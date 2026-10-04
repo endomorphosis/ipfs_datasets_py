@@ -115,8 +115,8 @@ RESULT not attacker(challenge) is false.
 """
 
 PROVERIF_DISAGREE = """\
-RESULT not attacker(challenge[]) is true.
-RESULT event(AcceptChallenge(x)) ==> event(BeginChallenge(x)) is false.
+RESULT not attacker(challenge) is true.
+RESULT inj-event(AcceptChallenge(x)) ==> inj-event(BeginChallenge(x)) is false.
 -> event AcceptChallenge(x)
 """
 
@@ -657,6 +657,8 @@ def test_proverif_disagreement_is_quarantined():
     assert (
         outcome.receipt.quarantine.reason is ProVerifQuarantineReason.DISAGREEMENT
     )
+    assert {item.claim_id for item in outcome.receipt.claim_outcomes} == {"secrecy", "auth"}
+    assert set(outcome.receipt.quarantine.claim_ids) == {"secrecy", "auth"}
 
 
 def test_tamarin_inconclusive_is_quarantined():

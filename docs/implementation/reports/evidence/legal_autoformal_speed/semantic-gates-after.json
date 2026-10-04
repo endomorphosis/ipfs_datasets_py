@@ -1,0 +1,142 @@
+{
+  "resolved_logic_tree": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  },
+  "all_gate_fields_identical_to_before": true,
+  "admitted": false,
+  "gates": [
+    {
+      "text": "Company A shall submit backup report within 10 days unless emergency.",
+      "vocabulary": {
+        "actors": [
+          "Company A"
+        ],
+        "actions": [
+          "submit"
+        ],
+        "objects": [
+          "backup report"
+        ],
+        "qualifiers": [
+          "exception",
+          "unless",
+          "emergency",
+          "deadline",
+          "within_duration",
+          "10 days",
+          "day",
+          "calendar",
+          "within 10 days"
+        ]
+      },
+      "rule": {
+        "modality": "O",
+        "actor": "Company A",
+        "action": "submit",
+        "object": "backup report",
+        "conditions": [],
+        "exceptions": [
+          "emergency"
+        ],
+        "temporal": [
+          "10 days"
+        ],
+        "temporal_records": [
+          {
+            "temporal_kind": "within_duration",
+            "value": "10 days",
+            "quantity": 10
+          }
+        ]
+      },
+      "decompiled": "Company A must submit backup report 10 days unless emergency.",
+      "pattern": null,
+      "status": "compiled",
+      "admitted": false,
+      "empty_status": "abstained",
+      "empty_error": "unsupported_semantics"
+    },
+    {
+      "text": "The agency shall not disclose records.",
+      "vocabulary": {
+        "actors": [
+          "agency"
+        ],
+        "actions": [
+          "disclose"
+        ],
+        "objects": [
+          "records"
+        ],
+        "qualifiers": []
+      },
+      "rule": {
+        "modality": "F",
+        "actor": "agency",
+        "action": "disclose",
+        "object": "records",
+        "conditions": [],
+        "exceptions": [],
+        "temporal": []
+      },
+      "decompiled": "Agency must not disclose records.",
+      "pattern": null,
+      "status": "compiled",
+      "admitted": false,
+      "empty_status": "abstained",
+      "empty_error": "unsupported_semantics"
+    },
+    {
+      "text": "The officer shall retain the file for at least 20 days.",
+      "vocabulary": {
+        "actors": [
+          "officer"
+        ],
+        "actions": [
+          "retain"
+        ],
+        "objects": [
+          "the file for at least 20 days"
+        ],
+        "qualifiers": [
+          "deadline",
+          "minimum_duration",
+          "20 days",
+          "day",
+          "calendar",
+          "at least 20 days"
+        ]
+      },
+      "rule": {
+        "modality": "O",
+        "actor": "officer",
+        "action": "retain",
+        "object": "the file for at least 20 days",
+        "conditions": [],
+        "exceptions": [],
+        "temporal": [
+          "20 days"
+        ],
+        "temporal_records": [
+          {
+            "temporal_kind": "minimum_duration",
+            "value": "20 days",
+            "quantity": 20
+          }
+        ]
+      },
+      "decompiled": "Officer must retain the file for at least 20 days.",
+      "pattern": {
+        "kind": "threshold",
+        "fail": 19,
+        "meet": 20
+      },
+      "status": "compiled",
+      "admitted": false,
+      "empty_status": "abstained",
+      "empty_error": "unsupported_semantics"
+    }
+  ]
+}

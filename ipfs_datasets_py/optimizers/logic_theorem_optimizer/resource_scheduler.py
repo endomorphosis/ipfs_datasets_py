@@ -7,11 +7,13 @@ pool can itself launch another pool.  This module provides one host-local,
 file-backed scheduler whose *root* leases consume global capacity and whose
 child leases consume their parent's already-accounted envelope.
 
-The state file contains identifiers and resource counts only.  It is guarded
-by an OS advisory lock and is therefore shared by unrelated Python processes;
+The state file contains identifiers, resource counts and bounded admission
+diagnostics. It is guarded by an OS advisory lock and is therefore shared by
+unrelated Python processes;
 no manager process or inherited semaphore is required.  Lease owners publish
-heartbeats and process birth markers, allowing capacity to be recovered after
-a crash without confusing a recycled PID for the original owner.
+heartbeats, process birth markers and optional kernel boot identities, allowing
+capacity to be recovered after a crash or reboot without confusing a recycled
+PID for the original owner.
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ import threading
 import time
 import uuid
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -38,6 +41,7 @@ from ipfs_datasets_py.optimizers.logic_theorem_optimizer.runtime_telemetry impor
     ResourceSnapshot,
     collect_resource_snapshot,
 )
+from .proof_resource_safety import ProofHostResources, collect_proof_host_resources
 
 
 RESOURCE_SCHEDULER_SCHEMA_VERSION = "legal-ir-global-resource-scheduler-v1"
@@ -47,6 +51,13 @@ DEFAULT_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_MEMORY_MB"
 DEFAULT_GPU_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_GPU_MEMORY_MB"
 DEFAULT_UNIFIED_MEMORY_ENV = "IPFS_DATASETS_RESOURCE_UNIFIED_MEMORY_MB"
 DEFAULT_CHILD_PROCESS_ENV = "IPFS_DATASETS_RESOURCE_CHILD_PROCESS_SLOTS"
+
+# Admission estimates, not kernel-enforced task ceilings. Linux PID limits
+# include JVM/ML service threads; process reservations cannot be compared 1:1.
+# Keep these runtime-only so this pressure check does not change persisted
+# capacities or split the existing shared scheduler authority during upgrades.
+PROOF_PID_TASKS_PER_PROCESS = 16
+PROOF_PID_HEADROOM_TASKS = 32
 
 
 class ResourceLane(str, Enum):
@@ -92,6 +103,14 @@ class ResourceUnavailableError(ResourceSchedulerError):
 
 class LeaseTimeoutError(ResourceSchedulerError, TimeoutError):
     """A resource request did not acquire a lease before its deadline."""
+
+    def __init__(
+        self, *args: object, admission_observation: Optional[Mapping[str, Any]] = None,
+    ) -> None:
+        super().__init__(*args)
+        # Diagnostic evidence belongs to this waiter, not the latest unrelated
+        # request examined by fairness. It never authorizes an admission.
+        self.admission_observation = deepcopy(admission_observation)
 
 
 class LeaseCancelledError(ResourceSchedulerError):
@@ -401,11 +420,71 @@ class ResourceSchedulerConfig:
         compare=False,
         repr=False,
     )
+    proof_safety_enabled: bool = False
+    proof_memory_headroom_mb: int = 0
+    proof_memory_stall_percent: float = 2.0
+    proof_cpu_stall_percent: float = 50.0
+    proof_io_stall_percent: float = 10.0
+    proof_backoff_seconds: float = 2.0
+    max_waiting_requests: Optional[int] = None
+    proof_resource_sampler: Callable[[], ProofHostResources] = field(
+        default=collect_proof_host_resources, compare=False, repr=False,
+    )
+
+    @classmethod
+    def for_proof_host(cls, **overrides: Any) -> "ResourceSchedulerConfig":
+        """Conservative host/container-aware profile for shared proof workers.
+
+        Keep 20% CPU and RAM outside the proof envelope. Explicit capacity
+        environment settings are capped by detected safe capacity. Install
+        the same configuration in every client of the shared state file.
+        """
+        sampler = overrides.get("proof_resource_sampler", collect_proof_host_resources)
+        host = sampler()
+        cpu = max(1, int(host.cpu_slots * 0.8))
+        memory = max(1, int(host.total_memory_mb * 0.8))
+        cpu = min(cpu, int(os.environ.get(DEFAULT_CPU_ENV, cpu)))
+        memory = min(memory, int(os.environ.get(DEFAULT_MEMORY_ENV, memory)))
+        defaults: Dict[str, Any] = {
+            "total_cpu_slots": cpu,
+            "total_memory_mb": memory,
+            "total_child_process_slots": min(cpu, _default_child_process_slots()),
+            "lane_reservations": {"validation": LaneReservation(cpu_slots=max(1, cpu // 8))}
+                if cpu > 1 else {},
+            "proof_safety_enabled": True,
+            "proof_resource_sampler": sampler,
+            "proof_memory_headroom_mb": max(1, host.total_memory_mb - memory),
+            "max_waiting_requests": 256,
+        }
+        defaults.update(overrides)
+        config = cls(**defaults)
+        config.validate()
+        return config
 
     def reservations(self) -> Dict[str, LaneReservation]:
         return _normalise_reservations(self.lane_reservations)
 
     def validate(self) -> None:
+        if (isinstance(self.proof_backoff_seconds, bool)
+                or not math.isfinite(float(self.proof_backoff_seconds))
+                or self.proof_backoff_seconds < 0):
+            raise ResourceConfigurationError("proof_backoff_seconds must be finite and non-negative")
+        if self.max_waiting_requests is not None and (
+            isinstance(self.max_waiting_requests, bool)
+            or not isinstance(self.max_waiting_requests, int)
+            or self.max_waiting_requests <= 0
+        ):
+            raise ResourceConfigurationError("max_waiting_requests must be positive or None")
+        if not isinstance(self.proof_safety_enabled, bool):
+            raise ResourceConfigurationError("proof_safety_enabled must be a bool")
+        if (isinstance(self.proof_memory_headroom_mb, bool)
+                or not isinstance(self.proof_memory_headroom_mb, int)
+                or self.proof_memory_headroom_mb < 0):
+            raise ResourceConfigurationError("proof_memory_headroom_mb must be non-negative")
+        for name in ("proof_memory_stall_percent", "proof_cpu_stall_percent", "proof_io_stall_percent"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not math.isfinite(float(value)) or not 0 <= value <= 100:
+                raise ResourceConfigurationError(f"{name} must be between 0 and 100")
         if isinstance(self.total_cpu_slots, bool) or not isinstance(self.total_cpu_slots, int):
             raise ResourceConfigurationError("total_cpu_slots must be an integer")
         if isinstance(self.total_memory_mb, bool) or not isinstance(self.total_memory_mb, int):
@@ -481,6 +560,13 @@ class ResourceSchedulerConfig:
 
     def persisted_dict(self) -> Dict[str, Any]:
         return {
+            "max_waiting_requests": self.max_waiting_requests,
+            "proof_safety_enabled": self.proof_safety_enabled,
+            "proof_memory_headroom_mb": self.proof_memory_headroom_mb,
+            "proof_memory_stall_percent": self.proof_memory_stall_percent,
+            "proof_cpu_stall_percent": self.proof_cpu_stall_percent,
+            "proof_io_stall_percent": self.proof_io_stall_percent,
+            "proof_backoff_seconds": self.proof_backoff_seconds,
             "total_cpu_slots": self.total_cpu_slots,
             "total_memory_mb": self.total_memory_mb,
             "total_gpu_memory_mb": self.total_gpu_memory_mb,
@@ -530,6 +616,50 @@ def _owner_is_alive(pid: int, marker: str) -> bool:
     return not marker or _owner_birth_marker(pid) == marker
 
 
+def _normalise_boot_id(value: Any) -> str:
+    """Only a canonical kernel UUID is evidence of a particular boot."""
+    if type(value) is not str:
+        return ""
+    try:
+        return value if str(uuid.UUID(value)) == value else ""
+    except ValueError:
+        return ""
+
+
+def _owner_boot_id() -> str:
+    """Return Linux's boot identity, or unknown without guessing from clocks.
+
+    Keep boot identity separate from the process birth marker so older clients
+    can still recognize live owners during a rolling upgrade. Wall-clock boot
+    estimates are unsuitable here: clock corrections must not free live work.
+    """
+    try:
+        with Path("/proc/sys/kernel/random/boot_id").open(encoding="ascii") as stream:
+            return _normalise_boot_id(stream.read(128).strip())
+    except (OSError, UnicodeError):
+        return ""
+
+
+def _owner_alive_once(
+    record: Mapping[str, Any], observations: Dict[tuple[int, str, str], bool],
+    *, current_boot: str,
+) -> bool:
+    """Reuse one owner observation only within the caller's locked operation.
+
+    Nested leases commonly share a process. Both birth and boot markers remain
+    part of the key, and callers create a fresh mapping for every operation.
+    Missing/unknown boot identities preserve legacy PID/birth-marker checks;
+    only two known, different boots independently prove the owner is dead.
+    """
+    identity = (int(record.get("owner_pid", 0)), str(record.get("owner_birth_marker", "")),
+                _normalise_boot_id(record.get("owner_boot_id", "")))
+    if identity not in observations:
+        current_boot = _normalise_boot_id(current_boot)
+        different_boot = bool(identity[2] and current_boot and identity[2] != current_boot)
+        observations[identity] = not different_boot and _owner_is_alive(*identity[:2])
+    return observations[identity]
+
+
 @dataclass(frozen=True)
 class ResourceLeaseToken:
     """Serializable authority for allocating work below a parent lease."""
@@ -566,7 +696,12 @@ class _CombinedCancellationSignal:
 
 
 class ResourceLease:
-    """An idempotently releasable root or nested resource lease."""
+    """An idempotently releasable root or nested resource lease.
+
+    Release revokes nested work immediately, but its reservation remains charged
+    until live descendants acknowledge completion by releasing their leases.
+    Owners must release worker leases only after the actual work has stopped.
+    """
 
     def __init__(self, scheduler: "GlobalResourceScheduler", record: Mapping[str, Any]) -> None:
         self._scheduler = scheduler
@@ -712,7 +847,7 @@ class GlobalResourceScheduler:
     """One process-safe scheduler shared by all host-local runtime lanes."""
 
     def __init__(self, config: Optional[ResourceSchedulerConfig] = None) -> None:
-        self.config = config or ResourceSchedulerConfig()
+        self.config = config or default_resource_scheduler_config()
         self.config.validate()
         self.state_path = Path(self.config.state_path).expanduser().resolve()
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -720,7 +855,7 @@ class GlobalResourceScheduler:
         self._thread_lock = _path_lock(self.state_path)
         # Validate or initialise eagerly so configuration mistakes fail before
         # a worker enters a long wait.
-        with self._locked_state():
+        with self._locked_state(allow_reconfigure=True):
             pass
 
     def _new_state(self) -> Dict[str, Any]:
@@ -757,7 +892,9 @@ class GlobalResourceScheduler:
         }
 
     @contextmanager
-    def _locked_state(self, *, persist: bool = True) -> Iterator[Dict[str, Any]]:
+    def _locked_state(
+        self, *, persist: bool = True, allow_reconfigure: bool = False,
+    ) -> Iterator[Dict[str, Any]]:
         with self._thread_lock:
             # Lock a stable sibling inode and atomically replace the JSON state
             # after fsync.  Locking the JSON inode itself would be unsafe:
@@ -781,15 +918,23 @@ class GlobalResourceScheduler:
                             ) from exc
                     else:
                         state = self._new_state()
-                    self._validate_state_configuration(state)
+                    self._validate_state_configuration(state, allow_reconfigure=allow_reconfigure)
                     yield state
                     if not persist:
+                        return
+                    # Reads may run recovery or normalize an older config, so
+                    # they still take the same lock and inspect fresh state.
+                    # Skip durable IO only when their complete resulting JSON
+                    # is unchanged. Every real mutation keeps the atomic write,
+                    # file fsync, replace and directory fsync sequence below.
+                    encoded = json.dumps(state, sort_keys=True, separators=(",", ":"))
+                    if encoded == raw:
                         return
                     temporary_path = self.state_path.with_name(
                         f".{self.state_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
                     )
                     with temporary_path.open("x", encoding="utf-8") as state_handle:
-                        json.dump(state, state_handle, sort_keys=True, separators=(",", ":"))
+                        state_handle.write(encoded)
                         state_handle.flush()
                         os.fsync(state_handle.fileno())
                     os.replace(temporary_path, self.state_path)
@@ -810,7 +955,9 @@ class GlobalResourceScheduler:
                             pass
                     fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
-    def _validate_state_configuration(self, state: Dict[str, Any]) -> None:
+    def _validate_state_configuration(
+        self, state: Dict[str, Any], *, allow_reconfigure: bool = False,
+    ) -> None:
         if state.get("schema_version") != RESOURCE_SCHEDULER_SCHEMA_VERSION:
             raise SchedulerStateError("unsupported resource scheduler state schema")
         expected = self.config.persisted_dict()
@@ -820,9 +967,29 @@ class GlobalResourceScheduler:
         # admission behavior, so an active scheduler can be upgraded safely.
         stored.setdefault("total_unified_memory_mb", None)
         stored.setdefault("total_child_process_slots", 64)
+        stored.setdefault("max_waiting_requests", None)
+        stored.setdefault("proof_safety_enabled", False)
+        stored.setdefault("proof_memory_headroom_mb", 0)
+        stored.setdefault("proof_memory_stall_percent", 2.0)
+        stored.setdefault("proof_cpu_stall_percent", 50.0)
+        stored.setdefault("proof_io_stall_percent", 10.0)
+        stored.setdefault("proof_backoff_seconds", 2.0)
         if stored == expected:
             state["config"] = expected
             return
+        if not allow_reconfigure:
+            # Another client may deliberately change an idle pool's limits.
+            # A facade opened before that change has no authority to silently
+            # restore its cached configuration during an ordinary operation.
+            raise ResourceConfigurationError(
+                f"scheduler configuration changed at {self.state_path}; "
+                "open a new scheduler facade with the intended configuration"
+            )
+        # A restart can change detected capacity while the file still holds
+        # old owners. Recover only proven-dead owners before testing whether
+        # configuration can change. Expired live owners and independently live
+        # descendants retain their reservations and still block reconfiguration.
+        self._recover_stale_locked(state, time.time())
         if state.get("leases") or state.get("waiters"):
             raise ResourceConfigurationError(
                 f"scheduler capacity differs from active shared state at {self.state_path}"
@@ -842,31 +1009,51 @@ class GlobalResourceScheduler:
                     changed = True
         return result
 
+    @staticmethod
+    def _prune_released_locked(state: Dict[str, Any]) -> set[str]:
+        """Drop acknowledged leaves, then any drained ancestor reservations."""
+        removed: set[str] = set()
+        while True:
+            parents = {record.get("parent_lease_id") for record in state["leases"].values()}
+            ready = {lease_id for lease_id, record in state["leases"].items()
+                     if record.get("release_requested") and lease_id not in parents}
+            if not ready:
+                return removed
+            for lease_id in ready:
+                state["leases"].pop(lease_id)
+            removed.update(ready)
+
     def _recover_stale_locked(self, state: Dict[str, Any], now: float) -> list[str]:
-        stale_roots: list[str] = []
+        # A missed heartbeat revokes authority; it does not prove the owner's
+        # native process or retained callable has stopped. Keep live owners
+        # charged until explicit release. An OS-dead owner can acknowledge only
+        # its own record; independently live descendants must still drain.
+        revoked = False
+        owner_observations: Dict[tuple[int, str, str], bool] = {}
+        current_boot = _owner_boot_id()
         for lease_id, record in list(state["leases"].items()):
             expired = float(record.get("expires_at", 0.0)) <= now
-            owner_dead = not _owner_is_alive(
-                int(record.get("owner_pid", 0)), str(record.get("owner_birth_marker", ""))
-            )
+            owner_dead = not _owner_alive_once(record, owner_observations, current_boot=current_boot)
             if expired or owner_dead:
-                stale_roots.append(lease_id)
-        recovered: set[str] = set()
-        for lease_id in stale_roots:
-            recovered.update(self._descendants(state, lease_id))
-        for lease_id in recovered:
-            state["leases"].pop(lease_id, None)
+                for descendant in self._descendants(state, lease_id):
+                    child = state["leases"][descendant]
+                    if not child.get("cancelled"):
+                        child["cancelled"] = True
+                        revoked = True
+                if owner_dead:
+                    record["release_requested"] = True
+        recovered = self._prune_released_locked(state)
 
         for waiter_id, waiter in list(state["waiters"].items()):
-            if not _owner_is_alive(
-                int(waiter.get("owner_pid", 0)), str(waiter.get("owner_birth_marker", ""))
-            ):
+            if not _owner_alive_once(waiter, owner_observations, current_boot=current_boot):
                 state["waiters"].pop(waiter_id, None)
 
         if recovered:
             metrics = state["metrics"]
             metrics["recoveries_total"] += 1
             metrics["recovered_leases_total"] += len(recovered)
+        if revoked:
+            state["metrics"]["cancellations_total"] += 1
         return sorted(recovered)
 
     def recover_stale_leases(self) -> list[str]:
@@ -962,7 +1149,96 @@ class GlobalResourceScheduler:
             return "gpu_memory_pressure"
         return ""
 
-    def _pressure_allows(self, waiter: Mapping[str, Any]) -> tuple[bool, str]:
+    def _record_proof_refusal(
+        self, state: Optional[Dict[str, Any]], waiter: Mapping[str, Any], *,
+        host: Optional[ProofHostResources], reason: str, gate: str,
+        decision_cycle_at: Optional[float], demand: Optional[Mapping[str, int]],
+        backoff_until: Optional[float] = None, error_type: Optional[str] = None,
+    ) -> None:
+        """Retain one bounded historical observation from the deciding sample.
+
+        The timestamp is the existing admission-cycle clock, not a new probe.
+        PSI values retain the sampler's max host/visible-cgroup avg10 contract:
+        memory/full, CPU/some and IO/full. Optional PSI reads still fall back
+        to zero; these values do not attest that every kernel file was readable.
+        """
+        if state is None:
+            return
+        sample = None
+        if host is not None:
+            try:
+                sample = {
+                    name: getattr(host, name) for name in (
+                        "cpu_slots", "total_memory_mb", "available_memory_mb",
+                        "memory_stall_percent", "cpu_stall_percent", "io_stall_percent",
+                        "pid_task_limit", "available_pid_tasks",
+                    )
+                }
+            except Exception as exc:
+                # A diagnostic field must not change the already made refusal.
+                error_type = type(exc).__name__
+        observation = {
+            "schema": "proof-resource-admission-refusal@1",
+            "historical": True,
+            "decision_cycle_at": decision_cycle_at,
+            "gate": gate,
+            "reason": reason,
+            "waiter_id": str(waiter.get("waiter_id", ""))[:128],
+            "sequence": waiter.get("sequence"),
+            "request_id": str(waiter.get("request_id", ""))[:256],
+            "lane": str(waiter.get("lane", ""))[:128],
+            "parent_lease_id": waiter.get("parent_lease_id"),
+            "sample": sample,
+            "sample_contract": "max-host-visible-cgroup-avg10; memory/full,cpu/some,io/full; optional-psi-zero-fallback",
+            "thresholds": {
+                "memory_stall_percent": self.config.proof_memory_stall_percent,
+                "cpu_stall_percent": self.config.proof_cpu_stall_percent,
+                "io_stall_percent": self.config.proof_io_stall_percent,
+            },
+            "proof_memory_headroom_mb": self.config.proof_memory_headroom_mb,
+            "demand": dict(demand) if demand is not None else None,
+            "backoff_until": backoff_until,
+            "error_type": error_type[:128] if error_type is not None else None,
+        }
+        state["last_proof_refusal"] = observation
+        if isinstance(waiter, dict):
+            waiter["last_proof_refusal"] = deepcopy(observation)
+
+    def _pressure_allows(
+        self, waiter: Mapping[str, Any], *, state: Optional[Dict[str, Any]] = None,
+        decision_cycle_at: Optional[float] = None,
+    ) -> tuple[bool, str]:
+        if self.config.proof_safety_enabled:
+            host = None
+            demand = None
+
+            def refused(reason: str, error_type: Optional[str] = None) -> tuple[bool, str]:
+                self._record_proof_refusal(
+                    state, waiter, host=host, reason=reason, gate="request_pressure",
+                    decision_cycle_at=decision_cycle_at, demand=demand, error_type=error_type,
+                )
+                return False, reason
+
+            try:
+                host = self.config.proof_resource_sampler()
+                demand = {"requested_memory_mb": int(waiter["memory_mb"])}
+                if int(waiter["memory_mb"]) <= 0:
+                    return refused("proof_memory_reservation_required")
+                if host.available_memory_mb < (
+                    self.config.proof_memory_headroom_mb + int(waiter["memory_mb"])
+                ):
+                    return refused("proof_memory_headroom")
+                for observed, threshold, reason in (
+                    (host.memory_stall_percent, self.config.proof_memory_stall_percent, "proof_memory_stall"),
+                    (host.cpu_stall_percent, self.config.proof_cpu_stall_percent, "proof_cpu_stall"),
+                    (host.io_stall_percent, self.config.proof_io_stall_percent, "proof_io_stall"),
+                ):
+                    if observed >= threshold:
+                        return refused(reason)
+            except Exception as exc:
+                host = None
+                demand = None
+                return refused("proof_resource_telemetry_unknown", type(exc).__name__)
         if (
             self.config.max_memory_percent is None
             and self.config.max_swap_percent is None
@@ -990,7 +1266,10 @@ class GlobalResourceScheduler:
             return max(1, total // (1024 * 1024))
         return None
 
-    def _root_can_grant(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
+    def _root_can_grant(
+        self, state: Dict[str, Any], waiter: Mapping[str, Any], *,
+        decision_cycle_at: Optional[float] = None,
+    ) -> bool:
         (
             used_cpu,
             used_memory,
@@ -1035,7 +1314,9 @@ class GlobalResourceScheduler:
                     return False
             elif used_gpu_memory + requested_gpu > total_gpu - self.config.reserved_gpu_memory_mb:
                 return False
-        pressure_allows, _ = self._pressure_allows(waiter)
+        pressure_allows, _ = self._pressure_allows(
+            waiter, state=state, decision_cycle_at=decision_cycle_at,
+        )
         return pressure_allows
 
     @staticmethod
@@ -1066,10 +1347,72 @@ class GlobalResourceScheduler:
             <= int(parent.get("child_process_slots", 0))
         )
 
-    def _can_grant(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
+    def _can_grant(self, state: Dict[str, Any], waiter: Mapping[str, Any]) -> bool:
+        decision_cycle_at = None
+        if self.config.proof_safety_enabled:
+            # Treat every outstanding envelope as not yet materialized. This
+            # deliberately overestimates demand rather than letting simultaneous
+            # admissions all spend the same live MemAvailable measurement.
+            now = time.time()
+            decision_cycle_at = now
+            backoff = state.setdefault("proof_backoff", {})
+            if now < float(backoff.get("until", 0)):
+                return False
+            reason = ""
+            host = None
+            demand = None
+            error_type = None
+            try:
+                host = self.config.proof_resource_sampler()
+                root_usage = self._root_usage(state)
+                reserved = root_usage[1]
+                reserved_processes = root_usage[4]
+                additional = 0 if waiter.get("parent_lease_id") else int(waiter["memory_mb"])
+                if host.available_memory_mb < self.config.proof_memory_headroom_mb + reserved + additional:
+                    reason = "proof_memory_headroom"
+                # Root envelopes cover all descendants. Conservatively treat
+                # existing reservations as not yet materialized, even though
+                # live pids.current may already include some of their tasks.
+                additional_processes = 0 if waiter.get("parent_lease_id") else int(waiter.get("child_process_slots", 0))
+                pid_demand = PROOF_PID_HEADROOM_TASKS + PROOF_PID_TASKS_PER_PROCESS * (
+                    reserved_processes + additional_processes)
+                demand = {
+                    "root_reserved_memory_mb": reserved,
+                    "additional_memory_mb": additional,
+                    "root_reserved_process_slots": reserved_processes,
+                    "additional_process_slots": additional_processes,
+                    "pid_tasks_required": pid_demand,
+                }
+                if host.available_pid_tasks is not None and host.available_pid_tasks < pid_demand:
+                    reason = "proof_pid_headroom"
+                for observed, threshold, label in (
+                    (host.memory_stall_percent, self.config.proof_memory_stall_percent, "proof_memory_stall"),
+                    (host.cpu_stall_percent, self.config.proof_cpu_stall_percent, "proof_cpu_stall"),
+                    (host.io_stall_percent, self.config.proof_io_stall_percent, "proof_io_stall"),
+                ):
+                    if observed >= threshold:
+                        reason = label
+            except Exception as exc:
+                reason = "proof_resource_telemetry_unknown"
+                host = None
+                demand = None
+                error_type = type(exc).__name__
+            if reason:
+                backoff.update(until=now + self.config.proof_backoff_seconds, reason=reason)
+                self._record_proof_refusal(
+                    state, waiter, host=host, reason=reason, gate="envelope",
+                    decision_cycle_at=now, demand=demand,
+                    backoff_until=backoff["until"], error_type=error_type,
+                )
+                return False
+            backoff.clear()
         if waiter.get("parent_lease_id"):
-            return self._child_can_grant(state, waiter)
-        return self._root_can_grant(state, waiter)
+            return self._child_can_grant(state, waiter) and (
+                not self.config.proof_safety_enabled or self._pressure_allows(
+                    waiter, state=state, decision_cycle_at=decision_cycle_at,
+                )[0]
+            )
+        return self._root_can_grant(state, waiter, decision_cycle_at=decision_cycle_at)
 
     def _is_fair_turn(self, state: Mapping[str, Any], waiter: Mapping[str, Any]) -> bool:
         # Skip an older waiter only when it cannot currently use capacity.
@@ -1169,6 +1512,8 @@ class GlobalResourceScheduler:
             raise ResourceConfigurationError("cpu_slots must be a positive integer")
         if isinstance(memory_mb, bool) or not isinstance(memory_mb, int) or memory_mb < 0:
             raise ResourceConfigurationError("memory_mb must be a non-negative integer")
+        if self.config.proof_safety_enabled and memory_mb == 0:
+            raise ResourceConfigurationError("proof safety requires a positive memory_mb reservation")
         if (
             isinstance(gpu_memory_mb, bool)
             or not isinstance(gpu_memory_mb, int)
@@ -1236,11 +1581,13 @@ class GlobalResourceScheduler:
 
         pid = int(owner_pid if owner_pid is not None else os.getpid())
         birth_marker = _owner_birth_marker(pid)
+        boot_id = _owner_boot_id()
         waiter_id = uuid.uuid4().hex
         started_wall = time.time()
         started_mono = time.monotonic()
         deadline = None if timeout is None else started_mono + float(timeout)
         terminal: Optional[str] = None
+        admission_observation: Optional[Mapping[str, Any]] = None
         granted_record: Optional[Dict[str, Any]] = None
 
         while granted_record is None and terminal is None:
@@ -1250,6 +1597,9 @@ class GlobalResourceScheduler:
             with self._locked_state() as state:
                 self._recover_stale_locked(state, now_wall)
                 if waiter_id not in state["waiters"]:
+                    if (self.config.max_waiting_requests is not None
+                            and len(state["waiters"]) >= self.config.max_waiting_requests):
+                        raise ResourceUnavailableError("resource admission queue is full; retry later")
                     if parent_id:
                         parent_record = state["leases"].get(parent_id)
                         if parent_record is None:
@@ -1289,6 +1639,7 @@ class GlobalResourceScheduler:
                         "parent_lease_id": parent_id,
                         "owner_pid": pid,
                         "owner_birth_marker": birth_marker,
+                        "owner_boot_id": boot_id,
                         "created_at": started_wall,
                         "request_id": str(request_id)[:256],
                         "saturation_recorded": False,
@@ -1316,6 +1667,7 @@ class GlobalResourceScheduler:
                     self._lane_metrics(state, lane_value)["cancellations_total"] += 1
                     terminal = "cancelled"
                 elif timed_out and not can_grant_now:
+                    admission_observation = deepcopy(waiter.get("last_proof_refusal"))
                     state["waiters"].pop(waiter_id, None)
                     wait_seconds = now_mono - started_mono
                     self._record_wait(state, lane_value, wait_seconds)
@@ -1341,6 +1693,7 @@ class GlobalResourceScheduler:
                         "parent_lease_id": parent_id,
                         "owner_pid": pid,
                         "owner_birth_marker": birth_marker,
+                        "owner_boot_id": boot_id,
                         "acquired_at": now_wall,
                         "heartbeat_at": now_wall,
                         "expires_at": now_wall + self.config.lease_ttl_seconds,
@@ -1355,6 +1708,9 @@ class GlobalResourceScheduler:
 
             if terminal is None and granted_record is None:
                 wait_for = self.config.poll_interval_seconds
+                if self.config.proof_safety_enabled:
+                    remaining_backoff = float(state.get("proof_backoff", {}).get("until", 0)) - time.time()
+                    wait_for = max(wait_for, min(1.0, remaining_backoff))
                 if deadline is not None:
                     wait_for = min(wait_for, max(0.0, deadline - time.monotonic()))
                 if cancel_event is not None and hasattr(cancel_event, "wait"):
@@ -1368,7 +1724,10 @@ class GlobalResourceScheduler:
         if terminal == "cancelled":
             raise LeaseCancelledError("resource lease request was cancelled")
         if terminal == "timeout":
-            raise LeaseTimeoutError("timed out waiting for a resource lease")
+            raise LeaseTimeoutError(
+                "timed out waiting for a resource lease",
+                admission_observation=admission_observation,
+            )
         assert granted_record is not None
         return ResourceLease(self, granted_record)
 
@@ -1390,6 +1749,8 @@ class GlobalResourceScheduler:
                 return False
             if lease_key and record.get("lease_key") != lease_key:
                 raise LeaseNotFoundError("lease authority does not match")
+            if record.get("release_requested"):
+                return False
             record["heartbeat_at"] = now
             record["expires_at"] = now + self.config.lease_ttl_seconds
             return True
@@ -1398,6 +1759,7 @@ class GlobalResourceScheduler:
 
     def cancel(self, lease_id: str, lease_key: Optional[str] = None) -> bool:
         with self._locked_state() as state:
+            self._recover_stale_locked(state, time.time())
             record = state["leases"].get(lease_id)
             if record is None:
                 return False
@@ -1423,21 +1785,46 @@ class GlobalResourceScheduler:
             record = state["leases"].get(lease_id)
             if record is None:
                 return missing_is_cancelled
-            stale = float(record.get("expires_at", 0.0)) <= time.time() or not _owner_is_alive(
-                int(record.get("owner_pid", 0)), str(record.get("owner_birth_marker", ""))
-            )
-            return stale or bool(record.get("cancelled"))
+            # Polling must observe ancestor expiry even before a writer runs
+            # recovery. A child heartbeat must not mask lost parent authority.
+            now = time.time()
+            seen: set[str] = set()
+            owner_observations: Dict[tuple[int, str, str], bool] = {}
+            current_boot = _owner_boot_id()
+            while record is not None:
+                identifier = str(record["lease_id"])
+                if identifier in seen:
+                    return True
+                seen.add(identifier)
+                stale = (float(record.get("expires_at", 0.0)) <= now
+                         or not _owner_alive_once(record, owner_observations, current_boot=current_boot))
+                if stale or record.get("cancelled") or record.get("release_requested"):
+                    return True
+                parent_id = record.get("parent_lease_id")
+                if not parent_id:
+                    return False
+                record = state["leases"].get(parent_id)
+            return True
 
     def release(self, lease_id: str, lease_key: Optional[str] = None) -> bool:
+        """Revoke this subtree, reclaiming capacity only after live work drains.
+
+        ``True`` acknowledges this release request, including a deferred one.
+        It does not assert that all descendants have already stopped.
+        """
         with self._locked_state() as state:
+            self._recover_stale_locked(state, time.time())
             record = state["leases"].get(lease_id)
             if record is None:
                 return False
             if lease_key and record.get("lease_key") != lease_key:
                 raise LeaseNotFoundError("lease authority does not match")
-            released = self._descendants(state, lease_id)
-            for descendant in released:
-                state["leases"].pop(descendant, None)
+            if record.get("release_requested"):
+                return False
+            record["release_requested"] = True
+            for descendant in self._descendants(state, lease_id):
+                state["leases"][descendant]["cancelled"] = True
+            released = self._prune_released_locked(state)
             state["metrics"]["releases_total"] += len(released)
             return True
 
@@ -1543,6 +1930,8 @@ class GlobalResourceScheduler:
                 "active_root_lease_count": len(state["leases"]) - active_children,
                 "active_child_lease_count": active_children,
                 "waiting_request_count": len(state["waiters"]),
+                "proof_backoff": dict(state.get("proof_backoff", {})),
+                "last_proof_refusal": deepcopy(state.get("last_proof_refusal")),
                 "saturation": {
                     "saturated": cpu >= self.config.total_cpu_slots
                     or memory >= self.config.total_memory_mb - self.config.reserved_memory_mb
@@ -1650,12 +2039,19 @@ _GLOBAL_SCHEDULERS: Dict[str, GlobalResourceScheduler] = {}
 _GLOBAL_SCHEDULERS_LOCK = threading.Lock()
 
 
+def default_resource_scheduler_config() -> ResourceSchedulerConfig:
+    """Use conservative admission unless an operator explicitly opts out."""
+    if os.environ.get("IPFS_DATASETS_PROOF_RESOURCE_SAFETY", "1") == "0":
+        return ResourceSchedulerConfig()
+    return ResourceSchedulerConfig.for_proof_host()
+
+
 def get_global_resource_scheduler(
     config: Optional[ResourceSchedulerConfig] = None,
 ) -> GlobalResourceScheduler:
     """Return the process-local facade for the shared host state file."""
 
-    effective = config or ResourceSchedulerConfig()
+    effective = config or default_resource_scheduler_config()
     key = str(Path(effective.state_path).expanduser().resolve())
     with _GLOBAL_SCHEDULERS_LOCK:
         scheduler = _GLOBAL_SCHEDULERS.get(key)

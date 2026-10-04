@@ -32,6 +32,7 @@ Those corrected fields are what appear on receipts and source-tree bindings.
 from __future__ import annotations
 
 import re
+from ...external_provers.isabelle_runtime import CHECK_MARKER, add_kernel_audit, theory_command
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -61,6 +62,7 @@ from ..results import (
     TheoremResult,
     TypedBackendResult,
 )
+from ..resource_admission import ResourceAdmittedToolRunner
 from .wasm import (
     DEFAULT_MAX_SOURCE_BYTES,
     CapabilityPlane,
@@ -121,7 +123,7 @@ class IsabellePathMetadata:
     theory_name: str
     theory_path: str
     session_dir: str
-    command_template: str = "{isabelle} process -T {theory_name} -d {session_dir}"
+    command_template: str = "{isabelle} process_theories -D {session_dir} -O -l HOL -o threads=1 -o parallel_proofs=0 -o quick_and_dirty=false {theory_name}"
     caller_path: str = ""
     corrected: bool = False
     schema_version: str = ISABELLE_PATH_METADATA_VERSION
@@ -652,6 +654,10 @@ def evaluate_isabelle_kernel_output(
         diagnostics.append(f"isabelle exited with non-zero status {process.returncode}")
         return False, report, bound_diagnostics(diagnostics)
 
+    if CHECK_MARKER not in combined:
+        diagnostics.append("Isabelle kernel audit did not confirm the named theorem")
+        return False, report, bound_diagnostics(diagnostics)
+
     return True, report, bound_diagnostics(diagnostics)
 
 
@@ -772,7 +778,9 @@ class IsabelleKernelBackend:
         self.backend_version = _text(backend_version, "backend_version")
         self.executable = _text(executable, "executable")
         self.session_dir = _text(session_dir or ".", "session_dir")
-        self._runner = runner or BoundedToolRunner()
+        self._runner = runner if runner is not None else ResourceAdmittedToolRunner(
+            cpu_slots=3, child_process_slots=12,
+        )
         if not isinstance(self._runner, BoundedToolRunner):
             raise IsabelleKernelError("runner must be a BoundedToolRunner")
         self._wasm_probe = wasm_probe or WasmCapabilityProbe()
@@ -805,16 +813,20 @@ class IsabelleKernelBackend:
             if state.plane is not CapabilityPlane.NATIVE:
                 raise IsabelleKernelError("native_probe must report the native plane")
             return state
-        if self._runner.is_available(self.executable, runtime=ToolRuntime.NATIVE):
+        from ...hammers.frontends.isabelle import IsabelleFrontend
+        capability = IsabelleFrontend(executable=self.executable).capability()
+        if capability.available:
+            self.executable = capability.executables["isabelle"]["path"]
+            self._runtime_identifier = capability.executables["isabelle"].get("version", "")
             return KernelCapabilityState.available_native(
                 kernel_id=self.backend_id,
                 executable=self.executable,
-                version=self.backend_version,
+                version=capability.executables["isabelle"].get("version") or self.backend_version,
             )
         return KernelCapabilityState.unavailable(
             plane=CapabilityPlane.NATIVE,
             kernel_id=self.backend_id,
-            reason=f"native Isabelle executable {self.executable!r} was not found",
+            reason=capability.unavailable_reason or "native Isabelle toolchain is not ready",
             executable=self.executable,
         )
 
@@ -865,6 +877,10 @@ class IsabelleKernelBackend:
     def _tool_request(
         self, source: str, bounds: ExecutionBounds, path_metadata: IsabellePathMetadata
     ) -> ToolRunRequest:
+        try:
+            source = add_kernel_audit(source, extract_isabelle_theorem_name(source))
+        except ValueError as exc:
+            raise IsabelleKernelError(str(exc)) from exc
         max_workspace_bytes = max(
             bounds.max_output_bytes * 2,
             len(source.encode("utf-8")) + bounds.max_output_bytes + 1024,
@@ -872,25 +888,37 @@ class IsabelleKernelBackend:
         # Isabelle requires the theory file basename to match the theory header.
         # Path metadata is already corrected; write under the corrected name and
         # point -d at the private workspace (session root).
+        # ZGC uses a heap-sized anonymous backing file: RLIMIT_FSIZE intended
+        # for theory artifacts prevents JVM startup. Private settings use Serial
+        # GC instead, preserving both file-size and address-space limits.
+        ml_heap_mb = max(64, min(1024, bounds.max_memory_bytes // (2 * 1024**2)))
+        settings = ('ISABELLE_JAVA_SYSTEM_OPTIONS="-server -Dfile.encoding=UTF-8 '
+                    '-Disabelle.threads=1 -XX:+UseSerialGC -XX:ActiveProcessorCount=1"\n'
+                    'ISABELLE_TOOL_JAVA_OPTIONS="-Djava.awt.headless=true '
+                    '-Xms64m -Xmx256m -Xss2m"\n'
+                    f'ML_OPTIONS="--minheap {min(256, ml_heap_mb)} --maxheap {ml_heap_mb} --gcthreads 1 --stackspace 256"\n'
+                    'ISABELLE_TMP_PREFIX="$TMPDIR/isabelle"\n')
+        files = {path_metadata.theory_path: source, ".isabelle/etc/settings": settings}
+        identifier = getattr(self, "_runtime_identifier", "")
+        if re.fullmatch(r"Isabelle[A-Za-z0-9_.-]+", identifier):
+            files[f".isabelle/{identifier}/etc/settings"] = settings
         return ToolRunRequest(
-            argv=(
-                self.executable,
-                "process",
-                "-T",
-                path_metadata.theory_name,
-                "-d",
-                "{workspace}",
-            ),
+            argv=tuple(theory_command(self.executable, path_metadata.theory_name, "{workspace}")),
             runtime=ToolRuntime.NATIVE,
             limits=ToolRunLimits(
                 timeout_seconds=bounds.timeout_ms / 1000,
                 cpu_seconds=bounds.timeout_ms / 1000,
-                memory_bytes=bounds.max_memory_bytes,
+                # Poly/ML's 32-bit object runtime reserves 16 GiB for the heap
+                # and 4 GiB for stacks, independent of actual residency. Retain
+                # an address-space ceiling and enforce the requested budget on
+                # aggregate resident memory on Linux instead.
+                memory_bytes=max(32 * 1024**3, bounds.max_memory_bytes),
+                resident_memory_bytes=bounds.max_memory_bytes,
                 max_output_bytes=bounds.max_output_bytes,
                 max_input_bytes=bounds.max_output_bytes,
                 max_workspace_bytes=max_workspace_bytes,
             ),
-            input_files={path_metadata.theory_path: source},
+            input_files=files,
         )
 
     def _build_result(

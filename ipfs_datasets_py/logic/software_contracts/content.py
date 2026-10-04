@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Final, Iterable
 
@@ -204,14 +205,34 @@ def _cid_from_digest_bytes(
     *,
     codec: str,
 ) -> str:
-    from multiformats import CID, multihash
+    from multiformats import multihash
 
     if codec not in _ALLOWED_READ_CODECS:
         raise ContentIdentityError(
             f"codec {codec!r} is outside the software-contract CID profile"
         )
     digest = multihash.digest(data, MULTIHASH_TYPE)
-    return str(CID(CID_BASE, CID_VERSION, codec, digest))
+    # Actual payload validation and hashing are never cached. Only the pure
+    # encoding of this freshly computed multihash may be reused. Exact types
+    # keep custom equality/hash methods and bool/int aliases out of cache keys.
+    if (type(CID_BASE) is str and type(CID_VERSION) is int
+            and type(codec) is str and type(digest) is bytes):
+        return _encode_cid_digest(CID_BASE, CID_VERSION, codec, digest)
+    return _encode_cid_digest.__wrapped__(CID_BASE, CID_VERSION, codec, digest)
+
+
+@lru_cache(maxsize=32768)
+def _encode_cid_digest(base: str, version: int, codec: str, digest: bytes) -> str:
+    """Encode a complete multihash under fixed normative registrations.
+
+    As with the syntax cache, multiformats registrations are fixed for this
+    process profile. A future supported registry reconfiguration must clear
+    both caches. No source bytes, structured values or verification results
+    are retained here; codec and the full multihash preserve domain separation.
+    """
+    from multiformats import CID
+
+    return str(CID(base, version, codec, digest))
 
 
 def cid_for_bytes(data: bytes) -> str:
@@ -219,28 +240,6 @@ def cid_for_bytes(data: bytes) -> str:
 
     payload = _require_bytes(data)
     return _cid_from_digest_bytes(payload, codec=SOURCE_CODEC)
-
-
-def cid_for_byte_chunks(chunks: Iterable[bytes], *, max_chunk_bytes: int) -> str:
-    """Hash every source byte with bounded frames and the ordinary raw CID.
-
-    This consumes the iterator completely and retains no source bytes. A
-    supplied or partially consumed iterator is not evidence of full hashing.
-    Chunk boundaries do not change the source content identity.
-    """
-    import hashlib
-    from multiformats import CID, multihash
-
-    if type(max_chunk_bytes) is not int or max_chunk_bytes < 1:
-        raise ContentIdentityError("max_chunk_bytes must be a positive integer")
-    digest = hashlib.sha256()
-    for chunk in chunks:
-        _require_bytes(chunk)
-        if len(chunk) > max_chunk_bytes:
-            raise ContentIdentityError("source frame exceeds max_chunk_bytes")
-        digest.update(chunk)
-    return str(CID(CID_BASE, CID_VERSION, SOURCE_CODEC,
-                   multihash.wrap(digest.digest(), MULTIHASH_TYPE)))
 
 
 def cid_for_obj(obj: Any) -> str:
@@ -281,6 +280,25 @@ def validate_cid(
             f"{sorted(_ALLOWED_READ_CODECS)}"
         )
 
+    profile = (PROFILE_ID, PROFILE_VERSION, CID_VERSION, CID_BASE, MULTIHASH_TYPE)
+    # This memoizes canonical *syntax*, not content verification. Every source
+    # and structured read below still hashes its actual bytes and checks the CID.
+    # Keep arbitrary str subclasses out of cache keys so custom equality/hash
+    # implementations cannot alias another caller's validated string.
+    if type(value) is str:
+        _validate_canonical_cid_syntax(value, allowed, profile)
+    else:
+        _validate_canonical_cid_syntax.__wrapped__(value, allowed, profile)
+    return value
+
+
+@lru_cache(maxsize=32768)
+def _validate_canonical_cid_syntax(
+    value: str, allowed: frozenset[str], profile: tuple[str, str, int, str, str]
+) -> None:
+    """Validate one immutable string under one exact normative CID profile."""
+    _, _, cid_version, cid_base, multihash_type = profile
+
     from multiformats import CID, multihash
 
     try:
@@ -288,23 +306,22 @@ def validate_cid(
     except Exception as exc:  # multiformats raises varied errors
         raise ContentIdentityError("CID is not decodable") from exc
 
-    expected_digest_size = multihash.get(MULTIHASH_TYPE).max_digest_size
+    expected_digest_size = multihash.get(multihash_type).max_digest_size
     if (
-        parsed.version != CID_VERSION
+        parsed.version != cid_version
         or parsed.codec.name not in allowed
-        or parsed.hashfun.name != MULTIHASH_TYPE
+        or parsed.hashfun.name != multihash_type
         or (
             expected_digest_size is not None
             and len(parsed.raw_digest) != expected_digest_size
         )
-        or parsed.base.name != CID_BASE
+        or parsed.base.name != cid_base
         or str(parsed) != value
     ):
         raise ContentIdentityError(
             "CID must use CIDv1 / base32 / sha2-256 and an allowed codec "
             f"from {sorted(allowed)}"
         )
-    return value
 
 
 def decode_and_recompute_source(claimed_cid: str, data: bytes) -> str:
@@ -576,7 +593,6 @@ __all__ = [
     "StructuredIdentityError",
     "canonical_dag_json_bytes",
     "cid_for_bytes",
-    "cid_for_byte_chunks",
     "cid_for_obj",
     "cid_for_structured",
     "cid_vectors_document",

@@ -561,3 +561,26 @@ def test_subprocess_executor_is_explicitly_injectable(tmp_path: Path) -> None:
     )
     assert result.ok
     assert result.stdout.strip() == "explicit"
+
+
+@pytest.mark.skipif(not Path('/proc/self/stat').is_file(), reason='Linux RSS guard')
+@pytest.mark.parametrize('spawn_child', [False, True])
+def test_resident_memory_guard_terminates_whole_tree(tmp_path, spawn_child):
+    child = 'import time; allocation=bytearray(64*1024*1024); print("allocated", flush=True); time.sleep(30)'
+    source = (f'import subprocess,sys,time; subprocess.Popen([sys.executable,"-c",{child!r}]); time.sleep(30)'
+              if spawn_child else child)
+    result = _runner(tmp_path).run(ToolRunRequest(
+        argv=(PYTHON, '-c', source),
+        limits=ToolRunLimits(timeout_seconds=5, resident_memory_bytes=32 * 1024**2)))
+    assert result.resource_exhausted and result.process_tree_terminated
+    assert not result.timed_out and result.elapsed_seconds < 5
+    assert result.workspace_cleaned
+
+
+@pytest.mark.skipif(not Path('/proc/self/stat').is_file(), reason='Linux RSS guard')
+def test_resident_memory_guard_allows_small_process(tmp_path):
+    result = _runner(tmp_path).run(ToolRunRequest(
+        argv=(PYTHON, '-c', 'print("ok")'),
+        limits=ToolRunLimits(timeout_seconds=5, resident_memory_bytes=64 * 1024**2)))
+    assert result.returncode == 0 and not result.resource_exhausted
+    assert result.stdout.strip() == 'ok'

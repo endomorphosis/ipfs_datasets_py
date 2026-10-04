@@ -149,10 +149,9 @@ def _process_runner(
             # Corrected path: argv must use -T <theory> -d <session>, and the
             # theory file written into the private workspace must match.
             argv = list(invocation.argv)
-            assert "process" in argv
-            t_idx = argv.index("-T")
-            assert argv[t_idx + 1] == expected_theory
-            assert "-d" in argv
+            assert "process_theories" in argv
+            assert argv[-1] == expected_theory
+            assert "-D" in argv
             theory_path = invocation.cwd / f"{expected_theory}.thy"
             assert theory_path.is_file(), (
                 f"expected corrected theory file at {theory_path}; "
@@ -160,7 +159,7 @@ def _process_runner(
             )
         return RawProcessResult(
             returncode=returncode,
-            stdout=stdout,
+            stdout=stdout + ("\nIPFS_ISABELLE_KERNEL_CHECKED\n" if returncode == 0 else ""),
             elapsed_seconds=0.011,
             timed_out=timed_out,
             process_tree_terminated=timed_out,

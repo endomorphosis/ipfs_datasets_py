@@ -1,0 +1,161 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "checkpoint_format_changed": false,
+  "combined_source_guard_passed": false,
+  "combined_test_execution_passed": true,
+  "constitution_formalized": false,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36336483333,
+    "inventory": {
+      "apparent_bytes": 34336483333,
+      "entry_count": 67230,
+      "special_file_count": 9,
+      "symlink_count": 3010
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 9272,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_shadow_endpoint_reuse.md",
+      "sha256": "0c7720d6414a1954e2fbe5faceb3ffcf5202a04a4c1b4cd3f4cba033713f8dd5"
+    },
+    {
+      "bytes": 72661,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "9c30d9ef0738ad8f3a0c79f83d9d0188124f20c5cc0930e41e647229923a20ce"
+    },
+    {
+      "bytes": 81233,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "9dde154ce6563338a0812648e9d2603665dd8f34dd61c2898d3a171935812757"
+    }
+  ],
+  "end_to_end_performance_claim": false,
+  "endpoint_hydrations_after": 3,
+  "endpoint_hydrations_before": 5,
+  "focused_receipt": {
+    "bytes": 968,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/focused-r2-receipt.json",
+    "sha256": "3cfec11c414865810d5758b37daf944b8d88dd39589ba8647943da8e15a1bfa2"
+  },
+  "frozen_prechange_sources": [
+    {
+      "bytes": 32622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/autoencoder_daemon_invocation_worker.before.py",
+      "sha256": "7acda440aa9d010826aeba445ee99b73f95ffa2c1278ff4fc1f0aacea062b1eb"
+    },
+    {
+      "bytes": 10453,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/autoencoder_daemon_sparse_shadow.before.py",
+      "sha256": "dc06863edde409b51b1e8e1be923abb3d3cd184156b189a759809205e57105c4"
+    }
+  ],
+  "full_checkpoint_authoritative": true,
+  "independent_base_reload_preserved": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 504
+  },
+  "native_cycle_performed": false,
+  "native_listener_performed": false,
+  "native_training_performed": false,
+  "native_validation_deferred_by_user": true,
+  "owned_production_unchanged_since_capture": true,
+  "passed": false,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 33265,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "6f8d85259db92105eba40ab9c2779ddcc8aef674eb748af74d6d4f9c04774355"
+    },
+    {
+      "bytes": 17406,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_sparse_shadow.py",
+      "sha256": "2dd926409674f2cf9b32b89bf5549a015c63377d6f51d4a6d5c86b3b91f7184c"
+    }
+  ],
+  "production_activated": false,
+  "profile_resource_release": {
+    "bytes": 2956,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/shadow-resource-release.json",
+    "sha256": "287ecd9af738b9e8417537f65bd8bbe839d06577502ded5edaa9452ca959b671"
+  },
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "qualification_status": "combined_capture_invalidated_by_source_changes",
+  "recorded_at": "2026-09-25T21:22:05.258663+00:00",
+  "regression": {
+    "bytes": 2559895,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/combined-r1-receipt.json",
+    "sha256": "b82f887c5adeeb6ab8c90091446c079b4688f1461cb3896cc71c2314abd428d6"
+  },
+  "relative_document_links_checked": 111,
+  "retained_initial_test_capture": {
+    "bytes": 2232,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/focused-r1-receipt.json",
+    "sha256": "d23e293d825ae9144db7bb01472ed9868fdb3ec049293db6370f5962a2514268"
+  },
+  "schema": "shadow-endpoint-reuse-closeout-v1",
+  "shadow_default_changed": false,
+  "source_changed_after_capture": [],
+  "source_changed_during_capture": [
+    "ipfs_datasets_py/logic/autoformal/supervisor_todo.py",
+    "ipfs_datasets_py/logic/deontic/ir.py",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  ],
+  "source_files_during_capture": 7743,
+  "synthetic_persistence_fixtures": true,
+  "synthetic_profile_passed_at_captured_sources": true,
+  "synthetic_storage_profile": {
+    "bytes": 11992,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shadow-endpoint-reuse-20260925/shadow-profile-receipt.json",
+    "sha256": "1980914817b92d27199203eab12ec8b55ef6892f02eaa3b5b4a6dca4dafb07b6"
+  }
+}

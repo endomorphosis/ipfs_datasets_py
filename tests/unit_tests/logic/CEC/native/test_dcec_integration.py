@@ -502,3 +502,61 @@ def test_multiargument_obligation_string_keeps_inner_formula(prefix):
 def test_malformed_or_unsupported_nested_prefix_is_not_accepted(expression):
     with pytest.raises(DCECParsingError):
         parse_dcec_string(expression)
+
+
+@pytest.mark.parametrize("alias", ["next", "x", "X"])
+@pytest.mark.parametrize("norm,operator", [
+    ("O", DeonticOperator.OBLIGATION),
+    ("P", DeonticOperator.PERMISSION),
+    ("F", DeonticOperator.PROHIBITION),
+])
+def test_next_alias_wraps_complete_native_norm(alias, norm, operator):
+    formula = parse_dcec_string(f"{alias}({norm}(Inspect(Agent, Cache)))")
+    assert isinstance(formula, TemporalFormula)
+    assert formula.operator is TemporalOperator.NEXT
+    assert isinstance(formula.formula, DeonticFormula)
+    assert formula.formula.operator is operator
+    atom = formula.formula.formula
+    assert atom.predicate.name == "Inspect"
+    assert [arg.function.name for arg in atom.arguments] == ["Agent", "Cache"]
+    assert formula.get_free_variables() == set()
+
+
+def test_next_scope_does_not_move_inside_obligation():
+    outer_time = parse_dcec_string("next(O(Inspect(Agent, Cache)))")
+    outer_norm = parse_dcec_string("O(next(Inspect(Agent, Cache)))")
+    assert isinstance(outer_time, TemporalFormula)
+    assert isinstance(outer_time.formula, DeonticFormula)
+    assert isinstance(outer_norm, DeonticFormula)
+    assert isinstance(outer_norm.formula, TemporalFormula)
+    assert outer_time != outer_norm
+    assert outer_time.formula.formula == outer_norm.formula.formula
+
+
+def test_next_preserves_native_intention_actor_and_proposition():
+    formula = parse_dcec_string("next(I(Agent, Inspect(Agent, Cache)))")
+    assert isinstance(formula, TemporalFormula)
+    assert formula.operator is TemporalOperator.NEXT
+    intention = formula.formula
+    assert isinstance(intention, CognitiveFormula)
+    assert intention.operator is CognitiveOperator.INTENTION
+    assert intention.agent.function.name == "Agent"
+    assert intention.formula.predicate.name == "Inspect"
+    assert [arg.function.name for arg in intention.formula.arguments] == ["Agent", "Cache"]
+
+
+@pytest.mark.parametrize("expression", [
+    "next()", "x()", "next(O(Inspect(Agent)), P(Write(Cache)))",
+    "X(a, b)", "next(O(Inspect(Agent)))trailing",
+    "next(O(Inspect(nested(Agent))))",
+])
+def test_next_rejects_missing_extra_or_malformed_operands(expression):
+    with pytest.raises(DCECParsingError):
+        parse_dcec_string(expression)
+
+
+@pytest.mark.parametrize("alias", ["next", "x", "X"])
+@pytest.mark.parametrize("args", [[], ["a", "b"]])
+def test_direct_next_tokens_require_exactly_one_operand(alias, args):
+    with pytest.raises(DCECParsingError, match="exactly one"):
+        token_to_formula(ParseToken(alias, args))

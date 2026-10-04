@@ -1,0 +1,27 @@
+{
+  "broad_deontic_command": "PYTHONPATH=$PWD python3 -m pytest tests/unit_tests/logic/deontic/test_deontic_formula*.py tests/unit_tests/logic/deontic/test_no_llm_parser_contract.py tests/unit_tests/logic/deontic/test_deontic_converter.py tests/unit_tests/logic/deontic/test_deontic_parser_ir_readiness.py --override-ini addopts= -q",
+  "broad_deontic": {
+    "passed": 456,
+    "failed": 21,
+    "seconds": 5.19
+  },
+  "failed_nodes_retested_with_original_builder": {
+    "count": 21,
+    "same_failures": true,
+    "identical_failure_messages": true,
+    "baseline_source_sha256": "db78722aecc1bea3452f218037d340c04024391f876639cc4cb9d0e0db867827",
+    "baseline_source_note": "Pre-edit formula_builder.py snapshot matches git HEAD ddf6b79467b68159650df81befc288c8553df664, loaded by explicit import hook; parser/compiler remain pinned to workspace."
+  },
+  "existing_autoformal_constitution_lift_tests": {
+    "passed": 32,
+    "failed": 0,
+    "seconds": 13.58,
+    "junit": "autoformal-existing-tests.xml"
+  },
+  "new_formula_pattern_cache_tests": {
+    "passed": 2,
+    "failed": 0,
+    "seconds": 0.27
+  },
+  "admitted": false
+}

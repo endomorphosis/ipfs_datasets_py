@@ -146,6 +146,253 @@ def terms_from_rule(rule: Mapping[str, Any] | None, *, decompiled: str = "") -> 
     return found
 
 
+SEALED_SPANS_FILE = "sealed-spans.parquet"
+_RESUME_FILES = {
+    "resume-checkpoint.parquet",
+    "entity-resume-checkpoint.parquet",
+    "entity-resume-checkpoint-v2.parquet",
+}
+_SPAN_STATUSES = {"pending", "gap", "sealed", "unsealed"}
+SPAN_EXPORT_COLUMNS = (
+    "admitted",
+    "code_identity",
+    "decompiled",
+    "formalized",
+    "legal_id",
+    "sealed",
+    "source_sha256",
+    "source_span_id",
+    "source_text",
+    "term_ids",
+    "status",
+    "rule_json",
+    "term_rows_json",
+)
+
+
+def _load_rule(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, Mapping):
+        return dict(raw)
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(str(raw))
+    except json.JSONDecodeError:
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def export_status(row: Mapping[str, Any]) -> str:
+    """Sealed when a legacy export omits status. Pending and gap stay explicit."""
+
+    status = str(row.get("status") or "").strip().lower()
+    if status in _SPAN_STATUSES:
+        return status
+    if row.get("sealed") is False:
+        return "unsealed"
+    return "sealed"
+
+
+def span_export_fields(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Columns a finished span needs so it can be grouped without DuckDB."""
+
+    status = export_status(row)
+    rule_json = row.get("rule_json")
+    if not isinstance(rule_json, str):
+        rule = row.get("rule") if isinstance(row.get("rule"), Mapping) else {}
+        rule_json = _json(rule) if rule else ""
+    term_rows_json = row.get("term_rows_json")
+    if not isinstance(term_rows_json, str):
+        term_rows = row.get("term_rows") if isinstance(row.get("term_rows"), list) else []
+        term_rows_json = _json(term_rows) if term_rows else "[]"
+    return {
+        "admitted": False,
+        "code_identity": str(row.get("code_identity") or ""),
+        "decompiled": str(row.get("decompiled") or ""),
+        "formalized": False,
+        "legal_id": str(row.get("legal_id") or ""),
+        "rule_json": rule_json,
+        "sealed": status == "sealed",
+        "source_sha256": str(row.get("source_sha256") or ""),
+        "source_span_id": str(row.get("source_span_id") or ""),
+        "source_text": str(row.get("source_text") or row.get("text") or ""),
+        "status": status,
+        "term_ids": json.dumps(list(row.get("term_ids") or []), ensure_ascii=True, sort_keys=True),
+        "term_rows_json": term_rows_json,
+    }
+
+
+def _term_rows_from_export(row: Mapping[str, Any], rule: Mapping[str, Any]) -> list[dict[str, str]]:
+    loaded: Any = None
+    if "term_rows_json" in row and row.get("term_rows_json") is not None:
+        raw = row.get("term_rows_json")
+        if isinstance(raw, str) and raw:
+            try:
+                loaded = json.loads(raw)
+            except json.JSONDecodeError:
+                loaded = []
+        else:
+            loaded = []
+    elif isinstance(row.get("term_rows"), list):
+        loaded = row.get("term_rows")
+    if not isinstance(loaded, list):
+        loaded = terms_from_rule(rule, decompiled=str(row.get("decompiled") or ""))
+    rows: list[dict[str, str]] = []
+    for item in loaded:
+        if not isinstance(item, Mapping):
+            continue
+        kind = str(item.get("kind") or "")
+        value = str(item.get("value") or "")
+        if not kind or not value:
+            continue
+        rows.append(
+            {
+                "kind": kind,
+                "term_id": str(item.get("term_id") or "") or _sha(kind + "\n" + value),
+                "value": value,
+            }
+        )
+    return rows
+
+
+def group_span_rows(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Group sealed clauses and terms. Gaps sit beside the groups. Pending blocks a section."""
+
+    statutes: dict[str, list[dict[str, Any]]] = {}
+    gaps: dict[str, list[dict[str, Any]]] = {}
+    pending: dict[str, list[dict[str, Any]]] = {}
+    terms: dict[str, dict[str, Any]] = {}
+    seen: dict[str, set[str]] = {}
+    exported: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue
+        legal_id = str(row.get("legal_id") or "").strip() or "unspecified"
+        status = export_status(row)
+        seen.setdefault(legal_id, set()).add(status)
+        span_id = str(row.get("source_span_id") or "")
+        rule = _load_rule(row.get("rule") if isinstance(row.get("rule"), Mapping) else row.get("rule_json"))
+        exported.append(
+            {
+                "decompiled": str(row.get("decompiled") or ""),
+                "legal_id": legal_id,
+                "rule": rule,
+                "source_sha256": str(row.get("source_sha256") or ""),
+                "source_span_id": span_id,
+                "status": status,
+                "text": str(row.get("source_text") or row.get("text") or ""),
+            }
+        )
+        if status == "sealed":
+            statutes.setdefault(legal_id, []).append(
+                {
+                    "legal_id": legal_id,
+                    "rule": rule,
+                    "source_sha256": str(row.get("source_sha256") or ""),
+                    "source_span_id": span_id,
+                    "text": str(row.get("source_text") or row.get("text") or ""),
+                }
+            )
+            for term in _term_rows_from_export(row, rule):
+                item = terms.setdefault(
+                    term["term_id"],
+                    {
+                        "kind": term["kind"],
+                        "statute_ids": [],
+                        "term_id": term["term_id"],
+                        "value": term["value"],
+                    },
+                )
+                if legal_id not in item["statute_ids"]:
+                    item["statute_ids"].append(legal_id)
+        elif status == "gap":
+            gaps.setdefault(legal_id, []).append(
+                {
+                    "legal_id": legal_id,
+                    "reason": str(row.get("reason") or ""),
+                    "source_span_id": span_id,
+                    "status": "gap",
+                }
+            )
+        else:
+            pending.setdefault(legal_id, []).append(
+                {
+                    "legal_id": legal_id,
+                    "source_span_id": span_id,
+                    "status": status,
+                }
+            )
+    for clauses in statutes.values():
+        clauses.sort(key=lambda item: item["source_span_id"])
+    for bucket in (gaps, pending):
+        for items in bucket.values():
+            items.sort(key=lambda item: item["source_span_id"])
+    for item in terms.values():
+        item["statute_ids"] = sorted(item["statute_ids"])
+    ready: list[str] = []
+    not_ready: list[str] = []
+    for legal_id, statuses in sorted(seen.items()):
+        if statuses and statuses <= {"sealed", "gap"}:
+            ready.append(legal_id)
+        else:
+            not_ready.append(legal_id)
+    return {
+        "admitted": False,
+        "formalized": False,
+        "gaps": gaps,
+        "not_ready": not_ready,
+        "pending": pending,
+        "ready": ready,
+        "rows": exported,
+        "statutes": statutes,
+        "terms": sorted(terms.values(), key=lambda item: (item["kind"], item["value"], item["term_id"])),
+    }
+
+
+def _pinned_revision(revision: str) -> str:
+    text = str(revision or "").strip()
+    if len(text) != 40 or any(char not in "0123456789abcdef" for char in text):
+        raise SpanCacheError("span revision must be a pinned commit")
+    return text
+
+
+def span_groups_from_parquet(
+    path: str | Path | None = None,
+    *,
+    revision: str | None = None,
+    repository_id: str = "justicedao/uscode-autoformal-span-cache",
+    download: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Read sealed-spans.parquet only. A pinned revision selects that file and no other."""
+
+    pinned = _pinned_revision(revision) if revision else ""
+    downloaded = path is None
+    if downloaded:
+        if not pinned:
+            raise SpanCacheError("sealed span parquet requires a local file or a pinned revision")
+        if download is None:
+            from huggingface_hub import hf_hub_download
+
+            download = hf_hub_download
+        path = download(
+            repository_id,
+            SEALED_SPANS_FILE,
+            repo_type="dataset",
+            revision=pinned,
+        )
+    source = Path(path)
+    if source.name in _RESUME_FILES or (not downloaded and source.name != SEALED_SPANS_FILE):
+        raise SpanCacheError("span grouping reads sealed-spans.parquet only")
+    if not source.is_file():
+        raise SpanCacheError("sealed span parquet is not a file")
+    import pyarrow.parquet as pq
+
+    grouped = group_span_rows(pq.read_table(source).to_pylist())
+    grouped["revision"] = pinned
+    grouped["source"] = SEALED_SPANS_FILE
+    return grouped
+
+
 def compiler_path_hashes(root: str | Path) -> dict[str, str]:
     """Hash every EDIT_SCOPES path. Missing files are omitted."""
 
@@ -1328,16 +1575,23 @@ class SpanCache:
     def sealed_rows(self) -> list[dict[str, Any]]:
         rows = self._db.execute(
             """
-            SELECT source_span_id, legal_id, source_text, decompiled, code_identity, source_sha256
+            SELECT source_span_id, legal_id, source_text, decompiled, code_identity,
+                   source_sha256, status, rule_json
             FROM span_cache WHERE sealed = TRUE ORDER BY source_span_id
             """
         ).fetchall()
         payload = []
         for row in rows:
-            terms = [
-                str(item[0])
+            term_rows = [
+                {"term_id": str(item[0]), "kind": str(item[1] or ""), "value": str(item[2] or "")}
                 for item in self._db.execute(
-                    "SELECT term_id FROM span_terms WHERE source_span_id = ? ORDER BY term_id",
+                    """
+                    SELECT t.term_id, t.kind, t.value
+                    FROM span_terms st
+                    JOIN sealed_terms t ON t.term_id = st.term_id
+                    WHERE st.source_span_id = ?
+                    ORDER BY t.term_id
+                    """,
                     [row[0]],
                 ).fetchall()
             ]
@@ -1348,11 +1602,15 @@ class SpanCache:
                     "decompiled": str(row[3] or ""),
                     "formalized": False,
                     "legal_id": str(row[1] or ""),
+                    "rule_json": str(row[7] or ""),
                     "sealed": True,
                     "source_sha256": str(row[5] or ""),
                     "source_span_id": str(row[0]),
                     "source_text": str(row[2] or ""),
-                    "term_ids": terms,
+                    "status": str(row[6] or "sealed"),
+                    "term_ids": [item["term_id"] for item in term_rows],
+                    "term_rows": term_rows,
+                    "term_rows_json": _json(term_rows),
                 }
             )
         return payload
@@ -1438,27 +1696,19 @@ class SpanCache:
             FROM span_cache WHERE sealed = TRUE ORDER BY legal_id, source_span_id
             """
         ).fetchall()
-        grouped: dict[str, list[dict[str, Any]]] = {}
-        for row in rows:
-            legal_id = str(row[0] or "").strip() or "unspecified"
-            rule: dict[str, Any] = {}
-            if row[4]:
-                try:
-                    loaded = json.loads(row[4])
-                    if isinstance(loaded, dict):
-                        rule = loaded
-                except json.JSONDecodeError:
-                    rule = {}
-            grouped.setdefault(legal_id, []).append(
-                {
-                    "legal_id": legal_id,
-                    "rule": rule,
-                    "source_sha256": str(row[2] or ""),
-                    "source_span_id": str(row[1]),
-                    "text": str(row[3] or ""),
-                }
-            )
-        return grouped
+        exported = [
+            {
+                "legal_id": str(row[0] or ""),
+                "rule_json": str(row[4] or ""),
+                "sealed": True,
+                "source_sha256": str(row[2] or ""),
+                "source_span_id": str(row[1]),
+                "source_text": str(row[3] or ""),
+                "status": "sealed",
+            }
+            for row in rows
+        ]
+        return group_span_rows(exported)["statutes"]
 
     def term_groups(self) -> list[dict[str, Any]]:
         rows = self._db.execute(
@@ -1486,7 +1736,9 @@ class SpanCache:
             statute = str(legal_id or "").strip() or "unspecified"
             if statute not in item["statute_ids"]:
                 item["statute_ids"].append(statute)
-        return list(grouped.values())
+        for item in grouped.values():
+            item["statute_ids"] = sorted(item["statute_ids"])
+        return sorted(grouped.values(), key=lambda item: (item["kind"], item["value"], item["term_id"]))
 
     def build_lean_units(
         self,

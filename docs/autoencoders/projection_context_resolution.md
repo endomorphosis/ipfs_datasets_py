@@ -1,5 +1,9 @@
 # Resolving missing context and semantics in native projections
 
+Follow-up implementation: [provisional fixtures and retrieved context](provisional_context_workflow.md)
+adds bounded BM25/explicit-link candidate retrieval and executable Legal/UI
+companions. The diagnosis below describes the original unchanged negatives.
+
 The three remaining default blockers are **three projections of two authored
 fixtures**, not three sampled federal-law passages. They identify real gaps in
 the framework, but do not establish a corpus failure rate, a parser regression,

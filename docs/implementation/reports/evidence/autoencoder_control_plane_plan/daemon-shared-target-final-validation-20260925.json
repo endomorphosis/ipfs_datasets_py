@@ -1,0 +1,162 @@
+{
+  "admitted": false,
+  "ast_files_checked": 5,
+  "broken_local_links": [],
+  "constitution_formalized": false,
+  "constitution_run_restarted": false,
+  "default_shared_target_enabled": false,
+  "documentation_files": [
+    {
+      "bytes": 10217,
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_targets.md",
+      "sha256": "a9399b40061cfe19a5915f80cd3db7a9d70a2883c4aa30c008b7eb9924979d57"
+    },
+    {
+      "bytes": 7188,
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_target_integration_audit.md",
+      "sha256": "f086679a39894d5f39172624dcdc5b41cb88802f1577df2c6254f4c2f1774768"
+    },
+    {
+      "bytes": 62127,
+      "path": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "5307cba6de1de07e60e1c547a97c5f1feb93645bbf71f1e66045dfb7cf4a810c"
+    },
+    {
+      "bytes": 53148,
+      "path": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "b6dc6bfa2d57fd39cf0cfd22f654143c635ea2a304f2d793332d8eb48fb9dea2"
+    }
+  ],
+  "end_to_end_speedup_demonstrated": false,
+  "implementation_validation_passed": true,
+  "local_markdown_links_checked": 60,
+  "model_promotion_performed": false,
+  "native_numeric_grammar_decision_state_parity": true,
+  "native_receipt": {
+    "bytes": 13921365,
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-target-native-20260925.json",
+    "sha256": "bdf2066779503ab41599a08d47b5db18ac00c6f3463f068b03dbf0c23aacb93a"
+  },
+  "production_test_harness_files": [
+    {
+      "bytes": 969542,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+      "sha256": "d484d01a29fd82b4a885306040c66c9427d8c64076488453b32ee43fe625293b"
+    },
+    {
+      "bytes": 14252,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_target_session.py",
+      "sha256": "ca67a2698a559454106ecbefd5aa0d4ee48aa14c9d3af47ee408b47b869b7e86"
+    },
+    {
+      "bytes": 14539,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_target_session.py",
+      "sha256": "e3b6c8c75982c14d8a1e2b6926ae8a98349f390f41d34d2db91c13ac0be4bb8e"
+    },
+    {
+      "bytes": 23427,
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_daemon_shared_target_integration.py",
+      "sha256": "fa7a536188eb091973f3c4e8b12b037d1eb313c5880e629980bd147374ea213b"
+    },
+    {
+      "bytes": 35147,
+      "path": "scripts/ops/legal_ir/benchmark_daemon_shared_targets.py",
+      "sha256": "c464ca6ada2837b9fdb00685e049cd5d0740725c7e9035b3bdbbe1b5f16aacb1"
+    }
+  ],
+  "protected_checkpoint": {
+    "bytes": 25895338,
+    "hardlinks": 2,
+    "inode": 57804548,
+    "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+    "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+  },
+  "protected_checkpoint_unchanged": true,
+  "publication_performed": false,
+  "pytest": {
+    "distinct_passing_tests": 335,
+    "gate_pilot_adapter": {
+      "log": {
+        "bytes": 1346,
+        "path": "workspace/test-logs/federal-corpus-audits/daemon-target-handoff-20260925/gates-and-adapter-tests.log",
+        "sha256": "8749d7db754f20fc00e07212a5544d0e193f8e2233509735dafeb6460909695d"
+      },
+      "overlap_with_regression": 11,
+      "passed": 42,
+      "seconds": 11.07
+    },
+    "known_failure": "test_default_bridge_loss_adapters_cover_registered_logic_views hardcodes six; saved pre-edit and current runners return identical seven current registered bridges including ui_ux_ir_formalization. No registry/test edit to hide failure.",
+    "known_preexisting_failures": 1,
+    "new_integration": {
+      "passed": 25,
+      "receipt": {
+        "bytes": 3154,
+        "path": "workspace/test-logs/federal-corpus-audits/daemon-shared-target-integration-20260925/validation.json",
+        "sha256": "960f039d441c5ded07371216f82ecbc05855aecbdcf32e90ed26f138b30d54d2"
+      },
+      "seconds": 6.31
+    },
+    "regression": {
+      "failed": 1,
+      "log": {
+        "bytes": 2345,
+        "path": "workspace/test-logs/federal-corpus-audits/daemon-target-handoff-20260925/daemon-regression-tests.log",
+        "sha256": "0aee085243cfc63d41e41f31f95dda20ea86002fafe1ecf6f533ad25c212b057"
+      },
+      "passed": 279,
+      "seconds": 48.26
+    }
+  },
+  "recorded_at": "2026-09-25T10:28:47.619167+00:00",
+  "schema_version": "daemon-shared-target-final-validation-v1",
+  "scoped_runner_patch": {
+    "bytes": 46370,
+    "path": "workspace/test-logs/federal-corpus-audits/daemon-target-handoff-20260925/runner.patch",
+    "sha256": "9a84c9c1fcf83b578bf1b002a4482d6da4a165c6f7ea6c778da67fe4a2ea4f31"
+  },
+  "source_changes_during_validation": [],
+  "source_file_count": 7715,
+  "source_validation_end": {
+    "bytes": 1255832,
+    "path": "workspace/test-logs/federal-corpus-audits/daemon-target-handoff-20260925/source-validation-end.json",
+    "sha256": "7daf02e263ffe7beeefac4365a13dc9aa06fb3f7accd5c9d1e46cca503ac4f6a"
+  },
+  "source_validation_start": {
+    "bytes": 1255832,
+    "path": "workspace/test-logs/federal-corpus-audits/daemon-target-handoff-20260925/source-validation-start.json",
+    "sha256": "7daf02e263ffe7beeefac4365a13dc9aa06fb3f7accd5c9d1e46cca503ac4f6a"
+  },
+  "storage_observation": {
+    "ceiling_bytes": 50000000000,
+    "roots": [
+      {
+        "apparent_bytes": 1083824312,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 130195516,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "apparent_bytes": 32587917819,
+        "path": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 67759742,
+        "path": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small"
+      },
+      {
+        "apparent_bytes": 95,
+        "path": "/tmp/lift-coding-target-reduction-pin-20260925"
+      },
+      {
+        "apparent_bytes": 78568661,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan"
+      }
+    ],
+    "scope": "Named roots only, apparent bytes, not a global census; includes shared unrelated pytest scratch and this time also accumulated control-plane evidence. No protected cleanup.",
+    "sum_apparent_bytes": 33948266145
+  },
+  "weights_downloaded": false,
+  "whole_daemon_semantic_parity_qualified": false
+}

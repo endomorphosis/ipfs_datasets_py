@@ -43,6 +43,9 @@ from typing import Any, Coroutine, Dict, TypeVar
 
 import pytest
 
+from tests.integration.logic.hammers.isabelle_execution_fixtures import unavailable_operation
+
+from ipfs_datasets_py.logic.hammers.frontends import isabelle as isabelle_frontend_module
 from ipfs_datasets_py.logic.hammers.corpus import CorpusManifest, CorpusSource
 from ipfs_datasets_py.logic.hammers.models import (
     HammerPolicy,
@@ -234,8 +237,8 @@ class TestCapabilityStatus:
         assert response["data"]["itps"]["lean"]["frontend"]["available"] is True
         assert response["data"]["any_capability_available"] is True
 
-    @pytest.mark.skipif(ISABELLE_AVAILABLE, reason="this host has isabelle installed")
-    def test_isabelle_reports_structured_unavailable_when_absent(self):
+    def test_isabelle_reports_structured_unavailable_when_absent(self, monkeypatch):
+        monkeypatch.setattr(isabelle_frontend_module, "run_isabelle_operation", unavailable_operation)
         response = run(lh.hammer_capability_status(itps=["isabelle"], solvers=[]))
         entry = response["data"]["itps"]["isabelle"]["frontend"]
         assert entry["available"] is False
@@ -306,8 +309,8 @@ class TestInspect:
         assert response["success"] is False
         assert response["capability"] is not None
 
-    @pytest.mark.skipif(ISABELLE_AVAILABLE, reason="this host has isabelle installed")
-    def test_unavailable_itp_reports_structured_capability(self):
+    def test_unavailable_itp_reports_structured_capability(self, monkeypatch):
+        monkeypatch.setattr(isabelle_frontend_module, "run_isabelle_operation", unavailable_operation)
         response = run(
             lh.hammer_inspect(
                 itp="isabelle",
@@ -538,8 +541,11 @@ class TestRunCandidate:
         assert response["status"] == "confirmation_required"
         assert response["success"] is False
 
-    @pytest.mark.skipif(VAMPIRE_AVAILABLE, reason="this host has vampire installed")
-    def test_unavailable_solver_after_confirmation(self):
+    def test_unavailable_solver_after_confirmation(self, monkeypatch):
+        original_which = shutil.which
+        monkeypatch.setattr(shutil, "which",
+                            lambda command, *args, **kwargs: None if command == "vampire"
+                            else original_which(command, *args, **kwargs))
         request = _base_request_payload(
             request_id="req-run-candidate-unavailable", allowed_solvers=["vampire"]
         )
@@ -645,8 +651,8 @@ class TestReconstruct:
         assert response["status"] == "confirmation_required"
         assert response["success"] is False
 
-    @pytest.mark.skipif(ISABELLE_AVAILABLE, reason="this host has isabelle installed")
-    def test_unavailable_itp_reports_structured_capability(self):
+    def test_unavailable_itp_reports_structured_capability(self, monkeypatch):
+        monkeypatch.setattr(isabelle_frontend_module, "run_isabelle_operation", unavailable_operation)
         request_id = "req-reconstruct-unavailable"
         request = dict(_base_request_payload(request_id=request_id, allowed_solvers=[]))
         request["itp"] = "isabelle"

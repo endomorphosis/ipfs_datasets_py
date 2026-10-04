@@ -1,0 +1,140 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "constitution_formalized": false,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36546098454,
+    "inventory": {
+      "apparent_bytes": 34546098454,
+      "entry_count": 73318,
+      "special_file_count": 12,
+      "symlink_count": 3131
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 8985,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_mapped_weights.md",
+      "sha256": "01169eb7e24ea72cf7bb94c540fda3bd0e44ee81aa3c8ccf7ce010b9a043349b"
+    },
+    {
+      "bytes": 62713,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "12412b37afdb31ea2b31ee86f2eb5e46e89b64447c35a86097ccc1d985d000c1"
+    },
+    {
+      "bytes": 72543,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "0289b7775b1dec54e324c8a1dce557bacd7c12ffcb55799518782713faafdd31"
+    },
+    {
+      "bytes": 32015,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "565fa3c165dc7caf5b75e201950b0fae1a6e87465171f02ee3dbdbbfb33e5ba5"
+    }
+  ],
+  "full_checkpoint_authoritative": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 772
+  },
+  "native_cycle_performed": false,
+  "native_validation_deferred_by_user": true,
+  "owned_production_unchanged_since_capture": true,
+  "passed": true,
+  "performance_claim": false,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 32722,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_arrow_weights.py",
+      "sha256": "3f126b4ab9903f95b74522fff08d4b43df44ba4efa41f20fb15f24354e181948"
+    },
+    {
+      "bytes": 11220,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_weight_session.py",
+      "sha256": "780676b77d1feeaa0ac5b0a720165c6dde7b082b82493d89a7f822ee20bd495d"
+    },
+    {
+      "bytes": 996577,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_modal_daemon_runner.py",
+      "sha256": "27f933b63d5b0212404c6f11f01a2780b1f527c52595518ebc4fb62c32252cf6"
+    },
+    {
+      "bytes": 15567,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_contracts.py",
+      "sha256": "34682aedf9bf565ff4a65ea79c9beb7fa2f3854c94cc5f0db18451e6fb0ba714"
+    },
+    {
+      "bytes": 27105,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation.py",
+      "sha256": "21158849304411d09508feb8f3002d79d065e541b8421a03fe935a432b8a16b7"
+    },
+    {
+      "bytes": 32622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_invocation_worker.py",
+      "sha256": "7acda440aa9d010826aeba445ee99b73f95ffa2c1278ff4fc1f0aacea062b1eb"
+    },
+    {
+      "bytes": 11296,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_shadow_evidence.py",
+      "sha256": "1abba8402625c8b6d528482c1e329aa72031427e4a95c6dfe98d2de187030d96"
+    }
+  ],
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T15:59:14.545909+00:00",
+  "regression": {
+    "bytes": 2561568,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-mapped-weights-20260925/combined-r1-receipt.json",
+    "sha256": "6803b2c78097fd00a377c592c6a0016e6065287631427984e9e4a2aca33b890d"
+  },
+  "relative_document_links_checked": 125,
+  "schema": "daemon-mapped-weights-closeout-v1",
+  "source_files_during_capture": 7737
+}

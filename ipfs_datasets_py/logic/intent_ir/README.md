@@ -24,6 +24,32 @@ bounded protocols and evaluation gates.
 
 ## Intended artifact chain
 
+`formalize/requirements.py` also supplies a bounded source requirement ledger
+for consumers that check plans against an explicit candidate interpretation:
+
+```python
+from ipfs_datasets_py.logic.intent_ir.formalize.requirements import (
+    build_intent_requirement_ledger,
+    validate_intent_requirement_ledger,
+)
+
+ledger = build_intent_requirement_ledger(
+    source_text, source_report=report, source_identity=source_identity,
+)
+validate_intent_requirement_ledger(ledger, source_text=source_text)
+```
+
+`source_identity` is an explicit nonempty string or bounded JSON object.
+The adapter accepts complete native document, rich document, and shared source
+document reports, plus the separate `intent-reviewed-source-report@1` schema
+for reviewed candidate interpretations. It performs no model inference. The
+ledger retains the producer report, exact character/UTF-8 spans, normative
+modality, rich ASTs, native action/control context, and unresolved source regions.
+Its deterministic validation checks source accounting and artifact bindings;
+it does not prove source semantics, operation effects, or task completion.
+
+The corpus artifact chain remains:
+
 ```text
 pinned HF bundle
   -> raw bundle CID + manifest

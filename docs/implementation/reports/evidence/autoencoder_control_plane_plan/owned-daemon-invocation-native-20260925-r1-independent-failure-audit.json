@@ -1,0 +1,200 @@
+{
+  "admitted": false,
+  "attempt_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-invocation-20260925/native-r1",
+  "attempt_directory_entries": [],
+  "audit_passed": true,
+  "checks": {
+    "all_post_admission_receipt_fields_absent": true,
+    "attempt_directory_exists_and_empty": true,
+    "combined_regression_635_passed": true,
+    "failed_receipt_expected_hash": true,
+    "failed_without_automatic_retry": true,
+    "historical_guards_not_reached": true,
+    "historical_source_matches_635_test_capture": true,
+    "no_admission_formalization_or_publication": true,
+    "no_attempt_artifacts_reported": true,
+    "protected_anchor_hashes_match_at_audit": true,
+    "retained_reservation_no_child_or_attempt": true,
+    "retained_reservation_not_released": true,
+    "scheduler_lane_capacity_failure": true,
+    "trainer_cpu_capacity_zero": true
+  },
+  "combined_test_counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 635
+  },
+  "combined_test_junit": {
+    "bytes": 1170905,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-invocation-20260925/combined-r1.xml",
+    "sha256": "9d9b6e7ed7f533786b54df3d3abb73fb1e19099bf7b56379bb44544f812ecaa6"
+  },
+  "combined_test_receipt": {
+    "bytes": 2841,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-invocation-20260925/combined-r1-receipt.json",
+    "sha256": "fdd80caae5b833c314acde786f949f7aa5960a89850bccee5742cbe5e1c6d969"
+  },
+  "combined_test_source_capture": {
+    "bytes": 2546830,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-owned-invocation-20260925/combined-r1-source.json",
+    "sha256": "bc003988805d7a0179092dc8f03fd25ce0c92ed6c56e691bfaa2e0905a8a695f"
+  },
+  "elapsed_seconds": 2.398687368957326,
+  "execution_boundary": "DaemonResourceReservation.__enter__ failed acquiring the trainer lane before the export context body; no historical export, private owner/database, execution run/lease, child execution, candidate, completion or restart replay was reached.",
+  "failure": {
+    "message": "request exceeds capacity available to its reservation lane",
+    "type": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.ResourceUnavailableError"
+  },
+  "formalized": false,
+  "historical_inputs_unchanged_interpretation": {
+    "independent_protected_anchor_hashes_only": true,
+    "meaning": "not_checked: historical_export never populated historical_guards",
+    "observed_mutation": false,
+    "receipt_value": false
+  },
+  "historical_source_file_count": 7729,
+  "native_qualification_passed": false,
+  "not_reached_receipt_fields": {
+    "candidate": true,
+    "candidate_version": true,
+    "cycle": true,
+    "evidence_closure": true,
+    "execution_run": true,
+    "exported_job": true,
+    "historical_guards": true,
+    "historical_input_verification": true,
+    "historical_owner": true,
+    "independent_verification": true,
+    "input_walk_before": true,
+    "native_result": true,
+    "owned_result": true,
+    "prepared": true,
+    "private_owner": true,
+    "restart_replay": true,
+    "snapshot": true
+  },
+  "protected_anchors": [
+    {
+      "artifact": {
+        "bytes": 25895338,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+        "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+      },
+      "expected_bytes": 25895338,
+      "expected_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "matches": true,
+      "method": "read-only bytes/SHA-256; no database open or checkpoint decoding"
+    },
+    {
+      "artifact": {
+        "bytes": 7876608,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/control.duckdb",
+        "sha256": "b9b7aa3079a391bc1017d1b45b5f53b268e9703686f6c69a621690729b55e2a9"
+      },
+      "expected_bytes": 7876608,
+      "expected_sha256": "b9b7aa3079a391bc1017d1b45b5f53b268e9703686f6c69a621690729b55e2a9",
+      "matches": true,
+      "method": "read-only bytes/SHA-256; no database open or checkpoint decoding"
+    }
+  ],
+  "receipt": {
+    "bytes": 2552284,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/owned-daemon-invocation-native-20260925-r1.json",
+    "sha256": "c88e6b0dbbd13322f76a15257a27e1ea8db25b936457c4ca7f9ed8ac6a8b8a84"
+  },
+  "recorded_at": "2026-09-25T13:58:33.041965+00:00",
+  "reservation_scope": "One full 1,000,000,000-byte reservation remains retained and charged. This audit did not release, rewrite or claim it; no CPU lease or child was admitted.",
+  "resource_ledger": {
+    "bytes": 1280,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "82cd2ad8445d018525471e13dde43adab471e9620d1e36f6a60814e4105b545f"
+  },
+  "retained_reservation": {
+    "artifacts_durable_asserted": false,
+    "attempt_directory": null,
+    "child": null,
+    "cpu_slots": 1,
+    "created_at": 1790344472.6628764,
+    "external_charges": {},
+    "last_usage": {
+      "additional_requested_bytes": 1000000000,
+      "charged_bytes": 34907284628,
+      "inventory": {
+        "apparent_bytes": 33907284628,
+        "entry_count": 57279,
+        "special_file_count": 9,
+        "symlink_count": 2866
+      },
+      "limit_bytes": 50000000000,
+      "minimum_filesystem_free_bytes": 327834148864,
+      "observed_apparent_bytes": 33907284628,
+      "outstanding_full_reservations_bytes": 0,
+      "scope": "named_roots_only_apparent_bytes"
+    },
+    "memory_mb": 3072,
+    "owner_pid": 3850850,
+    "prior_children": [],
+    "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+    "retention_reason": "scheduler_admission_failed",
+    "status": "retained",
+    "storage_bytes": 1000000000
+  },
+  "scheduler_capacity": {
+    "configuration": {
+      "lane_reservations": {
+        "codex": {
+          "cpu_slots": 4,
+          "memory_mb": 0
+        },
+        "hammer_lean": {
+          "cpu_slots": 8,
+          "memory_mb": 0
+        },
+        "orchestration": {
+          "cpu_slots": 2,
+          "memory_mb": 0
+        },
+        "reserve": {
+          "cpu_slots": 2,
+          "memory_mb": 0
+        },
+        "validation": {
+          "cpu_slots": 4,
+          "memory_mb": 0
+        }
+      },
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 64,
+      "total_cpu_slots": 20,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 99688,
+      "total_unified_memory_mb": null
+    },
+    "limits_modified_by_audit": false,
+    "other_lane_reserved_cpu_slots": 20,
+    "requested_cpu_slots": 1,
+    "total_cpu_slots": 20,
+    "trainer_available_cpu_slots": 0
+  },
+  "schema": "owned-daemon-preflight-failure-independent-audit-v1",
+  "scope": "Read-only receipt, historical test capture, filesystem absence, retained reservation and protected byte hashes; no model load, database connection, execution, training, registry mutation or reservation release.",
+  "source_scope": "The failed-attempt manifests equal both source manifests from the 635-test capture. Current package bytes are not requalified here; a later intentional resource-lane change belongs to a separate attempt.",
+  "terminal_process": {
+    "evidence": "reported by supervising root agent; not independently rerun",
+    "exit_code": 1,
+    "session_id": 5384
+  },
+  "unavailable_results": {
+    "accepted_projection_epochs": null,
+    "before_train_evaluation_seconds": null,
+    "candidate_or_base_component_comparison": null,
+    "native_daemon_seconds": null,
+    "reason": "preflight failed before export; no native evaluation or candidate exists"
+  }
+}

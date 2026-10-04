@@ -1,0 +1,193 @@
+{
+  "schema": "ir-family-dimension-inventory-plan/v1",
+  "status": "declarative_plan_not_runtime_inventory",
+  "cell_id": "codebase_ir_384d",
+  "ir_family_id": "codebase_ir",
+  "dimension": 384,
+  "store_id_proposed": "ir-cell:codebase_ir:384d",
+  "store_identity_dimensions": [
+    "ir_family_id",
+    "dimension"
+  ],
+  "variant_identity_additions": [
+    "dimension_role",
+    "task_id",
+    "input_representation_profile",
+    "encoder_tokenizer_revisions",
+    "decoder_architecture",
+    "target_ir_family",
+    "target_schema",
+    "target_codec",
+    "input_budget",
+    "output_budget",
+    "span_profile",
+    "objective_implementation"
+  ],
+  "native_semantics": [
+    "observed code and source versions",
+    "typed ProgramIR/contracts",
+    "calls/effects/dependencies",
+    "native Codebase grammar and code inverse"
+  ],
+  "canonical_ir_identity_depends_on_model_dimension": false,
+  "storage": {
+    "status": "planned_not_created",
+    "root_template": "<ir_store_root>/codebase_ir/384d",
+    "inventory_export": "<ir_store_root>/codebase_ir/384d/inventory.json",
+    "registry_database": "<ir_store_root>/codebase_ir/384d/registry.duckdb",
+    "index_database": "<ir_store_root>/codebase_ir/384d/index.duckdb",
+    "ducklake_catalog_database": "<ir_store_root>/codebase_ir/384d/lake/catalog.duckdb",
+    "ducklake_data_prefix": "<ir_store_root>/codebase_ir/384d/lake/data/",
+    "mutable_artifact_root": "<ir_store_root>/codebase_ir/384d/artifacts/",
+    "run_namespace": "<ir_store_root>/codebase_ir/384d/runs/<task>/<profile>/<run_id>/",
+    "database_writer_policy": "separate serialized owner per physical database; registry forbids foreign tables",
+    "canonical_repository_source_owner": "RepositoryCodebaseIndex captures repository code once; cell indexes reference exact admitted source/semantic heads when relevant",
+    "family_source_owner": "Canonical repository/source snapshot and source-correspondence owners",
+    "source_roots_required": [
+      "family source/corpus version and complete span/context manifest",
+      "repository source/semantic roots when code-grounding applies",
+      "applicability source revisions and both typed join endpoint roots"
+    ],
+    "ducklake_layout_adapter_required": true,
+    "current_isolated_history_limits": {
+      "metadata_name": "history.ducklake",
+      "byte_cap": 268435456,
+      "production_supported": false
+    }
+  },
+  "huggingface": {
+    "status": "proposed_not_created",
+    "repo_type": "model",
+    "repository_id_template": "<hf_namespace>/codebase-ir-autoencoder-384d",
+    "suggested_namespace_from_existing_release_descriptors": "Publicus",
+    "suggested_repository_id": "Publicus/codebase-ir-autoencoder-384d",
+    "namespace_write_access_verified": false,
+    "release_path_template": "releases/<task>/<profile>/<release_id>/",
+    "load_requires": [
+      "full immutable commit",
+      "manifest SHA256",
+      "matching family/dimension role/task/profile/codec",
+      "actual checkpoint SHA256"
+    ],
+    "existing_read_only_descriptors": [],
+    "existing_descriptor_source": null,
+    "visibility": null,
+    "visibility_status": "explicit deployment configuration required; no visibility changes performed during planning"
+  },
+  "dimension_profile": {
+    "dimension": 384,
+    "encoder_kind": "GTE-small source embedding for source-conditioned tasks",
+    "model_id": "thenlper/gte-small",
+    "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+    "hard_encoder_token_limit": 512,
+    "qualified_source_token_limit": null,
+    "pooling": "mean",
+    "normalization": "l2",
+    "unknown_limit_policy": "freeze task/span-specific admitted budget within encoder ceiling; historical compiler profiles remain separate",
+    "dimension_role_required": true
+  },
+  "task_profiles_to_inventory": [
+    "source_to_native_ir",
+    "structural_reconstruction",
+    "native_ir_to_logic",
+    "native_ir_to_source",
+    "retained_source_byte_restoration"
+  ],
+  "source_only_raw_text_decoder_admission": "not asserted by this plan; task/profile evidence and complete source access must be qualified independently",
+  "existing_checkpoint_evidence": [
+    {
+      "role": "registered shared parent envelope",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/cc/cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f",
+        "bytes": 1009515,
+        "sha256": "cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "owning_ir_family": "codebase_ir",
+      "payload_ir_family": "security_ir",
+      "decoder_kind": "frozen projection and fixed-tree ridge readout",
+      "native_codebase_decoder_complete": false
+    },
+    {
+      "role": "unpromoted repository child envelope",
+      "receipt": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/06/069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930",
+        "bytes": 304490,
+        "sha256": "069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930"
+      },
+      "dimension_role": "input_embedding",
+      "input_width": 384,
+      "payload_ir_family": "security_ir",
+      "development_parent_exact": "9/9",
+      "development_child_exact": "0/9",
+      "parent_pretraining_independence": "unknown",
+      "decoder_budget_unit": "fixed schema/scalar slots",
+      "promoted": false
+    }
+  ],
+  "checkpoint_discovery_complete": false,
+  "existing_cached_vector_rows": [],
+  "cached_codebase_rows_in_previous2640_transfer_inventory": 0,
+  "old_asset_policy": "Adopt authenticated read-only references. No recomputation, relabeling, in-place training or physical migration during planning.",
+  "span_curriculum": [
+    {
+      "stage_id": "S0",
+      "subject_scope": "same inherited expression cohort",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S1",
+      "subject_scope": "complete supported expression/function",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S2",
+      "subject_scope": "connected calls/import context",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S3",
+      "subject_scope": "complete supported function/module unit",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    },
+    {
+      "stage_id": "S4",
+      "subject_scope": "sealed module/dependency-slice aggregation",
+      "qualified_input_budget": null,
+      "qualified_output_budget": null,
+      "budget_status": "freeze from pinned-tokenizer/codec measurements before fitting",
+      "requires_complete_span_accounting": true
+    }
+  ],
+  "independent_heads": [
+    "source_applicability",
+    "serving_model_by_task_profile",
+    "candidate_training",
+    "lake_history_delivery",
+    "hub_publication"
+  ],
+  "promotion_policy": "Independent family/task/profile gate; original parent and shorter-span replay retained; another cell cannot grant qualification.",
+  "notes": [
+    "Existing wrapper retains SecurityIR numerical payload; native Codebase codec/head and source-successor coverage require separate qualification."
+  ],
+  "runtime_databases_created": false,
+  "remote_repository_created": false,
+  "model_or_embeddings_modified": false,
+  "continuation_and_transfer_policy": {
+    "same_variant_resume_parent_required": true,
+    "cross_cell_or_contract_transfer": "Use authenticated donor store/version/checkpoint refs and explicit transfer/KD edge, then initialize a new compatible variant; never fake same-variant parentage."
+  }
+}

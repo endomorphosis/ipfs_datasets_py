@@ -1,0 +1,163 @@
+{
+  "admitted": false,
+  "artifact_checks": {
+    "final_checkpoint": true,
+    "native_log": true,
+    "native_receipt": true,
+    "native_summary": true,
+    "protected_initial_checkpoint": true
+  },
+  "checkpoint_stat": {
+    "bytes": 25895338,
+    "inode": 57804548,
+    "nlink": 2
+  },
+  "constitution_formalized": false,
+  "documentation": [
+    {
+      "bytes": 14542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_verified_inputs.md",
+      "sha256": "c792e07cbb8195753517e18bca1865a2e9df3e59bc73613b3d269d241cd6d9fd"
+    },
+    {
+      "bytes": 16078,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_daemon_production_adoption_audit.md",
+      "sha256": "8295760e7fb550c3b988bd2680beb13c3ff229b63f786e498bf897422979ca17"
+    },
+    {
+      "bytes": 65980,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "abb76a6940c1076d00080ba1fc152a0da9382c82bf53a5541adc6f4f631a7dbb"
+    },
+    {
+      "bytes": 56303,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "a1b4b8eada6cba552fc8a88641f074008de34f14f40425f646539b9d62d1bf46"
+    },
+    {
+      "bytes": 24044,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DAEMON_OWNED_INVOCATION_PLAN.md",
+      "sha256": "aff0d914fd409d756f81eb50497bd666a82e037303e49e65c9af1e80141391e6"
+    }
+  ],
+  "documentation_link_count": 106,
+  "guards": {
+    "artifact_descriptors_match": true,
+    "documentation_links_resolve": true,
+    "harness_matches_native_capture": true,
+    "historical_artifacts_unchanged": true,
+    "producer_config_matches_native_capture": true,
+    "protected_checkpoint_unchanged": true,
+    "source_matches_native_capture": true,
+    "source_unchanged_during_closeout": true
+  },
+  "historical_artifacts": [
+    {
+      "bytes": 7876608,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/control.duckdb",
+      "sha256": "b9b7aa3079a391bc1017d1b45b5f53b268e9703686f6c69a621690729b55e2a9"
+    },
+    {
+      "bytes": 81449,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/a7/a75fae70c7e7208d3b0894964cfd451c1b2e438a1bca0abaf7c0a4a75268ffa6",
+      "sha256": "a75fae70c7e7208d3b0894964cfd451c1b2e438a1bca0abaf7c0a4a75268ffa6"
+    },
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/14/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 115457,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/cd/cd2cd5690064b32373579d8cd73f3d56ecfa8a797b7ef548f9632ab71227db08",
+      "sha256": "cd2cd5690064b32373579d8cd73f3d56ecfa8a797b7ef548f9632ab71227db08"
+    },
+    {
+      "bytes": 58636,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/f6/f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc",
+      "sha256": "f604e8fe35ed044dd88423839ca21c4045021f08aeb754fc0ec61a0adffd33cc"
+    },
+    {
+      "bytes": 434558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/0e/0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa",
+      "sha256": "0ec481a6f3a51041d72c95c3ee7f7971463404cba22ee48a3c6ed1d201c9e0fa"
+    },
+    {
+      "bytes": 340,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/0f/0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7",
+      "sha256": "0fd89e5669641913db41cf9d6e59a7ed91a76a3482dae05787b42e0d9ef45af7"
+    },
+    {
+      "bytes": 250,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/4a/4afff3f8e9a7a635cafff26f219222782a06aaa5d7925a2ae29edc1e9b6facdc",
+      "sha256": "4afff3f8e9a7a635cafff26f219222782a06aaa5d7925a2ae29edc1e9b6facdc"
+    },
+    {
+      "bytes": 858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/50/50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99",
+      "sha256": "50dacb5b991f4302751857860a9786a6083261c2b6bba7010c827caa1355ad99"
+    },
+    {
+      "bytes": 551,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/76/760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a",
+      "sha256": "760c396065d23e88cc7274b34f2a3f8a7f3bf2a7a2b1a34c07ac3486cb7cad7a"
+    },
+    {
+      "bytes": 2201,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/93/936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23",
+      "sha256": "936d0fb19843fd3cae0ff2bbeb1efc0d618c2a233664cc19748a11f9f043dc23"
+    },
+    {
+      "bytes": 1293,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/shared-target-native-20260925/artifacts/df/df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936",
+      "sha256": "df05b52d3d56b724a68c9e49cfaf29b2d856f0e3ea87323e09aeb72845bd3936"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "independent_audit": {
+    "bytes": 17206,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-corpus-input-native-cycle-independent-audit-20260925-r1.json",
+    "sha256": "801a37d1784a9ff7a94a531af6c0b1920c86912c1592261d3f3aa17211b7457d"
+  },
+  "missing_documentation_links": [],
+  "native_cycle_qualified_at_closeout": true,
+  "native_receipt": {
+    "bytes": 8978803,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-corpus-input-native-cycle-20260925-r1.json",
+    "sha256": "75d68fbf782bd09c656a6bfb8a679ee92da73e0a78bde3b2ad9a1598cd59e940"
+  },
+  "owner_candidate_registered": false,
+  "owner_head_promoted": false,
+  "owner_training_lease_claimed": false,
+  "post_native_source_drift": {},
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T13:13:22.069922+00:00",
+  "schema": "daemon-corpus-input-native-cycle-closeout-v1",
+  "scope": "Closeout of one bounded native lifecycle qualification, independent state audit and semantic gates; not a speed comparison, full-regression rerun, changed-state qualification or owner candidate completion.",
+  "semantic_receipt": {
+    "bytes": 1343,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/daemon-corpus-inputs-20260925/semantic-after-native-cycle-r1-receipt.json",
+    "sha256": "d305af54e78eb1b80ebe021faa915065f90076a3990ff36a4b86cbb8cf47cae9"
+  },
+  "source_count": 7723,
+  "speed_improvement_demonstrated": false,
+  "tree_pin": {
+    "compiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+    "decompiler": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+    "parser": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py"
+  }
+}

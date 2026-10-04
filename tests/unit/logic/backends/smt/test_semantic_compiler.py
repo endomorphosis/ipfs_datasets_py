@@ -586,3 +586,55 @@ def test_bounded_translation_bound_record_shape() -> None:
     )
     assert result.receipt.preservation_claim.kind is PreservationKind.BOUNDED
     assert result.receipt.authority_ceiling is EvidenceAuthority.BOUNDED
+
+
+def test_metadata_identifier_is_quoted_without_changing_receipt_identity() -> None:
+    identifier = 'obligation:learned_source_model_equality/path-1.v2'
+    result = _compiler().compile(SmtObligation(identifier, SmtQueryMode.THEOREM_BY_NEGATION,
+        features=(SmtFeature.EQUALITY,), goal=term_true()))
+    assert f'(set-info :obligation "{identifier}")' in result.smtlib
+    assert f'; obligation_id: "{identifier}"' in result.smtlib
+    assert result.obligation_id == identifier
+    assert result.to_dict()['obligation_id'] == identifier
+    assert result.receipt.metadata['obligation_id'] == identifier
+
+
+@pytest.mark.parametrize('identifier', [
+    'obl:valid\n(exit)', 'obl:valid\r(check-sat)', 'obl:"quoted"',
+    'obl:\x00nul', 'obl:\x1bcontrol', 'obl:\x7fcontrol', 'obl:\u2028line', 'obl:\u2029line',
+])
+def test_metadata_control_or_quote_cannot_enter_obligation_identifier(identifier: str) -> None:
+    with pytest.raises(SmtCompilerError):
+        SmtObligation(identifier, SmtQueryMode.THEOREM_BY_NEGATION,
+            features=(SmtFeature.EQUALITY,), goal=term_true())
+
+
+@pytest.mark.parametrize('value', ['line\n(exit)', 'line\r(exit)', 'a\tvalue', 'a\x00value', 'a\x1bvalue', 'a\x7fvalue', 'a\u2028value'])
+def test_metadata_string_encoder_rejects_comment_terminating_controls(value: str) -> None:
+    from ipfs_datasets_py.logic.backends.smt.compiler import _smt_metadata_string
+    with pytest.raises(SmtCompilerError, match='printable ASCII'):
+        _smt_metadata_string(value)
+
+
+@pytest.mark.parametrize('source_metadata', [
+    SOFTWARE_VERIFICATION_SMT_COMPILER_INTERFACE,
+    'compiler" ) (exit) ; "quoted metadata',
+])
+def test_real_z3_parses_colon_metadata_and_escaped_quotes(source_metadata: str, monkeypatch) -> None:
+    import shutil
+    from ipfs_datasets_py.logic.backends.smt import compiler as module
+    from ipfs_datasets_py.logic.backends.process import BoundedToolRunner, ToolRunRequest, ToolRunLimits
+    z3 = shutil.which('z3')
+    if z3 is None:
+        pytest.skip('installed Z3 executable unavailable')
+    monkeypatch.setattr(module, 'SOFTWARE_VERIFICATION_SMT_COMPILER_INTERFACE', source_metadata)
+    result = _compiler().compile(SmtObligation('obligation:learned_source_model_equality',
+        SmtQueryMode.THEOREM_BY_NEGATION, features=(SmtFeature.ARITHMETIC, SmtFeature.EQUALITY), goal=term_eq(term_int(1),term_int(1))))
+    observed = BoundedToolRunner().run(ToolRunRequest(argv=(z3, '-in', '-smt2'), stdin=result.smtlib,
+        limits=ToolRunLimits(timeout_seconds=5, max_input_bytes=65536, max_output_bytes=16384)))
+    # Z3 can print a trailing 'unsat' after a parse error; require a clean exit
+    # and complete output, not merely presence of that final status token.
+    assert observed.ok and observed.returncode == 0, (observed.stdout, observed.stderr)
+    assert not observed.output_truncated
+    assert observed.stdout.strip() == 'unsat'
+    assert '(error' not in observed.stdout and '(error' not in observed.stderr

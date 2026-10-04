@@ -3077,86 +3077,34 @@ def ensure_isabelle(
     strict: bool,
     on_progress: ProgressCallback | None = None,
     force: bool = False,
+    timeout_seconds: float = 600,
+    parent_lease=None,
+    scheduler=None,
+    cancellation=None,
+    memory_mb: int = 2048,
 ) -> bool:
-    """Install the official checksummed Isabelle application bundle.
+    """Use the admitted, bounded official Isabelle installation transaction.
 
     Isabelle is deliberately part of the explicit reconstruction portfolio,
     not the daemon's startup-critical generation portfolio: each bundle is
-    roughly 1.2 GB.
+    roughly 1.2 GB. Explicit custom installer commands remain a legacy override:
+    their execution and discovery are outside the bounded installation API's
+    deadline, admission, and native resource guarantees.
     """
-
-    existing = _which("isabelle")
-    if existing and not force:
-        _announce(
-            f"Isabelle is already available at {existing}",
-            on_progress,
-            phase="available",
-        )
-        return True
-    if not yes:
-        _announce(
-            "Isabelle is missing; rerun with --yes to install its user-local bundle.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
-    if _run_custom_solver_installer(
-        "isabelle",
-        strict=strict,
-        on_progress=on_progress,
-    ):
-        return _which("isabelle") is not None
-    platform_key = _normalized_platform_key()
-    release = ISABELLE_RELEASES.get(platform_key)
-    if release is None:
-        _announce(
-            "No managed Isabelle bundle is registered for "
-            f"{platform_key[0]}/{platform_key[1]}. Set "
-            "IPFS_DATASETS_PY_ISABELLE_INSTALL_COMMAND.",
-            on_progress,
-            phase="blocked",
-        )
-        return False
-
-    url, checksum = release
-    root = _external_prover_root()
-    archive = root / "downloads" / f"{ISABELLE_VERSION}-{platform_key[0]}-{platform_key[1]}.tar.gz"
-    destination = root / f"{ISABELLE_VERSION}-{platform_key[0]}-{platform_key[1]}"
+    if yes and str(os.environ.get("IPFS_DATASETS_PY_ISABELLE_INSTALL_COMMAND") or "").strip():
+        _announce("Explicit custom Isabelle installer uses the legacy uncontained override.",
+                  on_progress, phase="installing")
+        if _run_custom_solver_installer("isabelle", strict=strict, on_progress=on_progress):
+            return _which("isabelle") is not None
+    from ipfs_datasets_py.logic.backends.installers.isabelle_installation import (
+        ensure_isabelle_installation,
+    )
     try:
-        _announce(
-            f"Preparing the {ISABELLE_VERSION} reconstruction kernel bundle "
-            "(approximately 1.2 GB).",
-            on_progress,
-        )
-        if not _download_release_artifact(
-            url,
-            archive,
-            checksum,
-            strict=strict,
-            on_progress=on_progress,
-        ):
-            return False
-        _safe_extract_tar(archive, destination)
-        candidates = [
-            path
-            for path in destination.rglob("bin/isabelle")
-            if path.is_file() and os.access(path, os.X_OK)
-        ]
-        if len(candidates) != 1:
-            raise RuntimeError(
-                "Isabelle bundle did not contain exactly one bin/isabelle launcher"
-            )
-        launcher = _write_launcher("isabelle", candidates[0])
-        if ISABELLE_VERSION not in _read_version(str(launcher)):
-            raise RuntimeError(
-                f"Isabelle launcher did not report {ISABELLE_VERSION}"
-            )
-        _announce(
-            f"Installed {ISABELLE_VERSION} user-locally.",
-            on_progress,
-            phase="installed",
-        )
-        return True
+        receipt = ensure_isabelle_installation(yes=yes, strict=strict, force=force,
+            on_progress=on_progress, install_root=_external_prover_root(),
+            timeout_seconds=timeout_seconds, parent_lease=parent_lease,
+            scheduler=scheduler, cancellation=cancellation, memory_mb=memory_mb)
+        return receipt.usable is True
     except Exception as exc:
         _announce(f"Isabelle installation failed: {exc}", on_progress, phase="failed")
         if strict:

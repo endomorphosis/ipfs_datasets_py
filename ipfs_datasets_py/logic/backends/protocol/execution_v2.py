@@ -43,6 +43,13 @@ from ipfs_datasets_py.logic.backends.results import (
     ResultAuthority,
     ResultStatus,
 )
+from ipfs_datasets_py.logic.backends.smt.operation_budget import (
+    MAX_OPERATION_TIMEOUT_MS,
+    _Signals,
+    current_proof_operation,
+    proof_operation_scope,
+    validate_operation_timeout_ms,
+)
 from ipfs_datasets_py.logic.backends.toolchain_roles import (
     ToolRole,
     ToolchainAuthorityCeiling,
@@ -2055,14 +2062,25 @@ class ProtocolExecutionEngineV2:
         proverif: ProVerifBackend | None = None,
         tamarin: TamarinBackend | None = None,
         runner: BoundedToolRunner | None = None,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> None:
+        validate_operation_timeout_ms(operation_timeout_ms)
         self._runner = runner
-        self._proverif = proverif or ProVerifBackend(runner=runner)
-        self._tamarin = tamarin or TamarinBackend(runner=runner)
+        self._proverif = ProVerifBackend(runner=runner) if proverif is None else proverif
+        self._tamarin = TamarinBackend(runner=runner) if tamarin is None else tamarin
         if not isinstance(self._proverif, ProVerifBackend):
             raise ProtocolExecutionError("proverif must be a ProVerifBackend")
         if not isinstance(self._tamarin, TamarinBackend):
             raise ProtocolExecutionError("tamarin must be a TamarinBackend")
+        self._operation_timeout_ms = operation_timeout_ms
+        self._operation_cancellation = cancellation
+
+    def _operation_settings(self, bounds, operation_timeout_ms, cancellation):
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = self._operation_timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        return (_operation_timeout(bounds, timeout),
+                _Signals(self._operation_cancellation, cancellation))
 
     def backend(
         self, provider: ProtocolProviderKind | str
@@ -2087,7 +2105,9 @@ class ProtocolExecutionEngineV2:
     ) -> ProtocolCapabilityReceiptV2:
         kind = normalize_protocol_provider(provider)
         backend = self.backend(kind)
+        _operation_checkpoint("before protocol availability probe")
         available = backend.is_available()
+        _operation_checkpoint("after protocol availability probe")
         supported = True
         reason = ""
         if document is not None:
@@ -2129,8 +2149,28 @@ class ProtocolExecutionEngineV2:
     def execute(
         self,
         request: ProtocolExecutionRequestV2 | Mapping[str, Any],
+        *,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> ProtocolExecutionResultV2:
-        """Execute one typed protocol request on a single provider path."""
+        """Execute under one cooperative deadline through evidence publication.
+
+        Only bounds/control selection precedes the scope. Interruption raises a
+        typed proof-operation exception without returning partial evidence.
+        Declared request bounds and wire identities remain unchanged. Opaque
+        Python callbacks are checked at boundaries and are not preempted.
+        """
+        bounds = _operation_bounds(request.bounds if isinstance(request, ProtocolExecutionRequestV2)
+                                   else _require_mapping(request, "request").get("bounds"))
+        timeout, signal = self._operation_settings(bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            result = self._execute_request(request)
+            _operation_checkpoint("after protocol evidence construction")
+            return result
+
+    def _execute_request(
+        self, request: ProtocolExecutionRequestV2 | Mapping[str, Any],
+    ) -> ProtocolExecutionResultV2:
 
         req = (
             request
@@ -2158,10 +2198,13 @@ class ProtocolExecutionEngineV2:
                 )
             )
         )
+        _operation_checkpoint("after protocol request normalization")
         request_digest = _digest_of(req.to_dict())
         document: ProtocolIR | None = req.document  # type: ignore[assignment]
         provider: ProtocolProviderKind = req.provider  # type: ignore[assignment]
+        _operation_checkpoint("before protocol capability probe")
         capability = self.capability_receipt(provider, document=document)
+        _operation_checkpoint("after protocol capability probe")
 
         if req.has_mock_output or req.mode is ProtocolExecutionMode.MOCK:
             return self._rejected(
@@ -2208,12 +2251,23 @@ class ProtocolExecutionEngineV2:
         *,
         request_id_prefix: str = "req:protocol:split",
         bounds: ExecutionBounds | None = None,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> dict[ProtocolProviderKind, ProtocolExecutionResultV2]:
-        """Run each provider path independently; results never cross-establish."""
+        """Run independent providers within one shared operation budget."""
+        selected_bounds = _operation_bounds(bounds)
+        timeout, signal = self._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            return self._execute_split(document, request_id_prefix=request_id_prefix,
+                                       bounds=selected_bounds, operation_timeout_ms=timeout)
+
+    def _execute_split(self, document, *, request_id_prefix, bounds, operation_timeout_ms):
 
         doc = _document_from_value(document)
+        _operation_checkpoint("after split protocol document normalization")
         results: dict[ProtocolProviderKind, ProtocolExecutionResultV2] = {}
         for kind in ProtocolProviderKind:
+            _operation_checkpoint("before split protocol provider")
             req = ProtocolExecutionRequestV2(
                 request_id=f"{request_id_prefix}:{kind.value}",
                 provider=kind,
@@ -2221,7 +2275,7 @@ class ProtocolExecutionEngineV2:
                 bounds=bounds,
                 mode=ProtocolExecutionMode.ENGINE,
             )
-            results[kind] = self.execute(req)
+            results[kind] = _execute_in_operation(self, req, operation_timeout_ms=operation_timeout_ms)
             for other in ProtocolProviderKind:
                 if other is kind:
                     continue
@@ -2273,13 +2327,23 @@ class ProtocolExecutionEngineV2:
             requested_backend_id=backend.backend_id,
         )
 
-        outcome = backend.run(backend_request)
-        return self._from_backend_outcome(
+        _operation_checkpoint("before protocol backend execution")
+        run = backend.run
+        if getattr(run, "__func__", None) in _CANONICAL_BACKEND_RUN_METHODS:
+            outcome = run(backend_request, cancellation=current_proof_operation())
+        else:
+            # Caller-owned legacy callbacks keep their original signature.
+            outcome = run(backend_request)
+        _operation_checkpoint("after protocol backend execution")
+        _operation_checkpoint("before protocol evidence construction")
+        result = self._from_backend_outcome(
             req,
             request_digest=request_digest,
             capability=capability,
             outcome=outcome,
         )
+        _operation_checkpoint("after protocol evidence construction")
+        return result
 
     def _from_backend_outcome(
         self,
@@ -2522,6 +2586,43 @@ class ProtocolExecutionEngineV2:
 # ---------------------------------------------------------------------------
 
 
+_CANONICAL_BACKEND_RUN_METHODS = (ProVerifBackend.run, TamarinBackend.run)
+_CANONICAL_ENGINE_EXECUTE = ProtocolExecutionEngineV2.execute
+
+
+def _operation_bounds(bounds):
+    if bounds is None:
+        return ExecutionBounds(timeout_ms=1_000, max_steps=1_000)
+    if not isinstance(bounds, ExecutionBounds):
+        raise ProtocolExecutionError("bounds must be ExecutionBounds")
+    return bounds
+
+
+def _operation_timeout(bounds, override):
+    validate_operation_timeout_ms(override)
+    return min(bounds.timeout_ms, MAX_OPERATION_TIMEOUT_MS,
+               override if override is not None else MAX_OPERATION_TIMEOUT_MS)
+
+
+def _operation_checkpoint(phase):
+    operation = current_proof_operation()
+    if operation is not None:
+        return operation.checkpoint(phase)
+    return None
+
+
+def _execute_in_operation(engine, request, *, operation_timeout_ms):
+    """Call legacy execute(request) callbacks once, with return-time gating."""
+    _operation_checkpoint("before protocol engine execution")
+    execute = engine.execute
+    if getattr(execute, "__func__", None) is _CANONICAL_ENGINE_EXECUTE:
+        result = execute(request, operation_timeout_ms=operation_timeout_ms)
+    else:
+        result = execute(request)
+    _operation_checkpoint("after protocol engine execution")
+    return result
+
+
 def execute_protocol(
     document: ProtocolIR | Mapping[str, Any] | None = None,
     *,
@@ -2531,21 +2632,29 @@ def execute_protocol(
     source_format: str = "",
     bounds: ExecutionBounds | None = None,
     engine: ProtocolExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> ProtocolExecutionResultV2:
-    """Execute one protocol document/source against a single provider."""
-
-    eng = engine or ProtocolExecutionEngineV2()
-    req = ProtocolExecutionRequestV2(
-        request_id=request_id,
-        provider=provider,
-        document=document,
-        source=source,
-        source_format=source_format,
-        bounds=bounds,
-        **kwargs,
-    )
-    return eng.execute(req)
+    """Normalize and execute one provider within an aggregate operation budget."""
+    validate_operation_timeout_ms(operation_timeout_ms)
+    eng = ProtocolExecutionEngineV2() if engine is None else engine
+    selected_bounds = _operation_bounds(bounds)
+    if isinstance(eng, ProtocolExecutionEngineV2):
+        timeout, signal = eng._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+    else:
+        timeout, signal = _operation_timeout(selected_bounds, operation_timeout_ms), cancellation
+    with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+        req = ProtocolExecutionRequestV2(
+            request_id=request_id,
+            provider=provider,
+            document=document,
+            source=source,
+            source_format=source_format,
+            bounds=selected_bounds,
+            **kwargs,
+        )
+        return _execute_in_operation(eng, req, operation_timeout_ms=timeout)
 
 
 def execute_proverif(
@@ -2555,6 +2664,8 @@ def execute_proverif(
     source: str = "",
     bounds: ExecutionBounds | None = None,
     engine: ProtocolExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> ProtocolExecutionResultV2:
     return execute_protocol(
@@ -2565,6 +2676,8 @@ def execute_proverif(
         source_format="pv" if source else "",
         bounds=bounds,
         engine=engine,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
         **kwargs,
     )
 
@@ -2576,6 +2689,8 @@ def execute_tamarin(
     source: str = "",
     bounds: ExecutionBounds | None = None,
     engine: ProtocolExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> ProtocolExecutionResultV2:
     return execute_protocol(
@@ -2586,6 +2701,8 @@ def execute_tamarin(
         source_format="spthy" if source else "",
         bounds=bounds,
         engine=engine,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
         **kwargs,
     )
 

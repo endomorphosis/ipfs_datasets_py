@@ -80,39 +80,38 @@ def build_span_cache_package(
     import pyarrow as pa
     import pyarrow.parquet as pq
 
+    from ipfs_datasets_py.logic.autoformal.span_cache import SPAN_EXPORT_COLUMNS, span_export_fields
+
     root = Path(destination)
+    if root.name in {"resume-checkpoint.parquet", "entity-resume-checkpoint.parquet", "entity-resume-checkpoint-v2.parquet"}:
+        raise AutoformalSpanCacheError("span export must not replace resume-checkpoint.parquet")
     root.mkdir(parents=True, exist_ok=True)
-    records = []
-    for row in rows:
-        records.append(
-            {
-                "admitted": False,
-                "code_identity": str(row.get("code_identity") or ""),
-                "decompiled": str(row.get("decompiled") or ""),
-                "formalized": False,
-                "legal_id": str(row.get("legal_id") or ""),
-                "sealed": True,
-                "source_sha256": str(row.get("source_sha256") or ""),
-                "source_span_id": str(row.get("source_span_id") or ""),
-                "source_text": str(row.get("source_text") or ""),
-                "term_ids": json.dumps(list(row.get("term_ids") or []), ensure_ascii=True, sort_keys=True),
-            }
-        )
-    table = pa.Table.from_pylist(records) if records else pa.table(
-        {
-            "admitted": pa.array([], type=pa.bool_()),
-            "code_identity": pa.array([], type=pa.string()),
-            "decompiled": pa.array([], type=pa.string()),
-            "formalized": pa.array([], type=pa.bool_()),
-            "legal_id": pa.array([], type=pa.string()),
-            "sealed": pa.array([], type=pa.bool_()),
-            "source_sha256": pa.array([], type=pa.string()),
-            "source_span_id": pa.array([], type=pa.string()),
-            "source_text": pa.array([], type=pa.string()),
-            "term_ids": pa.array([], type=pa.string()),
-        }
+    records = [span_export_fields(row) for row in rows]
+    schema = pa.schema(
+        [
+            ("admitted", pa.bool_()),
+            ("code_identity", pa.string()),
+            ("decompiled", pa.string()),
+            ("formalized", pa.bool_()),
+            ("legal_id", pa.string()),
+            ("sealed", pa.bool_()),
+            ("source_sha256", pa.string()),
+            ("source_span_id", pa.string()),
+            ("source_text", pa.string()),
+            ("term_ids", pa.string()),
+            ("status", pa.string()),
+            ("rule_json", pa.string()),
+            ("term_rows_json", pa.string()),
+        ]
+    )
+    ordered = [{name: record[name] for name in SPAN_EXPORT_COLUMNS} for record in records]
+    table = pa.Table.from_pylist(ordered, schema=schema) if ordered else pa.table(
+        {field.name: pa.array([], type=field.type) for field in schema},
+        schema=schema,
     )
     parquet_path = root / SPANS_NAME
+    if parquet_path.name in {"resume-checkpoint.parquet", "entity-resume-checkpoint.parquet", "entity-resume-checkpoint-v2.parquet"}:
+        raise AutoformalSpanCacheError("span export must not replace resume-checkpoint.parquet")
     pq.write_table(table, parquet_path)
     payload = parquet_path.read_bytes()
     rid = release_id or ("span-cache-" + _sha(payload)[:12])

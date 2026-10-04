@@ -1,0 +1,56 @@
+{
+  "intent_ir": {
+    "before_validation": {
+      "embedding_mse": 0.004194529261440039,
+      "objective": 3.370443820953369,
+      "token_cross_entropy": 3.3700244426727295
+    },
+    "fit_seconds": 3.673910397104919,
+    "optimizer_examples_per_second": 1932.691727237841,
+    "optimizer_steps": 1000,
+    "optimizer_tokens_per_second": 57980.75181713523,
+    "selected_epoch": 484,
+    "selected_validation": {
+      "embedding_mse": 0.0005897167720831931,
+      "objective": 0.09906058013439178,
+      "token_cross_entropy": 0.09900160878896713
+    },
+    "test_used_for_selection": false
+  },
+  "security_ir": {
+    "before_validation": {
+      "embedding_mse": 0.0048042829148471355,
+      "objective": 3.6780893802642822,
+      "token_cross_entropy": 3.6776089668273926
+    },
+    "fit_seconds": 7.258099991828203,
+    "optimizer_examples_per_second": 964.8879805628619,
+    "optimizer_steps": 1000,
+    "optimizer_tokens_per_second": 59823.054794897434,
+    "selected_epoch": 500,
+    "selected_validation": {
+      "embedding_mse": 0.0008037185180000961,
+      "objective": 0.05385923758149147,
+      "token_cross_entropy": 0.053778864443302155
+    },
+    "test_used_for_selection": false
+  },
+  "ui_ux_ir": {
+    "before_validation": {
+      "embedding_mse": 0.004137580282986164,
+      "objective": 3.606001138687134,
+      "token_cross_entropy": 3.6055874824523926
+    },
+    "fit_seconds": 2.5312950571533293,
+    "optimizer_examples_per_second": 2866.6451660264324,
+    "optimizer_steps": 1000,
+    "optimizer_tokens_per_second": 51599.61298847578,
+    "selected_epoch": 500,
+    "selected_validation": {
+      "embedding_mse": 0.006253435742110014,
+      "objective": 0.05490739271044731,
+      "token_cross_entropy": 0.0542820505797863
+    },
+    "test_used_for_selection": false
+  }
+}

@@ -1,0 +1,1352 @@
+{
+  "admitted": false,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "corpus": "three_gate_sentences_not_a_held_out_canary",
+  "cuda_visible_devices": "",
+  "disk_cache": "0",
+  "elapsed_seconds": 11.488449978991412,
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "measurement_note": "Fresh process; disk target cache disabled; internal target cache naturally reused during training. Setup/loading/sample construction excluded from operation wall time.",
+  "mode": "train",
+  "model_init_seconds": 0.6809304620837793,
+  "optimizer_step": true,
+  "process_cold": true,
+  "profile_enabled": false,
+  "projection_settings": {
+    "epochs": 1,
+    "max_line_search_attempts": 1,
+    "max_seconds": 180,
+    "projection_max_update_families": 1,
+    "projection_update_backend": "python_sparse_batch"
+  },
+  "result": {
+    "accepted_epochs": 1,
+    "after": {
+      "cosine_loss": 0.5359225765745439,
+      "cross_entropy_entropy_loss": 0.46209812037329684,
+      "cross_entropy_excess_loss": 1.7351264569629228,
+      "cross_entropy_loss": 2.1972245773362196,
+      "decoded_embeddings": {
+        "us-code-gate-backup-bcade853017bef27": [
+          -0.06998508,
+          0.04820164000000001,
+          -0.08336238,
+          -0.02296562,
+          0.06954176,
+          -0.05345691999999999,
+          0.022249560000000005,
+          0.062150880000000006
+        ],
+        "us-code-gate-minimum-59ae9bad813b5828": [
+          0.285202,
+          0.397584,
+          -0.618659,
+          -0.053774,
+          0.406975,
+          -0.152713,
+          -0.420432,
+          -0.912908
+        ],
+        "us-code-gate-prohibit-e8a154dcd6bf3bd1": [
+          -0.05959674,
+          0.08114110000000001,
+          -0.09806248000000001,
+          0.05931352000000001,
+          -0.11497570000000001,
+          0.06724514,
+          -0.026387980000000002,
+          0.03801438
+        ]
+      },
+      "embedding_cosine_similarity": 0.4640774234254561,
+      "frame_ranking_loss": 0.0,
+      "legal_ir_grammar_rejection_reasons": {},
+      "legal_ir_losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.06665873713017896,
+        "legal_ir_multiview_cross_entropy_loss": 0.1708597518902741,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.016664679836341668,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.5215796643532099,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+        "legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+        "legal_ir_view_entropy_loss": 1.7654687011763066,
+        "legal_ir_view_family_cec_cosine_gap_loss": 5.165743905425716e-05,
+        "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.00018821406762013307,
+        "legal_ir_view_family_cec_cross_entropy_loss": 0.4632764328739913,
+        "legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+        "legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+        "legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+        "legal_ir_view_family_deontic_cosine_gap_loss": 0.004076937478990295,
+        "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.01202999785044608,
+        "legal_ir_view_family_deontic_cross_entropy_loss": 0.5551266280532462,
+        "legal_ir_view_family_entropy_loss": 1.7654687011763068,
+        "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0014348663325953008,
+        "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.006464402092749122,
+        "legal_ir_view_family_external_provers_cross_entropy_loss": 0.37825818164087693,
+        "legal_ir_view_family_frame_logic_cosine_gap_loss": 1.795055967520239e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 6.59071812132798e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.457132029273222,
+        "legal_ir_view_family_kg_cosine_gap_loss": 0.001591105091191758,
+        "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.0072460191321273015,
+        "legal_ir_view_family_kg_cross_entropy_loss": 0.37417101040483686,
+        "legal_ir_view_family_prover_cosine_gap_loss": 0.0014348663325953008,
+        "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.006464402092749122,
+        "legal_ir_view_family_prover_cross_entropy_loss": 0.37825818164087693,
+        "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00013145230779273062,
+        "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.0004693103618044388,
+        "legal_ir_view_family_tdfol_cross_entropy_loss": 0.470244106545107,
+        "source_decompiled_text_embedding_cosine_loss": 0.06665873713017896,
+        "source_decompiled_text_token_loss": 0.16075413333333335
+      },
+      "legal_ir_predicted_view_distribution": {
+        "CEC.native": 0.1673092926606027,
+        "TDFOL.prover": 0.16767749789594508,
+        "deontic.ir": 0.17239696496885804,
+        "external_provers.router": 0.16292022922246285,
+        "knowledge_graphs.neo4j_compat": 0.16271668571701114,
+        "modal.frame_logic": 0.16697932953512015
+      },
+      "legal_ir_target_count": 3,
+      "legal_ir_target_hashes": {
+        "us-code-gate-backup-bcade853017bef27": "fa872de3163f8fb65aa9a58fcf64d04a55f5198807fb47c9057cd250a9b99a23",
+        "us-code-gate-minimum-59ae9bad813b5828": "2c0368f76e0d007c3f6bd3a3fff4eacdbb528e4c3f8ff3011d699706594a078a",
+        "us-code-gate-prohibit-e8a154dcd6bf3bd1": "86da55bfed174f7c7c9ffbfe861d2621f67ab1a42ad346bab76ade0add0f109f"
+      },
+      "legal_ir_view_distribution": {
+        "CEC.native": 0.17458889797417576,
+        "TDFOL.prover": 0.178949469913531,
+        "deontic.ir": 0.23324859086437918,
+        "external_provers.router": 0.12245819878319307,
+        "knowledge_graphs.neo4j_compat": 0.12,
+        "modal.frame_logic": 0.17075484246472097
+      },
+      "legal_ir_view_family_metrics": {
+        "cec": {
+          "autoencoder_cosine_similarity": 0.46382909384190024,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9999483382321647,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.4632769141400626,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.5237666939225273,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "decompiler": {
+          "autoencoder_cosine_similarity": 0.4640774234254561,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 3.0,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "deontic": {
+          "autoencoder_cosine_similarity": 0.4682860658933176,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9959075199272668,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.5553071534245886,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.6997457725931375,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "external_provers": {
+          "autoencoder_cosine_similarity": 0.4635420864603837,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9985652001648737,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.3782597815169091,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.3673745963495792,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "frame_logic": {
+          "autoencoder_cosine_similarity": 0.4617898965881986,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9999818313635414,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.45717202909925436,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.512264527394163,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "kg": {
+          "autoencoder_cosine_similarity": 0.46407742342545616,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9984088949088082,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.37417101040483686,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.36,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "tdfol": {
+          "autoencoder_cosine_similarity": 0.46138313407231274,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9998676709268502,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.4703020781600117,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.536848409740593,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        }
+      },
+      "reconstruction_loss": 0.27176728983483706,
+      "sample_count": 3,
+      "sample_embedding_metrics": [
+        {
+          "citation": "gate U.S.C. prohibit",
+          "cosine_loss": 0.803883865,
+          "cosine_similarity": 0.196116135,
+          "reconstruction_loss": 0.503310232,
+          "sample_id": "us-code-gate-prohibit-e8a154dcd6bf3bd1",
+          "text_shape": "agency|not|disclose|records"
+        },
+        {
+          "citation": "gate U.S.C. backup",
+          "cosine_loss": 0.803883865,
+          "cosine_similarity": 0.196116135,
+          "reconstruction_loss": 0.311991637,
+          "sample_id": "us-code-gate-backup-bcade853017bef27",
+          "text_shape": "company|submit|backup|report|within|days|unless|emergency"
+        },
+        {
+          "citation": "gate U.S.C. minimum",
+          "cosine_loss": -0.0,
+          "cosine_similarity": 1.0,
+          "reconstruction_loss": 0.0,
+          "sample_id": "us-code-gate-minimum-59ae9bad813b5828",
+          "text_shape": "officer|retain|file|least|days"
+        }
+      ],
+      "symbolic_validity_penalty": 0.0
+    },
+    "before": {
+      "cosine_loss": 0.5359225765745439,
+      "cross_entropy_entropy_loss": 0.46209812037329684,
+      "cross_entropy_excess_loss": 1.7351264569629228,
+      "cross_entropy_loss": 2.1972245773362196,
+      "decoded_embeddings": {
+        "us-code-gate-backup-bcade853017bef27": [
+          -0.06998508,
+          0.04820164000000001,
+          -0.08336238,
+          -0.02296562,
+          0.06954176,
+          -0.05345691999999999,
+          0.022249560000000005,
+          0.062150880000000006
+        ],
+        "us-code-gate-minimum-59ae9bad813b5828": [
+          0.285202,
+          0.397584,
+          -0.618659,
+          -0.053774,
+          0.406975,
+          -0.152713,
+          -0.420432,
+          -0.912908
+        ],
+        "us-code-gate-prohibit-e8a154dcd6bf3bd1": [
+          -0.05959674,
+          0.08114110000000001,
+          -0.09806248000000001,
+          0.05931352000000001,
+          -0.11497570000000001,
+          0.06724514,
+          -0.026387980000000002,
+          0.03801438
+        ]
+      },
+      "embedding_cosine_similarity": 0.4640774234254561,
+      "frame_ranking_loss": 0.0,
+      "legal_ir_grammar_rejection_reasons": {},
+      "legal_ir_losses": {
+        "legal_ir_multiview_acceptance_loss": 0.0,
+        "legal_ir_multiview_cosine_loss": 0.06665873713017896,
+        "legal_ir_multiview_cross_entropy_loss": 0.1708597518902741,
+        "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+        "legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir_multiview_reconstruction_loss": 0.016664679836341668,
+        "legal_ir_multiview_text_reconstruction_loss": 0.0,
+        "legal_ir_multiview_total_loss": 0.5215796643532099,
+        "legal_ir_multiview_view_coverage_loss": 0.0,
+        "legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+        "legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+        "legal_ir_view_entropy_loss": 1.7654687011763066,
+        "legal_ir_view_family_cec_cosine_gap_loss": 6.109864384573616e-05,
+        "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.0002233294773110924,
+        "legal_ir_view_family_cec_cross_entropy_loss": 0.4633115482836822,
+        "legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+        "legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+        "legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+        "legal_ir_view_family_deontic_cosine_gap_loss": 0.004825260290579762,
+        "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.014624051750116496,
+        "legal_ir_view_family_deontic_cross_entropy_loss": 0.5577206819529166,
+        "legal_ir_view_family_entropy_loss": 1.7654687011763068,
+        "legal_ir_view_family_external_provers_cosine_gap_loss": 0.0017250257013473973,
+        "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.007616645055889104,
+        "legal_ir_view_family_external_provers_cross_entropy_loss": 0.3794104246040169,
+        "legal_ir_view_family_frame_logic_cosine_gap_loss": 2.0319652653625713e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 7.47518963800653e-05,
+        "legal_ir_view_family_frame_logic_cross_entropy_loss": 0.4571408739883888,
+        "legal_ir_view_family_kg_cosine_gap_loss": 0.0019132048057416418,
+        "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.00852911501333703,
+        "legal_ir_view_family_kg_cross_entropy_loss": 0.37545410628604664,
+        "legal_ir_view_family_prover_cosine_gap_loss": 0.0017250257013473973,
+        "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.007616645055889104,
+        "legal_ir_view_family_prover_cross_entropy_loss": 0.3794104246040169,
+        "legal_ir_view_family_tdfol_cosine_gap_loss": 0.00015457771341513085,
+        "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.0005548218994742745,
+        "legal_ir_view_family_tdfol_cross_entropy_loss": 0.4703296180827768,
+        "source_decompiled_text_embedding_cosine_loss": 0.06665873713017896,
+        "source_decompiled_text_token_loss": 0.16075413333333335
+      },
+      "legal_ir_predicted_view_distribution": {
+        "CEC.native": 0.16666666666666666,
+        "TDFOL.prover": 0.16666666666666666,
+        "deontic.ir": 0.16666666666666666,
+        "external_provers.router": 0.16666666666666666,
+        "knowledge_graphs.neo4j_compat": 0.16666666666666666,
+        "modal.frame_logic": 0.16666666666666666
+      },
+      "legal_ir_target_count": 3,
+      "legal_ir_target_hashes": {
+        "us-code-gate-backup-bcade853017bef27": "fa872de3163f8fb65aa9a58fcf64d04a55f5198807fb47c9057cd250a9b99a23",
+        "us-code-gate-minimum-59ae9bad813b5828": "2c0368f76e0d007c3f6bd3a3fff4eacdbb528e4c3f8ff3011d699706594a078a",
+        "us-code-gate-prohibit-e8a154dcd6bf3bd1": "86da55bfed174f7c7c9ffbfe861d2621f67ab1a42ad346bab76ade0add0f109f"
+      },
+      "legal_ir_view_distribution": {
+        "CEC.native": 0.17458889797417576,
+        "TDFOL.prover": 0.178949469913531,
+        "deontic.ir": 0.23324859086437918,
+        "external_provers.router": 0.12245819878319307,
+        "knowledge_graphs.neo4j_compat": 0.12,
+        "modal.frame_logic": 0.17075484246472097
+      },
+      "legal_ir_view_family_metrics": {
+        "cec": {
+          "autoencoder_cosine_similarity": 0.46382909384190024,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9999388966522318,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.46331203093517426,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.5237666939225273,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "decompiler": {
+          "autoencoder_cosine_similarity": 0.4640774234254561,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 3.0,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "deontic": {
+          "autoencoder_cosine_similarity": 0.4682860658933176,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.995157778365812,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.5579058914293412,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.6997457725931375,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "external_provers": {
+          "autoencoder_cosine_similarity": 0.4635420864603837,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9982750472242046,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.37941199787104557,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.3673745963495792,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "frame_logic": {
+          "autoencoder_cosine_similarity": 0.4617898965881986,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9999794472151348,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.45718092979978764,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.512264527394163,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "kg": {
+          "autoencoder_cosine_similarity": 0.46407742342545616,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9980867951942584,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.37545410628604664,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.36,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        },
+        "tdfol": {
+          "autoencoder_cosine_similarity": 0.46138313407231274,
+          "autoencoder_cosine_similarity_observation_count": 3.0,
+          "autoencoder_cross_entropy_loss": 2.1972245773362196,
+          "autoencoder_cross_entropy_loss_observation_count": 3.0,
+          "ir_cosine_similarity": 0.9998444736320528,
+          "ir_cosine_similarity_observation_count": 3.0,
+          "ir_cross_entropy_loss": 0.47038785240096587,
+          "ir_cross_entropy_loss_observation_count": 3.0,
+          "sample_count": 3.0,
+          "sample_weight": 0.536848409740593,
+          "symbolic_validity_success_rate": 1.0,
+          "symbolic_validity_success_rate_observation_count": 3.0
+        }
+      },
+      "reconstruction_loss": 0.27176728983483706,
+      "sample_count": 3,
+      "sample_embedding_metrics": [
+        {
+          "citation": "gate U.S.C. prohibit",
+          "cosine_loss": 0.803883865,
+          "cosine_similarity": 0.196116135,
+          "reconstruction_loss": 0.503310232,
+          "sample_id": "us-code-gate-prohibit-e8a154dcd6bf3bd1",
+          "text_shape": "agency|not|disclose|records"
+        },
+        {
+          "citation": "gate U.S.C. backup",
+          "cosine_loss": 0.803883865,
+          "cosine_similarity": 0.196116135,
+          "reconstruction_loss": 0.311991637,
+          "sample_id": "us-code-gate-backup-bcade853017bef27",
+          "text_shape": "company|submit|backup|report|within|days|unless|emergency"
+        },
+        {
+          "citation": "gate U.S.C. minimum",
+          "cosine_loss": -0.0,
+          "cosine_similarity": 1.0,
+          "reconstruction_loss": 0.0,
+          "sample_id": "us-code-gate-minimum-59ae9bad813b5828",
+          "text_shape": "officer|retain|file|least|days"
+        }
+      ],
+      "symbolic_validity_penalty": 0.0
+    },
+    "candidate_update_order": [
+      "legal_ir_view_global_logits"
+    ],
+    "compute_backend": {
+      "autoencoder_compute_backend": "python",
+      "autoencoder_compute_device": "python",
+      "autoencoder_compute_device_request": "auto"
+    },
+    "effective_max_line_search_attempts": 1,
+    "elapsed_seconds": 11.488,
+    "epoch_reports": [
+      {
+        "acceptance_source": "strict",
+        "accepted": true,
+        "attempt_reports": [
+          {
+            "acceptance_source": "strict",
+            "accepted": true,
+            "cosine_similarity_delta": 0.0,
+            "cross_entropy_delta": 0.0,
+            "cross_entropy_excess_delta": 0.0,
+            "effective_learning_rate": 0.175,
+            "evaluated_objective": {
+              "after": {
+                "cross_entropy_excess_loss": 1.7351264569629228,
+                "embedding_cosine_gap": 0.5359225765745439,
+                "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+                "legal_ir:legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+                "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+                "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+                "reconstruction_loss": 0.27176728983483706
+              },
+              "before": {
+                "cross_entropy_excess_loss": 1.7351264569629228,
+                "embedding_cosine_gap": 0.5359225765745439,
+                "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+                "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+                "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+                "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+                "reconstruction_loss": 0.27176728983483706
+              },
+              "selected_metric_names": [
+                "cross_entropy_excess_loss",
+                "embedding_cosine_gap",
+                "legal_ir:legal_ir_multiview_graph_failure_penalty",
+                "legal_ir:legal_ir_multiview_proof_failure_ratio",
+                "legal_ir:legal_ir_multiview_total_loss",
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+                "legal_ir:legal_ir_view_cross_entropy_loss",
+                "legal_ir:legal_ir_view_family_cosine_gap_loss",
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+                "legal_ir:legal_ir_view_family_cross_entropy_loss",
+                "reconstruction_loss"
+              ]
+            },
+            "gradient_norms_by_family": {
+              "cec": 0.023083086446,
+              "deontic": 0.194257955829,
+              "external_provers": 0.128822408417,
+              "frame_logic": 0.011802390297,
+              "kg": 0.135965983629,
+              "tdfol": 0.035644959469
+            },
+            "gradient_norms_by_head": {
+              "legal_ir_view_logits": 0.27342421884
+            },
+            "hard_example_count": 3,
+            "hard_example_fraction": 1.0,
+            "head_family_gradient_norms": {
+              "compiler_facing_legal_ir_view": 0.27342421884
+            },
+            "head_family_update_norms": {
+              "compiler_facing_legal_ir_view": 0.047849238297
+            },
+            "head_learning_rate_scale": 0.5,
+            "holdout_evaluated": true,
+            "legal_ir_view_cross_entropy_delta": 0.004296349010092015,
+            "legal_ir_view_cross_entropy_excess_delta": 0.004296349010092088,
+            "legal_ir_view_family_cosine_gap_delta": 0.00419872685166171,
+            "legal_ir_view_family_cross_entropy_delta": 0.0042963490100926816,
+            "legal_ir_view_family_cross_entropy_excess_delta": 0.004296349010092314,
+            "line_search_attempt": 1,
+            "line_search_multiplier": 1.0,
+            "line_search_refinement": false,
+            "objective_delta": 0.015059743861779662,
+            "pareto_regressions": {},
+            "projection_deadband": {
+              "adjusted_pareto_regressions": {},
+              "enabled": false,
+              "enforced_accepted": false,
+              "hard_guardrail_blocked_regressions": {},
+              "hard_guardrail_metrics": [
+                "embedding_cosine_similarity",
+                "reconstruction_loss",
+                "legal_ir:*",
+                "hammer_*",
+                "source_copy*",
+                "source_copy_*",
+                "symbolic_validity*"
+              ],
+              "max_ce_deadband": 0.0,
+              "mode": "off",
+              "tolerated_regressions": {},
+              "would_accept": false
+            },
+            "projection_prescreen": {
+              "effective_mode": "off",
+              "enabled": false,
+              "mode": "off",
+              "selected_for_holdout": true,
+              "top_k": 3
+            },
+            "reconstruction_delta": 0.0,
+            "strict_accepted": true,
+            "trainable_legal_ir_head_norms": {
+              "finite": true,
+              "gradient_norm": 0.273424218842,
+              "gradient_norms_by_family": {
+                "cec": 0.023083086446,
+                "deontic": 0.194257955829,
+                "external_provers": 0.128822408417,
+                "frame_logic": 0.011802390297,
+                "kg": 0.135965983629,
+                "tdfol": 0.035644959469
+              },
+              "gradient_norms_by_head": {
+                "legal_ir_view_logits": 0.27342421884
+              },
+              "head_family_gradient_norms": {
+                "compiler_facing_legal_ir_view": 0.27342421884
+              },
+              "head_family_update_norms": {
+                "compiler_facing_legal_ir_view": 0.047849238297
+              },
+              "learning_rate": 0.175,
+              "nonzero_gradient": true,
+              "nonzero_update": true,
+              "projection_update_backend": "python_sparse_batch",
+              "scalar_update_counts_by_head": {
+                "legal_ir_view_logits": 6
+              },
+              "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+              "trainable_head_families": {
+                "decompiler_plan_embedding_weights": "decompiler",
+                "decompiler_plan_family_logits": "decompiler",
+                "decompiler_plan_legal_ir_view_logits": "decompiler",
+                "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+                "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+                "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "proof_auxiliary_head_logits": "proof",
+                "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+                "semantic_slot_legal_ir_view_logits": "semantic_slot"
+              },
+              "update_norm": 0.047849238297,
+              "update_norms_by_family": {
+                "cec": 0.004039540128,
+                "deontic": 0.03399514227,
+                "external_provers": 0.022543921473,
+                "frame_logic": 0.002065418302,
+                "kg": 0.023794047135,
+                "tdfol": 0.006237867907
+              },
+              "update_norms_by_head": {
+                "legal_ir_view_logits": 0.047849238297
+              }
+            },
+            "update": "legal_ir_view_global_logits",
+            "update_norms_by_family": {
+              "cec": 0.004039540128,
+              "deontic": 0.03399514227,
+              "external_provers": 0.022543921473,
+              "frame_logic": 0.002065418302,
+              "kg": 0.023794047135,
+              "tdfol": 0.006237867907
+            },
+            "update_norms_by_head": {
+              "legal_ir_view_logits": 0.047849238297
+            }
+          }
+        ],
+        "candidate_reports": [
+          {
+            "acceptance_source": "strict",
+            "accepted": true,
+            "attempt_reports": [
+              {
+                "acceptance_source": "strict",
+                "accepted": true,
+                "cosine_similarity_delta": 0.0,
+                "cross_entropy_delta": 0.0,
+                "cross_entropy_excess_delta": 0.0,
+                "effective_learning_rate": 0.175,
+                "evaluated_objective": {
+                  "after": {
+                    "cross_entropy_excess_loss": 1.7351264569629228,
+                    "embedding_cosine_gap": 0.5359225765745439,
+                    "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                    "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                    "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                    "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+                    "legal_ir:legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+                    "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+                    "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+                    "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+                    "reconstruction_loss": 0.27176728983483706
+                  },
+                  "before": {
+                    "cross_entropy_excess_loss": 1.7351264569629228,
+                    "embedding_cosine_gap": 0.5359225765745439,
+                    "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                    "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                    "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                    "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+                    "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+                    "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+                    "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+                    "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+                    "reconstruction_loss": 0.27176728983483706
+                  },
+                  "selected_metric_names": [
+                    "cross_entropy_excess_loss",
+                    "embedding_cosine_gap",
+                    "legal_ir:legal_ir_multiview_graph_failure_penalty",
+                    "legal_ir:legal_ir_multiview_proof_failure_ratio",
+                    "legal_ir:legal_ir_multiview_total_loss",
+                    "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+                    "legal_ir:legal_ir_view_cross_entropy_loss",
+                    "legal_ir:legal_ir_view_family_cosine_gap_loss",
+                    "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+                    "legal_ir:legal_ir_view_family_cross_entropy_loss",
+                    "reconstruction_loss"
+                  ]
+                },
+                "gradient_norms_by_family": {
+                  "cec": 0.023083086446,
+                  "deontic": 0.194257955829,
+                  "external_provers": 0.128822408417,
+                  "frame_logic": 0.011802390297,
+                  "kg": 0.135965983629,
+                  "tdfol": 0.035644959469
+                },
+                "gradient_norms_by_head": {
+                  "legal_ir_view_logits": 0.27342421884
+                },
+                "hard_example_count": 3,
+                "hard_example_fraction": 1.0,
+                "head_family_gradient_norms": {
+                  "compiler_facing_legal_ir_view": 0.27342421884
+                },
+                "head_family_update_norms": {
+                  "compiler_facing_legal_ir_view": 0.047849238297
+                },
+                "head_learning_rate_scale": 0.5,
+                "holdout_evaluated": true,
+                "legal_ir_view_cross_entropy_delta": 0.004296349010092015,
+                "legal_ir_view_cross_entropy_excess_delta": 0.004296349010092088,
+                "legal_ir_view_family_cosine_gap_delta": 0.00419872685166171,
+                "legal_ir_view_family_cross_entropy_delta": 0.0042963490100926816,
+                "legal_ir_view_family_cross_entropy_excess_delta": 0.004296349010092314,
+                "line_search_attempt": 1,
+                "line_search_multiplier": 1.0,
+                "line_search_refinement": false,
+                "objective_delta": 0.015059743861779662,
+                "pareto_regressions": {},
+                "projection_deadband": {
+                  "adjusted_pareto_regressions": {},
+                  "enabled": false,
+                  "enforced_accepted": false,
+                  "hard_guardrail_blocked_regressions": {},
+                  "hard_guardrail_metrics": [
+                    "embedding_cosine_similarity",
+                    "reconstruction_loss",
+                    "legal_ir:*",
+                    "hammer_*",
+                    "source_copy*",
+                    "source_copy_*",
+                    "symbolic_validity*"
+                  ],
+                  "max_ce_deadband": 0.0,
+                  "mode": "off",
+                  "tolerated_regressions": {},
+                  "would_accept": false
+                },
+                "projection_prescreen": {
+                  "effective_mode": "off",
+                  "enabled": false,
+                  "mode": "off",
+                  "selected_for_holdout": true,
+                  "top_k": 3
+                },
+                "reconstruction_delta": 0.0,
+                "strict_accepted": true,
+                "trainable_legal_ir_head_norms": {
+                  "finite": true,
+                  "gradient_norm": 0.273424218842,
+                  "gradient_norms_by_family": {
+                    "cec": 0.023083086446,
+                    "deontic": 0.194257955829,
+                    "external_provers": 0.128822408417,
+                    "frame_logic": 0.011802390297,
+                    "kg": 0.135965983629,
+                    "tdfol": 0.035644959469
+                  },
+                  "gradient_norms_by_head": {
+                    "legal_ir_view_logits": 0.27342421884
+                  },
+                  "head_family_gradient_norms": {
+                    "compiler_facing_legal_ir_view": 0.27342421884
+                  },
+                  "head_family_update_norms": {
+                    "compiler_facing_legal_ir_view": 0.047849238297
+                  },
+                  "learning_rate": 0.175,
+                  "nonzero_gradient": true,
+                  "nonzero_update": true,
+                  "projection_update_backend": "python_sparse_batch",
+                  "scalar_update_counts_by_head": {
+                    "legal_ir_view_logits": 6
+                  },
+                  "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+                  "trainable_head_families": {
+                    "decompiler_plan_embedding_weights": "decompiler",
+                    "decompiler_plan_family_logits": "decompiler",
+                    "decompiler_plan_legal_ir_view_logits": "decompiler",
+                    "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+                    "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                    "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+                    "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                    "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                    "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                    "proof_auxiliary_head_logits": "proof",
+                    "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                    "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+                    "semantic_slot_legal_ir_view_logits": "semantic_slot"
+                  },
+                  "update_norm": 0.047849238297,
+                  "update_norms_by_family": {
+                    "cec": 0.004039540128,
+                    "deontic": 0.03399514227,
+                    "external_provers": 0.022543921473,
+                    "frame_logic": 0.002065418302,
+                    "kg": 0.023794047135,
+                    "tdfol": 0.006237867907
+                  },
+                  "update_norms_by_head": {
+                    "legal_ir_view_logits": 0.047849238297
+                  }
+                },
+                "update": "legal_ir_view_global_logits",
+                "update_norms_by_family": {
+                  "cec": 0.004039540128,
+                  "deontic": 0.03399514227,
+                  "external_provers": 0.022543921473,
+                  "frame_logic": 0.002065418302,
+                  "kg": 0.023794047135,
+                  "tdfol": 0.006237867907
+                },
+                "update_norms_by_head": {
+                  "legal_ir_view_logits": 0.047849238297
+                }
+              }
+            ],
+            "cosine_similarity_delta": 0.0,
+            "cross_entropy_delta": 0.0,
+            "cross_entropy_excess_delta": 0.0,
+            "effective_learning_rate": 0.175,
+            "evaluated_objective": {
+              "after": {
+                "cross_entropy_excess_loss": 1.7351264569629228,
+                "embedding_cosine_gap": 0.5359225765745439,
+                "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+                "legal_ir:legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+                "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+                "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+                "reconstruction_loss": 0.27176728983483706
+              },
+              "before": {
+                "cross_entropy_excess_loss": 1.7351264569629228,
+                "embedding_cosine_gap": 0.5359225765745439,
+                "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+                "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+                "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+                "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+                "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+                "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+                "reconstruction_loss": 0.27176728983483706
+              },
+              "selected_metric_names": [
+                "cross_entropy_excess_loss",
+                "embedding_cosine_gap",
+                "legal_ir:legal_ir_multiview_graph_failure_penalty",
+                "legal_ir:legal_ir_multiview_proof_failure_ratio",
+                "legal_ir:legal_ir_multiview_total_loss",
+                "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+                "legal_ir:legal_ir_view_cross_entropy_loss",
+                "legal_ir:legal_ir_view_family_cosine_gap_loss",
+                "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+                "legal_ir:legal_ir_view_family_cross_entropy_loss",
+                "reconstruction_loss"
+              ]
+            },
+            "gradient_norms_by_family": {
+              "cec": 0.023083086446,
+              "deontic": 0.194257955829,
+              "external_provers": 0.128822408417,
+              "frame_logic": 0.011802390297,
+              "kg": 0.135965983629,
+              "tdfol": 0.035644959469
+            },
+            "gradient_norms_by_head": {
+              "legal_ir_view_logits": 0.27342421884
+            },
+            "hard_example_count": 3,
+            "hard_example_fraction": 1.0,
+            "head_family_gradient_norms": {
+              "compiler_facing_legal_ir_view": 0.27342421884
+            },
+            "head_family_update_norms": {
+              "compiler_facing_legal_ir_view": 0.047849238297
+            },
+            "head_learning_rate_scale": 0.5,
+            "holdout_evaluated": true,
+            "legal_ir_view_cross_entropy_delta": 0.004296349010092015,
+            "legal_ir_view_cross_entropy_excess_delta": 0.004296349010092088,
+            "legal_ir_view_family_cosine_gap_delta": 0.00419872685166171,
+            "legal_ir_view_family_cross_entropy_delta": 0.0042963490100926816,
+            "legal_ir_view_family_cross_entropy_excess_delta": 0.004296349010092314,
+            "line_search_attempt": 1,
+            "line_search_attempt_count": 1,
+            "line_search_multiplier": 1.0,
+            "line_search_refinement": false,
+            "line_search_refinement_attempt_count": 0,
+            "objective_delta": 0.015059743861779662,
+            "pareto_regressions": {},
+            "projection_deadband": {
+              "adjusted_pareto_regressions": {},
+              "enabled": false,
+              "enforced_accepted": false,
+              "hard_guardrail_blocked_regressions": {},
+              "hard_guardrail_metrics": [
+                "embedding_cosine_similarity",
+                "reconstruction_loss",
+                "legal_ir:*",
+                "hammer_*",
+                "source_copy*",
+                "source_copy_*",
+                "symbolic_validity*"
+              ],
+              "max_ce_deadband": 0.0,
+              "mode": "off",
+              "tolerated_regressions": {},
+              "would_accept": false
+            },
+            "projection_prescreen": {
+              "effective_mode": "off",
+              "enabled": false,
+              "mode": "off",
+              "selected_for_holdout": true,
+              "top_k": 3
+            },
+            "reconstruction_delta": 0.0,
+            "strict_accepted": true,
+            "trainable_legal_ir_head_norms": {
+              "finite": true,
+              "gradient_norm": 0.273424218842,
+              "gradient_norms_by_family": {
+                "cec": 0.023083086446,
+                "deontic": 0.194257955829,
+                "external_provers": 0.128822408417,
+                "frame_logic": 0.011802390297,
+                "kg": 0.135965983629,
+                "tdfol": 0.035644959469
+              },
+              "gradient_norms_by_head": {
+                "legal_ir_view_logits": 0.27342421884
+              },
+              "head_family_gradient_norms": {
+                "compiler_facing_legal_ir_view": 0.27342421884
+              },
+              "head_family_update_norms": {
+                "compiler_facing_legal_ir_view": 0.047849238297
+              },
+              "learning_rate": 0.175,
+              "nonzero_gradient": true,
+              "nonzero_update": true,
+              "projection_update_backend": "python_sparse_batch",
+              "scalar_update_counts_by_head": {
+                "legal_ir_view_logits": 6
+              },
+              "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+              "trainable_head_families": {
+                "decompiler_plan_embedding_weights": "decompiler",
+                "decompiler_plan_family_logits": "decompiler",
+                "decompiler_plan_legal_ir_view_logits": "decompiler",
+                "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+                "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+                "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "proof_auxiliary_head_logits": "proof",
+                "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+                "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+                "semantic_slot_legal_ir_view_logits": "semantic_slot"
+              },
+              "update_norm": 0.047849238297,
+              "update_norms_by_family": {
+                "cec": 0.004039540128,
+                "deontic": 0.03399514227,
+                "external_provers": 0.022543921473,
+                "frame_logic": 0.002065418302,
+                "kg": 0.023794047135,
+                "tdfol": 0.006237867907
+              },
+              "update_norms_by_head": {
+                "legal_ir_view_logits": 0.047849238297
+              }
+            },
+            "update": "legal_ir_view_global_logits",
+            "update_norms_by_family": {
+              "cec": 0.004039540128,
+              "deontic": 0.03399514227,
+              "external_provers": 0.022543921473,
+              "frame_logic": 0.002065418302,
+              "kg": 0.023794047135,
+              "tdfol": 0.006237867907
+            },
+            "update_norms_by_head": {
+              "legal_ir_view_logits": 0.047849238297
+            }
+          }
+        ],
+        "cosine_similarity_delta": 0.0,
+        "cross_entropy_delta": 0.0,
+        "cross_entropy_excess_delta": 0.0,
+        "effective_learning_rate": 0.175,
+        "epoch": 1,
+        "evaluated_objective": {
+          "after": {
+            "cross_entropy_excess_loss": 1.7351264569629228,
+            "embedding_cosine_gap": 0.5359225765745439,
+            "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+            "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+            "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+            "reconstruction_loss": 0.27176728983483706
+          },
+          "before": {
+            "cross_entropy_excess_loss": 1.7351264569629228,
+            "embedding_cosine_gap": 0.5359225765745439,
+            "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+            "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+            "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+            "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+            "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+            "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+            "reconstruction_loss": 0.27176728983483706
+          },
+          "selected_metric_names": [
+            "cross_entropy_excess_loss",
+            "embedding_cosine_gap",
+            "legal_ir:legal_ir_multiview_graph_failure_penalty",
+            "legal_ir:legal_ir_multiview_proof_failure_ratio",
+            "legal_ir:legal_ir_multiview_total_loss",
+            "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+            "legal_ir:legal_ir_view_cross_entropy_loss",
+            "legal_ir:legal_ir_view_family_cosine_gap_loss",
+            "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+            "legal_ir:legal_ir_view_family_cross_entropy_loss",
+            "reconstruction_loss"
+          ]
+        },
+        "gradient_norms_by_family": {
+          "cec": 0.023083086446,
+          "deontic": 0.194257955829,
+          "external_provers": 0.128822408417,
+          "frame_logic": 0.011802390297,
+          "kg": 0.135965983629,
+          "tdfol": 0.035644959469
+        },
+        "gradient_norms_by_head": {
+          "legal_ir_view_logits": 0.27342421884
+        },
+        "hard_example_count": 3,
+        "hard_example_fraction": 1.0,
+        "head_family_gradient_norms": {
+          "compiler_facing_legal_ir_view": 0.27342421884
+        },
+        "head_family_update_norms": {
+          "compiler_facing_legal_ir_view": 0.047849238297
+        },
+        "head_learning_rate_scale": 0.5,
+        "holdout_evaluated": true,
+        "legal_ir_view_cross_entropy_delta": 0.004296349010092015,
+        "legal_ir_view_cross_entropy_excess_delta": 0.004296349010092088,
+        "legal_ir_view_family_cosine_gap_delta": 0.00419872685166171,
+        "legal_ir_view_family_cross_entropy_delta": 0.0042963490100926816,
+        "legal_ir_view_family_cross_entropy_excess_delta": 0.004296349010092314,
+        "line_search_attempt": 1,
+        "line_search_attempt_count": 1,
+        "line_search_multiplier": 1.0,
+        "line_search_refinement": false,
+        "line_search_refinement_attempt_count": 0,
+        "objective_delta": 0.015059743861779662,
+        "pareto_regressions": {},
+        "projection_deadband": {
+          "adjusted_pareto_regressions": {},
+          "enabled": false,
+          "enforced_accepted": false,
+          "hard_guardrail_blocked_regressions": {},
+          "hard_guardrail_metrics": [
+            "embedding_cosine_similarity",
+            "reconstruction_loss",
+            "legal_ir:*",
+            "hammer_*",
+            "source_copy*",
+            "source_copy_*",
+            "symbolic_validity*"
+          ],
+          "max_ce_deadband": 0.0,
+          "mode": "off",
+          "tolerated_regressions": {},
+          "would_accept": false
+        },
+        "projection_prescreen": {
+          "effective_mode": "off",
+          "enabled": false,
+          "mode": "off",
+          "selected_for_holdout": true,
+          "top_k": 3
+        },
+        "reconstruction_delta": 0.0,
+        "selected_update": "legal_ir_view_global_logits",
+        "strict_accepted": true,
+        "trainable_legal_ir_head_norms": {
+          "finite": true,
+          "gradient_norm": 0.273424218842,
+          "gradient_norms_by_family": {
+            "cec": 0.023083086446,
+            "deontic": 0.194257955829,
+            "external_provers": 0.128822408417,
+            "frame_logic": 0.011802390297,
+            "kg": 0.135965983629,
+            "tdfol": 0.035644959469
+          },
+          "gradient_norms_by_head": {
+            "legal_ir_view_logits": 0.27342421884
+          },
+          "head_family_gradient_norms": {
+            "compiler_facing_legal_ir_view": 0.27342421884
+          },
+          "head_family_update_norms": {
+            "compiler_facing_legal_ir_view": 0.047849238297
+          },
+          "learning_rate": 0.175,
+          "nonzero_gradient": true,
+          "nonzero_update": true,
+          "projection_update_backend": "python_sparse_batch",
+          "scalar_update_counts_by_head": {
+            "legal_ir_view_logits": 6
+          },
+          "schema_version": "legal-ir-trainable-objective-head-norms-v1",
+          "trainable_head_families": {
+            "decompiler_plan_embedding_weights": "decompiler",
+            "decompiler_plan_family_logits": "decompiler",
+            "decompiler_plan_legal_ir_view_logits": "decompiler",
+            "family_semantic_slot_legal_ir_view_logits": "semantic_slot",
+            "feature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+            "legal_ir_view_family_logits": "compiler_facing_legal_ir_view",
+            "legal_ir_view_logits": "compiler_facing_legal_ir_view",
+            "logic_signature_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+            "predicate_argument_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+            "proof_auxiliary_head_logits": "proof",
+            "round_trip_signal_legal_ir_view_logits": "compiler_facing_legal_ir_view",
+            "semantic_slot_legal_ir_view_family_logits": "semantic_slot",
+            "semantic_slot_legal_ir_view_logits": "semantic_slot"
+          },
+          "update_norm": 0.047849238297,
+          "update_norms_by_family": {
+            "cec": 0.004039540128,
+            "deontic": 0.03399514227,
+            "external_provers": 0.022543921473,
+            "frame_logic": 0.002065418302,
+            "kg": 0.023794047135,
+            "tdfol": 0.006237867907
+          },
+          "update_norms_by_head": {
+            "legal_ir_view_logits": 0.047849238297
+          }
+        },
+        "update": "legal_ir_view_global_logits",
+        "update_norms_by_family": {
+          "cec": 0.004039540128,
+          "deontic": 0.03399514227,
+          "external_provers": 0.022543921473,
+          "frame_logic": 0.002065418302,
+          "kg": 0.023794047135,
+          "tdfol": 0.006237867907
+        },
+        "update_norms_by_head": {
+          "legal_ir_view_logits": 0.047849238297
+        }
+      }
+    ],
+    "evaluated_objective": {
+      "after": {
+        "cross_entropy_excess_loss": 1.7351264569629228,
+        "embedding_cosine_gap": 0.5359225765745439,
+        "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+        "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.02199441904165611,
+        "legal_ir:legal_ir_view_cross_entropy_loss": 1.7874631202179627,
+        "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.02128811070493249,
+        "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.02199441904165574,
+        "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7874631202179625,
+        "reconstruction_loss": 0.27176728983483706
+      },
+      "before": {
+        "cross_entropy_excess_loss": 1.7351264569629228,
+        "embedding_cosine_gap": 0.5359225765745439,
+        "legal_ir:legal_ir_multiview_graph_failure_penalty": 0.0,
+        "legal_ir:legal_ir_multiview_proof_failure_ratio": 0.0,
+        "legal_ir:legal_ir_multiview_total_loss": 0.5215796643532099,
+        "legal_ir:legal_ir_view_cross_entropy_excess_loss": 0.0262907680517482,
+        "legal_ir:legal_ir_view_cross_entropy_loss": 1.7917594692280547,
+        "legal_ir:legal_ir_view_family_cosine_gap_loss": 0.0254868375565942,
+        "legal_ir:legal_ir_view_family_cross_entropy_excess_loss": 0.026290768051748053,
+        "legal_ir:legal_ir_view_family_cross_entropy_loss": 1.7917594692280552,
+        "reconstruction_loss": 0.27176728983483706
+      },
+      "selected_metric_names": [
+        "cross_entropy_excess_loss",
+        "embedding_cosine_gap",
+        "legal_ir:legal_ir_multiview_graph_failure_penalty",
+        "legal_ir:legal_ir_multiview_proof_failure_ratio",
+        "legal_ir:legal_ir_multiview_total_loss",
+        "legal_ir:legal_ir_view_cross_entropy_excess_loss",
+        "legal_ir:legal_ir_view_cross_entropy_loss",
+        "legal_ir:legal_ir_view_family_cosine_gap_loss",
+        "legal_ir:legal_ir_view_family_cross_entropy_excess_loss",
+        "legal_ir:legal_ir_view_family_cross_entropy_loss",
+        "reconstruction_loss"
+      ]
+    },
+    "legal_ir_bridge_max_sample_text_chars": null,
+    "legal_ir_bridge_max_samples": null,
+    "line_search_attempt_policy": "explicit",
+    "objective_weights": {
+      "cosine_gap": 1.5,
+      "cross_entropy": 1.0,
+      "legal_ir": 1.0,
+      "reconstruction": 1.0
+    },
+    "precomputed_holdout_evaluation_reused": false,
+    "precomputed_training_evaluation_reused": false,
+    "projection_cuda_residency": {
+      "enabled": false,
+      "reports": [],
+      "schema_version": "modal-autoencoder-cuda-residency-v2"
+    },
+    "projection_deadband": {
+      "hard_guardrail_metrics": [
+        "embedding_cosine_similarity",
+        "reconstruction_loss",
+        "legal_ir:*",
+        "hammer_*",
+        "source_copy*",
+        "source_copy_*",
+        "symbolic_validity*"
+      ],
+      "max_ce_deadband": 0.0,
+      "mode": "off"
+    },
+    "projection_prescreen": {
+      "effective_mode": "off",
+      "holdout_evaluation_limit": null,
+      "mode": "off",
+      "periodic_full_search": false,
+      "periodic_full_search_every_n_cycles": 0,
+      "projection_cycle": null,
+      "top_k": 3
+    },
+    "projection_prescreen_summary": {
+      "attempted_count": 1,
+      "best_prescreen_attempt": {},
+      "enabled_attempt_count": 0,
+      "evaluated_holdout_count": 0,
+      "positive_delta_count": 0,
+      "selected_for_holdout_count": 0,
+      "unselected_for_holdout_count": 0
+    },
+    "projection_profile": {},
+    "projection_profile_enabled": false,
+    "projection_update_backend": "python_sparse_batch",
+    "projection_update_families": {
+      "candidate_update_family_count": 1,
+      "max_update_families": 1
+    },
+    "rejection_summary": {
+      "accepted_attempt_count": 1,
+      "attempted_count": 1,
+      "best_rejected_attempt": {},
+      "pareto_regression_counts": {},
+      "projection_deadband": {
+        "best_would_accept_attempt": {},
+        "enforced_accept_count": 0,
+        "hard_guardrail_blocked_counts": {},
+        "shadow_would_accept_count": 0,
+        "strict_accepted_attempt_count": 1,
+        "tolerated_regression_counts": {},
+        "would_accept_count": 0
+      },
+      "refinement_attempt_count": 0,
+      "rejected_attempt_count": 0
+    },
+    "sample_memory_used": false,
+    "state_entry_count": 88318,
+    "stopped_reason": null,
+    "validation_sample_count": 3
+  },
+  "sample_build_seconds": 0.033311905921436846,
+  "sample_count": 3,
+  "schema": "legal-autoformal-speed-v1",
+  "seconds_per_sample": 3.8294833263304704,
+  "source_hashes": {
+    "ipfs_datasets_py/logic/deontic/formula_builder.py": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "b56316f756a36cfbcbe7070207678090d5e1c8beebe2ef4710ddd6732ddd045d"
+  },
+  "state_load_seconds": 0.7592782779829577,
+  "state_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+  "state_sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+  "target_cache_initial_entries": 0,
+  "use_sample_memory": false
+}

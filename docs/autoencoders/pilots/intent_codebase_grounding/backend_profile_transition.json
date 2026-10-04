@@ -1,0 +1,277 @@
+{
+  "schema": "codebase-ir-backend-profile-transition-contract/v1",
+  "status": "planned_runtime_qualification_pending",
+  "scope": "Process-owner source transition and dependent conditional-proof qualification; no runtime release/model promotion",
+  "inspection": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-profile-transition-20261002/inspection.json",
+  "source_candidate_manifest": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-backend-profile-transition-20261002/candidate-manifest.unqualified.json",
+    "bytes": 149887,
+    "sha256": "31aed1d888fdcb69337d3abb1d3f4cdd024f92ca1544af035887efc9e9890320"
+  },
+  "original_manifest": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/pilots/intent_codebase_grounding/release_bundle_manifest.json",
+    "sha256": "a0dc5a98ed414a4ec0e2228bb1d14869a69197f6010077356764706cf4a23deb",
+    "bytes": 149887
+  },
+  "backend_versions": [
+    {
+      "kind": "released_local_git",
+      "bytes": 50468,
+      "sha256": "742cdee25455c35d43945b0463ebbc606da5c1826e95691b69afb07e9d3fd96f"
+    },
+    {
+      "kind": "earlier_pinned_archive",
+      "bytes": 63356,
+      "sha256": "0261fd091fd1145404379320c44fd5d8628d28be328fa4a089afa7fd997d395e"
+    },
+    {
+      "kind": "candidate_working_source",
+      "bytes": 68367,
+      "sha256": "9035ba1982cf5fbd0db40ec994a3829902d9f4a25cc7aeb0c0ae2705f233cbf5"
+    }
+  ],
+  "static_receipt_check": {
+    "original_exit_code": 2,
+    "original_matching_files": 269,
+    "candidate_exit_code": 0,
+    "candidate_matching_files": 270,
+    "declared_files": 270,
+    "candidate_changed_file_ids": [
+      "F062"
+    ],
+    "candidate_changed_fields": [
+      "bytes",
+      "sha256"
+    ],
+    "candidate_receipt_check_passed": true,
+    "candidate_source_runtime_approved": false
+  },
+  "model_cells": [
+    {
+      "cell_id": "codebase_ir_8d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "inventory_file_id": "F259"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "inventory_file_id": "F260"
+    },
+    {
+      "cell_id": "codebase_ir_768d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "inventory_file_id": "F261"
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "inventory_file_id": "F262"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "inventory_file_id": "F263"
+    },
+    {
+      "cell_id": "security_ir_768d",
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "inventory_file_id": "F264"
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "inventory_file_id": "F265"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "inventory_file_id": "F266"
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "inventory_file_id": "F267"
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "inventory_file_id": "F268"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "inventory_file_id": "F269"
+    },
+    {
+      "cell_id": "intent_ir_768d",
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "inventory_file_id": "F270"
+    }
+  ],
+  "gates": [
+    {
+      "gate_id": "BT00",
+      "depends_on": [],
+      "status": "planned_not_executed",
+      "purpose": "Acquire complete datasets-owned source/test candidate against released Git",
+      "acceptance": [
+        "Retain and verify the released, earlier pinned and candidate source snapshots",
+        "Review released-to-pin plus pin-to-candidate diffs, not only the latest slice",
+        "Acquire all inherited owners/tests and exact required installed .py identity sources in an isolated clean candidate",
+        "Preserve historical release manifest and expected F062 pin; authenticate candidate commit origin separately from local source snapshots"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT01",
+      "depends_on": [
+        "BT00"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Qualify installed/imported dependency and execution origins",
+      "acceptance": [
+        "Python >=3.12 and selected package/import origins are bound to candidate receipts",
+        "Select a complete supervisor lineage or review a separately versioned native-only profile; do not use import fallback as qualification",
+        "Bind Linux /proc, pidfd/birth-identity capabilities, trusted prlimit binary and actual solver native executable/launcher receipts",
+        "Record admitted platform modes and ambient-library attestation limits"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT02",
+      "depends_on": [
+        "BT01"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Qualify lifecycle and failure behavior with candidate-bound tests",
+      "acceptance": [
+        "Lifecycle, file-limit, parallel-limit, descendant-session and exception-cleanup cohorts pass with exact candidate/test/environment receipts before and after",
+        "Report skips and unsupported platforms; skipped cases never count as qualified",
+        "Close writer-start failure, blocked stdin, reader I/O failure and normal surviving-worker coverage gaps with needed owner changes",
+        "Ordinary exceptions remain error results; KeyboardInterrupt/SystemExit preserve initiating exceptions after attempted cleanup",
+        "No successful receipt is admitted when tracked native work or required pipe workers remain; cleanup failures remain visible"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT03",
+      "depends_on": [
+        "BT02"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Qualify declared bounds without overstating containment",
+      "acceptance": [
+        "Account for preparation, execution and aggregate cleanup budget under the parent lease/deadline",
+        "State retained output caps separately from total pipe bytes drained and per-file versus workspace aggregate limits",
+        "Admit sampled RSS/ancestry guards only as sampled guards; do not claim kernel cgroup containment or guaranteed daemon discovery",
+        "Failure/cancellation attempts preserve bounded diagnostics and recoverable operation identity"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT04",
+      "depends_on": [
+        "BT03"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Requalify conditional integer checking and cache identity transition",
+      "acceptance": [
+        "Fresh current-source observation, exact compilation and two native solvers support each terminal conditional outcome",
+        "Exercise proved, refuted, unknown, disagreement, unavailable, timeout, error, cancellation and unsupported cases within the supported profile",
+        "Changed backend appears in checker environment source_sha256 and verifier profile implementation_sha256; canonical keys and CAS configuration/semantics change",
+        "For unchanged independently rederived inputs, backend change alone does not require changing source/snapshot/contract/compiled CIDs",
+        "Old-key records do not satisfy new-key lookup and never bypass fresh current/native checks; tampered bindings reject"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT05",
+      "depends_on": [
+        "BT04"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Qualify planned DuckDB/DuckLake applicability and typed Intent consumption",
+      "acceptance": [
+        "Append new exact-profile attempts/results with lineage; retain old immutable evidence and receipts without relabeling implementation hashes",
+        "Current-head and qualified-checker applicability fences run before every use",
+        "Only admitted terminal conditional outcomes enter conditional evidence; other statuses remain attempts",
+        "Intent joins preserve IR/family/dimension/task/span/proof-scope identities and assumption gates; historical/candidate proof never becomes authoritative fact"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT06",
+      "depends_on": [
+        "BT00"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Preserve independent IR/model lanes",
+      "acceptance": [
+        "Twelve separate cells retain exact original inventory and storage/Hub ownership",
+        "All26 unique checkpoint/vector/descriptor receipts and28 associations match",
+        "Backend receipt change does not alter embedding/decoder/source-input profile or reset training",
+        "Model evaluation, Legal text reconstruction, teacher provenance, distillation and promotion remain independent pending gates"
+      ],
+      "runtime_receipt": null
+    },
+    {
+      "gate_id": "BT07",
+      "depends_on": [
+        "BT04",
+        "BT05",
+        "BT06"
+      ],
+      "status": "planned_not_executed",
+      "purpose": "Integrate the qualified capability in its owning repository",
+      "acceptance": [
+        "Selected P03/P04/P08 prerequisites and all candidate-bound source/runtime gates pass",
+        "Integrate complete datasets-owned source/test closure, not just F062 or a single patch against a different baseline",
+        "Issue new versioned accepted release manifest with reviewed commit/package origins; retain this unqualified candidate and original manifest",
+        "Propagate only reviewed parent gitlinks for actually selected capabilities; independent model lanes and remaining work items keep their status"
+      ],
+      "runtime_receipt": null
+    }
+  ],
+  "proof_cache_transition": {
+    "implementation_change_creates_new_exact_binding": true,
+    "checker_environment_change_creates_new_exact_binding": true,
+    "rewrite_historical_bindings": false,
+    "reuse_historical_outcomes_as_proof": false,
+    "fresh_current_source_observation_required": true,
+    "fresh_native_checks_required": true,
+    "old_objects_retained": true,
+    "backend_change_alone_requires_new_compiled_cid": false,
+    "planned_index_operation": "append profile-bound attempts/results and retain historical rows; query current applicability",
+    "planned_database_migration_executed": false
+  },
+  "runtime_receipts": {
+    "installed_source_origin": null,
+    "lifecycle_tests": null,
+    "bounds_qualification": null,
+    "native_integer_checks": null,
+    "proof_index_applicability": null,
+    "intent_grounding": null,
+    "release_commit": null,
+    "accepted_release_manifest": null,
+    "parent_gitlinks": null
+  },
+  "runtime_readiness_qualified": false,
+  "source_profile_qualified": false,
+  "proof_authority": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "effects_authorized": false,
+  "network_fetch_performed": false
+}

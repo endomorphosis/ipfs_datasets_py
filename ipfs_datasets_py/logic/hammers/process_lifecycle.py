@@ -26,6 +26,7 @@ import os
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -273,6 +274,27 @@ def _resource_preexec(limits: ProcessLimits):
     return apply_limits
 
 
+def _linux_prlimit_path() -> str:
+    """Use an owner-selected native helper, never a PATH-provided executable."""
+    for path in (Path("/usr/bin/prlimit"), Path("/bin/prlimit")):
+        if path.is_file() and os.access(path, os.X_OK):
+            return str(path.resolve())
+    raise OSError("trusted Linux prlimit helper unavailable; refusing unbounded launch")
+
+
+def _linux_resource_argv(command: Sequence[str], limits: ProcessLimits) -> List[str]:
+    # Executing Python after fork from a pool thread can deadlock on an
+    # inherited lock. Apply rlimits in a native executable before exec instead.
+    argv = [_linux_prlimit_path(), "--core=0:0"]
+    if limits.cpu_seconds is not None:
+        value = max(1, int(math.ceil(limits.cpu_seconds)))
+        argv.append(f"--cpu={value}:{value}")
+    if limits.memory_mb is not None:
+        value = int(limits.memory_mb) * 1024 * 1024
+        argv.append(f"--as={value}:{value}")
+    return [*argv, "--", *command]
+
+
 class ManagedProcess:
     """Handle for a process whose monitor and cleanup belong to a supervisor."""
 
@@ -418,8 +440,10 @@ class ProcessSupervisor:
         child_env[_MANAGED_ID_ENV] = managed_id
         child_env[_SUPERVISOR_ID_ENV] = self.supervisor_id
         started = time.monotonic()
+        linux = sys.platform.startswith("linux")
+        argv = _linux_resource_argv(command, resolved_limits) if linux else list(command)
         process = subprocess.Popen(
-            list(command),
+            argv,
             cwd=str(cwd) if cwd is not None else None,
             env=child_env,
             stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
@@ -427,7 +451,7 @@ class ProcessSupervisor:
             stderr=subprocess.PIPE,
             text=True,
             start_new_session=(os.name == "posix"),
-            preexec_fn=_resource_preexec(resolved_limits),
+            preexec_fn=None if linux else _resource_preexec(resolved_limits),
             shell=False,
         )
         pgid = os.getpgid(process.pid) if os.name == "posix" else process.pid

@@ -19,9 +19,14 @@ from .autoencoder_modality_contracts import ModalityAdapterRegistry, ModalityCon
 
 SCHEMA = "autoencoder-runtime-interface/v1"
 NATIVE_DOMAINS = ("intent_ir", "security_ir", "ui_ux_ir")
+CODEBASE_DOMAIN = "codebase_ir"
+CODEBASE_FEATURE_VERSION = "codebase_feature_v1"
+CODEBASE_SOURCE_FEATURE_VERSION = "source_bound_feature_v1"
+CODEBASE_SOURCE_FEATURE_SCHEMA = "codebase-ir-source-bound-feature-targets@1"
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
 LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
 NATIVE_FORMULA_VERSION = "native_formula_v1"
+PUBLISHED_384_VERSION = "published_384_v1"
 MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
 
 
@@ -53,11 +58,67 @@ def _source_identity(paths):
 def describe_runtime(domain, version):
     """Describe an exact selection; never infer a version from vector width."""
     root = _optimizer_root()
+    if domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION:
+        from .autoencoder_logic_requirements import describe_logic_requirements
+        adapter, _ = _source_bound_codebase_adapter()
+        paths = [("autoencoder_runtime_registry.py", Path(__file__)),
+                 ("autoencoder_logic_requirements.py", root / "autoencoder_logic_requirements.py"),
+                 ("autoencoder_projection_features.py", root / "autoencoder_projection_features.py"),
+                 ("modal_autoencoder_cuda.py", root / "modal_autoencoder_cuda.py"),
+                 ("logic/software_contracts/codebase_ir_targets.py", Path(adapter.__file__))]
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": domain + "/" + version,
+                "input_representation": "source_bound_program_ir_structural_features", "dimension": None,
+                "latent_width_default": 8, "supported_latent_widths": {"minimum": 1, "maximum": 64},
+                "state_schema": features.STATE_SCHEMA, "target_schema": CODEBASE_SOURCE_FEATURE_SCHEMA,
+                "objective_default": "native-projection-reconstruction/v1",
+                "capabilities": ["prepare_targets", "train", "infer", "register_candidate", "load_version"],
+                "integrated": True, "training_purpose": "feature_pretraining",
+                "formal_decoder": {"available": False, "modes": [],
+                                   "scope": "numerical_structural_reconstruction_only"},
+                "resource_policy": "low-level cooperative CPU backend; current-source coordinator owns isolated resource admission and cancellation",
+                "qualification_requirements": describe_logic_requirements(domain),
+                "source_custody_owner": "native_codebase_target_adapter_and_training_coordinator",
+                "runtime_behavior_proved": False, "kernel_checked": False,
+                "planner_admission_eligible": False, "cache_authoritative": False,
+                "source_identity": _source_identity(paths), **features.FALSE}
+    if domain == CODEBASE_DOMAIN:
+        _require(version == CODEBASE_FEATURE_VERSION, "unknown codebase runtime version")
+        from ...logic.formalization.autoencoder import codebase_targets
+        paths = [("autoencoder_runtime_registry.py", Path(__file__)),
+                 ("autoencoder_projection_features.py", root / "autoencoder_projection_features.py"),
+                 ("autoencoder_modality_contracts.py", root / "autoencoder_modality_contracts.py"),
+                 ("codebase_targets.py", Path(codebase_targets.__file__))]
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": domain + "/" + version,
+                "input_representation": "captured_integer_model_structural_features", "dimension": None,
+                "state_schema": features.STATE_SCHEMA, "objective_default": "native-projection-reconstruction/v1",
+                "capabilities": ["prepare_targets", "train", "infer", "register_candidate", "load_version"],
+                "integrated": True, "training_purpose": "feature_pretraining",
+                "formal_decoder": {"available": False, "modes": [], "head_required": True,
+                                   "scope": "feature reconstruction only; no formula/property decoder"},
+                "unknown_atom_policy": "frozen basis reports omitted atoms; different unseen literals can collide; no semantic discrimination guarantee",
+                "resource_policy": "low-level cooperative CPU backend; current-source owner wrapper supplies isolated resource admission and cancellation",
+                "qualification_requirements": {
+                    "domain": domain, "qualified": False, "admitted": False,
+                    "qualification_gaps": ["source runtime semantics", "learned formal decoding",
+                                           "held-out semantic accuracy", "model head promotion", "proof authority"],
+                    "scope": codebase_targets.TARGET_PROFILE},
+                "source_identity": _source_identity(paths), **features.FALSE}
     _require(domain == "legal_ir" or domain in NATIVE_DOMAINS, "unknown modality domain")
     from .autoencoder_logic_requirements import describe_logic_requirements
     requirements = describe_logic_requirements(domain)
     paths = [("autoencoder_runtime_registry.py", Path(__file__)),
              ("autoencoder_logic_requirements.py", root / "autoencoder_logic_requirements.py")]
+    if version == PUBLISHED_384_VERSION:
+        from ...logic.formalization.autoencoder.checkpoint_hub import RUNTIMES
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": RUNTIMES[domain],
+                "input_representation": "gte_small_384d_source_embeddings", "dimension": 384,
+                "state_schema": "ir-384-hub-package/v1", "integrated": True,
+                "capabilities": ["load_checkpoint", "infer"], "release_stage": "development",
+                "source_identity": _source_identity(paths),
+                "qualification_requirements": requirements, **features.FALSE}
     if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
         paths.extend((name, Path(__file__).with_name(name)) for name in (
             "native_formula_training.py", "native_formula_checkpoint.py"))
@@ -147,12 +208,18 @@ def list_runtimes():
     legal = [version for version in LEGAL_VERSIONS if
              ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
               else (namespace / version / "__init__.py")).is_file()]
-    return [describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
+    return [describe_runtime(domain, PUBLISHED_384_VERSION) for domain in ("legal_ir", *NATIVE_DOMAINS)] + [
+        describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
-        for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)]
+        for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)] + [
+        describe_runtime(CODEBASE_DOMAIN, CODEBASE_FEATURE_VERSION),
+        describe_runtime(CODEBASE_DOMAIN, CODEBASE_SOURCE_FEATURE_VERSION)]
 
 
 def _target_adapter(domain):
+    if domain == CODEBASE_DOMAIN:
+        from ...logic.formalization.autoencoder import codebase_targets
+        return codebase_targets, codebase_targets.prepare_codebase_targets
     from ...logic.formalization.autoencoder import domain_targets, ui_targets
     _require(domain in NATIVE_DOMAINS, "native target preparation requires a native domain")
     if domain == "ui_ux_ir":
@@ -161,10 +228,17 @@ def _target_adapter(domain):
                             "security_ir": domain_targets.prepare_security_targets}[domain]
 
 
+def _source_bound_codebase_adapter():
+    from ...logic.software_contracts import codebase_ir_targets
+    return codebase_ir_targets, codebase_ir_targets.prepare_codebase_targets
+
+
 def prepare_targets(domain, version, **inputs):
     """Delegate to the domain's typed compiler/validator, preserving its views."""
     descriptor = describe_runtime(domain, version)
     _require("prepare_targets" in descriptor["capabilities"], "runtime lacks prepare_targets")
+    if domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION:
+        return _source_bound_codebase_adapter()[1](**inputs)
     return _target_adapter(domain)[1](**inputs)
 
 
@@ -186,10 +260,11 @@ class NativeRuntime:
     Training selects a private candidate. Inference never trains. Registry
     publication records ancestry, but does not promote a qualified model head.
     """
-    def __init__(self, domain, *, contract, feature_space, state=None, decoder_head=None):
+    def __init__(self, domain, *, contract, feature_space, state=None, decoder_head=None,
+                 _runtime_version="native_v1"):
         _require(type(contract) is ModalityContract, "typed modality contract required")
         _require(contract.domain == domain, "contract belongs to another domain")
-        self._descriptor = describe_runtime(domain, "native_v1")
+        self._descriptor = describe_runtime(domain, _runtime_version)
         self.contract, self._space = contract, _copy(feature_space)
         features._contract(contract, self._space)
         _require(contract.adapter.identifier == "native-domain-target-adapter" and contract.adapter.version == "1"
@@ -212,7 +287,9 @@ class NativeRuntime:
     def _verify_adapter(self):
         contract = self.contract
         domain = contract.domain
-        adapter, _ = _target_adapter(domain)
+        adapter, _ = (_source_bound_codebase_adapter() if domain == CODEBASE_DOMAIN
+                      and self._descriptor["runtime_version"] == CODEBASE_SOURCE_FEATURE_VERSION
+                      else _target_adapter(domain))
         _require(contract.adapter.sha256 == hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(),
                  "installed native target adapter differs from contract")
 
@@ -284,10 +361,190 @@ class NativeRuntime:
         return decode_formal_features(self._space, head, self.infer(samples))
 
 
+def _codebase_targets(samples):
+    from ...logic.formalization.autoencoder.domain_targets import DomainTargetEnvelope
+    adapter, _ = _target_adapter(CODEBASE_DOMAIN)
+    _require(type(samples) in (list, tuple) and 1 <= len(samples) <= 1024,
+             "codebase target batch must be a bounded nonempty list or tuple")
+    result = []
+    for sample in samples:
+        target = sample if type(sample) is DomainTargetEnvelope else DomainTargetEnvelope.from_dict(sample)
+        result.append(adapter.validate_codebase_targets(target))
+    return result
+
+
+class CodebaseFeatureRuntime:
+    """One frozen integer-model feature basis and exact Adam lineage.
+
+    This low-level API accepts captured replayable targets, not a live checkout.
+    It neither observes structural heads nor grants source or proof authority.
+    The current-source wrapper owns resource isolation and cohort/role fences.
+    """
+
+    def __init__(self, *, contract, feature_space, state=None):
+        _require(type(contract) is ModalityContract and contract.domain == CODEBASE_DOMAIN,
+                 "codebase runtime requires its exact modality contract")
+        self.contract, self._space = contract, _copy(feature_space)
+        self._descriptor = describe_runtime(CODEBASE_DOMAIN, CODEBASE_FEATURE_VERSION)
+        adapter, _ = _target_adapter(CODEBASE_DOMAIN)
+        _require(contract.ir_schema == adapter.TARGET_PROFILE
+                 and self._space.get("projection_ids") == [adapter.PROJECTION_ID],
+                 "codebase feature runtime requires its closed integer-model projection")
+        features._contract(contract, self._space)
+        _require(contract.adapter.identifier == "native-domain-target-adapter" and contract.adapter.version == "1"
+                 and contract.optimizer.version == "1"
+                 and re.fullmatch(r"1:latent-([1-9]|[1-5][0-9]|6[0-4])", contract.state_codec.version),
+                 "implementation labels differ from codebase_feature_v1")
+        self._verify_adapter()
+        self._state = None if state is None else _copy(state)
+        if state is not None:
+            features._validate_state(contract, self._space, self._state)
+        self._parent_version_id = None
+        self._result = None
+        self._training_report = None
+
+    def _verify_adapter(self):
+        adapter, _ = _target_adapter(CODEBASE_DOMAIN)
+        _require(self.contract.adapter.sha256 == hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(),
+                 "installed codebase target adapter differs from contract")
+
+    @property
+    def feature_space(self):
+        return _copy(self._space)
+
+    @property
+    def state(self):
+        return None if self._state is None else _copy(self._state)
+
+    @property
+    def training_report(self):
+        """Historical metadata, including owner-added cohort bindings, unchanged."""
+        return None if self._training_report is None else _copy(self._training_report)
+
+    @property
+    def parent_version_id(self):
+        return self._parent_version_id
+
+    def describe(self):
+        return {**_copy(self._descriptor), "contract": self.contract.to_dict(),
+                "contract_sha256": self.contract.sha256, "variant_id": self.contract.variant_id,
+                "parent_version_id": self._parent_version_id,
+                "latent_width": int(self.contract.state_codec.version.split("latent-")[1])}
+
+    def train(self, samples, *, validation_samples, **options):
+        _require(self._result is None, "register the pending candidate before training another version")
+        _require("base_state" not in options, "resume state is bound to this runtime; use load_version")
+        self._verify_adapter()
+        samples, validation_samples = _codebase_targets(samples), _codebase_targets(validation_samples)
+        options.setdefault("latent_width", int(self.contract.state_codec.version.split("latent-")[1]))
+        result = features.train_projection_features(self.contract, self._space, samples, validation_samples,
+                                                   base_state=self._state, **options)
+        self._result, self._state = _copy(result), _copy(result["state"])
+        self._training_report = _copy(result["report"])
+        return result
+
+    def infer(self, samples, **options):
+        _require(not options, "codebase inference does not accept training or decoder options")
+        _require(self._state is not None, "codebase inference requires a trained or loaded state")
+        self._verify_adapter()
+        result = features.infer_projection_features(self.contract, self._space, self._state, _codebase_targets(samples))
+        return {**result, "feature_coverage_complete": all(row["unknown_atoms"] == 0 for row in result["coverage"]),
+                "semantic_discrimination_guaranteed": False}
+
+    def decode_formal_logic(self, *args, **kwargs):
+        raise RuntimeVersionError("codebase_feature_v1 has no formula decoder or property prediction objective")
+
+    def _register(self, registry, directory, result):
+        self._verify_adapter()
+        receipt = features.register_feature_candidate(registry, self.contract, self._space, result, directory,
+                                                     parent_version_id=self._parent_version_id)
+        self._state, self._training_report = _copy(result["state"]), _copy(result["report"])
+        self._parent_version_id = receipt["version_id"]
+        self._result = None
+        return {**receipt, "runtime_id": self._descriptor["runtime_id"]}
+
+    def register_candidate(self, registry, directory):
+        _require(self._result is not None, "train a candidate before registering it")
+        return self._register(registry, directory, self._result)
+
+    def register_candidate_result(self, registry, directory, result):
+        """Register a trusted isolated worker result without retraining it.
+
+        The caller validates the worker envelope and current source/cohort. This
+        method validates numerical/registry identity and preserves its metadata;
+        accepting a result does not authenticate its numerical producer.
+        """
+        _require(self._result is None, "register the pending candidate before accepting a worker result")
+        _require(type(result) is dict and set(result) == {"state", "report"}, "closed native feature result required")
+        _require(len(features._raw(result)) <= MAX_CANDIDATE_BYTES, "worker feature result exceeds byte bound")
+        result = _copy(result)
+        _require(result["report"].get("base_state_sha256") ==
+                 (None if self._state is None else features.digest(self._state)),
+                 "worker result differs from the runtime numerical parent")
+        return self._register(registry, directory, result)
+
+
+class SourceBoundCodebaseFeatureRuntime(NativeRuntime):
+    """Exact source-bound target feature basis, numerical state and ancestry.
+
+    The target adapter and current-source coordinator own source custody. This
+    runtime reconstructs structural features and has no semantic decoder,
+    property predictor, proof authority, or model-head promotion operation.
+    """
+    def __init__(self, *, contract, feature_space, state=None, decoder_head=None):
+        _require(type(contract) is ModalityContract and contract.domain == CODEBASE_DOMAIN,
+                 "source-bound CodebaseIR runtime requires its exact modality contract")
+        _require(contract.ir_schema == CODEBASE_SOURCE_FEATURE_SCHEMA,
+                 "source-bound CodebaseIR target schema differs from this profile")
+        _require(decoder_head is None, "source-bound CodebaseIR feature profile has no formal decoder")
+        adapter, _ = _source_bound_codebase_adapter()
+        _require(type(feature_space) is dict and type(feature_space.get("projection_ids")) is list
+                 and bool(feature_space["projection_ids"])
+                 and set(feature_space["projection_ids"]) <= {
+                     adapter.CODEBASE_PROGRAM_PROJECTION, adapter.CODEBASE_CONTRACTS_PROJECTION},
+                 "source-bound CodebaseIR feature basis contains an unsupported projection")
+        super().__init__(CODEBASE_DOMAIN, contract=contract, feature_space=feature_space, state=state,
+                         _runtime_version=CODEBASE_SOURCE_FEATURE_VERSION)
+        self._training_report = None
+
+    @property
+    def training_report(self):
+        return None if self._training_report is None else _copy(self._training_report)
+
+    @property
+    def parent_version_id(self):
+        return self._parent_version_id
+
+    def train(self, samples, *, validation_samples, **options):
+        result = super().train(_source_bound_codebase_targets(samples),
+                               validation_samples=_source_bound_codebase_targets(validation_samples), **options)
+        self._training_report = _copy(result["report"])
+        return result
+
+    def infer(self, samples, **options):
+        return super().infer(_source_bound_codebase_targets(samples), **options)
+
+    def decode_formal_logic(self, *args, **kwargs):
+        raise RuntimeVersionError("source-bound CodebaseIR feature profile has no formal decoder")
+
+
+def _source_bound_codebase_targets(samples):
+    from ...logic.formalization.autoencoder.domain_targets import DomainTargetEnvelope
+    adapter, _ = _source_bound_codebase_adapter()
+    _require(type(samples) in (list, tuple) and 1 <= len(samples) <= 1024,
+             "source-bound CodebaseIR target batch must be bounded and nonempty")
+    return [adapter.validate_codebase_targets(sample if type(sample) is DomainTargetEnvelope
+            else DomainTargetEnvelope.from_dict(sample)) for sample in samples]
+
+
 class LegalRuntime:
     """Legal features with optional jointly trained latent formula projection/head."""
     def __init__(self, version, *, checkpoint=None, expected_sha256=None,
-                 formula_checkpoint=None, formula_sha256=None, **model_options):
+                 formula_checkpoint=None, formula_sha256=None, optimized=True, **model_options):
+        _require(type(optimized) is bool, "optimized must be a boolean")
+        self._optimized = optimized
+        self._inference_session = None
+        self._inference_decoder = None
         self._descriptor = describe_runtime("legal_ir", version)
         # The module name is selected solely from the closed local enum above.
         namespace = importlib.import_module(__package__ + ".autoencoder_lineages." + version)
@@ -316,15 +573,33 @@ class LegalRuntime:
         return result
 
     def train(self, samples, *, validation_samples=None, **options):
+        self._inference_session = None
+        self._inference_decoder = None
         return self.model.train_generalizable_projection(samples, validation_samples=validation_samples, **options)
 
     def infer(self, samples, **options):
         if self.model._joint_formula_checkpoint is not None:
             _require(not options, "joint formula inference has no bridge or compiler options")
+            if self._optimized:
+                from .modal_joint_formula_inference import JointInferenceSession
+                # Explicit reattachment replaces the owning decoder after full
+                # validation. In-place checkpoint/tensor writes still reach
+                # the existing session's original integrity checks.
+                decoder = self.model._joint_formula_decoder
+                if (self._inference_session is None or self._inference_decoder is not decoder
+                        or self._inference_session._model is not self.model):
+                    session = JointInferenceSession(self.model)
+                    self._inference_session = session
+                    self._inference_decoder = decoder
+                return self._inference_session.infer(samples)
             return self.model.decode_formal_logic(samples, mode="learned_latent")
         return self.model.evaluate(samples, **options)
 
     def decode_formal_logic(self, samples, *, mode=None, **options):
+        if self._optimized and self.model._joint_formula_checkpoint is not None and (
+                not mode or mode == "learned_latent"):
+            _require(not options, "learned latent inference has no compiler or sampling options")
+            return self.infer(samples)
         return self.model.decode_formal_logic(samples, mode=mode, **options)
 
 
@@ -458,6 +733,13 @@ def open_runtime(domain, version, **binding):
     """Select explicitly. Dimensions, source metadata, and filenames never dispatch."""
     descriptor = describe_runtime(domain, version)
     _require(descriptor["integrated"], descriptor.get("unsupported_reason", "runtime is not integrated"))
+    if domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION:
+        return SourceBoundCodebaseFeatureRuntime(**binding)
+    if domain == CODEBASE_DOMAIN:
+        return CodebaseFeatureRuntime(**binding)
+    if version == PUBLISHED_384_VERSION:
+        from ...logic.formalization.autoencoder.checkpoint_hub import open_autoencoder
+        return open_autoencoder(domain, **binding)
     if domain in NATIVE_DOMAINS and version == NATIVE_FORMULA_VERSION:
         return NativeFormulaRuntime(domain, **binding)
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
@@ -485,6 +767,28 @@ def build_native_runtime(domain, version, training_targets, *, projection_ids, i
     return open_runtime(domain, version, contract=contract, feature_space=space, decoder_head=head)
 
 
+def build_codebase_feature_runtime(training_targets, *, latent_width=8):
+    """Fit only the captured training vocabulary; no fitting or head promotion."""
+    adapter, _ = _target_adapter(CODEBASE_DOMAIN)
+    targets = _codebase_targets(training_targets)
+    space = features.build_feature_space(CODEBASE_DOMAIN, [adapter.PROJECTION_ID], targets)
+    contract = features.build_native_feature_contract(space, ir_schema=adapter.TARGET_PROFILE,
+        adapter_sha256=hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(), latent_width=latent_width)
+    return open_runtime(CODEBASE_DOMAIN, CODEBASE_FEATURE_VERSION, contract=contract, feature_space=space)
+
+
+def build_source_bound_codebase_runtime(training_targets, *, projection_ids=None, latent_width=8):
+    """Fit the explicit source-bound CodebaseIR feature basis on training only."""
+    adapter, _ = _source_bound_codebase_adapter()
+    targets = _source_bound_codebase_targets(training_targets)
+    if projection_ids is None:
+        projection_ids = [adapter.CODEBASE_PROGRAM_PROJECTION, adapter.CODEBASE_CONTRACTS_PROJECTION]
+    space = features.build_feature_space(CODEBASE_DOMAIN, projection_ids, targets)
+    contract = features.build_native_feature_contract(space, ir_schema=CODEBASE_SOURCE_FEATURE_SCHEMA,
+        adapter_sha256=hashlib.sha256(Path(adapter.__file__).read_bytes()).hexdigest(), latent_width=latent_width)
+    return open_runtime(CODEBASE_DOMAIN, CODEBASE_SOURCE_FEATURE_VERSION, contract=contract, feature_space=space)
+
+
 def _read_candidate(registry, version):
     from ...duckdb_control.autoencoder_registry import SCHEMA as REGISTRY_SCHEMA, content_identity
     expected_version = content_identity({"schema": REGISTRY_SCHEMA, **{
@@ -502,11 +806,43 @@ def _read_candidate(registry, version):
     return saved
 
 
+def _source_bound_completed_run_metadata(registry, row, saved, contract):
+    """Replay native durable run linkage and bind its result to this checkpoint."""
+    metadata = row["metadata"]
+    _require(type(metadata) is dict and set(metadata) == {"producer_run", "attempt", "result"}
+             and type(metadata["producer_run"]) is str
+             and type(metadata["attempt"]) is int and metadata["attempt"] >= 1,
+             "source-bound completed-run candidate metadata differs")
+    result = metadata["result"]
+    expected = {"training_purpose": "feature_pretraining", "contract_sha256": contract.sha256,
+                "feature_space_sha256": features.digest(saved["feature_space"]),
+                "state_sha256": features.digest(saved["state"]),
+                "report_sha256": features.digest(saved["report"]), **features.FALSE}
+    _require(type(result) is dict and result == expected
+             and all(result.get(name) is False for name in features.FALSE),
+             "source-bound completed-run result identity or authority differs")
+    completion = registry.get_run_completion(metadata["producer_run"])
+    _require(type(completion) is dict and set(completion) == {"run", "completion_receipt", "candidate_version"},
+             "source-bound candidate lacks a native completed run")
+    receipt, run = completion["completion_receipt"], completion["run"]
+    _require(completion["candidate_version"] == row and type(receipt) is dict and type(run) is dict
+             and receipt.get("version_id") == row["version_id"]
+             and receipt.get("run_id") == metadata["producer_run"]
+             and receipt.get("admitted") is False and receipt.get("promoted") is False
+             and run.get("run_id") == metadata["producer_run"]
+             and run.get("attempt") == metadata["attempt"] and run.get("result") == result
+             and run.get("variant_id") == row["variant_id"]
+             and run.get("base_version_id") == row["parent_version_id"],
+             "source-bound completed-run producer binding differs")
+
+
 def load_version(registry, version_id, *, domain, version):
     """Verify and reload a native candidate from the existing DuckDB registry.
 
     The caller selects the expected domain/version. Metadata cannot select
     imports, replace projections, migrate Adam state, or raise authority.
+    Only the source-bound CodebaseIR feature profile additionally accepts
+    candidates tied to an independently replayed native completed-run record.
     """
     descriptor = describe_runtime(domain, version)
     _require("load_version" in descriptor["capabilities"], "runtime lacks registry load_version")
@@ -524,6 +860,7 @@ def load_version(registry, version_id, *, domain, version):
         return runtime
     row = registry.get_version(version_id)
     if "decoder_head_sha256" in row["metadata"]:
+        _require(domain != CODEBASE_DOMAIN, "codebase feature runtime does not accept formal decoder artifacts")
         from .native_formal_checkpoint import FormalCandidateError, load_formal_candidate
         try:
             saved = load_formal_candidate(registry, version_id, domain)
@@ -538,8 +875,14 @@ def load_version(registry, version_id, *, domain, version):
     _require(row["variant_id"] == contract.variant_id, "registry variant differs from candidate contract")
     manifest = registry.get_variant(row["variant_id"])["manifest"]
     _require(manifest == contract.registry_manifest(), "registry modality manifest differs from candidate")
-    _require(row["metadata"] == {"contract_sha256": contract.sha256,
-             "training_purpose": "feature_pretraining", **features.FALSE}, "candidate metadata differs")
+    feature_metadata = {"contract_sha256": contract.sha256,
+                        "training_purpose": "feature_pretraining", **features.FALSE}
+    if row["metadata"] != feature_metadata or (
+            domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION
+            and any(row["metadata"].get(name) is not False for name in features.FALSE)):
+        _require(domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION,
+                 "candidate metadata differs")
+        _source_bound_completed_run_metadata(registry, row, saved, contract)
     report, state = saved["report"], saved["state"]
     _require(report["contract_sha256"] == contract.sha256
              and report["feature_space_sha256"] == features.digest(saved["feature_space"])
@@ -555,6 +898,8 @@ def load_version(registry, version_id, *, domain, version):
                  "candidate numerical parent differs from registry parent")
     runtime = open_runtime(domain, version, contract=contract, feature_space=saved["feature_space"], state=state)
     runtime._parent_version_id = row["version_id"]
+    if domain == CODEBASE_DOMAIN:
+        runtime._training_report = _copy(report)
     return runtime
 
 
@@ -601,6 +946,9 @@ class StreamedFormalRuntime:
 def open_formal_decoder(domain, version, **binding):
     """One explicit formal-output factory, including the v2 read-only decoder."""
     describe_runtime(domain, version)  # closed trusted-local dispatch
+    _require(not (domain == CODEBASE_DOMAIN and version == CODEBASE_SOURCE_FEATURE_VERSION),
+             "source-bound CodebaseIR feature profile has no formal decoder")
+    _require(domain != CODEBASE_DOMAIN, "codebase_feature_v1 has no formal decoder")
     if domain in NATIVE_DOMAINS and version == "native_v2":
         return StreamedFormalRuntime(domain, **binding)
     return open_runtime(domain, version, **binding)
@@ -610,4 +958,7 @@ __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_
            "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
            "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime", "LearnedFormulaRuntime",
            "LEARNED_FORMULA_VERSION", "NATIVE_FORMULA_VERSION", "NativeFormulaRuntime",
-           "build_native_formula_runtime"]
+           "build_native_formula_runtime", "CodebaseFeatureRuntime", "build_codebase_feature_runtime",
+           "CODEBASE_DOMAIN", "CODEBASE_FEATURE_VERSION", "CODEBASE_SOURCE_FEATURE_VERSION",
+           "CODEBASE_SOURCE_FEATURE_SCHEMA", "SourceBoundCodebaseFeatureRuntime",
+           "build_source_bound_codebase_runtime"]

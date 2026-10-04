@@ -114,8 +114,11 @@ def _prefix_call_token(expression: str) -> Optional[ParseToken]:
         else:
             raise DCECParsingError("Unsupported argument in functional expression")
     name = match.group(1)
+    if name.lower() in {"next", "x"} and len(args) != 1:
+        raise DCECParsingError("Temporal next requires exactly one formula argument")
     formula_operators = {"o", "p", "f", "and", "or", "not", "implies", "iff",
-                         "ifandonlyif", "b", "k", "i", "always", "box", "eventually", "diamond"}
+                         "ifandonlyif", "b", "k", "i", "always", "box", "eventually", "diamond",
+                         "next", "x"}
     if name.lower() not in formula_operators and any(isinstance(arg, ParseToken) for arg in args):
         raise DCECParsingError("Nested function terms are not supported")
     return ParseToken(name, args)
@@ -366,10 +369,11 @@ def token_to_formula(
                 return TemporalFormula(TemporalOperator.EVENTUALLY, formula)
 
     elif func_name in ["next", "x"]:
-        if len(token.args) >= 1:
-            formula = _arg_to_formula(token.args[0], namespace, variables)
-            if formula:
-                return TemporalFormula(TemporalOperator.NEXT, formula)
+        if len(token.args) != 1:
+            raise DCECParsingError("Temporal next requires exactly one formula argument")
+        formula = _arg_to_formula(token.args[0], namespace, variables)
+        if formula:
+            return TemporalFormula(TemporalOperator.NEXT, formula)
 
     # Atomic formula (predicate)
     else:

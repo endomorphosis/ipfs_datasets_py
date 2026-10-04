@@ -1,0 +1,980 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Authored intent and codebase grounding pilot specification",
+  "description": "Closed planning/fixture schema. Valid shape is not runtime owner admission; all live identities and actual outcomes remain absent.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "intent-codebase-grounding-pilot-spec/v1"
+    },
+    "status": {
+      "const": "authored_acceptance_specification"
+    },
+    "guide": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_contracts": {
+      "type": "string",
+      "minLength": 1
+    },
+    "validation_schema": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pipeline_plan": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_items": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspection_record": {
+      "type": "string",
+      "minLength": 1
+    },
+    "first_milestone": {
+      "const": "registered_capture_conditional_evidence_and_read_only_intent_grounding"
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "const": "counter.py"
+        },
+        "function": {
+          "const": "increment"
+        },
+        "parameter": {
+          "const": "x"
+        },
+        "profile": {
+          "const": "python-integer-offset@1"
+        },
+        "repository_selection": {
+          "const": "isolated authored fixture when executed; never scan current dirty workspace"
+        },
+        "whole_repository_claim": {
+          "const": false
+        },
+        "first_milestone_executes_edit": {
+          "const": false
+        },
+        "first_milestone_trains_model": {
+          "const": false
+        },
+        "missing_models_block_deterministic_milestone": {
+          "const": false
+        }
+      },
+      "required": [
+        "path",
+        "function",
+        "parameter",
+        "profile",
+        "repository_selection",
+        "whole_repository_claim",
+        "first_milestone_executes_edit",
+        "first_milestone_trains_model",
+        "missing_models_block_deterministic_milestone"
+      ]
+    },
+    "source_fixtures": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "source_fixture_id": {
+            "enum": [
+              "source_offset1",
+              "source_offset2"
+            ]
+          },
+          "path": {
+            "const": "counter.py"
+          },
+          "encoding": {
+            "const": "ASCII"
+          },
+          "line_endings": {
+            "const": "LF"
+          },
+          "source_text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bytes": {
+            "const": 47
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "raw_source_cid": {
+            "type": "string",
+            "pattern": "^b[a-z2-7]{20,}$"
+          },
+          "fixture_status": {
+            "const": "authored_not_captured_repository"
+          },
+          "static_profile_guard_checked": {
+            "const": true
+          }
+        },
+        "required": [
+          "source_fixture_id",
+          "path",
+          "encoding",
+          "line_endings",
+          "source_text",
+          "bytes",
+          "sha256",
+          "raw_source_cid",
+          "fixture_status",
+          "static_profile_guard_checked"
+        ]
+      }
+    },
+    "contract_fixtures": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "contract_fixture_id": {
+            "enum": [
+              "contract_offset1",
+              "contract_offset2"
+            ]
+          },
+          "native_contract": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "schema": {
+                "const": "codebase-integer-offset-contract@1"
+              },
+              "profile": {
+                "const": "python-integer-offset@1"
+              },
+              "path": {
+                "const": "counter.py"
+              },
+              "function_name": {
+                "const": "increment"
+              },
+              "parameter": {
+                "const": "x"
+              },
+              "offset": {
+                "enum": [
+                  1,
+                  2
+                ]
+              }
+            },
+            "required": [
+              "schema",
+              "profile",
+              "path",
+              "function_name",
+              "parameter",
+              "offset"
+            ]
+          },
+          "native_contract_cid": {
+            "type": "string",
+            "pattern": "^b[a-z2-7]{20,}$"
+          },
+          "owner_roundtrip_checked": {
+            "const": true
+          }
+        },
+        "required": [
+          "contract_fixture_id",
+          "native_contract",
+          "native_contract_cid",
+          "owner_roundtrip_checked"
+        ]
+      }
+    },
+    "normative_checker_assumptions": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "const": "The argument is an exact built-in Python int, excluding bool and subclasses; source annotations do not enforce this."
+        },
+        {
+          "const": "Integer arithmetic uses the unbounded mathematical model; allocation failure, resource exhaustion and asynchronous interruption are excluded from modeled execution."
+        },
+        {
+          "const": "The captured function is called directly with one supplied argument in sequential execution; module loading, rebinding and concurrent code changes are outside the model."
+        }
+      ],
+      "items": false
+    },
+    "intent_fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "const": "authored_desired_requirement_not_verified_intent_ir"
+        },
+        "desired_contract_fixture_id": {
+          "const": "contract_offset2"
+        },
+        "actual_verified_intent_artifact_ref": {
+          "type": "null"
+        },
+        "actual_verified_formalization_artifact_ref": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "text",
+        "status",
+        "desired_contract_fixture_id",
+        "actual_verified_intent_artifact_ref",
+        "actual_verified_formalization_artifact_ref"
+      ]
+    },
+    "runtime_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_id": {
+          "type": "null"
+        },
+        "source_mode_receipt": {
+          "type": "null"
+        },
+        "head_h0": {
+          "type": "null"
+        },
+        "head_h1": {
+          "type": "null"
+        },
+        "current_graph_cid": {
+          "type": "null"
+        },
+        "native_subject_version_h0": {
+          "type": "null"
+        },
+        "planned_post_subject_ref": {
+          "type": "null"
+        },
+        "observed_subject_version_h1": {
+          "type": "null"
+        },
+        "program_transition_query_ref": {
+          "type": "null"
+        },
+        "program_transition_observation_ref": {
+          "type": "null"
+        },
+        "checker_environment": {
+          "type": "null"
+        },
+        "producer_runner_manifest": {
+          "type": "null"
+        },
+        "fresh_receipt_offset1_h0": {
+          "type": "null"
+        },
+        "fresh_receipt_offset2_h0": {
+          "type": "null"
+        },
+        "fresh_receipt_offset2_h1": {
+          "type": "null"
+        },
+        "owner_grounding_receipt": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "repository_id",
+        "source_mode_receipt",
+        "head_h0",
+        "head_h1",
+        "current_graph_cid",
+        "native_subject_version_h0",
+        "planned_post_subject_ref",
+        "observed_subject_version_h1",
+        "program_transition_query_ref",
+        "program_transition_observation_ref",
+        "checker_environment",
+        "producer_runner_manifest",
+        "fresh_receipt_offset1_h0",
+        "fresh_receipt_offset2_h0",
+        "fresh_receipt_offset2_h1",
+        "owner_grounding_receipt"
+      ]
+    },
+    "runtime_materialization": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_canonical_owners": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "proof_index_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "current_accepted_statuses": {
+          "const": [
+            "proved",
+            "refuted"
+          ]
+        },
+        "scope": {
+          "const": "conditional_integer_contract"
+        },
+        "evidence_kind": {
+          "const": "conditional_smt"
+        },
+        "fresh_native_check_required_for_current_use": {
+          "const": true
+        },
+        "kernel_checked": {
+          "const": false
+        },
+        "behavior_authority": {
+          "const": false
+        },
+        "execution_authority": {
+          "const": false
+        },
+        "completion_authority": {
+          "const": false
+        },
+        "other_outcomes": {
+          "const": "Proposed separate attempt journal or reviewed owner extension; raised cancellation/stale failures mapped explicitly."
+        }
+      },
+      "required": [
+        "current_accepted_statuses",
+        "scope",
+        "evidence_kind",
+        "fresh_native_check_required_for_current_use",
+        "kernel_checked",
+        "behavior_authority",
+        "execution_authority",
+        "completion_authority",
+        "other_outcomes"
+      ]
+    },
+    "inherited_asset_observations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source8_parent": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "receipt": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ]
+            },
+            "input_width": {
+              "const": 53
+            },
+            "latent_width": {
+              "const": 8
+            },
+            "dimension_role": {
+              "const": "internal_latent"
+            },
+            "selections": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "contracts": {
+                    "type": "array"
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "role": {
+                    "enum": [
+                      "train",
+                      "tune",
+                      "canary"
+                    ]
+                  }
+                },
+                "required": [
+                  "contracts",
+                  "path",
+                  "role"
+                ]
+              }
+            },
+            "train_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "tuning_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "canary_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "heldout_canary": {
+              "const": false
+            }
+          },
+          "required": [
+            "receipt",
+            "input_width",
+            "latent_width",
+            "dimension_role",
+            "selections",
+            "train_coverage",
+            "tuning_coverage",
+            "canary_coverage",
+            "heldout_canary"
+          ]
+        },
+        "source8_child": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "receipt": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ]
+            },
+            "input_width": {
+              "const": 53
+            },
+            "latent_width": {
+              "const": 8
+            },
+            "dimension_role": {
+              "const": "internal_latent"
+            },
+            "selections": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "contracts": {
+                    "type": "array"
+                  },
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "role": {
+                    "enum": [
+                      "train",
+                      "tune",
+                      "canary"
+                    ]
+                  }
+                },
+                "required": [
+                  "contracts",
+                  "path",
+                  "role"
+                ]
+              }
+            },
+            "train_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "tuning_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "canary_coverage": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "known_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "projection_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "unknown_atoms": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "known_atoms",
+                  "projection_id",
+                  "unknown_atoms"
+                ]
+              }
+            },
+            "heldout_canary": {
+              "const": false
+            }
+          },
+          "required": [
+            "receipt",
+            "input_width",
+            "latent_width",
+            "dimension_role",
+            "selections",
+            "train_coverage",
+            "tuning_coverage",
+            "canary_coverage",
+            "heldout_canary"
+          ]
+        }
+      },
+      "required": [
+        "source8_parent",
+        "source8_child"
+      ]
+    },
+    "derived_basis_facts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "const": "Pure traversal of saved JSON projection leaves and comparison with frozen feature columns; no model inference."
+        },
+        "projection_id": {
+          "const": "codebase_ir.program@1"
+        },
+        "known_literal": {
+          "const": 1
+        },
+        "child_changed_train_literal": {
+          "const": 2
+        },
+        "tune_literal": {
+          "const": 3
+        },
+        "canary_literal": {
+          "const": 5
+        },
+        "these_critical_tokens_absent_from_frozen_columns": {
+          "const": true
+        },
+        "registered_counter_path": {
+          "const": false
+        },
+        "pilot_model_outcome": {
+          "const": "migration_required"
+        },
+        "historical_canary_is_independent_holdout": {
+          "const": false
+        }
+      },
+      "required": [
+        "method",
+        "projection_id",
+        "known_literal",
+        "child_changed_train_literal",
+        "tune_literal",
+        "canary_literal",
+        "these_critical_tokens_absent_from_frozen_columns",
+        "registered_counter_path",
+        "pilot_model_outcome",
+        "historical_canary_is_independent_holdout"
+      ]
+    },
+    "identity_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "raw_source_cid_is_repository_snapshot": {
+          "const": false
+        },
+        "raw_content_sha_is_target_source_digest": {
+          "const": false
+        },
+        "target_source_digest_is_vector_profile_key": {
+          "const": false
+        },
+        "native_identity_cid_is_full_record_transport_cid": {
+          "const": false
+        },
+        "pinned_artifact_ref_accepts_raw_python_bytes": {
+          "const": false
+        },
+        "native_transition_observation_replaces_query_subject_with_successor": {
+          "const": false
+        },
+        "canonical_ids_from_existing_owner": {
+          "const": true
+        }
+      },
+      "required": [
+        "raw_source_cid_is_repository_snapshot",
+        "raw_content_sha_is_target_source_digest",
+        "target_source_digest_is_vector_profile_key",
+        "native_identity_cid_is_full_record_transport_cid",
+        "pinned_artifact_ref_accepts_raw_python_bytes",
+        "native_transition_observation_replaces_query_subject_with_successor",
+        "canonical_ids_from_existing_owner"
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 23,
+      "maxItems": 23,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^G[0-9]{2}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "expected_outcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectation_status": {
+            "const": "planned_not_executed"
+          },
+          "actual_outcome": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "case_id",
+          "title",
+          "gate",
+          "input_refs",
+          "expected_outcome",
+          "expectation_status",
+          "actual_outcome"
+        ]
+      }
+    },
+    "implementation_handoffs": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "C00",
+          "C01",
+          "C04",
+          "C05",
+          "C07",
+          "C17",
+          "C10",
+          "C08",
+          "C09"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "actions_performed": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_scan": {
+          "const": false
+        },
+        "solver_execution": {
+          "const": false
+        },
+        "repository_code_execution": {
+          "const": false
+        },
+        "model_inference": {
+          "const": false
+        },
+        "model_training": {
+          "const": false
+        },
+        "embedding_regeneration": {
+          "const": false
+        },
+        "downloads": {
+          "const": false
+        },
+        "runtime_databases_created": {
+          "const": false
+        },
+        "remote_repositories_created": {
+          "const": false
+        },
+        "git_merge_or_push": {
+          "const": false
+        },
+        "runtime_promotion": {
+          "const": false
+        },
+        "effect_execution": {
+          "const": false
+        }
+      },
+      "required": [
+        "repository_scan",
+        "solver_execution",
+        "repository_code_execution",
+        "model_inference",
+        "model_training",
+        "embedding_regeneration",
+        "downloads",
+        "runtime_databases_created",
+        "remote_repositories_created",
+        "git_merge_or_push",
+        "runtime_promotion",
+        "effect_execution"
+      ]
+    },
+    "authoring_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "canonical_source_and_contract_serialization": {
+          "const": true
+        },
+        "native_contract_roundtrip": {
+          "const": true
+        },
+        "native_static_source_guard": {
+          "const": true
+        },
+        "runtime_admission": {
+          "const": false
+        },
+        "expected_solver_outcomes_executed": {
+          "const": false
+        }
+      },
+      "required": [
+        "canonical_source_and_contract_serialization",
+        "native_contract_roundtrip",
+        "native_static_source_guard",
+        "runtime_admission",
+        "expected_solver_outcomes_executed"
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "status",
+    "guide",
+    "adapter_contracts",
+    "validation_schema",
+    "pipeline_plan",
+    "work_items",
+    "inspection_record",
+    "first_milestone",
+    "scope",
+    "source_fixtures",
+    "contract_fixtures",
+    "normative_checker_assumptions",
+    "intent_fixture",
+    "runtime_bindings",
+    "runtime_materialization",
+    "required_canonical_owners",
+    "proof_index_admission",
+    "inherited_asset_observations",
+    "derived_basis_facts",
+    "identity_policy",
+    "cases",
+    "implementation_handoffs",
+    "actions_performed",
+    "authoring_checks"
+  ]
+}

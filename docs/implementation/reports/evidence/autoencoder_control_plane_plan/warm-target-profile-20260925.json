@@ -1,0 +1,683 @@
+{
+  "admitted": false,
+  "diagnostic_elapsed_seconds": 7.5297300280071795,
+  "diagnostic_only": true,
+  "error": {
+    "message": "target configuration/provenance mismatch",
+    "type": "TargetSnapshotError"
+  },
+  "formalized": false,
+  "owner_dispatch_performed": false,
+  "passed": false,
+  "prior_receipt": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence/autoencoder_control_plane_plan/produced-arrow-training-20260925.json",
+    "sha256": "85795ae5ced30be0e47e31eb1fd211916f8afa226b85f3843647e48f29dad5e3"
+  },
+  "profile_artifact": {
+    "bytes": 1140893,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/warm-target-profile-20260925/worker.pstats",
+    "sha256": "34d23e10f85e2180187002c5ff60d77dea53a0d857c163e3400af071768c97a2"
+  },
+  "profile_script_sha256": "86192eb9fbac1a58124da8895b15709396b304bf4ebe3a1cdf89628ee6d20da1",
+  "promotion_performed": false,
+  "publication_performed": false,
+  "schema": "shared-corpus-training-profile-v1",
+  "source_hashes": {
+    "ipfs_datasets_py/duckdb_control/autoencoder_registry.py": "57f4c5d90ab867da408daeadedc86981d16ed3824a322c5672e364159e8c5d97",
+    "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "5ec4ca7c38570b81a77bf2dab6b53c98201bb432bb41cb78ba507b10d0a3fac0",
+    "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "ea23d878c00337e8b1e42c6c06faa976a61c3ef6b446b63c5a04327a34678b12",
+    "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "c354a655ae7ab90a74282d8f329179819df0bb7222d212e2d5bd31e32e9a2fa8",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_arrow_inputs.py": "49c9bd491558a1cf3440063a0af38e8e69e897b6d3d2319c5e704542a5f5b08c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py": "5acd34400e483e123d53a83bcd49fde84d619623e58dd8dcb269ae092333dd7b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py": "614f17a9db7300368ca175aac808855d16c6ce8c1ea01ffaddb8c89a52148e63",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": "90dfe43fbec34a18d97047734f2f3ce7008b7c9ecfe3961acc97bc2128b3cfab",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_bundle.py": "7419e1c0f8f245b94d67ed44ff3a56149a4d92006b3df436404bee3893e0d7d9",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_target_snapshot.py": "7d0a014c4856826aafbe972534456af72e5b69c737662f8ce93a3e8e1d647c9b",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py": "e46d794d38971343d8f3aed68fb224e5b44292cf9f4b8c973dedc20db5651b87",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py": "54b0824707bd22b49f8eaf975474aa05f1aeb791f25ae28aa4ddcf74996f1a17",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_arrow_weights.py": "77cbd67d099c32c20bfe0ae1364d980c32464e9de018da57bba22b3bf221174a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_patch_codec.py": "0a3f18c9ef8e7589cd0a880e4b89b6f4f53d37af7602a63f315595e692d1fb96",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_sparse_checkpoint.py": "9fe1c3db314ddc170c5cec7861da1541d48b98992ec289d0cc053ef5f25e58f3",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_transaction.py": "d590112f9b6dcf3005c273a6291320b0fa0a218969326839f5c5be4ae332e89a",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py": "bbd62e121201faf2012c247a4e19b7cedb221c2fe3aa90eb55589dc1f472f484",
+    "scripts/ops/legal_ir/benchmark_produced_corpus_arrow_training.py": "d6b91dafeff9584bb98052b05a05038ec5f520f1e7d1cc6c791a6e76ac5334e1",
+    "scripts/ops/legal_ir/benchmark_shared_autoencoder_training.py": "0fed89ccac13fd223f2a65b1f2071500d834445fb61e5ddce25cea87a8c60f0d",
+    "scripts/ops/legal_ir/benchmark_sparse_checkpoint_training.py": "88ca7da74bbfee722d5197f23567669f7b139ea61cbc936b4abf60fd7006f293"
+  },
+  "top_cumulative": [
+    {
+      "calls": 1,
+      "cumulative_seconds": 2.2292176560000003,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "function": "from_dict",
+      "line": 3083,
+      "primitive_calls": 1,
+      "self_seconds": 0.10682211300000001
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 2.119759564,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "function": "__post_init__",
+      "line": 1049,
+      "primitive_calls": 1,
+      "self_seconds": 5.0016000000000004e-05
+    },
+    {
+      "calls": 38,
+      "cumulative_seconds": 2.119660876,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "track_component",
+      "line": 436,
+      "primitive_calls": 38,
+      "self_seconds": 2.752e-05
+    },
+    {
+      "calls": 38,
+      "cumulative_seconds": 2.119633356,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "_install",
+      "line": 422,
+      "primitive_calls": 38,
+      "self_seconds": 9.353600000000001e-05
+    },
+    {
+      "calls": 828570,
+      "cumulative_seconds": 2.119501387,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "_tracked_value",
+      "line": 327,
+      "primitive_calls": 38,
+      "self_seconds": 0.190689359
+    },
+    {
+      "calls": 33693,
+      "cumulative_seconds": 2.119350218,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "__init__",
+      "line": 70,
+      "primitive_calls": 33,
+      "self_seconds": 0.07530255100000001
+    },
+    {
+      "calls": 424952,
+      "cumulative_seconds": 2.096256494,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "<genexpr>",
+      "line": 82,
+      "primitive_calls": 88352,
+      "self_seconds": 0.08006449
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 2.036492639,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_target_preparation.py",
+      "function": "target_snapshot_config",
+      "line": 28,
+      "primitive_calls": 1,
+      "self_seconds": 0.021630108000000002
+    },
+    {
+      "calls": 8420759,
+      "cumulative_seconds": 2.017520201,
+      "file": "~",
+      "function": "<built-in method builtins.isinstance>",
+      "line": 0,
+      "primitive_calls": 4858587,
+      "self_seconds": 0.655697924
+    },
+    {
+      "calls": 1781086,
+      "cumulative_seconds": 1.5587365830000002,
+      "file": "/usr/lib/python3.12/typing.py",
+      "function": "__instancecheck__",
+      "line": 1194,
+      "primitive_calls": 1781086,
+      "self_seconds": 0.30189450500000004
+    },
+    {
+      "calls": 1781086,
+      "cumulative_seconds": 1.256842078,
+      "file": "/usr/lib/python3.12/typing.py",
+      "function": "__subclasscheck__",
+      "line": 1465,
+      "primitive_calls": 1781086,
+      "self_seconds": 0.375050629
+    },
+    {
+      "calls": 54662,
+      "cumulative_seconds": 1.093187888,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "__init__",
+      "line": 186,
+      "primitive_calls": 54662,
+      "self_seconds": 0.062471660000000005
+    },
+    {
+      "calls": 491935,
+      "cumulative_seconds": 1.030716228,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "<genexpr>",
+      "line": 198,
+      "primitive_calls": 491935,
+      "self_seconds": 0.086816128
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 1.003903435,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder.py",
+      "function": "state_identity_record",
+      "line": 1138,
+      "primitive_calls": 1,
+      "self_seconds": 5.168e-06
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 1.003898267,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "identity",
+      "line": 531,
+      "primitive_calls": 1,
+      "self_seconds": 1.9121000000000002e-05
+    },
+    {
+      "calls": 40,
+      "cumulative_seconds": 1.0037748560000002,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "canonical_digest",
+      "line": 54,
+      "primitive_calls": 40,
+      "self_seconds": 0.002965089
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 1.003723353,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "component_digests",
+      "line": 515,
+      "primitive_calls": 1,
+      "self_seconds": 6.1377e-05
+    },
+    {
+      "calls": 12,
+      "cumulative_seconds": 0.814654826,
+      "file": "/home/barberb/.local/lib/python3.12/site-packages/torch/_jit_internal.py",
+      "function": "_overload",
+      "line": 1047,
+      "primitive_calls": 12,
+      "self_seconds": 0.000225874
+    },
+    {
+      "calls": 828639,
+      "cumulative_seconds": 0.7446528570000001,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_state_version.py",
+      "function": "_canonical_value",
+      "line": 30,
+      "primitive_calls": 41,
+      "self_seconds": 0.335339237
+    },
+    {
+      "calls": 1785023,
+      "cumulative_seconds": 0.6843540920000001,
+      "file": "~",
+      "function": "<built-in method builtins.issubclass>",
+      "line": 0,
+      "primitive_calls": 1785023,
+      "self_seconds": 0.263169457
+    },
+    {
+      "calls": 7704,
+      "cumulative_seconds": 0.539045475,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "relative_to",
+      "line": 663,
+      "primitive_calls": 7704,
+      "self_seconds": 0.02088738
+    },
+    {
+      "calls": 144575,
+      "cumulative_seconds": 0.45630584300000004,
+      "file": "<frozen _collections_abc>",
+      "function": "__iter__",
+      "line": 1022,
+      "primitive_calls": 144575,
+      "self_seconds": 0.026727380000000002
+    },
+    {
+      "calls": 1165,
+      "cumulative_seconds": 0.438102584,
+      "file": "/usr/lib/python3.12/importlib/metadata/__init__.py",
+      "function": "metadata",
+      "line": 436,
+      "primitive_calls": 1165,
+      "self_seconds": 0.0016637020000000002
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 0.430648674,
+      "file": "/home/barberb/.local/lib/python3.12/site-packages/torch/nn/modules/__init__.py",
+      "function": "<module>",
+      "line": 1,
+      "primitive_calls": 1,
+      "self_seconds": 1.5088e-05
+    },
+    {
+      "calls": 129160,
+      "cumulative_seconds": 0.42961603400000004,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__getitem__",
+      "line": 276,
+      "primitive_calls": 129160,
+      "self_seconds": 0.060998642000000006
+    },
+    {
+      "calls": 1781744,
+      "cumulative_seconds": 0.42159263900000005,
+      "file": "<frozen abc>",
+      "function": "__subclasscheck__",
+      "line": 121,
+      "primitive_calls": 1781203,
+      "self_seconds": 0.274859422
+    },
+    {
+      "calls": 15421,
+      "cumulative_seconds": 0.385492975,
+      "file": "<frozen _collections_abc>",
+      "function": "__contains__",
+      "line": 1032,
+      "primitive_calls": 15421,
+      "self_seconds": 0.023975658
+    },
+    {
+      "calls": 6,
+      "cumulative_seconds": 0.38394021300000003,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_samples.py",
+      "function": "build_us_code_sample",
+      "line": 94,
+      "primitive_calls": 6,
+      "self_seconds": 0.0001033
+    },
+    {
+      "calls": 6,
+      "cumulative_seconds": 0.382133952,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+      "function": "parse",
+      "line": 1451,
+      "primitive_calls": 6,
+      "self_seconds": 0.00027397200000000004
+    },
+    {
+      "calls": 7725,
+      "cumulative_seconds": 0.35886655100000003,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "resolve",
+      "line": 1230,
+      "primitive_calls": 7725,
+      "self_seconds": 0.005518512000000001
+    },
+    {
+      "calls": 165505,
+      "cumulative_seconds": 0.356133537,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "with_segments",
+      "line": 380,
+      "primitive_calls": 165505,
+      "self_seconds": 0.062271662000000005
+    },
+    {
+      "calls": 76,
+      "cumulative_seconds": 0.354011181,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+      "function": "extract_cues",
+      "line": 1056,
+      "primitive_calls": 76,
+      "self_seconds": 0.19379668800000002
+    },
+    {
+      "calls": 1165,
+      "cumulative_seconds": 0.34776882800000003,
+      "file": "/usr/lib/python3.12/email/__init__.py",
+      "function": "message_from_string",
+      "line": 31,
+      "primitive_calls": 1165,
+      "self_seconds": 0.0007840950000000001
+    },
+    {
+      "calls": 708,
+      "cumulative_seconds": 0.34720294500000004,
+      "file": "~",
+      "function": "<built-in method builtins.__import__>",
+      "line": 0,
+      "primitive_calls": 31,
+      "self_seconds": 0.00046791100000000005
+    },
+    {
+      "calls": 1165,
+      "cumulative_seconds": 0.345956354,
+      "file": "/usr/lib/python3.12/email/parser.py",
+      "function": "parsestr",
+      "line": 56,
+      "primitive_calls": 1165,
+      "self_seconds": 0.0014934660000000002
+    },
+    {
+      "calls": 1165,
+      "cumulative_seconds": 0.344462888,
+      "file": "/usr/lib/python3.12/email/parser.py",
+      "function": "parse",
+      "line": 41,
+      "primitive_calls": 1165,
+      "self_seconds": 0.0014091190000000001
+    },
+    {
+      "calls": 2001,
+      "cumulative_seconds": 0.318531879,
+      "file": "/usr/lib/python3.12/email/feedparser.py",
+      "function": "feed",
+      "line": 171,
+      "primitive_calls": 2001,
+      "self_seconds": 0.001173418
+    },
+    {
+      "calls": 9283,
+      "cumulative_seconds": 0.31545554800000003,
+      "file": "<frozen posixpath>",
+      "function": "realpath",
+      "line": 428,
+      "primitive_calls": 9283,
+      "self_seconds": 0.005546835
+    },
+    {
+      "calls": 3166,
+      "cumulative_seconds": 0.308086356,
+      "file": "/usr/lib/python3.12/email/feedparser.py",
+      "function": "_call_parse",
+      "line": 176,
+      "primitive_calls": 3166,
+      "self_seconds": 0.003093998
+    },
+    {
+      "calls": 3166,
+      "cumulative_seconds": 0.304992358,
+      "file": "/usr/lib/python3.12/email/feedparser.py",
+      "function": "_parsegen",
+      "line": 216,
+      "primitive_calls": 3166,
+      "self_seconds": 0.053299346000000004
+    },
+    {
+      "calls": 9284,
+      "cumulative_seconds": 0.289293607,
+      "file": "<frozen posixpath>",
+      "function": "_joinrealpath",
+      "line": 437,
+      "primitive_calls": 9283,
+      "self_seconds": 0.06389847800000001
+    },
+    {
+      "calls": 1469,
+      "cumulative_seconds": 0.28482855300000004,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_find_and_load",
+      "line": 1349,
+      "primitive_calls": 9,
+      "self_seconds": 0.004096505
+    },
+    {
+      "calls": 1462,
+      "cumulative_seconds": 0.284634885,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_find_and_load_unlocked",
+      "line": 1304,
+      "primitive_calls": 6,
+      "self_seconds": 0.014445032000000002
+    },
+    {
+      "calls": 1417,
+      "cumulative_seconds": 0.284140722,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_load_unlocked",
+      "line": 911,
+      "primitive_calls": 7,
+      "self_seconds": 0.0019073870000000002
+    },
+    {
+      "calls": 1378,
+      "cumulative_seconds": 0.28400156800000004,
+      "file": "<frozen importlib._bootstrap_external>",
+      "function": "exec_module",
+      "line": 989,
+      "primitive_calls": 7,
+      "self_seconds": 0.002113991
+    },
+    {
+      "calls": 3304,
+      "cumulative_seconds": 0.283444122,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_call_with_frames_removed",
+      "line": 480,
+      "primitive_calls": 10,
+      "self_seconds": 0.001618138
+    },
+    {
+      "calls": 121464,
+      "cumulative_seconds": 0.281197129,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "_from_parsed_parts",
+      "line": 420,
+      "primitive_calls": 121464,
+      "self_seconds": 0.038723499
+    },
+    {
+      "calls": 3570,
+      "cumulative_seconds": 0.277266006,
+      "file": "~",
+      "function": "<built-in method builtins.exec>",
+      "line": 0,
+      "primitive_calls": 7,
+      "self_seconds": 0.09070045800000001
+    },
+    {
+      "calls": 36,
+      "cumulative_seconds": 0.27321833,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+      "function": "_parse_eligible_cues",
+      "line": 1667,
+      "primitive_calls": 36,
+      "self_seconds": 0.000177281
+    },
+    {
+      "calls": 1126,
+      "cumulative_seconds": 0.265715621,
+      "file": "/usr/lib/python3.12/json/__init__.py",
+      "function": "dumps",
+      "line": 183,
+      "primitive_calls": 1126,
+      "self_seconds": 0.000734474
+    },
+    {
+      "calls": 1126,
+      "cumulative_seconds": 0.264824442,
+      "file": "/usr/lib/python3.12/json/encoder.py",
+      "function": "encode",
+      "line": 183,
+      "primitive_calls": 1126,
+      "self_seconds": 0.0006721940000000001
+    },
+    {
+      "calls": 1124,
+      "cumulative_seconds": 0.26385543,
+      "file": "/usr/lib/python3.12/json/encoder.py",
+      "function": "iterencode",
+      "line": 205,
+      "primitive_calls": 1124,
+      "self_seconds": 0.26385543
+    },
+    {
+      "calls": 68344,
+      "cumulative_seconds": 0.26331822,
+      "file": "~",
+      "function": "<built-in method builtins.sorted>",
+      "line": 0,
+      "primitive_calls": 68344,
+      "self_seconds": 0.056057352000000005
+    },
+    {
+      "calls": 7704,
+      "cumulative_seconds": 0.260973135,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "is_relative_to",
+      "line": 690,
+      "primitive_calls": 7704,
+      "self_seconds": 0.005772261000000001
+    },
+    {
+      "calls": 166148,
+      "cumulative_seconds": 0.256600113,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__init__",
+      "line": 1159,
+      "primitive_calls": 166148,
+      "self_seconds": 0.047556539
+    },
+    {
+      "calls": 48403,
+      "cumulative_seconds": 0.247509727,
+      "file": "/usr/lib/python3.12/re/__init__.py",
+      "function": "_compile",
+      "line": 280,
+      "primitive_calls": 48403,
+      "self_seconds": 0.040239420000000005
+    },
+    {
+      "calls": 37320,
+      "cumulative_seconds": 0.24210909800000002,
+      "file": "/usr/lib/python3.12/re/__init__.py",
+      "function": "compile",
+      "line": 226,
+      "primitive_calls": 37320,
+      "self_seconds": 0.006057639
+    },
+    {
+      "calls": 15,
+      "cumulative_seconds": 0.22754231100000002,
+      "file": "/usr/lib/python3.12/json/__init__.py",
+      "function": "loads",
+      "line": 299,
+      "primitive_calls": 15,
+      "self_seconds": 8.540900000000001e-05
+    },
+    {
+      "calls": 15,
+      "cumulative_seconds": 0.21818388800000002,
+      "file": "/usr/lib/python3.12/json/decoder.py",
+      "function": "decode",
+      "line": 332,
+      "primitive_calls": 15,
+      "self_seconds": 5.1328e-05
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 0.218176576,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "function": "_parse_json",
+      "line": 108,
+      "primitive_calls": 1,
+      "self_seconds": 0.0038089530000000003
+    },
+    {
+      "calls": 15,
+      "cumulative_seconds": 0.218099647,
+      "file": "/usr/lib/python3.12/json/decoder.py",
+      "function": "raw_decode",
+      "line": 343,
+      "primitive_calls": 15,
+      "self_seconds": 0.15887146400000002
+    },
+    {
+      "calls": 166167,
+      "cumulative_seconds": 0.20907095,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__init__",
+      "line": 357,
+      "primitive_calls": 166167,
+      "self_seconds": 0.152293766
+    },
+    {
+      "calls": 1246,
+      "cumulative_seconds": 0.20772985300000002,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_handle_fromlist",
+      "line": 1390,
+      "primitive_calls": 279,
+      "self_seconds": 0.0008849390000000001
+    },
+    {
+      "calls": 583,
+      "cumulative_seconds": 0.206287031,
+      "file": "/usr/lib/python3.12/importlib/metadata/__init__.py",
+      "function": "version",
+      "line": 464,
+      "primitive_calls": 583,
+      "self_seconds": 0.0007653040000000001
+    },
+    {
+      "calls": 12,
+      "cumulative_seconds": 0.202631303,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_modal_parser.py",
+      "function": "fallback_formula",
+      "line": 1773,
+      "primitive_calls": 12,
+      "self_seconds": 5.1232e-05
+    },
+    {
+      "calls": 496,
+      "cumulative_seconds": 0.19879992400000002,
+      "file": "/usr/lib/python3.12/dataclasses.py",
+      "function": "wrap",
+      "line": 1257,
+      "primitive_calls": 496,
+      "self_seconds": 0.00035294700000000005
+    },
+    {
+      "calls": 496,
+      "cumulative_seconds": 0.19844697700000002,
+      "file": "/usr/lib/python3.12/dataclasses.py",
+      "function": "_process_class",
+      "line": 921,
+      "primitive_calls": 496,
+      "self_seconds": 0.048199907
+    },
+    {
+      "calls": 1,
+      "cumulative_seconds": 0.19627755300000002,
+      "file": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "function": "_require_tree_pin",
+      "line": 496,
+      "primitive_calls": 1,
+      "self_seconds": 5.568000000000001e-06
+    },
+    {
+      "calls": 1455,
+      "cumulative_seconds": 0.193233743,
+      "file": "<frozen importlib._bootstrap>",
+      "function": "module_from_spec",
+      "line": 806,
+      "primitive_calls": 1347,
+      "self_seconds": 0.0010213520000000001
+    },
+    {
+      "calls": 154365,
+      "cumulative_seconds": 0.18208296000000002,
+      "file": "/usr/lib/python3.12/pathlib.py",
+      "function": "__str__",
+      "line": 437,
+      "primitive_calls": 154365,
+      "self_seconds": 0.031316245
+    }
+  ],
+  "wall_speed_claim": false
+}

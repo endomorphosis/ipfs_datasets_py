@@ -105,28 +105,9 @@ def frozen_decompiler_config() -> dict[str, str]:
 def _readable_atom(atom: str) -> str:
     """Apply the frozen ``underscore_to_space_v1`` atom surface."""
 
-    comparison = _comparison_condition_surface(atom)
-    if comparison is not None:
-        return comparison
-    return " ".join(atom.replace("_", " ").split())
-
-
-def _comparison_condition_surface(atom: str) -> str | None:
-    """Render a comparison qualifier as ``when compared``, never ``if compared``."""
-
-    text = " ".join(str(atom or "").replace("_", " ").split())
-    if not text:
-        return None
-    folded = text.casefold()
-    if folded in {"if_compared", "if compared"}:
+    if atom == "if_compared":
         return "when compared"
-    if folded.startswith("if compared "):
-        return "when" + text[2:]
-    if folded.startswith("when compared"):
-        return text
-    if folded == "compared" or folded.startswith("compared "):
-        return "when " + text
-    return None
+    return " ".join(atom.replace("_", " ").split())
 
 
 def _join_atoms(atoms: tuple[str, ...], conjunction: str) -> str:
@@ -176,26 +157,15 @@ def decompile_rule(rule: CanonicalRule) -> str:
         _readable_atom(rule.action),
     ]
     if rule.object:
-        object_text = _readable_atom(rule.object)
-        if not _phrase_in_text(_readable_atom(rule.action), object_text):
-            parts.append(object_text)
+        parts.append(_readable_atom(rule.object))
 
     sentence = " ".join(parts)
     temporal = _temporal_not_already_in_object(rule)
     if temporal:
         sentence += " " + _join_atoms(temporal, "and")
-    other_conditions: list[str] = []
-    for atom in rule.conditions:
-        surface = _comparison_condition_surface(atom)
-        if surface is None:
-            other_conditions.append(atom)
-            continue
-        if _phrase_in_text(sentence, surface):
-            continue
-        sentence += " " + surface
-    if other_conditions:
+    if rule.conditions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['condition_connector']} " + _join_atoms(
-            tuple(other_conditions), "and"
+            rule.conditions, "and"
         )
     if rule.exceptions:
         sentence += f" {SOURCE_WITHHELD_DECOMPILER_CONFIG['exception_connector']} " + _join_atoms(

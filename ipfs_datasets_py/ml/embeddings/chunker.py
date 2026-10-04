@@ -5,7 +5,6 @@ for embedding operations, migrated and adapted from a pre-migration embeddings c
 Supports accelerate integration for distributed processing.
 """
 
-import bisect
 import logging
 import re
 from typing import Callable, Dict, List, Optional, AsyncIterator, TypeAlias
@@ -18,31 +17,9 @@ Tokenizer: TypeAlias = Callable[[str, Optional[Dict]], str]
 from .schema import DocumentChunk, ChunkingStrategy, EmbeddingConfig
 
 try:
-    from transformers import AutoTokenizer
-except ImportError:
-    AutoTokenizer = None
-
-try:
-    from llama_index.core.schema import Document
-
-    # from llama_index.embeddings.huggingface import HuggingFaceEmbedding FIXME This is hallucinated and will always be none
-    from llama_index.core.node_parser import SemanticSplitterNodeParser
-except ImportError:
-    Document = None
-    HuggingFaceEmbedding = None
-    SemanticSplitterNodeParser = None
-
-HuggingFaceEmbedding = None
-
-try:
     import pysbd
 except ImportError:
     pysbd = None
-
-try:
-    import torch
-except ImportError:
-    torch = None
 
 # Set the logging level to WARNING to suppress INFO and DEBUG messages
 logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
@@ -51,6 +28,150 @@ logging.getLogger("transformers").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 CHUNKING_STRATEGIES = ["semantic", "fixed", "sentences", "sliding_window"]
+
+
+_UNSET_OVERLAP = object()
+
+
+def _validate_chunk_limits(size, overlap=_UNSET_OVERLAP):
+    if type(size) is not int or size <= 0:
+        raise ValueError("chunk_size must be a positive integer")
+    if overlap is not _UNSET_OVERLAP and (type(overlap) is not int or not 0 <= overlap < size):
+        raise ValueError("chunk_overlap must be an integer between zero and chunk_size - 1")
+
+
+def _require_text(text):
+    if not isinstance(text, str):
+        raise ValueError("chunk source must be a string")
+
+
+def _trim_interval(text, start, end):
+    raw = text[start:end]
+    left = start + len(raw) - len(raw.lstrip())
+    right = end - (len(raw) - len(raw.rstrip()))
+    return left, max(left, right)
+
+
+def _sentence_splitter():
+    if pysbd is not None:
+        try:
+            return pysbd.Segmenter(language="en", clean=False, char_span=True)
+        except Exception:
+            logger.debug("Character-span sentence splitter unavailable", exc_info=True)
+    return None
+
+
+_ABBREVIATIONS = frozenset((
+    "mr mrs ms dr prof sr jr st vs etc fig figs eq eqs no nos art arts sec secs "
+    "inc ltd co corp dept approx al cf min max est misc vol vols rev ed pp"
+).split())
+_TERMINAL_ABBREVIATIONS = frozenset({"inc", "ltd", "co", "corp", "etc"})
+_SENTENCE_END = re.compile(r"(?P<punct>[.!?]+)[\"'\u2019\u201d)\]}]*(?=\s|$)")
+_TERMINAL_SENTENCE_TEXT = re.compile(r"[.!?。！？][\"'\u2019\u201d)\]}*_`]*$")
+
+
+def _coalesce_nonterminal_wraps(text, intervals):
+    """Prevent optional splitters from turning hard wraps into sentence cuts.
+
+    Blank lines remain paragraph separators. Markup, lists and code need the
+    structural corpus adapter; this guard only rejects cuts within prose.
+    """
+    result = []
+    for start, end in intervals:
+        if result:
+            previous_start, previous_end = result[-1]
+            gap = text[previous_end:start]
+            if (not _TERMINAL_SENTENCE_TEXT.search(text[previous_start:previous_end])
+                    and not re.search(r"\r?\n[ \t]*\r?\n", gap)):
+                result[-1] = (previous_start, end)
+                continue
+        result.append((start, end))
+    return result
+
+
+def _fallback_sentence_spans(text):
+    """Conservative punctuation boundaries; abbreviations may remain grouped."""
+    intervals, cursor = [], 0
+    for match in _SENTENCE_END.finditer(text):
+        if match["punct"] == ".":
+            prefix = text[cursor:match.start() + 1]
+            token = prefix.rsplit(None, 1)[-1] if prefix.strip() else ""
+            token = token.lstrip("([{\"'\u2018\u201c")
+            abbreviation = token[:-1].casefold()
+            following = text[match.end():].lstrip()
+            may_end = (abbreviation in _TERMINAL_ABBREVIATIONS and following
+                       and following[0].isupper())
+            if not may_end and (abbreviation in _ABBREVIATIONS
+                                or re.fullmatch(r"(?:[A-Za-z]\.)+", token)):
+                continue
+        start, end = _trim_interval(text, cursor, match.end())
+        if start < end:
+            intervals.append((start, end))
+        cursor = match.end()
+    start, end = _trim_interval(text, cursor, len(text))
+    if start < end:
+        intervals.append((start, end))
+    return intervals
+
+
+def _sentence_source_spans(text, splitter, *, diagnostics=None):
+    _require_text(text)
+    if diagnostics is not None:
+        diagnostics.update(
+            backend="source-punctuation-fallback/v1",
+            pysbd_version=getattr(pysbd, "__version__", None),
+            fallback_reason="splitter_unavailable" if splitter is None else None,
+        )
+    if not text.strip():
+        if diagnostics is not None:
+            diagnostics["backend"] = "not_required"
+        return []
+    if splitter is not None:
+        try:
+            intervals, cursor = [], 0
+            for span in splitter.segment(text):
+                start, end = getattr(span, "start", None), getattr(span, "end", None)
+                if (type(start) is not int or type(end) is not int
+                        or not cursor <= start < end <= len(text)
+                        or text[cursor:start].strip()
+                        or getattr(span, "sent", text[start:end]) != text[start:end]):
+                    raise ValueError("sentence splitter did not preserve source selectors")
+                left, right = _trim_interval(text, start, end)
+                if left < right:
+                    intervals.append((left, right))
+                cursor = end
+            if not intervals or text[cursor:].strip():
+                raise ValueError("sentence splitter omitted source content")
+            original_count = len(intervals)
+            intervals = _coalesce_nonterminal_wraps(text, intervals)
+            if diagnostics is not None:
+                diagnostics["backend"] = "pysbd-character-spans"
+                diagnostics["nonterminal_wraps_coalesced"] = original_count - len(intervals)
+            return intervals
+        except Exception as exc:
+            if diagnostics is not None:
+                diagnostics["fallback_reason"] = type(exc).__name__
+            logger.debug("Using source-preserving sentence fallback", exc_info=True)
+    return _fallback_sentence_spans(text)
+
+
+def sentence_source_spans(text: str) -> List[tuple[int, int]]:
+    """Return ordered, half-open source character intervals for whole sentences.
+
+    Punctuation and internal whitespace stay verbatim. Whitespace between the
+    returned intervals is deliberately outside them. Optional pysbd boundaries
+    are accepted only with complete, exact source selectors; the fallback never
+    splits a decimal, version or URL at punctuation without following whitespace.
+    Neither path rewrites text or subdivides an oversized atomic sentence.
+    """
+    return _sentence_source_spans(text, _sentence_splitter())
+
+
+def sentence_source_spans_with_diagnostics(text: str) -> Dict:
+    """Return exact intervals and the backend actually used for this input."""
+    diagnostics = {}
+    spans = _sentence_source_spans(text, _sentence_splitter(), diagnostics=diagnostics)
+    return {"spans": spans, **diagnostics}
 
 
 class BaseChunker(ABC):
@@ -79,9 +200,12 @@ class FixedSizeChunker(BaseChunker):
         super().__init__(config)
         self.chunk_size = self.config.chunk_size
         self.chunk_overlap = self.config.chunk_overlap
+        _validate_chunk_limits(self.chunk_size, self.chunk_overlap)
 
     def chunk_text(self, text: str, metadata: Optional[Dict] = None) -> List[DocumentChunk]:
         """Chunk text into fixed-size pieces."""
+        _validate_chunk_limits(self.chunk_size, self.chunk_overlap)
+        _require_text(text)
         if not text.strip():
             return []
 
@@ -90,34 +214,31 @@ class FixedSizeChunker(BaseChunker):
         chunk_id = 0
 
         while start < len(text):
-            end = start + self.chunk_size
+            end = min(start + self.chunk_size, len(text))
             chunk_content = text[start:end]
 
             # Avoid cutting words in half (except for very long words)
             if end < len(text) and not text[end].isspace():
                 # Find the last whitespace before the cut
-                last_space = chunk_content.rfind(" ")
+                last_space = max((match.start() for match in re.finditer(r"\s", chunk_content)), default=-1)
                 if (
                     last_space > self.chunk_size * 0.7
                 ):  # Only adjust if we don't lose too much content
                     end = start + last_space
                     chunk_content = text[start:end]
 
-            chunk = DocumentChunk(
-                content=chunk_content.strip(),
-                chunk_id=f"chunk_{chunk_id}",
-                metadata=metadata or {},
-                start_index=start,
-                end_index=end,
-            )
-            chunks.append(chunk)
-
-            chunk_id += 1
-            start = end - self.chunk_overlap
-
-            # Prevent infinite loops
-            if start >= end:
-                start = end
+            left, right = _trim_interval(text, start, end)
+            if left < right:
+                chunks.append(DocumentChunk(
+                    content=text[left:right], chunk_id=f"chunk_{chunk_id}",
+                    metadata=metadata or {}, start_index=left, end_index=right,
+                ))
+                chunk_id += 1
+            if end >= len(text):
+                break
+            # Word-boundary shortening can exceed the requested overlap.
+            # Advance even then, and stop at EOF instead of revisiting its tail.
+            start = max(start + 1, end - self.chunk_overlap)
 
         return chunks
 
@@ -136,72 +257,44 @@ class SentenceChunker(BaseChunker):
     def __init__(self, config: Optional[EmbeddingConfig] = None):
         super().__init__(config)
         self.chunk_size = self.config.chunk_size
+        _validate_chunk_limits(self.chunk_size)
         self.sentence_splitter = self._initialize_sentence_splitter()
 
     def _initialize_sentence_splitter(self):
         """Initialize sentence splitter."""
-        if pysbd is not None:
-            return pysbd.Segmenter(language="en", clean=False)
-        else:
-            # Fallback to simple regex-based splitting
-            return None
+        return _sentence_splitter()
 
     def _split_sentences(self, text: str) -> List[str]:
         """Split text into sentences."""
-        if self.sentence_splitter is not None:
-            return self.sentence_splitter.segment(text)
-        else:
-            # Simple fallback sentence splitting
-            sentences = re.split(r"[.!?]+", text)
-            return [s.strip() for s in sentences if s.strip()]
+        return [text[start:end] for start, end in _sentence_source_spans(text, self.sentence_splitter)]
 
     def chunk_text(self, text: str, metadata: Optional[Dict] = None) -> List[DocumentChunk]:
         """Chunk text by sentences."""
+        _validate_chunk_limits(self.chunk_size)
+        _require_text(text)
         if not text.strip():
             return []
 
-        sentences = self._split_sentences(text)
+        sentences = _sentence_source_spans(text, self.sentence_splitter)
         chunks = []
-        current_chunk = []
-        current_length = 0
-        chunk_id = 0
-        start_index = 0
+        current_start = current_end = None
 
-        for sentence in sentences:
-            sentence_length = len(sentence)
+        def append(start, end):
+            chunk_metadata = dict(metadata or {})
+            if end - start > self.chunk_size:
+                chunk_metadata.update(oversize_atomic_sentence=True, chunk_size_limit=self.chunk_size)
+            chunks.append(DocumentChunk(content=text[start:end], chunk_id=f"chunk_{len(chunks)}",
+                metadata=chunk_metadata, start_index=start, end_index=end))
 
-            # If adding this sentence would exceed chunk size, finalize current chunk
-            if current_length + sentence_length > self.chunk_size and current_chunk:
-                chunk_content = " ".join(current_chunk)
-                chunk = DocumentChunk(
-                    content=chunk_content,
-                    chunk_id=f"chunk_{chunk_id}",
-                    metadata=metadata or {},
-                    start_index=start_index,
-                    end_index=start_index + len(chunk_content),
-                )
-                chunks.append(chunk)
-
-                chunk_id += 1
-                start_index += len(chunk_content)
-                current_chunk = []
-                current_length = 0
-
-            current_chunk.append(sentence)
-            current_length += sentence_length + 1  # +1 for space
-
-        # Handle remaining content
-        if current_chunk:
-            chunk_content = " ".join(current_chunk)
-            chunk = DocumentChunk(
-                content=chunk_content,
-                chunk_id=f"chunk_{chunk_id}",
-                metadata=metadata or {},
-                start_index=start_index,
-                end_index=start_index + len(chunk_content),
-            )
-            chunks.append(chunk)
-
+        for start, end in sentences:
+            if current_start is not None and end - current_start > self.chunk_size:
+                append(current_start, current_end)
+                current_start = None
+            if current_start is None:
+                current_start = start
+            current_end = end
+        if current_start is not None:
+            append(current_start, current_end)
         return chunks
 
     async def chunk_text_async(
@@ -219,10 +312,15 @@ class SlidingWindowChunker(BaseChunker):
     def __init__(self, config: Optional[EmbeddingConfig] = None):
         super().__init__(config)
         self.chunk_size = self.config.chunk_size
+        _validate_chunk_limits(self.chunk_size, self.config.chunk_overlap)
         self.step_size = self.chunk_size - self.config.chunk_overlap
 
     def chunk_text(self, text: str, metadata: Optional[Dict] = None) -> List[DocumentChunk]:
         """Chunk text using sliding window."""
+        if type(self.step_size) is not int:
+            raise ValueError("sliding step must be an integer")
+        _validate_chunk_limits(self.chunk_size, self.chunk_size - self.step_size)
+        _require_text(text)
         if not text.strip():
             return []
 
@@ -231,15 +329,16 @@ class SlidingWindowChunker(BaseChunker):
 
         for start in range(0, len(text), self.step_size):
             end = min(start + self.chunk_size, len(text))
-            chunk_content = text[start:end].strip()
+            left, right = _trim_interval(text, start, end)
+            chunk_content = text[left:right]
 
             if chunk_content:  # Only add non-empty chunks
                 chunk = DocumentChunk(
                     content=chunk_content,
                     chunk_id=f"chunk_{chunk_id}",
                     metadata=metadata or {},
-                    start_index=start,
-                    end_index=end,
+                    start_index=left,
+                    end_index=right,
                 )
                 chunks.append(chunk)
                 chunk_id += 1
@@ -259,113 +358,111 @@ class SlidingWindowChunker(BaseChunker):
 
 
 class SemanticChunker(BaseChunker):
-    """Chunks text based on semantic similarity using embeddings."""
+    """Group exact sentence intervals with an explicitly supplied embedder.
 
-    def __init__(self, config: Optional[EmbeddingConfig] = None):
+    ``embedder`` accepts a list of exact source strings and returns ordered
+    vectors. It may wrap the embedding router with a pinned provider instance.
+    No provider is selected implicitly. Without one, sentence fallback is
+    explicit in every chunk's metadata and ``last_diagnostics``.
+
+    This general text adapter does not parse Markdown/code. Structured corpora
+    should use ``logic.formalization.coherent_spans`` to enforce block boundaries.
+    """
+
+    def __init__(self, config: Optional[EmbeddingConfig] = None, *, embedder=None,
+                 embedding_eligible=None, min_chars=128, similarity_threshold=0.5,
+                 max_embedding_chars=1024, on_embedding_error="structural"):
         super().__init__(config)
-        self.embedding_model_name = self.config.model_name
-        self.device = self.config.device
-        self.batch_size = self.config.batch_size
+        _validate_chunk_limits(self.config.chunk_size)
+        if embedder is not None and not callable(embedder):
+            raise ValueError("embedder must be callable")
+        if embedding_eligible is not None and not callable(embedding_eligible):
+            raise ValueError("embedding_eligible must be callable")
+        if type(min_chars) is not int or min_chars < 0:
+            raise ValueError("min_chars must be a nonnegative integer")
+        if on_embedding_error not in {"raise", "structural"}:
+            raise ValueError("invalid on_embedding_error policy")
+        self.embedder = embedder
+        self.embedding_eligible = embedding_eligible
+        self.min_chars = min_chars
+        self.similarity_threshold = similarity_threshold
+        self.max_embedding_chars = max_embedding_chars
+        self.on_embedding_error = on_embedding_error
+        self.last_diagnostics = {}
         self.chunkers = {}
         self._setup_semantic_chunking()
 
     def _setup_semantic_chunking(self):
-        """Setup semantic chunking with embedding model."""
-        if SemanticSplitterNodeParser is None or HuggingFaceEmbedding is None:
-            logger.warning(
-                "LlamaIndex components not available. Falling back to sentence chunking."
-            )
-            self.fallback_chunker = SentenceChunker(self.config)
-            return
-
-        try:
-            if self.embedding_model_name not in self.chunkers:
-                self.chunkers[self.embedding_model_name] = {}
-
-            if self.device not in self.chunkers[self.embedding_model_name]:
-                self.chunkers[self.embedding_model_name][self.device] = SemanticSplitterNodeParser(
-                    embed_model=HuggingFaceEmbedding(
-                        model_name=self.embedding_model_name,
-                        trust_remote_code=True,
-                        embed_batch_size=min(self.batch_size, 64),
-                        device=self.device,
-                    ),
-                    show_progress=False,
-                )
-        except Exception as e:
-            logger.error(f"Failed to setup semantic chunking: {e}")
-            self.fallback_chunker = SentenceChunker(self.config)
+        """Refresh compatibility configuration without loading a model."""
+        self.embedding_model_name = self.config.model_name
+        self.device = self.config.device
+        self.batch_size = self.config.batch_size
+        self.fallback_chunker = SentenceChunker(self.config)
 
     def chunk_text(self, text: str, metadata: Optional[Dict] = None) -> List[DocumentChunk]:
-        """Chunk text using semantic similarity."""
+        from .semantic_boundaries import group_semantic_atoms
+
+        _require_text(text)
+        _validate_chunk_limits(self.config.chunk_size)
         if not text.strip():
+            self.last_diagnostics = {"embedding_status": "not_required", "embeddings_used": False}
             return []
+        if self.embedder is None:
+            self.last_diagnostics = {
+                "embedding_status": "not_configured", "embeddings_used": False,
+                "fallback": "sentences", "semantic_correctness_verified": False,
+            }
+            chunks = self.fallback_chunker.chunk_text(text, metadata)
+            for chunk in chunks:
+                chunk.metadata = {**chunk.metadata, **self.last_diagnostics}
+            return chunks
 
-        # Check if semantic chunking is available
-        if (
-            self.embedding_model_name not in self.chunkers
-            or self.device not in self.chunkers[self.embedding_model_name]
-        ):
-            if hasattr(self, "fallback_chunker"):
-                logger.info("Using fallback sentence chunker for semantic chunking")
-                return self.fallback_chunker.chunk_text(text, metadata)
-            else:
-                # Final fallback to fixed-size chunking
-                fallback = FixedSizeChunker(self.config)
-                return fallback.chunk_text(text, metadata)
-
-        try:
-            # Use LlamaIndex semantic splitter
-            splitter = self.chunkers[self.embedding_model_name][self.device]
-
-            # Create a document for the splitter
-            if Document is not None:
-                doc = Document(text=text, metadata=metadata or {})
-                nodes = splitter.get_nodes_from_documents([doc])
-
-                chunks = []
-                for i, node in enumerate(nodes):
-                    chunk = DocumentChunk(
-                        content=node.text,
-                        chunk_id=f"semantic_chunk_{i}",
-                        metadata={**(metadata or {}), **node.metadata},
-                        start_index=getattr(node, "start_char_idx", None),
-                        end_index=getattr(node, "end_char_idx", None),
-                    )
-                    chunks.append(chunk)
-
-                return chunks
-            else:
-                # Fallback if Document class not available
-                if hasattr(self, "fallback_chunker"):
-                    return self.fallback_chunker.chunk_text(text, metadata)
-                else:
-                    fallback = SentenceChunker(self.config)
-                    return fallback.chunk_text(text, metadata)
-
-        except Exception as e:
-            logger.error(f"Semantic chunking failed: {e}")
-            if hasattr(self, "fallback_chunker"):
-                return self.fallback_chunker.chunk_text(text, metadata)
-            else:
-                fallback = SentenceChunker(self.config)
-                return fallback.chunk_text(text, metadata)
+        sentence_result = sentence_source_spans_with_diagnostics(text)
+        sentences = sentence_result["spans"]
+        # Include every character exactly once, attaching each inter-sentence
+        # gap to the preceding atom. No string reconstruction or offset search.
+        starts = [0] + [start for start, _ in sentences[1:]] + [len(text)]
+        atoms = list(zip(starts, starts[1:]))
+        result = group_semantic_atoms(
+            text, atoms, embedder=self.embedder, max_chars=self.config.chunk_size,
+            min_chars=min(self.min_chars, self.config.chunk_size),
+            max_embedding_chars=self.max_embedding_chars,
+            similarity_threshold=self.similarity_threshold,
+            embedding_eligible=self.embedding_eligible,
+            on_embedding_error=self.on_embedding_error,
+        )
+        self.last_diagnostics = result
+        self.last_diagnostics["sentence_splitter"] = {
+            key: value for key, value in sentence_result.items() if key != "spans"}
+        chunks = []
+        for i, group in enumerate(result["groups"]):
+            start, end = group["start_char"], group["end_char"]
+            chunks.append(DocumentChunk(
+                content=text[start:end], chunk_id=f"semantic_chunk_{i}",
+                start_index=start, end_index=end,
+                metadata={**(metadata or {}),
+                    "embedding_status": result["embedding_status"],
+                    "embeddings_used": result["embeddings_used"],
+                    "semantic_correctness_verified": False,
+                    "token_budget_checked": result["config"]["token_budget_checked"],
+                    "opaque_atom": group["opaque"],
+                    "exceeds_chunk_size": group["exceeds_max_chars"],
+                    "source_sha256": result["source_sha256"],
+                    "embedding_input_sha256": result["embedding_input_sha256"],
+                    "normalized_vectors_sha256": result["normalized_vectors_sha256"],
+                },
+            ))
+        return chunks
 
     async def chunk_text_async(
         self, text: str, metadata: Optional[Dict] = None
     ) -> AsyncIterator[DocumentChunk]:
-        """Async version of semantic chunking."""
-        chunks = self.chunk_text(text, metadata)
-        for chunk in chunks:
+        for chunk in self.chunk_text(text, metadata):
             yield chunk
 
     async def delete_endpoint(self, model_name: str, endpoint: str):
-        """Delete a model endpoint and free memory."""
-        if model_name in self.chunkers and endpoint in self.chunkers[model_name]:
-            del self.chunkers[model_name][endpoint]
-            if torch is not None:
-                with torch.no_grad():
-                    torch.cuda.empty_cache()
+        """Release references; lifetime of an injected provider belongs to caller."""
+        self.chunkers.get(model_name, {}).pop(endpoint, None)
 
 
 class Chunker:
@@ -419,7 +516,15 @@ class Chunker:
         """Create the appropriate chunker based on strategy."""
         match self.chunking_strategy:
             case "semantic":
-                return SemanticChunker(self.config)
+                return SemanticChunker(
+                    self.config,
+                    embedder=self.resources.get("embedder"),
+                    embedding_eligible=self.resources.get("embedding_eligible"),
+                    min_chars=self.metadata.get("min_chars", 128),
+                    similarity_threshold=self.metadata.get("similarity_threshold", 0.5),
+                    max_embedding_chars=self.metadata.get("max_embedding_chars", 1024),
+                    on_embedding_error=self.metadata.get("on_embedding_error", "structural"),
+                )
             case "fixed":
                 return FixedSizeChunker(self.config)
             case "sentences":
@@ -457,6 +562,7 @@ class Chunker:
         """Legacy method for setting up semantic chunking."""
         if isinstance(self.chunker, SemanticChunker):
             # Update configuration if needed
+            self.config.model_name = embedding_model_name
             if device:
                 self.config.device = device
             if embed_batch_size:
@@ -484,4 +590,6 @@ __all__ = [
     "Chunker",
     "chunker",
     "CHUNKING_STRATEGIES",
+    "sentence_source_spans",
+    "sentence_source_spans_with_diagnostics",
 ]

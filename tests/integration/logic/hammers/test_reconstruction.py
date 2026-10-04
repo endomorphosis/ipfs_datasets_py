@@ -28,10 +28,9 @@ These tests cover:
   Coq ``admit.``-abuse attempt that would otherwise silently compile with
   exit code 0.
 - :class:`~ipfs_datasets_py.logic.hammers.reconstructors.isabelle.
-  IsabelleReconstructor` is confirmed unavailable in this repository's
-  environment (matching the HAMMER-002/HAMMER-006 capability inventory), so
-  its acceptance/rejection logic is exercised via a mocked kernel-check
-  call — never against invented "available" behavior.
+  IsabelleReconstructor` exercises adapter acceptance/rejection via synthetic
+  admitted-operation receipts; separate native qualification covers the
+  installed toolchain without substituting a fabricated native result.
 - The hard trust-boundary invariant already enforced by
   :meth:`~ipfs_datasets_py.logic.hammers.models.HammerResult.validate`: a
   rejected :class:`~ipfs_datasets_py.logic.hammers.models.
@@ -46,6 +45,12 @@ These tests cover:
 from __future__ import annotations
 
 import shutil
+import hashlib
+from types import SimpleNamespace
+
+from ipfs_datasets_py.logic.backends.process import ToolRunResult, ToolRuntime
+from ipfs_datasets_py.logic.external_provers.isabelle_runtime import theory_command, theory_name
+from tests.integration.logic.hammers.isabelle_execution_fixtures import unavailable_operation
 
 import pytest
 
@@ -59,6 +64,7 @@ from ipfs_datasets_py.logic.hammers.frontends.base import (
 )
 from ipfs_datasets_py.logic.hammers.frontends import coq as coq_frontend_module
 from ipfs_datasets_py.logic.hammers.frontends import lean as lean_frontend_module
+from ipfs_datasets_py.logic.hammers.frontends import isabelle as isabelle_frontend_module
 from ipfs_datasets_py.logic.hammers.models import (
     HammerPolicy,
     HammerRequest,
@@ -131,7 +137,7 @@ Qed.
 """
 
 # ---------------------------------------------------------------------------
-# Isabelle fixtures (synthetic transcripts only; Isabelle is unavailable here)
+# Isabelle fixtures (synthetic transcripts for adapter projection tests)
 # ---------------------------------------------------------------------------
 
 ISABELLE_SOURCE = """theory HammerReconGoal
@@ -731,8 +737,30 @@ class TestCoqReconstructorReal:
 
 
 # ---------------------------------------------------------------------------
-# Isabelle reconstructor — mocked kernel check (unavailable in this env)
+# Isabelle reconstructor — synthetic admitted-operation receipts
 # ---------------------------------------------------------------------------
+
+
+def completed_isabelle_operation(*, source, stdout="IPFS_ISABELLE_KERNEL_CHECKED", returncode=0,
+                                 observation_overrides=None, operation_overrides=None, **kwargs):
+    """Synthetic helper seam: tests adapter interpretation, never a native proof."""
+    command = tuple(theory_command("/test/isabelle", theory_name(source), "{workspace}"))
+    observation_fields = dict(interface_version="BoundedToolRunner@1", runtime=ToolRuntime.NATIVE,
+        command=command, returncode=returncode, stdout=stdout, stderr="", elapsed_seconds=0.01,
+        output_files={}, process_tree_terminated=True)
+    observation_fields.update(observation_overrides or {})
+    observation = ToolRunResult(**observation_fields)
+    fields = dict(status="completed", reason_code="completed", observation=observation,
+        native_runtime={"executable": "/test/isabelle", "version": "Isabelle2025-2"},
+        preparation=SimpleNamespace(command_available=True), elapsed_seconds=0.05,
+        source_sha256=hashlib.sha256(source.encode()).hexdigest(), theory_name=theory_name(source),
+        runtime_unchanged=True)
+    fields.update(operation_overrides or {})
+    result = SimpleNamespace(**fields)
+    result.to_dict = lambda: {"status": result.status, "reason_code": result.reason_code,
+        "grants_proof_authority": False, "source_sha256": result.source_sha256,
+        "observation": result.observation.to_dict()}
+    return result
 
 
 class TestIsabelleReconstructorMocked:
@@ -757,85 +785,35 @@ class TestIsabelleReconstructorMocked:
         defaults.update(overrides)
         return make_request(**defaults)
 
-    def test_real_capability_is_unavailable_here(self):
+    def test_capability_is_unavailable_when_missing(self, monkeypatch):
+        monkeypatch.setattr(isabelle_frontend_module, "run_isabelle_operation", unavailable_operation)
         assert IsabelleReconstructor().capability().available is False
 
-    def test_real_reconstruct_raises_kernel_unavailable(self):
+    def test_reconstruct_raises_when_missing(self, monkeypatch):
+        monkeypatch.setattr(isabelle_reconstructor_module, "run_isabelle_operation", unavailable_operation)
         with pytest.raises(KernelUnavailableError):
             IsabelleReconstructor().reconstruct(
-                request=self._isabelle_request(),
-                candidate=make_candidate(),
-                goal_snapshot=self._isabelle_snapshot(),
-                native_source=ISABELLE_SOURCE,
+                request=self._isabelle_request(), candidate=make_candidate(),
+                goal_snapshot=self._isabelle_snapshot(), native_source=ISABELLE_SOURCE,
             )
 
     def test_mocked_kernel_accepts_clean_output(self, monkeypatch):
-        monkeypatch.setattr(
-            isabelle_reconstructor_module.IsabelleReconstructor,
-            "capability",
-            lambda self: make_available_capability(ITPKind.ISABELLE, "isabelle"),
-        )
-        monkeypatch.setattr(
-            isabelle_reconstructor_module,
-            "run_kernel_check",
-            lambda command, **kwargs: SolverProcessOutcome(
-                command=command, returncode=0, stdout="Successfully checked.", stderr=""
-            ),
-        )
+        monkeypatch.setattr(isabelle_reconstructor_module, "run_isabelle_operation", completed_isabelle_operation)
         record, evidence, lock = IsabelleReconstructor().reconstruct(
-            request=self._isabelle_request(),
-            candidate=make_candidate(),
-            goal_snapshot=self._isabelle_snapshot(),
-            native_source=ISABELLE_SOURCE,
+            request=self._isabelle_request(), candidate=make_candidate(),
+            goal_snapshot=self._isabelle_snapshot(), native_source=ISABELLE_SOURCE,
         )
         assert record.kernel_accepted is True
         assert "by (" in evidence.reconstructed_proof_text
 
-    def test_mocked_kernel_rejects_failure_marker(self, monkeypatch):
-        monkeypatch.setattr(
-            isabelle_reconstructor_module.IsabelleReconstructor,
-            "capability",
-            lambda self: make_available_capability(ITPKind.ISABELLE, "isabelle"),
-        )
-        monkeypatch.setattr(
-            isabelle_reconstructor_module,
-            "run_kernel_check",
-            lambda command, **kwargs: SolverProcessOutcome(
-                command=command,
-                returncode=1,
-                stdout="*** Failed to finish proof",
-                stderr="",
-            ),
-        )
+    @pytest.mark.parametrize("returncode,stdout", [
+        (1, "*** Failed to finish proof"), (0, "theory uses sorry somewhere")])
+    def test_mocked_kernel_rejects_failure(self, monkeypatch, returncode, stdout):
+        monkeypatch.setattr(isabelle_reconstructor_module, "run_isabelle_operation",
+            lambda **kwargs: completed_isabelle_operation(returncode=returncode, stdout=stdout, **kwargs))
         record, evidence, lock = IsabelleReconstructor().reconstruct(
-            request=self._isabelle_request(),
-            candidate=make_candidate(),
-            goal_snapshot=self._isabelle_snapshot(),
-            native_source=ISABELLE_SOURCE,
+            request=self._isabelle_request(), candidate=make_candidate(),
+            goal_snapshot=self._isabelle_snapshot(), native_source=ISABELLE_SOURCE,
         )
         assert record.kernel_accepted is False
         assert record.failure_reason
-
-    def test_mocked_kernel_rejects_residual_sorry(self, monkeypatch):
-        monkeypatch.setattr(
-            isabelle_reconstructor_module.IsabelleReconstructor,
-            "capability",
-            lambda self: make_available_capability(ITPKind.ISABELLE, "isabelle"),
-        )
-        monkeypatch.setattr(
-            isabelle_reconstructor_module,
-            "run_kernel_check",
-            lambda command, **kwargs: SolverProcessOutcome(
-                command=command,
-                returncode=0,
-                stdout="theory uses sorry somewhere",
-                stderr="",
-            ),
-        )
-        record, evidence, lock = IsabelleReconstructor().reconstruct(
-            request=self._isabelle_request(),
-            candidate=make_candidate(),
-            goal_snapshot=self._isabelle_snapshot(),
-            native_source=ISABELLE_SOURCE,
-        )
-        assert record.kernel_accepted is False

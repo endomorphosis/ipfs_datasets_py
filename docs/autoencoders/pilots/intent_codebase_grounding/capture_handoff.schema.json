@@ -1,0 +1,1584 @@
+{
+  "type": "object",
+  "required": [
+    "schema",
+    "status",
+    "guide",
+    "schema_file",
+    "pilot_spec",
+    "adapter_contracts",
+    "inspection_record",
+    "scope",
+    "integration",
+    "fixture",
+    "owners",
+    "api_signatures",
+    "operation_recovery",
+    "resources",
+    "model_lanes",
+    "call_sequence",
+    "proposed_runtime_bindings",
+    "acceptance_cases",
+    "acceptance_boundary",
+    "actions_performed_by_authoring"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "intent-codebase-capture-handoff-plan/v1"
+    },
+    "status": {
+      "const": "planned_not_runtime_implemented"
+    },
+    "guide": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pilot_spec": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adapter_contracts": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspection_record": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "implementation_slices",
+        "work_items",
+        "adapter_id",
+        "milestone",
+        "runtime_admission_established",
+        "proof_or_effect_authority"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "implementation_slices": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "work_items": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "adapter_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "milestone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime_admission_established": {
+          "type": "boolean",
+          "const": false
+        },
+        "proof_or_effect_authority": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "integration": {
+      "type": "object",
+      "required": [
+        "required_capabilities",
+        "downstream_capabilities",
+        "capability_specific_readiness",
+        "source_pins_are_complete_dependency_closure",
+        "local_git_observations_are_fresh_remote_verification",
+        "observed_datasets_local_origin",
+        "observed_parent_supervisor_gitlink",
+        "parent_gitlink_object_missing_in_nested_clone",
+        "nested_supervisor_pins_match_parent_gitlink_bytes",
+        "sibling_origin_selected_by_this_plan",
+        "gates"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "required_capabilities": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "downstream_capabilities": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "capability_specific_readiness": {
+          "type": "boolean",
+          "const": true
+        },
+        "source_pins_are_complete_dependency_closure": {
+          "type": "boolean",
+          "const": false
+        },
+        "local_git_observations_are_fresh_remote_verification": {
+          "type": "boolean",
+          "const": false
+        },
+        "observed_datasets_local_origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_parent_supervisor_gitlink": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parent_gitlink_object_missing_in_nested_clone": {
+          "type": "boolean",
+          "const": true
+        },
+        "nested_supervisor_pins_match_parent_gitlink_bytes": {
+          "type": "boolean",
+          "const": true
+        },
+        "sibling_origin_selected_by_this_plan": {
+          "type": "boolean",
+          "const": false
+        },
+        "gates": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {
+            "type": "object",
+            "required": [
+              "gate_id",
+              "title",
+              "requirement",
+              "failure_outcome",
+              "implementation_state",
+              "measured_outcome"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "gate_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requirement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "failure_outcome": {
+                "type": "string",
+                "minLength": 1
+              },
+              "implementation_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "measured_outcome": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "required": [
+        "source_specification",
+        "source_variant",
+        "path",
+        "exact_source_bytes",
+        "root_requirement",
+        "controls_outside_fixture_root",
+        "source_policy"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_specification": {
+          "type": "object",
+          "required": [
+            "path",
+            "bytes",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sha256": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "source_variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exact_source_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "root_requirement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "controls_outside_fixture_root": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "source_policy": {
+          "type": "object",
+          "required": [
+            "native_profile",
+            "native_admitted_modes",
+            "pilot_h0_required_mode",
+            "strict_clean_guard_implemented",
+            "strict_clean_status_scope",
+            "status_emptiness_covers_standard_ignored_files",
+            "git_clean_mode_proves_root_wide_cleanliness",
+            "guard_boundaries",
+            "native_publication_cleanliness_hook_available",
+            "failed_post_guard_can_leave_complete_native_head",
+            "later_h1_policy",
+            "declared_exclusions",
+            "effective_exclusions_owner",
+            "max_entries",
+            "max_file_bytes",
+            "inventory",
+            "proof_paths",
+            "training_paths",
+            "selections_filter_inventory",
+            "ignore_scope_owner",
+            "active_external_ignore_patterns_admitted"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "native_profile": {
+              "type": "string",
+              "minLength": 1
+            },
+            "native_admitted_modes": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "pilot_h0_required_mode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "strict_clean_guard_implemented": {
+              "type": "boolean",
+              "const": false
+            },
+            "strict_clean_status_scope": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status_emptiness_covers_standard_ignored_files": {
+              "type": "boolean",
+              "const": false
+            },
+            "git_clean_mode_proves_root_wide_cleanliness": {
+              "type": "boolean",
+              "const": false
+            },
+            "guard_boundaries": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "native_publication_cleanliness_hook_available": {
+              "type": "boolean",
+              "const": false
+            },
+            "failed_post_guard_can_leave_complete_native_head": {
+              "type": "boolean",
+              "const": true
+            },
+            "later_h1_policy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "declared_exclusions": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "effective_exclusions_owner": {
+              "type": "string",
+              "minLength": 1
+            },
+            "max_entries": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            },
+            "max_file_bytes": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65536
+            },
+            "inventory": {
+              "type": "string",
+              "minLength": 1
+            },
+            "proof_paths": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "training_paths": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "selections_filter_inventory": {
+              "type": "boolean",
+              "const": false
+            },
+            "ignore_scope_owner": {
+              "type": "string",
+              "minLength": 1
+            },
+            "active_external_ignore_patterns_admitted": {
+              "type": "boolean",
+              "const": false
+            }
+          }
+        }
+      }
+    },
+    "owners": {
+      "type": "object",
+      "required": [
+        "source_catalog_constructor",
+        "index_constructor",
+        "catalog_constructor_may_create_sql_domain",
+        "exact_native_file_backed_owner_required",
+        "shared_store_connection_and_cas_required",
+        "worker_connection_transfer_allowed",
+        "source_owner_is_separate_from_cell_registries",
+        "default_in_memory_owners_accepted",
+        "serialized_writer_required",
+        "proposed_registration_is_native_index_register_api",
+        "native_observation_fields",
+        "native_observation_cid_field_exists",
+        "proposed_outer_observation_wrapper_owner_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_catalog_constructor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "index_constructor": {
+          "type": "string",
+          "minLength": 1
+        },
+        "catalog_constructor_may_create_sql_domain": {
+          "type": "boolean",
+          "const": true
+        },
+        "exact_native_file_backed_owner_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "shared_store_connection_and_cas_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "worker_connection_transfer_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "source_owner_is_separate_from_cell_registries": {
+          "type": "boolean",
+          "const": true
+        },
+        "default_in_memory_owners_accepted": {
+          "type": "boolean",
+          "const": false
+        },
+        "serialized_writer_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "proposed_registration_is_native_index_register_api": {
+          "type": "boolean",
+          "const": false
+        },
+        "native_observation_fields": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "native_observation_cid_field_exists": {
+          "type": "boolean",
+          "const": false
+        },
+        "proposed_outer_observation_wrapper_owner_required": {
+          "type": "boolean",
+          "const": true
+        }
+      }
+    },
+    "api_signatures": {
+      "type": "object",
+      "required": [
+        "ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+        "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+        "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": {
+          "type": "object",
+          "required": [
+            "source",
+            "api_signatures_from_ast"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "api_signatures_from_ast": {
+              "type": "object",
+              "required": [
+                "RepositoryCodebaseIndex.__init__",
+                "RepositoryCodebaseIndex.prepare_current",
+                "RepositoryCodebaseIndex.current",
+                "RepositoryCodebaseIndex.observe_current",
+                "RepositoryCodebaseIndex.load",
+                "RepositoryCodebaseIndex.lookup",
+                "RepositoryCodebaseIndex.load_ast_artifact"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "RepositoryCodebaseIndex.__init__": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.prepare_current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.observe_current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.load": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.lookup": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "RepositoryCodebaseIndex.load_ast_artifact": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ipfs_datasets_py/duckdb_control/codebase_catalog.py": {
+          "type": "object",
+          "required": [
+            "source",
+            "api_signatures_from_ast"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "api_signatures_from_ast": {
+              "type": "object",
+              "required": [
+                "CodebaseCatalog.__init__",
+                "CodebaseCatalog.current",
+                "CodebaseCatalog.request_identity",
+                "CodebaseCatalog.resolve_operation",
+                "CodebaseCatalog.publish"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "CodebaseCatalog.__init__": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "CodebaseCatalog.current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "CodebaseCatalog.request_identity": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "CodebaseCatalog.resolve_operation": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "CodebaseCatalog.publish": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py": {
+          "type": "object",
+          "required": [
+            "source",
+            "api_signatures_from_ast"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "api_signatures_from_ast": {
+              "type": "object",
+              "required": [
+                "CodebaseScanPolicy",
+                "prepare_policy_current",
+                "load_policy_receipt"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "CodebaseScanPolicy": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "null"
+                    }
+                  }
+                },
+                "prepare_policy_current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "load_policy_receipt": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py": {
+          "type": "object",
+          "required": [
+            "source",
+            "api_signatures_from_ast"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "type": "object",
+              "required": [
+                "path",
+                "bytes",
+                "sha256"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "bytes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "sha256": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "api_signatures_from_ast": {
+              "type": "object",
+              "required": [
+                "verify_policy_current"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "verify_policy_current": {
+                  "type": "object",
+                  "required": [
+                    "line",
+                    "signature"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "line": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "signature": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "operation_recovery": {
+      "type": "object",
+      "required": [
+        "outer_request_owner",
+        "outer_request_fields",
+        "native_request_fields",
+        "native_request_available_before_manifest_derivation",
+        "native_request_must_be_preserved_before_ambiguous_commit",
+        "native_prepublication_journal_hook_implemented",
+        "unknown_request_cid_outcome",
+        "blind_retry_with_current_head_allowed",
+        "historical_retry_grants_currentness",
+        "commit_stage_accounting",
+        "failure_states"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "outer_request_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outer_request_fields": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "native_request_fields": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "native_request_available_before_manifest_derivation": {
+          "type": "boolean",
+          "const": false
+        },
+        "native_request_must_be_preserved_before_ambiguous_commit": {
+          "type": "boolean",
+          "const": true
+        },
+        "native_prepublication_journal_hook_implemented": {
+          "type": "boolean",
+          "const": false
+        },
+        "unknown_request_cid_outcome": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blind_retry_with_current_head_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "historical_retry_grants_currentness": {
+          "type": "boolean",
+          "const": false
+        },
+        "commit_stage_accounting": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "failure_states": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "required": [
+        "outer_parent_lease_before_metadata_required",
+        "outer_remaining_deadline_required",
+        "native_limits_are_cooperative",
+        "native_git_metadata_output_cap_verified",
+        "operation_wide_hard_timeout_verified",
+        "operation_wide_rss_cap_verified",
+        "whole_repository_capture_admitted",
+        "native_acquisition_remediation",
+        "fixture_metadata_gate_implemented",
+        "catalog_row_caps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "outer_parent_lease_before_metadata_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "outer_remaining_deadline_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "native_limits_are_cooperative": {
+          "type": "boolean",
+          "const": true
+        },
+        "native_git_metadata_output_cap_verified": {
+          "type": "boolean",
+          "const": false
+        },
+        "operation_wide_hard_timeout_verified": {
+          "type": "boolean",
+          "const": false
+        },
+        "operation_wide_rss_cap_verified": {
+          "type": "boolean",
+          "const": false
+        },
+        "whole_repository_capture_admitted": {
+          "type": "boolean",
+          "const": false
+        },
+        "native_acquisition_remediation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fixture_metadata_gate_implemented": {
+          "type": "boolean",
+          "const": false
+        },
+        "catalog_row_caps": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "model_lanes": {
+      "type": "object",
+      "required": [
+        "inventory_index",
+        "cell_count",
+        "cells",
+        "capture_depends_on_model_availability",
+        "donor_weights_or_embeddings_rewritten",
+        "codebase_fixture_observations",
+        "other_family_inventory_relabeling_allowed",
+        "random_replacement_of_learned_components_allowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "inventory_index": {
+          "type": "object",
+          "required": [
+            "path",
+            "bytes",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "sha256": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "cell_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 12,
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "required": [
+              "cell_id",
+              "ir_family_id",
+              "dimension",
+              "inventory",
+              "runtime_task_admission",
+              "model_execution_required_for_capture"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "cell_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "ir_family_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dimension": {
+                "type": "integer",
+                "enum": [
+                  8,
+                  384,
+                  768
+                ]
+              },
+              "inventory": {
+                "type": "object",
+                "required": [
+                  "path",
+                  "bytes",
+                  "sha256"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "runtime_task_admission": {
+                "type": "null"
+              },
+              "model_execution_required_for_capture": {
+                "type": "boolean",
+                "const": false
+              }
+            }
+          }
+        },
+        "capture_depends_on_model_availability": {
+          "type": "boolean",
+          "const": false
+        },
+        "donor_weights_or_embeddings_rewritten": {
+          "type": "boolean",
+          "const": false
+        },
+        "codebase_fixture_observations": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": [
+              "dimension",
+              "disposition",
+              "reason"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "dimension": {
+                "type": "integer",
+                "enum": [
+                  8,
+                  384,
+                  768
+                ]
+              },
+              "disposition": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "other_family_inventory_relabeling_allowed": {
+          "type": "boolean",
+          "const": false
+        },
+        "random_replacement_of_learned_components_allowed": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "call_sequence": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "step_id",
+              "depends_on",
+              "owner_api",
+              "requirement",
+              "success_state",
+              "actual_state"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "depends_on": {
+                "type": "array",
+                "maxItems": 0
+              },
+              "owner_api": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requirement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "success_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actual_state": {
+                "type": "null"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "step_id",
+              "depends_on",
+              "owner_api",
+              "requirement",
+              "success_state",
+              "actual_state"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "depends_on": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "owner_api": {
+                "type": "string",
+                "minLength": 1
+              },
+              "requirement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "success_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "actual_state": {
+                "type": "null"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "proposed_runtime_bindings": {
+      "type": "object",
+      "required": [
+        "implementation_release_manifest",
+        "package_resolution_receipt",
+        "repository_registration",
+        "fixture_root_locator",
+        "fixture_git_commit",
+        "source_owner_incarnation",
+        "outer_operation_request",
+        "native_operation_id",
+        "original_expected_head",
+        "native_request_cid",
+        "native_publication_receipt",
+        "published_head",
+        "source_manifest",
+        "policy_receipt",
+        "fresh_source_policy_observation",
+        "outer_observation_wrapper",
+        "resource_lease_and_stage_counters",
+        "case_outcome_receipts",
+        "B01_acceptance_record"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "implementation_release_manifest": {
+          "type": "null"
+        },
+        "package_resolution_receipt": {
+          "type": "null"
+        },
+        "repository_registration": {
+          "type": "null"
+        },
+        "fixture_root_locator": {
+          "type": "null"
+        },
+        "fixture_git_commit": {
+          "type": "null"
+        },
+        "source_owner_incarnation": {
+          "type": "null"
+        },
+        "outer_operation_request": {
+          "type": "null"
+        },
+        "native_operation_id": {
+          "type": "null"
+        },
+        "original_expected_head": {
+          "type": "null"
+        },
+        "native_request_cid": {
+          "type": "null"
+        },
+        "native_publication_receipt": {
+          "type": "null"
+        },
+        "published_head": {
+          "type": "null"
+        },
+        "source_manifest": {
+          "type": "null"
+        },
+        "policy_receipt": {
+          "type": "null"
+        },
+        "fresh_source_policy_observation": {
+          "type": "null"
+        },
+        "outer_observation_wrapper": {
+          "type": "null"
+        },
+        "resource_lease_and_stage_counters": {
+          "type": "null"
+        },
+        "case_outcome_receipts": {
+          "type": "null"
+        },
+        "B01_acceptance_record": {
+          "type": "null"
+        }
+      }
+    },
+    "acceptance_cases": {
+      "type": "array",
+      "minItems": 18,
+      "maxItems": 18,
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "trigger",
+          "expected_outcome",
+          "expectation_status",
+          "actual_outcome"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "trigger": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expected_outcome": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expectation_status": {
+            "type": "string",
+            "minLength": 1
+          },
+          "actual_outcome": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    "acceptance_boundary": {
+      "type": "object",
+      "required": [
+        "source_and_policy_reobserved_for_current_use",
+        "all_nonexcluded_entries_reconciled",
+        "actual_runtime_outcomes_required",
+        "observation_locks_future_source_edits",
+        "structural_capture_implies_behavioral_proof",
+        "capture_admits_training",
+        "planning_schema_validation_admits_runtime"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_and_policy_reobserved_for_current_use": {
+          "type": "boolean",
+          "const": true
+        },
+        "all_nonexcluded_entries_reconciled": {
+          "type": "boolean",
+          "const": true
+        },
+        "actual_runtime_outcomes_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "observation_locks_future_source_edits": {
+          "type": "boolean",
+          "const": false
+        },
+        "structural_capture_implies_behavioral_proof": {
+          "type": "boolean",
+          "const": false
+        },
+        "capture_admits_training": {
+          "type": "boolean",
+          "const": false
+        },
+        "planning_schema_validation_admits_runtime": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    },
+    "actions_performed_by_authoring": {
+      "type": "object",
+      "required": [
+        "source_reads",
+        "static_ast_signature_extraction",
+        "local_git_reads",
+        "runtime_adapter_implementation",
+        "repository_scan",
+        "database_creation",
+        "solver_execution",
+        "model_inference",
+        "training",
+        "embedding_regeneration",
+        "git_merge_or_push",
+        "remote_fetch"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_reads": {
+          "type": "boolean",
+          "const": true
+        },
+        "static_ast_signature_extraction": {
+          "type": "boolean",
+          "const": true
+        },
+        "local_git_reads": {
+          "type": "boolean",
+          "const": true
+        },
+        "runtime_adapter_implementation": {
+          "type": "boolean",
+          "const": false
+        },
+        "repository_scan": {
+          "type": "boolean",
+          "const": false
+        },
+        "database_creation": {
+          "type": "boolean",
+          "const": false
+        },
+        "solver_execution": {
+          "type": "boolean",
+          "const": false
+        },
+        "model_inference": {
+          "type": "boolean",
+          "const": false
+        },
+        "training": {
+          "type": "boolean",
+          "const": false
+        },
+        "embedding_regeneration": {
+          "type": "boolean",
+          "const": false
+        },
+        "git_merge_or_push": {
+          "type": "boolean",
+          "const": false
+        },
+        "remote_fetch": {
+          "type": "boolean",
+          "const": false
+        }
+      }
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ipfs-datasets:intent-codebase-capture-handoff-plan:v1",
+  "title": "Closed authored B00/B01 capture handoff planning specification",
+  "description": "Planning shape and absent runtime-results validation only; not a canonical source/proof/operation codec or runtime admission policy."
+}

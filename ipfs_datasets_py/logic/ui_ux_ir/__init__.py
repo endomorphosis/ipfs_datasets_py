@@ -39,9 +39,13 @@ __all__ = [
     "create_mediator",
     "UIMediator",
     "public_api_manifest",
+    "open_autoencoder",
+    "formalize_with_autoencoder",
 ]
 
 _LAZY: Final[Mapping[str, tuple[str, str]]] = {
+    "open_autoencoder": (".autoencoder", "open_autoencoder"),
+    "formalize_with_autoencoder": (".autoencoder", "formalize_with_autoencoder"),
     "UI_UX_IR_SCHEMA_VERSION": (".schema", "UI_UX_IR_SCHEMA_VERSION"),
     "UIIRDocument": (".schema", "UIIRDocument"),
     "UIIRValidationError": (".schema", "UIIRValidationError"),

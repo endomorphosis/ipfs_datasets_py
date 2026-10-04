@@ -1,0 +1,1023 @@
+{
+  "schema": "codebase-ir-proof-index-improvement-work-items/v2",
+  "status": "implementation_plan",
+  "created_date_utc": "2026-10-02",
+  "guide": "codebase_ir_proof_index_improvement_plan.md",
+  "inspection_record": "../../../../artifacts/codebase-ir-proof-planning-20261002/inspection.json",
+  "purpose": "Maintain12 independent IR family\u00d7dimension inventories/stores/Hubrepositories, qualify progressively larger spans with family/task-specific decoders, and federate grounded Codebase/Intent/Security/Legal evidence for symbolic supervision.",
+  "observed_baseline": {
+    "datasets_checkout": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+    "datasets_origin_main": "ea275ae32779db01c7dc59dc62ce12bcd9841ae2",
+    "datasets_main_behind_observed_origin": 38,
+    "refs_can_advance": true,
+    "legal_raw_gru_exposed_validation": {
+      "rows": 60,
+      "exact_ir_matches": 0,
+      "measures_legal_text_reconstruction": false,
+      "old_weights_loaded": true
+    },
+    "source384_recorded_experiment": {
+      "rows": 9,
+      "parent_exact_targets": 9,
+      "child_exact_targets": 0,
+      "child_promoted": false,
+      "parent_pretraining_independence": "unknown",
+      "rerun_during_plan_creation": false,
+      "cohort_role": "repository-round authored development retention panel; independent teacher qualification not established"
+    },
+    "native_768d_training_completed_in_inspected_migration": false,
+    "released_source384_worker_consumes_persisted_vector_cache": false,
+    "datasets_core_audit_origin_main": "b86bf9ebeea81b1976696f0f031949a936431a3b",
+    "unpublished_codebase_dependencies": [
+      "ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+      "ipfs_datasets_py/logic/software_contracts/codebase_property_cache.py",
+      "ipfs_datasets_py/logic/software_contracts/codebase_verification.py",
+      "ipfs_datasets_py/duckdb_control/codebase_verification_catalog.py",
+      "ipfs_datasets_py/duckdb_control/codebase_evidence_index.py",
+      "ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py"
+    ],
+    "supervisor_source_provenance": {
+      "original_nested_audit_head": "9b5c4e01b4aded11f92089ca216456bd39f7b6ba",
+      "sibling_comparison_head": "18e0f79e56def8ba426cafdfad568fe6bf7440b7",
+      "sibling_observed_origin_main": "5f15211cf581786c1d010d8251df9ffc163c1e83",
+      "sibling_planner_and_compiler_modified_relative_to_head": true,
+      "fresh_selected_release_recheck_required": true,
+      "sibling_proof_scope_index_modified_relative_to_head": true
+    }
+  },
+  "pilot": {
+    "repositories": [
+      "ipfs_datasets_py declared Python scope",
+      "registered ipfs_accelerate_py supervisor scope"
+    ],
+    "initial_scan_profile": "proposed strict-clean gate over existing committed Git-root policy; explicit overlay mode separate",
+    "max_inventory_entries": 256,
+    "max_source_bytes": 65536,
+    "released_source384_max_cohort_rows": 128,
+    "source384_decoder_scope": "one annotated two-operand scalar Python function per selected file",
+    "nested_repositories": "explicit opaque boundaries until separately registered",
+    "independent_counts": [
+      "inventory_entries",
+      "parsed_units",
+      "supported_native_units",
+      "supported_decoder_units",
+      "formalized_properties",
+      "checked_properties",
+      "runtime_correspondence_admitted_properties"
+    ],
+    "initial_effect_example": "Declared integer function x+1 changed to requested x+2; current-source checks and affected tests required.",
+    "larger_repositories": "Require a new deterministic paged/aggregate capture profile; current pilot bounds are not silently raised.",
+    "existing_policy_admits_git_working": true,
+    "training_and_proof_selection_paths_filter_inventory": false
+  },
+  "reconstruction_metrics": [
+    {
+      "id": "exact_ir",
+      "target": "independently established canonical reference IR",
+      "inputs_policy": "References may be used only after source-only generation for scoring."
+    },
+    {
+      "id": "critical_fields",
+      "target": "source semantic subjects, operators, modalities, bounds, references and effects",
+      "inputs_policy": "Constant grammar tokens cannot hide variable-field collapse."
+    },
+    {
+      "id": "source_withheld_roundtrip",
+      "target": "surface and recompiled semantics of legal text/code reconstructed from IR",
+      "inputs_policy": "A retained source sidecar is unavailable to this learned-reconstruction metric."
+    },
+    {
+      "id": "original_bytes",
+      "target": "exact original source bytes",
+      "inputs_policy": "Source/CST sidecar restoration is a separate labeled deterministic baseline."
+    }
+  ],
+  "cache_contracts": {
+    "source_artifacts": "Exact source/AST/native payload CAS identities and frontend profiles",
+    "vectors": "Exact payload/span/context, encoder and code assets, tokenizer, truncation, pooling, normalization, precision and dimension",
+    "candidates": "Vector receipt plus decoder/checkpoint, task codec, generation profile and output validation",
+    "proofs": "Existing CanonicalProofCacheKey plus exact current applicability and admitted source/checker evidence",
+    "canonical_proof_key_fields": [
+      "source",
+      "expression",
+      "formalization",
+      "slice",
+      "obligation",
+      "assumptions",
+      "bounds",
+      "translation",
+      "provider",
+      "environment",
+      "policy",
+      "schema",
+      "checker",
+      "network_policy",
+      "evidence_kind",
+      "authority_ceiling"
+    ],
+    "similarity_is_proof_identity": false,
+    "initial_proof_reuse": "Strict complete source snapshot and exact-tree contracts",
+    "cross_snapshot_reuse": "Later separately reviewed dependency-slice applicability profile; preserve original key and certificate",
+    "outcomes_are_conceptual_adapter_targets": [
+      "candidate",
+      "conditional_model_checked",
+      "kernel_checked",
+      "refuted",
+      "unknown",
+      "timeout",
+      "unsupported",
+      "failed",
+      "stale"
+    ],
+    "outcomes_match_existing_owner_enums_without_mapping": false
+  },
+  "publication_contract": {
+    "bulk_payload_owner": "immutable CAS and DuckLake history",
+    "current_control_owner": "existing file-backed DuckDB catalogs with one serialized writer",
+    "cross_owner_atomic_transaction_claimed": false,
+    "required_cases": [
+      "restart hydration",
+      "interrupted CAS staging",
+      "interrupted lake commit",
+      "interrupted control-head publication",
+      "duplicate operation",
+      "orphan batch reconciliation"
+    ],
+    "local_owner_flow": [
+      "Durably authenticate referenced CAS payloads",
+      "Commit owned DuckDB state/head and transactional outbox event together",
+      "Reconcile optional DuckLake history through delivery owner; record pending delivery"
+    ],
+    "existing_transactional_history_outbox_owner": "AutoencoderRegistry",
+    "proposed_history_outbox_owner_migrations": [
+      "CodebaseCatalog",
+      "conditional proof/evidence catalogs"
+    ],
+    "future_lake_referencing_aggregate_flow": [
+      "Durably authenticate CAS payloads and commit lake batch",
+      "Validate lake snapshot and aggregate manifest",
+      "Compare-and-swap aggregate head with idempotent publication operation and recovery journal"
+    ],
+    "pending_optional_history_blocks_local_head": false
+  },
+  "training_admission": {
+    "eligible_targets": [
+      "deterministic source-bound native targets",
+      "reviewed declared contracts",
+      "separately typed trusted verification outcomes"
+    ],
+    "unchecked_model_outputs_are_ground_truth": false,
+    "intent_goals_are_observed_code_facts": false,
+    "serving_model_mutated_in_place": false,
+    "promotion_automatic": false,
+    "split_grouping": [
+      "source identity",
+      "normalized and alpha clones",
+      "rename/revision connected lineage",
+      "connected modules",
+      "shared fixtures",
+      "generated variants"
+    ],
+    "replay_preserves_original_roles_and_snapshot": true,
+    "original_ridge_rows_or_sufficient_statistics_required": true,
+    "budgets": "Freeze steps/rows/time/memory/prover and retry budgets with C09; leased runs stop without promotion on exhaustion.",
+    "teacher_policy": "Qualify same-family/task/codec/source-access/span fidelity first; explicit reviewed bridge/alignment for other tasks. Compiler-target 8D readouts are not source-only teachers. Small teachers supervise matched units, not unseen long-span semantics.",
+    "variant_identity": "Stable cell/IR family/dimension role/task/representation-basis/codec/budgets/span-contract; initial frozen corpus lineage if applicable",
+    "evolving_source_and_corpus_roots": "Immutable model version/run metadata; compatible source-successor continuation does not become an unrelated variant merely because its source head changes",
+    "cross_cell_transfer": "Same-variant continuation uses native parent; cross-cell/width/family/task transfer uses immutable donor receipts and a separate new variant/transfer edge."
+  },
+  "acceptance_policy": {
+    "controlled_arithmetic_critical_fields": "exact on preregistered supported fixtures",
+    "controlled_parent_retention": "no preregistered regression",
+    "stale_or_forged_acceptances_in_regression_panel": 0,
+    "broader_repository_thresholds": "Freeze independent grouped task-specific absolute fidelity, coverage, retention and operational thresholds before selection; no unmeasured general-Python guarantee.",
+    "training_loss_is_promotion_evidence_alone": false,
+    "compiling_a_formula_is_source_runtime_proof": false,
+    "per_family_width_role_task_decoder_span_stage": true
+  },
+  "work_items": [
+    {
+      "id": "C00",
+      "title": "Integration and authenticated model inventory",
+      "depends_on": [],
+      "owners": [
+        "ipfs_datasets_py release integration",
+        "ipfs_accelerate_py release integration",
+        "existing AutoencoderRegistry artifact owners"
+      ],
+      "deliverables": [
+        "Isolated branch from fresh datasets origin/main; reviewed missing GTE and local Codebase training/proof/cache dependencies plus scoped dependent edits",
+        "Inventory actual checkpoints, old cached vectors, producer closures, runtime selectors, native encoder assets and task/codec compatibility; discover independently per family/width/task",
+        "Immutable acquisition manifests and clean-checkout reproduction; supervisor integration in its owning repository"
+      ],
+      "acceptance": [
+        "Current origin code is distinguished from local unpublished modules",
+        "Each selected model reloads its authenticated bytes with explicit runtime selection; missing required weights reject execution",
+        "Existing 481 bound migration files remain unchanged; no random replacement of inherited decoder bodies",
+        "Clean checkout obtains required artifacts independently of local workspace paths",
+        "Chosen current supervisor release is compared with both inspected checkouts; local modifications and previously fixed gaps are classified"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C01",
+      "title": "Repository identity and cross-owner schema adapters",
+      "depends_on": [
+        "C00"
+      ],
+      "owners": [
+        "RepositoryCodebaseIndex",
+        "CodebaseCatalog",
+        "semantic_state",
+        "supervisor repository snapshot and datasets adapter"
+      ],
+      "deliverables": [
+        "Committed and explicit dirty-overlay repository profiles; nested-root boundaries and environment manifests",
+        "Source CID/span to AST symbol, semantic stable ID and version CID joins",
+        "Registered converters for RepositoryState, InvalidationPlan, SemanticCapsule and DatasetsContextPack; authority mapping",
+        "Typed store/root/family/role identity, distinct from semantic logic family and opaque payload type",
+        "Worktree/source-mode repository identity and complete HEAD/index/working/untracked/ignore capture semantics",
+        "Explicit raw/native identity versus full-record pinned transport CID and raw exposure versus target-envelope digest adapters"
+      ],
+      "acceptance": [
+        "Dirty bytes cannot pass a committed-source profile",
+        "Empty roots, wrong repository, stale heads and ABA observations reject applicability",
+        "Stable symbol identity cannot substitute for a body/version identity",
+        "Converters round-trip supported fields and preserve unknown scope and authority",
+        "Live observation is point-in-time; a durable head or historical retry receipt alone cannot authorize consumption"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C02",
+      "title": "Incremental repository index and complete scoped inventory",
+      "depends_on": [
+        "C01"
+      ],
+      "owners": [
+        "RepositoryCodebaseIndex",
+        "CodebaseScanPolicy",
+        "DuckDBASTStore",
+        "semantic_index"
+      ],
+      "deliverables": [
+        "Bounded Python pilot using existing exact-byte capture and source-correspondence owners",
+        "Incremental source/symbol/dependency updates and explicit unsupported/dynamic dependencies",
+        "Separately versioned deterministic paging/shard profile and sealed aggregate manifest before whole-repository rollout",
+        "Separate warm-process AST reuse, cold-restart artifact loading, semantic rescans and embedding reuse; reviewed durable shard hydration if needed"
+      ],
+      "acceptance": [
+        "Every admitted-scope entry reconciles to parsed, partial, failed, opaque or captured_unindexed status; exclusions are recorded outside admitted scope",
+        "Pilot honors current 256-entry and 65536-byte bounds",
+        "No repository imports or side-effectful module execution are needed for AST capture",
+        "Paged manifests reject missing, duplicate or conflicting entries; incomplete dependencies trigger conservative invalidation",
+        "All nonexcluded entries are bounded independent of training/proof selections; pages reconcile to one source root"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C12",
+      "title": "Family task and representation-width contracts",
+      "depends_on": [
+        "C00",
+        "C01"
+      ],
+      "owners": [
+        "ModalityContract versioned adapter",
+        "IR family native schemas",
+        "runtime inventory owners"
+      ],
+      "deliverables": [
+        "Twelve independently named cell inventories with actual checkpoint/cached-row evidence and explicit unavailable profiles",
+        "Closed versioned family/task/dimension-role/encoder/decoder/codec/input-output-budget/span contract",
+        "Stable continuation variant and evolving source/corpus run/version metadata"
+      ],
+      "acceptance": [
+        "All four IR families \u00d7 three widths accounted for; no domain_scope-only existence claims",
+        "Wrong family/dimension role/task/codec/budget rejects before loading",
+        "Structural latent8 and source-embedding8 remain distinct; logic_family_id never substitutes for ir_family_id",
+        "Codebase 384D Security payload bridge retained; native Codebase decoder independence not falsely asserted"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C15",
+      "title": "Isolated cell stores inventories and routing",
+      "depends_on": [
+        "C12"
+      ],
+      "owners": [
+        "AutoencoderRegistry instances",
+        "reviewed index/connection owner",
+        "DuckLake history/delivery owners",
+        "store directory adapter"
+      ],
+      "deliverables": [
+        "Separate registry.duckdb and index.duckdb per cell with independent owner/locks/leases",
+        "Separate DuckLake catalog/data prefix, schema versions and delivery journal per cell",
+        "Read-only old asset adoption manifests and locator directory; canonical repository capture referenced once",
+        "Reconcile proposed lake/catalog.duckdb with current history.ducklake subnamespace and 256MiB/production=False contract through reviewed adapter"
+      ],
+      "acceptance": [
+        "Registry foreign-table guard preserved; no independent writer services share a file",
+        "Restart/backup/restore/migration/retention/rollback work independently per cell",
+        "Missing optional cell does not disable existing cells",
+        "All matching old weights/vectors retain exact bytes; no physical migration or regeneration hidden in inventory setup",
+        "Restore issues a nonrepeating owner incarnation; old leases and origin-owner sequences cannot become current again"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C03",
+      "title": "Family representation profiles and authenticated vector reuse",
+      "depends_on": [
+        "C00",
+        "C02",
+        "C12",
+        "C15"
+      ],
+      "owners": [
+        "existing GTE embedding reuse adapters",
+        "codebase_source_384 worker",
+        "AutoencoderRegistry"
+      ],
+      "deliverables": [
+        "Authenticated persisted vector-cache adapter for source384; profile-specific row receipts",
+        "Independent 8D feature, GTE-small 384D and native multilingual 768D registrations",
+        "Deterministic source-unit/chunk/context assembly with token accounting and span coverage",
+        "Independent family bindings to shared immutable raw vectors; preserve12-cell profiles and actual 8D dimension roles"
+      ],
+      "acceptance": [
+        "Exact matching cached vectors are reused byte-for-byte; only absent or changed inputs are encoded",
+        "Encoder revision/assets, input/context bytes, tokenizer, truncation, pooling, normalization and dtype all match",
+        "Projected 384D values cannot be labeled as native 768D values",
+        "Missing native 768D inputs remain unavailable without disabling 8D and 384D paths",
+        "All old caches remain unchanged; parallel workers serialize shared owner transitions",
+        "Prior 2640 rows have 660 each for Legal/Intent/Security/UIUX and zero Codebase rows; no cross-family data relabeling"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C04",
+      "title": "Native Codebase IR semantics and typed logic projections",
+      "depends_on": [
+        "C02",
+        "C12"
+      ],
+      "owners": [
+        "software_contracts ProgramIR and source correspondence",
+        "logic family translators",
+        "released codebase_semantic_manifest"
+      ],
+      "deliverables": [
+        "Declared integer/Boolean supported semantics and independently derived native targets",
+        "Typed family obligations with source/native mappings, bounds, assumptions and unsupported facets",
+        "Incremental semantics roadmap for branches, loops, aliasing, exceptions, I/O and async behavior",
+        "Separate Codebase/Security/Legal/Intent native targets and typed applicability joins; preserve source/payload bridge provenance"
+      ],
+      "acceptance": [
+        "Positive and negative source/formula fixtures bind exact source subjects",
+        "Tests, finite-model, conditional SMT and kernel evidence remain separate",
+        "Intent-desired properties cannot become implementation observations or training truth without evidence",
+        "Compiled model semantics do not imply arbitrary Python runtime correspondence"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C05",
+      "title": "Durable proof storage and consistent publication",
+      "depends_on": [
+        "C01",
+        "C04",
+        "C15"
+      ],
+      "owners": [
+        "CanonicalProofCacheKey",
+        "DuckDBProofStore or durable evidence owner",
+        "CodebaseEvidenceIndex",
+        "DuckLake history and delivery owners"
+      ],
+      "deliverables": [
+        "Reviewed storage ownership decision; SQL put/get/hydration and migrations if using DuckDBProofStore",
+        "Exact canonical-key and reverse-dependency views with distinct outcome/authority states",
+        "Registry local state plus transactional outbox and reconciled DuckLake history; proposed source/proof owner delivery migrations; separate future lake-referencing aggregate publication",
+        "Per-cell registry/index schema owners and durable proof/applicability storage; canonical source and proof identities remain shared contracts",
+        "Explicit historical-hit/fresh-check/certificate-recheck counters; current integer cache never bypasses native checks",
+        "Current evidence index terminal proved/refuted admission preserved; nonterminal/raised failures routed to reviewed separate attempt journal"
+      ],
+      "acceptance": [
+        "Proof rows survive process restart and can be retrieved without an in-process dictionary",
+        "All 16 canonical key fields and source/checker/environment bindings are retained",
+        "Candidate or untrusted historical status cannot create current proof authority",
+        "Crash/retry in local outbox delivery and future lake-backed aggregate publication cannot expose completed heads with missing referenced artifacts; pending optional history does not block a valid local head",
+        "Native DuckDB has one serialized writer owner; DuckLake catalog selection is explicitly tested",
+        "Historical exact index integrity cannot substitute for trusted fresh checker output or verified portable certificate"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C06",
+      "title": "Current proof applicability and invalidation",
+      "depends_on": [
+        "C02",
+        "C05"
+      ],
+      "owners": [
+        "semantic_state invalidation",
+        "codebase_property_cache",
+        "CodebaseEvidenceIndex",
+        "supervisor verification and dependency reconciliation"
+      ],
+      "deliverables": [
+        "Strict full-source-snapshot and exact-tree applicability for the pilot",
+        "Typed reverse-dependency invalidation for source, contracts, policies, locks and toolchains",
+        "Later separately reviewed dependency-slice reuse profile with explicit old-to-current applicability records"
+      ],
+      "acceptance": [
+        "Body edit, rename, deletion, signature, decorator, globals, import, lock, policy, toolchain and nested-root changes are covered",
+        "Negative and positive cached outcomes obey identical freshness rules",
+        "No key fields are dropped to manufacture cross-tree hits",
+        "Unclosed dependency graphs broaden checks; concurrent changes and ABA cannot reuse stale authority"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C17",
+      "title": "Typed cross IR federation and current-owner validation",
+      "depends_on": [
+        "C01",
+        "C04",
+        "C05",
+        "C06",
+        "C15"
+      ],
+      "owners": [
+        "DuckLake federation/snapshot contracts",
+        "semantic_state freshness",
+        "supervisor context and DecisionRuntime",
+        "typed cross-IR bridge owners"
+      ],
+      "deliverables": [
+        "Required-cell role-specific generation/snapshot vector and immutable planningmanifest",
+        "Codebase\u2194Intent/Security/Legal subject/applicability joins and owner-qualified dependency events",
+        "Exact typed root-kind/store/family/role/epoch validation and effect-time reobservation"
+      ],
+      "acceptance": [
+        "Absent or wrong store/root role bindings cannot satisfy freshness",
+        "Partial history/Hub delivery cannot fabricate complete required evidence",
+        "Unrelated metric or optional head advance does not block required unchanged subjects",
+        "Copies ofone certificate across dimensions count asone evidence item; no global atomic transaction claim",
+        "Changed law/instruction/security source root or applicability revision invalidates joins even if code stays unchanged; restored owner epochs reject old permits"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C07",
+      "title": "Intent grounding and symbolic planner admission",
+      "depends_on": [
+        "C04",
+        "C05",
+        "C06",
+        "C17"
+      ],
+      "owners": [
+        "IntentConstraintAdapter",
+        "obligation_graph_compiler",
+        "FormalPlanCompiler and FormalPlanValidator",
+        "symbolic_candidate_planner",
+        "ProofScopeIndex",
+        "DecisionRuntime"
+      ],
+      "deliverables": [
+        "Intent binding artifacts and eligibility views joining desired goals to current symbols and admitted facts",
+        "Required IR-hook failure propagation and registered upstream converters",
+        "Evidence-backed ObservedFact construction and independently observed effect-time roots/leases/scope",
+        "State-qualified current/planned-post/observed-post intent bindings and reviewed transition producer contracts",
+        "Typed verified Codebase-to-formalization registration and evidence-owner-derived satisfaction IDs",
+        "Separate admitted unknown-resolution workflow followed by re-grounding/recompilation",
+        "Reuse existing ProgramTransition types with proposed outer state adapter; H0 query subject persists while H1 belongs in measured observed mapping"
+      ],
+      "acceptance": [
+        "Ambiguous/missing symbols remain unresolved work",
+        "Empty roots, proof-status strings and validation Booleans cannot authorize a proof-backed plan",
+        "Required IR exceptions reject or return unavailable",
+        "Effect-time observations cannot default to the permit's old values",
+        "Planner can produce a bounded verification/context-resolution step when evidence is unknown",
+        "Exact typed store/family/root-kind/owner-generation bindings required; root value from another store or absent binding rejects",
+        "Achievable currently-false goal schedules a transition while preserving the current false fact; predicate ID alone cannot separate states",
+        "Unknown REVIEW leaves are not silently converted to tasks; conflicting facts and false mandatory policy still block"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C09",
+      "title": "Frozen evaluation harness and baseline controls",
+      "depends_on": [
+        "C00",
+        "C02",
+        "C04",
+        "C12"
+      ],
+      "owners": [
+        "source-generation evaluation harness",
+        "codebase training corpus owner",
+        "verification test suites",
+        "supervisor planner test suites"
+      ],
+      "deliverables": [
+        "Frozen connected clone/rename/revision/fixture groups and ancestral split/replay roles",
+        "Parent, candidate, model-off, zero-head, shuffled/rotated-input and deterministic baselines",
+        "Separate legal/code IR, semantic fields, source-withheld surface reconstruction, byte restoration, proof and resource metrics",
+        "Pinned-tokenizer/codec input/output length measurements, family critical-field panels and independent span-stage thresholds",
+        "Frozen end-to-end repair panel, state/runner/observer negative controls and truthful cache/coverage denominators"
+      ],
+      "acceptance": [
+        "Exposed validation, authored diagnostics and independent holdouts are labeled separately",
+        "Evaluation feedback cannot be relabeled as independent future evidence",
+        "Numeric thresholds and complete coverage denominators are frozen before fitting/selection",
+        "Recorded source384 parent 9/9 and child 0/9 regression is reproduced under the same task and scope",
+        "Harness/baseline exists before C08; final candidate reporting follows candidate fitting",
+        "Training eligibility is independent of a verified edit; integer-offset pilot does not imply source384 two-operand eligibility"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C13",
+      "title": "Family-specific decoder and source-inverse adapters",
+      "depends_on": [
+        "C03",
+        "C04",
+        "C09"
+      ],
+      "owners": [
+        "IR family decoder owners",
+        "GTE compatible donor-transfer adapters",
+        "source-generation and inverse evaluators"
+      ],
+      "deliverables": [
+        "Reuse matching actual bodies/heads with recorded component transfer and representation alignment",
+        "Native Codebase/Security/Legal/Intent grammars, variable-cardinality/reference mechanisms and explicit output budgets",
+        "Separate IR\u2192text/code inverse tasks and reversible surface-channel specification where original wording is required"
+      ],
+      "acceptance": [
+        "No universal decoder or architecture-by-width assumption",
+        "Fixed tree/ridge scope preserved; unsupported larger targets remain rejected",
+        "Compiler-conditional targets cannot be passed as source-only generation inputs",
+        "Generated inverse is compared to independently established source meaning; retained byte restoration labeled separately"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C08",
+      "title": "Private online repository adaptation and scoped distillation",
+      "depends_on": [
+        "C03",
+        "C04",
+        "C09",
+        "C13",
+        "C15"
+      ],
+      "owners": [
+        "codebase_source_training 8D",
+        "codebase_source_384",
+        "local codebase_training_corpus and codebase_model_generation after integration",
+        "AutoencoderRegistry",
+        "native 768D migration adapters"
+      ],
+      "deliverables": [
+        "Budgeted leased shadow runs with immutable lineage, frozen serving parent and replay",
+        "Compatible 8D Adam continuation; source384 ridge retention from archived rows/vectors or sufficient statistics",
+        "Task-qualified 768D inherited initialization/alignment and optional scoped teacher supervision",
+        "Cell/task/profile-specific leased shadow runs and distinct serving heads; progressively larger profiles keep shorter-span replay",
+        "Durable eligible-trigger queue with coalescing/retries/supersession and exact parent/corpus/update-policy identity",
+        "Mandatory inherited mode, unknown-atom coverage gate and explicit cohort/basis expansion",
+        "Separate exact-Adam original-root replay and intermediate exposure ledger versus federated reset/diagnostic-replay policies with lineage recovery and no duplicate fit after acknowledgment gaps",
+        "Owner-side promotion validator, task/profile serving rollout and rollback receipts"
+      ],
+      "acceptance": [
+        "Existing compatible weights are loaded; optimizer/refit method and replay provenance match the actual trainer",
+        "Old ridge weights are not treated as recoverable training statistics",
+        "Teacher task/codecs/source fidelity are qualified before distillation; unmatched logits are not merged",
+        "No preregistered parent/replay/held-out regression; controlled arithmetic critical fields are exact",
+        "Training completion alone never promotes a model or closes a proof/intent obligation",
+        "Cancellation, budget exhaustion or stale source/model heads leave the serving parent unchanged",
+        "Cross-cell donor transfer is not recorded as same-variant native continuation; registry parent checks remain enforced",
+        "Missing parent cannot enter existing fresh random-root path in reuse mode",
+        "Registered cohort/evaluation invariants remain enforced; new atoms cannot be silently omitted as complete source learning",
+        "FedAvg replay is diagnostic and aggregate Adam resets; no exact-continuation or source384-ridge aggregation claim",
+        "Saved source8 parent/child unknown critical literals and unregistered pilot path trigger basis/cohort migration; historical canary diagnostics do not qualify a holdout"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C14",
+      "title": "Progressive span coverage and hierarchical qualification",
+      "depends_on": [
+        "C06",
+        "C09",
+        "C13"
+      ],
+      "owners": [
+        "family source/span adapters",
+        "decoder grammars",
+        "native semantic/family checkers",
+        "coverage manifest owner"
+      ],
+      "deliverables": [
+        "Per family/task/cell inherited short span \u2192 complete unit \u2192 connected context \u2192 complete section \u2192 sealed aggregate curriculum",
+        "Measured pinned-tokenizer/codec budgets and stage-specific coverage/reference manifests",
+        "Matched short source width comparisons then longer native 768Dbands, with small teacher unit maps and shorter-span replay"
+      ],
+      "acceptance": [
+        "Every declaredsubject/context/omitted/unsupported span accounted for; no silent truncation",
+        "Input ceiling does not enlarge target grammar or prove whole unit coverage",
+        "Independent larger-span fidelity and current proof gates required",
+        "One cell larger-span promotion cannot change another cell qualification or default head"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C16",
+      "title": "Dedicated Hugging Face repositories and versioned packages",
+      "depends_on": [
+        "C00",
+        "C12",
+        "C15"
+      ],
+      "owners": [
+        "checkpoint_hub versioned package adapters",
+        "exact-resume publication adapter",
+        "per cell publication journal"
+      ],
+      "deliverables": [
+        "Twelve distinct model repository mappings with configured namespace and existing release discovery",
+        "Explicit 8D/384D/768D and Codebase family/task package/loader contracts; preserve current strict 384D schema",
+        "Immutable release manifests/cards/full commit pins and independent publication reconciliation"
+      ],
+      "acceptance": [
+        "No repository rename/delete or overwrite of pinned legacy release",
+        "Local actual checkpoint reload and clean pinned acquisition reproduce selected task/profile",
+        "Wrong family/width role/task/budget/package rejects",
+        "Remote delivery and local promotion are separately recorded; planned names do not imply repositories exist"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C10",
+      "title": "Supervisor read-only planning and isolated witnessed pilot",
+      "depends_on": [
+        "C05",
+        "C06",
+        "C07",
+        "C09"
+      ],
+      "owners": [
+        "agent_supervisor planning",
+        "DecisionRuntime",
+        "VerificationExecutor",
+        "intent_repository task owner"
+      ],
+      "deliverables": [
+        "Read-only intent-to-obligation plan before mutation execution",
+        "One declared integer increment intent with isolated patching, current-root admission and real check execution",
+        "Patch/rebase/merge invalidation, actual final-tree verification and task-owner completion evidence",
+        "Real ProducerRule/TaskCandidate runner arguments/effects/paths/checks/budgets and exact typed registration",
+        "Trusted live observer callback/envelope before dispatch and around verification; measured planned-to-actual post-state map"
+      ],
+      "acceptance": [
+        "Current x+1 evidence cannot satisfy desired x+2",
+        "Measured effects and post-roots bind exact affected symbols and dependency scope",
+        "Cancellation, required-hook failure, forged evidence and concurrent source changes cannot complete a task",
+        "Actual merged/rebased tree is verified rather than inheriting another branch's completion receipts",
+        "Fallback validation marker is not a runnable check; absent observation cannot fall back to copied plan identities",
+        "Old-tree receipts, worker-supplied satisfaction IDs and changed unmapped subjects cannot close post-state goals"
+      ],
+      "implementation_state": "planned"
+    },
+    {
+      "id": "C11",
+      "title": "Reviewable package and measured rollout",
+      "depends_on": [
+        "C08",
+        "C10",
+        "C14",
+        "C16"
+      ],
+      "owners": [
+        "datasets and supervisor release integration",
+        "registry promotion owners",
+        "DuckLake delivery owners"
+      ],
+      "deliverables": [
+        "Clean acquisition/reproduction manifests, schema migrations and operational documentation",
+        "Shadow comparison report, rollback model/index heads and crash recovery instructions",
+        "Integration evidence for datasets, supervisor and parent submodule pointers; separate publication/adoption record",
+        "Twelve-cell routing and typed federation receipts; independent adoption/rollback and per-repository pinned acquisition"
+      ],
+      "acceptance": [
+        "Model/decoder weights, caches and canonical task profiles survive a clean checkout reproduction",
+        "Parallel lanes remain independently usable with missing optional assets",
+        "Rollout records actual Git integration, artifact delivery and runtime promotion separately",
+        "Metrics report unsupported/unknown denominators and operational benefit without inflating proof authority"
+      ],
+      "implementation_state": "planned"
+    }
+  ],
+  "parallel_work_after_prerequisites": [
+    [
+      "C02 bounded capture",
+      "C12 family contracts"
+    ],
+    [
+      "C03 cached representations",
+      "C04 family native semantics",
+      "C16 package adapters"
+    ],
+    [
+      "family/cell-specific retention work under global leases"
+    ],
+    [
+      "C08 private adaptation",
+      "C10 deterministic supervisor pilot"
+    ],
+    [
+      "independent per cell span qualification and publication"
+    ]
+  ],
+  "suggested_timing": {
+    "october_2026": "Authenticate old work; declare 12 inventories/store/repository mappings and typed contracts; bounded capture/durability/grounding first; family heads and shadow adaptation independently.",
+    "november_2026": "Per-family native 768D initialization/distillation after actual native inputs and qualified teacher/task/span gates; wider context adoption and other cells independent.",
+    "calendar_is_quality_gate": false
+  },
+  "actions_performed_by_creating_this_plan": {
+    "model_training": false,
+    "distillation": false,
+    "embedding_regeneration": false,
+    "model_download": false,
+    "git_merges": false,
+    "remote_artifact_publication": false,
+    "runtime_promotion": false,
+    "supervisor_mutation_execution": false,
+    "runtime_databases_created": false,
+    "remote_repositories_created": false
+  },
+  "previous_schema": "codebase-ir-proof-index-improvement-work-items/v1",
+  "updated_date_utc": "2026-10-02",
+  "inventory_directory": "ir_family_dimension_inventory_plan.json",
+  "family_dimension_inventories": [
+    {
+      "cell_id": "codebase_ir_8d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/codebase_ir/8d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/codebase_ir/384d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "codebase_ir_768d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/codebase_ir/768d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/security_ir/8d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/security_ir/384d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "security_ir_768d",
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/security_ir/768d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/legal_ir/8d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/legal_ir/384d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/legal_ir/768d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "inventory_manifest": "inventories/intent_ir/8d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "inventory_manifest": "inventories/intent_ir/384d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    },
+    {
+      "cell_id": "intent_ir_768d",
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "inventory_manifest": "inventories/intent_ir/768d.json",
+      "status": "planned_inventory_with_scoped_read_only_evidence"
+    }
+  ],
+  "family_dimension_count": 12,
+  "ir_family_ids": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "ir_family_is_logic_family": false,
+  "dimension_profiles": [
+    {
+      "dimension": 8,
+      "encoder_kind": "historical explicit input or compiler-derived internal latent; new source-only projection profile must be declared",
+      "hard_encoder_token_limit": null,
+      "qualified_source_token_limit": null,
+      "unknown_limit_policy": "retain unknown provenance; freeze a producer-specific small-span budget before source-only qualification",
+      "dimension_role_required": true
+    },
+    {
+      "dimension": 384,
+      "encoder_kind": "GTE-small source embedding for source-conditioned tasks",
+      "model_id": "thenlper/gte-small",
+      "model_revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "hard_encoder_token_limit": 512,
+      "qualified_source_token_limit": null,
+      "pooling": "mean",
+      "normalization": "l2",
+      "unknown_limit_policy": "freeze task/span-specific admitted budget within encoder ceiling; historical compiler profiles remain separate",
+      "dimension_role_required": true
+    },
+    {
+      "dimension": 768,
+      "encoder_kind": "native GTE multilingual source embedding after local asset admission",
+      "model_id": "Alibaba-NLP/gte-multilingual-base",
+      "model_revision": "9bbca17d9273fd0d03d5725c7a4b0f6b45142062",
+      "code_revision": "40ced75c3017eb27626c9d4ea981bde21a2662f4",
+      "hard_encoder_token_limit": 8192,
+      "qualified_source_token_limit": null,
+      "pooling": "cls",
+      "normalization": "l2",
+      "unknown_limit_policy": "native production/admission and per-task span qualification required; no padded384 vectors",
+      "dimension_role_required": true
+    }
+  ],
+  "contract_policy": {
+    "status": "proposed_versioned_closed_adapter",
+    "required_variant_fields": [
+      "dimension_role",
+      "task_id",
+      "input_representation_profile",
+      "encoder_tokenizer_revisions",
+      "decoder_architecture",
+      "target_ir_family",
+      "target_schema",
+      "target_codec",
+      "input_budget",
+      "output_budget",
+      "span_profile",
+      "objective_implementation"
+    ],
+    "ir_family_id_separate_from_logic_family_id": true,
+    "native_ir_document_size_fixed_by_vector_width": false,
+    "legacy_8d_dimension_roles_not_interchangeable": true,
+    "native_ir_identity_independent_of_proposing_dimension": true,
+    "stable_variant_and_evolving_run_version_roots_remain_separate": true,
+    "current_modality_contract_feature_pretraining_only": true,
+    "current_checkpoint_hub384_only_and_excludes_codebase": true,
+    "source_to_ir_and_ir_to_source_are_separate_tasks": true
+  },
+  "storage_isolation": {
+    "status": "planned",
+    "cell_count": 12,
+    "reuse": "Existing registry/catalog/index owner implementations as distinct configured instances",
+    "registry_and_index_databases_separate": true,
+    "registry_accepts_foreign_tables": false,
+    "ducklake_catalog_and_data_independent_per_cell": true,
+    "canonical_source_captured_once_and_referenced": true,
+    "shared_raw_vectors_reused_only_with_exact_profile": true,
+    "operations_namespaced_by_cell_task_profile_run": true,
+    "cross_store_atomic_transaction": false,
+    "per_cell_acceptance": [
+      "restart fencing",
+      "schema migration",
+      "backup/restore",
+      "delivery recovery",
+      "independent rollback",
+      "unavailable optional cell handling",
+      "exact old artifact adoption"
+    ],
+    "family_sources_independently_owned": true,
+    "current_history_layout_adapter_required": true
+  },
+  "hub_publication": {
+    "status": "planned_not_executed",
+    "model_repo_count": 12,
+    "naming": "<hf_namespace>/<ir-family>-autoencoder-<dimension>d",
+    "suggested_namespace": "Publicus",
+    "namespace_source": "Existing published384 descriptor records; write access not checked",
+    "legacy_repositories_and_pinned_releases_preserved": true,
+    "current384_loader_guards_preserved": true,
+    "versioned8d_768d_codebase_package_adapters_required": true,
+    "immutable_full_commit_and_manifest_required": true,
+    "promotion_separate_from_publication": true,
+    "dataset_repositories": "optional separate deployment configuration, not required by this model-repository plan"
+  },
+  "federation": {
+    "status": "proposed_adapter",
+    "required_cells_only": true,
+    "manifest_bindings": [
+      "store ID",
+      "IRfamily",
+      "dimension and role",
+      "task/codec/span profile",
+      "repository/source/semantic root kind and ID",
+      "owner epoch and role-specific generation",
+      "model checkpoint",
+      "lake snapshot",
+      "exact subject",
+      "typed cross-IR relation",
+      "evidence/applicability/environment/authority",
+      "unavailable and unresolved requirements",
+      "both family-source endpoint roots",
+      "applicability source revisions"
+    ],
+    "validation": "Owner-validate immutable receipts and exact typed joins, reobserve relevant monotonic generations, publish coordinator CAS, then independently revalidate before effects.",
+    "missing_or_wrong_typed_roots_rejected": true,
+    "global_atomic_commit_claimed": false,
+    "copied_proof_counts_as_independent_evidence": false,
+    "cross_store_invalidation": "Store-qualified dependencies and idempotent origin-owner sequence events; effect-time validation even when delivery lags.",
+    "source_change_invalidation": "Changed Legal/Intent/Security source or corpus roots invalidate applicable joins even when repository code is unchanged."
+  },
+  "previous_aggregate_lane_summary": {
+    "status": "superseded_by_family_dimension_inventories",
+    "not_a_complete_four_family_inventory": true,
+    "records": [
+      {
+        "id": "codebase_feature_8d",
+        "dimension": 8,
+        "input": "compiler-derived source-bound structural features",
+        "updates": "compatible saved Adam continuation with frozen basis and ancestral replay",
+        "formal_decoder_available": false
+      },
+      {
+        "id": "gte_small_source_384d",
+        "dimension": 384,
+        "max_encoder_input_tokens": 512,
+        "input": "exact source bytes/context under pinned GTE-small profile",
+        "updates": "existing structured decoder frozen projection/vocabulary with explicit ridge head refit and retention data",
+        "persisted_vector_cache_adapter": "required"
+      },
+      {
+        "id": "gte_multilingual_native_768d",
+        "dimension": 768,
+        "max_encoder_input_tokens": 8192,
+        "input": "native Alibaba-NLP/gte-multilingual-base vectors with separately authenticated receipts",
+        "updates": "qualified inherited initialization and representation alignment; optional task-scoped distillation",
+        "current_native_training_state": "not completed in inspected migration"
+      }
+    ]
+  },
+  "family_and_store_inspection_record": "../../../../artifacts/codebase-ir-family-scaling-plan-20261002/inspection.json",
+  "repository_pipeline_guide": "codebase_ir_repository_pipeline_improvement_plan.md",
+  "repository_pipeline_contract": "codebase_ir_repository_pipeline_plan.json",
+  "repository_pipeline_inspection_record": "../../../../artifacts/codebase-ir-repository-pipeline-plan-20261002/inspection.json",
+  "grounding_pilot_pack": {
+    "directory": "pilots/intent_codebase_grounding",
+    "specification": "pilots/intent_codebase_grounding/pilot_spec.json",
+    "adapter_contracts": "pilots/intent_codebase_grounding/adapter_contracts.json",
+    "first_milestone": "capture/conditional evidence/read-only intent grounding; no edit or training",
+    "status": "authored_planning_pack_not_executed"
+  }
+}

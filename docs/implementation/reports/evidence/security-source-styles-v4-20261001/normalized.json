@@ -1,0 +1,790 @@
+{
+  "fresh_holdout": false,
+  "model_promoted": false,
+  "panels": {
+    "normalized-legacy-01": {
+      "already_exposed_development_regression": true,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/augmented-0-checkpoint.json",
+        "sha256": "be2ec82a1d2a71171d86c3ffee3f9023a884df13302c33879b38f401f34ff843"
+      },
+      "fresh_holdout": false,
+      "full_report": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/report.json",
+        "sha256": "6ae00f470b3a1cacba42311815787b4da620102dd6ec47cf385d2b60038c01fc"
+      },
+      "input_sha256": {
+        "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/augmented-0-checkpoint.json": "be2ec82a1d2a71171d86c3ffee3f9023a884df13302c33879b38f401f34ff843",
+        "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/canary.json": "014c2029ed820a8431a11d636db342a97364611ad676aef67ebc789093014aed",
+        "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/test.json": "e2e590c68d00454600ce355bbc5bae57843786bd52704d61f7fb85dec761ac25"
+      },
+      "model_promoted": false,
+      "observed_embedding_parameter_devices": [
+        "cuda:0"
+      ],
+      "partitions": {
+        "canary": {
+          "actual_lake_builds": 1,
+          "batches": [
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "c1eca3b870a9130e47dc004b0ea837be3b6449f440c1c3e37493476e8e8593bb",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (6.2s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/canary-inference-0.json",
+                "sha256": "a11fdc1936ae7481a79b3d2b08106d09c90f6270b48ad1b8f06d4ab3572208b6"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/canary-lake-0/receipt.json",
+              "receipt_sha256": "28c0ecab3ea43c909db5e8ed016a479cd71bd07605caf5a461fae1f27802483a",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/canary-zero-head-0.json",
+                "sha256": "5f2cba334d373bbff06a7f5f42d5e44564d7c5421ca5ddfc97962f8daa2345eb"
+              }
+            }
+          ],
+          "count": 60,
+          "exact": 60,
+          "inference_seconds": 0.7843592409044504,
+          "inference_timing_scope": "normalization, verified CUDA-or-CPU embedding, numerical decoding and original-source qualification; first call includes model load",
+          "lake_status_counts": {
+            "passed": 60
+          },
+          "normalization_status_counts": {
+            "normalized": 60
+          },
+          "source_status_counts": {
+            "qualified": 60
+          },
+          "unique_canonical_function_count": 30,
+          "unique_embedding_views_across_batches": 30,
+          "zero_head": {
+            "changed_candidates": 54,
+            "count": 60,
+            "source_status_counts": {
+              "mismatch": 54,
+              "qualified": 6
+            }
+          }
+        },
+        "test": {
+          "actual_lake_builds": 2,
+          "batches": [
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "4d40dbe73618a61aab69d405661c7dd44f9d34f54c3758dd86813f327162647f",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (7.2s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-inference-0.json",
+                "sha256": "b8c049753f0ff67e5266d69e8edb0cf61b909d5a2558aec6ef11d69f8ea8e301"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-lake-0/receipt.json",
+              "receipt_sha256": "10341d10e9b9f5f580f334328865657396686650a3b5e8adfc904fb0b11162c5",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-zero-head-0.json",
+                "sha256": "bc3fda7705a8da600c526a070e4a70f825fce320ef95a2ae4951eae045ed9a01"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "1d8f4bedd4f3d5fe8f65af48ceaa6e7cf9e304ec55c56b5e5ec22ae2ecd86ec8",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (5.7s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-inference-1.json",
+                "sha256": "043e2c058812b13185e0880ec12b510628922cfebeaf340df3cd09d791ed9f36"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-lake-1/receipt.json",
+              "receipt_sha256": "d62b97ba7d382ed507d7f25adc9a4f7285c5b09f04a8790831eeefe9ca9f8b1d",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-legacy-01/test-zero-head-1.json",
+                "sha256": "bbf21d36b9659f53a72a446a0228681fda8d3d2e0df8dc445a6ce6d7ce44f003"
+              }
+            }
+          ],
+          "count": 120,
+          "exact": 120,
+          "inference_seconds": 4.732472541043535,
+          "inference_timing_scope": "normalization, verified CUDA-or-CPU embedding, numerical decoding and original-source qualification; first call includes model load",
+          "lake_status_counts": {
+            "passed": 120
+          },
+          "normalization_status_counts": {
+            "normalized": 120
+          },
+          "source_status_counts": {
+            "qualified": 120
+          },
+          "unique_canonical_function_count": 30,
+          "unique_embedding_views_across_batches": 36,
+          "zero_head": {
+            "changed_candidates": 108,
+            "count": 120,
+            "source_status_counts": {
+              "mismatch": 108,
+              "qualified": 12
+            }
+          }
+        }
+      },
+      "prediction_repair_performed": false,
+      "producer": {
+        "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/normalized_source_program_runtime_384.py": "c9e9c8b33c24f8e934b5e859dfe99404d39eec9c1c24132705dfa18079c153f3",
+        "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/security/source_normalization_384.py": "5d6714c433881f81871d842c7d3389fcb59243441a126118f39c1a01760e89a5",
+        "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/check_normalized_security_source_384.py": "aaf019a340299b55129300df06c1b2d7d048c172049b769d5697421752b59bab"
+      },
+      "proof_authority": false,
+      "raw_decoder_accuracy_replaced": false,
+      "runtime": {
+        "admitted": false,
+        "automatic_lake_build": false,
+        "checkpoint_sha256": "be2ec82a1d2a71171d86c3ffee3f9023a884df13302c33879b38f401f34ff843",
+        "claim_proved": false,
+        "completion_authority": false,
+        "dimension": 384,
+        "domain_id": "security_ir",
+        "embedding_input": "guarded_normalized_source_or_unchanged_unsupported_source",
+        "execution_authority": false,
+        "generation": "independent_learned_scalar_classes_assembled_through_training_consensus_schema",
+        "head_sha256": "8b3a6746c800a1d3b2ceae20775006236cbdab40f3cb3c710f10ab3bf4626f0f",
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "independent_source_fidelity_check_required": true,
+        "input_representation": "source_embedding_384",
+        "input_view": "guarded_ast_normalized",
+        "output_scope": "fixed_typed_json_schema_and_training_scalar_vocabulary",
+        "prediction_repair_performed": false,
+        "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_decoder_quality_metric": false,
+        "sample_memory_used": false,
+        "schema": "structured-source-384-autoencoder/v1",
+        "security_specification_inferred": false,
+        "shuffle_embeddings_ablation": "cyclic_rotation_of_supplied_embedding_batch",
+        "source_qualification_input": "original_untouched_source",
+        "source_qualification_schema": "security-source-program-binding-384/v2",
+        "source_semantics_verified": false,
+        "source_text_is_neural_input": false,
+        "target_dependent_normalization": false,
+        "whole_program_semantics_verified": false,
+        "whole_target_retrieval": false,
+        "zero_projection_ablation": "zero_residual_branch_identity_embedding_retained"
+      },
+      "schema": "hybrid-normalized-source-384-diagnostic/v1",
+      "scope": "hybrid AST-preprocessed learned decoder over narrow Int/Bool source grammar; compilation is definition/type evidence",
+      "source_files_modified": false,
+      "source_input_view": "guarded_ast_normalized",
+      "source_parser_used": true,
+      "source_semantics_verified": false,
+      "training_performed": false,
+      "unique_canonical_function_count_across_partitions": 30
+    },
+    "normalized-v4-01": {
+      "already_exposed_development_regression": true,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_ridge_path-0-checkpoint.json",
+        "sha256": "3c843a2c24965be1369887bc3d65c4f2ed4c5a49786b68cff88def85b7bd9cea"
+      },
+      "fresh_holdout": false,
+      "full_report": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/report.json",
+        "sha256": "923c8babc54e28a410cec37b949edb942f205b4272dfefc491a3329a18638a3f"
+      },
+      "input_sha256": {
+        "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/canary.json": "f7daa949d4d4f3b2f93c6f404428dffd3bae4d2637af65192a4ab1ad7d2d95f7",
+        "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_ridge_path-0-checkpoint.json": "3c843a2c24965be1369887bc3d65c4f2ed4c5a49786b68cff88def85b7bd9cea",
+        "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/test.json": "2a711c82f4c7b152a1e02c15f637361926652f2e190df2b74458bbd6ebfce1d4"
+      },
+      "model_promoted": false,
+      "observed_embedding_parameter_devices": [
+        "cuda:0"
+      ],
+      "partitions": {
+        "canary": {
+          "actual_lake_builds": 2,
+          "batches": [
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "412182ea1ee5c96968d07fcdb8ce83ad8d3202e25fa4309b85496ab992f4f7a7",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (7.7s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-inference-0.json",
+                "sha256": "cf7635a00ac8b271b2c41968925b2b707dc8a40bfbcf54295962c99cb6086883"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-lake-0/receipt.json",
+              "receipt_sha256": "11dfdc1438ee86d4a8d4e5e605da30503f743d1feaf2f3d310b2450a05e77d70",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-zero-head-0.json",
+                "sha256": "9b0feb736f84d61a583b56906bc8a23d1b420d9de624a5748fed83f098f47463"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "2dca4625810f3af0f32b65bd7f947d4aa70241f608eff08de685c5da09cfa1ae",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (5.8s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-inference-1.json",
+                "sha256": "0bc78473b2d0016cc0154a774903c25c61e66dd4eb4ea97435e7bebe2fe9ca55"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-lake-1/receipt.json",
+              "receipt_sha256": "6f2bb3bb0da40f31b0672d8124ffdba566f7828f983a79c502f4ee2b859257fb",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/canary-zero-head-1.json",
+                "sha256": "5b799683b51741bd4cf3a3a29fe20eb3b6a3346b01a5c21a95dcf0b21cb84444"
+              }
+            }
+          ],
+          "count": 112,
+          "exact": 112,
+          "inference_seconds": 0.979487108066678,
+          "inference_timing_scope": "normalization, verified CUDA-or-CPU embedding, numerical decoding and original-source qualification; first call includes model load",
+          "lake_status_counts": {
+            "passed": 112
+          },
+          "normalization_status_counts": {
+            "normalized": 112
+          },
+          "source_status_counts": {
+            "qualified": 112
+          },
+          "unique_canonical_function_count": 28,
+          "unique_embedding_views_across_batches": 28,
+          "zero_head": {
+            "changed_candidates": 112,
+            "count": 112,
+            "source_status_counts": {
+              "mismatch": 112
+            }
+          }
+        },
+        "test": {
+          "actual_lake_builds": 8,
+          "batches": [
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "6363760bfb8ce11700cc4703d6ed105d710866393c787930ff3814c03ce905db",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.9s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-0.json",
+                "sha256": "0d6e7902b7620d698f0bf0ecc4bd537356b8a6a1c4f08402a760464ec290d663"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-0/receipt.json",
+              "receipt_sha256": "0437e1e60bc260b544e9fdd9691ce5681b1e0761da1913b3475e8b3dcad40536",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-0.json",
+                "sha256": "9b6663f5b3635a10528ca294ff1feb03ab5b4e9eab393e2b623d139aa29edd39"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "261aad7128aba1224f1de2ac2102fef7aff4411c37aeca7fe4d6a88a60f209d5",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.5s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-1.json",
+                "sha256": "40418058b872f6efb0d07e8c45b03708893436acad734aecadff5ac14ec91d70"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-1/receipt.json",
+              "receipt_sha256": "c576c44736d1cc5224b079567434014dfe9cc37b387bf8a36fbf6f0b6e1796eb",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-1.json",
+                "sha256": "f817690b7631155aa6b3dae631a92fc0fd304f25bf813d98d63a80aa532cfc12"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "84b26a5fc248768541227f5dcbb03c71da2681f5ad89e2253c86700196ec2103",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.9s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-2.json",
+                "sha256": "a2035e20558fd84fa81a0a317291a970dfa002c2b4883e58203ee503747b402b"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-2/receipt.json",
+              "receipt_sha256": "0d88c5564002717e662c153beea4cc6f6cb9c57389671fbc50844b84a0e6afce",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-2.json",
+                "sha256": "6e56abfe80fd308eda029446684989eab54b162f9d936df94cc0daad433671d4"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "e0b31af6b611bed07676ab8696541b0ac790c16798e9ea8d2723270e445e676b",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.5s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-3.json",
+                "sha256": "36d87cfdc6f6b17b158f1d59fa3631884ddcf8c879c7a17d1866744e44e3b792"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-3/receipt.json",
+              "receipt_sha256": "dbf099b9f80bf27c58183dab42ebf3feb4bb1fdfc784f5432b02025319c0e5e5",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-3.json",
+                "sha256": "7b46f40e9dc3173efce75253a8a66c1a1d87848bde8102fabf7334d2d7baa664"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "2c5afbb7fe1a571673b3a8a2de4602b19d6b0681f38e2c5c23c88d09342079a4",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.6s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-4.json",
+                "sha256": "2118f2844e31a18e7e7c884a3d87f52b6d2e78a3f52d04c616adb4eda806d180"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-4/receipt.json",
+              "receipt_sha256": "0042df85e1cd6619f1abf7aa9f6e7ced5978a261a6234862416e95afcbae6433",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-4.json",
+                "sha256": "fff07d933d0726a540ae0b922fe3c64c54143eefaf13dc82625e1c4f615d2f9d"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "a8905a0c028379ee961489dc59c7b779be2109daf98074be15644f5263127bb0",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.9s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-5.json",
+                "sha256": "a07600d871f47216cf94e14545ec71873589d760745d6f262689751bfd529e47"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-5/receipt.json",
+              "receipt_sha256": "b81ac5804752c66a2977466226999bd67080f0deff7cd4116f9b96ee6284c410",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-5.json",
+                "sha256": "6042390bfee5800dfe15264bf776b9ab86903ff285d2279e190c22c927ec0d4f"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "651ae3705c7589441daee149ee6807954bc2417d292dcdfac9a28e6d42ed3d38",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (8.7s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-6.json",
+                "sha256": "2fe1888c4abdf47cc8d6a5b69d93f71fe88842af699ad2f03adb0f02884d5b98"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-6/receipt.json",
+              "receipt_sha256": "73ac2333f44a981772d92a9a8a5c871745fc880f213d58c72f3b9e4a95864bd5",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-6.json",
+                "sha256": "add7e26fbf4a72d9d56cf1745fdbf4d8ac95602e0a8e57f23fcf8ce1ca93d9ab"
+              }
+            },
+            {
+              "backend_executed": true,
+              "execution": {
+                "backend_executed": true,
+                "command": [
+                  "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+                  "build",
+                  "SecuritySourcePrograms"
+                ],
+                "executable_sha256": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "input_files_sha256": {
+                  "SecuritySourcePrograms.lean": "f33e8721f80217843de821db0ad59295def41301ec6bf3094bab4a2d86f6a0e6",
+                  "lakefile.toml": "6a8c32403c919f8307bcec185866e40e6b9f7fd598ddc487e5a60dbd292ff6c5",
+                  "lean-toolchain": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+                },
+                "output_truncated": false,
+                "returncode": 0,
+                "status": "passed",
+                "stderr": "info: native_family_securitysourceprograms: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+                "stdout": "\u2714 [2/3] Built SecuritySourcePrograms (7.7s)\nBuild completed successfully (3 jobs).\n",
+                "timed_out": false,
+                "toolchain": "leanprover/lean4:v4.34.1",
+                "workspace_limit_exceeded": false
+              },
+              "inference": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-inference-7.json",
+                "sha256": "8e628aae5709711406b0df4118904fefd12953d10a263c1029806779698f6a89"
+              },
+              "receipt_path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-lake-7/receipt.json",
+              "receipt_sha256": "593984a8dfd4e067e1439a562c745a806bf2a78f9d1a12e39f241b84ade88e5a",
+              "status": "passed",
+              "tool_binary_sha256": {
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake": "f80f50cbab5322e35bcb0bf88937e22e9d908b5e4e336e83ddfc30eb1506aacf",
+                "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean": "79fb1d26fa5a39385d59fdc48a711a14b0710ca6480271acce99b4d177cea085"
+              },
+              "zero_head": {
+                "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/normalized-v4-01/test-zero-head-7.json",
+                "sha256": "73c42e0ddc122de86c1ef03dd0eb027aba7156b15ffb0b902d8c196dc4892035"
+              }
+            }
+          ],
+          "count": 504,
+          "exact": 504,
+          "inference_seconds": 8.39770145737566,
+          "inference_timing_scope": "normalization, verified CUDA-or-CPU embedding, numerical decoding and original-source qualification; first call includes model load",
+          "lake_status_counts": {
+            "passed": 504
+          },
+          "normalization_status_counts": {
+            "normalized": 504
+          },
+          "source_status_counts": {
+            "qualified": 504
+          },
+          "unique_canonical_function_count": 28,
+          "unique_embedding_views_across_batches": 35,
+          "zero_head": {
+            "changed_candidates": 504,
+            "count": 504,
+            "source_status_counts": {
+              "mismatch": 504
+            }
+          }
+        }
+      },
+      "prediction_repair_performed": false,
+      "producer": {
+        "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/normalized_source_program_runtime_384.py": "c9e9c8b33c24f8e934b5e859dfe99404d39eec9c1c24132705dfa18079c153f3",
+        "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/security/source_normalization_384.py": "5d6714c433881f81871d842c7d3389fcb59243441a126118f39c1a01760e89a5",
+        "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/check_normalized_security_source_384.py": "aaf019a340299b55129300df06c1b2d7d048c172049b769d5697421752b59bab"
+      },
+      "proof_authority": false,
+      "raw_decoder_accuracy_replaced": false,
+      "runtime": {
+        "admitted": false,
+        "automatic_lake_build": false,
+        "checkpoint_sha256": "3c843a2c24965be1369887bc3d65c4f2ed4c5a49786b68cff88def85b7bd9cea",
+        "claim_proved": false,
+        "completion_authority": false,
+        "dimension": 384,
+        "domain_id": "security_ir",
+        "embedding_input": "guarded_normalized_source_or_unchanged_unsupported_source",
+        "execution_authority": false,
+        "generation": "independent_learned_scalar_classes_assembled_through_training_consensus_schema",
+        "head_sha256": "b3f78e63d9892bd3f6e1b9dd7a656e245e677bebccd914375d96356de8f5050e",
+        "hybrid_profile": "guarded-source-normalization-384/v1",
+        "independent_source_fidelity_check_required": true,
+        "input_representation": "source_embedding_384",
+        "input_view": "guarded_ast_normalized",
+        "output_scope": "fixed_typed_json_schema_and_training_scalar_vocabulary",
+        "prediction_repair_performed": false,
+        "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_decoder_quality_metric": false,
+        "sample_memory_used": false,
+        "schema": "structured-source-384-autoencoder/v1",
+        "security_specification_inferred": false,
+        "shuffle_embeddings_ablation": "cyclic_rotation_of_supplied_embedding_batch",
+        "source_qualification_input": "original_untouched_source",
+        "source_qualification_schema": "security-source-program-binding-384/v2",
+        "source_semantics_verified": false,
+        "source_text_is_neural_input": false,
+        "target_dependent_normalization": false,
+        "whole_program_semantics_verified": false,
+        "whole_target_retrieval": false,
+        "zero_projection_ablation": "zero_residual_branch_identity_embedding_retained"
+      },
+      "schema": "hybrid-normalized-source-384-diagnostic/v1",
+      "scope": "hybrid AST-preprocessed learned decoder over narrow Int/Bool source grammar; compilation is definition/type evidence",
+      "source_files_modified": false,
+      "source_input_view": "guarded_ast_normalized",
+      "source_parser_used": true,
+      "source_semantics_verified": false,
+      "training_performed": false,
+      "unique_canonical_function_count_across_partitions": 28
+    }
+  },
+  "proof_authority": false,
+  "raw_decoder_metrics_replaced": false,
+  "schema": "hybrid-source-normalization-closeout/v1",
+  "source_semantics_verified": false
+}

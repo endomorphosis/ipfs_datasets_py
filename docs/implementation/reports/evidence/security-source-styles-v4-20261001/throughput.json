@@ -1,0 +1,626 @@
+{
+  "checkpoint_promoted": false,
+  "checkpoint_selection_changed": false,
+  "equivalence": {
+    "baseline": {
+      "all_repeated_heads_bit_identical_to_frozen_same_algorithm": true,
+      "all_validation_predictions_identical": true,
+      "frozen_eigen": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/baseline_ridge_path-0-checkpoint.json",
+        "sha256": "84037100edba5a829e4b29bbf73abc3fbe7a9d0f15126aff963e1d5c14176695"
+      },
+      "frozen_reference": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/baseline_reference-0-checkpoint.json",
+        "sha256": "96621afa6b9a25ef5d9894fdd0a967932d1272006aad8abe573b83579859c23d"
+      },
+      "reference_vs_eigen_max_abs_weight_delta": 9.769129949432909e-13
+    },
+    "style_augmented": {
+      "all_repeated_heads_bit_identical_to_frozen_same_algorithm": true,
+      "all_validation_predictions_identical": true,
+      "frozen_eigen": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_ridge_path-0-checkpoint.json",
+        "sha256": "3c843a2c24965be1369887bc3d65c4f2ed4c5a49786b68cff88def85b7bd9cea"
+      },
+      "frozen_reference": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_reference-0-checkpoint.json",
+        "sha256": "9f4633f749507c08d70e2ef2d558a7af69e35d8faa50432f7971e3c7c6974f49"
+      },
+      "reference_vs_eigen_max_abs_weight_delta": 3.4217340072473235e-10
+    }
+  },
+  "holdout_data_read": false,
+  "holdout_predictions_recomputed": false,
+  "hyperparameter_search_performed": false,
+  "network_calls": 0,
+  "plan": {
+    "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/plan.json",
+    "sha256": "b19b121ac9185176b475fc6fd5bc607b98f8bbb4776f3a53e47eda19c3df0cca"
+  },
+  "producer": {
+    "inherited_grouped_recipe": {
+      "decoder_implementation": {
+        "runtime_sha256": "3f9ca9ce7b4cf2a2d10d6aeb1fae78543c468133d2fa0df9fcb32f63f89e90f7",
+        "shared_runtime": {
+          "legal_codec_sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+          "native": {
+            "dependencies": {
+              "ipfs_datasets_py.logic.intent_ir.decoder": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257",
+              "ipfs_datasets_py.logic.intent_ir.formalize.rich_grammar": "6c40ac99d7e339651b6029764f94b12430ca515d4c5f7426770b013499efe92b",
+              "ipfs_datasets_py.logic.intent_ir.schema": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56",
+              "ipfs_datasets_py.logic.security_ir.model": "abc3aea9c2f4d1ce513ee2c9fc4c304d8bd387ded18e0d646247417422225d39",
+              "ipfs_datasets_py.logic.software_verification.program": "f051f42d64c5f993451972924953cc7eaa6d17df097235ddabfd5d791d406f91",
+              "ipfs_datasets_py.logic.ui_ux_ir.decoder": "d7be6bff3a1f1464d4783567b90942258ef718bc1c2b7e02938698ed4e619e57",
+              "ipfs_datasets_py.logic.ui_ux_ir.schema": "8a7b0cc90151043514d263b1a2655d6d41a2835dacd6b56018ba5c0c89961855",
+              "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_latent_formula": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36"
+            },
+            "runtime": "66c5ee320f9c7aacd3b246d0666c7fc3ee928e4679892e1e90c838e1b291dbc6",
+            "scope": "listed_numerical_and_native_validator_modules_only"
+          },
+          "numerical": {
+            "files": {
+              "canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+              "legal_formula_codec.py": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290",
+              "legal_ir_grammar_decoder.py": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd",
+              "modal_latent_formula.py": "ec5bdcd752d157c9fc0257a45551cfe9ce7be172af767e8ed769bf1bc8a31d36",
+              "tree_pin.py": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+            },
+            "scope": "listed_latent_decoder_and_grammar_sources_only"
+          },
+          "runtime_sha256": "8de8096e895de9df08ccf5352dfd704806823296821d98b5badf08bb553a52e4"
+        }
+      },
+      "public_api_sha256": "3237d133cf9c67c616e6cc9420e263534dfc4ba4bc1c2b866f3948fdcdcd417a",
+      "recipe_sha256": "c6dda0f85937f7ece993cf0bc82aebc72144457507db218cf83f9c9b495994a4",
+      "scope": "recipe_public_api_named_ui_semantics_and_decoder_declared_modules",
+      "ui_semantic_contracts": {
+        "ui_flogic": "2671912bf789bf3c8ea6412023006c0436a3fd838b7e787a41f9743e102a6909",
+        "ui_semantic_components": "72567a0e24bae8d2c0cac70bd06e4b7249016de271c35be6d215bccd054018c5",
+        "ui_source_contract_384": "09fe94c4cc04cc6df1d302d5fbeb87141d5dbda5aec33d12bb626201dc01790a"
+      }
+    },
+    "trainer_id": "structured-source-shared-eigen-ridge-path-384/v1",
+    "trainer_sha256": "6c0cbd07c2f1550a508791b2b967eaa0946cb94990c8121c60cc360d8bd13b57"
+  },
+  "provider_calls": 0,
+  "read_json_paths": [
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/baseline_reference-0-checkpoint.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/baseline_ridge_path-0-checkpoint.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/preparation.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_reference-0-checkpoint.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/style_augmented_ridge_path-0-checkpoint.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/train.json",
+    "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/run-02/validation.json"
+  ],
+  "records": [
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/baseline-reference-replay-checkpoint.json",
+        "sha256": "2b8f1262a1f9f11eed2d3bc421137112f5e77bd4f600cb3052c6f5d7aaa934ae"
+      },
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.004707087995484471,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.2628092470113188,
+      "head_sha256": "51f2d289bb081f175873f054bfea1985016ab1abb0995f02910b18522327da3d",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 0.9936435020063072,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "recipe": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/baseline-reference-replay-recipe.json",
+        "sha256": "c4705dbc2705d7ef95512fdb210b09a462497c819a5ed49a3fac4d2088d99c41"
+      },
+      "repetition": 0,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.2650270168669522,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/baseline-optimized-replay-checkpoint.json",
+        "sha256": "fd6407832a2e3a3f9b531125cd43b4dd94222eba8820212aef4bafcfef0cc5d5"
+      },
+      "complete_recipe_seconds": 0.6767463379073888,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.006993704009801149,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 0.6777166200336069,
+      "head_sha256": "386f73b9b1cd0405b4899e71bb40a6ce1ea54067b4990ac4ad71133fddffac6a",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.40159513615071774,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "recipe": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/baseline-optimized-replay-recipe.json",
+        "sha256": "15d98b3be1de0981f4b3f8f9281bc8432c70f6dbca7287aaa8909ccd19ba6d05"
+      },
+      "repetition": 0,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.26661762688308954,
+      "complete_recipe_seconds": 0.591394690098241,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.006551859900355339,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 0.5923398199956864,
+      "head_sha256": "386f73b9b1cd0405b4899e71bb40a6ce1ea54067b4990ac4ad71133fddffac6a",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.3148803359363228,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 1,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.004155050264671445,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 0.7367682470940053,
+      "head_sha256": "51f2d289bb081f175873f054bfea1985016ab1abb0995f02910b18522327da3d",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 0.4625247810035944,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 1,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.0047689622733742,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 0.8465306537691504,
+      "head_sha256": "51f2d289bb081f175873f054bfea1985016ab1abb0995f02910b18522327da3d",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 0.5631880671717227,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 2,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.2649433580227196,
+      "complete_recipe_seconds": 0.5898749059997499,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.006545251933857799,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 0.5909060689155012,
+      "head_sha256": "386f73b9b1cd0405b4899e71bb40a6ce1ea54067b4990ac4ad71133fddffac6a",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.3150255100335926,
+      "panel": "baseline",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 2,
+      "selected_ridge": 0.01,
+      "training_rows": 336,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.8581349206349206,
+        "classifier_slot_correct": 1730,
+        "count": 504,
+        "exact_targets": 218,
+        "semantic_leaf_accuracy": 0.8581349206349206,
+        "semantic_leaf_correct": 1730,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.5814933201763779,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/style_augmented-optimized-replay-checkpoint.json",
+        "sha256": "61af49e080fe520e05855cdc5c60583dfd4530836d20c53e7a3cf0e3c2f129f9"
+      },
+      "complete_recipe_seconds": 1.0764972299803048,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.009382945951074362,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.0784893149975687,
+      "head_sha256": "b3f78e63d9892bd3f6e1b9dd7a656e245e677bebccd914375d96356de8f5050e",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.48068027407862246,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "recipe": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/style_augmented-optimized-replay-recipe.json",
+        "sha256": "3e37e2885d43c78000da364da87a859b5d5a017cacdbff4000698f74ebe1e412"
+      },
+      "repetition": 0,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "checkpoint": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/style_augmented-reference-replay-checkpoint.json",
+        "sha256": "1fe5de7e77332439df0bd90abf96ebae8af06ac7934bd209ed3af35bdd04cd12"
+      },
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.16389463189989328,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.6929195700213313,
+      "head_sha256": "dca370a9af110c85b6647859f48fe3e4333d2b665fff17088e7c2efcc94711d3",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 1.019448203034699,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "recipe": {
+        "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/style_augmented-reference-replay-recipe.json",
+        "sha256": "a058a9b5a5d528a29d07f378cc6e15756aed82a5a166ab4e68ff46f5705eaa0a"
+      },
+      "repetition": 0,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.17126759118400514,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.627451293868944,
+      "head_sha256": "dca370a9af110c85b6647859f48fe3e4333d2b665fff17088e7c2efcc94711d3",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 1.028269523056224,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 1,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.660274735884741,
+      "complete_recipe_seconds": 1.1544593579601496,
+      "execution_order": [
+        "reference",
+        "optimized"
+      ],
+      "factorization_seconds": 0.009475347120314837,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.156531780026853,
+      "head_sha256": "b3f78e63d9892bd3f6e1b9dd7a656e245e677bebccd914375d96356de8f5050e",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.4800884590949863,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 1,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "optimized",
+      "audit_seconds": 0.5757553318981081,
+      "complete_recipe_seconds": 1.0723854880779982,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.009452865924686193,
+      "factorizations": 1,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.0745095100719482,
+      "head_sha256": "b3f78e63d9892bd3f6e1b9dd7a656e245e677bebccd914375d96356de8f5050e",
+      "input_audit_passes_per_split": 1,
+      "internal_public_fit_seconds": 0.48268300318159163,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 2,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    },
+    {
+      "arm": "reference",
+      "audit_seconds": null,
+      "complete_recipe_seconds": null,
+      "execution_order": [
+        "optimized",
+        "reference"
+      ],
+      "factorization_seconds": 0.1706805657595396,
+      "factorizations": 4,
+      "frozen_head_bit_identical": true,
+      "frozen_validation_predictions_identical": true,
+      "full_call_seconds": 1.7051667119376361,
+      "head_sha256": "dca370a9af110c85b6647859f48fe3e4333d2b665fff17088e7c2efcc94711d3",
+      "input_audit_passes_per_split": null,
+      "internal_public_fit_seconds": 1.1119511609431356,
+      "panel": "style_augmented",
+      "projection_sha256": "4e90ec5a3ff3978d3f6d40fb366ea01f2a056fe6c59b3fddcf7c50f66366afd7",
+      "repetition": 2,
+      "selected_ridge": 0.001,
+      "training_rows": 1344,
+      "validation_metrics": {
+        "classifier_slot_accuracy": 0.9920634920634921,
+        "classifier_slot_correct": 2000,
+        "count": 504,
+        "exact_targets": 488,
+        "semantic_leaf_accuracy": 0.9920634920634921,
+        "semantic_leaf_correct": 2000,
+        "semantic_leaf_count": 2016,
+        "semantic_metric_scope": "correct_variable_leaves_only_for_native_valid_candidates",
+        "teacher_forcing": false,
+        "valid_candidates": 504
+      },
+      "validation_rows": 504
+    }
+  ],
+  "schema": "structured-source-single-audit-timing/v1",
+  "scope": "development-only numerical replay and complete training workflow timing; no new generalization result",
+  "snapshot": {
+    "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/throughput-followup-01/trainer_snapshot.py",
+    "sha256": "6c0cbd07c2f1550a508791b2b967eaa0946cb94990c8121c60cc360d8bd13b57"
+  },
+  "summary": {
+    "baseline": {
+      "factorization_median_seconds": {
+        "optimized": 0.006551859900355339,
+        "reference": 0.004707087995484471
+      },
+      "full_call_seconds": {
+        "optimized": [
+          0.6777166200336069,
+          0.5923398199956864,
+          0.5909060689155012
+        ],
+        "reference": [
+          1.2628092470113188,
+          0.7367682470940053,
+          0.8465306537691504
+        ]
+      },
+      "mean_seconds": {
+        "optimized": 0.6203208363149315,
+        "reference": 0.9487027159581581
+      },
+      "mean_speedup_reference_over_optimized": 1.5293742534814838,
+      "median_seconds": {
+        "optimized": 0.5923398199956864,
+        "reference": 0.8465306537691504
+      },
+      "median_speedup_reference_over_optimized": 1.4291300790402965,
+      "median_training_rows_per_second": {
+        "optimized": 567.2419591889785,
+        "reference": 396.91415603672573
+      },
+      "training_rows": 336,
+      "validation_rows": 504
+    },
+    "style_augmented": {
+      "factorization_median_seconds": {
+        "optimized": 0.009452865924686193,
+        "reference": 0.1706805657595396
+      },
+      "full_call_seconds": {
+        "optimized": [
+          1.0784893149975687,
+          1.156531780026853,
+          1.0745095100719482
+        ],
+        "reference": [
+          1.6929195700213313,
+          1.627451293868944,
+          1.7051667119376361
+        ]
+      },
+      "mean_seconds": {
+        "optimized": 1.1031768683654566,
+        "reference": 1.675179191942637
+      },
+      "mean_speedup_reference_over_optimized": 1.5185046387209866,
+      "median_seconds": {
+        "optimized": 1.0784893149975687,
+        "reference": 1.6929195700213313
+      },
+      "median_speedup_reference_over_optimized": 1.5697138084535847,
+      "median_training_rows_per_second": {
+        "optimized": 1246.1875897240852,
+        "reference": 793.8947743294533
+      },
+      "training_rows": 1344,
+      "validation_rows": 504
+    }
+  },
+  "test_used_for_fit_or_selection": false
+}

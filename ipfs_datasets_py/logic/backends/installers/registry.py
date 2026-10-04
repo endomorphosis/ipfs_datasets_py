@@ -185,7 +185,7 @@ PLUGIN_MODULE_PATHS: Final[Mapping[str, str]] = MappingProxyType(
             "ipfs_datasets_py.logic.backends.installers.rocq"
         ),
         InstallerPluginFamily.ISABELLE.value: (
-            "ipfs_datasets_py.logic.backends.installers.isabelle"
+            "ipfs_datasets_py.logic.backends.installers.isabelle_installation"
         ),
         InstallerPluginFamily.HYPERPROPERTY.value: (
             "ipfs_datasets_py.logic.backends.installers.hyperproperty"
@@ -690,7 +690,7 @@ def _build_default_entries() -> tuple[InstallerEntry, ...]:
         _entry(
             "isabelle",
             InstallerPluginFamily.ISABELLE,
-            "ensure_isabelle",
+            "ensure_isabelle_installation",
             license="BSD-3-Clause",
             source="https://isabelle.in.tum.de/",
             identity_kind="release_archive",

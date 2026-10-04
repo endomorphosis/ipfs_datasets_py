@@ -21,11 +21,18 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping, Sequence
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, ClassVar, Final
 
 from ipfs_datasets_py.logic.backends.process import BoundedToolRunner
+from ipfs_datasets_py.logic.backends.smt.operation_budget import (
+    _Signals,
+    current_proof_operation,
+    proof_operation_scope,
+    validate_operation_timeout_ms,
+)
 from ipfs_datasets_py.logic.backends.results import (
     ModelCheckResult,
     ResultAuthority,
@@ -33,10 +40,9 @@ from ipfs_datasets_py.logic.backends.results import (
 )
 from ipfs_datasets_py.logic.backends.tla.compiler import (
     GeneratedTLAArtifacts,
-    TLACompileBounds,
     TLACompiler,
     TLACompilerError,
-    TLASourceMapEntry,
+    _decode_tla_artifact_payload,
 )
 from ipfs_datasets_py.logic.backends.tla.runners import (
     APALACHE_BACKEND_VERSION,
@@ -44,7 +50,9 @@ from ipfs_datasets_py.logic.backends.tla.runners import (
     TLC_BACKEND_VERSION,
     TLC_CAPABILITY,
     ApalacheBackend,
+    CounterexampleState,
     CounterexampleTrace,
+    _counterexample_structure_errors,
     ExecutableFinder,
     JvmProbe,
     ModelCheckOutcome,
@@ -613,6 +621,29 @@ def _evidence_receipt_payload(receipt: Mapping[str, Any] | object) -> dict[str, 
     if not isinstance(raw, Mapping):
         raise StateExecutionError("receipt.to_dict() must return a mapping")
     return dict(_contract_json_value(dict(raw), "receipt"))
+
+
+def _capability_tool_version(provider: StateProviderKind, banner: str) -> str:
+    """Fit descriptive version metadata without clipping a claimed identity.
+
+    Legacy short metadata is preserved. For an oversized help excerpt, accept
+    only a complete provider-labelled version line; its final unterminated line
+    may already have been clipped by the raw runner. The full retained excerpt
+    stays unchanged in the embedded model-check receipt.
+    """
+    if len(banner) <= 256:
+        return banner
+    label = r"TLC(?:2)?" if provider is StateProviderKind.TLC else r"Apalache"
+    for raw_line in banner.splitlines(keepends=True):
+        if not raw_line.endswith(("\n", "\r")):
+            continue
+        line = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", raw_line).strip()
+        if len(line) <= 256 and re.match(
+            rf"{label}\b.*\bversion[ \t]+[0-9]+(?:\.[0-9]+)+(?:[-+][A-Za-z0-9_.-]+)?(?:[ \t]|$)",
+            line, re.IGNORECASE,
+        ):
+            return line
+    return "unknown"
 
 
 _MODULE_HEADER_RE: Final = re.compile(
@@ -1354,9 +1385,23 @@ class StateCounterexampleBindingV2:
                 raise StateExecutionError(
                     "replayed status requires replayed=True"
                 )
-            if self.state_count < 1 and not self.raw_trace:
+            if self.state_count < 1 or self.state_count != len(self.states):
                 raise StateExecutionError(
-                    "replayed counterexample requires states or raw_trace"
+                    "replayed counterexample requires complete nonempty states"
+                )
+            try:
+                checked_states = tuple(CounterexampleState(**state) for state in self.states)
+                if any(state.to_dict() != dict(original)
+                       for state, original in zip(checked_states, self.states)):
+                    raise TLARunnerError("noncanonical counterexample state")
+                checked_trace = CounterexampleTrace(
+                    states=checked_states, raw=self.raw_trace, replay_notes=self.replay_notes)
+                errors = _counterexample_structure_errors(checked_trace)
+            except (TLARunnerError, TypeError, ValueError) as error:
+                raise StateExecutionError("replayed counterexample contains malformed states") from error
+            if errors:
+                raise StateExecutionError(
+                    "replayed counterexample requires complete structurally matching raw states"
                 )
         if status is StateReplayStatus.NON_REPLAYABLE and self.replayed:
             raise StateExecutionError(
@@ -1459,12 +1504,9 @@ class StateCounterexampleBindingV2:
             )
 
         states = tuple(item.to_dict() for item in trace.states[:_MAX_TRACE_STATES])
-        if trace.replayed:
-            status = StateReplayStatus.REPLAYED
-        elif trace.states:
-            status = StateReplayStatus.NON_REPLAYABLE
-        else:
-            status = StateReplayStatus.NON_REPLAYABLE
+        structure_errors = _counterexample_structure_errors(trace)
+        replayed = bool(trace.replayed) and not structure_errors
+        status = StateReplayStatus.REPLAYED if replayed else StateReplayStatus.NON_REPLAYABLE
         return cls(
             status=status,
             module=module,
@@ -1472,8 +1514,8 @@ class StateCounterexampleBindingV2:
             bounds=bounds,
             property_name=primary,
             property_binding=properties,
-            replayed=bool(trace.replayed),
-            replay_notes=tuple(trace.replay_notes),
+            replayed=replayed,
+            replay_notes=tuple(dict.fromkeys((*structure_errors, *trace.replay_notes))),
             state_count=len(trace.states),
             states=states,
             raw_trace=trace.raw,
@@ -2428,6 +2470,13 @@ class StateExecutionEngineV2:
     """Execute TLC / Apalache on independent capability surfaces.
 
     Interface owner: ``StateProviderEvidence@2``.
+
+    Construction is pure. Default backends are created only for the selected
+    provider, once per execute call; concurrent calls have separate contexts.
+    Their JVM setup, compilation, check and final evidence consume one
+    cooperative deadline. Standalone capability/backend access retains its
+    separate support-probe semantics. Optional installation and Python callbacks
+    are checked at boundaries, not forcibly preempted.
     """
 
     INTERFACE: ClassVar[str] = STATE_PROVIDER_EVIDENCE_V2_INTERFACE
@@ -2446,35 +2495,46 @@ class StateExecutionEngineV2:
         which: ExecutableFinder | None = None,
         jvm_probe: JvmProbe | None = None,
         lazy_install: bool = True,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> None:
+        validate_operation_timeout_ms(operation_timeout_ms)
+        if tlc is not None and not isinstance(tlc, TLCBackend):
+            raise StateExecutionError("tlc must be a TLCBackend")
+        if apalache is not None and not isinstance(apalache, ApalacheBackend):
+            raise StateExecutionError("apalache must be an ApalacheBackend")
         self._compiler = compiler or TLACompiler()
         self._runner = runner
-        self._tlc = tlc or TLCBackend(
-            runner=runner,
-            which=which,
-            jvm_probe=jvm_probe,
-            compiler=self._compiler,
-            lazy_install=lazy_install,
-        )
-        self._apalache = apalache or ApalacheBackend(
-            runner=runner,
-            which=which,
-            jvm_probe=jvm_probe,
-            compiler=self._compiler,
-            lazy_install=lazy_install,
-        )
-        if not isinstance(self._tlc, TLCBackend):
-            raise StateExecutionError("tlc must be a TLCBackend")
-        if not isinstance(self._apalache, ApalacheBackend):
-            raise StateExecutionError("apalache must be an ApalacheBackend")
+        self._tlc = tlc
+        self._apalache = apalache
+        self._backend_options = dict(runner=runner, which=which, jvm_probe=jvm_probe,
+                                     compiler=self._compiler, lazy_install=lazy_install)
+        self._backend_calls = ContextVar("state_execution_backends", default=None)
+        self._operation_timeout_ms = operation_timeout_ms
+        self._operation_cancellation = cancellation
+
+    def _operation_settings(self, bounds, operation_timeout_ms, cancellation):
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = self._operation_timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        return (bounds.timeout_ms if timeout is None else timeout,
+                _Signals(self._operation_cancellation, cancellation))
 
     def backend(
         self, provider: StateProviderKind | str
     ) -> TLCBackend | ApalacheBackend:
         kind = normalize_state_provider(provider)
-        if kind is StateProviderKind.TLC:
-            return self._tlc
-        return self._apalache
+        injected = self._tlc if kind is StateProviderKind.TLC else self._apalache
+        if injected is not None:
+            return injected
+        calls = self._backend_calls.get()
+        if calls is not None and kind in calls:
+            return calls[kind]
+        _operation_checkpoint("before state provider construction")
+        backend = (TLCBackend if kind is StateProviderKind.TLC else ApalacheBackend)(**self._backend_options)
+        _operation_checkpoint("after state provider construction")
+        if calls is not None:
+            calls[kind] = backend
+        return backend
 
     def capability_of(
         self, provider: StateProviderKind | str
@@ -2492,7 +2552,9 @@ class StateExecutionEngineV2:
     ) -> StateCapabilityReceiptV2:
         kind = normalize_state_provider(provider)
         backend = self.backend(kind)
+        _operation_checkpoint("before state availability probe")
         available = backend.is_available()
+        _operation_checkpoint("after state availability probe")
         supported = True
         reason = ""
         cap = capability_for(kind)
@@ -2507,10 +2569,12 @@ class StateExecutionEngineV2:
         if not available and not reason:
             reason = f"{kind.value} executable or JVM unavailable"
         jvm_ok = True
+        _operation_checkpoint("before state JVM capability probe")
         try:
             jvm_ok = bool(backend._jvm_probe())  # noqa: SLF001 — intentional probe
         except Exception:
             jvm_ok = False
+        _operation_checkpoint("after state JVM capability probe")
         return StateCapabilityReceiptV2(
             provider=kind,
             available=available,
@@ -2532,8 +2596,30 @@ class StateExecutionEngineV2:
     def execute(
         self,
         request: StateExecutionRequestV2 | Mapping[str, Any],
+        *,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> StateExecutionResultV2:
-        """Execute one typed state request on a single provider path."""
+        """Execute one provider under an aggregate cooperative operation scope.
+
+        Only bounds/control selection precedes the scope. Request normalization,
+        selected JVM setup, compilation, checking and evidence construction are
+        inside it. An interruption raises a typed proof-operation error without
+        publishing partial evidence; request and receipt bounds stay unchanged.
+        """
+        bounds = request.bounds if isinstance(request, StateExecutionRequestV2) else _normalize_bounds(
+            _require_mapping(request, "request").get("bounds"))
+        timeout, signal = self._operation_settings(bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            token = self._backend_calls.set({})
+            try:
+                return self._execute_request(request)
+            finally:
+                self._backend_calls.reset(token)
+
+    def _execute_request(
+        self, request: StateExecutionRequestV2 | Mapping[str, Any],
+    ) -> StateExecutionResultV2:
 
         req = (
             request
@@ -2561,9 +2647,12 @@ class StateExecutionEngineV2:
                 )
             )
         )
+        _operation_checkpoint("after state request normalization")
         request_digest = _digest_of(req.to_dict())
         provider: StateProviderKind = req.provider  # type: ignore[assignment]
+        _operation_checkpoint("before state capability probe")
         capability = self.capability_receipt(provider)
+        _operation_checkpoint("after state capability probe")
 
         if req.has_mock_output or req.mode is StateExecutionMode.MOCK:
             return self._rejected(
@@ -2619,11 +2708,22 @@ class StateExecutionEngineV2:
         request_id_prefix: str = "req:state:split",
         bounds: ExecutionBounds | None = None,
         module_name: str = "StateModel",
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> dict[StateProviderKind, StateExecutionResultV2]:
-        """Run each provider path independently; results never cross-establish."""
+        """Run independent provider paths within one shared operation budget."""
+        selected_bounds = _normalize_bounds(bounds)
+        timeout, signal = self._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            return self._execute_split(document=document, artifacts=artifacts,
+                request_id_prefix=request_id_prefix, bounds=selected_bounds,
+                module_name=module_name, operation_timeout_ms=timeout)
 
+    def _execute_split(self, *, document, artifacts, request_id_prefix, bounds,
+                       module_name, operation_timeout_ms):
         results: dict[StateProviderKind, StateExecutionResultV2] = {}
         for kind in StateProviderKind:
+            _operation_checkpoint("before split state provider")
             req = StateExecutionRequestV2(
                 request_id=f"{request_id_prefix}:{kind.value}",
                 provider=kind,
@@ -2633,7 +2733,7 @@ class StateExecutionEngineV2:
                 bounds=bounds,
                 mode=StateExecutionMode.ENGINE,
             )
-            results[kind] = self.execute(req)
+            results[kind] = _execute_in_operation(self, req, operation_timeout_ms=operation_timeout_ms)
             for other in StateProviderKind:
                 if other is kind:
                     continue
@@ -2668,51 +2768,12 @@ class StateExecutionEngineV2:
     def _artifacts_from_mapping(
         self, data: Mapping[str, Any], module_name: str
     ) -> GeneratedTLAArtifacts:
-        model_text = str(data.get("model_text") or "")
-        if not model_text:
-            raise StateExecutionError("artifacts payload requires model_text")
-        bounds_raw = data.get("bounds")
-        if isinstance(bounds_raw, TLACompileBounds):
-            bounds = bounds_raw
-        elif isinstance(bounds_raw, Mapping):
-            bounds = TLACompileBounds.from_dict(bounds_raw)
-        else:
-            bounds = self._compiler.bounds
-        source_map_raw = data.get("source_map") or ()
-        source_map: list[TLASourceMapEntry] = []
-        for item in source_map_raw:
-            if isinstance(item, TLASourceMapEntry):
-                source_map.append(item)
-            elif isinstance(item, Mapping):
-                source_map.append(
-                    TLASourceMapEntry(
-                        source_id=str(item.get("source_id", "")),
-                        source_kind=str(item.get("source_kind", "unknown")),
-                        tla_symbol=str(item.get("tla_symbol", "X")),
-                        role=str(item.get("role", "symbol")),
-                        line_hint=str(item.get("line_hint", "")),
-                    )
-                )
-        return GeneratedTLAArtifacts(
-            module_name=str(data.get("module_name", module_name)),
-            model_text=model_text if model_text.endswith("\n") else model_text + "\n",
-            tlc_config_text=str(
-                data.get("tlc_config_text")
-                or "SPECIFICATION Spec\nINVARIANT Safety\n"
-            ),
-            apalache_config_text=str(
-                data.get("apalache_config_text")
-                or "INIT Init\nNEXT Next\nINVARIANT Safety\n"
-            ),
-            source_map=tuple(source_map),
-            losses=(),
-            bounds=bounds,
-            source_document_id=str(data.get("source_document_id", "raw")),
-            source_kind=str(data.get("source_kind", "payload")),
-            safety_properties=tuple(data.get("safety_properties") or ("Safety",)),
-            liveness_properties=tuple(data.get("liveness_properties") or ()),
-            fairness_limitations=tuple(data.get("fairness_limitations") or ()),
-        )
+        try:
+            return _decode_tla_artifact_payload(
+                data, default_bounds=self._compiler.bounds, module_name=module_name,
+            )
+        except TLACompilerError as error:
+            raise StateExecutionError(f"invalid artifacts payload: {error}") from error
 
     def _execute_engine(
         self,
@@ -2725,6 +2786,7 @@ class StateExecutionEngineV2:
         bounds: ExecutionBounds = req.bounds  # type: ignore[assignment]
         backend = self.backend(provider)
 
+        _operation_checkpoint("before state compilation")
         try:
             artifacts = self._resolve_artifacts(req)
         except StateExecutionError as error:
@@ -2735,6 +2797,7 @@ class StateExecutionEngineV2:
                 disposition=StateDisposition.MALFORMED,
                 reason=str(error),
             )
+        _operation_checkpoint("after state compilation")
 
         # Reject Apalache requests that require liveness if only liveness props exist.
         cap = capability_for(provider)
@@ -2780,9 +2843,11 @@ class StateExecutionEngineV2:
         )
 
         try:
+            _operation_checkpoint("before state model check")
             outcome = backend.check(
                 artifacts, request=backend_request
             )
+            _operation_checkpoint("after state model check")
         except TLARunnerError as error:
             return self._error_result(
                 req,
@@ -2816,7 +2881,8 @@ class StateExecutionEngineV2:
         disposition = _status_to_disposition(receipt.status)
         result_status = _status_to_result_status(receipt.status)
 
-        # Keep capability tool version from receipt.
+        # Keep the raw receipt; the smaller capability field gets a complete
+        # recognized version line when native help metadata exceeds its bound.
         capability = StateCapabilityReceiptV2(
             provider=provider,
             available=capability.available
@@ -2825,7 +2891,7 @@ class StateExecutionEngineV2:
             capability=capability_for(provider).to_dict(),
             reason=receipt.reason if disposition is StateDisposition.UNAVAILABLE else capability.reason,
             jvm_available=receipt.jvm_available,
-            tool_version=receipt.tool_version,
+            tool_version=_capability_tool_version(provider, receipt.tool_version),
         )
 
         module = StateModuleBindingV2.from_artifacts(
@@ -2852,9 +2918,13 @@ class StateExecutionEngineV2:
             notes=tuple(artifacts.fairness_limitations)
             + capability_for(provider).approximation_notes,
         )
+        # Keep the original receipt/witness intact; validate only this derived
+        # binding against the actual artifacts, never a legacy replayed flag.
+        structural_trace = (replay_counterexample(receipt.counterexample, artifacts.source_map)
+                            if receipt.counterexample is not None else None)
         counterexample = StateCounterexampleBindingV2.from_trace(
             disposition=disposition,
-            trace=receipt.counterexample,
+            trace=structural_trace,
             module=module,
             config=config,
             bounds=bounds_binding,
@@ -3194,6 +3264,25 @@ class StateExecutionEngineV2:
 # ---------------------------------------------------------------------------
 
 
+def _operation_checkpoint(phase):
+    operation = current_proof_operation()
+    if operation is not None:
+        return operation.checkpoint(phase)
+    return None
+
+
+def _execute_in_operation(engine, request, *, operation_timeout_ms):
+    """Keep caller-owned execute(request) callbacks exactly-once and compatible."""
+    _operation_checkpoint("before state engine execution")
+    execute = engine.execute
+    if getattr(execute, "__func__", None) is StateExecutionEngineV2.execute:
+        result = execute(request, operation_timeout_ms=operation_timeout_ms)
+    else:
+        result = execute(request)
+    _operation_checkpoint("after state engine execution")
+    return result
+
+
 def execute_state(
     *,
     provider: StateProviderKind | str,
@@ -3205,24 +3294,38 @@ def execute_state(
     mode: StateExecutionMode | str = StateExecutionMode.ENGINE,
     engine: StateExecutionEngineV2 | None = None,
     source_ref_ids: Sequence[str] = (),
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> StateExecutionResultV2:
-    """Execute one state-model check on the named provider."""
+    """Normalize and execute one state-model operation with one shared budget.
 
+    Pure engine construction and bounds/control selection precede the scope.
+    Explicit caller engines retain their execute(request) signature; their
+    Python callbacks are checked before and after and are not preempted.
+    """
+
+    validate_operation_timeout_ms(operation_timeout_ms)
     eng = engine or StateExecutionEngineV2()
-    return eng.execute(
-        StateExecutionRequestV2(
+    selected_bounds = _normalize_bounds(bounds)
+    if isinstance(eng, StateExecutionEngineV2):
+        timeout, signal = eng._operation_settings(selected_bounds, operation_timeout_ms, cancellation)
+    else:
+        timeout = selected_bounds.timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        signal = cancellation
+    with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+        request = StateExecutionRequestV2(
             request_id=request_id,
             provider=provider,
             document=document,
             artifacts=artifacts,
             module_name=module_name,
-            bounds=bounds,
+            bounds=selected_bounds,
             mode=mode,
             source_ref_ids=tuple(source_ref_ids),
             **kwargs,
         )
-    )
+        return _execute_in_operation(eng, request, operation_timeout_ms=timeout)
 
 
 def execute_tlc(
@@ -3233,6 +3336,8 @@ def execute_tlc(
     module_name: str = "StateModel",
     bounds: ExecutionBounds | None = None,
     engine: StateExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> StateExecutionResultV2:
     """Execute TLC on a document or precompiled artifacts."""
@@ -3245,6 +3350,8 @@ def execute_tlc(
         module_name=module_name,
         bounds=bounds,
         engine=engine,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
         **kwargs,
     )
 
@@ -3257,6 +3364,8 @@ def execute_apalache(
     module_name: str = "StateModel",
     bounds: ExecutionBounds | None = None,
     engine: StateExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> StateExecutionResultV2:
     """Execute Apalache on a document or precompiled artifacts."""
@@ -3269,6 +3378,8 @@ def execute_apalache(
         module_name=module_name,
         bounds=bounds,
         engine=engine,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
         **kwargs,
     )
 
@@ -3284,6 +3395,8 @@ def hermetic_engine(
     tlc_timed_out: bool = False,
     apalache_timed_out: bool = False,
     compiler: TLACompiler | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
 ) -> StateExecutionEngineV2:
     """Build an engine with hermetic fixed stdout for offline tests."""
 
@@ -3350,6 +3463,8 @@ def hermetic_engine(
         ),
         compiler=compiler,
         lazy_install=False,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
     )
 
 

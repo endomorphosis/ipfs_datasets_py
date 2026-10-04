@@ -78,6 +78,9 @@ _EXPORT_MODULE.update(
     }
 )
 
+_EXPORT_MODULE.update({name: "autoencoder" for name in (
+    "open_autoencoder", "formalize_with_autoencoder")})
+
 __all__ = sorted(_EXPORT_MODULE)
 
 

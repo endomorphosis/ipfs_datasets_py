@@ -86,67 +86,165 @@ def mentions_defined_term(text: str) -> bool:
     return "as defined in" in lowered or "for purposes of this" in lowered
 
 
+def _span_status(span: Mapping[str, Any]) -> str:
+    """Legacy rows omit status and stay attachable. Pending and gap do not."""
+
+    status = str(span.get("status") or "").strip().lower()
+    if status in {"pending", "gap", "sealed", "unsealed"}:
+        return status
+    if span.get("sealed") is False:
+        return "unsealed"
+    return "sealed"
+
+
+def _span_rule(span: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    rule = span.get("rule")
+    if isinstance(rule, str):
+        try:
+            rule = json.loads(rule or "{}")
+        except json.JSONDecodeError:
+            return None
+    if isinstance(rule, Mapping):
+        return rule
+    raw = span.get("rule_json")
+    if not isinstance(raw, str) or not raw:
+        return None
+    try:
+        loaded = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+    return loaded if isinstance(loaded, Mapping) else None
+
+
+def _open_stitch_slots(span: Mapping[str, Any]) -> list[str]:
+    rule = _span_rule(span)
+    if rule is None:
+        return []
+    from .family_supervision import open_slots, stitch_symbol
+
+    span_id = str(span.get("source_span_id") or span.get("id") or "")
+    return [
+        stitch_symbol(span_id, slot)
+        for slot in open_slots(str(rule.get("actor") or ""), str(rule.get("action") or ""))
+    ]
+
+
+def _finding(context: Mapping[str, Any], *, kind: str, evidence: str, span_id: str = "", term_id: str = "") -> dict[str, str]:
+    return {
+        "entity_id": str(context.get("entity_id") or ""),
+        "evidence": evidence,
+        "kind": kind,
+        "span_id": span_id,
+        "term_id": term_id,
+    }
+
+
 def inconsistencies_for_section(
     context: Mapping[str, Any],
     spans: Sequence[Mapping[str, Any]],
+    terms: Sequence[Mapping[str, Any]] | None = None,
 ) -> list[dict[str, str]]:
     """Compare one section neighborhood with its spans. Not an admit."""
+
+    from .lean_units import MAX_CLAUSES, MAX_TERM_STATUTES
 
     legal_id = str(context.get("span_legal_id") or "")
     contained = {str(item) for item in context.get("contained_span_ids") or []}
     found: list[dict[str, str]] = []
     seen: set[str] = set()
-    for span in spans:
-        if not isinstance(span, Mapping):
-            continue
-        if str(span.get("legal_id") or "") != legal_id:
+    matching = [
+        span
+        for span in spans
+        if isinstance(span, Mapping) and str(span.get("legal_id") or "") == legal_id
+    ]
+    pending = [span for span in matching if _span_status(span) in {"pending", "unsealed"}]
+    if pending:
+        for span in pending:
+            found.append(
+                _finding(
+                    context,
+                    kind="section_not_ready",
+                    evidence="span is still pending",
+                    span_id=str(span.get("source_span_id") or span.get("id") or ""),
+                )
+            )
+        return found
+    sealed_clauses: list[Mapping[str, Any]] = []
+    for span in matching:
+        if _span_status(span) == "gap":
             continue
         span_id = str(span.get("source_span_id") or span.get("id") or "")
         seen.add(span_id)
+        sealed_clauses.append(span)
         text = str(span.get("text") or "")
         decompiled = str(span.get("decompiled") or "")
         if span_id and span_id not in contained:
             found.append(
-                {
-                    "entity_id": str(context.get("entity_id") or ""),
-                    "evidence": "span legal id is missing from the section neighborhood",
-                    "kind": "span_not_in_section",
-                    "span_id": span_id,
-                    "term_id": "",
-                }
+                _finding(
+                    context,
+                    kind="span_not_in_section",
+                    evidence="span legal id is missing from the section neighborhood",
+                    span_id=span_id,
+                )
             )
         if mentions_defined_term(text) and not context.get("definition_targets") and "unresolved_citation" not in (
             context.get("reasons") or []
         ):
             found.append(
-                {
-                    "entity_id": str(context.get("entity_id") or ""),
-                    "evidence": "span uses a defined term and the section has no definition closure",
-                    "kind": "missing_definition_closure",
-                    "span_id": span_id,
-                    "term_id": "",
-                }
+                _finding(
+                    context,
+                    kind="missing_definition_closure",
+                    evidence="span uses a defined term and the section has no definition closure",
+                    span_id=span_id,
+                )
             )
         if mentions_defined_term(text) and decompiled and "defined" not in decompiled.lower():
             found.append(
-                {
-                    "entity_id": str(context.get("entity_id") or ""),
-                    "evidence": "decompiler dropped a defined term",
-                    "kind": "capture_not_in_decompilation",
-                    "span_id": span_id,
-                    "term_id": "",
-                }
+                _finding(
+                    context,
+                    kind="capture_not_in_decompilation",
+                    evidence="decompiler dropped a defined term",
+                    span_id=span_id,
+                )
             )
     for span_id in sorted(contained - seen):
         found.append(
-            {
-                "entity_id": str(context.get("entity_id") or ""),
-                "evidence": "contained span has no span row",
-                "kind": "missing_span_row",
-                "span_id": span_id,
-                "term_id": "",
-            }
+            _finding(
+                context,
+                kind="missing_span_row",
+                evidence="contained span has no span row",
+                span_id=span_id,
+            )
         )
+    ordered = sorted(sealed_clauses, key=lambda span: str(span.get("source_span_id") or span.get("id") or ""))
+    extra = ordered[MAX_CLAUSES:]
+    if extra:
+        overflow_ids = [str(span.get("source_span_id") or span.get("id") or "") for span in extra]
+        found.append(
+            _finding(
+                context,
+                kind="lean_unit_overflow",
+                evidence="clauses exceed the render cap: " + ",".join(overflow_ids),
+                span_id=overflow_ids[0],
+            )
+        )
+    targets = {str(item) for item in context.get("definition_targets") or [] if str(item)}
+    for term in terms or []:
+        if not isinstance(term, Mapping):
+            continue
+        statute_ids = [str(item) for item in term.get("statute_ids") or [] if str(item)]
+        if not statute_ids or (legal_id not in statute_ids and not (set(statute_ids) & targets)):
+            continue
+        overflow_ids = statute_ids[MAX_TERM_STATUTES:]
+        if overflow_ids and statute_ids[0] == legal_id:
+            found.append(
+                _finding(
+                    context,
+                    kind="lean_unit_overflow",
+                    evidence="statutes exceed the render cap: " + ",".join(overflow_ids),
+                    term_id=str(term.get("term_id") or ""),
+                )
+            )
     return found
 
 
@@ -187,25 +285,75 @@ def propagation_tasks(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]
 def proof_sources_for_section(
     context: Mapping[str, Any],
     spans: Sequence[Mapping[str, Any]],
+    terms: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Statute Lean from contained spans. Term Lean from the definition closure only."""
+    """Statute Lean from sealed clauses. Term Lean from term groups inside the closure."""
 
-    from .lean_units import render_statute_lean, render_term_lean
+    from .lean_units import statute_lean_unit, term_lean_unit
 
     legal_id = str(context.get("span_legal_id") or "")
     contained = {str(item) for item in context.get("contained_span_ids") or []}
-    clauses = [
-        span
-        for span in spans
-        if isinstance(span, Mapping) and str(span.get("source_span_id") or span.get("id") or "") in contained
-    ]
+    clauses = []
+    for span in spans:
+        if not isinstance(span, Mapping):
+            continue
+        span_id = str(span.get("source_span_id") or span.get("id") or "")
+        if span_id not in contained or _span_status(span) != "sealed":
+            continue
+        clauses.append(span)
+    clauses.sort(key=lambda span: str(span.get("source_span_id") or span.get("id") or ""))
+    statute = statute_lean_unit(legal_id, clauses)
     targets = [str(item) for item in context.get("definition_targets") or [] if str(item)]
+    allowed = {legal_id, *targets}
+    term_units: list[dict[str, Any]] = []
+    for term in terms or []:
+        if not isinstance(term, Mapping):
+            continue
+        statute_ids = [str(item) for item in term.get("statute_ids") or [] if str(item)]
+        if legal_id not in statute_ids and not (set(statute_ids) & set(targets)):
+            continue
+        restricted = [item for item in statute_ids if item in allowed]
+        unit = term_lean_unit(
+            str(term.get("kind") or ""),
+            str(term.get("value") or ""),
+            statute_ids=restricted,
+            term_id=str(term.get("term_id") or ""),
+        )
+        term_units.append(unit)
+    overflows = []
+    if statute["overflow_ids"]:
+        overflows.append({"kind": "lean_unit_overflow", "overflow_ids": statute["overflow_ids"], "term_id": ""})
+    for unit in term_units:
+        if unit["overflow_ids"]:
+            overflows.append(
+                {
+                    "kind": "lean_unit_overflow",
+                    "overflow_ids": unit["overflow_ids"],
+                    "term_id": unit["term_id"],
+                }
+            )
     return {
         "admitted": False,
         "formalized": False,
-        "statute_lean": render_statute_lean(legal_id, clauses),
-        "term_lean": render_term_lean("object", legal_id or "section", statute_ids=targets),
+        "overflow": overflows,
+        "statute_lean": statute["lean"],
+        "term_lean": "".join(unit["lean"] for unit in term_units),
+        "term_units": term_units,
     }
+
+
+def term_category(kind: str, value: str) -> str:
+    """Map a compiler term onto the meta-ontology. Lexicon wins when it matches."""
+
+    from .meta_ontology import classify_surface
+
+    found = classify_surface(value)
+    key = str(kind or "")
+    if key in {"conditions", "exceptions", "temporal", "qualifiers"}:
+        return found if found == "state" else ""
+    if found:
+        return found
+    return {"actor": "participant", "action": "act", "object": "object", "modality": "deontic"}.get(key, "")
 
 
 def work_kind_for(entity_type: str) -> str:
@@ -907,61 +1055,95 @@ class EntityCache:
                     self._db.execute('DROP TABLE IF EXISTS '+name)
         return result
 
+    def _section_pages(self, after: str = ""):
+        return self._db.execute(
+            "SELECT entity_id, context_json FROM entity_queue "
+            "WHERE entity_type = 'section' AND entity_id > ? ORDER BY entity_id LIMIT ?",
+            [after, MAX_BATCH],
+        ).fetchall()
+
     @_owned_method
     @_atomic_method
     def assign_span_context(self, spans: Sequence[Mapping[str, Any]]) -> dict[str, int]:
-        """Attach span ids to the section that owns their legal id. Titles stay scope-only."""
+        """Attach sealed span ids to the section that owns their legal id. Titles stay scope-only."""
 
         self._reject_section_claims()
-        by_legal: dict[str, list[str]] = {}
+        sealed: dict[str, list[str]] = {}
+        gaps: dict[str, list[str]] = {}
+        pending: set[str] = set()
+        slots: dict[str, list[str]] = {}
+        seen: set[str] = set()
         for span in spans:
             if not isinstance(span, Mapping):
                 continue
             legal_id = str(span.get("legal_id") or span.get("span_legal_id") or "")
             span_id = str(span.get("source_span_id") or span.get("id") or "")
-            if legal_id and span_id:
-                by_legal.setdefault(legal_id, []).append(span_id)
-        rows = self._db.execute(
-            "SELECT entity_id, entity_type, context_json FROM entity_queue"
-        ).fetchall()
-        attached = 0
-        updates: list[tuple[str, str]] = []
-        for entity_id, entity_type, raw in rows:
-            if str(entity_type) != "section":
+            if not legal_id or not span_id:
                 continue
-            context = _object(raw or '', MAX_CONTEXT_BYTES, 'entity context')
-            legal_id = str(context.get("span_legal_id") or "")
-            span_ids = sorted(set(by_legal.get(legal_id, [])))
-            context["contained_span_ids"] = span_ids
-            if span_ids and "section_spans" not in context.get("reasons", []):
-                context.setdefault("reasons", []).append("section_spans")
-            encoded=_json(context)
-            _string(encoded,MAX_CONTEXT_BYTES,'updated entity context')
-            updates.append((encoded,str(entity_id)))
-            attached += len(span_ids)
-        if updates:
-            self._db.executemany(
-                "UPDATE entity_queue SET context_json = ? WHERE entity_id = ?",
-                updates,
-            )
-        return {"attached_spans": attached, "sections": len(updates), "admitted": False}
+            seen.add(legal_id)
+            status = _span_status(span)
+            if status in {"pending", "unsealed"}:
+                pending.add(legal_id)
+                continue
+            if status == "gap":
+                gaps.setdefault(legal_id, []).append(span_id)
+                continue
+            sealed.setdefault(legal_id, []).append(span_id)
+            slots.setdefault(legal_id, []).extend(_open_stitch_slots(span))
+        attached = 0
+        sections = 0
+        after = ""
+        while True:
+            page = self._section_pages(after)
+            if not page:
+                break
+            updates: list[tuple[str, str]] = []
+            for entity_id, raw in page:
+                context = _object(raw or '', MAX_CONTEXT_BYTES, 'entity context')
+                legal_id = str(context.get("span_legal_id") or "")
+                span_ids = sorted(set(sealed.get(legal_id, [])))
+                context["contained_span_ids"] = span_ids
+                context["gap_span_ids"] = sorted(set(gaps.get(legal_id, [])))
+                context["open_stitch_slots"] = sorted(set(slots.get(legal_id, [])))
+                if legal_id in pending:
+                    context["section_ready"] = False
+                elif legal_id in seen:
+                    context["section_ready"] = True
+                if span_ids and "section_spans" not in context.get("reasons", []):
+                    context.setdefault("reasons", []).append("section_spans")
+                encoded = _json(context)
+                _string(encoded, MAX_CONTEXT_BYTES, 'updated entity context')
+                updates.append((encoded, str(entity_id)))
+                attached += len(span_ids)
+            if updates:
+                self._db.executemany(
+                    "UPDATE entity_queue SET context_json = ? WHERE entity_id = ?",
+                    updates,
+                )
+            sections += len(updates)
+            after = page[-1][0]
+        return {"attached_spans": attached, "sections": sections, "admitted": False}
 
     @_owned_method
     @_atomic_method
     def record_inconsistencies(
         self,
         spans: Sequence[Mapping[str, Any]],
+        terms: Sequence[Mapping[str, Any]] | None = None,
     ) -> list[dict[str, str]]:
         """Persist section-versus-span mismatches. Does not admit."""
 
-        rows = self._db.execute(
-            "SELECT entity_id, context_json FROM entity_queue WHERE entity_type = 'section'"
-        ).fetchall()
         found: list[dict[str, str]] = []
-        for entity_id, raw in rows:
-            context = _object(raw or '', MAX_CONTEXT_BYTES, 'entity context')
-            context["entity_id"] = str(entity_id)
-            found.extend(inconsistencies_for_section(context, spans))
+        after = ""
+        while True:
+            page = self._section_pages(after)
+            if not page:
+                break
+            for entity_id, raw in page:
+                context = _object(raw or '', MAX_CONTEXT_BYTES, 'entity context')
+                context["entity_id"] = str(entity_id)
+                found.extend(inconsistencies_for_section(context, spans, terms))
+            after = page[-1][0]
         self._db.execute("DELETE FROM inconsistency")
         for index, row in enumerate(found):
             self._db.execute(
@@ -1018,39 +1200,45 @@ class EntityCache:
                 unresolved.add(source)
             else:
                 graph.setdefault(source, set()).add(target)
-        rows = self._db.execute("SELECT entity_id,context_json FROM entity_queue WHERE entity_type='section'").fetchall()
-        updates, linked, gaps = [], 0, 0
-        for entity_id, raw in rows:
-            context = _object(raw or "", MAX_CONTEXT_BYTES, "entity context")
-            legal_id = str(context.get("span_legal_id") or "")
-            depths, frontier, expanded = {}, {legal_id}, set()
-            for depth in (1, 2):
-                next_frontier = set()
-                for node in sorted(frontier):
-                    expanded.add(node)
-                    for target in sorted(graph.get(node, ())):
-                        if target != legal_id and target not in depths:
-                            depths[target] = depth
-                            next_frontier.add(target)
-                _require(len(depths) <= MAX_DEFINITION_TARGETS, "definition closure exceeds explicit bound")
-                frontier = next_frontier
-            targets = sorted(depths)
-            context["definition_targets"] = targets
-            context["definition_hops"] = max(depths.values(), default=0)
-            reasons = [item for item in context.get("reasons", [])
-                       if item not in {"definition_closure", "unresolved_citation"}]
-            if expanded & unresolved:
-                reasons.append("unresolved_citation")
-                gaps += 1
-            if targets:
-                reasons.append("definition_closure")
-                linked += 1
-            context["reasons"] = reasons
-            encoded=_json(context)
-            _string(encoded,MAX_CONTEXT_BYTES,'updated entity context')
-            updates.append((encoded,str(entity_id)))
-        if updates:
-            self._db.executemany("UPDATE entity_queue SET context_json=? WHERE entity_id=?", updates)
+        linked, gaps = 0, 0
+        after = ""
+        while True:
+            page = self._section_pages(after)
+            if not page:
+                break
+            updates = []
+            for entity_id, raw in page:
+                context = _object(raw or "", MAX_CONTEXT_BYTES, "entity context")
+                legal_id = str(context.get("span_legal_id") or "")
+                depths, frontier, expanded = {}, {legal_id}, set()
+                for depth in (1, 2):
+                    next_frontier = set()
+                    for node in sorted(frontier):
+                        expanded.add(node)
+                        for target in sorted(graph.get(node, ())):
+                            if target != legal_id and target not in depths:
+                                depths[target] = depth
+                                next_frontier.add(target)
+                    _require(len(depths) <= MAX_DEFINITION_TARGETS, "definition closure exceeds explicit bound")
+                    frontier = next_frontier
+                targets = sorted(depths)
+                context["definition_targets"] = targets
+                context["definition_hops"] = max(depths.values(), default=0)
+                reasons = [item for item in context.get("reasons", [])
+                           if item not in {"definition_closure", "unresolved_citation"}]
+                if expanded & unresolved:
+                    reasons.append("unresolved_citation")
+                    gaps += 1
+                if targets:
+                    reasons.append("definition_closure")
+                    linked += 1
+                context["reasons"] = reasons
+                encoded = _json(context)
+                _string(encoded, MAX_CONTEXT_BYTES, 'updated entity context')
+                updates.append((encoded, str(entity_id)))
+            if updates:
+                self._db.executemany("UPDATE entity_queue SET context_json=? WHERE entity_id=?", updates)
+            after = page[-1][0]
         return {"definition_sections": linked, "unresolved": gaps, "admitted": False}
 
     @_owned_method
@@ -1147,6 +1335,45 @@ class EntityCache:
         )
         row = self._db.execute("SELECT count(*) FROM task_board").fetchone()
         return int(row[0] if row else 0)
+
+    @_owned_method
+    def section_context_pages(self):
+        """Yield prepared section contexts one batch at a time."""
+
+        after = ""
+        while True:
+            page = self._section_pages(after)
+            if not page:
+                return
+            parsed = []
+            for entity_id, raw in page:
+                context = _object(raw or "", MAX_CONTEXT_BYTES, "entity context")
+                context["entity_id"] = str(entity_id)
+                parsed.append(context)
+            yield parsed
+            after = page[-1][0]
+
+    @_owned_method
+    def list_inconsistencies(self) -> list[dict[str, Any]]:
+        rows = self._db.execute(
+            """
+            SELECT inconsistency_id, entity_id, span_id, term_id, kind, evidence, admitted, formalized
+            FROM inconsistency ORDER BY inconsistency_id
+            """
+        ).fetchall()
+        return [
+            {
+                "admitted": False,
+                "entity_id": str(row[1] or ""),
+                "evidence": str(row[5] or ""),
+                "formalized": False,
+                "inconsistency_id": str(row[0]),
+                "kind": str(row[4] or ""),
+                "span_id": str(row[2] or ""),
+                "term_id": str(row[3] or ""),
+            }
+            for row in rows
+        ]
 
     @_owned_method
     def stats(self) -> dict[str, int]:

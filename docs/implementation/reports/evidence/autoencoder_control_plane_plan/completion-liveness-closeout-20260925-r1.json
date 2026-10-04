@@ -1,0 +1,134 @@
+{
+  "admitted": false,
+  "all_selected_tests_unchanged_since_capture": true,
+  "checkpoint_format_changed": false,
+  "combined_source_guard_passed": true,
+  "combined_test_execution_passed": true,
+  "constitution_formalized": false,
+  "control_liveness_only": true,
+  "default_storage_changed": false,
+  "disk_after": {
+    "charged_bytes": 36692611297,
+    "inventory": {
+      "apparent_bytes": 34692611297,
+      "entry_count": 66962,
+      "special_file_count": 12,
+      "symlink_count": 3062
+    },
+    "limit_bytes": 50000000000,
+    "retained_reservations": [
+      {
+        "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      },
+      {
+        "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+        "status": "retained",
+        "storage_bytes": 1000000000
+      }
+    ]
+  },
+  "documents": [
+    {
+      "bytes": 6484,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/autoencoder_completion_liveness.md",
+      "sha256": "bbb4f19fa8905fa1604a9aec7dd77d7e78b417fd326132cbb5c9515e50729913"
+    },
+    {
+      "bytes": 71545,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "87fad7ee08882a0cd8d2f2267cc08773f792396c2489024f86cc6d6a81ab46a1"
+    },
+    {
+      "bytes": 80117,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "8f3f28fb9ec743c450771c59d1ee140f0515871fcbbe6d3cb5f054446f9bdb8e"
+    }
+  ],
+  "end_to_end_performance_claim": false,
+  "final_completion_hash_synchronous": true,
+  "focused_receipt": {
+    "bytes": 3168,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-completion-liveness-20260925/liveness-r3-receipt.json",
+    "sha256": "2c59a629d3b127d5e91c606b81b89361bc6ba397de18d72d0aa570e16beaf763"
+  },
+  "frozen_prechange_sources": [
+    {
+      "bytes": 51406,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/completion-liveness-20260925/autoencoder_training_coordinator.before.py",
+      "sha256": "a1530b22629efc868cd8d9dbce2cb9a8f010b8ff899ade2075b1d7e141615c11"
+    }
+  ],
+  "full_checkpoint_authoritative": true,
+  "junit_totals": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 541
+  },
+  "native_cycle_performed": false,
+  "native_listener_performed": false,
+  "native_validation_deferred_by_user": true,
+  "owned_production_unchanged_since_capture": true,
+  "passed": true,
+  "pinned_inode": 57804548,
+  "pinned_links": 2,
+  "production": [
+    {
+      "bytes": 54200,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_coordinator.py",
+      "sha256": "f997f298dcd4527a78c82d0eed57a9d416e8c1a710dc5a991a702e0876149e92"
+    }
+  ],
+  "production_activated": false,
+  "profile_performed": false,
+  "promotion_performed": false,
+  "protected_artifacts": [
+    {
+      "bytes": 25895338,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd"
+    },
+    {
+      "bytes": 25895897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.state.json",
+      "sha256": "23fa2a50725fa5afe3f96da9ae84ea686df5fb49262aa1b6614321023a91799c"
+    },
+    {
+      "bytes": 8889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1"
+    },
+    {
+      "bytes": 1148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535"
+    },
+    {
+      "bytes": 55254,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3"
+    }
+  ],
+  "protected_unchanged": true,
+  "publication_performed": false,
+  "recorded_at": "2026-09-25T21:05:35.330676+00:00",
+  "registry_commands_owner_thread": true,
+  "regression": {
+    "bytes": 2558230,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/completion-liveness-20260925/combined-r1-receipt.json",
+    "sha256": "db715f12de050c8f64b157b03eac1e59e1140078d4aa5b9eb82a0e6960315800"
+  },
+  "relative_document_links_checked": 105,
+  "retained_source_drift_investigation": {
+    "bytes": 1998,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-completion-liveness-20260925/liveness-r2-source-drift.json",
+    "sha256": "657ea59c7857a37aff82f3d77e24dc1537a848a3b9aa40d8728e082d4ed07638"
+  },
+  "schema": "completion-liveness-closeout-v1",
+  "source_changed_after_capture": [],
+  "source_changed_during_capture": [],
+  "source_files_during_capture": 7743,
+  "synthetic_persistence_fixtures": true
+}

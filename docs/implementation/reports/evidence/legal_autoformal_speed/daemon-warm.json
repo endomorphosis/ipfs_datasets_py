@@ -1,0 +1,42 @@
+{
+  "sample_count": 3,
+  "legal_ir_target_count": 3,
+  "bridge_names": [
+    "modal_frame_logic",
+    "deontic_norms",
+    "fol_tdfol",
+    "cec_dcec",
+    "external_prover_router"
+  ],
+  "legal_ir_evaluate_provers": false,
+  "legal_ir_parallel_workers": 1,
+  "metric_disk_cache": false,
+  "cache_cold_process": false,
+  "in_process_bridge_cache": "warm",
+  "use_sample_memory": false,
+  "measurements_seconds": {
+    "two_pass": [
+      0.28532704000826925,
+      0.28254641499370337,
+      0.2830294899176806,
+      0.27671184798236936,
+      0.2790231119142845,
+      0.27431911299936473
+    ],
+    "reuse": [
+      0.22488847898785025,
+      0.2256082290550694,
+      0.22549939702730626,
+      0.22453807899728417,
+      0.224042315967381,
+      0.2245970560470596
+    ]
+  },
+  "median_seconds": {
+    "two_pass": 0.28078476345399395,
+    "reuse": 0.22474276751745492
+  },
+  "all_evaluations_exactly_equal": true,
+  "optimizer_step": false,
+  "admitted": false
+}

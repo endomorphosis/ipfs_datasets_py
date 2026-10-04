@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="21" skipped="0" tests="21" time="8.343" timestamp="2026-09-24T23:13:35.530115+00:00" hostname="spark-b271"><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots" time="0.441"><failure message="AssertionError: assert 'approve the discharge' == ''&#10;  &#10;  + approve the discharge">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2542: in test_ir_formula_builder_uses_detail_only_action_verb_and_object_slots
+    assert norm.action == ""
+E   AssertionError: assert 'approve the discharge' == ''
+E     
+E     + approve the discharge</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_action_component_records" time="0.427"><failure message="AssertionError: assert 'approve the discharge' == ''&#10;  &#10;  + approve the discharge">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2584: in test_ir_formula_builder_uses_detail_only_action_component_records
+    assert norm.action == ""
+E   AssertionError: assert 'approve the discharge' == ''
+E     
+E     + approve the discharge</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_regulated_object_slot" time="0.420"><failure message="AssertionError: assert 'inspect the premises' == ''&#10;  &#10;  + inspect the premises">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2613: in test_ir_formula_builder_uses_detail_only_regulated_object_slot
+    assert norm.action == ""
+E   AssertionError: assert 'inspect the premises' == ''
+E     
+E     + inspect the premises</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_regulated_activity_object_slot" time="0.420"><failure message="AssertionError: assert 'monitor regulated activity' == ''&#10;  &#10;  + monitor regulated activity">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2651: in test_ir_formula_builder_uses_detail_only_regulated_activity_object_slot
+    assert norm.action == ""
+E   AssertionError: assert 'monitor regulated activity' == ''
+E     
+E     + monitor regulated activity</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_recipient_slot" time="0.423"><failure message="AssertionError: assert 'notify the applicant' == ''&#10;  &#10;  + notify the applicant">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2690: in test_ir_formula_builder_uses_detail_only_recipient_slot
+    assert norm.action == ""
+E   AssertionError: assert 'notify the applicant' == ''
+E     
+E     + notify the applicant</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_applicability_slots" time="0.008"><failure message="AssertionError: assert 'apply to foo...obile vendors' == 'food carts a...obile vendors'&#10;  &#10;  - food carts and mobile vendors&#10;  + apply to food carts and mobile vendors&#10;  ? +++++++++">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2801: in test_ir_formula_builder_uses_detail_only_applicability_slots
+    assert norm.action == "food carts and mobile vendors"
+E   AssertionError: assert 'apply to foo...obile vendors' == 'food carts a...obile vendors'
+E     
+E     - food carts and mobile vendors
+E     + apply to food carts and mobile vendors
+E     ? +++++++++</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_exemption_slots" time="0.002"><failure message="AssertionError: assert 'Emergency repairs' == 'emergency repairs'&#10;  &#10;  - emergency repairs&#10;  ? ^&#10;  + Emergency repairs&#10;  ? ^">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2841: in test_ir_formula_builder_uses_detail_only_exemption_slots
+    assert norm.actor == "emergency repairs"
+E   AssertionError: assert 'Emergency repairs' == 'emergency repairs'
+E     
+E     - emergency repairs
+E     ? ^
+E     + Emergency repairs
+E     ? ^</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_uses_detail_only_penalty_sanction_slot" time="0.424"><failure message="AssertionError: assert 'incur a civi...per violation' == 'incur civil ...per violation'&#10;  &#10;  - incur civil fine not less than $100 and not more than $500 per violation&#10;  + incur a civil fine of not less than $100 and not more than $500 per violation&#10;  ?       ++           +++">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2922: in test_ir_formula_builder_uses_detail_only_penalty_sanction_slot
+    assert norm.action == "incur civil fine not less than $100 and not more than $500 per violation"
+E   AssertionError: assert 'incur a civi...per violation' == 'incur civil ...per violation'
+E     
+E     - incur civil fine not less than $100 and not more than $500 per violation
+E     + incur a civil fine of not less than $100 and not more than $500 per violation
+E     ?       ++           +++</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_formula_builder_preserves_detail_only_recipient_slot" time="0.427"><failure message="AssertionError: assert 'applicant' == 'the applicant'&#10;  &#10;  - the applicant&#10;  ? ----&#10;  + applicant">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:2961: in test_ir_formula_builder_preserves_detail_only_recipient_slot
+    assert norm.recipient == "the applicant"
+E   AssertionError: assert 'applicant' == 'the applicant'
+E     
+E     - the applicant
+E     ? ----
+E     + applicant</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_formula_record_preserves_capped_condition_slots_as_omitted_provenance" time="0.428"><failure message="AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'&#10;  &#10;  Skipping 35 identical leading characters in diff, use -v to show&#10;  - AreMet(x) ∧ FeesArePaid(x) ∧ InspectionIsComplete(x) → IssuePermit(x)))&#10;  + AreMet(x) → IssuePermit(x)))">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:3043: in test_formula_record_preserves_capped_condition_slots_as_omitted_provenance
+    assert formula == (
+E   AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'
+E     
+E     Skipping 35 identical leading characters in diff, use -v to show
+E     - AreMet(x) ∧ FeesArePaid(x) ∧ InspectionIsComplete(x) → IssuePermit(x)))
+E     + AreMet(x) → IssuePermit(x)))</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_formula_record_preserves_capped_exception_slots_as_omitted_provenance" time="0.423"><failure message="AssertionError: assert '¬ApplicationIsIncomplete(x)' in 'O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))'">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:3086: in test_formula_record_preserves_capped_exception_slots_as_omitted_provenance
+    assert "¬ApplicationIsIncomplete(x)" in formula
+E   AssertionError: assert '¬ApplicationIsIncomplete(x)' in 'O(∀x (Applicant(x) ∧ ¬ApprovalIsDenied(x) → ObtainPermit(x)))'</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_mixed_substantive_and_reference_exception_formula_record_remains_blocked" time="0.432"><failure message="assert True is False">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:3798: in test_mixed_substantive_and_reference_exception_formula_record_remains_blocked
+    assert record["proof_ready"] is False
+E   assert True is False</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_external_applicability_formula_record_remains_blocked" time="0.007"><failure message="assert True is False">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:3847: in test_external_applicability_formula_record_remains_blocked
+    assert record["proof_ready"] is False
+E   assert True is False</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_override_exclusion_preserves_true_condition_predicates" time="0.424"><failure message="IndexError: list index out of range">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:4683: in test_override_exclusion_preserves_true_condition_predicates
+    assert norm.conditions[0]["value"] == "approval"
+           ^^^^^^^^^^^^^^^^^^
+E   IndexError: list index out of range</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_multiple_substantive_conditions_remain_formula_antecedents" time="0.346"><failure message="AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'&#10;  &#10;  Skipping 35 identical leading characters in diff, use -v to show&#10;  - AreMet(x) ∧ FeesArePaid(x) ∧ InspectionIsComplete(x) → IssuePermit(x)))&#10;  + AreMet(x) → IssuePermit(x)))">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:4833: in test_multiple_substantive_conditions_remain_formula_antecedents
+    assert formula == (
+E   AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'
+E     
+E     Skipping 35 identical leading characters in diff, use -v to show
+E     - AreMet(x) ∧ FeesArePaid(x) ∧ InspectionIsComplete(x) → IssuePermit(x)))
+E     + AreMet(x) → IssuePermit(x)))</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_duplicate_condition_aliases_are_not_repeated_in_formula" time="0.347"><failure message="AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'&#10;  &#10;  Skipping 35 identical leading characters in diff, use -v to show&#10;  - AreMet(x) ∧ FeesArePaid(x) → IssuePermit(x)))&#10;  ?           -----------------&#10;  + AreMet(x) → IssuePermit(x)))">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:4854: in test_duplicate_condition_aliases_are_not_repeated_in_formula
+    assert formula == (
+E   AssertionError: assert 'O(∀x (Direct...uePermit(x)))' == 'O(∀x (Direct...uePermit(x)))'
+E     
+E     Skipping 35 identical leading characters in diff, use -v to show
+E     - AreMet(x) ∧ FeesArePaid(x) → IssuePermit(x)))
+E     ?           -----------------
+E     + AreMet(x) → IssuePermit(x)))</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_reference_condition_filtering_preserves_other_substantive_conditions" time="0.428"><failure message="AssertionError: assert 'O(∀x (Secret...shNotice(x)))' == 'O(∀x (Secret...shNotice(x)))'&#10;  &#10;  - O(∀x (Secretary(x) ∧ NoticeIsComplete(x) ∧ PublicationIsRequired(x) → PublishNotice(x)))&#10;  + O(∀x (Secretary(x) → PublishNotice(x)))">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:4877: in test_reference_condition_filtering_preserves_other_substantive_conditions
+    assert formula == (
+E   AssertionError: assert 'O(∀x (Secret...shNotice(x)))' == 'O(∀x (Secret...shNotice(x)))'
+E     
+E     - O(∀x (Secretary(x) ∧ NoticeIsComplete(x) ∧ PublicationIsRequired(x) → PublishNotice(x)))
+E     + O(∀x (Secretary(x) → PublishNotice(x)))</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_formula_builder" name="test_ir_source_span_falls_back_to_support_span_for_legacy_elements" time="0.257"><failure message="assert [0, 32] == [4, 34]&#10;  &#10;  At index 0 diff: 0 != 4&#10;  Use -v to get more diff">tests/unit_tests/logic/deontic/test_deontic_formula_builder.py:5238: in test_ir_source_span_falls_back_to_support_span_for_legacy_elements
+    assert norm.source_span.to_list() == [4, 34]
+E   assert [0, 32] == [4, 34]
+E     
+E     At index 0 diff: 0 != 4
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_converter.TestDeonticConverter" name="test_converter_keeps_external_applicability_formula_record_blocked" time="0.015"><failure message="assert True is False">tests/unit_tests/logic/deontic/test_deontic_converter.py:377: in test_converter_keeps_external_applicability_formula_record_blocked
+    assert record["proof_ready"] is False
+E   assert True is False</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_converter.TestDeonticConverter" name="test_unresolved_cross_reference_still_routes_to_repair" time="0.345"><failure message="AssertionError: assert 'cross_reference_requires_resolution' in []">tests/unit_tests/logic/deontic/test_deontic_converter.py:1035: in test_unresolved_cross_reference_still_routes_to_repair
+    assert "cross_reference_requires_resolution" in element["llm_repair"]["reasons"]
+E   AssertionError: assert 'cross_reference_requires_resolution' in []</failure></testcase><testcase classname="tests.unit_tests.logic.deontic.test_deontic_converter.TestDeonticConverter" name="test_subject_to_duty_modals_are_obligation_norms_without_condition_noise" time="0.343"><failure message="AssertionError: assert 'O(∀x (Owner(...Sidewalk(x)))' == 'O(∀x (Owner(...Sidewalk(x)))'&#10;  &#10;  - O(∀x (Owner(x) → MaintainSidewalk(x)))&#10;  + O(∀x (Owner(x) ∧ DutyMaintainSidewalk(x) → MaintainSidewalk(x)))">tests/unit_tests/logic/deontic/test_deontic_converter.py:3272: in test_subject_to_duty_modals_are_obligation_norms_without_condition_noise
+    assert build_deontic_formula(element) == expected_formula
+E   AssertionError: assert 'O(∀x (Owner(...Sidewalk(x)))' == 'O(∀x (Owner(...Sidewalk(x)))'
+E     
+E     - O(∀x (Owner(x) → MaintainSidewalk(x)))
+E     + O(∀x (Owner(x) ∧ DutyMaintainSidewalk(x) → MaintainSidewalk(x)))</failure></testcase></testsuite></testsuites>

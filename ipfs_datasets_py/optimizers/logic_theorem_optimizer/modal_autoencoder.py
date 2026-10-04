@@ -28172,12 +28172,15 @@ def _legal_ir_parallel_worker_count(
         return 1
     if requested is None:
         raw = os.environ.get("IPFS_DATASETS_LEGAL_IR_PARALLEL_WORKERS", "").strip()
-        if not raw:
-            return 1
-        try:
-            requested = int(raw)
-        except ValueError:
-            return 1
+        if not raw or raw == "auto":
+            from ipfs_datasets_py.logic.autoformal.worker_budget import worker_budget
+
+            requested = worker_budget(kind="compiler")
+        else:
+            try:
+                requested = int(raw)
+            except ValueError:
+                return 1
     return max(1, min(int(requested), int(item_count)))
 
 

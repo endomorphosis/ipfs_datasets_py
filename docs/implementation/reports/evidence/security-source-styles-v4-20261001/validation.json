@@ -1,0 +1,19 @@
+{
+  "datasets": {
+    "errors": 0,
+    "failures": 0,
+    "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/final-datasets-validation.xml",
+    "sha256": "fcedddf49a3c3db9d3b5de2e32b69b71b2e50df2887942e4b7da87c6c1c6402a",
+    "skipped": 0,
+    "tests": 208
+  },
+  "schema": "source-styles-closeout-tests/v1",
+  "supervisor": {
+    "failures": 0,
+    "path": "/home/barberb/lift_coding/artifacts/security-source-styles-v4-20261001/supervisor-normalized-smoke-01/test-receipt.json",
+    "sha256": "f7569bdac660ffdc120671c7b8f6e454c36931d0e95c07709167e168360dc075",
+    "skipped": 0,
+    "tests": 44
+  },
+  "total_tests": 252
+}

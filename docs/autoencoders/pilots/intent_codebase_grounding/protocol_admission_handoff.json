@@ -1,0 +1,195 @@
+{
+  "schema": "codebase-ir-protocol-admission-handoff/v1",
+  "captured_at_utc": "2026-10-03T00:32:18.493798+00:00",
+  "status": "draft_source_commit_saved_protocol_slice_passed_full_proof_pending",
+  "worktree": "/home/barberb/lift_coding/.worktrees/proof-protocol-admission-20261003",
+  "branch": "codex/proof-protocol-admission-20261003",
+  "draft_source_commit": "97d9ddc80186ae2666a011c770d5fbb7a6413146",
+  "parent_commit": "826d94979180dd36cf6b2867aae0b2a077b2838f",
+  "committed_paths": [
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+    "ipfs_datasets_py/duckdb_control/codebase_evidence_index.py",
+    "ipfs_datasets_py/duckdb_control/codebase_verification_catalog.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_applicability.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_integer_batch.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_integer_profile.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_integer_verification.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_integer_workers.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_property_cache.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_compat.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_execution.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_smt_protocol.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_verification.py",
+    "ipfs_datasets_py/logic/software_contracts/content.py",
+    "ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+    "ipfs_datasets_py/logic/software_verification/applicability.py",
+    "ipfs_datasets_py/logic/software_verification/pipeline.py",
+    "ipfs_datasets_py/logic/software_verification/source_adapters.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "tests/unit/logic/software_contracts/test_codebase_smt_protocol.py"
+  ],
+  "committed_file_count": 22,
+  "worktree_clean": true,
+  "acquisition": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/acquisition.json",
+    "bytes": 22784,
+    "sha256": "469b9e63349cea44b8a8d7ddca1d2e0d6870637e27d526aa64a9f1c805795426"
+  },
+  "runtime_source_admission": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/admission.json",
+    "bytes": 23443,
+    "sha256": "6b07c7aea67f347a4f581daa3a7328163af40b70b6f5ad34cd43ea04593e035e"
+  },
+  "dependency_profile": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/dependency-profile.json",
+    "bytes": 92523,
+    "sha256": "12d8ab0aecb08a492c79ba511a2846794502f5cd512ae47144569ec9462386e2"
+  },
+  "test_result": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/runs/pure-protocol-02/result.json",
+    "bytes": 88919,
+    "sha256": "a26cc411d56c4744a6bd9aa929b6f0f639499fe011a709137c18bea57136b0a6"
+  },
+  "harness": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/run_protocol_tests.py",
+    "bytes": 13056,
+    "sha256": "89a528b868495ab2d485c459a0102384c62e05e2a3efa3738fde72fcdef4e775"
+  },
+  "identity_source_inventory": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/identity-source-inventory.json",
+    "bytes": 101104,
+    "sha256": "41ca29428c475261c45b90ac610ad5e88d40f444eac4cf83daf4d923833f6389"
+  },
+  "commit_record": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/commit.json",
+    "bytes": 2377,
+    "sha256": "4229ffca368741ce8631c98303e9c0bb3997542af01d6b15ff6837c22cd86e08"
+  },
+  "bundle_record": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/bundle.json",
+    "bytes": 962,
+    "sha256": "2516fe803b59b5c1ef391a21638cb07c2beaed3cf95967d689010d1aff91e843"
+  },
+  "incremental_bundle": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/draft-proof-sources.bundle",
+    "bytes": 83164,
+    "sha256": "8dc23e6376f71f995ee4f0748899890f405507e49cc9971a212c4cc6241fd826"
+  },
+  "bundle_required_base_commit": "826d94979180dd36cf6b2867aae0b2a077b2838f",
+  "bundle_verify_exit_code": 0,
+  "local_origin_comparison": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/local-origin-comparison.json",
+    "bytes": 17575,
+    "sha256": "104963302678150a020a4b90e242c1fc68a7a4536fc35e08f079dfeab6b71282"
+  },
+  "preservation": {
+    "path": "/home/barberb/lift_coding/artifacts/codebase-ir-proof-protocol-admission-20261003/preservation.json",
+    "bytes": 501235,
+    "sha256": "18b1315cd082c75710bed5d38a37877d331ae9af00b93b24118767396d9f1314"
+  },
+  "protocol_slice_qualified": true,
+  "protocol_tests_passed": 103,
+  "protocol_tests_failed": 0,
+  "protocol_tests_skipped": 0,
+  "expected_protocol_cases": 103,
+  "runtime_project_owner_sources": 22,
+  "runtime_admitted_source_files": 26,
+  "presence_only_router_prerequisite": 1,
+  "runtime_executed_project_and_test_files": 25,
+  "runtime_admitted_external_source_files": 399,
+  "all_admitted_source_files": 425,
+  "guarded_python_source_loads": 409,
+  "final_denied_imports": 0,
+  "final_denied_effects": 0,
+  "native_launches_in_protocol_run": 0,
+  "optional_beartype_loaded_at_admitted_origin": true,
+  "source_load_policy": "Verify each guarded raw source read and compile the same bytes; preimport selected test and disable assertion rewriting",
+  "source_endpoint_receipts_match": true,
+  "stdlib_generated_native_or_full_executed_closure_attested": false,
+  "retained_startup_failure": {
+    "run_id": "pure-protocol-01",
+    "tests_executed": 0,
+    "cause": "Unadmitted pytest compatibility shim py.py",
+    "resolution": "Review/pin329byte shim; retain v1 dependency profile and failed run"
+  },
+  "dated_runtime_admission_staged_paths": 21,
+  "later_static_candidate_addition": "ipfs_datasets_py/logic/software_verification/applicability.py",
+  "full_proof_sources_runtime_admitted": false,
+  "original_frozen_selected_source_files": 27,
+  "declared_identity_modules": 29,
+  "additional_identity_source_files": 18,
+  "additional_identity_source_provenance_counts": {
+    "committed": 17,
+    "new_local_snapshot": 1
+  },
+  "frozen_and_identity_source_union_files": 45,
+  "declared_identity_source_inventory_complete": true,
+  "producer_identity_inventory_operations_executed": false,
+  "full_eager_transitive_external_closure_admitted": false,
+  "supervisor_policy": {
+    "integer_profile_default": true,
+    "revised_historical_2_producers": false
+  },
+  "locally_observed_origin": "1418ad558a56d22e6ca023e385ef002acf1ce2d7",
+  "selected45_origin_path_counts": {
+    "match": 23,
+    "different": 10,
+    "absent": 12
+  },
+  "fresh_remote_state_verified": false,
+  "retained_source_acquisition_correction": {
+    "cause": "Applicability identity helper absent at pinned Git base",
+    "resolution": "Capture authenticated13011byte local source64d2b9b784775aa0ec6eaa7352102ffb171570e22da9e798602af89bb344b884 and stage separately; other17 additions use exact committed blobs"
+  },
+  "next_gates": [
+    "Admit eager/transitive package and test/benchmark imports for each later cohort",
+    "Pin supervisor origins and loaded/unavailable/exception branches for the integer profile",
+    "Qualify scheduler reboot/memory behavior before native proofs",
+    "Admit native executables/launchers/resource helper and run fresh native semantics",
+    "Qualify index/catalog/currentness and intent applicability separately"
+  ],
+  "new_worktrees": 1,
+  "new_branches": 1,
+  "local_commits": 1,
+  "merges": 0,
+  "pushes": 0,
+  "parent_gitlinks_changed": 0,
+  "accepted_release_manifest": null,
+  "proof_profile_qualified": false,
+  "proof_authority": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "solver_executions": 0,
+  "model_executions": 0,
+  "database_operations": 0,
+  "training_runs": 0,
+  "new_embeddings_generated": 0,
+  "installed_package_changes": 0,
+  "network_fetches": 0,
+  "prior_bound_file_counts_preserved": [
+    481,
+    17,
+    30,
+    82,
+    62,
+    65
+  ],
+  "original_assets_unchanged": 26,
+  "original_inventory_documents_unchanged": 13,
+  "ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_inventory_cells": 12
+}

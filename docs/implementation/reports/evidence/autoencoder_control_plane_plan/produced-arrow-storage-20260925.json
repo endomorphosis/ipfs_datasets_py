@@ -1,0 +1,15 @@
+{
+  "apparent_bytes": {
+    "cached_gte_model_repository": 67759742,
+    "shared_pytest_temporary_root": 31965610490,
+    "workspace/test-logs": 187667079,
+    "workspace/todo-queues": 130194297
+  },
+  "campaign_limit_bytes": 50000000000,
+  "named_roots_apparent_bytes_sum": 32351231608,
+  "not_global_filesystem_census": true,
+  "observed_named_roots_sum_below_limit": true,
+  "recorded_at": "2026-09-25T06:29:06.271984+00:00",
+  "schema": "produced-arrow-storage-observation-v1",
+  "scope": "du -sb observations after native benchmark and tests; shared pytest temporary root also contains unrelated session artifacts, not attributed entirely to this campaign; no files removed"
+}

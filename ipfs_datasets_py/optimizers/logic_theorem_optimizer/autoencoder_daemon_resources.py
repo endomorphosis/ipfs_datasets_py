@@ -32,15 +32,17 @@ import uuid
 
 from .resource_scheduler import ResourceLane, get_global_resource_scheduler
 
-# Campaign cap increased to 90 GB with operator authorization on 2026-09-29. Existing
+# Campaign cap increased to 140 GB with operator authorization on 2026-10-02. Existing
 # ledgers require an explicit, lock-held limit migration; _read never upgrades
 # historical ledgers or releases their retained reservations implicitly.
-MAX_STORAGE_BYTES = 90_000_000_000
+MAX_STORAGE_BYTES = 140_000_000_000
 MAX_LEDGER_BYTES = 8 * 1024 * 1024
 MAX_RESERVATIONS = 4096
 MAX_CHILDREN_PER_RESERVATION = 16
 MAX_EXTERNAL_CHARGES = 128
-MAX_INVENTORY_ENTRIES = 1_000_000
+# The same exact-root census observed 1,359,805 entries on 2026-10-02. Increase
+# only the finite scan bound; path/identity checks and accounting stay unchanged.
+MAX_INVENTORY_ENTRIES = 2_000_000
 SCHEMA = "daemon-resource-reservations-v1"
 SCHEDULER_LANE = ResourceLane.HAMMER_LEAN
 SCHEDULER_WORKLOAD = "canonical_trainer"

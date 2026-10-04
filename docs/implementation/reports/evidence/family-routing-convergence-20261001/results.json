@@ -1,0 +1,1930 @@
+{
+  "actual_SANY_checks": 30,
+  "admitted": false,
+  "candidate_sha256": {
+    "docs/autoencoders/family_routing_and_refinement.md": "b5dccc67838813d95424790f34361843869160f1af435429333662a454ecbfb6",
+    "docs/autoencoders/training_readiness_parallel.md": "5eab1d770a1d9dc408c4907ed4302b1eb7247dd4171865093d9fec534de0cfb1",
+    "ipfs_datasets_py/logic/formalization/autoencoder/parallel_projection_checks.py": "f3ea8f211c425f17af861900ad36ed34423b23a0321ed33ff3af0f017125c4b6",
+    "ipfs_datasets_py/logic/hammers/semantic_routing.py": "5e8cd8a4abf194fc16591ffc323860a56cadcd22b016598f366e3926227f4922",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_decoder_refinement.py": "6ff9c4161b5646a8de978470972c9ca7145e2adc637b0f5e21e4f281e542934f",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_family_training_validated_v5.py": "c17b0ea27bbde64d2dd3a71121c984086f92a037343fb8e3a675b5b6715d0054",
+    "scripts/ops/autoencoder/benchmark_validated_family_convergence.py": "a80aa6e39ff079deb963d5ef0ea7ca83b06aab8db89775daef9d4b95f11016b6",
+    "tests/fixtures/logic/family_safe_convergence_v1/panel.py": "083313a1946c313f1f64ae93c20ac83231aa10ca74220998a52ed6600f2d5077",
+    "tests/unit/logic/formalization/autoencoder/test_family_decoder_refinement.py": "0417caafe73c0adaaa37b0ae063f00589a68bf4d964a39bd5c186a785febe055",
+    "tests/unit/logic/formalization/autoencoder/test_family_safe_convergence_panel.py": "bcf55d81cfa429eda25c80881e621b90e912d131e3aca51eea94a90e253ff022",
+    "tests/unit/logic/formalization/autoencoder/test_parallel_projection_checks.py": "df665762f6f30737d1fae062ebfdf7787cea0a26c76a550abaf672bd0615a0ad",
+    "tests/unit/logic/formalization/autoencoder/test_validated_family_refinement.py": "f6362d5ff4d50c0f160fe729874bea231df62e2e4c97bc463b1d8593ef516c6f",
+    "tests/unit_tests/logic/hammers/test_semantic_routing.py": "8e6d3375e8141621164cad974bbb84b838685c8e701e53ae55c116c31c308583"
+  },
+  "comparison": {
+    "actual_lake_builds": 40,
+    "admitted": false,
+    "constitution_formalized": false,
+    "development": {
+      "actual_lake_builds": 32,
+      "emitted_projection_checks": 528,
+      "native_validation_seconds": 389.69011830398813,
+      "portfolio_diagnostics": {
+        "actual_attempts": 8,
+        "attempts": [
+          {
+            "attempt_id": "portfolio-legal_ir:portfolio-legal_ir:projection:5ce5daccbac8692bf68eef1e71e499fb6ef25cb78b194adf7a771393b72ef750:smtlib:0:z3:0",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:29:01.481846+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreie7672dxst5ojthgj22gfgmwm3pcfepc5vpeonyfngmwfneh353zu",
+            "request_id": "portfolio-legal_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.0653,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 7.359776645898819e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "z3",
+            "solver_version": "Z3 version 4.15.4 - 64 bit",
+            "started_at": "2026-10-01T22:29:00.248735+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-legal_ir:projection:5ce5daccbac8692bf68eef1e71e499fb6ef25cb78b194adf7a771393b72ef750:smtlib:0",
+            "verdict": "sat",
+            "wall_time_seconds": 0.6628026640973985
+          },
+          {
+            "attempt_id": "portfolio-legal_ir:portfolio-legal_ir:projection:5ce5daccbac8692bf68eef1e71e499fb6ef25cb78b194adf7a771393b72ef750:smtlib:1:cvc5:1",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:29:01.520879+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreictma3zmhhdlx446jy62l5b2wj4ld6yvwtx5rnzvmx5xyuz5t5bmi",
+            "request_id": "portfolio-legal_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.033537000000000004,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 4.3190084397792816e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "cvc5",
+            "solver_version": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]",
+            "started_at": "2026-10-01T22:29:00.249612+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-legal_ir:projection:5ce5daccbac8692bf68eef1e71e499fb6ef25cb78b194adf7a771393b72ef750:smtlib:1",
+            "verdict": "sat",
+            "wall_time_seconds": 0.6324802299495786
+          },
+          {
+            "attempt_id": "portfolio-intent_ir:portfolio-intent_ir:projection:69dbcb7f22265444d013fff0120e76b714fd58de739e6ce94887a1724a6504f7:smtlib:0:z3:0",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:30:23.059754+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreie7672dxst5ojthgj22gfgmwm3pcfepc5vpeonyfngmwfneh353zu",
+            "request_id": "portfolio-intent_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.07004400000000022,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 6.081536412239075e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "z3",
+            "solver_version": "Z3 version 4.15.4 - 64 bit",
+            "started_at": "2026-10-01T22:30:21.835355+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-intent_ir:projection:69dbcb7f22265444d013fff0120e76b714fd58de739e6ce94887a1724a6504f7:smtlib:0",
+            "verdict": "sat",
+            "wall_time_seconds": 0.46496258885599673
+          },
+          {
+            "attempt_id": "portfolio-intent_ir:portfolio-intent_ir:projection:69dbcb7f22265444d013fff0120e76b714fd58de739e6ce94887a1724a6504f7:smtlib:1:cvc5:1",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:30:23.092180+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreifnwaxkxfdi3yssxuv32zmfqndtoaaflexuewshlotsw6wmfan7zu",
+            "request_id": "portfolio-intent_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.07004400000000022,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 9.438954293727875e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "cvc5",
+            "solver_version": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]",
+            "started_at": "2026-10-01T22:30:21.835570+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-intent_ir:projection:69dbcb7f22265444d013fff0120e76b714fd58de739e6ce94887a1724a6504f7:smtlib:1",
+            "verdict": "sat",
+            "wall_time_seconds": 0.5584101981949061
+          },
+          {
+            "attempt_id": "portfolio-security_ir:portfolio-security_ir:projection:56f076a540430b324674eb56a9e72d18d84ee9638cc543002d10b28269807f03:smtlib:0:z3:0",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:31:58.541035+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreie7672dxst5ojthgj22gfgmwm3pcfepc5vpeonyfngmwfneh353zu",
+            "request_id": "portfolio-security_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.12351899999999816,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 3.359746187925339e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "z3",
+            "solver_version": "Z3 version 4.15.4 - 64 bit",
+            "started_at": "2026-10-01T22:31:57.512169+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-security_ir:projection:56f076a540430b324674eb56a9e72d18d84ee9638cc543002d10b28269807f03:smtlib:0",
+            "verdict": "sat",
+            "wall_time_seconds": 0.46818463294766843
+          },
+          {
+            "attempt_id": "portfolio-security_ir:portfolio-security_ir:projection:56f076a540430b324674eb56a9e72d18d84ee9638cc543002d10b28269807f03:smtlib:1:cvc5:1",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:31:58.530958+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreihoni4j64ubduenlvrxqghjzkwrniwrndxtfwijjmeeogu35e5etm",
+            "request_id": "portfolio-security_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.12351899999999816,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 9.599607437849045e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "cvc5",
+            "solver_version": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]",
+            "started_at": "2026-10-01T22:31:57.513064+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-security_ir:projection:56f076a540430b324674eb56a9e72d18d84ee9638cc543002d10b28269807f03:smtlib:1",
+            "verdict": "sat",
+            "wall_time_seconds": 0.42929117497988045
+          },
+          {
+            "attempt_id": "portfolio-ui_ux_ir:portfolio-ui_ux_ir:projection:a7cdd366e037b883aa59334e936bdd91c2496a6c852c8f1c39c3c164987d0df4:smtlib:0:z3:0",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:33:28.654589+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreie7672dxst5ojthgj22gfgmwm3pcfepc5vpeonyfngmwfneh353zu",
+            "request_id": "portfolio-ui_ux_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.08462900000000673,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 1.1040829122066498e-06,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "z3",
+            "solver_version": "Z3 version 4.15.4 - 64 bit",
+            "started_at": "2026-10-01T22:33:27.486818+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-ui_ux_ir:projection:a7cdd366e037b883aa59334e936bdd91c2496a6c852c8f1c39c3c164987d0df4:smtlib:0",
+            "verdict": "sat",
+            "wall_time_seconds": 0.5871172780171037
+          },
+          {
+            "attempt_id": "portfolio-ui_ux_ir:portfolio-ui_ux_ir:projection:a7cdd366e037b883aa59334e936bdd91c2496a6c852c8f1c39c3c164987d0df4:smtlib:1:cvc5:1",
+            "exit_code": 0,
+            "finished_at": "2026-10-01T22:33:28.834180+00:00",
+            "network_used": false,
+            "raw_output_digest": "bafkreifagigxpp4l6mbqe6x2yvsj7rqtronz3y2nik6ptkbcteeh4qqwo4",
+            "request_id": "portfolio-ui_ux_ir",
+            "resource_usage": {
+              "cpu_seconds": 0.0417500000000004,
+              "global_lease_cpu_slots": 1,
+              "global_lease_memory_mb": 256,
+              "global_lease_wait_seconds": 2.8801150619983673e-07,
+              "max_rss_mb": 0.0
+            },
+            "schema_version": "1.0.0",
+            "solver_name": "cvc5",
+            "solver_version": "This is cvc5 version 1.3.3 [git 8ff882e on branch HEAD]",
+            "started_at": "2026-10-01T22:33:27.487884+00:00",
+            "target": "smtlib",
+            "timeout_seconds": 15,
+            "translation_id": "portfolio-ui_ux_ir:projection:a7cdd366e037b883aa59334e936bdd91c2496a6c852c8f1c39c3c164987d0df4:smtlib:1",
+            "verdict": "sat",
+            "wall_time_seconds": 0.680964239872992
+          }
+        ],
+        "qualification_granted": false,
+        "requested_logic_family": "propositional",
+        "scope": "propositional satisfiability only; not source proof",
+        "solver_attempt_counts": {
+          "cvc5": 4,
+          "z3": 4
+        },
+        "solver_names": [
+          "z3",
+          "cvc5"
+        ],
+        "verdict_counts": {
+          "sat": 8
+        }
+      },
+      "preparation_seconds": 16.689227554947138
+    },
+    "domains": {
+      "intent_ir": {
+        "all_emitted_projections_have_loss": true,
+        "candidate_relative_reduction_vs_baseline": 0.0036856364761775895,
+        "candidate_relative_reduction_vs_initial": 0.017542938349189074,
+        "effective_heldout_feature_panel": {
+          "colliding_row_groups": [],
+          "distinct_retained_feature_vectors": 2,
+          "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+          "rows": 2
+        },
+        "feature_selection": {
+          "available_atoms": {
+            "intent-extended/dcec/default/v1": 329,
+            "intent-extended/frame_logic/default/v1": 2694,
+            "intent-extended/higher_order/default/v1": 298,
+            "intent-extended/tdfol/default/v1": 152,
+            "intent-route/action-hoare/v1": 124,
+            "intent-route/intentions/v1": 42,
+            "intent-route/norms/v1": 41,
+            "intent_ir/guarded/action_contract/v1": 4399,
+            "intent_ir/guarded/state/v1": 4399,
+            "intent_ir/guarded/tla_plus/v1": 4399,
+            "intent_ir/guarded/workflow/v1": 4399,
+            "intent_ir/native_formula/CEC/v3": 180,
+            "intent_ir/native_formula/DCEC/v3": 195,
+            "intent_ir/native_formula/DFOL/v3": 134,
+            "intent_ir/native_formula/FOL/v3": 154,
+            "intent_ir/native_formula/TDFOL/v3": 149,
+            "intent_ir/native_formula/TFOL/v3": 133,
+            "intent_ir/native_formula/frame_logic/v3": 288,
+            "intent_ir/native_formula/propositional/v3": 244,
+            "intent_ir/semantic/datalog/v1": 1450,
+            "intent_ir/semantic/deontic/v1": 676,
+            "intent_ir/semantic/horn_chc/v1": 1450,
+            "intent_ir/semantic/intention_agency/v1": 680
+          },
+          "method": "training_document_frequency_equal_projection_budget",
+          "retained_atoms": {
+            "intent-extended/dcec/default/v1": 215,
+            "intent-extended/frame_logic/default/v1": 215,
+            "intent-extended/higher_order/default/v1": 215,
+            "intent-extended/tdfol/default/v1": 152,
+            "intent-route/action-hoare/v1": 124,
+            "intent-route/intentions/v1": 42,
+            "intent-route/norms/v1": 41,
+            "intent_ir/guarded/action_contract/v1": 215,
+            "intent_ir/guarded/state/v1": 215,
+            "intent_ir/guarded/tla_plus/v1": 215,
+            "intent_ir/guarded/workflow/v1": 215,
+            "intent_ir/native_formula/CEC/v3": 180,
+            "intent_ir/native_formula/DCEC/v3": 195,
+            "intent_ir/native_formula/DFOL/v3": 134,
+            "intent_ir/native_formula/FOL/v3": 154,
+            "intent_ir/native_formula/TDFOL/v3": 149,
+            "intent_ir/native_formula/TFOL/v3": 133,
+            "intent_ir/native_formula/frame_logic/v3": 215,
+            "intent_ir/native_formula/propositional/v3": 215,
+            "intent_ir/semantic/datalog/v1": 215,
+            "intent_ir/semantic/deontic/v1": 214,
+            "intent_ir/semantic/horn_chc/v1": 214,
+            "intent_ir/semantic/intention_agency/v1": 214
+          }
+        },
+        "initial_heldout_objective": 0.0008225927489763109,
+        "regressed_families_vs_baseline": [],
+        "regressed_families_vs_initial": [
+          "propositional"
+        ],
+        "retained_feature_holdout_coverage": {
+          "projections": [
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent-extended/dcec/default/v1",
+              "row": 0,
+              "unknown_atoms": 49
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent-extended/frame_logic/default/v1",
+              "row": 0,
+              "unknown_atoms": 2281
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent-extended/higher_order/default/v1",
+              "row": 0,
+              "unknown_atoms": 50
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 116,
+              "projection_id": "intent-extended/tdfol/default/v1",
+              "row": 0,
+              "unknown_atoms": 1
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 112,
+              "projection_id": "intent-route/action-hoare/v1",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 30,
+              "projection_id": "intent-route/intentions/v1",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 29,
+              "projection_id": "intent-route/norms/v1",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/action_contract/v1",
+              "row": 0,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/state/v1",
+              "row": 0,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/tla_plus/v1",
+              "row": 0,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/workflow/v1",
+              "row": 0,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "intent_ir/native_formula/CEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "intent_ir/native_formula/DCEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "intent_ir/native_formula/DFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "intent_ir/native_formula/FOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "intent_ir/native_formula/TDFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "intent_ir/native_formula/TFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/native_formula/frame_logic/v3",
+              "row": 0,
+              "unknown_atoms": 21
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 188,
+              "projection_id": "intent_ir/native_formula/propositional/v3",
+              "row": 0,
+              "unknown_atoms": 6
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/semantic/datalog/v1",
+              "row": 0,
+              "unknown_atoms": 990
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/deontic/v1",
+              "row": 0,
+              "unknown_atoms": 330
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/horn_chc/v1",
+              "row": 0,
+              "unknown_atoms": 991
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/intention_agency/v1",
+              "row": 0,
+              "unknown_atoms": 333
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent-extended/dcec/default/v1",
+              "row": 1,
+              "unknown_atoms": 50
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent-extended/frame_logic/default/v1",
+              "row": 1,
+              "unknown_atoms": 2281
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent-extended/higher_order/default/v1",
+              "row": 1,
+              "unknown_atoms": 50
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 116,
+              "projection_id": "intent-extended/tdfol/default/v1",
+              "row": 1,
+              "unknown_atoms": 1
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 112,
+              "projection_id": "intent-route/action-hoare/v1",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 30,
+              "projection_id": "intent-route/intentions/v1",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 29,
+              "projection_id": "intent-route/norms/v1",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/action_contract/v1",
+              "row": 1,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/state/v1",
+              "row": 1,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/tla_plus/v1",
+              "row": 1,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/guarded/workflow/v1",
+              "row": 1,
+              "unknown_atoms": 4086
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "intent_ir/native_formula/CEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "intent_ir/native_formula/DCEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "intent_ir/native_formula/DFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "intent_ir/native_formula/FOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "intent_ir/native_formula/TDFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "intent_ir/native_formula/TFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/native_formula/frame_logic/v3",
+              "row": 1,
+              "unknown_atoms": 21
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 186,
+              "projection_id": "intent_ir/native_formula/propositional/v3",
+              "row": 1,
+              "unknown_atoms": 8
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 215,
+              "projection_id": "intent_ir/semantic/datalog/v1",
+              "row": 1,
+              "unknown_atoms": 990
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/deontic/v1",
+              "row": 1,
+              "unknown_atoms": 330
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/horn_chc/v1",
+              "row": 1,
+              "unknown_atoms": 991
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 214,
+              "projection_id": "intent_ir/semantic/intention_agency/v1",
+              "row": 1,
+              "unknown_atoms": 333
+            }
+          ],
+          "untrained_projection_ids": []
+        },
+        "strategies": {
+          "decoder_blocks": {
+            "fit_wall_seconds_median": 32.42473326995969,
+            "heldout_family_means": {
+              "datalog": -2.220446049250313e-16,
+              "dcec": 0.0006435038844589895,
+              "deontic": 0.0017999271530240077,
+              "event_calculus": 0.001288284640744444,
+              "first_order": 0.0015922726827374196,
+              "frame_logic": -2.220446049250313e-16,
+              "higher_order": -2.220446049250313e-16,
+              "horn_chc": -8.881784197001253e-17,
+              "intention_agency": 0.0017052045469219976,
+              "program": 0.00027012863950627336,
+              "propositional": 0.0013813549289061675,
+              "tdfol": 0.0017572663659402054,
+              "temporal": 0.0008763259290848846,
+              "transition_system": -2.220446049250313e-16
+            },
+            "heldout_objective_mean": 0.0008081620550945295,
+            "optimization_seconds_median": 0.42675713647622615,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              4,
+              13
+            ]
+          },
+          "joint_adam": {
+            "fit_wall_seconds_median": 32.00006547861267,
+            "heldout_family_means": {
+              "datalog": -2.220446049250313e-16,
+              "dcec": 0.0006435038844589895,
+              "deontic": 0.0018074440736259353,
+              "event_calculus": 0.001288284640744444,
+              "first_order": 0.0015922726827374196,
+              "frame_logic": -2.220446049250313e-16,
+              "higher_order": -2.220446049250313e-16,
+              "horn_chc": -8.881784197001253e-17,
+              "intention_agency": 0.0017210019623619868,
+              "program": 0.00027517446316184177,
+              "propositional": 0.0013819610678199553,
+              "tdfol": 0.0017701546096416413,
+              "temporal": 0.0008763259290848846,
+              "transition_system": -2.220446049250313e-16
+            },
+            "heldout_objective_mean": 0.0008111516652597229,
+            "optimization_seconds_median": 0.3846720589790493,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "legal_ir": {
+        "all_emitted_projections_have_loss": true,
+        "candidate_relative_reduction_vs_baseline": 0.0026381333634672988,
+        "candidate_relative_reduction_vs_initial": 0.007787544408038638,
+        "effective_heldout_feature_panel": {
+          "colliding_row_groups": [],
+          "distinct_retained_feature_vectors": 2,
+          "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+          "rows": 2
+        },
+        "feature_selection": {
+          "available_atoms": {
+            "legal-ir/modal-family/deontic/v3/explicit-legal-interpretation/v1": 354,
+            "legal-ir/modal-family/temporal/v3/explicit-legal-interpretation/v1": 352,
+            "legal-ir/modal-view/frame_logic/v1": 44,
+            "legal_ir/native_formula/CEC/v3": 180,
+            "legal_ir/native_formula/DCEC/v3": 195,
+            "legal_ir/native_formula/DFOL/v3": 134,
+            "legal_ir/native_formula/FOL/v3": 154,
+            "legal_ir/native_formula/TDFOL/v3": 149,
+            "legal_ir/native_formula/TFOL/v3": 133,
+            "legal_ir/native_formula/frame_logic/v3": 288,
+            "legal_ir/native_formula/propositional/v3": 244
+          },
+          "method": "training_document_frequency_equal_projection_budget",
+          "retained_atoms": {
+            "legal-ir/modal-family/deontic/v3/explicit-legal-interpretation/v1": 354,
+            "legal-ir/modal-family/temporal/v3/explicit-legal-interpretation/v1": 352,
+            "legal-ir/modal-view/frame_logic/v1": 44,
+            "legal_ir/native_formula/CEC/v3": 180,
+            "legal_ir/native_formula/DCEC/v3": 195,
+            "legal_ir/native_formula/DFOL/v3": 134,
+            "legal_ir/native_formula/FOL/v3": 154,
+            "legal_ir/native_formula/TDFOL/v3": 149,
+            "legal_ir/native_formula/TFOL/v3": 133,
+            "legal_ir/native_formula/frame_logic/v3": 288,
+            "legal_ir/native_formula/propositional/v3": 244
+          }
+        },
+        "initial_heldout_objective": 0.0018089009932911178,
+        "regressed_families_vs_baseline": [],
+        "regressed_families_vs_initial": [
+          "propositional"
+        ],
+        "retained_feature_holdout_coverage": {
+          "projections": [
+            {
+              "has_coverage": true,
+              "known_atoms": 259,
+              "projection_id": "legal-ir/modal-family/deontic/v3/explicit-legal-interpretation/v1",
+              "row": 0,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 259,
+              "projection_id": "legal-ir/modal-family/temporal/v3/explicit-legal-interpretation/v1",
+              "row": 0,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 29,
+              "projection_id": "legal-ir/modal-view/frame_logic/v1",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "legal_ir/native_formula/CEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "legal_ir/native_formula/DCEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "legal_ir/native_formula/DFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "legal_ir/native_formula/FOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "legal_ir/native_formula/TDFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "legal_ir/native_formula/TFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 233,
+              "projection_id": "legal_ir/native_formula/frame_logic/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 191,
+              "projection_id": "legal_ir/native_formula/propositional/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 263,
+              "projection_id": "legal-ir/modal-family/deontic/v3/explicit-legal-interpretation/v1",
+              "row": 1,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 263,
+              "projection_id": "legal-ir/modal-family/temporal/v3/explicit-legal-interpretation/v1",
+              "row": 1,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 29,
+              "projection_id": "legal-ir/modal-view/frame_logic/v1",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "legal_ir/native_formula/CEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "legal_ir/native_formula/DCEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "legal_ir/native_formula/DFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "legal_ir/native_formula/FOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "legal_ir/native_formula/TDFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "legal_ir/native_formula/TFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 229,
+              "projection_id": "legal_ir/native_formula/frame_logic/v3",
+              "row": 1,
+              "unknown_atoms": 7
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 187,
+              "projection_id": "legal_ir/native_formula/propositional/v3",
+              "row": 1,
+              "unknown_atoms": 7
+            }
+          ],
+          "untrained_projection_ids": []
+        },
+        "strategies": {
+          "decoder_blocks": {
+            "fit_wall_seconds_median": 23.367069322965108,
+            "heldout_family_means": {
+              "dcec": 0.0011282641964617136,
+              "deontic": 0.0015690449521225424,
+              "event_calculus": 0.0012537592178548996,
+              "first_order": 0.0015527405888973466,
+              "frame_logic": 0.0036669733021256847,
+              "propositional": 0.0023634609248320486,
+              "tdfol": 0.0012759377588800777,
+              "temporal": 0.0015483318306346297
+            },
+            "heldout_objective_mean": 0.001794814096476118,
+            "optimization_seconds_median": 0.21432265196926892,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              9,
+              5
+            ]
+          },
+          "joint_adam": {
+            "fit_wall_seconds_median": 23.53913296549581,
+            "heldout_family_means": {
+              "dcec": 0.001134847658048653,
+              "deontic": 0.0015696401291977146,
+              "event_calculus": 0.0012608291748424445,
+              "first_order": 0.0015589828524740894,
+              "frame_logic": 0.0036782386775816456,
+              "propositional": 0.0023676218529659152,
+              "tdfol": 0.0012759377588800777,
+              "temporal": 0.001550394535367203
+            },
+            "heldout_objective_mean": 0.001799561579919718,
+            "optimization_seconds_median": 0.5686188859399408,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "security_ir": {
+        "all_emitted_projections_have_loss": true,
+        "candidate_relative_reduction_vs_baseline": 0.006397749764875282,
+        "candidate_relative_reduction_vs_initial": 0.010166445508539623,
+        "effective_heldout_feature_panel": {
+          "colliding_row_groups": [],
+          "distinct_retained_feature_vectors": 2,
+          "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+          "rows": 2
+        },
+        "feature_selection": {
+          "available_atoms": {
+            "hyperproperty.ir/v1": 296,
+            "program.program_contract/v1": 93,
+            "program.program_ir/v1": 244,
+            "security_ir/bounded_state/tla_plus/v4": 1119,
+            "security_ir/native_formula/CEC/v3": 183,
+            "security_ir/native_formula/DCEC/v3": 198,
+            "security_ir/native_formula/DFOL/v3": 137,
+            "security_ir/native_formula/FOL/v3": 157,
+            "security_ir/native_formula/TDFOL/v3": 152,
+            "security_ir/native_formula/TFOL/v3": 136,
+            "security_ir/native_formula/frame_logic/v3": 291,
+            "security_ir/native_formula/propositional/v3": 247,
+            "separation_logic.heap_model/v1": 68,
+            "separation_logic.ir/v1": 186,
+            "temporal.formula/v1": 54,
+            "transition_system.state_transition_ir/v1": 216
+          },
+          "method": "training_document_frequency_equal_projection_budget",
+          "retained_atoms": {
+            "hyperproperty.ir/v1": 296,
+            "program.program_contract/v1": 93,
+            "program.program_ir/v1": 244,
+            "security_ir/bounded_state/tla_plus/v4": 1119,
+            "security_ir/native_formula/CEC/v3": 183,
+            "security_ir/native_formula/DCEC/v3": 198,
+            "security_ir/native_formula/DFOL/v3": 137,
+            "security_ir/native_formula/FOL/v3": 157,
+            "security_ir/native_formula/TDFOL/v3": 152,
+            "security_ir/native_formula/TFOL/v3": 136,
+            "security_ir/native_formula/frame_logic/v3": 291,
+            "security_ir/native_formula/propositional/v3": 247,
+            "separation_logic.heap_model/v1": 68,
+            "separation_logic.ir/v1": 186,
+            "temporal.formula/v1": 54,
+            "transition_system.state_transition_ir/v1": 216
+          }
+        },
+        "initial_heldout_objective": 0.001425982920702518,
+        "regressed_families_vs_baseline": [],
+        "regressed_families_vs_initial": [
+          "frame_logic",
+          "propositional"
+        ],
+        "retained_feature_holdout_coverage": {
+          "projections": [
+            {
+              "has_coverage": true,
+              "known_atoms": 296,
+              "projection_id": "hyperproperty.ir/v1",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 75,
+              "projection_id": "program.program_contract/v1",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 171,
+              "projection_id": "program.program_ir/v1",
+              "row": 0,
+              "unknown_atoms": 12
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 1085,
+              "projection_id": "security_ir/bounded_state/tla_plus/v4",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 138,
+              "projection_id": "security_ir/native_formula/CEC/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 153,
+              "projection_id": "security_ir/native_formula/DCEC/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 95,
+              "projection_id": "security_ir/native_formula/DFOL/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 112,
+              "projection_id": "security_ir/native_formula/FOL/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 110,
+              "projection_id": "security_ir/native_formula/TDFOL/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 94,
+              "projection_id": "security_ir/native_formula/TFOL/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 224,
+              "projection_id": "security_ir/native_formula/frame_logic/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 182,
+              "projection_id": "security_ir/native_formula/propositional/v3",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 55,
+              "projection_id": "separation_logic.heap_model/v1",
+              "row": 0,
+              "unknown_atoms": 2
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 131,
+              "projection_id": "separation_logic.ir/v1",
+              "row": 0,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 36,
+              "projection_id": "temporal.formula/v1",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 196,
+              "projection_id": "transition_system.state_transition_ir/v1",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 296,
+              "projection_id": "hyperproperty.ir/v1",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 75,
+              "projection_id": "program.program_contract/v1",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 171,
+              "projection_id": "program.program_ir/v1",
+              "row": 1,
+              "unknown_atoms": 12
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 1085,
+              "projection_id": "security_ir/bounded_state/tla_plus/v4",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 138,
+              "projection_id": "security_ir/native_formula/CEC/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 153,
+              "projection_id": "security_ir/native_formula/DCEC/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 95,
+              "projection_id": "security_ir/native_formula/DFOL/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 112,
+              "projection_id": "security_ir/native_formula/FOL/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 110,
+              "projection_id": "security_ir/native_formula/TDFOL/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 94,
+              "projection_id": "security_ir/native_formula/TFOL/v3",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 220,
+              "projection_id": "security_ir/native_formula/frame_logic/v3",
+              "row": 1,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 178,
+              "projection_id": "security_ir/native_formula/propositional/v3",
+              "row": 1,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 55,
+              "projection_id": "separation_logic.heap_model/v1",
+              "row": 1,
+              "unknown_atoms": 2
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 131,
+              "projection_id": "separation_logic.ir/v1",
+              "row": 1,
+              "unknown_atoms": 9
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 36,
+              "projection_id": "temporal.formula/v1",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 196,
+              "projection_id": "transition_system.state_transition_ir/v1",
+              "row": 1,
+              "unknown_atoms": 3
+            }
+          ],
+          "untrained_projection_ids": []
+        },
+        "strategies": {
+          "decoder_blocks": {
+            "fit_wall_seconds_median": 25.12023778609,
+            "heldout_family_means": {
+              "dcec": 0.001503634928662079,
+              "deontic": 0.0017497047980151647,
+              "event_calculus": 0.0016805550556323388,
+              "first_order": 0.0021072744316805742,
+              "frame_logic": 0.0022986357752513573,
+              "hyperproperty": 2.220446049250313e-16,
+              "program": 0.000694758587617662,
+              "propositional": 0.002615284552489473,
+              "separation_logic": 0.0010375299356165427,
+              "tdfol": 0.0014911796524645872,
+              "temporal": 0.0014532784577095334,
+              "transition_system": 0.00030599274137751704
+            },
+            "heldout_objective_mean": 0.0014114857430430876,
+            "optimization_seconds_median": 0.3029671498807147,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              10,
+              10
+            ]
+          },
+          "joint_adam": {
+            "fit_wall_seconds_median": 25.04826901096385,
+            "heldout_family_means": {
+              "dcec": 0.0015080897875238068,
+              "deontic": 0.001759005185645911,
+              "event_calculus": 0.0016856282545299225,
+              "first_order": 0.002113889569448986,
+              "frame_logic": 0.0023109054424909764,
+              "hyperproperty": 2.220446049250313e-16,
+              "program": 0.0007101536379943471,
+              "propositional": 0.002627896834116822,
+              "separation_logic": 0.001049318752351557,
+              "tdfol": 0.0014989520761200118,
+              "temporal": 0.0014746606936080382,
+              "transition_system": 0.0003083904233804782
+            },
+            "heldout_objective_mean": 0.0014205742214342565,
+            "optimization_seconds_median": 0.3067514350404963,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              0,
+              0
+            ]
+          }
+        }
+      },
+      "ui_ux_ir": {
+        "all_emitted_projections_have_loss": true,
+        "candidate_relative_reduction_vs_baseline": 0.004192366348161225,
+        "candidate_relative_reduction_vs_initial": 0.006574524627707912,
+        "effective_heldout_feature_panel": {
+          "colliding_row_groups": [],
+          "distinct_retained_feature_vectors": 2,
+          "interpretation": "distinct source identities may become identical after training-vocabulary filtering",
+          "rows": 2
+        },
+        "feature_selection": {
+          "available_atoms": {
+            "ui_ux_ir/bounded_state/tla_plus/v4": 1677,
+            "ui_ux_ir/declared_state/native/v2": 2226,
+            "ui_ux_ir/event_prefix/native/v2": 1396,
+            "ui_ux_ir/native_formula/CEC/v3": 180,
+            "ui_ux_ir/native_formula/DCEC/v3": 195,
+            "ui_ux_ir/native_formula/DFOL/v3": 134,
+            "ui_ux_ir/native_formula/FOL/v3": 154,
+            "ui_ux_ir/native_formula/TDFOL/v3": 149,
+            "ui_ux_ir/native_formula/TFOL/v3": 133,
+            "ui_ux_ir/native_formula/frame_logic/v3": 288,
+            "ui_ux_ir/native_formula/propositional/v3": 244,
+            "ui_ux_ir:dcec": 15,
+            "ui_ux_ir:event_calculus": 63,
+            "ui_ux_ir:flogic": 38,
+            "ui_ux_ir:interface_bindings": 87,
+            "ui_ux_ir:tdfol/request-token-confirmation/v1": 358
+          },
+          "method": "training_document_frequency_equal_projection_budget",
+          "retained_atoms": {
+            "ui_ux_ir/bounded_state/tla_plus/v4": 686,
+            "ui_ux_ir/declared_state/native/v2": 686,
+            "ui_ux_ir/event_prefix/native/v2": 686,
+            "ui_ux_ir/native_formula/CEC/v3": 180,
+            "ui_ux_ir/native_formula/DCEC/v3": 195,
+            "ui_ux_ir/native_formula/DFOL/v3": 134,
+            "ui_ux_ir/native_formula/FOL/v3": 154,
+            "ui_ux_ir/native_formula/TDFOL/v3": 149,
+            "ui_ux_ir/native_formula/TFOL/v3": 133,
+            "ui_ux_ir/native_formula/frame_logic/v3": 288,
+            "ui_ux_ir/native_formula/propositional/v3": 244,
+            "ui_ux_ir:dcec": 15,
+            "ui_ux_ir:event_calculus": 63,
+            "ui_ux_ir:flogic": 38,
+            "ui_ux_ir:interface_bindings": 87,
+            "ui_ux_ir:tdfol/request-token-confirmation/v1": 358
+          }
+        },
+        "initial_heldout_objective": 0.0011566969947523168,
+        "regressed_families_vs_baseline": [],
+        "regressed_families_vs_initial": [],
+        "retained_feature_holdout_coverage": {
+          "projections": [
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+              "row": 0,
+              "unknown_atoms": 901
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/declared_state/native/v2",
+              "row": 0,
+              "unknown_atoms": 1300
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/event_prefix/native/v2",
+              "row": 0,
+              "unknown_atoms": 560
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "ui_ux_ir/native_formula/CEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "ui_ux_ir/native_formula/DCEC/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "ui_ux_ir/native_formula/DFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "ui_ux_ir/native_formula/TDFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "ui_ux_ir/native_formula/TFOL/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 233,
+              "projection_id": "ui_ux_ir/native_formula/frame_logic/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 191,
+              "projection_id": "ui_ux_ir/native_formula/propositional/v3",
+              "row": 0,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 15,
+              "projection_id": "ui_ux_ir:dcec",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 63,
+              "projection_id": "ui_ux_ir:event_calculus",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 33,
+              "projection_id": "ui_ux_ir:flogic",
+              "row": 0,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 57,
+              "projection_id": "ui_ux_ir:interface_bindings",
+              "row": 0,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 237,
+              "projection_id": "ui_ux_ir:tdfol/request-token-confirmation/v1",
+              "row": 0,
+              "unknown_atoms": 17
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/bounded_state/tla_plus/v4",
+              "row": 1,
+              "unknown_atoms": 901
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/declared_state/native/v2",
+              "row": 1,
+              "unknown_atoms": 1300
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 686,
+              "projection_id": "ui_ux_ir/event_prefix/native/v2",
+              "row": 1,
+              "unknown_atoms": 560
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 147,
+              "projection_id": "ui_ux_ir/native_formula/CEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 162,
+              "projection_id": "ui_ux_ir/native_formula/DCEC/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 104,
+              "projection_id": "ui_ux_ir/native_formula/DFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 121,
+              "projection_id": "ui_ux_ir/native_formula/FOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 119,
+              "projection_id": "ui_ux_ir/native_formula/TDFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 103,
+              "projection_id": "ui_ux_ir/native_formula/TFOL/v3",
+              "row": 1,
+              "unknown_atoms": 3
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 229,
+              "projection_id": "ui_ux_ir/native_formula/frame_logic/v3",
+              "row": 1,
+              "unknown_atoms": 7
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 187,
+              "projection_id": "ui_ux_ir/native_formula/propositional/v3",
+              "row": 1,
+              "unknown_atoms": 7
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 15,
+              "projection_id": "ui_ux_ir:dcec",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 63,
+              "projection_id": "ui_ux_ir:event_calculus",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 33,
+              "projection_id": "ui_ux_ir:flogic",
+              "row": 1,
+              "unknown_atoms": 0
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 57,
+              "projection_id": "ui_ux_ir:interface_bindings",
+              "row": 1,
+              "unknown_atoms": 5
+            },
+            {
+              "has_coverage": true,
+              "known_atoms": 237,
+              "projection_id": "ui_ux_ir:tdfol/request-token-confirmation/v1",
+              "row": 1,
+              "unknown_atoms": 17
+            }
+          ],
+          "untrained_projection_ids": []
+        },
+        "strategies": {
+          "decoder_blocks": {
+            "fit_wall_seconds_median": 25.10527389543131,
+            "heldout_family_means": {
+              "dcec": 0.0005706732391502929,
+              "deontic": 0.0014139799992097808,
+              "event_calculus": 0.0006350338125748051,
+              "first_order": 0.0015693809751918253,
+              "frame_logic": 0.0017733172375867681,
+              "propositional": 0.0022082920130829017,
+              "tdfol": 0.0014565736529691682,
+              "temporal": 0.0007145794270958994,
+              "transition_system": 2.5535129566378603e-16
+            },
+            "heldout_objective_mean": 0.001149092261873522,
+            "optimization_seconds_median": 0.3216469194740057,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              5,
+              10
+            ]
+          },
+          "joint_adam": {
+            "fit_wall_seconds_median": 27.490036718547344,
+            "heldout_family_means": {
+              "dcec": 0.0005726028131154073,
+              "deontic": 0.0014139799992097808,
+              "event_calculus": 0.0006362194045046823,
+              "first_order": 0.0015736365159560606,
+              "frame_logic": 0.0017782172860127086,
+              "propositional": 0.002219912786981781,
+              "tdfol": 0.0014762213981394086,
+              "temporal": 0.0007145794270958994,
+              "transition_system": 2.5535129566378603e-16
+            },
+            "heldout_objective_mean": 0.0011539299590017761,
+            "optimization_seconds_median": 0.2848205555928871,
+            "optimizer_steps": [
+              72,
+              72
+            ],
+            "selected_epochs": [
+              0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "emitted_projection_checks": 660,
+    "freeze_sha256": "cec1c2bd271633801118e2d82502461508e34545608c66a5e171e31263319bb3",
+    "global_convergence_established": false,
+    "heldout": {
+      "actual_lake_builds": 8,
+      "emitted_projection_checks": 132,
+      "native_validation_seconds": 94.99704144289717,
+      "portfolio_diagnostics": {
+        "actual_attempts": 0,
+        "attempts": [],
+        "qualification_granted": false,
+        "requested_logic_family": null,
+        "scope": "propositional satisfiability only; not source proof",
+        "solver_attempt_counts": {},
+        "solver_names": [],
+        "verdict_counts": {}
+      },
+      "preparation_seconds": 4.117396499030292
+    },
+    "heldout_now_exposed": true,
+    "independent_heldout_groups_per_domain": 2,
+    "models_promoted": false,
+    "qualified": false,
+    "schema": "validated-family-convergence-comparison/v1",
+    "scope": "fresh authored native structural feature reconstruction; not natural-source decoding",
+    "selection_on_test": false,
+    "source_decoder_trained": false,
+    "source_semantics_verified": false,
+    "wall_seconds": 1048.7884757290594,
+    "weights_downloaded": false
+  },
+  "constitution_formalized": false,
+  "evidence_archive": "evidence.tar.gz",
+  "execution_environment": {
+    "HF_HUB_OFFLINE": "1",
+    "TRANSFORMERS_OFFLINE": "1",
+    "cpu_count": 20,
+    "cuda_visible_devices": "",
+    "legal_ir_bridge_evaluate_ran": false,
+    "notes": "Native structural projection experiment, not a bridge-on autoencoder timing; no bridge target count inferred.",
+    "numerical_fits_parallelized": false,
+    "observed_unix_seconds": 1790894086.597815,
+    "pid": 1419772,
+    "python_numerical_threads": 1,
+    "rss_scope": "single benchmark process, excludes Lake and solver child processes; sampled before completion",
+    "runner_status_sample": {
+      "Cpus_allowed_list": "0-19",
+      "Threads": "1",
+      "VmHWM": "856000 kB",
+      "VmRSS": "849192 kB"
+    },
+    "weights_downloaded": false,
+    "worker_request": 4
+  },
+  "local_generated_checkpoints_not_in_archive": {
+    "comparison-r2/intent_ir/decoder_blocks-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1505289,
+      "sha256": "4107c3105fb7b6c197bc60b3d8937150dba310b8c350baf11a1364371dbdbca9"
+    },
+    "comparison-r2/intent_ir/decoder_blocks-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1506967,
+      "sha256": "f14fef7ac859a4f9c09c56637a35d96c9002fd1e60580003ccb36fc9e8853523"
+    },
+    "comparison-r2/intent_ir/joint_adam-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1434568,
+      "sha256": "5ff8023d232a9eaf7b644b129c3982df9ad7d3bb1210db375788d5674515249c"
+    },
+    "comparison-r2/intent_ir/joint_adam-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1434553,
+      "sha256": "07472f35cf2b8266c79ec268e453b4a3c9485ecb252f4484e73e38fc1cadd2cb"
+    },
+    "comparison-r2/legal_ir/decoder_blocks-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 918748,
+      "sha256": "62adac62e7bf698c716f77bbc96001ff68e9d1d439ad4827fd11457cec80def3"
+    },
+    "comparison-r2/legal_ir/decoder_blocks-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 920510,
+      "sha256": "71f28a864c28034d79c72afc71db89d5e9eeb9bd1721c08bce6c0ec8b964547c"
+    },
+    "comparison-r2/legal_ir/joint_adam-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 848873,
+      "sha256": "933d0286400538fdb1e4fb6395a15ffc3fe78578582f7013e02e4a967e870a49"
+    },
+    "comparison-r2/legal_ir/joint_adam-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 848894,
+      "sha256": "a8e2d84c6fb884f65068548cf81c661500e4a596e489d6f830437d7f751c60df"
+    },
+    "comparison-r2/security_ir/decoder_blocks-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1220715,
+      "sha256": "6e969e55ba12ed29151ff458ef132afbe2133fa3d9558b4a8ef59707a58d4048"
+    },
+    "comparison-r2/security_ir/decoder_blocks-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1221632,
+      "sha256": "6b8fdecdb912194ce2f3cb6d1f3858cdaa94107cfe051ccd37b39db30c3ad18c"
+    },
+    "comparison-r2/security_ir/joint_adam-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1020971,
+      "sha256": "03062ec9c56451fae95988cb28ca105fdeeb40752170aaf1c42696b5b35cb154"
+    },
+    "comparison-r2/security_ir/joint_adam-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1020945,
+      "sha256": "febb121bf71c6d18a527f693d9dd50bfd2e428f5316bbf5f07a2f1fd8bd634fe"
+    },
+    "comparison-r2/ui_ux_ir/decoder_blocks-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1190862,
+      "sha256": "1f4b7fbed2f3ec1bd8891bd76396f73a70130ca0888e44760d2b8af2e0b3cbe5"
+    },
+    "comparison-r2/ui_ux_ir/decoder_blocks-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1190544,
+      "sha256": "18b1886252666ec474496354854810bd9c0635fc074b77fa970c3f15d9dee887"
+    },
+    "comparison-r2/ui_ux_ir/joint_adam-1729/checkpoint/family_checkpoint.json": {
+      "bytes": 1102004,
+      "sha256": "a440a3eac21dd30532c03275d6e29664f2a4926c63811202cb3a51c82651aacd"
+    },
+    "comparison-r2/ui_ux_ir/joint_adam-1730/checkpoint/family_checkpoint.json": {
+      "bytes": 1102001,
+      "sha256": "c7c0530b4723e26c451ee842fda97cd69f7fb2a451cb782ba547153222b3829f"
+    }
+  },
+  "native_checks_parallelized": true,
+  "numerical_fits_parallelized": false,
+  "paired_heldout_analysis": {
+    "domains": {
+      "intent_ir": {
+        "available_training_atoms": 27009,
+        "known_fraction": 0.150919831892792,
+        "known_heldout_atom_occurrences": 7613,
+        "paired_results": [
+          {
+            "baseline_objective": 0.0008111516652597229,
+            "candidate_objective": 0.0008071128793525345,
+            "regressed_families_vs_baseline": {
+              "propositional": {
+                "baseline": 0.0013819610678199553,
+                "candidate": 0.001382362603424136,
+                "delta": 4.015356041807156e-07
+              }
+            },
+            "regressed_families_vs_initial": {
+              "propositional": 2.0231276352272558e-05
+            },
+            "relative_reduction": 0.004979076145883554,
+            "seed": 1729
+          },
+          {
+            "baseline_objective": 0.0008111516652597229,
+            "candidate_objective": 0.0008092112308365244,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {
+              "propositional": 1.821592731633551e-05
+            },
+            "relative_reduction": 0.002392196806471736,
+            "seed": 1730
+          }
+        ],
+        "retained_training_atoms": 4096,
+        "unknown_heldout_atom_occurrences": 42831
+      },
+      "legal_ir": {
+        "available_training_atoms": 2227,
+        "known_fraction": 0.9740552735476593,
+        "known_heldout_atom_occurrences": 3454,
+        "paired_results": [
+          {
+            "baseline_objective": 0.001799561579919718,
+            "candidate_objective": 0.0017980335808632465,
+            "regressed_families_vs_baseline": {
+              "dcec": {
+                "baseline": 0.001134847658048653,
+                "candidate": 0.0011363789177750163,
+                "delta": 1.5312597263633914e-06
+              },
+              "deontic": {
+                "baseline": 0.0015696401291977146,
+                "candidate": 0.0015739183013950648,
+                "delta": 4.2781721973502666e-06
+              },
+              "event_calculus": {
+                "baseline": 0.0012608291748424445,
+                "candidate": 0.001261853628426822,
+                "delta": 1.0244535843773831e-06
+              },
+              "first_order": {
+                "baseline": 0.0015589828524740894,
+                "candidate": 0.0015594004642396717,
+                "delta": 4.1761176558237183e-07
+              },
+              "temporal": {
+                "baseline": 0.001550394535367203,
+                "candidate": 0.0015536540419195475,
+                "delta": 3.259506552344589e-06
+              }
+            },
+            "regressed_families_vs_initial": {
+              "dcec": 1.5312597263633914e-06,
+              "deontic": 4.2781721973502666e-06,
+              "event_calculus": 1.0244535843773831e-06,
+              "first_order": 4.1761176558237183e-07,
+              "propositional": 1.5987995417814007e-05,
+              "temporal": 3.259506552344589e-06
+            },
+            "relative_reduction": 0.000849095176025938,
+            "seed": 1729
+          },
+          {
+            "baseline_objective": 0.001799561579919718,
+            "candidate_objective": 0.0017915946120889892,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {
+              "propositional": 2.3964776411722257e-05
+            },
+            "relative_reduction": 0.0044271715509086595,
+            "seed": 1730
+          }
+        ],
+        "retained_training_atoms": 2227,
+        "unknown_heldout_atom_occurrences": 92
+      },
+      "security_ir": {
+        "available_training_atoms": 3777,
+        "known_fraction": 0.974922600619195,
+        "known_heldout_atom_occurrences": 6298,
+        "paired_results": [
+          {
+            "baseline_objective": 0.0014205742214342565,
+            "candidate_objective": 0.0014116512469176772,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {
+              "frame_logic": 3.713264095313567e-06,
+              "propositional": 1.04283823857995e-05
+            },
+            "relative_reduction": 0.006281244852923251,
+            "seed": 1729
+          },
+          {
+            "baseline_objective": 0.0014205742214342565,
+            "candidate_objective": 0.0014113202391684981,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {
+              "frame_logic": 5.665286759610599e-06,
+              "propositional": 1.2600572753585209e-05
+            },
+            "relative_reduction": 0.0065142546768273135,
+            "seed": 1730
+          }
+        ],
+        "retained_training_atoms": 3777,
+        "unknown_heldout_atom_occurrences": 162
+      },
+      "ui_ux_ir": {
+        "available_training_atoms": 7337,
+        "known_fraction": 0.564186046511628,
+        "known_heldout_atom_occurrences": 7278,
+        "paired_results": [
+          {
+            "baseline_objective": 0.0011539299590017761,
+            "candidate_objective": 0.0011490222393549761,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {},
+            "relative_reduction": 0.004253048123514791,
+            "seed": 1729
+          },
+          {
+            "baseline_objective": 0.0011539299590017761,
+            "candidate_objective": 0.0011491622843920676,
+            "regressed_families_vs_baseline": {},
+            "regressed_families_vs_initial": {},
+            "relative_reduction": 0.004131684572807881,
+            "seed": 1730
+          }
+        ],
+        "retained_training_atoms": 4096,
+        "unknown_heldout_atom_occurrences": 5622
+      }
+    },
+    "schema": "paired-heldout-analysis/v1",
+    "scope": "posthoc reporting only; no tuning or promotion"
+  },
+  "schema": "family-routing-convergence-evidence/v1",
+  "source_decoder_trained": false,
+  "tested_base_revision": "493911c2b89cbe2747c2a09ee887a30f8f2b66af",
+  "tests": {
+    "suites": [
+      {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "spark-b271",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "153",
+        "time": "5.016",
+        "timestamp": "2026-10-01T22:25:18.455771+00:00"
+      },
+      {
+        "errors": "0",
+        "failures": "0",
+        "hostname": "spark-b271",
+        "name": "pytest",
+        "skipped": "0",
+        "tests": "8",
+        "time": "18.251",
+        "timestamp": "2026-10-01T22:27:53.891891+00:00"
+      }
+    ],
+    "total": 161
+  }
+}

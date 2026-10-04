@@ -1,0 +1,396 @@
+{
+  "schema": "intent-codebase-capability-release-sequence/v1",
+  "status": "planned_not_released",
+  "guide": "release_sequence.md",
+  "manifest": "release_bundle_manifest.json",
+  "manifest_anchor": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/pilots/intent_codebase_grounding/release_bundle_manifest.json",
+    "bytes": 149887,
+    "sha256": "a0dc5a98ed414a4ec0e2228bb1d14869a69197f6010077356764706cf4a23deb"
+  },
+  "preflight_script": "../../../../scripts/ops/autoencoder/audit_ir_release_bundle.py",
+  "capture_handoff": "capture_handoff.json",
+  "adapter_contracts": "adapter_contracts.json",
+  "inspection_record": "../../../../../../artifacts/codebase-ir-release-bundle-preflight-20261002/inspection.json",
+  "preflight_report": "../../../../../../artifacts/codebase-ir-release-bundle-preflight-20261002/preflight-report.json",
+  "dependency_seeds_are_complete_closure": false,
+  "measured_preflight": {
+    "status": "receipt_failures",
+    "files_declared": 270,
+    "files_matching": 269,
+    "nonmatching_file_ids": [
+      "F062"
+    ],
+    "original_assets_authenticated": 26,
+    "inventory_owner_associations_authenticated": 28,
+    "cells_authenticated": 12,
+    "runtime_readiness_qualified": false
+  },
+  "packages": [
+    {
+      "package_id": "P00",
+      "depends_on": [],
+      "title": "Pinned preflight tool and review bundle",
+      "work_items": [
+        "C00",
+        "C11"
+      ],
+      "acceptance": "Review the manifest anchor, run declared byte/inventory checks without importing owners, and preserve expected pin failures.",
+      "scope": "New standalone checker and focused tests; report has no runtime authority.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P01",
+      "depends_on": [
+        "P00"
+      ],
+      "title": "Capture implementation acquisition",
+      "work_items": [
+        "C00",
+        "C01",
+        "C02"
+      ],
+      "acceptance": "Acquire one clean source release with complete capture import/identity closure; reconcile divergent foundations and executable/package origins.",
+      "scope": "Already released capture APIs and policy wrappers plus21 newly enumerated capture dependency seeds; pinned matches are not runtime qualification.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P02",
+      "depends_on": [
+        "P01"
+      ],
+      "title": "Capture adapter qualification",
+      "work_items": [
+        "C01",
+        "C02"
+      ],
+      "acceptance": "Implement B00/B01 outer registration, source-mode/lease/deadline guards, exact-request journal/recovery and measured acceptance; qualify isolated fixture.",
+      "scope": "Use capture_handoff.json order; preserve native-published/policy-failed states. Whole-repository resources remain separate remediation.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P02S",
+      "depends_on": [
+        "P02"
+      ],
+      "title": "Selected-cell representation contracts and isolated stores",
+      "work_items": [
+        "C12",
+        "C15"
+      ],
+      "acceptance": "Qualify typed family/dimension/task/store/role/incarnation contracts and physically isolated selected-cell registry/index/routing owners before proof storage, typed joins or private adaptation.",
+      "scope": "Use original inventories; preserve unavailable model heads explicitly. No fitting or Hub publication is required to qualify store and routing ownership.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P03",
+      "depends_on": [
+        "P02",
+        "P02S"
+      ],
+      "title": "Conditional checker and proof-index integration",
+      "work_items": [
+        "C04",
+        "C05",
+        "C06",
+        "C09"
+      ],
+      "acceptance": "Integrate local verifier/cache/batch/workers/applicability/evidence owners and resolve process/profile/pipeline divergence; qualify fresh exact native checks and terminal-only history.",
+      "scope": "Retain conditional scope. Qualify default optional supervisor import or review a distinct native-only profile; no implicit variant switch. Qualify native semantics and frozen bounded evaluation first; model-specific evaluations remain per-cell gates.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P04",
+      "depends_on": [
+        "P03",
+        "P02S"
+      ],
+      "title": "Typed Intent and supervisor grounding",
+      "work_items": [
+        "C07",
+        "C10",
+        "C17"
+      ],
+      "acceptance": "Select one complete supervisor lineage, acquire gitlink objects separately, register typed Formalization/Codebase/Intent bridge and qualify current/planned subject joins.",
+      "scope": "Read-only current-code grounding precedes producers/effects; proof records are not automatically authoritative facts.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P05",
+      "depends_on": [
+        "P00"
+      ],
+      "title": "Preserved decoder and embedding acquisition",
+      "work_items": [
+        "C00",
+        "C03",
+        "C12",
+        "C13"
+      ],
+      "acceptance": "Integrate original107GTE additions and select actual checkpoints/vectors through twelve immutable inventories; copy or acquire exact bytes without regeneration.",
+      "scope": "Optional for deterministic capture. Source8 requires corpus/basis migration; source384 fixture unsupported; native Codebase768 unavailable. This is byte acquisition only; it does not complete C03/C13 runtime profile or decoder qualification.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P06",
+      "depends_on": [
+        "P03",
+        "P05",
+        "P02S"
+      ],
+      "title": "Private adaptation and cross-width distillation",
+      "work_items": [
+        "C03",
+        "C08",
+        "C09",
+        "C13",
+        "C14"
+      ],
+      "acceptance": "Qualify task/source/target/profile coverage and independent frozen evaluations per cell before private fitting or distillation using preserved learned components.",
+      "scope": "Reuse old384 rows and donors under their original profiles; create768 inputs only as separately pinned missing inputs when later authorized. Never pad or relabel384 vectors as768. Execute scoped prerequisites internally in order: C03 profiles, C09 frozen evaluation, C13 decoder/inverse gates, then C08 adaptation/C14 span qualification.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P07",
+      "depends_on": [
+        "P04",
+        "P05",
+        "P02S"
+      ],
+      "title": "Versioned Hub and review package delivery",
+      "work_items": [
+        "C11",
+        "C16"
+      ],
+      "acceptance": "Qualify dedicated versioned Hub package acquisition/delivery for selected cells after store routing; model promotion still requires that cell task/decoder/evaluation gates.",
+      "scope": "C15 store/routing prerequisite is already P02S. Delivery of development assets does not complete C11 measured rollout or qualify a model; no Hub publication performed here.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    },
+    {
+      "package_id": "P08",
+      "depends_on": [
+        "P02"
+      ],
+      "title": "Owning-repository release and parent gitlinks",
+      "work_items": [
+        "C00",
+        "C11"
+      ],
+      "acceptance": "After selected capability packages pass clean-checkout qualification, integrate their reviewed owning-repository changes, then update nested and outer parent pointers.",
+      "scope": "Package selection can promote capture independently of wider models. Re-fetch/review actual target state at future execution; current local refs do not establish remote merge status. Referenced work items denote scoped deliverables; capture-only release does not mark whole C11 rollout complete.",
+      "implementation_state": "planned",
+      "actual_release_receipt": null
+    }
+  ],
+  "source_sets": {
+    "capture_additional_seed_ids": [
+      "F081",
+      "F082",
+      "F083",
+      "F084",
+      "F085",
+      "F086",
+      "F087",
+      "F088",
+      "F089",
+      "F090",
+      "F091",
+      "F092",
+      "F093",
+      "F094",
+      "F095",
+      "F096",
+      "F097",
+      "F098",
+      "F099",
+      "F100",
+      "F101"
+    ],
+    "proof_additional_seed_ids": [
+      "F102",
+      "F103",
+      "F104",
+      "F105",
+      "F106",
+      "F107",
+      "F108",
+      "F109",
+      "F110",
+      "F111",
+      "F112",
+      "F113",
+      "F114",
+      "F115",
+      "F116",
+      "F117",
+      "F118",
+      "F119",
+      "F120",
+      "F121",
+      "F122",
+      "F123",
+      "F124",
+      "F125",
+      "F126",
+      "F127"
+    ],
+    "original107_gte_file_ids": [
+      "F128",
+      "F129",
+      "F130",
+      "F131",
+      "F132",
+      "F133",
+      "F134",
+      "F135",
+      "F136",
+      "F137",
+      "F138",
+      "F139",
+      "F140",
+      "F141",
+      "F142",
+      "F143",
+      "F144",
+      "F145",
+      "F146",
+      "F147",
+      "F148",
+      "F149",
+      "F150",
+      "F151",
+      "F152",
+      "F153",
+      "F154",
+      "F155",
+      "F156",
+      "F157",
+      "F158",
+      "F159",
+      "F160",
+      "F161",
+      "F162",
+      "F163",
+      "F164",
+      "F165",
+      "F166",
+      "F167",
+      "F168",
+      "F169",
+      "F170",
+      "F171",
+      "F172",
+      "F173",
+      "F174",
+      "F048",
+      "F175",
+      "F022",
+      "F176",
+      "F177",
+      "F178",
+      "F179",
+      "F180",
+      "F181",
+      "F182",
+      "F183",
+      "F184",
+      "F185",
+      "F186",
+      "F187",
+      "F188",
+      "F189",
+      "F190",
+      "F191",
+      "F192",
+      "F193",
+      "F194",
+      "F195",
+      "F196",
+      "F197",
+      "F198",
+      "F199",
+      "F200",
+      "F201",
+      "F202",
+      "F203",
+      "F204",
+      "F205",
+      "F206",
+      "F207",
+      "F208",
+      "F209",
+      "F210",
+      "F211",
+      "F212",
+      "F213",
+      "F214",
+      "F215",
+      "F216",
+      "F217",
+      "F218",
+      "F219",
+      "F220",
+      "F221",
+      "F222",
+      "F223",
+      "F224",
+      "F225",
+      "F226",
+      "F227",
+      "F228",
+      "F229",
+      "F230",
+      "F231",
+      "F232"
+    ],
+    "proof_pin_drift_ids": [
+      "F062"
+    ]
+  },
+  "integration_policy": {
+    "clean_checkout_qualification_required": true,
+    "source_files_readable_for_producer_identity_required": true,
+    "module_origin_qualification_required": true,
+    "native_only_profile_change_requires_separate_variant_review": true,
+    "missing_local_git_object_means_missing_source_api": false,
+    "mix_supervisor_lineages_implicitly": false,
+    "byte_preflight_grants_scan_or_solver_authority": false,
+    "unavailable_models_block_capture": false,
+    "authenticated_donor_is_qualified_source_teacher": false,
+    "proof_or_training_promotion_from_inventory_hashes": false,
+    "selected_cell_store_routing_before_proof_grounding_or_adaptation": true,
+    "optional_package_promotion_requires_its_own_qualification": true
+  },
+  "parallelism": {
+    "capture_and_models_separate": true,
+    "cell_count": 12,
+    "independent_cell_promotion": true,
+    "shared_repository_capture_reference_only": true
+  },
+  "actions_performed": {
+    "standalone_preflight_tool_added": true,
+    "synthetic_unit_tests_executed": true,
+    "explicit_receipt_preflight_executed": true,
+    "owner_runtime_imports": false,
+    "repository_scan": false,
+    "solver_execution": false,
+    "database_creation": false,
+    "model_execution": false,
+    "training": false,
+    "distillation": false,
+    "embedding_regeneration": false,
+    "git_merge_or_push": false,
+    "remote_fetch": false,
+    "hub_write": false
+  },
+  "work_item_references_are_scoped_deliverables_not_completion": true
+}

@@ -1,0 +1,151 @@
+{
+  "schema": "report-size-accounting-final-validation-v1",
+  "recorded_at": "2026-09-25T12:12:28.620419+00:00",
+  "implementation": {
+    "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_report_bundle.py",
+    "sha256": "16ae5547afff84d6fc98447b73d33e66c30affff603bf733651fd7c995979b18",
+    "bytes": 45344
+  },
+  "new_tests": {
+    "path": "tests/unit/optimizers/logic_theorem_optimizer/test_legal_ir_report_size_accounting.py",
+    "sha256": "53575873227c01121dcc1b75a55577548997c263591153d631ec2523055003f4",
+    "bytes": 13761
+  },
+  "comparison_harness": {
+    "path": "scripts/ops/legal_ir/benchmark_report_codec_exact_sizes.py",
+    "sha256": "60a0defd84029be39e82599e7b8f1386fd8878ca22ef980736ab3e71931b2347",
+    "bytes": 18613
+  },
+  "original_codec": {
+    "path": "workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/legal_ir_report_bundle.before.py",
+    "sha256": "0e86cccef95373ed19329fd27b77a7fda106bcb6e5561f17c63e66f429c17059",
+    "bytes": 43584
+  },
+  "scoped_diff": {
+    "path": "workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/size-accounting.patch",
+    "sha256": "c42a5a31df1ed816ee8222d358746195b6d409ed3da699e7a11aed8f527ff704",
+    "bytes": 5362
+  },
+  "tests": {
+    "combined": {
+      "path": "workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/combined-receipt.json",
+      "sha256": "9abeadb14563c1aac7638ba05bf7f25dac6b874fa8a21ecf27a60a035d99dd41",
+      "bytes": 4129
+    },
+    "counts": {
+      "tests": 396,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "post_drift_semantics": {
+      "path": "workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/semantic-after-external-drift-receipt.json",
+      "sha256": "7e7b019aff9a963370f2df6eba10ebbc5fc32cce9c3687cf0ff72a5f65a6a114",
+      "bytes": 418
+    },
+    "post_drift_pass_count": 31
+  },
+  "comparison_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/report-size-accounting-comparison-20260925.json",
+    "sha256": "8e5b26e01dfccf2867901f470d1a82f2571cc75a0a86eae83a275443ab3dc67e",
+    "bytes": 95290
+  },
+  "same_artifact_comparison_passed": true,
+  "native_receipt": {
+    "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-report-native-20260925-r4.json",
+    "sha256": "873b8f0649a8533329480206b043f49efaf0f42c31af54ca903c1bcb2dc49c31",
+    "bytes": 2459874
+  },
+  "native_daemon_comparison_qualified": false,
+  "native_daemon_arms_run": 0,
+  "native_prepared_bundle_published": false,
+  "current_package_file_count": 7721,
+  "source_changes_after_native_start": {
+    "logic/autoformal/repair_context.py": {
+      "before": "0a55f0291eabc4d9fed7b1381ca282946d1a10d60219b67ef79ac800fcb48f73",
+      "after": "702d159d31d53177774eca3958f92b70263a1eb6cfaf0314db1456f5dfbf88e5"
+    }
+  },
+  "protected_artifacts": [
+    {
+      "path": "workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json",
+      "sha256": "1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd",
+      "bytes": 25895338,
+      "matches_expected": true
+    },
+    {
+      "path": "workspace/todo-queues/restart12-bridge-on-measurement.json",
+      "sha256": "bcc035a9a923ff0d60f70837a4604b3dd65092c04bc0c7afbd525a52f72b56b1",
+      "bytes": 8889,
+      "matches_expected": true
+    },
+    {
+      "path": "workspace/todo-queues/restart12-bridge-on-one-step.json",
+      "sha256": "f799be3ff83d48513bd6a23669d334b24c73f08564c7cfdc86841bc21b696535",
+      "bytes": 1148,
+      "matches_expected": true
+    },
+    {
+      "path": "workspace/todo-queues/constitution-on-restart12.json",
+      "sha256": "da3cbac63a44bdd1862bfe6809f0179b73db337f66a1051ee491c823789cd1a3",
+      "bytes": 55254,
+      "matches_expected": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-report-native-20260925-r3.json",
+      "sha256": "3114a63d34a9b949659ff7e70af19e93f92ece76d551a539c8e498770dcaf02b",
+      "bytes": 6460925,
+      "matches_expected": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/autoencoder_control_plane_plan/daemon-shared-target-native-20260925.json",
+      "sha256": "bdf2066779503ab41599a08d47b5db18ac00c6f3463f068b03dbf0c23aacb93a",
+      "bytes": 13921365,
+      "matches_expected": true
+    }
+  ],
+  "documents": [
+    {
+      "path": "docs/implementation/reports/autoencoder_report_size_accounting.md",
+      "sha256": "28fcb08d74a57e89d82c2f05930f6c4e6cb7ea98d177de434c402a369d525bc5",
+      "bytes": 7470
+    },
+    {
+      "path": "docs/implementation/reports/autoencoder_report_hydration_profile.md",
+      "sha256": "3dd1edae29e86b0602b1f063de524544be1fd507239dcf149f4ab5e9e92aa7eb",
+      "bytes": 4819
+    },
+    {
+      "path": "docs/implementation/reports/autoencoder_daemon_shared_reports.md",
+      "sha256": "ead595012ccfd3a43e37d490c5a8b7f76b2282acf237e03940da9194835a3bfa",
+      "bytes": 15776
+    },
+    {
+      "path": "docs/implementation/plans/FEDERAL_LAW_END_TO_END_TRAINING_PLAN.md",
+      "sha256": "4eabb18581bf61038621340d05e6aedb2846be24a611ee6809e482548fb6ec03",
+      "bytes": 64688
+    },
+    {
+      "path": "docs/implementation/plans/AUTOENCODER_DUCKDB_DUCKLAKE_TRAINING_PLAN.md",
+      "sha256": "d15e6fbb0956f342f71a32e38d9f1cad07e17cc13b99a6f29a764b8be130b74a",
+      "bytes": 54865
+    }
+  ],
+  "documentation_links_checked": 83,
+  "missing_links": [],
+  "storage_observation": {
+    "path": "workspace/test-logs/federal-corpus-audits/report-size-accounting-20260925/storage-before-native.json",
+    "sha256": "4c76ef909930016ad6b8a09f59b39c1d4e3b44f5b25bc0a83e0bf0496345b29e",
+    "bytes": 1184
+  },
+  "no_active_native_session": true,
+  "native_session_terminal_exit": 1,
+  "code_or_guard_reverted_after_native_failure": false,
+  "heldout_canary_qualified": false,
+  "admitted": false,
+  "constitution_formalized": false,
+  "hf_upload": false,
+  "production_ducklake_activation": false,
+  "weight_download": false,
+  "implementation_checks_passed": true
+}

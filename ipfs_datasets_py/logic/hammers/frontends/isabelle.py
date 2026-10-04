@@ -1,39 +1,20 @@
-"""Native Isabelle/HOL frontend adapter (HAMMER-006).
+"""Native Isabelle/HOL goal capture with the modern process_theories tool.
 
-Captures a real, native :class:`~ipfs_datasets_py.logic.hammers.frontends.base.GoalSnapshot`
-from an Isabelle/HOL theory whose proof contains an explicit ``sorry``
-incomplete-proof marker, by inserting a genuine Isar ``print_state``
-diagnostic command immediately before that marker and parsing
-``isabelle process``'s own goal-state output (the Isar reference manual's
-documented mechanism for dumping the current proof state — the direct
-analogue of Lean's placeholder-hole diagnostic and Coq/Rocq's ``Show.``).
-
-Environment status
--------------------
-Per ``docs/logic/itp_hammer_capability_inventory.md`` (HAMMER-002), this
-repository's probed environments have **no** ``isabelle`` executable and no
-prior Isabelle bridge module at all — Isabelle is the one ITP confirmed
-fully ``unavailable`` there. This adapter therefore cannot be exercised
-against a live Isabelle toolchain in this checkout; :meth:`capability`
-reflects that honestly (``available=False`` with a structured reason) rather
-than ever short-circuiting to a fabricated snapshot. The instrumentation and
-parsing logic below is written to the same non-fabrication contract as
-:mod:`.lean` and :mod:`.coq` (never invents a goal from plain text; only
-ever parses genuine ``isabelle process`` diagnostic output) and its unit
-coverage in ``tests/integration/logic/hammers/test_itp_frontends.py``
-exercises it against a synthetic, format-accurate ``isabelle process``
-transcript with the real subprocess call replaced — never against invented
-"available" behavior in this environment.
+Capability discovery probes version and command help without installation or
+heap construction. Execution loads a private theory with print_state and one
+worker. Capture permits the explicit incomplete proof solely to obtain native
+goal evidence; it grants no theorem authority. Optional auto_install=True
+uses the admitted, checksummed installer within the same operation deadline.
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
-from ipfs_datasets_py.logic.external_provers.lazy_installer import find_executable
+from ipfs_datasets_py.logic.backends.installers.isabelle_execution import run_isabelle_operation, validate_isabelle_source
+from ipfs_datasets_py.logic.external_provers.isabelle_runtime import theory_command, theory_name as validate_theory_name
 
 from ..models import ITPKind
 from .base import (
@@ -45,12 +26,9 @@ from .base import (
     LocalHypothesis,
     SourcePosition,
     UniverseContext,
-    run_bounded_process,
 )
 
 __all__ = ["IsabelleFrontend"]
-
-_VERSION_TIMEOUT = 5.0
 
 _SORRY_RE = re.compile(r"\bsorry\b")
 _THEORY_NAME_RE = re.compile(r"^\s*theory\s+(\S+)", re.MULTILINE)
@@ -69,52 +47,29 @@ class IsabelleFrontend:
 
     itp = ITPKind.ISABELLE
 
-    def __init__(self, *, timeout: float = DEFAULT_TIMEOUT_SECONDS):
+    def __init__(self, *, timeout: float = DEFAULT_TIMEOUT_SECONDS, executable: str = "isabelle",
+                 auto_install: bool = False, install_root=None, parent_lease=None,
+                 scheduler=None, cancellation=None, memory_mb: int = 2048):
         self._timeout = timeout
+        self._executable = None if executable == "isabelle" else executable
+        self._auto_install = auto_install
+        self._install_root = install_root
+        self._parent_lease = parent_lease
+        self._scheduler = scheduler
+        self._cancellation = cancellation
+        self._memory_mb = memory_mb
+
+    def _operation_options(self):
+        return dict(executable=self._executable, install_root=self._install_root,
+                    parent_lease=self._parent_lease, scheduler=self._scheduler,
+                    cancellation=self._cancellation, memory_mb=self._memory_mb)
 
     # -- capability ---------------------------------------------------
 
     def capability(self) -> CapabilityEvidence:
-        isabelle_path = find_executable("isabelle")
-
-        version: Optional[str] = None
-        version_error: Optional[str] = None
-        if isabelle_path:
-            probe = run_bounded_process([isabelle_path, "version"], timeout=_VERSION_TIMEOUT)
-            if probe.error:
-                version_error = probe.error
-            else:
-                lines = (probe.stdout or probe.stderr or "").strip().splitlines()
-                version = lines[0].strip() if lines else None
-
-        executables: Dict[str, Dict[str, Any]] = {
-            "isabelle": {
-                "found": isabelle_path is not None,
-                "path": isabelle_path,
-                "version": version,
-                "version_probe_error": version_error,
-            }
-        }
-
-        available = isabelle_path is not None
-        unavailable_reason = None
-        if not available:
-            unavailable_reason = "isabelle_executable_not_found_on_path_or_common_install_dirs"
-
-        return CapabilityEvidence(
-            itp=ITPKind.ISABELLE,
-            available=available,
-            executables=executables,
-            unavailable_reason=unavailable_reason,
-            notes=(
-                "Availability requires the `isabelle` launcher (`isabelle "
-                "process -T <theory> -d <dir>`, used to elaborate the "
-                "instrumented theory and parse its native `print_state` "
-                "goal display). No Isabelle bridge/frontend previously "
-                "existed in this repository (HAMMER-002 capability "
-                "inventory); this is the first."
-            ),
-        )
+        operation = run_isabelle_operation(mode="command", timeout_seconds=self._timeout,
+                                           **self._operation_options())
+        return _capability_from_operation(operation)
 
     # -- goal snapshot --------------------------------------------------
 
@@ -126,13 +81,10 @@ class IsabelleFrontend:
         file_name: str = "Goal.thy",
         timeout: Optional[float] = None,
     ) -> GoalSnapshot:
-        capability = self.capability()
-        if not capability.available:
-            raise FrontendUnavailableError(
-                "Isabelle frontend unavailable: isabelle executable not found",
-                capability=capability,
-            )
-
+        try:
+            validate_isabelle_source(source)
+        except ValueError as exc:
+            raise GoalCaptureError(str(exc)) from exc
         if not _SORRY_RE.search(source):
             raise GoalCaptureError(
                 "IsabelleFrontend.snapshot_goal requires a native `sorry` "
@@ -146,29 +98,48 @@ class IsabelleFrontend:
                 "IsabelleFrontend.snapshot_goal requires a `theory NAME` "
                 "header in source to derive the required matching file name"
             )
-        theory_name = theory_match.group(1)
+        try:
+            theory_name = validate_theory_name(source)
+        except ValueError as exc:
+            raise GoalCaptureError(str(exc)) from exc
         resolved_file_name = f"{theory_name}.thy"
-
         instrumented, marker_line, marker_col = _instrument_isabelle_source(source)
-
-        with tempfile.TemporaryDirectory(prefix="hammer-isabelle-") as tmpdir:
-            source_path = Path(tmpdir) / resolved_file_name
-            source_path.write_text(instrumented, encoding="utf-8")
-            isabelle_path = capability.executables["isabelle"]["path"]
-            result = run_bounded_process(
-                [isabelle_path, "process", "-T", theory_name, "-d", tmpdir],
-                timeout=timeout if timeout is not None else self._timeout,
-                cwd=tmpdir,
+        try:
+            validate_isabelle_source(instrumented)
+        except ValueError as exc:
+            raise GoalCaptureError(str(exc)) from exc
+        operation = run_isabelle_operation(
+            mode="capture", source=instrumented, auto_install=self._auto_install,
+            timeout_seconds=timeout if timeout is not None else self._timeout,
+            **self._operation_options(),
+        )
+        capability = _capability_from_operation(operation)
+        result = operation.observation
+        if result is None:
+            raise FrontendUnavailableError(
+                f"Isabelle frontend unavailable: {capability.unavailable_reason}", capability=capability,
             )
-
-        if result.error:
-            raise GoalCaptureError(f"isabelle process invocation failed: {result.error}")
+        if (operation.status != "completed" or result.error or result.returncode != 0
+                or result.cancelled or result.timed_out or result.unavailable
+                or result.resource_exhausted or result.output_truncated
+                or result.workspace_limit_exceeded or not result.workspace_cleaned):
+            raise _operation_failure(
+                f"isabelle process_theories invocation failed (exit {result.returncode}, "
+                f"{operation.reason_code}): {result.error or (result.stderr + result.stdout)[-2000:]}",
+                operation,
+            )
+        isabelle_path = capability.executables["isabelle"]["path"]
+        expected_command = tuple(theory_command(isabelle_path, theory_name, "{workspace}", capture=True))
+        if (not capability.available or not operation.runtime_unchanged
+                or operation.source_sha256 != hashlib.sha256(instrumented.encode("utf-8")).hexdigest()
+                or operation.theory_name != theory_name or result.command != expected_command):
+            raise _operation_failure("Isabelle execution receipt does not match the requested theory/runtime", operation)
 
         combined_output = result.stdout + "\n" + result.stderr
         block_match = _GOAL_BLOCK_RE.search(combined_output)
         if block_match is None:
             raise GoalCaptureError(
-                "isabelle process produced no `goal (N subgoals):` block "
+                "isabelle process_theories produced no `goal (N subgoals):` block "
                 "after `print_state`; cannot construct a goal snapshot "
                 f"without native evidence (stdout={result.stdout!r}, "
                 f"stderr={result.stderr!r})"
@@ -177,7 +148,7 @@ class IsabelleFrontend:
         goal_text = _first_enumerated_goal(block_match.group("goals"))
         if goal_text is None:
             raise GoalCaptureError(
-                f"isabelle process goal block had no enumerated subgoal: {block_match.group(0)!r}"
+                f"isabelle process_theories goal block had no enumerated subgoal: {block_match.group(0)!r}"
             )
 
         hypotheses = _parse_isabelle_hypotheses(combined_output, source)
@@ -198,14 +169,47 @@ class IsabelleFrontend:
             imports=imports,
             universe_context=universe_context,
             source_position=source_position,
-            native_command=[isabelle_path, "process", "-T", theory_name, "-d", "."],
+            native_command=theory_command(isabelle_path, theory_name, ".", capture=True),
             raw_native_output=block_match.group(0),
             extra={
                 "resolved_executable": isabelle_path,
                 "theory_name": theory_name,
                 "full_output": combined_output,
+                "execution": operation.to_dict(),
             },
         )
+
+
+def _operation_failure(message, operation) -> GoalCaptureError:
+    error = GoalCaptureError(message)
+    error.execution = operation.to_dict()
+    return error
+
+
+def _capability_from_operation(operation) -> CapabilityEvidence:
+    """Project current admitted runtime observations without another probe."""
+    runtime = operation.native_runtime or {}
+    if hasattr(runtime, "to_dict"):
+        runtime = runtime.to_dict()
+    preparation = operation.preparation
+    available = bool(operation.status == "completed" and preparation is not None
+                     and preparation.command_available)
+    reason = {"installed_artifact_missing": "isabelle_executable_not_found_on_path_or_common_install_dirs",
+              "isabelle_theory_processor_unavailable": "isabelle_process_theories_not_ready"}.get(
+                  operation.reason_code, operation.reason_code)
+    return CapabilityEvidence(
+        itp=ITPKind.ISABELLE, available=available,
+        executables={"isabelle": {
+            "found": bool(runtime.get("executable")), "path": runtime.get("executable"),
+            "version": runtime.get("version"),
+            "version_probe_error": None if available else reason,
+            "theory_processing_ready": available, "execution": operation.to_dict(),
+        }},
+        unavailable_reason=None if available else reason,
+        notes="Runtime checks and theory execution use shared pressure-aware admission, "
+              "private workspaces and one total deadline. Capability checks never install "
+              "or build HOL. Resource observations confer no proof authority.",
+    )
 
 
 # ---------------------------------------------------------------------------

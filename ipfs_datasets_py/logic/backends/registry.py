@@ -14,6 +14,7 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
+from threading import Lock
 from typing import Any, Final
 
 from ipfs_datasets_py.logic.ir_core.claims import FrozenMap, stable_digest
@@ -405,6 +406,58 @@ def _classify_solver_stdout(stdout: str) -> str:
     return results[0]
 
 
+def _operation_checkpoint(phase: str) -> float | None:
+    # Execution-only imports keep declaration/catalog construction inert.
+    from .smt.operation_budget import current_proof_operation
+
+    operation = current_proof_operation()
+    return operation.checkpoint(phase) if operation is not None else None
+
+
+def _operation_call(phase: str, callback: Callable[..., Any], *args: Any) -> Any:
+    """Cooperative boundary; caller-owned callbacks are never retried/preempted."""
+    _operation_checkpoint("before " + phase)
+    try:
+        value = callback(*args)
+    except Exception:
+        _operation_checkpoint("after failed " + phase)
+        raise
+    _operation_checkpoint("after " + phase)
+    return value
+
+
+def _run_scoped_operation(
+    backend: ProofBackend, request: BackendRequest, callback: Callable[[], Any],
+    *, operation_timeout_ms: int | None, cancellation: Any | None,
+) -> tuple[BackendAttempt, BoundedResult]:
+    from .smt.operation_budget import (
+        MAX_OPERATION_TIMEOUT_MS, ProofOperationInterrupted,
+        proof_operation_scope, validate_operation_timeout_ms,
+    )
+
+    validate_operation_timeout_ms(operation_timeout_ms)
+    timeout = min(request.bounds.timeout_ms, MAX_OPERATION_TIMEOUT_MS,
+                  operation_timeout_ms if operation_timeout_ms is not None else MAX_OPERATION_TIMEOUT_MS)
+    try:
+        with proof_operation_scope(timeout_ms=timeout, cancellation=cancellation):
+            return callback()
+    except ProofOperationInterrupted as error:
+        # This is outside the stopped local scope. A parent remains latched and
+        # will reject its own result; no completed/late foreign evidence escapes.
+        cancelled = error.kind == "cancelled"
+        return _make_outcome(
+            backend_id=backend.backend_id, backend_version=backend.backend_version,
+            capabilities=backend.capabilities, request=request,
+            attempt_status=AttemptStatus.CANCELLED if cancelled else AttemptStatus.TIMED_OUT,
+            result_status=ResultStatus.UNKNOWN,
+            classification="cancelled" if cancelled else "timeout",
+            diagnostics=(f"{type(error).__name__}: {error}",),
+            # Existing wire bounds require clamped descriptive usage. This is
+            # not a complete resource measurement or a claim of exact wall time.
+            usage=ResourceUsage(elapsed_ms=min(request.bounds.timeout_ms, error.elapsed_ms)),
+        )
+
+
 class CallableProofBackend:
     """A backend assembled from inert compiler, runner, and probe callables."""
 
@@ -461,7 +514,7 @@ class CallableProofBackend:
         """Run the configured read-only availability probe."""
 
         try:
-            return self._availability_probe() is True
+            return _operation_call("availability probe", self._availability_probe) is True
         except Exception:
             return False
 
@@ -489,10 +542,22 @@ class CallableProofBackend:
             output_digest=output_digest,
         )
 
-    def run(self, request: BackendRequest) -> tuple[BackendAttempt, BoundedResult]:
+    def run(
+        self, request: BackendRequest, *, operation_timeout_ms: int | None = None,
+        cancellation: Any | None = None,
+    ) -> tuple[BackendAttempt, BoundedResult]:
+        """Run within one inherited, tightening wall/cancellation scope.
+
+        Python callbacks are cooperative. Native transports that already honor
+        the ambient proof operation also consume setup/admission time.
+        """
         if not isinstance(request, BackendRequest):
             raise TypeError("request must be a BackendRequest")
-        if not self.supports(request):
+        return _run_scoped_operation(self, request, lambda: self._run_request(request),
+            operation_timeout_ms=operation_timeout_ms, cancellation=cancellation)
+
+    def _run_request(self, request: BackendRequest) -> tuple[BackendAttempt, BoundedResult]:
+        if not _operation_call("backend capability check", self.supports, request):
             return self._terminal(
                 request,
                 attempt_status=AttemptStatus.FAILED,
@@ -503,7 +568,7 @@ class CallableProofBackend:
                     f"{request.logic_family}/{request.query_kind.value}",
                 ),
             )
-        if not self.is_available():
+        if not _operation_call("backend availability", self.is_available):
             return self._terminal(
                 request,
                 attempt_status=AttemptStatus.UNAVAILABLE,
@@ -514,7 +579,7 @@ class CallableProofBackend:
 
         started = time.monotonic()
         try:
-            compiled = self._compiler(request)
+            compiled = _operation_call("backend compilation", self._compiler, request)
             if not isinstance(compiled, CompiledBackendRequest):
                 raise MalformedBackendOutput(
                     "compiler did not return CompiledBackendRequest"
@@ -527,7 +592,7 @@ class CallableProofBackend:
                 raise MalformedBackendOutput(
                     "compiled request is bound to a different backend"
                 )
-            raw = self._runner(compiled, request)
+            raw = _operation_call("backend execution", self._runner, compiled, request)
             if not isinstance(raw, BackendRunnerOutput):
                 raise MalformedBackendOutput(
                     "runner did not return BackendRunnerOutput"
@@ -817,7 +882,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         if probe is None:
             return True
         try:
-            return probe() is True
+            return _operation_call("availability probe", probe) is True
         except Exception:
             return False
 
@@ -826,8 +891,15 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
         request: BackendRequest,
         *,
         backend_id: str | None = None,
+        operation_timeout_ms: int | None = None,
+        cancellation: Any | None = None,
     ) -> tuple[BackendAttempt, BoundedResult]:
-        """Execute one backend and fail closed on malformed return values."""
+        """Execute with an aggregate setup/run/normalization budget by default.
+
+        Request/type and pure backend routing precede the operation. The budget
+        is at most the declared request timeout; optional controls only tighten
+        it. Stop results remain bound UNKNOWN pairs with no authority upgrade.
+        """
 
         if not isinstance(request, BackendRequest):
             raise TypeError("request must be a BackendRequest")
@@ -856,7 +928,14 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
                 )
             selected_id = candidates[0]
         backend = self[selected_id]
-        if not backend.capabilities.supports(
+        return _run_scoped_operation(backend, request,
+            lambda: self._run_request(request, backend),
+            operation_timeout_ms=operation_timeout_ms, cancellation=cancellation)
+
+    def _run_request(
+        self, request: BackendRequest, backend: ProofBackend,
+    ) -> tuple[BackendAttempt, BoundedResult]:
+        if not _operation_call("registry capability check", backend.capabilities.supports,
             request.logic_family, request.query_kind
         ):
             return _make_outcome(
@@ -873,7 +952,7 @@ class ProofBackendRegistry(Mapping[str, ProofBackend]):
                 ),
             )
         try:
-            returned = backend.run(request)
+            returned = _operation_call("registry backend execution", backend.run, request)
             if (
                 not isinstance(returned, tuple)
                 or len(returned) != 2
@@ -1306,12 +1385,12 @@ def _factory_constructors() -> dict[str, Callable[[], Any]]:
     """Map factory keys to zero-arg constructors.  Imports stay inside callables."""
 
     def z3():
-        from .z3.compiler import Z3Backend
+        from .z3 import Z3Backend
 
         return Z3Backend()
 
     def cvc5():
-        from .cvc5.compiler import CVC5Backend
+        from .cvc5 import CVC5Backend
 
         return CVC5Backend()
 
@@ -1422,6 +1501,7 @@ class LazyMatrixProofBackend:
         self._delegate: Any | None = None
         self._delegate_error: str = ""
         self._delegate_loaded = False
+        self._delegate_lock = Lock()
         self._capabilities = entry.capabilities()
         self._backend_id = entry.provider_id
         self._backend_version = "matrix-declared/v1"
@@ -1453,38 +1533,62 @@ class LazyMatrixProofBackend:
         return self._capabilities.supports(request.logic_family, request.query_kind)
 
     def _load_delegate(self) -> Any | None:
+        from .smt.operation_budget import ProofOperationInterrupted
+
+        _operation_checkpoint("before lazy backend construction")
         if self._delegate_loaded:
             return self._delegate
-        self._delegate_loaded = True
-        if self._factory is None:
-            return None
+        # A concurrent caller sees either a completed cached delegate or waits
+        # under its own scope; it never mistakes in-progress setup for absence.
+        while True:
+            remaining = _operation_checkpoint("waiting for lazy backend construction")
+            if self._delegate_lock.acquire(timeout=0.05 if remaining is None else min(0.05, remaining)):
+                break
         try:
-            self._delegate = self._factory()
-        except Exception as error:
-            self._delegate = None
-            self._delegate_error = f"{type(error).__name__}: {error}"
-        return self._delegate
+            _operation_checkpoint("before lazy backend construction")
+            if self._delegate_loaded:
+                return self._delegate
+            if self._factory is None:
+                self._delegate_loaded = True
+                return None
+            try:
+                delegate = _operation_call("lazy backend factory", self._factory)
+            except ProofOperationInterrupted:
+                # A later fresh operation may retry; this interrupted one may not.
+                raise
+            except Exception as error:
+                detail = f"{type(error).__name__}: {error}"
+                _operation_checkpoint("after lazy backend failure normalization")
+                self._delegate_error = detail
+                self._delegate_loaded = True
+                return None
+            _operation_checkpoint("before lazy backend publication")
+            self._delegate = delegate
+            self._delegate_loaded = True
+            return delegate
+        finally:
+            self._delegate_lock.release()
 
     def is_available(self) -> bool:
         """Explicit availability probe; never runs during discovery."""
 
         if self._availability_probe is not None:
             try:
-                return self._availability_probe() is True
+                return _operation_call("availability probe", self._availability_probe) is True
             except Exception:
                 return False
         if self._entry.factory_key == "runtime_mtl":
             return True
         if self._entry.factory_key == "datalog_secpal":
             return True
-        delegate = self._load_delegate()
+        delegate = _operation_call("lazy delegate access", self._load_delegate)
         if delegate is None:
             return False
-        probe = getattr(delegate, "is_available", None)
+        probe = _operation_call("delegate availability lookup", getattr, delegate, "is_available", None)
         if probe is None:
             return True
         try:
-            return probe() is True
+            return _operation_call("availability probe", probe) is True
         except Exception:
             return False
 
@@ -1512,10 +1616,22 @@ class LazyMatrixProofBackend:
             payload=payload,
         )
 
-    def run(self, request: BackendRequest) -> tuple[BackendAttempt, BoundedResult]:
+    def run(
+        self, request: BackendRequest, *, operation_timeout_ms: int | None = None,
+        cancellation: Any | None = None,
+    ) -> tuple[BackendAttempt, BoundedResult]:
+        """Run within one inherited, tightening wall/cancellation scope.
+
+        Python callbacks are cooperative. Native transports that already honor
+        the ambient proof operation also consume setup/admission time.
+        """
         if not isinstance(request, BackendRequest):
             raise TypeError("request must be a BackendRequest")
-        if not self.supports(request):
+        return _run_scoped_operation(self, request, lambda: self._run_request(request),
+            operation_timeout_ms=operation_timeout_ms, cancellation=cancellation)
+
+    def _run_request(self, request: BackendRequest) -> tuple[BackendAttempt, BoundedResult]:
+        if not _operation_call("backend capability check", self.supports, request):
             return self._terminal(
                 request,
                 attempt_status=AttemptStatus.FAILED,
@@ -1528,9 +1644,9 @@ class LazyMatrixProofBackend:
             )
 
         if self._entry.factory_key == "runtime_mtl":
-            return self._run_runtime_mtl(request)
+            return _operation_call("runtime MTL normalization", self._run_runtime_mtl, request)
 
-        if not self.is_available():
+        if not _operation_call("backend availability", self.is_available):
             detail = self._delegate_error or f"{self.backend_id} is not available"
             return self._terminal(
                 request,
@@ -1540,7 +1656,7 @@ class LazyMatrixProofBackend:
                 diagnostics=(detail,),
             )
 
-        delegate = self._load_delegate()
+        delegate = _operation_call("lazy delegate access", self._load_delegate)
         if delegate is None:
             return self._terminal(
                 request,
@@ -1553,7 +1669,7 @@ class LazyMatrixProofBackend:
                 ),
             )
 
-        run = getattr(delegate, "run", None)
+        run = _operation_call("delegate run lookup", getattr, delegate, "run", None)
         if not callable(run):
             return self._terminal(
                 request,
@@ -1564,7 +1680,7 @@ class LazyMatrixProofBackend:
             )
 
         try:
-            returned = run(request)
+            returned = _operation_call("delegate execution", run, request)
         except UnsupportedBackendRequest as error:
             return self._terminal(
                 request,
@@ -1605,9 +1721,11 @@ class LazyMatrixProofBackend:
             and isinstance(returned[0], BackendAttempt)
             and isinstance(returned[1], BoundedResult)
         ):
-            return self._rebind_protocol_pair(request, returned[0], returned[1])
+            return _operation_call("protocol pair rebinding", self._rebind_protocol_pair,
+                                   request, returned[0], returned[1])
 
-        return self._normalize_foreign_outcome(request, returned)
+        return _operation_call("foreign outcome normalization", self._normalize_foreign_outcome,
+                               request, returned)
 
 
     def _rebind_protocol_pair(
@@ -1696,74 +1814,143 @@ class LazyMatrixProofBackend:
     def _normalize_foreign_outcome(
         self, request: BackendRequest, returned: Any
     ) -> tuple[BackendAttempt, BoundedResult]:
-        """Map non-protocol adapter returns onto bound attempt/result pairs."""
+        """Retain foreign evidence without translating its semantic authority.
+
+        A foreign status can describe a terminal execution failure, but cannot
+        establish a conclusion for the query kind chosen by the caller. Only
+        the separate protocol-pair path handles already bound protocol results.
+        """
 
         classification = "foreign_adapter_outcome"
         attempt_status = AttemptStatus.SUCCEEDED
         result_status = ResultStatus.UNKNOWN
-        diagnostics: list[str] = []
+        diagnostics = [
+            "foreign outcome recorded without authority upgrade; "
+            "generic conclusions remain non-conclusive"
+        ]
         payload: dict[str, Any] = {"adapter_return_type": type(returned).__name__}
 
-        result_obj = getattr(returned, "result", None)
-        if result_obj is not None:
-            status = getattr(result_obj, "status", None)
-            if status is not None:
-                status_value = getattr(status, "value", str(status)).lower()
-                payload["result_status"] = status_value
-                try:
-                    result_status = ResultStatus(status_value)
-                except ValueError:
-                    result_status = ResultStatus.UNKNOWN
-                if status_value in {"unavailable"}:
-                    attempt_status = AttemptStatus.UNAVAILABLE
-                    result_status = ResultStatus.UNKNOWN
-                elif status_value in {"error", "malformed"}:
-                    attempt_status = AttemptStatus.FAILED
-                    result_status = ResultStatus.ERROR
-                elif status_value in {"timeout"}:
-                    attempt_status = AttemptStatus.TIMED_OUT
-                    result_status = ResultStatus.UNKNOWN
-            if hasattr(result_obj, "to_dict"):
-                try:
-                    payload["result"] = result_obj.to_dict()
-                except Exception as error:
-                    diagnostics.append(f"result serialization failed: {error}")
-        elif hasattr(returned, "to_dict"):
-            try:
-                payload["outcome"] = returned.to_dict()
-            except Exception as error:
-                diagnostics.append(f"outcome serialization failed: {error}")
-        else:
-            diagnostics.append(
-                f"{self.backend_id} returned non-protocol outcome "
-                f"{type(returned).__name__}; recorded without authority upgrade"
-            )
+        def field(value: Any, name: str) -> Any:
+            return _operation_call("foreign " + name + " access",
+                value.get if isinstance(value, Mapping) else lambda key: getattr(value, key, None), name)
 
-        if result_status not in {
-            ResultStatus.UNKNOWN,
-            ResultStatus.ERROR,
-            ResultStatus.TIMEOUT,
-            ResultStatus.UNAVAILABLE,
-            ResultStatus.UNSUPPORTED,
-            ResultStatus.MALFORMED,
-            ResultStatus.CANDIDATE,
-        }:
+        def declared_text(value: Any, name: str) -> str:
+            raw = _operation_call("foreign enum value access", getattr, value, "value", value)
+            if (not isinstance(raw, str) or not raw or raw != raw.strip()
+                    or "\x00" in raw or len(raw) > 256):
+                raise MalformedBackendOutput(f"foreign {name} must be bounded non-empty text")
+            return raw
+
+        def bounded_payload(value: Mapping[str, Any]) -> dict[str, Any]:
+            # Apply the same finite-JSON contract as BoundedResult, then count
+            # encoded chunks without joining an arbitrarily large JSON string.
+            frozen = FrozenMap(value).to_dict()
+            remaining = request.bounds.max_output_bytes
+            encoder = json.JSONEncoder(ensure_ascii=False, separators=(",", ":"),
+                                       sort_keys=True, allow_nan=False)
+            for chunk in encoder.iterencode(frozen):
+                if len(chunk) > remaining:
+                    raise MalformedBackendOutput("foreign payload exceeds max_output_bytes")
+                remaining -= len(chunk.encode("utf-8"))
+                if remaining < 0:
+                    raise MalformedBackendOutput("foreign payload exceeds max_output_bytes")
+            return frozen
+
+        phase = "result access"
+        try:
+            result_obj = field(returned, "result")
+            nested = result_obj is not None
+            if not nested:
+                result_obj = returned
+            phase = "status access"
+            status = field(result_obj, "status")
+            if status is not None:
+                status_value = declared_text(status, "status")
+                payload["result_status"] = status_value
+                # This is deliberately a terminal-only map, never ResultStatus
+                # construction from a foreign verdict or the requested query.
+                terminal = {
+                    "unavailable": (AttemptStatus.UNAVAILABLE, ResultStatus.UNKNOWN),
+                    "timeout": (AttemptStatus.TIMED_OUT, ResultStatus.UNKNOWN),
+                    "timed_out": (AttemptStatus.TIMED_OUT, ResultStatus.UNKNOWN),
+                    "cancelled": (AttemptStatus.CANCELLED, ResultStatus.UNKNOWN),
+                    "canceled": (AttemptStatus.CANCELLED, ResultStatus.UNKNOWN),
+                    "error": (AttemptStatus.FAILED, ResultStatus.ERROR),
+                    "malformed": (AttemptStatus.FAILED, ResultStatus.ERROR),
+                    "unsupported": (AttemptStatus.FAILED, ResultStatus.ERROR),
+                }.get(status_value.lower())
+                if terminal is not None:
+                    attempt_status, result_status = terminal
+            phase = "authority access"
+            authority = field(result_obj, "authority")
+            if authority is not None:
+                raw_authority = _operation_call("foreign authority value access", getattr,
+                                                authority, "value", authority)
+                if isinstance(raw_authority, str):
+                    payload["result_authority"] = declared_text(raw_authority, "authority")
+                elif isinstance(raw_authority, Mapping):
+                    payload["result_authority"] = dict(raw_authority)
+                else:
+                    serializer = _operation_call("foreign authority serializer lookup", getattr,
+                                                 raw_authority, "to_dict", None)
+                    if not callable(serializer):
+                        raise MalformedBackendOutput("foreign authority is not descriptive JSON")
+                    serialized = _operation_call("foreign authority serialization", serializer)
+                    if not isinstance(serialized, Mapping):
+                        raise MalformedBackendOutput("foreign authority serialization must be a mapping")
+                    payload["result_authority"] = dict(serialized)
             if self._entry.family in {
-                PROVIDER_MATRIX_FAMILY_ATP,
-                PROVIDER_MATRIX_FAMILY_HAMMER,
+                PROVIDER_MATRIX_FAMILY_ATP, PROVIDER_MATRIX_FAMILY_HAMMER,
             }:
-                result_status = ResultStatus.CANDIDATE
                 payload["authority_note"] = (
-                    "foreign ATP/Hammer outcomes remain candidate until kernel reconstruction"
+                    "foreign ATP/Hammer outcomes remain candidate evidence until kernel reconstruction; "
+                    "this generic wrapper establishes no proof"
                 )
+            phase = "result serialization" if nested else "outcome serialization"
+            serializer = _operation_call("foreign result serializer lookup", getattr,
+                                         result_obj, "to_dict", None)
+            if serializer is not None:
+                if not callable(serializer):
+                    raise MalformedBackendOutput("foreign to_dict must be callable")
+                serialized = _operation_call("foreign result serialization", serializer)
+                if not isinstance(serialized, Mapping):
+                    raise MalformedBackendOutput("foreign serialization must be a mapping")
+                payload["result" if nested else "outcome"] = dict(serialized)
+            elif isinstance(result_obj, Mapping):
+                payload["result" if nested else "outcome"] = dict(result_obj)
+            phase = "payload validation"
+            payload = _operation_call("foreign payload validation", bounded_payload, payload)
+        except Exception as error:
+            _operation_checkpoint("foreign outcome failure normalization")
+            # A broken getter/serializer cannot turn a foreign result into a
+            # successful generic attempt. Do not evaluate arbitrary exception
+            # string methods, retry callbacks, or catch process-control signals.
+            attempt_status = AttemptStatus.FAILED
+            result_status = ResultStatus.ERROR
+            diagnostics.append(f"foreign {phase} failed ({type(error).__name__}); payload omitted")
+            fallback: dict[str, Any] = {"foreign_payload_omitted": True}
+            try:
+                fallback = bounded_payload(fallback)
+            except MalformedBackendOutput:
+                # Small limits may not fit the descriptive marker. The existing
+                # terminal helper requires a representable non-empty payload.
+                fallback = bounded_payload({"omitted": True})
+            for name in ("adapter_return_type", "result_status", "result_authority", "authority_note"):
+                value = payload.get(name)
+                if not isinstance(value, str) or len(value) > 256:
+                    continue
+                try:
+                    fallback = bounded_payload({**fallback, name: value})
+                except (ValueError, TypeError):
+                    continue
+            payload = fallback
 
         return self._terminal(
             request,
             attempt_status=attempt_status,
             result_status=result_status,
             classification=classification,
-            diagnostics=diagnostics
-            or (f"normalized foreign outcome from {self.backend_id}",),
+            diagnostics=diagnostics,
             payload=payload,
         )
 

@@ -538,17 +538,11 @@ class TestResolveAttempts:
         assert len(denied) == 1
         assert "UNSUPPORTED" in denied[0]["reason"]
 
-    def test_denies_missing_executable(self):
+    def test_denies_missing_executable(self, monkeypatch):
+        import shutil
+        monkeypatch.setattr(shutil, "which", lambda _: None)
         policy = PortfolioPolicy(hammer_policy=_allow_policy("z3"))
         portfolio = SolverPortfolio(policy)
-        # No override configured and (almost certainly) no "z3" on PATH in a
-        # bare test environment; if it genuinely is on PATH this assertion
-        # would need a monkeypatch, but resolve_attempts must gracefully
-        # deny rather than raise either way.
-        import shutil
-
-        if shutil.which("z3") is not None:
-            pytest.skip("a real z3 executable is on PATH in this environment")
         _, denied = portfolio.resolve_attempts(
             [PortfolioAttemptSpec(translation=_smt_translation(), solver_name="z3")]
         )
@@ -562,6 +556,25 @@ class TestResolveAttempts:
 
 
 class TestSolverPortfolioRun:
+    @pytest.fixture(autouse=True)
+    def _healthy_scheduler(self, tmp_path, monkeypatch):
+        """Fake-runner orchestration must not wait on unrelated host workloads."""
+        from ipfs_datasets_py.logic.hammers import portfolio as module
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.proof_resource_safety import ProofHostResources
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
+            GlobalResourceScheduler, ResourceSchedulerConfig,
+        )
+        scheduler = GlobalResourceScheduler(ResourceSchedulerConfig.for_proof_host(
+            state_path=tmp_path / "portfolio-resources.json",
+            proof_resource_sampler=lambda: ProofHostResources(8, 16384, 16384),
+            lane_reservations={}, auto_renew_leases=False,
+            proof_backoff_seconds=0.01, poll_interval_seconds=0.005,
+        ))
+        assert scheduler.config.proof_safety_enabled
+        monkeypatch.setattr(module, "get_global_resource_scheduler", lambda: scheduler)
+        yield scheduler
+        assert scheduler.active_leases() == []
+
     def test_empty_attempts_returns_empty_result(self):
         policy = PortfolioPolicy(hammer_policy=_allow_policy("z3"))
         portfolio = SolverPortfolio(policy)

@@ -407,6 +407,89 @@ class GeneratedTLAArtifacts:
             )
         return payload
 
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> GeneratedTLAArtifacts:
+        """Decode a complete canonical artifact without changing its meaning.
+
+        Text-free summaries are not executable artifacts. All content digests
+        and metadata are required and validated; only the outer artifact digest
+        may be absent, as produced by ``to_dict(include_digest=False)``. Digest
+        consistency is an integrity check, not attestation of the supplied TLA.
+        """
+
+        required = frozenset({
+            "module_name", "model_text", "tlc_config_text", "apalache_config_text",
+            "source_map", "losses", "bounds", "source_document_id", "source_kind",
+            "safety_properties", "liveness_properties", "fairness_limitations",
+            "interface_version", "schema_version", "model_digest", "tlc_config_digest",
+            "apalache_config_digest", "translator", "bounded", "unbounded_proof",
+        })
+        data = _artifact_record(value, "artifact", required, {"artifact_digest"})
+        if data["bounded"] is not True or data["unbounded_proof"] is not False:
+            raise TLACompilerError("artifact must declare bounded=true and unbounded_proof=false")
+        translator = _artifact_record(data["translator"], "translator", {"id", "version"})
+        if translator != {"id": TLA_TRANSLATOR_ID, "version": TLA_COMPILER_VERSION}:
+            raise TLACompilerError("unsupported artifact translator")
+        for name in ("model_text", "tlc_config_text", "apalache_config_text"):
+            _artifact_text(data[name], name)
+        for name in ("module_name", "source_document_id", "source_kind", "interface_version", "schema_version"):
+            _artifact_text(data[name], name)
+
+        bounds_data = _artifact_record(
+            data["bounds"], "compile bounds", frozenset(TLACompileBounds.__dataclass_fields__)
+        )
+        # Do not use the older permissive bounds reader: explicit canonical
+        # numeric fields must reach the constructor without int()/str() casts.
+        bounds = TLACompileBounds(**bounds_data)
+        source_map = []
+        source_records = _artifact_sequence(data["source_map"], "source_map")
+        for item in source_records:
+            record = _artifact_record(item, "source-map entry", frozenset(TLASourceMapEntry.__dataclass_fields__))
+            for name, raw in record.items():
+                _artifact_text(raw, "source-map " + name, empty=name == "line_hint")
+            entry = TLASourceMapEntry(**record)
+            if entry.to_dict() != record:
+                raise TLACompilerError("source-map entry is not canonical")
+            source_map.append(entry)
+        losses = []
+        loss_records = _artifact_sequence(data["losses"], "losses")
+        for item in loss_records:
+            record = _artifact_record(item, "projection loss", frozenset(ProjectionLoss.__dataclass_fields__))
+            for name, raw in record.items():
+                _artifact_text(raw, "projection loss " + name)
+            loss = ProjectionLoss(**record)
+            if loss.to_dict() != record:
+                raise TLACompilerError("projection loss is not canonical")
+            losses.append(loss)
+        properties = {}
+        for name in ("safety_properties", "liveness_properties", "fairness_limitations"):
+            properties[name] = _artifact_sequence(data[name], name)
+            for item in properties[name]:
+                _artifact_text(item, name + " item")
+
+        artifact = cls(
+            module_name=data["module_name"], model_text=data["model_text"],
+            tlc_config_text=data["tlc_config_text"], apalache_config_text=data["apalache_config_text"],
+            source_map=tuple(source_map), losses=tuple(losses), bounds=bounds,
+            source_document_id=data["source_document_id"], source_kind=data["source_kind"],
+            safety_properties=tuple(properties["safety_properties"]),
+            liveness_properties=tuple(properties["liveness_properties"]),
+            fairness_limitations=tuple(properties["fairness_limitations"]),
+            interface_version=data["interface_version"], schema_version=data["schema_version"],
+        )
+        expected = artifact.to_dict(include_digest="artifact_digest" in data)
+        # Normalize only sequence containers (FrozenMap uses tuples). Values,
+        # ordering, explicit empties and every supplied digest must match exactly.
+        data.update(properties)
+        data["source_map"] = [dict(item) for item in source_records]
+        data["losses"] = [dict(item) for item in loss_records]
+        data["bounds"] = bounds_data
+        data["translator"] = translator
+        for name, expected_value in expected.items():
+            if data[name] != expected_value:
+                raise TLACompilerError(f"artifact {name} does not match canonical content")
+        return artifact
+
 
 class TLACompiler:
     """Compile state / concurrency / refinement IR into deterministic TLA+."""
@@ -1738,6 +1821,85 @@ class TLACompiler:
 # ----------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------
+
+
+def _artifact_record(
+    value: Any, name: str, required: set[str] | frozenset[str],
+    optional: set[str] | frozenset[str] = frozenset(),
+) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        raise TLACompilerError(f"{name} must be a mapping")
+    keys = set(value)
+    if not all(isinstance(key, str) for key in keys):
+        raise TLACompilerError(f"{name} keys must be strings")
+    if keys - required - optional:
+        raise TLACompilerError(f"{name} contains unknown fields: {', '.join(sorted(keys - required - optional))}")
+    if required - keys:
+        raise TLACompilerError(f"{name} is missing fields: {', '.join(sorted(required - keys))}")
+    return dict(value)
+
+
+def _artifact_sequence(value: Any, name: str) -> list[Any]:
+    if isinstance(value, (str, bytes, bytearray)) or not isinstance(value, Sequence):
+        raise TLACompilerError(f"{name} must be a sequence")
+    return list(value)
+
+
+def _artifact_text(value: Any, name: str, *, empty: bool = False) -> str:
+    if not isinstance(value, str) or (not empty and not value) or "\x00" in value:
+        raise TLACompilerError(f"{name} must be {'possibly empty ' if empty else 'non-empty '}text without NUL bytes")
+    try:
+        value.encode("utf-8")
+    except UnicodeError as error:
+        raise TLACompilerError(f"{name} must be valid UTF-8 text") from error
+    return value
+
+
+def _decode_tla_artifact_payload(
+    value: Mapping[str, Any], *, default_bounds: TLACompileBounds,
+    module_name: str = "StateModel",
+) -> GeneratedTLAArtifacts:
+    """Share strict canonical decoding and the small legacy raw-model form.
+
+    Declaring versions, digests, bounds or projection metadata commits a payload
+    to the canonical contract. A failed canonical decode never falls back to a
+    raw model with replacement bounds or discarded provenance.
+    """
+
+    if not isinstance(value, Mapping):
+        raise TLACompilerError("artifacts payload must be a mapping")
+    canonical_markers = {
+        "schema_version", "interface_version", "translator", "bounded", "unbounded_proof",
+        "bounds", "source_map", "losses", "artifact_digest", "model_digest",
+        "tlc_config_digest", "apalache_config_digest",
+    }
+    if canonical_markers.intersection(value):
+        return GeneratedTLAArtifacts.from_dict(value)
+    fields = {
+        "model_text", "module_name", "tlc_config_text", "apalache_config_text",
+        "source_document_id", "source_kind", "safety_properties",
+        "liveness_properties", "fairness_limitations",
+    }
+    data = _artifact_record(value, "raw artifact payload", {"model_text"}, fields - {"model_text"})
+    model = _artifact_text(data["model_text"], "model_text")
+    text = {
+        "module_name": data.get("module_name", module_name),
+        "tlc_config_text": data.get("tlc_config_text", "SPECIFICATION Spec\nINVARIANT Safety\n"),
+        "apalache_config_text": data.get("apalache_config_text", "INIT Init\nNEXT Next\nINVARIANT Safety\n"),
+        "source_document_id": data.get("source_document_id", "raw"),
+        "source_kind": data.get("source_kind", "payload"),
+    }
+    for name, raw in text.items():
+        _artifact_text(raw, name)
+    properties = {}
+    for name, default in (("safety_properties", ("Safety",)), ("liveness_properties", ()), ("fairness_limitations", ())):
+        properties[name] = _artifact_sequence(data.get(name, default), name)
+        for item in properties[name]:
+            _artifact_text(item, name + " item")
+    return GeneratedTLAArtifacts(
+        model_text=model if model.endswith("\n") else model + "\n",
+        source_map=(), losses=(), bounds=default_bounds, **text, **properties,
+    )
 
 
 def _text(value: object, field_name: str, *, optional: bool = False) -> str:

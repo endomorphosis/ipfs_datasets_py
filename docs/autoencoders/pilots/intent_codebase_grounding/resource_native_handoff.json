@@ -1,0 +1,211 @@
+{
+  "schema": "codebase-ir-resource-native-handoff/v1",
+  "captured_at_utc": "2026-10-03T01:23:58.483359+00:00",
+  "status": "resource_cohort_and_bounded_native_baseline_passed_full_proof_index_model_pending",
+  "worktree": "/home/barberb/lift_coding/.worktrees/proof-resource-admission-20261003",
+  "branch": "codex/proof-resource-admission-20261003",
+  "draft_source_commit": "7a40a59c80ae68bb64cad4f01622c4bf43c880b8",
+  "parent_commit": "97d9ddc80186ae2666a011c770d5fbb7a6413146",
+  "committed_paths": [
+    "ipfs_datasets_py/duckdb_control/codebase_verification_projection.py",
+    "ipfs_datasets_py/duckdb_control/codebase_verification_queries.py",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "tests/unit/duckdb_control/test_codebase_verification_catalog.py",
+    "tests/unit/duckdb_control/test_codebase_verification_projection.py",
+    "tests/unit/duckdb_control/test_codebase_verification_queries.py",
+    "tests/unit/logic/software_contracts/test_codebase_smt_native_admission.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_proof_memory_origin_edges.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_proof_memory_telemetry.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_resource_scheduler_durable_reads.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_resource_scheduler_lifecycle.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_resource_scheduler_reboot.py"
+  ],
+  "committed_file_count": 12,
+  "worktree_clean": true,
+  "receipts": {
+    "acquisition.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/acquisition.json",
+      "bytes": 7729,
+      "sha256": "24de36306e9d5bd02503abb402d44605ec71bad1178311842f0a0aff09efa31b"
+    },
+    "admission.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/admission.json",
+      "bytes": 15771,
+      "sha256": "e1bf007349aa0f447b2cab6b2f13e216470f39888fa1c86661663c8e914c617e"
+    },
+    "dependency-profile.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/dependency-profile.json",
+      "bytes": 92523,
+      "sha256": "12d8ab0aecb08a492c79ba511a2846794502f5cd512ae47144569ec9462386e2"
+    },
+    "run_resource_tests.py": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/run_resource_tests.py",
+      "bytes": 14024,
+      "sha256": "274fa727003a5c720b2e82aed44c50059f7a00ddba2100b4508fcde8b738e5de"
+    },
+    "runs/resource-contracts-02/result.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/runs/resource-contracts-02/result.json",
+      "bytes": 205493,
+      "sha256": "d341e8da68a9dc0ee291ef91b7477ee7031a5580680d1232fe94f735bbcfd1f6"
+    },
+    "harness-correction.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/harness-correction.json",
+      "bytes": 948,
+      "sha256": "618c717ba4943cd3a80962913c89bd8a08feb8bc0e73142b96e54ebfa7111058"
+    },
+    "native-admission.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/native-admission.json",
+      "bytes": 31171,
+      "sha256": "7b4fff8e892a74e255b67157dc7ff0f91c6f6a3a9e481f45f1a43d198e0e3753"
+    },
+    "run_native_smt_tests.py": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/run_native_smt_tests.py",
+      "bytes": 17898,
+      "sha256": "54a4e80cb8fcd337750e8b990a1f7119b93df6ad2d4bd6c20df59e3778210edb"
+    },
+    "runs/native-smt-baseline-01/result.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/runs/native-smt-baseline-01/result.json",
+      "bytes": 14876,
+      "sha256": "2c04264818305702a13a5895fe5b0988c340c63d6d1370f2538176089accd9a3"
+    },
+    "native-baseline-observations.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/native-baseline-observations.json",
+      "bytes": 5423,
+      "sha256": "20cbdbca900f1acb113422599d2f2934040b1fe441d8eb985c0204cf00d45f1e"
+    },
+    "index-followup.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/index-followup.json",
+      "bytes": 43029,
+      "sha256": "d3ec0844c4d4a8d76525fd5917f2128113ee96d680b7d4c41ec3730c02f42c88"
+    },
+    "index-candidate-acquisition.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/index-candidate-acquisition.json",
+      "bytes": 4381,
+      "sha256": "ac25734f6b84cdfd1da9146f31c3a782c1fb02a856a6eeff1df9e3a5ac399bb2"
+    },
+    "gap-status.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/gap-status.json",
+      "bytes": 8350,
+      "sha256": "bba617f86e64e6047cc073df4989c6bbe10267dfbd1ede2b68874ac0ab038da8"
+    },
+    "commit.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/commit.json",
+      "bytes": 3079,
+      "sha256": "28fe8fbd109bb522c576bc71fdc7366c202e302a4f456cb206c1d9204ab10e3f"
+    },
+    "bundle.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/bundle.json",
+      "bytes": 1076,
+      "sha256": "d25b8837913878dbae96766dd7520c79a84a82d26b3ad69739e64509949bdae4"
+    },
+    "resource-and-native-draft.bundle": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/resource-and-native-draft.bundle",
+      "bytes": 49523,
+      "sha256": "5e3aead26a122b16b4b0a1f5174c60eb16f9a90adaf0830b81ae0eaafda1e19f"
+    },
+    "local-origin-comparison.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/local-origin-comparison.json",
+      "bytes": 3855,
+      "sha256": "2168221689097b1d3c11f27a092cdbed87d9d642ae6e5226b54b439450fa7ea8"
+    },
+    "preservation.json": {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-resource-admission-20261003/preservation.json",
+      "bytes": 546548,
+      "sha256": "e2e1314f71f421e286ea317c44f59cc6b3c0dee73177481b3c8dd6ce70f577e4"
+    }
+  },
+  "resource_tests_passed": 204,
+  "resource_tests_failed": 0,
+  "resource_tests_skipped": 0,
+  "explicitly_deselected_resource_cases": 6,
+  "reused_resource_cases": 162,
+  "new_resource_regression_cases": 42,
+  "resource_admitted_project_files": 17,
+  "resource_admitted_external_files": 399,
+  "resource_all_source_pins": 416,
+  "resource_guarded_source_loads": 125,
+  "native_tests_passed": 12,
+  "native_tests_failed": 0,
+  "native_tests_skipped": 0,
+  "native_logical_solver_calls": 4,
+  "native_phase_launches": 12,
+  "native_admitted_project_files": 36,
+  "native_admitted_external_files": 399,
+  "native_all_source_pins": 435,
+  "native_guarded_source_loads": 419,
+  "native_target_selection": "Direct pinned ELF targets, selected prlimit helper; discovery shell launcher unexecuted",
+  "native_memory_bytes": 134217728,
+  "native_logical_timeout_ms": 5000,
+  "native_schedulers_drained": true,
+  "native_workspaces_cleaned": true,
+  "only_main_thread_at_both_completions": true,
+  "blocked_imports_in_successful_runs": 0,
+  "blocked_effects_in_successful_runs": 0,
+  "index_missing_helpers_acquired": 2,
+  "index_test_modules_acquired": 3,
+  "index_database_operations_executed": false,
+  "retained_initial_resource_failure": {
+    "passed": 121,
+    "failed": 83,
+    "cause": "Harness supplied invalid zero optional capacities",
+    "resolution": "Clear inherited optional settings and leave capacities absent; owners/tests unchanged"
+  },
+  "original_assets_unchanged": 26,
+  "original_inventory_documents_unchanged": 13,
+  "prior_bound_file_counts_preserved": [
+    481,
+    17,
+    30,
+    82,
+    62,
+    65,
+    67
+  ],
+  "ir_families": [
+    "codebase_ir",
+    "security_ir",
+    "legal_ir",
+    "intent_ir"
+  ],
+  "dimension_sizes": [
+    8,
+    384,
+    768
+  ],
+  "independent_inventory_cells": 12,
+  "new_worktrees": 1,
+  "new_branches": 1,
+  "local_commits": 1,
+  "merges": 0,
+  "pushes": 0,
+  "parent_gitlinks_changed": 0,
+  "model_executions": 0,
+  "training_runs": 0,
+  "database_operations": 0,
+  "new_embeddings_generated": 0,
+  "network_fetches": 0,
+  "installed_package_changes": 0,
+  "proof_authority": false,
+  "proof_profile_qualified": false,
+  "runtime_release_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "full_native_shared_library_closure_attested": false,
+  "supervisor_operations_executed": false,
+  "locally_observed_origin": "1418ad558a56d22e6ca023e385ef002acf1ce2d7",
+  "selected12_origin_path_counts": {
+    "match": 0,
+    "different": 1,
+    "absent": 11
+  },
+  "fresh_remote_state_verified": false,
+  "accepted_release_manifest": null,
+  "next_cohort": "Private Git/file-backed DuckDB currentness after project/CID/Git/DuckDB dependency admission",
+  "native_memory_policy": {
+    "per_process_address_space_limit": true,
+    "sampled_process_tree_rss_guard": true,
+    "kernel_aggregate_memory_limit": false,
+    "hard_parent_rss_limit": false
+  }
+}

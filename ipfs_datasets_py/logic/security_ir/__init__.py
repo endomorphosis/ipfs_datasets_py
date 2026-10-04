@@ -13,6 +13,7 @@ from typing import Any, Final
 
 
 _EXPORTS: Final[dict[str, tuple[str, ...]]] = {
+    "autoencoder": ("open_autoencoder", "formalize_with_autoencoder"),
     "model": (
         "Asset",
         "Assumption",

@@ -955,7 +955,9 @@ class PythonSemanticAnalyzer:
             return PythonSemanticAnalysis(path, source_cid, (), ("python.parse_error",))
 
         module = _module_name(path)
-        namespace = self.namespace or module.split(".")[0]
+        # Hidden script paths have an empty first dotted component. Keep their
+        # complete module name as the namespace without changing ordinary IDs.
+        namespace = self.namespace or module.split(".")[0] or module
         parents = {
             child: parent
             for parent in ast.walk(tree)

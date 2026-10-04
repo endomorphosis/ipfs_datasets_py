@@ -1,0 +1,186 @@
+{
+  "candidate_freeze_sha256": "c50253a1d1f247aba57c428d17e79a4d03321f581ca87cee50ab76a54c25449d",
+  "claim_proved": false,
+  "diagnostic_driver_sha256": "f11ad949e1f949ee77bde472a1bd8be1317c67d03386f17185e843cc89027386",
+  "elapsed_seconds": 1.384427080862224,
+  "evidence": {
+    "intent_ir": {
+      "checkpoint_sha256": "a5439dfa472828560a1a672e9417a105f9d3a3382db1ea04fb8944b8603f0989",
+      "decoded_evaluation_sha256": "1885ff92077078401526e06c76445485a01be82d65cf71a1d59d7f0c2561b4bc",
+      "source_inputs_sha256": "27e7891434f40a294e1446adaceeccce759eec515e0064d3f1e6aee28c0061eb"
+    },
+    "legal_ir": {
+      "checkpoint_sha256": "2ac54a5c3789d7c7a29d6b6a0db5e3a3a69e41c8b335e7ada62e80ecc845f8f3",
+      "decoded_evaluation_sha256": "10a01aba0041da21a55ff30824b70ac18b524b3c07682cccc3e521a08a81cdea",
+      "source_inputs_sha256": "ea7532abc3c2bcc27ce38dc6358a3898250f62e7cb8fd17af723dd1b85d65444"
+    },
+    "security_ir": {
+      "checkpoint_sha256": "19af23dd9a9e17aab427066fa3b9c4d86c74e843f995532032ec9f920ec4d8c3",
+      "decoded_evaluation_sha256": "7339742073bdc7291bc3536a3b6cec6a5e420d9c63b7cab508e887090641ddf4",
+      "source_inputs_sha256": "e7d05033f043b36b06a5958443a527379c602b77fb01512ac1dba4b3bab5d3f5"
+    },
+    "ui_ux_ir": {
+      "checkpoint_sha256": "c00a856c7adc80167a449f833d50dd2e2390f4cba092f11e65ae7d8eba5ea3fe",
+      "decoded_evaluation_sha256": "8188359c0c01049d152b899810876e24cbec1238e65d754ef3b1b1c008d2cefa",
+      "source_inputs_sha256": "43f634f2c082cf9907ade20ae8fcfb7e1a5b9262fb464e29aa99b226bbaad2d3"
+    }
+  },
+  "execution_authority": false,
+  "full_evidence": {
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/projections.json",
+    "sha256": "a0d78962b56e654f7f6f0e5489fa01691adda821ccdfcc21627b84c7a7d6e97a"
+  },
+  "lake": [
+    {
+      "decoded_row_id": "intent_ir:0:0:0:0",
+      "modality": "required",
+      "result": {
+        "actual_guard_truth_checked": false,
+        "backend_executed": true,
+        "backend_status": "passed",
+        "claim_proved": false,
+        "command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "build",
+          "TypedSlotFixture"
+        ],
+        "execution_authority": false,
+        "existence_asserted": false,
+        "facts_asserted": false,
+        "fixture_sha256": "b6221709412e20b8024b42a414631bdb93cc5319670c5ed784e1d49256e26962",
+        "lean_source_sha256": "6dbbced6310c3f53e436415376d3193d4062dbb24121837f6b72ea41fa84a9a7",
+        "observations": [
+          {
+            "returncode": 0,
+            "stderr": "info: typed_slot_fixture: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+            "stdout": "\u2714 [2/3] Built TypedSlotFixture (158ms)\nBuild completed successfully (3 jobs).\n",
+            "timed_out": false
+          }
+        ],
+        "other_family_backends_executed": false,
+        "projection_sha256": "b1d7bdd43fa32ce5390abfe55d7f843601151e803e8b37bc793d158ad6d780e2",
+        "proof_authority": false,
+        "schema": "intent-rich-logic-lake/v1",
+        "source_semantics_verified": false,
+        "status": "passed",
+        "syntax_verified": true,
+        "toolchain": "leanprover/lean4:v4.34.1",
+        "validated_scope": "parameterized_rich_formula_syntax_only"
+      }
+    },
+    {
+      "decoded_row_id": "intent_ir:0:0:1:0",
+      "modality": "permitted",
+      "result": {
+        "actual_guard_truth_checked": false,
+        "backend_executed": true,
+        "backend_status": "passed",
+        "claim_proved": false,
+        "command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "build",
+          "TypedSlotFixture"
+        ],
+        "execution_authority": false,
+        "existence_asserted": false,
+        "facts_asserted": false,
+        "fixture_sha256": "d138ca0438e8734cdc5b262a4ea9c447fd621b2cea499edbc02a114b79bc4d7b",
+        "lean_source_sha256": "6dbbced6310c3f53e436415376d3193d4062dbb24121837f6b72ea41fa84a9a7",
+        "observations": [
+          {
+            "returncode": 0,
+            "stderr": "info: typed_slot_fixture: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+            "stdout": "\u2714 [2/3] Built TypedSlotFixture (167ms)\nBuild completed successfully (3 jobs).\n",
+            "timed_out": false
+          }
+        ],
+        "other_family_backends_executed": false,
+        "projection_sha256": "739826d62fb9d7dc9e50f5a9ec3c6e7fc1c56e9d8d79115322296772d0cc2949",
+        "proof_authority": false,
+        "schema": "intent-rich-logic-lake/v1",
+        "source_semantics_verified": false,
+        "status": "passed",
+        "syntax_verified": true,
+        "toolchain": "leanprover/lean4:v4.34.1",
+        "validated_scope": "parameterized_rich_formula_syntax_only"
+      }
+    },
+    {
+      "decoded_row_id": "intent_ir:0:0:2:0",
+      "modality": "prohibited",
+      "result": {
+        "actual_guard_truth_checked": false,
+        "backend_executed": true,
+        "backend_status": "passed",
+        "claim_proved": false,
+        "command": [
+          "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+          "build",
+          "TypedSlotFixture"
+        ],
+        "execution_authority": false,
+        "existence_asserted": false,
+        "facts_asserted": false,
+        "fixture_sha256": "74e88a082b67772c49ec9c7dfaa0b3710876898d9106d8c539281879ccc82e9b",
+        "lean_source_sha256": "6dbbced6310c3f53e436415376d3193d4062dbb24121837f6b72ea41fa84a9a7",
+        "observations": [
+          {
+            "returncode": 0,
+            "stderr": "info: typed_slot_fixture: no previous manifest, creating one from scratch\ninfo: toolchain not updated; already up-to-date\n",
+            "stdout": "\u2714 [2/3] Built TypedSlotFixture (144ms)\nBuild completed successfully (3 jobs).\n",
+            "timed_out": false
+          }
+        ],
+        "other_family_backends_executed": false,
+        "projection_sha256": "1448d84a01d490f9e4b1477e1f4039a66392f8eeca43cc731b9249b593ef7f5a",
+        "proof_authority": false,
+        "schema": "intent-rich-logic-lake/v1",
+        "source_semantics_verified": false,
+        "status": "passed",
+        "syntax_verified": true,
+        "toolchain": "leanprover/lean4:v4.34.1",
+        "validated_scope": "parameterized_rich_formula_syntax_only"
+      }
+    }
+  ],
+  "lake_scope": "three modality representatives; parameterized syntax/typechecking, not all rows or semantic correctness",
+  "partition": "test",
+  "prior_complete_native_family_counts_are_separate": true,
+  "projection_scope": "only supported views of exact learned local fragments; missing world/program context remains explicit",
+  "proof_authority": false,
+  "results": {
+    "intent_ir": {
+      "exact_reference_matches": 60,
+      "status_counts": {
+        "projected_candidate": 60
+      },
+      "total_decoded_rows": 60
+    },
+    "legal_ir": {
+      "exact_reference_matches": 60,
+      "status_counts": {
+        "native_grammar_validated": 60
+      },
+      "total_decoded_rows": 60
+    },
+    "security_ir": {
+      "exact_reference_matches": 60,
+      "status_counts": {
+        "fragment_validated_missing_program_context": 60
+      },
+      "total_decoded_rows": 60
+    },
+    "ui_ux_ir": {
+      "exact_reference_matches": 60,
+      "status_counts": {
+        "projected_candidate": 20,
+        "projection_failed": 40
+      },
+      "total_decoded_rows": 60
+    }
+  },
+  "schema": "learned-source-native-projection-diagnostic/v1",
+  "source_freeze_sha256": "7c7aafa76bd0490d793e3bd4501b530d8334310badbc5cdec5eaa5734d850e67",
+  "source_semantics_verified": false,
+  "trained_or_selected_models": false
+}

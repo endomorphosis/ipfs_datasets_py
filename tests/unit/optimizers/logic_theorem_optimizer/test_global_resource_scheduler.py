@@ -197,11 +197,13 @@ def test_cancelling_parent_propagates_to_children_and_future_nested_work(tmp_pat
     assert child.cancellation_signal.is_set()
     with pytest.raises(LeaseCancelledError):
         parent.acquire_child(cpu_slots=1, timeout=0)
-    parent.release()  # Cascades even if a child owner did not release explicitly.
+    parent.release()  # Revokes children but keeps their live capacity charged.
+    assert scheduler.snapshot()["active_lease_count"] == 2
+    child.release()
     assert scheduler.snapshot()["active_lease_count"] == 0
 
 
-def test_expired_lease_is_recovered_after_interrupted_owner(tmp_path):
+def test_expired_live_lease_is_revoked_until_owner_acknowledges_completion(tmp_path):
     scheduler = GlobalResourceScheduler(
         _config(
             tmp_path / "scheduler.json",
@@ -213,8 +215,11 @@ def test_expired_lease_is_recovered_after_interrupted_owner(tmp_path):
     abandoned = scheduler.acquire("orchestration", timeout=0)
     time.sleep(0.05)
     recovered = scheduler.recover_stale_leases()
-    assert abandoned.lease_id in recovered
-    assert scheduler.snapshot()["active_lease_count"] == 0
+    assert abandoned.lease_id not in recovered
+    assert abandoned.cancelled
+    assert scheduler.snapshot()["active_lease_count"] == 1
+    assert scheduler.try_acquire("orchestration") is None
+    abandoned.release()
     replacement = scheduler.acquire("orchestration", timeout=0)
     replacement.release()
 

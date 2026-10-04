@@ -1429,16 +1429,29 @@ def _declare_sort_lines(sorts: Sequence[SmtSort]) -> list[str]:
     return lines
 
 
+def _smt_metadata_string(value: str) -> str:
+    """Encode one inert SMT-LIB metadata string, including quoted identifiers.
+
+    SMT-LIB escapes a double quote by doubling it, not by a backslash.  Metadata
+    emitted here is printable ASCII: controls, line separators and non-ASCII
+    text are rejected so the same literal is also safe inside a line comment.
+    The native obligation and receipt keep the original, unchanged identifier.
+    """
+    if type(value) is not str or any(not 32 <= ord(char) <= 126 for char in value):
+        raise SmtCompilerError("SMT metadata requires printable ASCII without control characters")
+    return '"' + value.replace('"', '""') + '"'
+
+
 def _build_script(obligation: SmtObligation) -> SmtScript:
     logic = obligation.logic or select_smt_logic(obligation.theories, obligation.query_mode)
     lines: list[str] = [
         f"; software-verification semantic SMT compiler {SMT_COMPILER_VERSION}",
-        f"; obligation_id: {obligation.obligation_id}",
+        f"; obligation_id: {_smt_metadata_string(obligation.obligation_id)}",
         f"; query_mode: {obligation.query_mode.value}",
         f"; features: {','.join(item.value for item in obligation.features)}",
         f"(set-info :smt-lib-version {SMTLIB_VERSION})",
-        f'(set-info :source "{SOFTWARE_VERIFICATION_SMT_COMPILER_INTERFACE}")',
-        f"(set-info :obligation {obligation.obligation_id})",
+        f"(set-info :source {_smt_metadata_string(SOFTWARE_VERIFICATION_SMT_COMPILER_INTERFACE)})",
+        f"(set-info :obligation {_smt_metadata_string(obligation.obligation_id)})",
         f"(set-logic {logic})",
     ]
     if obligation.request_model:

@@ -309,22 +309,50 @@ def compile_semantic_links(
     links: list[SemanticLinkNode] = []
     pairs: list[tuple[str, str]] = []
     blocks: dict[str, bytes] = {}
+    # Facts are immutable and this inventory is sealed for this compilation.
+    # Hash each referenced fact once, rather than serializing a large class AST
+    # again for every incoming/outgoing edge. Keep caches local to this call so
+    # changed source facts can never reuse a previous compilation's identity.
+    symbol_fact_cids: dict[str, str] = {}
+    artifact_fact_cids: dict[str, str] = {}
+
+    def symbol_cid(fact: SymbolFactNode) -> str:
+        key = fact.stable_symbol_id
+        if key not in symbol_fact_cids:
+            symbol_fact_cids[key] = fact.fact_cid
+        return symbol_fact_cids[key]
+
     for edge in ordered:
         source = symbol_by_id.get(edge.source_id)
         if source is None:
             raise MerkleCompilerError(
                 f"edge {edge.edge_id} source_id {edge.source_id!r} is not a known symbol"
             )
-        target_kind, target_stable_id, target_version_cid, target_fact_cid = (
-            _classify_target(edge.target_id, symbol_by_id, artifact_by_id)
-        )
+        target_symbol = symbol_by_id.get(edge.target_id)
+        target_artifact = artifact_by_id.get(edge.target_id)
+        if target_symbol is not None:
+            target_kind, target_stable_id, target_version_cid, target_fact_cid = (
+                LinkTargetKind.SYMBOL.value, target_symbol.stable_symbol_id,
+                target_symbol.version_cid, symbol_cid(target_symbol),
+            )
+        elif target_artifact is not None:
+            if target_artifact.artifact_id not in artifact_fact_cids:
+                artifact_fact_cids[target_artifact.artifact_id] = target_artifact.fact_cid
+            target_kind, target_stable_id, target_version_cid, target_fact_cid = (
+                LinkTargetKind.ARTIFACT.value, target_artifact.artifact_id, None,
+                artifact_fact_cids[target_artifact.artifact_id],
+            )
+        else:
+            target_kind, target_stable_id, target_version_cid, target_fact_cid = (
+                LinkTargetKind.UNRESOLVED.value, None, None, None,
+            )
         # Metadata is preserved verbatim from the producer edge (already closed).
         metadata = dict(edge.metadata) if edge.metadata else {}
         link = SemanticLinkNode(
             edge_id=edge.edge_id,
             source_stable_id=source.stable_symbol_id,
             source_version_cid=source.version_cid,
-            source_fact_cid=source.fact_cid,
+            source_fact_cid=symbol_cid(source),
             target_kind=target_kind,
             target_stable_id=target_stable_id,
             target_version_cid=target_version_cid,
@@ -647,6 +675,9 @@ def verify_symbol_merkle_dag(dag: SymbolMerkleDag) -> SymbolMerkleDag:
         if restored.fact_cid != fact.fact_cid:
             raise MerkleCompilerError("artifact fact CID round-trip failed")
 
+    # The immutable node inventory is shared by every link. Rebuilding these
+    # CIDs inside the edge loop makes verification O(edges * nodes) in hashing.
+    node_cids = {node.node_cid for node in dag.symbol_nodes}
     for link in dag.links:
         payload = _load(link.link_cid)
         if payload != link.identity_payload():
@@ -657,7 +688,6 @@ def verify_symbol_merkle_dag(dag: SymbolMerkleDag) -> SymbolMerkleDag:
         if restored.link_cid != link.link_cid:
             raise MerkleCompilerError("link CID round-trip failed")
         # Layering: links must not reference node CIDs.
-        node_cids = {node.node_cid for node in dag.symbol_nodes}
         if restored.source_fact_cid in node_cids or (
             restored.target_fact_cid is not None and restored.target_fact_cid in node_cids
         ):

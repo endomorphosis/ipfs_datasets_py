@@ -1,0 +1,41 @@
+Diagnostic cProfile run; do not use profiler timings as wall-time speed measurements.
+Thu Sep 24 23:08:44 2026    /tmp/legal-autoformal-speed/parser-before.prof
+
+         618217201 function calls (596086673 primitive calls) in 101.472 seconds
+
+   Ordered by: cumulative time
+   List reduced from 1255 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       16    0.001    0.000  101.191    6.324 converter.py:166(convert)
+   227078    1.219    0.000  100.591    0.000 __init__.py:280(_compile)
+      282    0.028    0.000  100.233    0.355 formula_builder.py:110(build_deontic_formula_from_ir)
+   199824    0.070    0.000   98.432    0.000 __init__.py:164(match)
+   171219    0.221    0.000   98.388    0.001 _compiler.py:740(compile)
+      240    0.003    0.000   85.314    0.355 formula_builder.py:2457(build_deontic_formula_record_from_ir)
+        8    0.000    0.000   50.894    6.362 canonical_compiler.py:678(compile)
+        8    0.000    0.000   50.575    6.322 __init__.py:530(vocabulary_from_clause)
+   171219    0.150    0.000   49.037    0.000 _parser.py:969(parse)
+849563/171219    2.364    0.000   48.755    0.000 _parser.py:452(_parse_sub)
+   171219    0.105    0.000   48.755    0.000 _compiler.py:573(_code)
+4444645/171563   17.942    0.000   48.534    0.000 _parser.py:512(_parse)
+5565040/171219   22.175    0.000   42.307    0.000 _compiler.py:37(_compile)
+       16    0.000    0.000   33.951    2.122 converters.py:192(convert)
+       16    0.001    0.000   33.951    2.122 converter.py:348(_convert_impl)
+       16    0.000    0.000   29.972    1.873 exports.py:208(build_deterministic_parser_capability_profile_records)
+       26    0.000    0.000   29.972    1.153 exports.py:133(build_deterministic_parser_capability_profile_record)
+       16    0.000    0.000   28.232    1.765 deontic_parser.py:5653(extract_normative_elements)
+       16    0.000    0.000   28.193    1.762 deontic_parser.py:610(extract_normative_elements)
+       78    0.001    0.000   27.669    0.355 formula_builder.py:2590(parser_element_to_formula_record)
+       16    0.001    0.000   18.694    1.168 exports.py:1285(build_prover_syntax_target_coverage_records_from_irs)
+       26    0.001    0.000   18.686    0.719 exports.py:1701(build_prover_syntax_records_from_ir)
+       52    0.001    0.000   18.671    0.359 deontic_parser.py:2619(_finalize_element)
+       26    0.000    0.000   18.628    0.716 prover_syntax.py:127(validate_ir_with_provers)
+       52    0.000    0.000   18.535    0.356 deontic_parser.py:3368(build_llm_repair_payload)
+       52    0.000    0.000   18.533    0.356 deontic_parser.py:3343(_deterministic_ir_repair_resolution)
+       32    0.000    0.000   18.518    0.579 formula_builder.py:2508(build_deontic_formula_records_from_irs)
+ 74318953    8.721    0.000   13.255    0.000 _parser.py:168(__getitem__)
+       52    0.000    0.000   11.437    0.220 exports.py:5062(_deterministic_norm_family)
+       16    0.002    0.000    9.796    0.612 deontic_parser.py:1552(analyze_normative_sentence)
+
+

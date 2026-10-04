@@ -1061,6 +1061,11 @@ class ModalLossTodoGenerator:
         "source_decompiled_text_token_loss": 0.25,
         "structural_text_reconstruction_loss": 0.50,
         "symbolic_validity_penalty": 0.0,
+        # Native UI structural/accessibility gaps require review even when the
+        # numerical reconstruction objective is otherwise small.
+        "ui_projection_loss": 0.0,
+        "ui_roundtrip_loss": 0.0,
+        "ui_accessibility_gap": 0.0,
         "tdfol_no_formula_loss": 0.0,
         "tdfol_parse_failure_ratio": 0.0,
         "text_reconstruction_loss": 0.0,

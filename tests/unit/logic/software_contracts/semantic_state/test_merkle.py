@@ -9,6 +9,100 @@ from typing import Any
 
 import pytest
 
+
+def test_link_fact_cache_preserves_exact_cold_merkle_blocks(monkeypatch):
+    """A local immutable-fact cache must not change a single producer byte."""
+    from ipfs_datasets_py.logic.software_contracts.semantic_state import merkle
+
+    caller = _make_symbol("pkg.mod.caller")
+    callee = _make_symbol("pkg.mod.callee")
+    artifact = ArtifactRecord("artifact:database", "external", "config/db.json")
+    edges = [_edge(caller, target, metadata={"occurrence": index})
+             for index in range(12)
+             for target in (callee.stable_id, caller.stable_id, artifact.artifact_id, "lexical:unknown")]
+    facts = compile_symbol_facts([caller, callee]).facts
+    artifacts = compile_artifact_facts([artifact]).facts
+    optimized = compile_semantic_links(edges, symbol_facts=facts, artifact_facts=artifacts)
+
+    def reference(edges, *, symbol_facts, artifact_facts=()):
+        symbols = {fact.stable_symbol_id: fact for fact in symbol_facts}
+        external = {fact.artifact_id: fact for fact in artifact_facts}
+        links, blocks, pairs = [], {}, []
+        for edge in sorted(edges, key=lambda row: row.edge_id):
+            source = symbols[edge.source_id]
+            kind, stable, version, fact = merkle._classify_target(edge.target_id, symbols, external)
+            link = SemanticLinkNode(edge_id=edge.edge_id, source_stable_id=source.stable_symbol_id,
+                source_version_cid=source.version_cid, source_fact_cid=source.fact_cid,
+                target_kind=kind, target_stable_id=stable, target_version_cid=version,
+                target_fact_cid=fact, relation=edge.relation, source_span=edge.span,
+                extraction_method=edge.extraction_method, confidence=edge.confidence,
+                extractor_version=edge.extractor_version, metadata=dict(edge.metadata))
+            cid, raw = merkle._record_block(link.identity_payload(), link.link_cid)
+            links.append(link)
+            pairs.append((link.edge_id, cid))
+            blocks[cid] = raw
+        index = SortedPairIndex(pairs=pairs)
+        cid, raw = merkle._record_block(index.identity_payload(), index.index_cid)
+        blocks[cid] = raw
+        return merkle.LinkCompileResult(tuple(links), index, blocks)
+
+    assert optimized == reference(edges, symbol_facts=facts, artifact_facts=artifacts)
+    cold = _build([caller, callee], artifacts=[artifact], edges=edges)
+    monkeypatch.setattr(merkle, "compile_semantic_links", reference)
+    assert _build([caller, callee], artifacts=[artifact], edges=edges) == cold
+
+
+def test_link_fact_cache_hashes_once_and_never_survives_new_compilation(monkeypatch):
+    from collections import Counter
+    from ipfs_datasets_py.logic.software_contracts.semantic_state.models import ArtifactFactNode
+
+    caller, callee = _make_symbol("pkg.mod.caller"), _make_symbol("pkg.mod.callee")
+    artifact = ArtifactRecord("artifact:database", "external", "config/db.json")
+    facts = compile_symbol_facts([caller, callee]).facts
+    artifacts = compile_artifact_facts([artifact]).facts
+    edges = [_edge(caller, target, metadata={"occurrence": index})
+             for index in range(20) for target in (caller.stable_id, callee.stable_id, artifact.artifact_id)]
+    counts = Counter()
+    symbol_getter, artifact_getter = SymbolFactNode.fact_cid.fget, ArtifactFactNode.fact_cid.fget
+
+    def symbol_cid(fact):
+        counts[fact.stable_symbol_id] += 1
+        return symbol_getter(fact)
+
+    def artifact_cid(fact):
+        counts[fact.artifact_id] += 1
+        return artifact_getter(fact)
+
+    monkeypatch.setattr(SymbolFactNode, "fact_cid", property(symbol_cid))
+    monkeypatch.setattr(ArtifactFactNode, "fact_cid", property(artifact_cid))
+    before = compile_semantic_links(edges, symbol_facts=facts, artifact_facts=artifacts)
+    assert counts == {caller.stable_id: 1, callee.stable_id: 1, artifact.artifact_id: 1}
+    changed = _mutate_symbol_semantics(callee)
+    new_facts = tuple(SymbolFactNode(symbol=changed) if row.stable_symbol_id == callee.stable_id else row for row in facts)
+    counts.clear()
+    after = compile_semantic_links(edges, symbol_facts=new_facts, artifact_facts=artifacts)
+    assert counts == {caller.stable_id: 1, callee.stable_id: 1, artifact.artifact_id: 1}
+    assert before.index.index_cid != after.index.index_cid
+
+
+def test_verification_hashes_node_inventory_once_for_all_edges(monkeypatch):
+    caller, callee = _make_symbol("pkg.mod.caller"), _make_symbol("pkg.mod.callee")
+    edges = [_edge(caller, callee.stable_id, metadata={"occurrence": index}) for index in range(80)]
+    dag = _build([caller, callee], edges=edges)
+    getter = SymbolMerkleNode.node_cid.fget
+    count = 0
+
+    def observed(node):
+        nonlocal count
+        count += 1
+        return getter(node)
+
+    monkeypatch.setattr(SymbolMerkleNode, "node_cid", property(observed))
+    assert verify_symbol_merkle_dag(dag) is dag
+    # Canonical block/round-trip/membership checks still rederive each identity;
+    # adding links must not rehash every immutable node for each link.
+    assert count <= 12 * len(dag.symbol_nodes)
+
 from ipfs_datasets_py.logic.software_contracts.content import (
     canonical_dag_json_bytes,
     cid_for_bytes,

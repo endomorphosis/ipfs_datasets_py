@@ -1,0 +1,32 @@
+{
+  "source": "Two cold processes evaluating the identical backup gate with the same five bridges and provers false.",
+  "only_differences": [
+    {
+      "path": "/views/deontic_norms.deontic_graph/payload/metadata/created_at",
+      "first": "2026-09-24T23:15:21.824931+00:00",
+      "second": "2026-09-24T23:15:21.530776+00:00"
+    },
+    {
+      "path": "/views/deontic_norms.deontic_graph/payload/metadata/last_updated",
+      "first": "2026-09-24T23:15:21.824962+00:00",
+      "second": "2026-09-24T23:15:21.530813+00:00"
+    }
+  ],
+  "interpretation": "Deontic graph wall timestamps are included in LegalIRDocument.canonical_hash. No evaluation-reuse code changes the document.",
+  "admitted": false,
+  "raw_documents": [
+    {
+      "path": "/tmp/legal-autoformal-speed/daemon-target-doc-1.json",
+      "size_bytes": 14530128,
+      "raw_sha256": "7b070551365bff0994a16b226dcac63004e44425437045dcbd4b2b3bc3d3d58e",
+      "timestamp_normalized_sha256": "d3e2e4640cb58572b537df65b3c6424b5d9cc469ad63f2ca20534aaa50514577"
+    },
+    {
+      "path": "/tmp/legal-autoformal-speed/daemon-target-doc-2.json",
+      "size_bytes": 14530128,
+      "raw_sha256": "89b970d1fa7b9b6c0de2adef19cfc1f9976a979053dc889856a09954467f58eb",
+      "timestamp_normalized_sha256": "d3e2e4640cb58572b537df65b3c6424b5d9cc469ad63f2ca20534aaa50514577"
+    }
+  ],
+  "timestamp_normalized_payloads_equal": true
+}

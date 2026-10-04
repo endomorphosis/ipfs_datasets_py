@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -74,9 +75,11 @@ from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import (
     DirtyTreeError,
     DirtyTreePolicy,
     DuckDBASTIngestor,
+    DuckDBIngestError,
     GitObjectIdentity,
     GitObjectIdentityError,
     IngestAction,
+    SourceShardCache,
     apply_dirty_tree_policy,
     build_duckdb_ast_ingestor,
     ingest_schema_descriptor,
@@ -87,6 +90,10 @@ from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import (
 )
 from ipfs_datasets_py.logic.software_contracts.python_frontend import (
     PythonASTExtractor,
+)
+from ipfs_datasets_py.logic.software_contracts.semantic_index.snapshot import (
+    RepositorySnapshot,
+    SnapshotEntry,
 )
 
 
@@ -407,7 +414,7 @@ def test_only_changed_files_are_reparsed() -> None:
     assert actions["pkg/b.py"] == IngestAction.REUSED.value
 
 
-def test_rename_reuses_source_cid_without_reparse() -> None:
+def test_rename_reparses_module_and_qualified_symbol_names() -> None:
     ingestor, frontend = _ingestor()
 
     first = ingestor.ingest_revision(
@@ -423,12 +430,13 @@ def test_rename_reuses_source_cid_without_reparse() -> None:
         identity=_identity(COMMIT_B, TREE_B),
         created_at=2.0,
     )
-    assert second.stats.reused_count == 1
-    assert second.stats.parsed_count == 0
+    assert second.stats.reused_count == 0
+    assert second.stats.parsed_count == 1
     assert second.stats.renamed_path_count == 1
-    assert frontend.parse_invocations == 0
+    assert frontend.parse_invocations == 1
     assert second.projection_for_path("pkg/new_name.py") is not None
     assert second.projection_for_path("pkg/old_name.py") is None
+    assert {row.qualified_name for row in second.symbols} == {"pkg.new_name.alpha"}
 
 
 def test_rebind_preserves_source_cid_without_parser() -> None:
@@ -440,17 +448,20 @@ def test_rebind_preserves_source_cid_without_parser() -> None:
     )
     rebound = rebind_ast_record(
         record,
-        path="b.py",
+        path="a.py",
         repository_id="repository:y",
         revision=COMMIT_B,
         repository_tree_cid=record.provenance.repository_tree_cid,
     )
     assert rebound.provenance.source_cid == record.provenance.source_cid
-    assert rebound.provenance.path == "b.py"
+    assert rebound.provenance.path == "a.py"
     assert rebound.provenance.revision == COMMIT_B
     assert rebound.symbols == record.symbols
     # Provenance is part of IR identity, so AST CID changes with rebind.
     assert rebound.cid != record.cid
+    with pytest.raises(DuckDBIngestError, match="path changes require reparsing"):
+        rebind_ast_record(record, path="b.py", repository_id="repository:y",
+                          revision=COMMIT_B, repository_tree_cid=None)
 
 
 # ---------------------------------------------------------------------------
@@ -592,3 +603,311 @@ def test_duplicate_revision_publish_is_idempotent() -> None:
     assert second is first or second.published is True
     # Second call must not reparse when returning the existing publication.
     assert frontend.parse_invocations == 1
+
+
+def _snapshot(sources, *, mode="filesystem", repository_id="repository:snapshot", opaque=()):
+    return RepositorySnapshot(
+        repository_id=repository_id,
+        entries=tuple(SnapshotEntry(path, "source", len(data), cid_for_bytes(data),
+                                   captured_bytes=data, disposition="filesystem")
+                      for path, data in sources.items()) + tuple(opaque),
+        mode=mode,
+        git_commit=COMMIT_A if mode in {"git-clean", "git-working"} else None,
+        git_tree=TREE_A if mode in {"git-clean", "git-working"} else None,
+    )
+
+
+def test_identical_bytes_at_distinct_paths_keep_distinct_modules():
+    ingestor, frontend = _ingestor()
+    publication = ingestor.ingest_revision(
+        sources={"pkg/a.py": SRC_ALPHA, "pkg/b.py": SRC_ALPHA},
+        identity=_identity(COMMIT_A, TREE_A),
+    )
+    assert frontend.parse_invocations == 2
+    assert {row.qualified_name for row in publication.symbols} == {"pkg.a.alpha", "pkg.b.alpha"}
+
+
+@pytest.mark.parametrize("change", ["frontend_version", "parser_version", "configuration"])
+def test_cache_separates_native_frontend_version_toolchain_and_configuration(monkeypatch, change):
+    from ipfs_datasets_py.logic.software_contracts import python_frontend
+    ingestor, frontend = _ingestor()
+    first = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_A, TREE_A))
+    if change == "frontend_version":
+        monkeypatch.setattr(python_frontend, "PYTHON_FRONTEND_VERSION", "1.2.999")
+    elif change == "parser_version":
+        frontend._frontend.feature_version = (3, 9)
+    else:
+        frontend._frontend.max_ast_nodes = 1
+    second = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_B, TREE_B))
+    assert frontend.parse_invocations == 2
+    assert second.stats.reused_count == 0
+    if change == "configuration":
+        assert second.stats.parse_failed_count == 1
+        assert not second.symbols
+    else:
+        assert second.projections[0].ast_cid != first.projections[0].ast_cid
+
+
+def test_custom_frontend_is_not_assumed_revision_independent():
+    class RevisionFrontend:
+        def __init__(self):
+            self.calls = 0
+        def extract_from_source(self, source, **options):
+            self.calls += 1
+            return PythonASTExtractor().extract_from_source(
+                source, module_name="revision_" + options["revision"], **options)
+    frontend = RevisionFrontend()
+    ingestor = DuckDBASTIngestor(frontends={"python": frontend})
+    first = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_A, TREE_A))
+    second = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_B, TREE_B))
+    assert frontend.calls == 2
+    assert first.symbols[0].qualified_name != second.symbols[0].qualified_name
+    assert second.stats.reused_count == 0
+
+
+def test_same_bytes_in_another_registered_language_do_not_reuse_python():
+    js = CountingFrontend(PythonASTExtractor())
+    ingestor = DuckDBASTIngestor(frontends={"python": PythonASTExtractor(), "javascript": js})
+    first = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_A, TREE_A))
+    second = ingestor.ingest_revision(sources={"b.js": SRC_ALPHA}, identity=_identity(COMMIT_B, TREE_B))
+    assert first.stats.parsed_count == second.stats.parsed_count == 1
+    assert js.parse_invocations == 1
+    assert second.stats.reused_count == 0
+    assert {row.qualified_name for row in second.symbols} == {"b.js.alpha"}
+
+
+@pytest.mark.parametrize("field", ["source_cid", "path", "revision", "repository_id", "repository_tree_cid"])
+def test_frontend_provenance_mismatch_fails_before_publication(field):
+    class WrongFrontend:
+        def extract_from_source(self, source, **options):
+            record = PythonASTExtractor().extract_from_source(source, **options)
+            wrong = {"source_cid": cid_for_bytes(b"wrong"), "path": "wrong.py",
+                     "revision": "wrong", "repository_id": "repository:wrong",
+                     "repository_tree_cid": cid_for_bytes(b"wrong tree")}
+            return replace(record, provenance=replace(record.provenance, **{field: wrong[field]}))
+    ingestor = DuckDBASTIngestor(frontends={"python": WrongFrontend()})
+    with pytest.raises(DuckDBIngestError, match="provenance inconsistent"):
+        ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=_identity(COMMIT_A, TREE_A))
+    assert ingestor.list_publications() == ()
+    assert len(ingestor.shard_cache) == 0
+
+
+def test_source_only_cache_calls_cannot_mint_contextual_hits():
+    cache = SourceShardCache()
+    record = PythonASTExtractor().extract_from_source(SRC_ALPHA)
+    cache.put(record)
+    assert cache.get(record.provenance.source_cid) is None
+    assert len(cache) == 0
+
+
+def test_cache_payload_and_context_are_reverified():
+    from ipfs_datasets_py.logic.software_contracts.duckdb_ingest import _frontend_cache_context
+    extractor = PythonASTExtractor()
+    context = _frontend_cache_context(extractor, language="python", path="a.py")
+    record = extractor.extract_from_source(SRC_ALPHA, path="a.py")
+    cache = SourceShardCache()
+    cache.put(record, context=context)
+    assert cache.get(record.provenance.source_cid, context=context) == record
+    assert cache.get(record.provenance.source_cid, context=replace(context, ast_schema="other-schema")) is None
+    with pytest.raises(DuckDBIngestError, match="extraction context"):
+        cache.put(record, context=replace(context, path="b.py"))
+    key = (record.provenance.source_cid, context.cid)
+    other = extractor.extract_from_source(SRC_BETA, path="a.py")
+    cache._entries[key] = (record.cid, other.canonical_bytes)
+    with pytest.raises(DuckDBIngestError, match="payload identity"):
+        cache.get(record.provenance.source_cid, context=context)
+
+
+@pytest.mark.parametrize("mode", ["filesystem", "git-unborn", "git-clean", "git-working"])
+def test_ingest_captured_snapshot_modes_and_idempotence(mode):
+    ingestor, frontend = _ingestor()
+    snapshot = _snapshot({"pkg/a.py": SRC_ALPHA}, mode=mode)
+    first = ingestor.ingest_snapshot(snapshot, created_at=1)
+    again = ingestor.ingest_snapshot(snapshot, created_at=2)
+    assert again is first
+    assert first.identity.snapshot_cid == snapshot.snapshot_cid
+    assert first.revision == "snapshot:" + snapshot.snapshot_cid
+    assert first.repository_tree_cid == snapshot.snapshot_cid
+    assert first.identity.snapshot.to_dict() == snapshot.to_dict()
+    assert first.repository_id == snapshot.repository_id
+    assert frontend.parse_invocations == 1
+    assert first.stats.published_file_count == 1
+    assert first.identity.snapshot.entries[0].captured_bytes is None
+
+
+def test_dirty_changes_at_same_head_get_distinct_snapshot_revisions():
+    ingestor, frontend = _ingestor()
+    first = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA, "b.py": SRC_BETA}, mode="git-working"))
+    second = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_GAMMA, "b.py": SRC_BETA}, mode="git-working"))
+    assert first.identity.snapshot.git_commit == second.identity.snapshot.git_commit
+    assert first.revision_id != second.revision_id
+    assert first.repository_tree_cid != second.repository_tree_cid
+    assert second.stats.reused_count == 1
+    assert frontend.parse_invocations == 3
+    assert {row.name for row in second.symbols} == {"gamma", "beta"}
+
+
+def test_snapshot_manifest_only_or_changed_capture_is_rejected():
+    ingestor, _ = _ingestor()
+    snapshot = _snapshot({"a.py": SRC_ALPHA})
+    manifest_only = RepositorySnapshot.from_dict(snapshot.to_dict())
+    with pytest.raises(DuckDBIngestError, match="captured bytes do not verify"):
+        ingestor.ingest_snapshot(manifest_only)
+    object.__setattr__(snapshot.entries[0], "captured_bytes", SRC_BETA)
+    with pytest.raises(DuckDBIngestError, match="captured bytes do not verify"):
+        ingestor.ingest_snapshot(snapshot)
+    assert ingestor.list_publications() == ()
+
+
+def test_snapshot_opaque_inventory_remains_bound_and_skipped():
+    ingestor, _ = _ingestor()
+    opaque = SnapshotEntry("deleted.py", "opaque", None, opaque_reason="unstaged_deleted",
+                           acquisition="opaque", disposition="unstaged_deleted")
+    snapshot = _snapshot({"a.py": SRC_ALPHA}, opaque=(opaque,))
+    publication = ingestor.ingest_snapshot(snapshot)
+    assert publication.stats.scanned_path_count == 2
+    assert publication.stats.skipped_count == 1
+    assert publication.identity.snapshot.to_dict() == snapshot.to_dict()
+    assert any(row.path == "deleted.py" and row.detail == "unstaged_deleted" for row in publication.decisions)
+
+
+def test_checkpoint_aborts_before_atomic_snapshot_publication():
+    ingestor, frontend = _ingestor()
+    before = ingestor.store.stats()
+    def checkpoint():
+        if frontend.parse_invocations == 1:
+            raise TimeoutError("total deadline exceeded")
+    with pytest.raises(TimeoutError, match="total deadline"):
+        ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}), checkpoint=checkpoint)
+    assert ingestor.list_publications() == ()
+    assert ingestor.store.stats() == before
+
+
+def test_distinct_snapshot_repositories_do_not_invalidate_each_other():
+    ingestor, _ = _ingestor()
+    first = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}, repository_id="repository:first"))
+    second = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}, repository_id="repository:second"))
+    assert second.invalidations == ()
+    assert ingestor.get_publication(first.revision_id) is first
+
+
+def test_duplicate_git_revision_cannot_silently_rebind_different_bytes():
+    ingestor, _ = _ingestor()
+    identity = _identity(COMMIT_A, TREE_A)
+    first = ingestor.ingest_revision(sources={"a.py": SRC_ALPHA}, identity=identity)
+    with pytest.raises(DuckDBIngestError, match="already binds different"):
+        ingestor.ingest_revision(sources={"a.py": SRC_BETA}, identity=identity)
+    assert ingestor.get_publication(first.revision_id) is first
+
+
+def test_snapshot_restore_republishes_invalidated_projections():
+    ingestor, frontend = _ingestor()
+    snapshot_a = _snapshot({"a.py": SRC_ALPHA})
+    first = ingestor.ingest_snapshot(snapshot_a, created_at=1)
+    second = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_BETA}), created_at=2)
+    assert ingestor.store.get_by_ast_cid(first.projections[0].ast_cid) is None
+    restored = ingestor.ingest_snapshot(snapshot_a, created_at=3)
+    assert restored.revision_id == first.revision_id
+    assert restored is not first
+    assert restored.stats.reused_count == 1
+    assert frontend.parse_invocations == 2
+    assert ingestor.store.get_by_ast_cid(restored.projections[0].ast_cid) is not None
+    assert ingestor.store.get_by_ast_cid(second.projections[0].ast_cid) is None
+    assert ingestor.ingest_snapshot(snapshot_a, created_at=4) is restored
+
+
+def test_snapshot_restore_empty_revision_invalidates_current_contents():
+    ingestor, _ = _ingestor()
+    empty = _snapshot({})
+    first = ingestor.ingest_snapshot(empty, created_at=1)
+    second = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}), created_at=2)
+    restored = ingestor.ingest_snapshot(empty, created_at=3)
+    assert restored.revision_id == first.revision_id
+    assert restored.projections == ()
+    assert ingestor.store.get_by_ast_cid(second.projections[0].ast_cid) is None
+
+
+def test_snapshot_republishes_after_external_store_invalidation():
+    ingestor, _ = _ingestor()
+    snapshot = _snapshot({"a.py": SRC_ALPHA})
+    first = ingestor.ingest_snapshot(snapshot, created_at=1)
+    ingestor.store.invalidate(blob_id=first.projections[0].blob_id, reason="manual", created_at=2)
+    restored = ingestor.ingest_snapshot(snapshot, created_at=3)
+    assert ingestor.store.get_by_ast_cid(restored.projections[0].ast_cid) is not None
+
+
+def test_before_publish_failure_keeps_previous_complete_snapshot_active():
+    ingestor, _ = _ingestor()
+    first = ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}), created_at=1)
+    before_invalidations = ingestor.store.list_invalidations()
+    attempted = []
+    def refuse(publication):
+        assert publication.published is False
+        assert {row.name for row in publication.symbols} == {"beta"}
+        assert ingestor.store.get_by_ast_cid(first.projections[0].ast_cid) is not None
+        attempted.append(publication)
+        raise OSError("manifest sealing failed")
+    with pytest.raises(OSError, match="manifest sealing"):
+        ingestor.ingest_snapshot(_snapshot({"a.py": SRC_BETA}), created_at=2, before_publish=refuse)
+    assert len(attempted) == 1
+    assert ingestor.list_publications() == (first,)
+    assert ingestor.store.list_invalidations() == before_invalidations
+    assert ingestor.store.get_by_ast_cid(first.projections[0].ast_cid) is not None
+    assert ingestor.store.get_by_ast_cid(attempted[0].projections[0].ast_cid) is None
+
+
+def test_before_publish_runs_for_active_idempotent_snapshot():
+    ingestor, _ = _ingestor()
+    snapshot = _snapshot({"a.py": SRC_ALPHA})
+    prepared = []
+    first = ingestor.ingest_snapshot(snapshot, created_at=1, before_publish=prepared.append)
+    assert prepared[0].published is False
+    again = ingestor.ingest_snapshot(snapshot, created_at=2, before_publish=prepared.append)
+    assert again is first
+    assert prepared[1] is first
+
+
+def test_deadline_rechecked_after_artifact_sealing_before_sql_commit():
+    ingestor, _ = _ingestor()
+    sealed = []
+    def checkpoint():
+        if sealed:
+            raise TimeoutError("deadline expired during sealing")
+    with pytest.raises(TimeoutError, match="during sealing"):
+        ingestor.ingest_snapshot(_snapshot({"a.py": SRC_ALPHA}),
+                                 checkpoint=checkpoint, before_publish=sealed.append)
+    assert len(sealed) == 1
+    assert ingestor.list_publications() == ()
+    assert ingestor.store.get_by_ast_cid(sealed[0].projections[0].ast_cid) is None
+
+
+def test_owner_publisher_replaces_default_batch_and_runs_on_cached_retry():
+    ingestor, _ = _ingestor()
+    snapshot = _snapshot({"a.py": SRC_ALPHA})
+    published = []
+    def owner(publication):
+        published.append(publication)
+        ingestor.store.apply_batch(publication.projections, publication.invalidations)
+    first = ingestor.ingest_snapshot(snapshot, created_at=1, publish_batch=owner)
+    assert ingestor.store.stats()["puts"] == 1
+    again = ingestor.ingest_snapshot(snapshot, created_at=2, publish_batch=owner)
+    assert again is first
+    assert len(published) == 2
+    assert published[0].published is False and published[1].published is True
+    assert ingestor.store.stats()["puts"] == 2
+
+
+def test_owner_rejection_cannot_publish_or_bypass_cached_snapshot_checks():
+    ingestor, _ = _ingestor()
+    snapshot = _snapshot({"a.py": SRC_ALPHA})
+    def reject(publication):
+        raise ValueError("owner generation conflict")
+    with pytest.raises(ValueError, match="owner generation conflict"):
+        ingestor.ingest_snapshot(snapshot, publish_batch=reject)
+    assert ingestor.list_publications() == ()
+    assert ingestor.store.stats()["puts"] == 0
+    first = ingestor.ingest_snapshot(snapshot)
+    with pytest.raises(ValueError, match="owner generation conflict"):
+        ingestor.ingest_snapshot(snapshot, publish_batch=reject)
+    assert ingestor.list_publications() == (first,)
+    assert ingestor.store.stats()["puts"] == 1

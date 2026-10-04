@@ -48,12 +48,12 @@ from ipfs_datasets_py.logic.software_verification.vc import (
 # ---------------------------------------------------------------------------
 
 BUGGY_INCR = """\
-def incr(x):
+def incr(x: int) -> int:
     return x
 """
 
 FIXED_INCR = """\
-def incr(x):
+def incr(x: int) -> int:
     return x + 1
 """
 
@@ -131,7 +131,9 @@ def test_pipeline_exposes_source_to_verification_pipeline_interface() -> None:
 
 
 def test_contract_specs_attach_and_vc_generation_is_source_bound() -> None:
-    adapted = adapt_source_to_software_verification(FIXED_INCR, path="incr_fixed.py")
+    adapted = adapt_source_to_software_verification(
+        FIXED_INCR, path="incr_fixed.py", preserve_type_annotations=True,
+    )
     assert adapted.program is not None
     program, contracts = attach_contract_specs(adapted.program, _incr_contracts())
     assert len(contracts) == 1
@@ -413,7 +415,7 @@ def test_precondition_strengthens_postcondition_proof() -> None:
     """Under x >= 0, identity is a non-negative result."""
 
     source = """\
-def nonneg_id(x):
+def nonneg_id(x: int) -> int:
     return x
 """
     contracts = [

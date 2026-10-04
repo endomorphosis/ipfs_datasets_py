@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, ClassVar, Final
 
-from ipfs_datasets_py.logic.backends.cvc5.compiler import (
+from ipfs_datasets_py.logic.backends.cvc5 import (
     CVC5SoftwareVerificationBackend,
 )
 from ipfs_datasets_py.logic.backends.results import (
@@ -49,11 +49,24 @@ from ipfs_datasets_py.logic.backends.smt.differential import (
     SoftwareVerificationSmtOutcome,
     Z3_SV_BACKEND_ID,
 )
+from ipfs_datasets_py.logic.backends.smt.admitted_differential import (
+    _checkpoint,
+    _guard_backend,
+    _guard_compiler,
+)
+from ipfs_datasets_py.logic.backends.smt.operation_budget import (
+    ProofOperationCancelled,
+    ProofOperationInterrupted,
+    ProofOperationTimeout,
+    _Signals,
+    proof_operation_scope,
+    validate_operation_timeout_ms,
+)
 from ipfs_datasets_py.logic.backends.toolchain_roles import (
     ToolRole,
     ToolchainAuthorityCeiling,
 )
-from ipfs_datasets_py.logic.backends.z3.compiler import (
+from ipfs_datasets_py.logic.backends.z3 import (
     Z3SoftwareVerificationBackend,
 )
 from ipfs_datasets_py.logic.families.models import EvidenceAuthority
@@ -1775,9 +1788,10 @@ class SmtExecutionEngineV2:
 
     Interface owner: ``SMTProviderEvidence@2``.
 
-    Hermetic fixture runners are the default for deterministic CI.  Live
-    pinned solvers may be injected or constructed when available.  Mock and
-    fallback outputs are rejected as non-authoritative typed dispositions.
+    Default backends run admitted native solvers. ``hermetic_engine`` supplies
+    deterministic fixture runners; selecting ``hermetic_fixture`` mode alone
+    adds immediate replay without replacing native execution. Mock and fallback
+    outputs are rejected as non-authoritative typed dispositions.
     """
 
     INTERFACE: ClassVar[str] = SMT_PROVIDER_EVIDENCE_V2_INTERFACE
@@ -1792,10 +1806,15 @@ class SmtExecutionEngineV2:
         z3: SoftwareVerificationSmtBackend | None = None,
         cvc5: SoftwareVerificationSmtBackend | None = None,
         compiler: SoftwareVerificationSMTCompiler | None = None,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> None:
+        validate_operation_timeout_ms(operation_timeout_ms)
         self._compiler = compiler or SoftwareVerificationSMTCompiler()
         self._z3 = z3
         self._cvc5 = cvc5
+        self._operation_timeout_ms = operation_timeout_ms
+        self._operation_cancellation = cancellation
 
     @property
     def z3(self) -> SoftwareVerificationSmtBackend:
@@ -1812,14 +1831,40 @@ class SmtExecutionEngineV2:
     def execute(
         self,
         request: SmtExecutionRequestV2 | Mapping[str, Any],
+        *,
+        operation_timeout_ms: int | None = None,
+        cancellation=None,
     ) -> SmtExecutionResultV2:
-        """Execute one typed SMT/CHC obligation request."""
+        """Execute, including immediate replay, under one cooperative deadline.
 
-        req = (
-            request
-            if isinstance(request, SmtExecutionRequestV2)
-            else SmtExecutionRequestV2.from_dict(request)
+        The aggregate timeout defaults to the request bounds. Native phases
+        inherit its remaining time; Python work is checked at call boundaries.
+        Only bounds selection and control validation precede the scope. Request
+        normalization, compilation, peers and final evidence stay inside it.
+        Interruption raises a typed failure without returning partial evidence.
+        """
+
+        bounds = request.bounds if isinstance(request, SmtExecutionRequestV2) else _coerce_bounds(
+            _require_mapping(request, "SmtExecutionRequestV2").get("bounds")
         )
+        timeout, signal = self._operation_settings(bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            req = (
+                request
+                if isinstance(request, SmtExecutionRequestV2)
+                else SmtExecutionRequestV2.from_dict(request)
+            )
+            _checkpoint("after SMT request normalization")
+            return self._execute_request(req)
+
+    def _operation_settings(self, bounds, operation_timeout_ms, cancellation):
+        validate_operation_timeout_ms(operation_timeout_ms)
+        timeout = self._operation_timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        if timeout is None:
+            timeout = bounds.timeout_ms
+        return timeout, _Signals(self._operation_cancellation, cancellation)
+
+    def _execute_request(self, req: SmtExecutionRequestV2) -> SmtExecutionResultV2:
         request_digest = _digest_of(req.to_dict())
         obligation_digest = req.obligation_digest
         query_mode = req.query_mode
@@ -1964,11 +2009,18 @@ class SmtExecutionEngineV2:
             backend=backend,
         )
 
-    def replay(self, result: SmtExecutionResultV2) -> SmtReplayReceiptV2:
-        """Re-execute the same obligation and compare dispositions/verdicts."""
+    def replay(self, result: SmtExecutionResultV2, *,
+               operation_timeout_ms: int | None = None, cancellation=None) -> SmtReplayReceiptV2:
+        """Re-execute and build the replay receipt under one operation budget."""
 
         if not isinstance(result, SmtExecutionResultV2):
             raise SmtExecutionError("replay requires SmtExecutionResultV2")
+        timeout, signal = self._operation_settings(result.request.bounds, operation_timeout_ms, cancellation)
+        with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+            return self._replay_result(result, operation_timeout_ms=timeout)
+
+    def _replay_result(self, result: SmtExecutionResultV2, *,
+                       operation_timeout_ms: int) -> SmtReplayReceiptV2:
         if result.disposition in {
             SmtDisposition.MOCK_REJECTED,
             SmtDisposition.FALLBACK_REJECTED,
@@ -1979,7 +2031,7 @@ class SmtExecutionEngineV2:
                 "non-executable dispositions cannot be replayed as success"
             )
         # Force re-execution without mock/fallback.
-        fresh = self.execute(
+        fresh = _execute_in_operation(self,
             SmtExecutionRequestV2(
                 request_id=result.request.request_id,
                 obligation=result.request.obligation,
@@ -1990,7 +2042,7 @@ class SmtExecutionEngineV2:
                 request_proof=result.request.request_proof,
                 available=result.request.available,
                 confidence=result.request.confidence,
-            )
+            ), operation_timeout_ms=operation_timeout_ms,
         )
         original = result.evidence
         replayed = fresh.evidence
@@ -2033,14 +2085,15 @@ class SmtExecutionEngineV2:
         self,
         obligation: SmtObligation | Mapping[str, Any] | SmtCompilation,
     ) -> SmtCompilation:
+        _checkpoint("before SMT compilation")
         if isinstance(obligation, SmtCompilation):
             return obligation
         if isinstance(obligation, SmtObligation):
-            return self._compiler.compile(obligation)
+            return _guard_compiler(self._compiler).compile(obligation)
         # Mapping may carry request_proof which is not a compiler field.
         payload = dict(obligation)
         payload.pop("request_proof", None)
-        return self._compiler.compile(payload)
+        return _guard_compiler(self._compiler).compile(payload)
 
     def _execute_single(
         self,
@@ -2053,7 +2106,7 @@ class SmtExecutionEngineV2:
         bounds: ExecutionBounds,
         backend: SoftwareVerificationSmtBackend,
     ) -> SmtExecutionResultV2:
-        outcome = backend.run_compilation(compilation, bounds=bounds)
+        outcome = self._run_compilation(backend, compilation, bounds=bounds)
         disposition = _verdict_to_disposition(
             query_mode=compilation.query_mode, verdict=outcome.verdict
         )
@@ -2069,6 +2122,14 @@ class SmtExecutionEngineV2:
             differential_report=None,
         )
 
+    def _run_compilation(self, backend, compilation, *, bounds):
+        # Single-provider callers have historically been allowed to inject a
+        # compatible object without subclassing SoftwareVerificationSmtBackend.
+        _checkpoint("before SMT backend execution")
+        outcome = backend.run_compilation(compilation, bounds=bounds)
+        _checkpoint("after SMT backend execution")
+        return outcome
+
     def _execute_differential(
         self,
         req: SmtExecutionRequestV2,
@@ -2080,8 +2141,8 @@ class SmtExecutionEngineV2:
         bounds: ExecutionBounds,
     ) -> SmtExecutionResultV2:
         verifier = SmtDifferentialVerifier(
-            left=self.z3,
-            right=self.cvc5,
+            left=_guard_backend(self.z3),
+            right=_guard_backend(self.cvc5),
             compiler=self._compiler,
         )
         report = verifier.verify(compilation, bounds=bounds)
@@ -2318,6 +2379,7 @@ class SmtExecutionEngineV2:
         mode: SmtExecutionMode,
         bounds: ExecutionBounds,
     ) -> SmtReplayReceiptV2:
+        _checkpoint("before immediate SMT replay")
         # Re-run the primary backend on the same compilation (deterministic
         # hermetic runners yield identical verdicts).
         provider = req.provider  # type: ignore[assignment]
@@ -2327,7 +2389,7 @@ class SmtExecutionEngineV2:
             backend = self.z3
         else:
             backend = self.z3
-        replayed_outcome = backend.run_compilation(compilation, bounds=bounds)
+        replayed_outcome = self._run_compilation(backend, compilation, bounds=bounds)
         replayed_disposition = _verdict_to_disposition(
             query_mode=compilation.query_mode,
             verdict=replayed_outcome.verdict,
@@ -2417,6 +2479,22 @@ class SmtExecutionEngineV2:
 # ---------------------------------------------------------------------------
 
 
+def _execute_in_operation(engine, request, *, operation_timeout_ms):
+    """Keep legacy injected execute(request) callbacks under the outer scope."""
+    _checkpoint("before SMT engine execution")
+    execute = engine.execute
+    if getattr(execute, "__func__", None) is SmtExecutionEngineV2.execute:
+        # Preserve an explicit aggregate override through nested helper/replay
+        # scopes, without changing the bounds recorded in the request.
+        result = execute(request, operation_timeout_ms=operation_timeout_ms)
+    else:
+        # Explicit caller engines retain their signature and lifecycle. Their
+        # Python execution is cooperative; never retry a callback on TypeError.
+        result = execute(request)
+    _checkpoint("after SMT engine execution")
+    return result
+
+
 def execute_smt(
     obligation: SmtObligation | Mapping[str, Any] | SmtCompilation,
     *,
@@ -2424,18 +2502,33 @@ def execute_smt(
     provider: SmtProviderKind | str = SmtProviderKind.DIFFERENTIAL,
     mode: SmtExecutionMode | str = SmtExecutionMode.HERMETIC_FIXTURE,
     engine: SmtExecutionEngineV2 | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
     **kwargs: Any,
 ) -> SmtExecutionResultV2:
-    """Execute one obligation through SMTProviderEvidence@2."""
+    """Normalize and execute one obligation under an aggregate operation scope.
 
-    request = SmtExecutionRequestV2(
-        request_id=request_id,
-        obligation=obligation,
-        provider=provider,
-        mode=mode,
-        **kwargs,
-    )
-    return (engine or SmtExecutionEngineV2()).execute(request)
+    Pure engine construction and bounds/control selection precede the scope.
+    Explicit caller engines keep their execute(request) signature and are
+    checked before and after it; their Python callbacks cannot be preempted.
+    """
+    validate_operation_timeout_ms(operation_timeout_ms)
+    engine = engine or SmtExecutionEngineV2()
+    bounds = _coerce_bounds(kwargs.get("bounds"))
+    if isinstance(engine, SmtExecutionEngineV2):
+        timeout, signal = engine._operation_settings(bounds, operation_timeout_ms, cancellation)
+    else:
+        timeout = bounds.timeout_ms if operation_timeout_ms is None else operation_timeout_ms
+        signal = cancellation
+    with proof_operation_scope(timeout_ms=timeout, cancellation=signal):
+        request = SmtExecutionRequestV2(
+            request_id=request_id,
+            obligation=obligation,
+            provider=provider,
+            mode=mode,
+            **kwargs,
+        )
+        return _execute_in_operation(engine, request, operation_timeout_ms=timeout)
 
 
 def execute_z3(
@@ -2468,6 +2561,8 @@ def hermetic_engine(
     z3_kwargs: Mapping[str, Any] | None = None,
     cvc5_kwargs: Mapping[str, Any] | None = None,
     compiler: SoftwareVerificationSMTCompiler | None = None,
+    operation_timeout_ms: int | None = None,
+    cancellation=None,
 ) -> SmtExecutionEngineV2:
     """Build an engine with injectable hermetic solver runners (CI-safe)."""
 
@@ -2489,10 +2584,15 @@ def hermetic_engine(
             compiler=compiler,
         ),
         compiler=compiler,
+        operation_timeout_ms=operation_timeout_ms,
+        cancellation=cancellation,
     )
 
 
 __all__ = [
+    "ProofOperationCancelled",
+    "ProofOperationInterrupted",
+    "ProofOperationTimeout",
     "SMT_ARTIFACT_BINDING_V2_INTERFACE",
     "SMT_DIFFERENTIAL_BINDING_V2_INTERFACE",
     "SMT_EXECUTION_REQUEST_V2_INTERFACE",

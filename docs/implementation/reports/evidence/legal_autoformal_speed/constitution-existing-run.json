@@ -1,0 +1,1706 @@
+{
+  "admitted": false,
+  "bridge": {
+    "batch_size": 16,
+    "batches": 15,
+    "bridge_names": [
+      "modal_frame_logic",
+      "deontic_norms",
+      "fol_tdfol",
+      "cec_dcec",
+      "external_prover_router"
+    ],
+    "legal_ir_losses_sum": {
+      "legal_ir_multiview_acceptance_loss": 0.3,
+      "legal_ir_multiview_cosine_loss": 1.5485391704166764,
+      "legal_ir_multiview_cross_entropy_loss": 3.741399350485346,
+      "legal_ir_multiview_frame_logic_missing_loss": 0.0,
+      "legal_ir_multiview_graph_failure_penalty": 0.3000000000000001,
+      "legal_ir_multiview_proof_failure_ratio": 0.3000000000000001,
+      "legal_ir_multiview_reconstruction_loss": 0.6121347991841336,
+      "legal_ir_multiview_text_reconstruction_loss": 0.3000000000000001,
+      "legal_ir_multiview_total_loss": 10.728829849244864,
+      "legal_ir_multiview_view_coverage_loss": 0.25,
+      "legal_ir_view_cross_entropy_excess_loss": 0.4218617063408873,
+      "legal_ir_view_cross_entropy_loss": 26.602909703229887,
+      "legal_ir_view_entropy_loss": 26.181047996889003,
+      "legal_ir_view_family_cec_cosine_gap_loss": 0.004539190522514676,
+      "legal_ir_view_family_cec_cross_entropy_excess_loss": 0.014667767189676712,
+      "legal_ir_view_family_cec_cross_entropy_loss": 7.122509847060212,
+      "legal_ir_view_family_cosine_gap_loss": 0.39691347179855074,
+      "legal_ir_view_family_cross_entropy_excess_loss": 0.42186170634088654,
+      "legal_ir_view_family_cross_entropy_loss": 26.602909703229887,
+      "legal_ir_view_family_deontic_cosine_gap_loss": 0.07646146749283604,
+      "legal_ir_view_family_deontic_cross_entropy_excess_loss": 0.2038777248124818,
+      "legal_ir_view_family_deontic_cross_entropy_loss": 8.232129403560428,
+      "legal_ir_view_family_entropy_loss": 26.181047996889003,
+      "legal_ir_view_family_external_provers_cosine_gap_loss": 0.029634757044289316,
+      "legal_ir_view_family_external_provers_cross_entropy_excess_loss": 0.12968086004993515,
+      "legal_ir_view_family_external_provers_cross_entropy_loss": 5.707566334050378,
+      "legal_ir_view_family_frame_logic_cosine_gap_loss": 0.0016326377909375996,
+      "legal_ir_view_family_frame_logic_cross_entropy_excess_loss": 0.004535964532138587,
+      "legal_ir_view_family_frame_logic_cross_entropy_loss": 6.943967881919856,
+      "legal_ir_view_family_kg_cosine_gap_loss": 0.03428997469393099,
+      "legal_ir_view_family_kg_cross_entropy_excess_loss": 0.1477479532730386,
+      "legal_ir_view_family_kg_cross_entropy_loss": 5.709335441581975,
+      "legal_ir_view_family_prover_cosine_gap_loss": 0.029634757044289316,
+      "legal_ir_view_family_prover_cross_entropy_excess_loss": 0.12968086004993515,
+      "legal_ir_view_family_prover_cross_entropy_loss": 5.707566334050378,
+      "legal_ir_view_family_tdfol_cosine_gap_loss": 0.006036257154762529,
+      "legal_ir_view_family_tdfol_cross_entropy_excess_loss": 0.019896499108963368,
+      "legal_ir_view_family_tdfol_cross_entropy_loss": 7.211637750105104,
+      "source_decompiled_text_embedding_cosine_loss": 1.5485391704166764,
+      "source_decompiled_text_token_loss": 2.4197286375
+    },
+    "legal_ir_target_count": 231,
+    "sample_count": 231,
+    "state_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues/legal-ir-daemon-restart12-20260608T075001Z-best-8h-autoencoder.state.json"
+  },
+  "census_error": "",
+  "census_stopped": false,
+  "facet_counts": {
+    "cross_reference": 2,
+    "no_parser_elements": 28,
+    "other": 110,
+    "penalty": 6,
+    "procedure": 10,
+    "qualification_swallowed": 3,
+    "repeal_or_amend": 1,
+    "structure": 6
+  },
+  "formalized": false,
+  "optimizer_step": false,
+  "roundtrip_ok_count": 0,
+  "source": "/home/barberb/lift_coding/JevOps/.improve-watch/us-constitution/constitution.txt",
+  "spans": [
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "preamble.span-1",
+      "reason": "preamble",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "art-1.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "qualification_swallowed",
+      "id": "art-1.sec-2.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-6",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-2.span-7",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "qualification_swallowed",
+      "id": "art-1.sec-3.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-6",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-7",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-8",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-3.span-9",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "art-1.sec-3.span-10",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "art-1.sec-4.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-4.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-5.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 7 unsupported semantic issue(s) affect 4 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "art-1.sec-5.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-5.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-5.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-6.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-6.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-6.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 7 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-7.span-6",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 6 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "art-1.sec-8.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 21 unsupported semantic issue(s) affect 6 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-6",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-7",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-9.span-8",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-10.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-10.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 9 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-1.sec-10.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "art-2.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-6",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "art-2.sec-1.span-7",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-8",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-9",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-10",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "qualification_swallowed",
+      "id": "art-2.sec-1.span-11",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "art-2.sec-1.span-12",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-13",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-1.span-14",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 6 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "art-2.sec-2.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 5 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-2.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-2.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 12 unsupported semantic issue(s) affect 5 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "art-2.sec-4.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "art-3.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "art-3.sec-1.span-2",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-3.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-3.sec-2.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-3.sec-2.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "art-3.sec-2.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "art-3.sec-3.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-3.sec-3.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "art-3.sec-3.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-1.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-2.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-2.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-3.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-4.sec-4.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 8 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-5.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 9 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "art-6.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-6.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "art-6.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "art-7.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-26.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-1",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-2",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-3",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-4",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-5",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-6",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-7",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-8",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-9",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-10",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-11",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-12",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-13",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-14",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-15",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "signature.span-16",
+      "reason": "signature",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-2.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-4.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-5.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 6 unsupported semantic issue(s) affect 4 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-6.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-7.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "amend-8.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-9.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-10.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-10.span-2",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-38.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-38.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-11.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-40.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-11.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-42.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-42.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-12.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-44.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-12.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 6 unsupported semantic issue(s) affect 4 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "amend-12.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-12.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 4 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "structure",
+      "id": "amend-12.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-12.span-5",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-12.span-6",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-46.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-46.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-13.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-48.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "penalty",
+      "id": "amend-13.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-13.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-51.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-51.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-14.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-53.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-14.sec-1.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-1.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-2.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-3.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-14.sec-4.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-4.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-14.sec-5.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-14.sec-5.span-2",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-59.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-59.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-15.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-15.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-62.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-62.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-16.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-64.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-16.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-66.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-66.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-17.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-68.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-17.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-17.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-17.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 5 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-17.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-70.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-70.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-70.span-3",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "amend-18.sec-1.span-1",
+      "reason": "repealed",
+      "status": "inactive"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "amend-18.sec-2.span-1",
+      "reason": "repealed",
+      "status": "inactive"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "amend-18.sec-3.span-1",
+      "reason": "repealed",
+      "status": "inactive"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-74.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-74.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-19.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-19.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-76.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-76.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-20.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-78.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-78.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-20.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-20.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-20.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-20.sec-3.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-20.sec-4.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-20.sec-5.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-20.sec-6.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-85.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-85.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "repeal_or_amend",
+      "id": "amend-21.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-21.sec-2.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "cross_reference",
+      "id": "amend-21.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-89.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-89.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-22.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-22.sec-1.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 5 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-22.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-92.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-92.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "cross_reference",
+      "id": "amend-23.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 5 unsupported semantic issue(s) affect 3 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-23.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-95.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-95.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-24.sec-1.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-24.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-98.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-98.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-25.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-100.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-25.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-25.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-25.sec-3.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-25.sec-4.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "procedure",
+      "id": "amend-25.sec-4.span-2",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 3 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-25.sec-4.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-25.sec-4.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 6 unsupported semantic issue(s) affect 2 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-105.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-105.span-2",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-26.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-107.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-26.sec-1.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-26.sec-2.span-1",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 2 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-27.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-27.span-2",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-27.span-3",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "other",
+      "id": "amend-27.span-4",
+      "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS 1 unsupported semantic issue(s) affect 1 typed deontic record(s); the compiler abstained.",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-27.span-5",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": "no_parser_elements",
+      "id": "amend-27.span-1",
+      "reason": "no_parser_elements",
+      "status": "gap"
+    },
+    {
+      "decompiled": "",
+      "facet": null,
+      "id": "note-112.span-1",
+      "reason": "note",
+      "status": "non_operative"
+    }
+  ],
+  "summary": {
+    "admitted": false,
+    "compiled_count": 0,
+    "formalized": false,
+    "roundtrip_ok_count": 0,
+    "span_count": 231,
+    "status_counts": {
+      "gap": 166,
+      "inactive": 3,
+      "non_operative": 62
+    }
+  }
+}

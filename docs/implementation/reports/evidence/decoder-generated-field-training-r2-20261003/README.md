@@ -1,0 +1,13 @@
+# Generated scalar-field training and cadence comparison
+
+This experiment tests whether supervising errors at generated scalar positions improves reconstruction, and whether sharing or reducing auxiliary work controls its cost. Pooled final exact results are boundary-first-last: 83/288, generated-fields: 81/288, generated-fields-every2: 83/288. These totals reuse the same 48 exposed development paragraphs across six width/seed combinations; they are not 288 independent examples. Selected epoch distribution: epoch 0: 18 fits. Numerical improvements do not override any original acceptance condition.
+
+The new objective covers actor, action, modality and object on actual source-only generated prefixes. Boundary and scalar losses share one source-only rollout and one accepted replay graph. A failed bulk replay can cause an explicitly recorded causal retry; its work is counted. The every-second-update arm explicitly reduces both auxiliary exposures without changing ordinary update counts. No checkpoint is automatically promoted.
+
+Input provenance differs by width: the 8D sidecar uses nonsemantic linguistic-feature-hash vectors; the 384D and 768D sidecars use authenticated cached semantic embeddings. These experiments do not execute or retrain the historical 8D linguistic teacher.
+
+Measurement scope: 18 fresh CPU fits, widths 8/384/768, two seeds, 48 training and 48 repeatedly exposed development paragraphs. Context 512, output limit 512, temperature 0, one worker, bridge names `[]`, provers disabled and metric disk cache disabled. Source representations are authenticated cached embeddings. No cold compiler/bridge-on timing, encoder execution, weights download, fresh-holdout claim, global convergence proof, native-family qualification or Lake admission is made. The Constitution remains unformalized.
+
+The detailed developer guide is `docs/autoencoders/decoder_length_distillation.md`, section “Generated scalar-field training and rollout cadence (2026-10-03)”. `results.json` provides the recipe, all final/selected quality summaries and per-fit times. `manifest.json` binds the exact source, evidence and immutable predecessor references.
+
+Concatenate `archive_parts` in manifest order after checking every part’s hash and size, then verify the logical archive digest before extraction. The complete logical archive is split to keep each Git blob below 48 MB. All 18 raw reports, 54 typed states and 324 control panels are retained; old checkpoint bytes are protected external artifacts and are not bundled. The archive is not standalone: resolve its declared predecessor archives and environment dependencies before reproducing it. No model execution is needed to inspect reports or run saved-data arithmetic audits.

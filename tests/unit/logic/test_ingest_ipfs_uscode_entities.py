@@ -231,6 +231,8 @@ def test_main_defaults_are_offline_without_claim_release(ingest, cache_type, tmp
     assert report["admitted"] is report["formalized"] is False
     assert report["hf"]["uploaded"] is report["hf"]["remote_verified"] is False
     assert report["poll"]["poll_performed"] is False
+    assert report["stitch"]["performed"] is False
+    assert report["stitch"]["uploaded"] is False
     output = Path(report["hf"]["local_path"])
     assert output.name == "entity-resume-checkpoint-v2.parquet"
     assert output.parent.name == report["enqueued"]["input_id"][7:]
@@ -401,3 +403,332 @@ def test_oversized_remote_checkpoint_rejected_before_download(ingest, cache, tmp
         result = ingest._poll(cache, inputs)
         assert result == {"changed": False, "error": "EntityIngestError", "admitted": False, "formalized": False}
         assert _queue_count(cache) == 0 and cache.checkpoint()["next_ordinal"] == 0
+
+
+def _logic_index(path: Path) -> Path:
+    rows = [
+        {"record_kind": "node", "node_type": "section", "label": "9", "legal_id": "usc:us:1:9",
+         "node_id": "node-9", "node_cid": "", "edge_type": "", "src": "", "dst": ""},
+        {"record_kind": "edge", "node_type": "", "label": "", "legal_id": "", "node_id": "",
+         "node_cid": "", "edge_type": "CITES", "src": "usc:us:1:1", "dst": "node-9"},
+        {"record_kind": "edge", "node_type": "", "label": "", "legal_id": "", "node_id": "",
+         "node_cid": "", "edge_type": "CITES", "src": "usc:us:1:9", "dst": "usc:us:1:8"},
+        {"record_kind": "edge", "node_type": "", "label": "", "legal_id": "", "node_id": "",
+         "node_cid": "", "edge_type": "CITES", "src": "usc:us:1:8", "dst": "usc:us:9:9"},
+        {"record_kind": "edge", "node_type": "", "label": "", "legal_id": "", "node_id": "",
+         "node_cid": "", "edge_type": "CITES_UNRESOLVED", "src": "usc:us:1:1", "dst": ""},
+        {"record_kind": "edge", "node_type": "", "label": "", "legal_id": "", "node_id": "",
+         "node_cid": "", "edge_type": "HAS_SOURCE", "src": "usc:us:1:1", "dst": "pkg:1"},
+    ]
+    pq.write_table(pa.Table.from_pylist(rows), path)
+    return path
+
+
+def _publish_script():
+    path = Path(__file__).resolve().parents[3] / "scripts/ops/legal_ir/publish_kg_meta_ontology.py"
+    spec = importlib.util.spec_from_file_location("_kg_publish_read", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _sealed_spans(directory: Path) -> Path:
+    from ipfs_datasets_py.huggingface.autoformal_span_cache import build_span_cache_package
+    from ipfs_datasets_py.logic.autoformal.span_cache import terms_from_rule
+
+    rule = {"modality": "obligation", "actor": "Agency", "action": "make", "object": "records"}
+    decompiled = "Agency must make records available."
+    build_span_cache_package(
+        [
+            {
+                "decompiled": decompiled,
+                "legal_id": "usc:us:1:1",
+                "rule": rule,
+                "source_sha256": "abc",
+                "source_span_id": "span-sealed",
+                "source_text": "Each agency shall make records available.",
+                "status": "sealed",
+                "term_rows": terms_from_rule(rule, decompiled=decompiled),
+            },
+            {
+                "legal_id": "usc:us:1:1",
+                "source_span_id": "span-gap",
+                "source_text": "A gap remains.",
+                "status": "gap",
+            },
+            {
+                "legal_id": "usc:us:2:2",
+                "source_span_id": "span-pending",
+                "source_text": "Still pending.",
+                "status": "pending",
+            },
+        ],
+        directory,
+    )
+    return directory / "sealed-spans.parquet"
+
+
+@pytest.mark.parametrize("name", [
+    "kg-logic-index.parquet",
+    "kg-meta-ontology.parquet",
+    "meta-ontology.parquet",
+    "entity-resume-checkpoint-v2.parquet",
+    "resume-checkpoint.parquet",
+    "sealed-spans.parquet",
+])
+def test_stitch_writer_refuses_protected_names(ingest, tmp_path, name):
+    with pytest.raises(ingest.EntityIngestError, match="refusing to replace"):
+        ingest._write_stitch_parquet(tmp_path, name, [], None)
+
+
+def test_publish_script_reads_cites_without_upload(tmp_path, capsys):
+    publish = _publish_script()
+    assert publish.main([]) == 2
+    assert "refusing to upload autoformal/uscode/kg-meta-ontology.parquet" in capsys.readouterr().out
+    assert publish.main(["--logic-index", str(tmp_path / "other.parquet")]) == 2
+    capsys.readouterr()
+    logic = _logic_index(tmp_path / "kg-logic-index.parquet")
+    assert publish.main(["--logic-index", str(logic)]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report == {"admitted": False, "cites": 4, "formalized": False, "uploaded": False}
+    cites = publish.read_graph_cites(pq.read_table(logic))
+    assert {"source_legal_id": "usc:us:1:1", "target_legal_id": "usc:us:1:9", "unresolved": False} in cites
+    assert {item["target_legal_id"] for item in cites if not item["unresolved"]} == {
+        "usc:us:1:8", "usc:us:1:9", "usc:us:9:9"}
+    assert all(item["target_legal_id"] != "pkg:1" for item in cites)
+    assert any(item["unresolved"] is True and item["source_legal_id"] == "usc:us:1:1" for item in cites)
+
+
+def test_stitch_stage_joins_sealed_spans_without_replacing_the_logic_index(
+    ingest, cache_type, tmp_path, monkeypatch, capsys,
+):
+    from ipfs_datasets_py.logic.autoformal.lean_units import term_fingerprint
+
+    entities, relationships = _files(tmp_path)
+    spans = _sealed_spans(tmp_path / "span-pkg")
+    logic = _logic_index(tmp_path / "kg-logic-index.parquet")
+    source_bytes = logic.read_bytes()
+    stitch_dir = tmp_path / "stitch"
+    placed = stitch_dir / "autoformal" / "uscode" / "kg-logic-index.parquet"
+    placed.parent.mkdir(parents=True)
+    placed.write_bytes(source_bytes)
+    calls = []
+
+    def publish(paths, *, fingerprint):
+        calls.append(fingerprint)
+        return {"uploaded": True, "fingerprint": fingerprint, "revision": "c" * 40}
+
+    monkeypatch.setattr(ingest, "_cache_type", lambda: cache_type)
+    monkeypatch.setattr(ingest, "_publish_stitch_files", publish)
+    monkeypatch.setattr(cache_type, "claim_batch", lambda *args, **kwargs: pytest.fail("stitch claimed entities"))
+    monkeypatch.setattr(cache_type, "release_stale_claims", lambda *args, **kwargs: pytest.fail("stitch released claims"))
+    args = [
+        "--parquet", str(entities), "--relationships", str(relationships),
+        "--cache", str(tmp_path / "stitch.duckdb"), "--batch", "2",
+        "--stitch", "--spans", str(spans), "--logic-index", str(logic),
+        "--stitch-dir", str(stitch_dir), "--stitch-upload",
+    ]
+    assert ingest.main(args) == 0
+    assert ingest.main(args) == 0
+    reports = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
+    assert len(reports) == 2
+    assert reports[0]["stage"] == "entities_prepared"
+    assert reports[0]["stitch"]["performed"] is True
+    assert reports[0]["stitch"]["uploaded"] is True
+    assert reports[0]["stitch"]["admitted"] is reports[0]["stitch"]["formalized"] is False
+    assert reports[0]["hf"]["uploaded"] is False
+    assert reports[1]["stitch"]["skipped"] is True
+    assert reports[1]["stitch"]["uploaded"] is False
+    assert reports[1]["stitch"]["fingerprint"] == reports[0]["stitch"]["fingerprint"]
+    assert calls == [reports[0]["stitch"]["fingerprint"]]
+    output = stitch_dir / "autoformal" / "uscode"
+    assert sorted(path.name for path in output.iterdir()) == sorted([*ingest.STITCH_FILES, "kg-logic-index.parquet"])
+    assert logic.read_bytes() == source_bytes == placed.read_bytes()
+    assert not list(stitch_dir.rglob("kg-meta-ontology.parquet"))
+    assert not list(stitch_dir.rglob("entity-resume-checkpoint-v2.parquet"))
+    resume = Path(reports[0]["hf"]["local_path"])
+    assert resume.name == "entity-resume-checkpoint-v2.parquet"
+    assert resume.parent.parent.name == "entity-hf-checkpoint-v2"
+    neighborhood = pq.read_table(output / "section-neighborhoods.parquet").to_pylist()
+    assert len(neighborhood) == 1
+    row = neighborhood[0]
+    assert row["admitted"] is False and row["formalized"] is False
+    assert row["span_legal_id"] == "usc:us:1:1"
+    assert row["entity_id"] == "doc1:section:1"
+    assert json.loads(row["sealed_span_ids"]) == ["span-sealed"]
+    assert json.loads(row["gap_span_ids"]) == ["span-gap"]
+    assert "span-pending" not in row["sealed_span_ids"] and "span-gap" not in row["sealed_span_ids"]
+    targets = json.loads(row["definition_targets"])
+    assert targets == ["usc:us:1:8", "usc:us:1:9"]
+    assert "unresolved_citation" in json.loads(row["reasons"])
+    terms = pq.read_table(output / "term-index.parquet").to_pylist()
+    actor = next(item for item in terms if item["kind"] == "actor" and item["value"] == "Agency")
+    assert actor["category"] == "participant"
+    assert actor["admitted"] is False and actor["formalized"] is False
+    assert actor["overflow"] is False
+    findings = pq.read_table(output / "inconsistencies.parquet").to_pylist()
+    assert any(
+        item["kind"] == "section_not_ready" and item["span_id"] == "span-pending" and item["entity_id"] == "doc2:section:2"
+        for item in findings
+    )
+    assert all(item["admitted"] is False and item["formalized"] is False for item in findings)
+    units = pq.read_table(output / "lean-units.parquet").to_pylist()
+    assert units
+    assert all(item["lake_ok"] is False and item["lake_error"] == "lake_not_run" for item in units)
+    assert all(item["admitted"] is False and item["formalized"] is False for item in units)
+    fingerprint = str(term_fingerprint("actor", "Agency"))
+    assert any(item["unit_kind"] == "term" and fingerprint in item["lean_source"] for item in units)
+    assert not list(output.glob(".*.tmp"))
+    occurrences = pq.read_table(output / "logic-occurrences.parquet").to_pylist()
+    assert occurrences
+    assert all(item["admitted"] is False and item["formalized"] is False for item in occurrences)
+    assert not any(item["kind"] == "decompiled" for item in occurrences)
+    actor_row = next(
+        item for item in occurrences
+        if item["hit_kind"] == "role" and item["kind"] == "actor" and item["surface"] == "Agency"
+    )
+    assert actor_row["document_id"] == "doc1"
+    assert actor_row["document_label"] == "First document"
+    assert actor_row["section_label"] == "1"
+    assert actor_row["entity_id"] == "doc1:section:1"
+    assert actor_row["legal_id"] == "usc:us:1:1"
+    assert "participant:Agency" in actor_row["formula"]
+    assert json.loads(actor_row["definition_targets"]) == ["usc:us:1:8", "usc:us:1:9"]
+    assert "usc:us:9:9" not in actor_row["definition_targets"]
+    assert json.loads(actor_row["open_stitch_slots"]) == json.loads(row["open_stitch_slots"])
+    pending_label = next(item for item in occurrences if item["entity_id"] == "doc2:section:2")
+    assert pending_label["hit_kind"] == "label"
+    assert pending_label["formula"] == ""
+    assert pending_label["document_id"] == "doc2"
+    assert pending_label["document_label"] == "Second document"
+    assert "section_not_ready" in json.loads(pending_label["reasons"])
+    monkeypatch.setattr(ingest, "_cache_type", lambda: pytest.fail("lookup opened the cache"))
+    monkeypatch.setattr(ingest, "enqueue_entities", lambda *args, **kwargs: pytest.fail("lookup enqueued"))
+    monkeypatch.setattr(ingest, "prepare_pending", lambda *args, **kwargs: pytest.fail("lookup prepared"))
+    monkeypatch.setattr(ingest, "_publish_stitch_files", lambda *args, **kwargs: pytest.fail("lookup uploaded"))
+    monkeypatch.setattr(cache_type, "claim_batch", lambda *args, **kwargs: pytest.fail("lookup claimed entities"))
+    assert ingest.main([
+        "--lookup", "Agency",
+        "--stitch-dir", str(stitch_dir),
+        "--spans", str(tmp_path / "absent" / "sealed-spans.parquet"),
+    ]) == 0
+    looked = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert looked["admitted"] is looked["formalized"] is False
+    assert looked["normalized"] == "agency"
+    assert looked["category"] == "participant"
+    assert looked["kinds"] == ["actor"]
+    assert looked["roles"] and all(item["document_id"] == "doc1" for item in looked["roles"])
+    assert any("participant:Agency" in item["formula"] for item in looked["roles"])
+
+
+def test_lookup_theft_returns_the_act_formula_and_document(ingest, cache_type, tmp_path, monkeypatch, capsys):
+    from ipfs_datasets_py.huggingface.autoformal_span_cache import build_span_cache_package
+    from ipfs_datasets_py.logic.autoformal.span_cache import terms_from_rule
+
+    entities, relationships = _files(tmp_path)
+    theft_rule = {"action": "theft", "actor": "A person", "modality": "prohibition", "object": "signature"}
+    theft_text = "A person shall not commit theft of a signature."
+    open_rule = {"action": "publish", "modality": "obligation", "object": "notice"}
+    build_span_cache_package(
+        [
+            {
+                "decompiled": "A person must not commit theft of a signature.",
+                "legal_id": "usc:us:1:1",
+                "rule": theft_rule,
+                "source_sha256": "theft",
+                "source_span_id": "span-theft",
+                "source_text": theft_text,
+                "status": "sealed",
+                "term_rows": terms_from_rule(theft_rule, decompiled="A person must not commit theft of a signature."),
+            },
+            {
+                "legal_id": "usc:us:1:1",
+                "rule": open_rule,
+                "source_sha256": "open",
+                "source_span_id": "span-open",
+                "source_text": "Notice shall be published.",
+                "status": "sealed",
+                "term_rows": terms_from_rule(open_rule),
+            },
+        ],
+        tmp_path / "theft-pkg",
+    )
+    habeas_rule = {"action": "grant", "actor": "The court", "modality": "obligation", "object": "relief"}
+    build_span_cache_package(
+        [
+            {
+                "legal_id": "usc:us:1:1",
+                "rule": habeas_rule,
+                "source_sha256": "habeas",
+                "source_span_id": "span-habeas",
+                "source_text": "The court shall grant habeas corpus.",
+                "status": "sealed",
+                "term_rows": terms_from_rule(habeas_rule),
+            }
+        ],
+        tmp_path / "habeas-pkg",
+    )
+    logic = _logic_index(tmp_path / "kg-logic-index.parquet")
+    stitch_dir = tmp_path / "stitch"
+    monkeypatch.setattr(ingest, "_cache_type", lambda: cache_type)
+    monkeypatch.setattr(cache_type, "claim_batch", lambda *args, **kwargs: pytest.fail("stitch claimed entities"))
+    monkeypatch.setattr(ingest, "_publish_stitch_files", lambda *args, **kwargs: pytest.fail("stitch uploaded"))
+    assert ingest.main([
+        "--parquet", str(entities), "--relationships", str(relationships),
+        "--cache", str(tmp_path / "theft.duckdb"), "--batch", "2",
+        "--stitch", "--spans", str(tmp_path / "theft-pkg" / "sealed-spans.parquet"),
+        "--logic-index", str(logic), "--stitch-dir", str(stitch_dir),
+        "--lookup", "theft",
+    ]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["stitch"]["performed"] is True
+    assert report["stitch"]["uploaded"] is False
+    assert report["hf"]["uploaded"] is False
+    looked = report["lookup"]
+    assert looked["admitted"] is looked["formalized"] is False
+    assert looked["normalized"] == "theft"
+    assert looked["category"] == "act"
+    assert looked["kinds"] == ["action"]
+    role = looked["roles"][0]
+    assert "act:theft" in role["formula"]
+    assert "participant:A person" in role["formula"]
+    assert role["document_id"] == "doc1"
+    assert role["document_label"] == "First document"
+    assert role["definition_targets"] == ["usc:us:1:8", "usc:us:1:9"]
+    assert "usc:us:9:9" not in role["definition_targets"]
+    assert "stitch:span-open:actor" in role["open_stitch_slots"]
+    assert all(row["normalized"] != "steal" for row in looked["rows"])
+    monkeypatch.setattr(ingest, "_cache_type", lambda: pytest.fail("lookup opened the cache"))
+    monkeypatch.setattr(ingest, "enqueue_entities", lambda *args, **kwargs: pytest.fail("lookup enqueued"))
+    monkeypatch.setattr(ingest, "prepare_pending", lambda *args, **kwargs: pytest.fail("lookup prepared"))
+    assert ingest.main(["--lookup", "doc1", "--stitch-dir", str(stitch_dir)]) == 0
+    document = json.loads(capsys.readouterr().out)
+    assert document["rows"]
+    assert {row["document_id"] for row in document["rows"]} == {"doc1"}
+    assert any(row["span_id"] == "span-theft" and "act:theft" in row["formula"] for row in document["rows"])
+    assert any(row["span_id"] == "span-open" and row["formula"] == "" for row in document["rows"])
+    assert ingest.main(["--lookup", "doc2", "--stitch-dir", str(stitch_dir)]) == 0
+    pending = json.loads(capsys.readouterr().out)
+    assert pending["rows"]
+    assert {row["document_id"] for row in pending["rows"]} == {"doc2"}
+    assert all(row["formula"] == "" for row in pending["rows"])
+    assert any("section_not_ready" in row["reasons"] for row in pending["rows"])
+    assert ingest.main(["--lookup", "steal", "--stitch-dir", str(stitch_dir)]) == 0
+    assert json.loads(capsys.readouterr().out)["rows"] == []
+    with pytest.raises(ingest.EntityIngestError, match="three"):
+        ingest.main(["--lookup", "ab", "--stitch-dir", str(stitch_dir)])
+    assert ingest.main([
+        "--lookup", "habeas corpus",
+        "--stitch-dir", str(stitch_dir),
+        "--spans", str(tmp_path / "habeas-pkg" / "sealed-spans.parquet"),
+    ]) == 0
+    habeas = json.loads(capsys.readouterr().out)
+    assert habeas["mentions"]
+    assert habeas["roles"] == []
+    mention = habeas["mentions"][0]
+    assert mention["hit_kind"] == "mention"
+    assert mention["normalized"] == "habeas corpus"
+    assert mention["admitted"] is mention["formalized"] is False
+    assert "participant:The court" in mention["formula"]
+    assert mention["document_id"] == "doc1"
+    assert mention["document_label"] == "First document"

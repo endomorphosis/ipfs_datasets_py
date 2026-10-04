@@ -1,0 +1,760 @@
+{
+  "schema": "intent-codebase-capture-handoff-plan/v1",
+  "status": "planned_not_runtime_implemented",
+  "guide": "capture_handoff.md",
+  "schema_file": "capture_handoff.schema.json",
+  "pilot_spec": "pilot_spec.json",
+  "adapter_contracts": "adapter_contracts.json",
+  "inspection_record": "../../../../../../artifacts/codebase-ir-capture-handoff-20261002/inspection.json",
+  "scope": {
+    "implementation_slices": [
+      "B00",
+      "B01"
+    ],
+    "work_items": [
+      "C00",
+      "C01",
+      "C02"
+    ],
+    "adapter_id": "A01",
+    "milestone": "authenticated_complete_structural_capture_and_fresh_policy_observation",
+    "runtime_admission_established": false,
+    "proof_or_effect_authority": false
+  },
+  "integration": {
+    "required_capabilities": [
+      "exact_native_source_capture",
+      "durable_structural_head",
+      "frozen_scan_scope",
+      "fresh_source_and_ignore_observation"
+    ],
+    "downstream_capabilities": [
+      "conditional_native_checks_and_evidence_index",
+      "typed_codebase_intent_grounding",
+      "compatible_model_execution"
+    ],
+    "capability_specific_readiness": true,
+    "source_pins_are_complete_dependency_closure": false,
+    "local_git_observations_are_fresh_remote_verification": false,
+    "observed_datasets_local_origin": "ace690e14442ba0ec45b886a660a2aa0fb3d186c",
+    "observed_parent_supervisor_gitlink": "5306d49957bba7444a31639584e26378f3e3fb19",
+    "parent_gitlink_object_missing_in_nested_clone": true,
+    "nested_supervisor_pins_match_parent_gitlink_bytes": true,
+    "sibling_origin_selected_by_this_plan": false,
+    "gates": [
+      {
+        "gate_id": "I01",
+        "title": "Capability-specific release acquisition",
+        "requirement": "Clean selected release contains all direct/lazy imports, package initializers and implementation-identity closure files; each matches approved receipts.",
+        "failure_outcome": "integration_required",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I02",
+        "title": "Package and executable binding",
+        "requirement": "Actual module origins, Python/dependency/Git identities, parser profile and native schemas resolve from that selected release, independently of editable/sibling paths.",
+        "failure_outcome": "wrong_implementation_root",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I03",
+        "title": "Supervisor lineage selection",
+        "requirement": "Select a complete reviewed supervisor release for downstream grounding; distinguish source byte matches from unavailable local gitlink objects.",
+        "failure_outcome": "downstream_integration_required",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I04",
+        "title": "Isolated durable owner binding",
+        "requirement": "Exact file-backed native AST store/CAS/catalog share the same injected connection/store and CAS objects; serialized writer and control paths remain outside fixture root.",
+        "failure_outcome": "wrong_owner",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I05",
+        "title": "Exact repository view and source policy",
+        "requirement": "Outer registration maps an explicit unique worktree/source-mode view to one exact committed Git root and frozen ignore/exclusion scope.",
+        "failure_outcome": "unsupported_source_policy",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I06",
+        "title": "Strict H0 cleanliness and honest resource scope",
+        "requirement": "A reviewed outer guard fences root-wide Git status and admitted mode before/current-use acceptance; whole-repository admission awaits bounded native metadata acquisition.",
+        "failure_outcome": "source_or_resource_rejected",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      },
+      {
+        "gate_id": "I07",
+        "title": "Operation recovery and measured acceptance",
+        "requirement": "Retain outer operation request, original expected head and exact native request; recover possible commits before retry, then freshly observe source/policy and reconcile the entire inventory.",
+        "failure_outcome": "recovery_pending",
+        "implementation_state": "planned",
+        "measured_outcome": null
+      }
+    ]
+  },
+  "fixture": {
+    "source_specification": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/pilots/intent_codebase_grounding/pilot_spec.json",
+      "bytes": 19041,
+      "sha256": "8abdb02fb0b993973284dca0927f4fd07122c93124dfbab3ce02166c5d07f772"
+    },
+    "source_variant": "authored_h0",
+    "path": "counter.py",
+    "exact_source_bytes": 47,
+    "root_requirement": "isolated exact committed Git root",
+    "controls_outside_fixture_root": [
+      "source_owner_database",
+      "source_owner_cas",
+      "cell_databases",
+      "scheduler_state",
+      "operation_journal",
+      "run_manifest",
+      "logs"
+    ],
+    "source_policy": {
+      "native_profile": "codebase-single-root-python-structural@1",
+      "native_admitted_modes": [
+        "git-clean",
+        "git-working"
+      ],
+      "pilot_h0_required_mode": "git-clean",
+      "strict_clean_guard_implemented": false,
+      "strict_clean_status_scope": "root-wide tracked/index and nonignored untracked Git status without declared-exclusion filtering",
+      "status_emptiness_covers_standard_ignored_files": false,
+      "git_clean_mode_proves_root_wide_cleanliness": false,
+      "guard_boundaries": [
+        "pre_capture",
+        "post_publication_before_outer_acceptance",
+        "current_use"
+      ],
+      "native_publication_cleanliness_hook_available": false,
+      "failed_post_guard_can_leave_complete_native_head": true,
+      "later_h1_policy": "commit successor before strict-clean capture or admit separately reviewed captured-overlay profile",
+      "declared_exclusions": [],
+      "effective_exclusions_owner": "CodebaseScanPolicy.to_dict and canonical snapshot exclusion owner",
+      "max_entries": 256,
+      "max_file_bytes": 65536,
+      "inventory": "all_nonexcluded_entries",
+      "proof_paths": [
+        "counter.py"
+      ],
+      "training_paths": [],
+      "selections_filter_inventory": false,
+      "ignore_scope_owner": "prepare_policy_current/load_policy_receipt/verify_policy_current",
+      "active_external_ignore_patterns_admitted": false
+    }
+  },
+  "owners": {
+    "source_catalog_constructor": "CodebaseCatalog(store, artifacts, limits=...)",
+    "index_constructor": "RepositoryCodebaseIndex(ingestor=..., artifacts=..., catalog=...)",
+    "catalog_constructor_may_create_sql_domain": true,
+    "exact_native_file_backed_owner_required": true,
+    "shared_store_connection_and_cas_required": true,
+    "worker_connection_transfer_allowed": false,
+    "source_owner_is_separate_from_cell_registries": true,
+    "default_in_memory_owners_accepted": false,
+    "serialized_writer_required": true,
+    "proposed_registration_is_native_index_register_api": false,
+    "native_observation_fields": [
+      "head",
+      "manifest"
+    ],
+    "native_observation_cid_field_exists": false,
+    "proposed_outer_observation_wrapper_owner_required": true
+  },
+  "api_signatures": {
+    "ipfs_datasets_py/logic/software_contracts/codebase_ir.py": {
+      "source": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+        "bytes": 28715,
+        "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4"
+      },
+      "api_signatures_from_ast": {
+        "RepositoryCodebaseIndex.__init__": {
+          "line": 220,
+          "signature": "self, *, ingestor: DuckDBASTIngestor | None=None, artifacts: ImmutableCAS | None=None, catalog: CodebaseCatalog | None=None"
+        },
+        "RepositoryCodebaseIndex.prepare_current": {
+          "line": 252,
+          "signature": "self, repository: str | Path, *, repository_id: str, operation_id: str, expected_head: CodebaseHead | None, limits: CodebaseScanLimits | None=None, exclusions: Sequence[str] | None=None, scheduler: Any=None, parent_lease: Any=None, cancel_event: Any=None, admission_timeout_seconds: float=30.0, timeout_seconds: float=120.0, memory_mb: int=512"
+        },
+        "RepositoryCodebaseIndex.current": {
+          "line": 416,
+          "signature": "self, repository_id: str"
+        },
+        "RepositoryCodebaseIndex.observe_current": {
+          "line": 422,
+          "signature": "self, repository: str | Path, *, expected_head: CodebaseHead, scheduler: Any=None, parent_lease: Any=None, cancel_event: Any=None, admission_timeout_seconds: float=30.0, timeout_seconds: float=120.0, memory_mb: int=512"
+        },
+        "RepositoryCodebaseIndex.load": {
+          "line": 490,
+          "signature": "self, manifest_cid: str"
+        },
+        "RepositoryCodebaseIndex.lookup": {
+          "line": 499,
+          "signature": "self, manifest: CodebaseIRManifest, path: str"
+        },
+        "RepositoryCodebaseIndex.load_ast_artifact": {
+          "line": 516,
+          "signature": "self, manifest: CodebaseIRManifest, path: str"
+        }
+      }
+    },
+    "ipfs_datasets_py/duckdb_control/codebase_catalog.py": {
+      "source": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+        "bytes": 29575,
+        "sha256": "e7c85582d965a1e72eb97795e711b77856daf3767cde02f4152127a1fa876140"
+      },
+      "api_signatures_from_ast": {
+        "CodebaseCatalog.__init__": {
+          "line": 206,
+          "signature": "self, store: DuckDBASTStore, artifacts: ImmutableCAS, *, limits: CodebaseCatalogLimits | None=None"
+        },
+        "CodebaseCatalog.current": {
+          "line": 330,
+          "signature": "self, repository_id: str"
+        },
+        "CodebaseCatalog.request_identity": {
+          "line": 339,
+          "signature": "manifest: CodebaseIRManifest, expected_head: CodebaseHead | None"
+        },
+        "CodebaseCatalog.resolve_operation": {
+          "line": 347,
+          "signature": "self, operation_id: str, request_identity: str"
+        },
+        "CodebaseCatalog.publish": {
+          "line": 438,
+          "signature": "self, *, operation_id: str, manifest: CodebaseIRManifest, expected_head: CodebaseHead | None, projections: Sequence[ASTCatalogProjection], invalidations: Sequence[InvalidationRow]=(), checkpoint: Callable[[], None] | None=None"
+        }
+      }
+    },
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py": {
+      "source": {
+        "path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+        "bytes": 23161,
+        "sha256": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b"
+      },
+      "api_signatures_from_ast": {
+        "CodebaseScanPolicy": {
+          "line": 81,
+          "signature": null
+        },
+        "prepare_policy_current": {
+          "line": 359,
+          "signature": "index, repository, *, repository_id, operation_id, expected_head, policy=None, training_paths=(), proof_paths=(), scheduler=None, parent_lease=None, cancel_event=None, timeout_seconds=120.0, memory_mb=512"
+        },
+        "load_policy_receipt": {
+          "line": 407,
+          "signature": "index, receipt_cid"
+        }
+      }
+    },
+    "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py": {
+      "source": {
+        "path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py",
+        "bytes": 3085,
+        "sha256": "8c43bc1b97a94c5100815447130a549266b9ccdc266574e2b8b224a3ea82aef5"
+      },
+      "api_signatures_from_ast": {
+        "verify_policy_current": {
+          "line": 16,
+          "signature": "index, repository, *, expected_head, receipt_cid, scheduler=None, parent_lease=None, cancel_event=None, timeout_seconds=120.0, memory_mb=512"
+        }
+      }
+    }
+  },
+  "operation_recovery": {
+    "outer_request_owner": "proposed versioned adapter request and operation journal",
+    "outer_request_fields": [
+      "adapter_schema",
+      "adapter_operation_id",
+      "native_operation_id",
+      "repository_registration",
+      "source_policy",
+      "implementation_release",
+      "source_owner_incarnation",
+      "original_expected_head",
+      "training_paths",
+      "proof_paths",
+      "resource_and_cancellation_contract"
+    ],
+    "native_request_fields": [
+      "repository_id",
+      "manifest_cid",
+      "original_expected_head"
+    ],
+    "native_request_available_before_manifest_derivation": false,
+    "native_request_must_be_preserved_before_ambiguous_commit": true,
+    "native_prepublication_journal_hook_implemented": false,
+    "unknown_request_cid_outcome": "recovery_pending",
+    "blind_retry_with_current_head_allowed": false,
+    "historical_retry_grants_currentness": false,
+    "commit_stage_accounting": [
+      "native_not_known_committed",
+      "native_complete_committed",
+      "policy_sealed",
+      "current_observed",
+      "outer_response_delivered"
+    ],
+    "failure_states": [
+      "rejected",
+      "unavailable",
+      "stale",
+      "timeout",
+      "cancelled",
+      "head_conflict",
+      "operation_conflict",
+      "recovery_pending",
+      "native_published_policy_failed",
+      "sealed_but_not_current"
+    ]
+  },
+  "resources": {
+    "outer_parent_lease_before_metadata_required": true,
+    "outer_remaining_deadline_required": true,
+    "native_limits_are_cooperative": true,
+    "native_git_metadata_output_cap_verified": false,
+    "operation_wide_hard_timeout_verified": false,
+    "operation_wide_rss_cap_verified": false,
+    "whole_repository_capture_admitted": false,
+    "native_acquisition_remediation": "review bounded native Git metadata acquisition plus remaining-deadline propagation before broader repository admission",
+    "fixture_metadata_gate_implemented": false,
+    "catalog_row_caps": "use exact native CodebaseCatalogLimits; reaching bounds rejects without pruning replay protection"
+  },
+  "model_lanes": {
+    "inventory_index": {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/ir_family_dimension_inventory_plan.json",
+      "bytes": 25143,
+      "sha256": "a2d7ff1bf5a0fc5907c18a8bd98f8ca282d6d83ea87ae475949a1fe3249719f2"
+    },
+    "cell_count": 12,
+    "cells": [
+      {
+        "cell_id": "codebase_ir_8d",
+        "ir_family_id": "codebase_ir",
+        "dimension": 8,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/8d.json",
+          "bytes": 7862,
+          "sha256": "bb4d7a74ec581e32c19800333dfcbf2bb175e753e975375f5a3efbbf5c66a2a1"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "codebase_ir_384d",
+        "ir_family_id": "codebase_ir",
+        "dimension": 384,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/384d.json",
+          "bytes": 8393,
+          "sha256": "d01836c6d11996d6d4e88a7d2722fca63004ed4fea19e08f331db65903b4fdc4"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "codebase_ir_768d",
+        "ir_family_id": "codebase_ir",
+        "dimension": 768,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/768d.json",
+          "bytes": 7034,
+          "sha256": "4f2476246a11e0e53f4e18ec82c53b160fa7d39e8b27cf91ef85f865de039177"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "security_ir_8d",
+        "ir_family_id": "security_ir",
+        "dimension": 8,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/8d.json",
+          "bytes": 7507,
+          "sha256": "e9441e3a56c98133aa02e19b8f70b80c03357ec3d15c47f852a713c9616e1d7a"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "security_ir_384d",
+        "ir_family_id": "security_ir",
+        "dimension": 384,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/384d.json",
+          "bytes": 9757,
+          "sha256": "36fab9a4d7976cc5e791db062919f8d3ff6a30969414a5dad809c197a7beaf21"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "security_ir_768d",
+        "ir_family_id": "security_ir",
+        "dimension": 768,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/768d.json",
+          "bytes": 7126,
+          "sha256": "990f57bb94f99cdbffe328549ae8baea39390faab1fd3be864d6ffed109a9fee"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "legal_ir_8d",
+        "ir_family_id": "legal_ir",
+        "dimension": 8,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/8d.json",
+          "bytes": 7495,
+          "sha256": "6c5515387d1280ff0dbe55270bd655b612cc6ae2c76293f1c7bc3e77f4f49b0f"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "legal_ir_384d",
+        "ir_family_id": "legal_ir",
+        "dimension": 384,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/384d.json",
+          "bytes": 10568,
+          "sha256": "77492b849bd2fa75a55a5d4f79de8eb5a3f6059346ab931df9ed5ccda75e1776"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "legal_ir_768d",
+        "ir_family_id": "legal_ir",
+        "dimension": 768,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/768d.json",
+          "bytes": 7577,
+          "sha256": "7c48396a3d0332b0dacbb248fdd5c6ab037080475ebde137aa2217973d514595"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "intent_ir_8d",
+        "ir_family_id": "intent_ir",
+        "dimension": 8,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/8d.json",
+          "bytes": 7440,
+          "sha256": "4ff8cbbf4dc5696603ea97f5f57db9415f679148d1b9f13a9a1883a9b5886af5"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "intent_ir_384d",
+        "ir_family_id": "intent_ir",
+        "dimension": 384,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/384d.json",
+          "bytes": 9678,
+          "sha256": "0b8b99e966316e16f641359d19a9bdab1e0b2536d400761a88edbb99a4b9e437"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      },
+      {
+        "cell_id": "intent_ir_768d",
+        "ir_family_id": "intent_ir",
+        "dimension": 768,
+        "inventory": {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/768d.json",
+          "bytes": 7061,
+          "sha256": "c66c360cc797cbe7b74a08bed90102d22719937a7c7cb46d44f9f70d94af8a98"
+        },
+        "runtime_task_admission": null,
+        "model_execution_required_for_capture": false
+      }
+    ],
+    "capture_depends_on_model_availability": false,
+    "donor_weights_or_embeddings_rewritten": false,
+    "codebase_fixture_observations": [
+      {
+        "dimension": 8,
+        "disposition": "artifact_reuse_only_migration_required",
+        "reason": "authentic saved donor outside counter.py cohort with unknown critical atoms in later saved targets"
+      },
+      {
+        "dimension": 384,
+        "disposition": "unsupported_source384_task",
+        "reason": "single-argument integer-offset fixture does not satisfy two-distinct-parameter cohort"
+      },
+      {
+        "dimension": 768,
+        "disposition": "native_codebase_head_unavailable",
+        "reason": "no native Codebase768 parent/head authenticated for this fixture"
+      }
+    ],
+    "other_family_inventory_relabeling_allowed": false,
+    "random_replacement_of_learned_components_allowed": false
+  },
+  "call_sequence": [
+    {
+      "step_id": "S01",
+      "depends_on": [],
+      "owner_api": "proposed outer operation lease/deadline, registration and capability gate",
+      "requirement": "Acquire the parent operation lease and outer deadline before capability/package metadata checks, owner construction, fixture materialization or Git inspection. Then select exact implementation release and fixture spec; no existing index.register API. Capture readiness is separate from proof and model readiness.",
+      "success_state": "integration_admitted",
+      "actual_state": null
+    },
+    {
+      "step_id": "S02",
+      "depends_on": [
+        "S01"
+      ],
+      "owner_api": "injected durable native owners",
+      "requirement": "Under the acquired parent lease and remaining deadline, open isolated file-backed AST/CAS/catalog owners and shared index; constructors may create SQL domains. Record process/connection/file-root identities.",
+      "success_state": "owners_bound",
+      "actual_state": null
+    },
+    {
+      "step_id": "S03",
+      "depends_on": [
+        "S02"
+      ],
+      "owner_api": "proposed fixture/source/lease guard",
+      "requirement": "Under the already acquired lease and remaining deadline, materialize authored H0 in an isolated committed Git root with a unique repository-view ID; enforce the source guard before capture. No fixture/module execution.",
+      "success_state": "fixture_committed_clean",
+      "actual_state": null
+    },
+    {
+      "step_id": "S04",
+      "depends_on": [
+        "S03"
+      ],
+      "owner_api": "CodebaseScanPolicy + prepare_policy_current",
+      "requirement": "Pass exact original expected head, native operation ID, bounded policy, training_paths=(), proof_paths=(counter.py,), parent lease and remaining time. Selectors do not narrow source inventory.",
+      "success_state": "native_published",
+      "actual_state": null
+    },
+    {
+      "step_id": "S05",
+      "depends_on": [
+        "S04"
+      ],
+      "owner_api": "native publication recovery + policy sealing",
+      "requirement": "Reconcile any raised/ambiguous outcome. A complete native head may have committed before policy receipt sealing. Preserve exact native request or require reviewed recovery extension.",
+      "success_state": "policy_sealed",
+      "actual_state": null
+    },
+    {
+      "step_id": "S06",
+      "depends_on": [
+        "S05"
+      ],
+      "owner_api": "CodebaseHead.from_dict + load_policy_receipt",
+      "requirement": "Decode/recompute the actual head and authenticate the complete historical policy receipt and source/AST records under identical producer pins. Historical replay makes no live-source claim.",
+      "success_state": "historical_authenticated",
+      "actual_state": null
+    },
+    {
+      "step_id": "S07",
+      "depends_on": [
+        "S06"
+      ],
+      "owner_api": "verify_policy_current + proposed strict guard",
+      "requirement": "Join exact head, active ASTs, admitted bytes and ignore/configuration evidence; separately fence strict root-wide cleanliness and outer remaining budget. Native observation has no CID field.",
+      "success_state": "current_observed",
+      "actual_state": null
+    },
+    {
+      "step_id": "S08",
+      "depends_on": [
+        "S07"
+      ],
+      "owner_api": "proposed capture handoff acceptance",
+      "requirement": "Reconcile all nonexcluded inventory and native coverage; publish a new immutable measured outer record after owner checks. Reobserve source/policy at each downstream consumption boundary.",
+      "success_state": "B01_accepted",
+      "actual_state": null
+    }
+  ],
+  "proposed_runtime_bindings": {
+    "implementation_release_manifest": null,
+    "package_resolution_receipt": null,
+    "repository_registration": null,
+    "fixture_root_locator": null,
+    "fixture_git_commit": null,
+    "source_owner_incarnation": null,
+    "outer_operation_request": null,
+    "native_operation_id": null,
+    "original_expected_head": null,
+    "native_request_cid": null,
+    "native_publication_receipt": null,
+    "published_head": null,
+    "source_manifest": null,
+    "policy_receipt": null,
+    "fresh_source_policy_observation": null,
+    "outer_observation_wrapper": null,
+    "resource_lease_and_stage_counters": null,
+    "case_outcome_receipts": null,
+    "B01_acceptance_record": null
+  },
+  "acceptance_cases": [
+    {
+      "case_id": "K01",
+      "trigger": "Clean authored H0 capture",
+      "expected_outcome": "One complete counter.py native entry, exact47byte source identity, structural AST/head/policy references and fresh scoped observation.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K02",
+      "trigger": "Non-Git, unborn or subtree input",
+      "expected_outcome": "Frozen scan-policy exact committed-root gate rejects; base snapshot API support cannot bypass it.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K03",
+      "trigger": "Dirty, staged or nonignored-untracked root",
+      "expected_outcome": "Proposed strict H0 guard rejects current acceptance; native API may still publish complete structural evidence if called separately.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K04",
+      "trigger": "Same-head changed source or racing edit",
+      "expected_outcome": "Source/currentness guard rejects; never substitute the unchanged Git commit for observed source identity.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K05",
+      "trigger": "Same-operation exact historical retry",
+      "expected_outcome": "Return/reconcile original native receipt; fresh currentness can reject historical generation; no AST reactivation claim.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K06",
+      "trigger": "Conflicting operation or stale expected head",
+      "expected_outcome": "Preserve native operation/head conflict; no overwrite or substitution of original expected head.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K07",
+      "trigger": "Lost response or post-commit cancellation",
+      "expected_outcome": "Resolve with recorded exact request identity; if missing, remain recovery_pending without blind retry. Complete native head can survive failure.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K08",
+      "trigger": "Policy seal or final scope observation failure",
+      "expected_outcome": "Distinguish native_published_policy_failed and sealed_but_not_current; no false complete rollback claim.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K09",
+      "trigger": "Cold restart under identical owners/producers",
+      "expected_outcome": "Authenticate durable head/history and perform fresh source/policy observation; no Python parsing/training/solver or shared inherited DB connection.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K10",
+      "trigger": "Ignore rules, configuration or ambient active pattern drift",
+      "expected_outcome": "Frozen scope rejects or becomes stale, including self-ignored .gitignore inventory; exact historical bytes remain evidence only.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K11",
+      "trigger": "Opaque, oversized, partial, failed or unindexed entry",
+      "expected_outcome": "Keep explicit full-population dispositions; unsupported entries cannot become proof/training candidates.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K12",
+      "trigger": "Entry cap or cooperative memory-envelope violation",
+      "expected_outcome": "Reject without truncating inventory or silently increasing frozen bounds; per-file oversize is accounted as opaque.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K13",
+      "trigger": "Missing/corrupt CAS, AST, catalog or owner incarnation",
+      "expected_outcome": "Fail closed; do not recreate missing authenticated bytes or quietly attach a different physical store.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K14",
+      "trigger": "Foreign supervisor/package shadowing or pin drift",
+      "expected_outcome": "Capability gate rejects; a source/Git hash pass alone cannot prove clean installation or runtime API compatibility.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K15",
+      "trigger": "Unavailable or incompatible 8D/384D/768D model lanes",
+      "expected_outcome": "Deterministic capture remains independent; retain donor bytes and return explicit per-cell task inadmissibility/unavailability.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K16",
+      "trigger": "Restore prior bytes after successor capture",
+      "expected_outcome": "New generation/receipt required; old head remains stale even if raw snapshot content repeats.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K17",
+      "trigger": "Output stores/logs placed inside fixture tree",
+      "expected_outcome": "Reject layout before initialization; new control files cannot contaminate captured population or Git-status fences.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    },
+    {
+      "case_id": "K18",
+      "trigger": "Oversized Git metadata or operation deadline exhaustion",
+      "expected_outcome": "Whole-repository mode unavailable until reviewed bounded acquisition; isolate fixture metadata and reject exhausted remaining budget.",
+      "expectation_status": "planned_not_executed",
+      "actual_outcome": null
+    }
+  ],
+  "acceptance_boundary": {
+    "source_and_policy_reobserved_for_current_use": true,
+    "all_nonexcluded_entries_reconciled": true,
+    "actual_runtime_outcomes_required": true,
+    "observation_locks_future_source_edits": false,
+    "structural_capture_implies_behavioral_proof": false,
+    "capture_admits_training": false,
+    "planning_schema_validation_admits_runtime": false
+  },
+  "actions_performed_by_authoring": {
+    "source_reads": true,
+    "static_ast_signature_extraction": true,
+    "local_git_reads": true,
+    "runtime_adapter_implementation": false,
+    "repository_scan": false,
+    "database_creation": false,
+    "solver_execution": false,
+    "model_inference": false,
+    "training": false,
+    "embedding_regeneration": false,
+    "git_merge_or_push": false,
+    "remote_fetch": false
+  }
+}

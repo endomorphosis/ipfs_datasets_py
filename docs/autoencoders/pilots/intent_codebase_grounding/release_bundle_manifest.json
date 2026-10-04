@@ -1,0 +1,4045 @@
+{
+  "schema": "ir-release-bundle-preflight-manifest/v1",
+  "roots": {
+    "workspace": "/home/barberb/lift_coding",
+    "datasets_release": "/tmp/ir-release-datasets-20261001"
+  },
+  "files": [
+    {
+      "file_id": "F001",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py",
+      "bytes": 28715,
+      "sha256": "0fc2945f5c42eb2cdf068fab23885560dd8add30c3d4e751f3862f02fce72ba4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir.py"
+    },
+    {
+      "file_id": "F002",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py",
+      "bytes": 59397,
+      "sha256": "cec3c3686d10dc5d9a0d5ccf853cd873284f3e4098e41ecdd6dc517a2b73c50e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ingest.py"
+    },
+    {
+      "file_id": "F003",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py",
+      "bytes": 48191,
+      "sha256": "5135e623a0a3f970252da63dce049be167e8bb73db5355f6c3116316b70aafa6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/snapshot.py"
+    },
+    {
+      "file_id": "F004",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py",
+      "bytes": 32144,
+      "sha256": "002957f910a0bc1ff29de1ed72aca9c2464218ac5f65478be34a7c8f04e166a1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/scanner.py"
+    },
+    {
+      "file_id": "F005",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_property_cache.py",
+      "bytes": 10075,
+      "sha256": "d8d3614e435607de9ce1bb7b910af150dfbf6359dcebd3778593e411c3f6cbf1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_property_cache.py"
+    },
+    {
+      "file_id": "F006",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_verification.py",
+      "bytes": 13730,
+      "sha256": "6308995c77628f069385b0c3cac2a3a19e07488f7e90b4963eb39dce2e52d919",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_verification.py"
+    },
+    {
+      "file_id": "F007",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_verification.py",
+      "bytes": 42244,
+      "sha256": "9d735f56c3624dfaf9bd3ffbabc107ea6118057bfc85d8787b13077382cc6eb3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_verification.py"
+    },
+    {
+      "file_id": "F008",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_source_training.py",
+      "bytes": 47987,
+      "sha256": "aea5fa8803ae6b6dde7c4e71b81f68a7f95257b3a5d76cea693ee13e66710aa0",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_source_training.py"
+    },
+    {
+      "file_id": "F009",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py",
+      "bytes": 36177,
+      "sha256": "64eb3e7fea8c4ae7a16d2aaabae9dd5cda2002a811195032cbe1533f01818adc",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_federated_training.py"
+    },
+    {
+      "file_id": "F010",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatched_training.py",
+      "bytes": 7385,
+      "sha256": "b255bf3784b0d3309402c66ca59987ca9d4b1be34671a5bfe925caa8b19b1d98",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatched_training.py"
+    },
+    {
+      "file_id": "F011",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatch_recovery.py",
+      "bytes": 7393,
+      "sha256": "db622f6b246ffd306d963c52f68bb8790a57eed263a4922a835616fd93a838a5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_indexed_dispatch_recovery.py"
+    },
+    {
+      "file_id": "F012",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_federated_artifacts.py",
+      "bytes": 20293,
+      "sha256": "6efa0148ddfa210bb3b351d1051675e2c0b20260d68bcae7a7305b78f08297f7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_federated_artifacts.py"
+    },
+    {
+      "file_id": "F013",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_catalog.py",
+      "bytes": 29575,
+      "sha256": "e7c85582d965a1e72eb97795e711b77856daf3767cde02f4152127a1fa876140",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_catalog.py"
+    },
+    {
+      "file_id": "F014",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_evidence_index.py",
+      "bytes": 36479,
+      "sha256": "68b83b5921e2577d260c1f9e97ed12fe815135c180ec68247c571e41dac79ebd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_evidence_index.py"
+    },
+    {
+      "file_id": "F015",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_verification_catalog.py",
+      "bytes": 39109,
+      "sha256": "1a8041f0bee49eaa788d37c80e757ffd4abf4a1b9242e3159bb9c878094acf71",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/codebase_verification_catalog.py"
+    },
+    {
+      "file_id": "F016",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_registry.py",
+      "bytes": 51708,
+      "sha256": "0333ce963cf85f2843e0662db431e0554f0c449be20387f0badd909bc5d7840f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/duckdb_control/autoencoder_registry.py"
+    },
+    {
+      "file_id": "F017",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/canonical_cache_key.py",
+      "bytes": 25282,
+      "sha256": "6cc3b52c8635f6400f4f4bc00974b6e3489ce853da9b79db6420eb243c10c58f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/canonical_cache_key.py"
+    },
+    {
+      "file_id": "F018",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py",
+      "bytes": 32125,
+      "sha256": "0d93a2e56d0b46cff34f15c4792042bca33f47af00da80e21fa501ddf442de06",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_projection_features.py"
+    },
+    {
+      "file_id": "F019",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_codebase.py",
+      "bytes": 13298,
+      "sha256": "9a2d469ab47fdf40b4c20d8cc0fa2201eb51203a2ca544a7bee6e162122ca98a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_federated_codebase.py"
+    },
+    {
+      "file_id": "F020",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "bytes": 87518,
+      "sha256": "00257f921b48bc78c6971378ff2e688a2cf5b6ae1330965f85627bbbfb23968d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py"
+    },
+    {
+      "file_id": "F021",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/published_384_checkpoints.py",
+      "bytes": 1971,
+      "sha256": "a7ab0892799bf80fdca2e4780be12fabea1b5105d03cc34b98ea895c77b1617a",
+      "roles": [
+        "inherited_asset",
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/published_384_checkpoints.py"
+    },
+    {
+      "file_id": "F022",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_parallel_paths.py",
+      "bytes": 14427,
+      "sha256": "f395c1aa1d0aeba8bb58b87e6ba9c2a09e902a8a20aee529098e805eac43f0aa",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_parallel_paths.py"
+    },
+    {
+      "file_id": "F023",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py",
+      "bytes": 23161,
+      "sha256": "7037fca4046b357ef941cd511b20da55979a8055056ebc755bcb65c0026cb55b",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_scan_policy.py"
+    },
+    {
+      "file_id": "F024",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py",
+      "bytes": 3085,
+      "sha256": "8c43bc1b97a94c5100815447130a549266b9ccdc266574e2b8b224a3ea82aef5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_scan_policy_live.py"
+    },
+    {
+      "file_id": "F025",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "bytes": 26428,
+      "sha256": "7f0c148bdc1ff0cc01a8cc0bfd115417118eaa2f4f2db0f0d2f2ad23198b95e8",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_source_384.py"
+    },
+    {
+      "file_id": "F026",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/software_contracts/codebase_training_corpus.py",
+      "bytes": 12743,
+      "sha256": "f040f6a5e958daaaebe0a7833621ac93396d075f217e2656771d75ca28b61d20",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_training_corpus.py"
+    },
+    {
+      "file_id": "F027",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py",
+      "bytes": 16154,
+      "sha256": "51a8d38ecc01f48f693f1526bf33617ad99bdf871bd1ee04d2c62ba7bc94c089",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/software_contracts/codebase_model_generation.py"
+    },
+    {
+      "file_id": "F028",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/obligation_graph_compiler.py",
+      "bytes": 135680,
+      "sha256": "8a17f0fe2f756f75d4b49c358b77d9edba1f57fe8d85fea968ca7de628a8f9be",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/obligation_graph_compiler.py"
+    },
+    {
+      "file_id": "F029",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/symbolic_candidate_planner.py",
+      "bytes": 76736,
+      "sha256": "644a5d9ea848769ec442a152eebee9ab90bd971834aec64f5f45812b31734df6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/symbolic_candidate_planner.py"
+    },
+    {
+      "file_id": "F030",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_compiler.py",
+      "bytes": 159428,
+      "sha256": "73748bf182569cedd22b8cde0e6e9bf2aa0c35f6b76997ff958946d703371bb3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_compiler.py"
+    },
+    {
+      "file_id": "F031",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_validator.py",
+      "bytes": 131911,
+      "sha256": "a87cb299e6e77a182a2dd1941100b4f8b080824db7d7575fc6063efcb70a2023",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_validator.py"
+    },
+    {
+      "file_id": "F032",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/ir_registry.py",
+      "bytes": 60402,
+      "sha256": "8978d35862ba5ee03795c8a91f4da19320810ae18b273f12bc970b332a7846e5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/ir_registry.py"
+    },
+    {
+      "file_id": "F033",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/intent_constraint_adapter.py",
+      "bytes": 110112,
+      "sha256": "f0a0dc04e5161f8359b5c594d6046247765395f583b5dc08bc1c657115d55df4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/intent_constraint_adapter.py"
+    },
+    {
+      "file_id": "F034",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/proof_scope_index.py",
+      "bytes": 149243,
+      "sha256": "092c000cb0efe03dc789cc4145f2944db25a3d39b0957d237b7989602d2d0415",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/proof_scope_index.py"
+    },
+    {
+      "file_id": "F035",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/context/decision_runtime.py",
+      "bytes": 99999,
+      "sha256": "ee8cf60218a2b9fe86ca1ec717da57a478996ddcde4a5705eab52397be126839",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/context/decision_runtime.py"
+    },
+    {
+      "file_id": "F036",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/executor.py",
+      "bytes": 84730,
+      "sha256": "b5f39586d91a0d2a8ea573eda18f1e0a026c1b06d0760e8ea0f80cad2763864f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/executor.py"
+    },
+    {
+      "file_id": "F037",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/datasets_adapter.py",
+      "bytes": 77374,
+      "sha256": "212b259f46a7196d4039914467b5eed81a46f2bdb003fe134c6568cae11ac8eb",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/datasets_adapter.py"
+    },
+    {
+      "file_id": "F038",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/program_transition.py",
+      "bytes": 96750,
+      "sha256": "fd6cacb79b4500b1481b1173cab8d6455c73dce45e3075a3f5263cc73daaad91",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/program_transition.py"
+    },
+    {
+      "file_id": "F039",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/schemas/program-transition.payload.schema.json",
+      "bytes": 23730,
+      "sha256": "d6980d8ff74cad08e0b31d998b4f85f659df3ce6d6efecf29ce94f7733b64fe5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/schemas/program-transition.payload.schema.json"
+    },
+    {
+      "file_id": "F040",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/program_identity.py",
+      "bytes": 93608,
+      "sha256": "f3fe79607e6d6a748d892c0827d89b8dbcecd2fc18e2787842c38a71689c159f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_state/program_identity.py"
+    },
+    {
+      "file_id": "F041",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py",
+      "bytes": 29578,
+      "sha256": "88d619efdc83f8e207b13b05f879c956655a7b5825f5647b46457ca92539c3cf",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_ir_targets.py"
+    },
+    {
+      "file_id": "F042",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py",
+      "bytes": 8128,
+      "sha256": "373f6f4e99923b58487256b956ebdfd66248485713a91483eca4e6783b59e102",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/identity.py"
+    },
+    {
+      "file_id": "F043",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/source_adapters.py",
+      "bytes": 71146,
+      "sha256": "f903d036b38199f1cfd3ca72b065d2fec70e23ed6065795b11423e991d6f2fa2",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/source_adapters.py"
+    },
+    {
+      "file_id": "F044",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/pipeline.py",
+      "bytes": 63924,
+      "sha256": "97048ce560b367b4651def82dcb345d3ee34edc60373c15dbaba551ca459e9da",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/pipeline.py"
+    },
+    {
+      "file_id": "F045",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/content.py",
+      "bytes": 21152,
+      "sha256": "a7036a66ec6b476a78cb3e9a2384eaf9dca72cb8c7cf57ed0b25cd3b592720c9",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/content.py"
+    },
+    {
+      "file_id": "F046",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/cid_utils.py"
+    },
+    {
+      "file_id": "F047",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_profile.py",
+      "bytes": 25834,
+      "sha256": "9baf67451294b29b7c9e205477293246b1dde46f6d4bebe627a4e3145832acf3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_profile.py"
+    },
+    {
+      "file_id": "F048",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_corpus.py",
+      "bytes": 15340,
+      "sha256": "b3c44a3427fd1aaecde6ee3ab5840b88e8297cd6c314c60838d1af80f57a8682",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_corpus.py"
+    },
+    {
+      "file_id": "F049",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_transfer_corpus.py",
+      "bytes": 20130,
+      "sha256": "4a073808c4e54647f5c97dcfdd61c14da5e204eb6fea76f4d95c3819e6b64746",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_transfer_corpus.py"
+    },
+    {
+      "file_id": "F050",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/context/decision_contracts.py",
+      "bytes": 72854,
+      "sha256": "07df6bf70b640607556302da3f62addfd3217f93c7acccb82e1dd6821c619686",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/context/decision_contracts.py"
+    },
+    {
+      "file_id": "F051",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/ir_adapters.py",
+      "bytes": 38681,
+      "sha256": "792437b5cb1f4728bc517bd4dff47d78d991dacf563c49613979ea7fe6f28623",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/proof/ir_adapters.py"
+    },
+    {
+      "file_id": "F052",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/contracts.py",
+      "bytes": 198875,
+      "sha256": "a77034e7d34dbf3af95a682a50e43c7abc3589082a723b821bf0f1fea7e40b14",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_accelerate_py/ipfs_accelerate_py/agent_supervisor/verification/contracts.py"
+    },
+    {
+      "file_id": "F053",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_resources.py",
+      "bytes": 3454,
+      "sha256": "207f5b168f0cacf2ed6356c622a87e2bc8531c9a252c79de2c19ce5bca710700",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_resources.py"
+    },
+    {
+      "file_id": "F054",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py",
+      "bytes": 94154,
+      "sha256": "34f728f42076b66c564eef64edfa1f9ee7039ae29148ab68f75679dcddcc42c3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/duckdb_ast_store.py"
+    },
+    {
+      "file_id": "F055",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/cache.py",
+      "bytes": 57876,
+      "sha256": "d708bb536860334a43a97244652765bf926d949286207cc25ff68788bf85751f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/cache.py"
+    },
+    {
+      "file_id": "F056",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/integration/logic/software_contracts/test_codebase_current.py",
+      "bytes": 23847,
+      "sha256": "096f53549d31499b51f1dbb001063c9b487ddaa5e250ebe67ed312d2ca53f931",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/software_contracts/test_codebase_current.py"
+    },
+    {
+      "file_id": "F057",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/integration/logic/software_contracts/test_codebase_ir.py",
+      "bytes": 16772,
+      "sha256": "9ee6adceb92f2bfe8686f2f25a255a767166cb620bacd012fbbe16a1f863b081",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/integration/logic/software_contracts/test_codebase_ir.py"
+    },
+    {
+      "file_id": "F058",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/duckdb_control/test_codebase_catalog.py",
+      "bytes": 16639,
+      "sha256": "d3d212f722cfc93ebd97c0c8c10106193e6ff97aae3ce8d5d2a64c0b008107f6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/duckdb_control/test_codebase_catalog.py"
+    },
+    {
+      "file_id": "F059",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_batch.py",
+      "bytes": 12551,
+      "sha256": "b63468aa1f123beee3ac0e44368b1ae2474ebefdf51d6711d3ed84e5b71deccd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_batch.py"
+    },
+    {
+      "file_id": "F060",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_workers.py",
+      "bytes": 9694,
+      "sha256": "1f5e1ff5ae6aaaa09f85db314bac1fa1fe04395ea978aadada1f66a03ec9d6cd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_integer_workers.py"
+    },
+    {
+      "file_id": "F061",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_applicability.py",
+      "bytes": 28416,
+      "sha256": "f930724d5e7e939605a83e8e453c28827595890bbff5ba191bfe68bae775c080",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/codebase_applicability.py"
+    },
+    {
+      "file_id": "F062",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/backends/process.py",
+      "bytes": 63356,
+      "sha256": "0261fd091fd1145404379320c44fd5d8628d28be328fa4a089afa7fd997d395e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/process.py"
+    },
+    {
+      "file_id": "F063",
+      "root_id": "datasets_release",
+      "relative_path": "ipfs_datasets_py/logic/backends/codebase_process.py",
+      "bytes": 54671,
+      "sha256": "5c569b34afd75e1942f11fcb9ecf20d57799d2762927d9379813ce94aca437e1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/tmp/ir-release-datasets-20261001/ipfs_datasets_py/logic/backends/codebase_process.py"
+    },
+    {
+      "file_id": "F064",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/backends/smt/compiler.py",
+      "bytes": 86862,
+      "sha256": "9b14183c071fb9eaed29a18e0bdd6483f71e152a82c88732bc0ae0a6d2321be5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/smt/compiler.py"
+    },
+    {
+      "file_id": "F065",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/backends/smt/differential.py",
+      "bytes": 51943,
+      "sha256": "a1df37ffd82c35e9bb89e2541238bc9e481c4515512571cee7fba411e36dbf2e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/smt/differential.py"
+    },
+    {
+      "file_id": "F066",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/vc.py",
+      "bytes": 81752,
+      "sha256": "bc738a32af07afb4cc787d0ea5f743dc01e99d52230a45669bb04222e6cf7bf9",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/vc.py"
+    },
+    {
+      "file_id": "F067",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/receipts.py",
+      "bytes": 31836,
+      "sha256": "4065833e8fa766e587035c456b381fead715f39c1e4e4619ea0d0bb969a609ea",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/receipts.py"
+    },
+    {
+      "file_id": "F068",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/obligation_graph_compiler.py",
+      "bytes": 135680,
+      "sha256": "8a17f0fe2f756f75d4b49c358b77d9edba1f57fe8d85fea968ca7de628a8f9be",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/obligation_graph_compiler.py"
+    },
+    {
+      "file_id": "F069",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/symbolic_candidate_planner.py",
+      "bytes": 77845,
+      "sha256": "4a51d33888c34a24cd0a8733bcb5272c7927f1b3f61186f8322445ba72b7e7ee",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/symbolic_candidate_planner.py"
+    },
+    {
+      "file_id": "F070",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_compiler.py",
+      "bytes": 160096,
+      "sha256": "9c0505757b56c52ccc4937cafe56f95e6eb255ef5acc5a3402d11526fc25909d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_compiler.py"
+    },
+    {
+      "file_id": "F071",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_validator.py",
+      "bytes": 131911,
+      "sha256": "a87cb299e6e77a182a2dd1941100b4f8b080824db7d7575fc6063efcb70a2023",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/planning/formal_plan_validator.py"
+    },
+    {
+      "file_id": "F072",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/ir_registry.py",
+      "bytes": 60402,
+      "sha256": "8978d35862ba5ee03795c8a91f4da19320810ae18b273f12bc970b332a7846e5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/ir_registry.py"
+    },
+    {
+      "file_id": "F073",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/intent_constraint_adapter.py",
+      "bytes": 110112,
+      "sha256": "f0a0dc04e5161f8359b5c594d6046247765395f583b5dc08bc1c657115d55df4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/intent_constraint_adapter.py"
+    },
+    {
+      "file_id": "F074",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/proof_scope_index.py",
+      "bytes": 149605,
+      "sha256": "6482376fe353704397470d2495b745cdc086b40652b832f88f24e05e048d7f6f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/proof_scope_index.py"
+    },
+    {
+      "file_id": "F075",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/context/decision_runtime.py",
+      "bytes": 99999,
+      "sha256": "ee8cf60218a2b9fe86ca1ec717da57a478996ddcde4a5705eab52397be126839",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/context/decision_runtime.py"
+    },
+    {
+      "file_id": "F076",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/executor.py",
+      "bytes": 84730,
+      "sha256": "b5f39586d91a0d2a8ea573eda18f1e0a026c1b06d0760e8ea0f80cad2763864f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/executor.py"
+    },
+    {
+      "file_id": "F077",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/datasets_adapter.py",
+      "bytes": 77374,
+      "sha256": "212b259f46a7196d4039914467b5eed81a46f2bdb003fe134c6568cae11ac8eb",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/datasets_adapter.py"
+    },
+    {
+      "file_id": "F078",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/context/decision_contracts.py",
+      "bytes": 72854,
+      "sha256": "07df6bf70b640607556302da3f62addfd3217f93c7acccb82e1dd6821c619686",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/context/decision_contracts.py"
+    },
+    {
+      "file_id": "F079",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/ir_adapters.py",
+      "bytes": 38681,
+      "sha256": "792437b5cb1f4728bc517bd4dff47d78d991dacf563c49613979ea7fe6f28623",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/proof/ir_adapters.py"
+    },
+    {
+      "file_id": "F080",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/contracts.py",
+      "bytes": 198875,
+      "sha256": "a77034e7d34dbf3af95a682a50e43c7abc3589082a723b821bf0f1fea7e40b14",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "intent_grounding"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_accelerate/ipfs_accelerate_py/agent_supervisor/verification/contracts.py"
+    },
+    {
+      "file_id": "F081",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/__init__.py",
+      "bytes": 56829,
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/__init__.py"
+    },
+    {
+      "file_id": "F082",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/router_deps.py",
+      "bytes": 5845,
+      "sha256": "56f66dfff183d9d0ee7977a314c49adbaa181e6fe0087c8f1c581a7d2973bf4c",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/router_deps.py"
+    },
+    {
+      "file_id": "F083",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py",
+      "bytes": 4434,
+      "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/__init__.py"
+    },
+    {
+      "file_id": "F084",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/__init__.py",
+      "bytes": 2424,
+      "sha256": "b4182826af58a52d90da4cea3c57ee684be90d4b41e39f209a697a0bbd8e3e45",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/__init__.py"
+    },
+    {
+      "file_id": "F085",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/ast_ir.py",
+      "bytes": 53425,
+      "sha256": "1461edb7c39f2adc89a70e54decfa291ccceafc50ed23011fbdeea5acb4c8b91",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/ast_ir.py"
+    },
+    {
+      "file_id": "F086",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/python_frontend.py",
+      "bytes": 53460,
+      "sha256": "baf1c1ec5e6a5f83a0eb640b988850264d35311cdcedc87d22cff610d05308df",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/python_frontend.py"
+    },
+    {
+      "file_id": "F087",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/repository.py",
+      "bytes": 167869,
+      "sha256": "742b7ac132e6327d8ce52973890239bc789cebe2e816ca0c57c1041d01600db9",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/repository.py"
+    },
+    {
+      "file_id": "F088",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/schema_versions.py",
+      "bytes": 8081,
+      "sha256": "fd7270cada2126606c00870dcb7291d27d7f8182e0e861d4f83905031668bbc6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/schema_versions.py"
+    },
+    {
+      "file_id": "F089",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py",
+      "bytes": 663,
+      "sha256": "5c41f8f1e165dd365eaaaa2a5f7a9a8bb97d311604a79b42b5999ca2c06f8997",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/__init__.py"
+    },
+    {
+      "file_id": "F090",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/index.py",
+      "bytes": 8069,
+      "sha256": "c88632d2ad97ebbe87df89494d641413a6a263781e91df6269aca2b5daac235c",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/index.py"
+    },
+    {
+      "file_id": "F091",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py",
+      "bytes": 16441,
+      "sha256": "8344f50bfbf9af6418ab35e173522649006696f98e56eaeb0a09739c1a4da427",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/delta.py"
+    },
+    {
+      "file_id": "F092",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/explain.py",
+      "bytes": 9400,
+      "sha256": "e9b6867f638b0e00b79a603be05c05186900302f578c0a0fadf431374800c1b9",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/explain.py"
+    },
+    {
+      "file_id": "F093",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py",
+      "bytes": 33307,
+      "sha256": "45c36b78be53bf6ec2dd65452eb282ba0e7e9b94d5385a0d8f66ebbad4f3f375",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/invalidation.py"
+    },
+    {
+      "file_id": "F094",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py",
+      "bytes": 34958,
+      "sha256": "4b061c97838929a4cdc055998ce71aa854234c7e75d3fbee12595fa1bafa8a75",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/models.py"
+    },
+    {
+      "file_id": "F095",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py",
+      "bytes": 54595,
+      "sha256": "744c5d1699403239d3eb5e9588a38a38cbc0cc56799c2884d8821f1a4e1bdd76",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/python_analysis.py"
+    },
+    {
+      "file_id": "F096",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py",
+      "bytes": 30681,
+      "sha256": "45a0ab3fae08e91db2971540e5d933c8e82c47e7f65b3e5ec88912dbedc67ab4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/pytest_analysis.py"
+    },
+    {
+      "file_id": "F097",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py",
+      "bytes": 18520,
+      "sha256": "4e269d1e2f39ea27582e98f240996696d61b0fe0b1358e363ff2376baa7972e3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_contracts/semantic_index/symbol_graph.py"
+    },
+    {
+      "file_id": "F098",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "bytes": 957,
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/__init__.py"
+    },
+    {
+      "file_id": "F099",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "bytes": 69336,
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py"
+    },
+    {
+      "file_id": "F100",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "bytes": 8008,
+      "sha256": "3cc2de908a6d24708f81818932415694c6866878c9dae670dea49dde547f5e48",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py"
+    },
+    {
+      "file_id": "F101",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "bytes": 53075,
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "capture",
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py"
+    },
+    {
+      "file_id": "F102",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/backends/results.py",
+      "bytes": 27160,
+      "sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/backends/results.py"
+    },
+    {
+      "file_id": "F103",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/__init__.py",
+      "bytes": 2438,
+      "sha256": "e574c74067e7059cc506b32c780bc0444de89c63b55dade3df00ae9fd563431e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/__init__.py"
+    },
+    {
+      "file_id": "F104",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/bounded_cache.py",
+      "bytes": 6656,
+      "sha256": "29a450b5fc08c5577964774035717dc5d7be85c159cfd502fba5252c4ec9c9fa",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/bounded_cache.py"
+    },
+    {
+      "file_id": "F105",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/converters.py",
+      "bytes": 13962,
+      "sha256": "f530c453775f2c1a4a2f8a26aa647df1f725be109078df258288eab33a427fde",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/converters.py"
+    },
+    {
+      "file_id": "F106",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/errors.py",
+      "bytes": 2268,
+      "sha256": "10d21acd8d0fd6049297a1b36d10db1fcc09146095f1dabfe5a686b887f4b8cf",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/errors.py"
+    },
+    {
+      "file_id": "F107",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/feature_detection.py",
+      "bytes": 4875,
+      "sha256": "a285d84f9b13ee3c2c54023e07ccf9da94ce93e6736362c1881421db9e509d76",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/feature_detection.py"
+    },
+    {
+      "file_id": "F108",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/proof_cache.py",
+      "bytes": 168205,
+      "sha256": "b68c36ff934ba6ee7a308162ee7035c78f4c522a5483e85e536b428db8485b36",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/proof_cache.py"
+    },
+    {
+      "file_id": "F109",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/utility_monitor.py",
+      "bytes": 6398,
+      "sha256": "ef23631a622dfd555cefcdf69793e78a7c64a115c7451aea4dfff5389b014985",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/utility_monitor.py"
+    },
+    {
+      "file_id": "F110",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/common/validators.py",
+      "bytes": 8374,
+      "sha256": "e58dbba7d3f346545e2ff572928ed9c7bb9adc71b20e8cc8dc816a7fc060e0c7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/common/validators.py"
+    },
+    {
+      "file_id": "F111",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/families/models.py",
+      "bytes": 36277,
+      "sha256": "1a92305ef498812e3757147179907d4ddf4a4518371034fc2363922d5d5fed3f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/families/models.py"
+    },
+    {
+      "file_id": "F112",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+      "bytes": 6942,
+      "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/__init__.py"
+    },
+    {
+      "file_id": "F113",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/artifacts.py",
+      "bytes": 44109,
+      "sha256": "63896fb1fb4ef22be50d76996ce404119a5d209d01f046a6a842b7b96848ebc6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/artifacts.py"
+    },
+    {
+      "file_id": "F114",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/axes.py",
+      "bytes": 16755,
+      "sha256": "4d65336f197a18ccbfd3dd02ce968eb401fb498aeebd2a43735d7a88ab8c6f97",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/axes.py"
+    },
+    {
+      "file_id": "F115",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+      "bytes": 14098,
+      "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/canonical.py"
+    },
+    {
+      "file_id": "F116",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/claims.py",
+      "bytes": 16176,
+      "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/claims.py"
+    },
+    {
+      "file_id": "F117",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/diagnostics.py",
+      "bytes": 20110,
+      "sha256": "508fd3c2dce94a1eb1e2dff19f8f578ccec2d1e94eb1db2742f75783e23ff198",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/diagnostics.py"
+    },
+    {
+      "file_id": "F118",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/evidence.py",
+      "bytes": 12653,
+      "sha256": "826743829d2964b97e13720b5ea52907de77f6b18e8886e5a3c0fb6a977fdeff",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/evidence.py"
+    },
+    {
+      "file_id": "F119",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/identity.py",
+      "bytes": 8911,
+      "sha256": "606bffc1f938c59f44651eeb65cb9c0738e16e465aabba0ad82ef05e3b5b3b0e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/identity.py"
+    },
+    {
+      "file_id": "F120",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/protocols.py",
+      "bytes": 57414,
+      "sha256": "b452a7095a2524f0ea3f4e4f3a395643d3257cd6f42e3c77f8e1817df62f6fed",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/protocols.py"
+    },
+    {
+      "file_id": "F121",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+      "bytes": 31891,
+      "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/ir_core/provenance.py"
+    },
+    {
+      "file_id": "F122",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/contracts.py",
+      "bytes": 36669,
+      "sha256": "0238a345e5c35aec78801891562e896d719bca0424eab8ad790d5da2c239c5aa",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/contracts.py"
+    },
+    {
+      "file_id": "F123",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/ir.py",
+      "bytes": 33328,
+      "sha256": "40f59ac33b5e8c282b06d7d8dec34940ffa8013f50fc65fc71e19a1ea41ef282",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/ir.py"
+    },
+    {
+      "file_id": "F124",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/program.py",
+      "bytes": 58065,
+      "sha256": "f051f42d64c5f993451972924953cc7eaa6d17df097235ddabfd5d791d406f91",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/program.py"
+    },
+    {
+      "file_id": "F125",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/properties.py",
+      "bytes": 15384,
+      "sha256": "0b438555895505df283d7f151887a14d826df27259f4f5eee0ac584b74dbe10a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/properties.py"
+    },
+    {
+      "file_id": "F126",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/translations.py",
+      "bytes": 28440,
+      "sha256": "c418cf45efd69dd01ced3eb2e05f9bc411ab12855fa408401d1ba74839df6dda",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/software_verification/translations.py"
+    },
+    {
+      "file_id": "F127",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/utils/__init__.py",
+      "bytes": 175,
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "conditional_proofs"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/utils/__init__.py"
+    },
+    {
+      "file_id": "F128",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_affine_alignment_preparation_v1.json",
+      "bytes": 1754,
+      "sha256": "f4cc89345ba4bc30b2a174edd3036b6c2471f7ebbd1f14e2df44a10bc3307653",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_affine_alignment_preparation_v1.json"
+    },
+    {
+      "file_id": "F129",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_aligned_decoder_preparation_v1.json",
+      "bytes": 704,
+      "sha256": "2be8aa4fa4f6eaa5ce40dfd22fcae44edaddfb2aea44db5272f5231786dc4dc5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_aligned_decoder_preparation_v1.json"
+    },
+    {
+      "file_id": "F130",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_aligned_interface_training_v1.json",
+      "bytes": 1606,
+      "sha256": "ca694b19d09b42531de30713f98c830a9ae4415de1c30dfc9ad4453a5c048b0d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_aligned_interface_training_v1.json"
+    },
+    {
+      "file_id": "F131",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_bridge_preparation_v1.json",
+      "bytes": 1169,
+      "sha256": "2185d71d11db554bc88c7185cb7d87fccfdf1c706ae548fa4846dbe6766c0c20",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_bridge_preparation_v1.json"
+    },
+    {
+      "file_id": "F132",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_decoder_interface_training_v1.json",
+      "bytes": 1402,
+      "sha256": "444fe404e703b3932559de9eb1fefc90fab2a126ad1cb3b2f1d366710f812bae",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_decoder_interface_training_v1.json"
+    },
+    {
+      "file_id": "F133",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_decoder_native_preparation_v1.json",
+      "bytes": 2007,
+      "sha256": "0bc3b0913591db96643c7409abe6403727037418a21f26421582db072b2d2721",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_decoder_native_preparation_v1.json"
+    },
+    {
+      "file_id": "F134",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_decoder_source_evaluation_v1.json",
+      "bytes": 842,
+      "sha256": "13b65fbf97a02005b9880ab9e0caf2cfb7c0fdd132324f144a5b48a08becc009",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_decoder_source_evaluation_v1.json"
+    },
+    {
+      "file_id": "F135",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_decoder_transfer_preparation_v1.json",
+      "bytes": 1846,
+      "sha256": "37b9d9356800429c12358b3844051f58cd40cc15d04cf8b0acf7d4817eacf71b",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_decoder_transfer_preparation_v1.json"
+    },
+    {
+      "file_id": "F136",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_embedding_reuse_v1.json",
+      "bytes": 983,
+      "sha256": "1788b021e8c4a71471b9fbfdbfb0e7d671d140aeb55274864f4ec9dd257692bc",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_embedding_reuse_v1.json"
+    },
+    {
+      "file_id": "F137",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_migration_preparation_20261001_repin.json",
+      "bytes": 17471,
+      "sha256": "37588a201b3b6641987e2f28ab35b7efe6c93c18740f07897057f4f155b6fde7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_migration_preparation_20261001_repin.json"
+    },
+    {
+      "file_id": "F138",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_multilingual_local_assets_v1.json",
+      "bytes": 1470,
+      "sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_multilingual_local_assets_v1.json"
+    },
+    {
+      "file_id": "F139",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/configs/autoencoders/gte_parallel_lineages_v1.json",
+      "bytes": 6528,
+      "sha256": "0312cb577521a98565ea0706f918bf4532c017cacd7f9fcbd53e50a9cfd4f0a4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_parallel_lineages_v1.json"
+    },
+    {
+      "file_id": "F140",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_affine_alignment.md",
+      "bytes": 8585,
+      "sha256": "2adbcc7e976cf7749d798c1b1283557cd141f60cc93c4f6badaaf99cd1a29a56",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_affine_alignment.md"
+    },
+    {
+      "file_id": "F141",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_affine_bridge_preparation.md",
+      "bytes": 9003,
+      "sha256": "bdda99ce111dfab18b2eba029b3f36af76abdae6caf37d529a39cecc94f7291f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_affine_bridge_preparation.md"
+    },
+    {
+      "file_id": "F142",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_aligned_decoder.md",
+      "bytes": 9616,
+      "sha256": "53bb6572eb61e1a3b4c8b58a1f20e6b1a7069e13d23b42def09099c9f0248103",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_aligned_decoder.md"
+    },
+    {
+      "file_id": "F143",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_aligned_interface_training.md",
+      "bytes": 10326,
+      "sha256": "bd64e6a5af58c3c979d15946824248895680e7fc6b0ccac93c251ee0f47fa3cd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_aligned_interface_training.md"
+    },
+    {
+      "file_id": "F144",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_decoder_interface_training.md",
+      "bytes": 10680,
+      "sha256": "64be97830c12a4a6f5ecc039304a5773f9e80ec133aac590d80619675d0df74b",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_decoder_interface_training.md"
+    },
+    {
+      "file_id": "F145",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_decoder_knowledge_transfer.md",
+      "bytes": 10467,
+      "sha256": "e50f53bf4db5472ab0d42f78021f29051a184cbfbe84f77210519e00097c8026",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_decoder_knowledge_transfer.md"
+    },
+    {
+      "file_id": "F146",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_decoder_native_inputs.md",
+      "bytes": 11462,
+      "sha256": "749ff921c4aaa887293881994f39a8e8194cbf9d38fb00d1654201dc1af58602",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_decoder_native_inputs.md"
+    },
+    {
+      "file_id": "F147",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_decoder_reuse.md",
+      "bytes": 17437,
+      "sha256": "5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_decoder_reuse.md"
+    },
+    {
+      "file_id": "F148",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_decoder_source_evaluation.md",
+      "bytes": 11232,
+      "sha256": "b930d05e2c7cba60a60747717dfaafcc3acfecb4434a7d4d953cb2a227ad48a2",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_decoder_source_evaluation.md"
+    },
+    {
+      "file_id": "F149",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_embedding_reuse.md",
+      "bytes": 8254,
+      "sha256": "61a15804c94fda04d6180f1c403fd003970ce722452554035a665cd7ffb626bd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_embedding_reuse.md"
+    },
+    {
+      "file_id": "F150",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_multilingual_preparation.md",
+      "bytes": 9757,
+      "sha256": "d7281ebee1a31e59965e2e6a5e538c2a99231ce4ce5cb9d28644fccba52c7d96",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_multilingual_preparation.md"
+    },
+    {
+      "file_id": "F151",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/gte_parallel_model_workers.md",
+      "bytes": 9618,
+      "sha256": "7c0c1730a4fcbc5a511a78d09c388cf699db0d912f0be030d6f390578fd5564a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/gte_parallel_model_workers.md"
+    },
+    {
+      "file_id": "F152",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_affine_alignment.py",
+      "bytes": 11986,
+      "sha256": "afce326ec0c7288c3837491f90a92d12388c3c20c9f05106dcb7e6448b9e7f57",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_affine_alignment.py"
+    },
+    {
+      "file_id": "F153",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_affine_bridge.py",
+      "bytes": 19997,
+      "sha256": "5f22119fa64f08cf8cd5f8f805972b78554cfad13cda40a48fd9a4bb575a7b68",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_affine_bridge.py"
+    },
+    {
+      "file_id": "F154",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_decoder.py",
+      "bytes": 14406,
+      "sha256": "4ad50e3478d5553f62407feb5a86d6750bfcfae60652f96c994ec1a9b0e59eb3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_decoder.py"
+    },
+    {
+      "file_id": "F155",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_decoder_contract.py",
+      "bytes": 20194,
+      "sha256": "316283e980fae04dba3f61259664c2f887daa76f205e95e79894fff4e8980218",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_decoder_contract.py"
+    },
+    {
+      "file_id": "F156",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_interface_checkpoint.py",
+      "bytes": 14698,
+      "sha256": "df591bb9e379117482949db91b73a4c112b1b09f79d25234223a7b299453cb38",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_interface_checkpoint.py"
+    },
+    {
+      "file_id": "F157",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_interface_training.py",
+      "bytes": 23079,
+      "sha256": "40d6007c9d93fd357abb9729f314e9ded6c6397c4b3c634ae484787d28d97f81",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_aligned_interface_training.py"
+    },
+    {
+      "file_id": "F158",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_alignment_contract.py",
+      "bytes": 44404,
+      "sha256": "73a7841d7ec14db1ba3ce0b47084395bcc6c6558751f26c90866a0b737ce34f0",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_alignment_contract.py"
+    },
+    {
+      "file_id": "F159",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_bridge_pairs.py",
+      "bytes": 15127,
+      "sha256": "c42dc8dc14517caa347c372cddd54c2ff2e13f6e90514df17f50a5470ae1b497",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_bridge_pairs.py"
+    },
+    {
+      "file_id": "F160",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_bridge_teacher.py",
+      "bytes": 19456,
+      "sha256": "657de3e47e4d1031692c4280bd69f206dc8d388c3d8f4e064f6657f96d4c6c47",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_bridge_teacher.py"
+    },
+    {
+      "file_id": "F161",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_distillation.py",
+      "bytes": 11464,
+      "sha256": "60d2e1db528ecd3165f7211019b4ea9bc838e843e63566efb9413645ef2a3ccd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_distillation.py"
+    },
+    {
+      "file_id": "F162",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_interface_checkpoint.py",
+      "bytes": 26441,
+      "sha256": "5d283dd4b411edc982a4fb0b2114c74c6c7ba4d77dfb4e3634afa57fff2484b3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_interface_checkpoint.py"
+    },
+    {
+      "file_id": "F163",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_interface_training.py",
+      "bytes": 20016,
+      "sha256": "dd8e555d0e742dc9c5375f4ce4857018e3d0c139ce859a5f26ec0a2cc5a35fd8",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_interface_training.py"
+    },
+    {
+      "file_id": "F164",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_native_batch.py",
+      "bytes": 20286,
+      "sha256": "f9fea69376b762bcdc9e0d9691d4b9f833cfe8be9e9df9cf756e3338131bdd76",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_native_batch.py"
+    },
+    {
+      "file_id": "F165",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_native_objective.py",
+      "bytes": 21747,
+      "sha256": "c896e0bbd9a9b9170ae12918afa8df6bf20131fd5957b11c7de483effd6ddffd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_native_objective.py"
+    },
+    {
+      "file_id": "F166",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_reuse.py",
+      "bytes": 13945,
+      "sha256": "82e7ef0eacec0dc392773cae62db84b7fba83812363004e73a168a366220e3e5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_reuse.py"
+    },
+    {
+      "file_id": "F167",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_comparison.py",
+      "bytes": 19197,
+      "sha256": "acf245266bb83393a321fc92f9f338e0d8e626baa6907451fdbc4f8397822915",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_comparison.py"
+    },
+    {
+      "file_id": "F168",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_evaluation.py",
+      "bytes": 16406,
+      "sha256": "7a73a16a3beca5ac819c87d6d94a807f51b77cada42f8c69114d8729b68922f1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_evaluation.py"
+    },
+    {
+      "file_id": "F169",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py",
+      "bytes": 17669,
+      "sha256": "3fe2bc54e36bd5b9f68bafe236193f2c377efa37090e2fe971a9a8e0bcc5aedf",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_source_generation.py"
+    },
+    {
+      "file_id": "F170",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_batch.py",
+      "bytes": 25849,
+      "sha256": "e7cd0134df183df54dd56822e8e72d042076a206d2527322e7e64122a85e50d6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_batch.py"
+    },
+    {
+      "file_id": "F171",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_replay.py",
+      "bytes": 25011,
+      "sha256": "0cff6e50bcf996dd70bbf3c63fcfe3a6875a177db87bdcdb4fba5c4d5dfdac88",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_transfer_replay.py"
+    },
+    {
+      "file_id": "F172",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_warm_start.py",
+      "bytes": 26165,
+      "sha256": "2d8bc4a22718392b250e777bba192512d1fcf60973bfa7e615a409c22fb7e6e3",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_decoder_warm_start.py"
+    },
+    {
+      "file_id": "F173",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_embedding_reuse.py",
+      "bytes": 4419,
+      "sha256": "382213c3eefb9cf659653e73f1c6d3bca4a3c37e7cee7790f5739a75f7c82318",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_embedding_reuse.py"
+    },
+    {
+      "file_id": "F174",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_legacy8_decoder_donor.py",
+      "bytes": 30102,
+      "sha256": "1f09e5975e808e5f1afcd5fec25cd5c412524f89db691d0ab7c107e17f9a8f71",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_legacy8_decoder_donor.py"
+    },
+    {
+      "file_id": "F175",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py"
+    },
+    {
+      "file_id": "F176",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_worker_contract.py",
+      "bytes": 13861,
+      "sha256": "2e8af403f437ec335a58d7b7c1a3a2771f3c047b6e41d55ce2e080dfb5187747",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_worker_contract.py"
+    },
+    {
+      "file_id": "F177",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/evaluate_gte_decoder_sources.py",
+      "bytes": 13105,
+      "sha256": "479d3fc4e50132e2a8442e3db6e2d5b3dc2132c037e28fe0a1362fa05fa4423f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/evaluate_gte_decoder_sources.py"
+    },
+    {
+      "file_id": "F178",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/gte_aligned_interface_parent.py",
+      "bytes": 18429,
+      "sha256": "3bde3013f3229f5aba9d7b975a0180d02a8d297f1cc90f77b913384505c083bf",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/gte_aligned_interface_parent.py"
+    },
+    {
+      "file_id": "F179",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/gte_source_evaluation_parent.py",
+      "bytes": 17438,
+      "sha256": "19633ec93028e954364ebd8353a4ac047c092ad8637fa0e5c3ead17b14b2570a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/gte_source_evaluation_parent.py"
+    },
+    {
+      "file_id": "F180",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_aligned_decoder.py",
+      "bytes": 22900,
+      "sha256": "93bdff0cb791b542c222dc60c736717ee25b35b8e61d3fe66c9c3c58d52eff03",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_aligned_decoder.py"
+    },
+    {
+      "file_id": "F181",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_alignment.py",
+      "bytes": 18806,
+      "sha256": "028d852708a0902285f89b25f56ef8b64308df76424ddf6d6938e0ce20e002ea",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_alignment.py"
+    },
+    {
+      "file_id": "F182",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_bridge.py",
+      "bytes": 14679,
+      "sha256": "333ece6031dc7687afe8134e76a0fcd3157d3acad6ef361a725c80b22dda1ffe",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_bridge.py"
+    },
+    {
+      "file_id": "F183",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_native.py",
+      "bytes": 17633,
+      "sha256": "872a7c083d3e6ff2f141b59a7ef4a72a4071a4039d981d30fc1218147f500be5",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_native.py"
+    },
+    {
+      "file_id": "F184",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_reuse.py",
+      "bytes": 18839,
+      "sha256": "a0acfc5675a9e34428d77957c73e9205a9baea78d911e3f0db541ac1d3d1e6d8",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_reuse.py"
+    },
+    {
+      "file_id": "F185",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_transfer.py",
+      "bytes": 12989,
+      "sha256": "9ff0fa8b43424f695424a10f2c0b847bb0d2e955d1cab2bf9bfe6637ab77486d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_decoder_transfer.py"
+    },
+    {
+      "file_id": "F186",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_embedding_reuse.py",
+      "bytes": 8283,
+      "sha256": "b0193ce6123bb060ceaf28612e8c4965787484c947846ffd8a82d3884ba530de",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_embedding_reuse.py"
+    },
+    {
+      "file_id": "F187",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_multilingual.py",
+      "bytes": 16663,
+      "sha256": "47d16c26e2a0cc41e91087568aa87d8c46010380a999bbc4b5a04dc17d30f07a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/prepare_gte_multilingual.py"
+    },
+    {
+      "file_id": "F188",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/run_gte_aligned_interface_training.py",
+      "bytes": 16445,
+      "sha256": "aff70d52971cd35f311a2fd70be68eb13b6748b2f35143c9c97f72c32a1a0b3d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/run_gte_aligned_interface_training.py"
+    },
+    {
+      "file_id": "F189",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/run_gte_decoder_interface_training.py",
+      "bytes": 17626,
+      "sha256": "6410ec1ca4e03fb8600fc77d79aade85ca719bcc01146f31e364d7637db0b371",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/run_gte_decoder_interface_training.py"
+    },
+    {
+      "file_id": "F190",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/run_gte_model_worker.py",
+      "bytes": 14258,
+      "sha256": "816dc12e85eb44bdc05879fa40b838eec55ed81c2c2254798930e75f2b9ba233",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/run_gte_model_worker.py"
+    },
+    {
+      "file_id": "F191",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/scripts/ops/autoencoder/run_gte_parallel_paths.py",
+      "bytes": 6329,
+      "sha256": "35d83b5078dbbca60dd8df2fb88c1f8bc9b111cb71a4149ca50e3135341e97da",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/autoencoder/run_gte_parallel_paths.py"
+    },
+    {
+      "file_id": "F192",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_evaluate_gte_decoder_sources.py",
+      "bytes": 18228,
+      "sha256": "0f51e1b2f54146ba6ba6e3ed2264b394578df5aab39efba2fe5119a48540129a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_evaluate_gte_decoder_sources.py"
+    },
+    {
+      "file_id": "F193",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_affine_alignment.py",
+      "bytes": 14829,
+      "sha256": "c3c8dba0f7239f44de04f8ea6a1a27397028689a81abf6bc92e100057169f81a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_affine_alignment.py"
+    },
+    {
+      "file_id": "F194",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_affine_bridge.py",
+      "bytes": 14494,
+      "sha256": "f0f3e436ffbe31467acee3b28376d0098f405350d73ee6ccebe6486dfc83005f",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_affine_bridge.py"
+    },
+    {
+      "file_id": "F195",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_decoder.py",
+      "bytes": 22234,
+      "sha256": "7cb8fa309b99d9bde438cbd48809bb30000cc971cc15ba12d054ee9b8da998b7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_decoder.py"
+    },
+    {
+      "file_id": "F196",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_decoder_contract.py",
+      "bytes": 18617,
+      "sha256": "14ae0b35c4c7aa532693d108ea326dfda38caf8d3f3aafeafd8c5dfe8b6bd050",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_decoder_contract.py"
+    },
+    {
+      "file_id": "F197",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_interface_checkpoint.py",
+      "bytes": 21007,
+      "sha256": "18d0ef941dfcc36a6d41201077e2888e25c20ada74fedeed9395388dba357b72",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_interface_checkpoint.py"
+    },
+    {
+      "file_id": "F198",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_interface_training.py",
+      "bytes": 25505,
+      "sha256": "0f31e25e50c4f655e055a4e9378eb76e0ab122a2fce415ded0df742dcc72eea1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_aligned_interface_training.py"
+    },
+    {
+      "file_id": "F199",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_alignment_contract.py",
+      "bytes": 24686,
+      "sha256": "49ec2f0e12a450e4d424ae595344b4e03b7a464cb345bb2fdcb2c05c2ac60e67",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_alignment_contract.py"
+    },
+    {
+      "file_id": "F200",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_bridge_pairs.py",
+      "bytes": 24462,
+      "sha256": "2af1af01c68f4c402f0a4a745b7ce16a49c8237d890ab8a0f8e4e62f25196980",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_bridge_pairs.py"
+    },
+    {
+      "file_id": "F201",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_bridge_teacher.py",
+      "bytes": 16002,
+      "sha256": "55638082cf782b43d957a66bf9c8f293a9ec401d5e923d669e5ccb18507ae030",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_bridge_teacher.py"
+    },
+    {
+      "file_id": "F202",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_distillation.py",
+      "bytes": 14999,
+      "sha256": "c9e751b0bcec278212d710c54a3ab44fddd32e3f87fc4e747adf68db5fdac524",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_distillation.py"
+    },
+    {
+      "file_id": "F203",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_interface_checkpoint.py",
+      "bytes": 19204,
+      "sha256": "bd32a34da5874cd634c1f9724f92f5b636c39649c2b3c632580ea17e2ef68584",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_interface_checkpoint.py"
+    },
+    {
+      "file_id": "F204",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_interface_training.py",
+      "bytes": 13803,
+      "sha256": "3031dc1d338ac9ff136a3df7bff434fd020ff133395a529d54729f59dec16ad8",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_interface_training.py"
+    },
+    {
+      "file_id": "F205",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_native_batch.py",
+      "bytes": 19482,
+      "sha256": "fed0c6cf449fa7e81f391be45d6c2bc85cbc815f765ed06b4396d99f85b1d714",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_native_batch.py"
+    },
+    {
+      "file_id": "F206",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_native_objective.py",
+      "bytes": 18991,
+      "sha256": "9e1a0216ebe66569da724787792871d48993d86f8173259ab32cb50a9c8e5a3d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_native_objective.py"
+    },
+    {
+      "file_id": "F207",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_reuse.py",
+      "bytes": 22966,
+      "sha256": "e5a27b0479b0e610201b702534d92f3d4d7f6ae0771abf20c4aef028f6cce6bd",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_reuse.py"
+    },
+    {
+      "file_id": "F208",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_comparison.py",
+      "bytes": 20373,
+      "sha256": "19830852690e1390a78bb6664b592a5fcd7f686bb0a6b14aa9ca12dcbc18e75d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_comparison.py"
+    },
+    {
+      "file_id": "F209",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_evaluation.py",
+      "bytes": 15316,
+      "sha256": "3dd5ed1848c44afa417c52d30535282b4a569884463dd378337af385f7b7119a",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_evaluation.py"
+    },
+    {
+      "file_id": "F210",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_generation.py",
+      "bytes": 15897,
+      "sha256": "0465ff67ce89f803ebf3406a796aa44b5e073f044c7eab01bc74d99babdfc2bc",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_source_generation.py"
+    },
+    {
+      "file_id": "F211",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_transfer_batch.py",
+      "bytes": 19043,
+      "sha256": "1431a077d7a634763ebb712c40d1941cf2deb667905a268ba5d17322405dd6e7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_transfer_batch.py"
+    },
+    {
+      "file_id": "F212",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_transfer_replay.py",
+      "bytes": 18405,
+      "sha256": "938dd8e3c069307a7aa94a64639d747bf20f64c97438e8a169fea188a2f578fe",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_transfer_replay.py"
+    },
+    {
+      "file_id": "F213",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_warm_start.py",
+      "bytes": 18430,
+      "sha256": "d94b07e3d327e5da7d747ad1c67a27202c1a9d02a1a012ca0ac5554ce3f8eca8",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_decoder_warm_start.py"
+    },
+    {
+      "file_id": "F214",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_embedding_reuse.py",
+      "bytes": 12571,
+      "sha256": "b13f9eeab1b9d9bf17a0192cf7faa93d28861cbcd6b0cac4d2db13f961cda948",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_embedding_reuse.py"
+    },
+    {
+      "file_id": "F215",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_legacy8_decoder_donor.py",
+      "bytes": 19074,
+      "sha256": "e73665df6284d269d0649d3c014a097757dda1ece8f1cf01d1977ab9f0d21ac1",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_legacy8_decoder_donor.py"
+    },
+    {
+      "file_id": "F216",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_model_worker.py",
+      "bytes": 7186,
+      "sha256": "90ea011d19f47f1d6e712f075f66f00acc4e817e0d8580a28baebe7480e9b56d",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_model_worker.py"
+    },
+    {
+      "file_id": "F217",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_multilingual_corpus.py",
+      "bytes": 19403,
+      "sha256": "165cce796ae704e8995046fec5e20a1cf7b45941b55744611b38db3b0d70a5ab",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_multilingual_corpus.py"
+    },
+    {
+      "file_id": "F218",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_multilingual_profile.py",
+      "bytes": 13010,
+      "sha256": "62eaf80c483902d97ef8e91c6236f08700a2dccc0d70776e3b660ef759d6eea6",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_multilingual_profile.py"
+    },
+    {
+      "file_id": "F219",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_parallel_paths.py",
+      "bytes": 15932,
+      "sha256": "149c576d024de922a84564a4ee3267cfbd69994f7418b7647f3abd655e7cbea4",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_parallel_paths.py"
+    },
+    {
+      "file_id": "F220",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_parallel_paths_cli.py",
+      "bytes": 8331,
+      "sha256": "4531d3551e4e4fb34fb319a9bd2d81006cf6fd39cf797015557b7d484ca1dd38",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_parallel_paths_cli.py"
+    },
+    {
+      "file_id": "F221",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_source_evaluation_parent.py",
+      "bytes": 11249,
+      "sha256": "31a13f89a64019e6a477e9c29eb2f2d0ac94203165af83d872da2c7de52c6555",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_source_evaluation_parent.py"
+    },
+    {
+      "file_id": "F222",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_worker_contract.py",
+      "bytes": 11429,
+      "sha256": "6d498f70ecfa7454aabae270b7759551285c680045940df8fd518241254a7544",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_gte_worker_contract.py"
+    },
+    {
+      "file_id": "F223",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_aligned_decoder.py",
+      "bytes": 22657,
+      "sha256": "8997a882fbed44b4040e69fac8e987bffbb45f3d7ecab87872c5c082b9769319",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_aligned_decoder.py"
+    },
+    {
+      "file_id": "F224",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_alignment.py",
+      "bytes": 28838,
+      "sha256": "0c8685635511074eb281135695b52e5efa120c12ee8e21dac5491883b7f00968",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_alignment.py"
+    },
+    {
+      "file_id": "F225",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_bridge.py",
+      "bytes": 8827,
+      "sha256": "e761286627bb9d3baa4804f5f372bccf192b880acb957c3e88fa50a28f0f2506",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_bridge.py"
+    },
+    {
+      "file_id": "F226",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_native.py",
+      "bytes": 20647,
+      "sha256": "727330e41e74f33d9723cef21300dc86c2ae78f0dd58305089497f7c370aa4cb",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_native.py"
+    },
+    {
+      "file_id": "F227",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_reuse.py",
+      "bytes": 14109,
+      "sha256": "558acce64243d690be6c1333389c997b258c971137e0aa8822416fd366f45154",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_reuse.py"
+    },
+    {
+      "file_id": "F228",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_transfer.py",
+      "bytes": 17958,
+      "sha256": "5dde00e422ae75c72956483d85214a0c10d322af781d1e090cf84349f396834c",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_decoder_transfer.py"
+    },
+    {
+      "file_id": "F229",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_embedding_reuse.py",
+      "bytes": 12711,
+      "sha256": "8b29167bf753c69af0adf0b524e7ac47033e77c584e8990ea3f4fe18adcd1062",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_embedding_reuse.py"
+    },
+    {
+      "file_id": "F230",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_multilingual.py",
+      "bytes": 15058,
+      "sha256": "1203d5c13c0ed62c3bfed3958ebec0db8bcb33e53873e6c6b399ba465f80a649",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_prepare_gte_multilingual.py"
+    },
+    {
+      "file_id": "F231",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_run_gte_aligned_interface_training.py",
+      "bytes": 16441,
+      "sha256": "783f038df05e5b383171d89d3d3fcf707b5f04beebf49580102839db076f5dcb",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_run_gte_aligned_interface_training.py"
+    },
+    {
+      "file_id": "F232",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_run_gte_decoder_interface_training.py",
+      "bytes": 12360,
+      "sha256": "359f67e356beef31a713ac049157b2727681f637f40fa5667b099731736cfec7",
+      "roles": [
+        "owner_source"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_run_gte_decoder_interface_training.py"
+    },
+    {
+      "file_id": "F233",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/parent-checkpoint.json",
+      "bytes": 673933,
+      "sha256": "53318593b6aa77d5d352c9499c48d92d513215c8d2f945f7d6838205528ba17c",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/parent-checkpoint.json"
+    },
+    {
+      "file_id": "F234",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/child-checkpoint.json",
+      "bytes": 815238,
+      "sha256": "c00a0c54f8b1adb24d1822ab2ac98cec2d414e5b2ec55fad9da69ad7630be6a6",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/child-checkpoint.json"
+    },
+    {
+      "file_id": "F235",
+      "root_id": "workspace",
+      "relative_path": "artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_0/models/cc/cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f",
+      "bytes": 1009515,
+      "sha256": "cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/cc/cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f"
+    },
+    {
+      "file_id": "F236",
+      "root_id": "workspace",
+      "relative_path": "artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_0/models/06/069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930",
+      "bytes": 304490,
+      "sha256": "069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/06/069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930"
+    },
+    {
+      "file_id": "F237",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/security_ir/resumed/checkpoint.json",
+      "bytes": 92660,
+      "sha256": "4807bdfd76f4e43bd969296dbd2e1fc29e9afc2aa76df9115a78dc17b581e6c4",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/security_ir/resumed/checkpoint.json"
+    },
+    {
+      "file_id": "F238",
+      "root_id": "workspace",
+      "relative_path": "artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json",
+      "bytes": 597741,
+      "sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json"
+    },
+    {
+      "file_id": "F239",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/security_ir/train.json",
+      "bytes": 3202749,
+      "sha256": "99d856ef2a70f1a44c992f6f31dd35cd1f491db93f147065db51aa635d7c6876",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/train.json"
+    },
+    {
+      "file_id": "F240",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/security_ir/validation.json",
+      "bytes": 1068258,
+      "sha256": "e719430c2db18dde3d3e49ca831755a4569c975f2eff12bd1db7dba2c82cf8b3",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/validation.json"
+    },
+    {
+      "file_id": "F241",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/security_ir/test.json",
+      "bytes": 1067558,
+      "sha256": "e2e590c68d00454600ce355bbc5bae57843786bd52704d61f7fb85dec761ac25",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/test.json"
+    },
+    {
+      "file_id": "F242",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/security_ir/canary.json",
+      "bytes": 534505,
+      "sha256": "014c2029ed820a8431a11d636db342a97364611ad676aef67ebc789093014aed",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/canary.json"
+    },
+    {
+      "file_id": "F243",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+      "bytes": 128924,
+      "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json"
+    },
+    {
+      "file_id": "F244",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "bytes": 614534,
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json"
+    },
+    {
+      "file_id": "F245",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/semantic-1729-checkpoint.json",
+      "bytes": 621716,
+      "sha256": "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/semantic-1729-checkpoint.json"
+    },
+    {
+      "file_id": "F246",
+      "root_id": "workspace",
+      "relative_path": "artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json",
+      "bytes": 1715990,
+      "sha256": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json"
+    },
+    {
+      "file_id": "F247",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/legal_ir/train.json",
+      "bytes": 3113459,
+      "sha256": "00f4074cca56daed9f766e74c90d3d35e608bfb1058c24db99fc30250314704f",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/train.json"
+    },
+    {
+      "file_id": "F248",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+      "bytes": 1038480,
+      "sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json"
+    },
+    {
+      "file_id": "F249",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/legal_ir/test.json",
+      "bytes": 1037637,
+      "sha256": "33288ea40ee902788bb012b98dd48a767405c18090b92981ef82d680ddee0d72",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/test.json"
+    },
+    {
+      "file_id": "F250",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/legal_ir/canary.json",
+      "bytes": 519374,
+      "sha256": "ac7c55bb4d70f1428d5ecd81595b0546fa325bfb7f4c9ab67ad010dcdba813ec",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/canary.json"
+    },
+    {
+      "file_id": "F251",
+      "root_id": "workspace",
+      "relative_path": "artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+      "bytes": 6873498,
+      "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json"
+    },
+    {
+      "file_id": "F252",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/intent_ir/resumed/checkpoint.json",
+      "bytes": 25559,
+      "sha256": "3f61850d111893b8010ffcb360599cbcebd32165a9699133c87dde26e2d274c1",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/intent_ir/resumed/checkpoint.json"
+    },
+    {
+      "file_id": "F253",
+      "root_id": "workspace",
+      "relative_path": "artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json",
+      "bytes": 586049,
+      "sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json"
+    },
+    {
+      "file_id": "F254",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/intent_ir/train.json",
+      "bytes": 3116227,
+      "sha256": "9d642ce65ac25ec9cb05b14db34aecb3584a648b6c2da4c3cb15c40ef1e7f8aa",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/train.json"
+    },
+    {
+      "file_id": "F255",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/intent_ir/validation.json",
+      "bytes": 1039515,
+      "sha256": "8478295c9c2a2e7158c8fdede1e3b5043e7278c0531020e4e8e0c7ffd27be404",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/validation.json"
+    },
+    {
+      "file_id": "F256",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/intent_ir/test.json",
+      "bytes": 1038586,
+      "sha256": "775e8f91e4d485d34c58f256624670c32fe2a1c44f951f660027a0759c58aacc",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/test.json"
+    },
+    {
+      "file_id": "F257",
+      "root_id": "workspace",
+      "relative_path": "artifacts/source-native-v3-20261001/run-02/intent_ir/canary.json",
+      "bytes": 519725,
+      "sha256": "38dc9c77b3a9bb4ca584b7baef2cd9f84ecb6290ad781b4a6dbcff2744b2474b",
+      "roles": [
+        "inherited_asset"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/canary.json"
+    },
+    {
+      "file_id": "F258",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/ir_family_dimension_inventory_plan.json",
+      "bytes": 25143,
+      "sha256": "a2d7ff1bf5a0fc5907c18a8bd98f8ca282d6d83ea87ae475949a1fe3249719f2",
+      "roles": [
+        "inventory_index"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/ir_family_dimension_inventory_plan.json"
+    },
+    {
+      "file_id": "F259",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/8d.json",
+      "bytes": 7862,
+      "sha256": "bb4d7a74ec581e32c19800333dfcbf2bb175e753e975375f5a3efbbf5c66a2a1",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/8d.json"
+    },
+    {
+      "file_id": "F260",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/384d.json",
+      "bytes": 8393,
+      "sha256": "d01836c6d11996d6d4e88a7d2722fca63004ed4fea19e08f331db65903b4fdc4",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/384d.json"
+    },
+    {
+      "file_id": "F261",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/768d.json",
+      "bytes": 7034,
+      "sha256": "4f2476246a11e0e53f4e18ec82c53b160fa7d39e8b27cf91ef85f865de039177",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/codebase_ir/768d.json"
+    },
+    {
+      "file_id": "F262",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/security_ir/8d.json",
+      "bytes": 7507,
+      "sha256": "e9441e3a56c98133aa02e19b8f70b80c03357ec3d15c47f852a713c9616e1d7a",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/8d.json"
+    },
+    {
+      "file_id": "F263",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/security_ir/384d.json",
+      "bytes": 9757,
+      "sha256": "36fab9a4d7976cc5e791db062919f8d3ff6a30969414a5dad809c197a7beaf21",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/384d.json"
+    },
+    {
+      "file_id": "F264",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/security_ir/768d.json",
+      "bytes": 7126,
+      "sha256": "990f57bb94f99cdbffe328549ae8baea39390faab1fd3be864d6ffed109a9fee",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/security_ir/768d.json"
+    },
+    {
+      "file_id": "F265",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/8d.json",
+      "bytes": 7495,
+      "sha256": "6c5515387d1280ff0dbe55270bd655b612cc6ae2c76293f1c7bc3e77f4f49b0f",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/8d.json"
+    },
+    {
+      "file_id": "F266",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/384d.json",
+      "bytes": 10568,
+      "sha256": "77492b849bd2fa75a55a5d4f79de8eb5a3f6059346ab931df9ed5ccda75e1776",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/384d.json"
+    },
+    {
+      "file_id": "F267",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/768d.json",
+      "bytes": 7577,
+      "sha256": "7c48396a3d0332b0dacbb248fdd5c6ab037080475ebde137aa2217973d514595",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/legal_ir/768d.json"
+    },
+    {
+      "file_id": "F268",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/8d.json",
+      "bytes": 7440,
+      "sha256": "4ff8cbbf4dc5696603ea97f5f57db9415f679148d1b9f13a9a1883a9b5886af5",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/8d.json"
+    },
+    {
+      "file_id": "F269",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/384d.json",
+      "bytes": 9678,
+      "sha256": "0b8b99e966316e16f641359d19a9bdab1e0b2536d400761a88edbb99a4b9e437",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/384d.json"
+    },
+    {
+      "file_id": "F270",
+      "root_id": "workspace",
+      "relative_path": "external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/768d.json",
+      "bytes": 7061,
+      "sha256": "c66c360cc797cbe7b74a08bed90102d22719937a7c7cb46d44f9f70d94af8a98",
+      "roles": [
+        "cell_inventory"
+      ],
+      "capabilities": [
+        "model_reuse"
+      ],
+      "source_path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/inventories/intent_ir/768d.json"
+    }
+  ],
+  "cells": [
+    {
+      "cell_id": "codebase_ir_8d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "inventory_file_id": "F259"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "inventory_file_id": "F260"
+    },
+    {
+      "cell_id": "codebase_ir_768d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "inventory_file_id": "F261"
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "inventory_file_id": "F262"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "inventory_file_id": "F263"
+    },
+    {
+      "cell_id": "security_ir_768d",
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "inventory_file_id": "F264"
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "inventory_file_id": "F265"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "inventory_file_id": "F266"
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "inventory_file_id": "F267"
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "inventory_file_id": "F268"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "inventory_file_id": "F269"
+    },
+    {
+      "cell_id": "intent_ir_768d",
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "inventory_file_id": "F270"
+    }
+  ],
+  "asset_links": [
+    {
+      "cell_id": "codebase_ir_8d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F233"
+    },
+    {
+      "cell_id": "codebase_ir_8d",
+      "inventory_pointer": "/existing_checkpoint_evidence/1/receipt",
+      "asset_file_id": "F234"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F235"
+    },
+    {
+      "cell_id": "codebase_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/1/receipt",
+      "asset_file_id": "F236"
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F237"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F238"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/0/receipt",
+      "asset_file_id": "F239"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/1/receipt",
+      "asset_file_id": "F240"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/2/receipt",
+      "asset_file_id": "F241"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/3/receipt",
+      "asset_file_id": "F242"
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "inventory_pointer": "/huggingface/existing_descriptor_source",
+      "asset_file_id": "F021"
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F243"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F244"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/1/receipt",
+      "asset_file_id": "F245"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/2/receipt",
+      "asset_file_id": "F246"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/0/receipt",
+      "asset_file_id": "F247"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/1/receipt",
+      "asset_file_id": "F248"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/2/receipt",
+      "asset_file_id": "F249"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/3/receipt",
+      "asset_file_id": "F250"
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "inventory_pointer": "/huggingface/existing_descriptor_source",
+      "asset_file_id": "F021"
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F251"
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F252"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/existing_checkpoint_evidence/0/receipt",
+      "asset_file_id": "F253"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/0/receipt",
+      "asset_file_id": "F254"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/1/receipt",
+      "asset_file_id": "F255"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/2/receipt",
+      "asset_file_id": "F256"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/existing_cached_vector_rows/3/receipt",
+      "asset_file_id": "F257"
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "inventory_pointer": "/huggingface/existing_descriptor_source",
+      "asset_file_id": "F021"
+    }
+  ],
+  "inventory_index_file_id": "F258",
+  "closure_complete": false
+}

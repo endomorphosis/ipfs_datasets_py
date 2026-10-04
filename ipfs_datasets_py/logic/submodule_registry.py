@@ -210,11 +210,14 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         target_files=(
             "ipfs_datasets_py/logic/legal_ir/__init__.py",
             "ipfs_datasets_py/logic/legal_ir/adapter.py",
+            "ipfs_datasets_py/logic/legal_ir/autoencoder.py",
         ),
         ast_scope="legal_ir",
         public_symbols=(
             "LegalIRFormalizationAdapter",
             "adapt_legal_sample",
+            "open_autoencoder",
+            "formalize_with_autoencoder",
         ),
     ),
     LogicSubmoduleSpec(
@@ -238,6 +241,7 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         target_files=(
             "ipfs_datasets_py/logic/security_ir/__init__.py",
             "ipfs_datasets_py/logic/security_ir/model.py",
+            "ipfs_datasets_py/logic/security_ir/autoencoder.py",
             "ipfs_datasets_py/logic/security_ir/adapter.py",
             "ipfs_datasets_py/logic/security_ir/results.py",
             "ipfs_datasets_py/logic/security_ir/result_policy.py",
@@ -253,6 +257,8 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "XamanSecurityAdapter",
             "SecurityResultAuthority",
             "SecurityIRFormalizationAdapter",
+            "open_autoencoder",
+            "formalize_with_autoencoder",
         ),
     ),
     LogicSubmoduleSpec(
@@ -265,6 +271,7 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "ipfs_datasets_py/logic/intent_ir/__init__.py",
             "ipfs_datasets_py/logic/intent_ir/schema.py",
             "ipfs_datasets_py/logic/intent_ir/decoder.py",
+            "ipfs_datasets_py/logic/intent_ir/autoencoder.py",
             "ipfs_datasets_py/logic/intent_ir/canonicalize.py",
             "ipfs_datasets_py/logic/intent_ir/protocols.py",
         ),
@@ -275,6 +282,8 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "canonical_intent_ir_bytes",
             "IntentNormalizer",
             "IntentFormalizer",
+            "open_autoencoder",
+            "formalize_with_autoencoder",
         ),
     ),
     LogicSubmoduleSpec(
@@ -852,6 +861,7 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
         target_files=(
             "ipfs_datasets_py/logic/ui_ux_ir/__init__.py",
             "ipfs_datasets_py/logic/ui_ux_ir/schema.py",
+            "ipfs_datasets_py/logic/ui_ux_ir/autoencoder.py",
             "ipfs_datasets_py/logic/ui_ux_ir/runtime/mediator.py",
         ),
         ast_scope="ui_ux_ir",
@@ -865,6 +875,8 @@ _SPECS: tuple[LogicSubmoduleSpec, ...] = (
             "ui_ir_identity",
             "evaluate_ui_interaction",
             "public_api_manifest",
+            "open_autoencoder",
+            "formalize_with_autoencoder",
         ),
         notes="Pinned from origin/agent/ui-ux-ir @ 9d558ad70. Cold import is side-effect free.",
     ),

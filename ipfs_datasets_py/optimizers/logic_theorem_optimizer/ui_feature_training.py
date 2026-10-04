@@ -63,7 +63,9 @@ def producer_identity():
     """Bind selected UI/family/codec sources and dependency versions, not an OS capsule."""
     root = Path(__file__).resolve().parents[2]
     files = {Path(__file__), Path(features.__file__), Path(features.__file__).with_name('modal_autoencoder_cuda.py'),
-             Path(features.__file__).with_name('autoencoder_modality_contracts.py')}
+             Path(features.__file__).with_name('autoencoder_modality_contracts.py'),
+             Path(features.__file__).with_name('ui_formal_decoder.py'),
+             Path(features.__file__).with_name('native_formal_decoder.py')}
     for directory in ('logic/ui_ux_ir', 'logic/families'):
         files.update((root/directory).rglob('*.py'))
     # Other modalities share this package but are not UI target producers.
@@ -117,12 +119,14 @@ def _source_ids(rows):
 
 def train_ui_feature_batch(registry, training_rows, tuning_rows, directory, *, parent_version_id=None,
                            projection_ids=DEFAULT_PROJECTIONS, epochs=3, latent_width=4,
-                           learning_rate=0.02, max_seconds=60.0):
+                           learning_rate=0.02, max_seconds=60.0, formal_decoder_version=None):
     """Prepare native targets, train/select, and register a private feature candidate.
 
     Resume keeps the original feature basis, tuning panel, and optimizer state.
     Group exclusions include all prior training groups, not just this batch.
     """
+    from . import ui_formal_decoder as decoder
+    _require(formal_decoder_version in (None, decoder.VERSION), 'unknown UI formal decoder version')
     started = time.monotonic()
     directory = Path(directory)
     _require(not directory.exists(), 'fresh UI attempt directory required')
@@ -135,7 +139,7 @@ def train_ui_feature_batch(registry, training_rows, tuning_rows, directory, *, p
     train_sources, tune_sources = _source_ids(training), _source_ids(tuning)
     _require(not train_sources & tune_sources, 'training/tuning source record leakage')
     targets, tuning_targets = [r.target for r in training], [r.target for r in tuning]
-    base = None
+    base, decoder_head = None, None
     if parent_version_id is None:
         space = features.build_feature_space('ui_ux_ir', projection_ids, targets)
         contract = features.build_native_feature_contract(space, ir_schema=ui_training_inputs.SCHEMA,
@@ -151,6 +155,13 @@ def train_ui_feature_batch(registry, training_rows, tuning_rows, directory, *, p
         _require(not train_sources & tune_sources, 'historical training/tuning source record leakage')
         space, base = saved['feature_space'], saved['state']
         _require(sorted(projection_ids) == space['projection_ids'], 'UI projection set changed on resume')
+        _require(history.get('formal_decoder_version') == formal_decoder_version, 'UI formal decoder version changed on resume')
+        decoder_head = history.get('formal_decoder_head')
+    if formal_decoder_version is not None:
+        if parent_version_id is None:
+            decoder_head = decoder.train_ui_formal_decoder(space, targets)
+        else:
+            decoder.validate_ui_decoder(space, decoder_head)
     result = features.train_projection_features(contract, space, targets, tuning_targets,
         base_state=base, epochs=epochs, latent_width=latent_width, learning_rate=learning_rate,
         max_seconds=max_seconds)
@@ -162,6 +173,8 @@ def train_ui_feature_batch(registry, training_rows, tuning_rows, directory, *, p
              'target_preparation_seconds': preparation_seconds,
              'source_provenance': [dict(r.provenance) for r in training + tuning],
              'interface_join': 'explicit_source_bound_declaration_not_runtime_authority', **features.FALSE}
+    if formal_decoder_version is not None:
+        batch.update(formal_decoder_version=formal_decoder_version, formal_decoder_head=decoder_head)
     result['report']['ui_batch'] = batch
     directory.mkdir(parents=True)
     _save(directory/'source_rows.json', {'training': training_rows, 'tuning': tuning_rows})
@@ -179,6 +192,15 @@ def train_ui_feature_batch(registry, training_rows, tuning_rows, directory, *, p
                'before': result['report']['before'], 'after': result['report']['after'],
                'tuning_coverage': result['report']['tuning_coverage'], 'heldout_canary': False,
                'transport_executed': False, 'weights_downloaded': False, **features.FALSE}
+    if formal_decoder_version is not None:
+        predicted = features.infer_projection_features(contract, space, result['state'], tuning_targets)
+        fidelity = decoder.evaluate_ui_decoded_fidelity(space, decoder_head, predicted, tuning_targets)
+        summary.update(formal_decoder_version=formal_decoder_version, decoder_tuning_fidelity=fidelity,
+            formal_decoder_scope='structural_compiler_output_readout_not_source_text_decoder')
+        _save(directory/'formal-decoder.json', decoder_head)
+        _save(directory/'decoder-tuning-fidelity.json', fidelity)
+    _require(producer_identity() == before_source, 'UI producer changed during decoder measurement')
+    summary['wall_seconds'] = time.monotonic() - started
     _save(directory/'report.json', summary)
     return summary
 
@@ -195,6 +217,15 @@ def infer_ui_feature_batch(registry, version_id, rows, directory):
                                                  [row.target for row in prepared])
     _require(producer_identity() == producer, 'UI producer changed during inference')
     result.update({'ui_batch_schema': SCHEMA, 'version_id': version_id, 'transport_executed': False})
+    if saved['report']['ui_batch'].get('formal_decoder_version') is not None:
+        from . import ui_formal_decoder as decoder
+        _require(saved['report']['ui_batch']['formal_decoder_version'] == decoder.VERSION, 'unknown saved UI decoder version')
+        head = saved['report']['ui_batch']['formal_decoder_head']
+        result['formal_decoding'] = decoder.decode_ui_formal_features(saved['feature_space'], head, result)
+        result['decoder_fidelity'] = decoder.evaluate_ui_decoded_fidelity(saved['feature_space'], head, result,
+            [row.target for row in prepared])
+        result['formal_decoder_version'] = decoder.VERSION
+    _require(producer_identity() == producer, 'UI producer changed during decoding')
     directory.mkdir(parents=True)
     _save(directory/'source_rows.json', {'inference': rows})
     _save(directory/'inference.json', result)

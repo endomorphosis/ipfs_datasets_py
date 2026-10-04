@@ -1,0 +1,21 @@
+{
+  "freeze_and_producer_unchanged": true,
+  "live_source_api_rows": 480,
+  "models_promoted": false,
+  "proof_authority": false,
+  "pytest_log": "/home/barberb/lift_coding/artifacts/source-native-v3-tests.log",
+  "pytest_log_sha256": "5c757c8383f899dbd2ae350d91c92fdb650d0205b4a160b580275baf1894d808",
+  "pytest_passed": 195,
+  "schema": "native-source-validation-receipt/v1",
+  "security_native_lake_blocked_representatives": 4,
+  "security_native_lake_builds": 0,
+  "source_files": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/complete_training.py": "3237d133cf9c67c616e6cc9420e263534dfc4ba4bc1c2b866f3948fdcdcd417a",
+    "ipfs_datasets_py/logic/formalization/autoencoder/grouped_source_training_384.py": "c6dda0f85937f7ece993cf0bc82aebc72144457507db218cf83f9c9b495994a4",
+    "ipfs_datasets_py/logic/formalization/autoencoder/security/source_program_binding_384.py": "956666bac015713e1b292d563a8224a71e547ad50e4e13d04299f1056893f283",
+    "ipfs_datasets_py/logic/formalization/autoencoder/ui_source_contract_384.py": "09fe94c4cc04cc6df1d302d5fbeb87141d5dbda5aec33d12bb626201dc01790a",
+    "scripts/ops/autoencoder/benchmark_native_source_v3.py": "7bd69b13a71729ccdf9c75b0ccfb327f58e8a90cfd209f058dcc3c4e050c6eac",
+    "scripts/ops/autoencoder/check_source_bound_program_384.py": "66af129a19568f0317e94be2a7d53f67358cbbfb909ad4000c5d898b7ae82cb9",
+    "tests/fixtures/logic/source_reconstruction_v3.py": "5498592e48f174e872b059b055da596aff543fbce76709408f835ca92bfd36da"
+  }
+}
