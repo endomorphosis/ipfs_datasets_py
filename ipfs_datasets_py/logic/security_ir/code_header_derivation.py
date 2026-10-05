@@ -11,8 +11,10 @@ import ast
 from dataclasses import asdict
 import hashlib
 import json
+import math
 from pathlib import Path, PurePosixPath
 import shutil
+import time
 
 from . import doctor_header_contracts as contracts
 from .doctor_header_contracts import WsgiHeaderProtocolContract
@@ -306,12 +308,34 @@ def validate_header_candidate_function(*, source_bytes: bytes, source_path: str,
 
 
 def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source_path: str,
-                           protocol: WsgiHeaderProtocolContract, z3_executable: str = "z3") -> dict:
+                           protocol: WsgiHeaderProtocolContract, z3_executable: str = "z3",
+                           timeout_seconds: float | None = None, cancel_event=None,
+                           parent_lease=None) -> dict:
     """Execute optional real Z3 against independently rebuilt source-bound goals.
 
     SAT is a counterexample in the stated string model; UNSAT establishes only
     that model obligation. Neither grants source, mutation or completion authority.
+    A parent lease opts into the native bounded profile and requires one
+    aggregate deadline. Legacy callers keep the optional unleased solver path.
     """
+    if timeout_seconds is not None and (type(timeout_seconds) not in (int, float)
+            or not math.isfinite(timeout_seconds) or not 0 < timeout_seconds <= 300):
+        raise ValueError("bounded header checker deadline required")
+    if cancel_event is not None and not callable(getattr(cancel_event, "is_set", None)):
+        raise TypeError("cancel_event must provide is_set")
+    deadline = None if timeout_seconds is None else time.monotonic() + timeout_seconds
+    def remaining_seconds():
+        if cancel_event is not None and cancel_event.is_set():
+            raise InterruptedError("header checker cancelled")
+        left = 5. if deadline is None else deadline - time.monotonic()
+        if left <= 0:
+            raise TimeoutError("header checker deadline expired")
+        return left
+    def remaining_ms():
+        return min(5000, max(1, int(remaining_seconds() * 1000)))
+    if parent_lease is not None and deadline is None:
+        raise ValueError("leased header checking requires an aggregate deadline")
+    remaining_seconds()
     report = validate_header_semantics(expected_report, source_bytes=source_bytes,
         source_path=source_path, protocol=protocol)
     if type(z3_executable) is not str or not z3_executable.strip():
@@ -327,14 +351,49 @@ def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source
         output["status"] = "solver_unavailable"
     elif report["status"] == "modeled":
         from ..backends.z3.compiler import Z3SoftwareVerificationBackend
-        backend = Z3SoftwareVerificationBackend(executable=executable)
+        if parent_lease is None:
+            backend = Z3SoftwareVerificationBackend(executable=executable)
+        else:
+            from .bounded_header_checker import (
+                HEADER_EXECUTION_PROFILE, BoundedHeaderCheckerError,
+                LeaseCancelledError, bounded_header_runner,
+            )
+            executable = str(Path(executable).resolve(strict=True))
+            runner = bounded_header_runner(executable, parent_lease=parent_lease,
+                remaining_seconds=remaining_seconds, cancel_event=cancel_event)
+            def leased_runner(smtlib, bounds):
+                try:
+                    return runner(smtlib, bounds)
+                except (OSError, LeaseCancelledError) as cause:
+                    # The generic SMT backend converts timeout and OS failures
+                    # into solver outcomes. Native lease failures
+                    # must keep their cause and admission observations instead.
+                    error = BoundedHeaderCheckerError("bounded leased header checking did not complete")
+                    if hasattr(cause, "header_checker_diagnostic"):
+                        error.header_checker_diagnostic = cause.header_checker_diagnostic
+                    raise error from cause
+            backend = Z3SoftwareVerificationBackend(executable=executable, runner=leased_runner,
+                # A native result obtains its version inside the leased runner.
+                # An inconclusive observation cannot start an unowned probe.
+                version_probe=lambda: "")
+            output["execution_profile"] = HEADER_EXECUTION_PROFILE
         output["solver_executable_sha256"] = _sha(Path(executable).read_bytes())
+        def require_same_leased_executable():
+            if parent_lease is None:
+                return
+            selected = shutil.which(z3_executable)
+            if (selected is None or str(Path(selected).resolve(strict=True)) != executable
+                    or _sha(Path(executable).read_bytes()) != output["solver_executable_sha256"]):
+                raise BoundedHeaderCheckerError("leased header checker executable changed")
         for target in report["smt_targets"]:
             compilation = SoftwareVerificationSMTCompiler().compile(SmtObligation.from_dict(target["obligation"]))
             if compilation.to_dict() != target["compilation"]:
                 raise ValueError("SMT target differs from native recompilation")
-            outcome = backend.run(compilation, bounds=ExecutionBounds(timeout_ms=5000,
+            require_same_leased_executable()
+            outcome = backend.run(compilation, bounds=ExecutionBounds(timeout_ms=remaining_ms(),
                 max_steps=100000, max_memory_bytes=128 * 1024 * 1024, max_output_bytes=65536))
+            require_same_leased_executable()
+            remaining_ms()
             status = outcome.result.status.value
             answer = {"satisfiable": "sat", "unsatisfiable": "unsat", "proved": "unsat", "disproved": "sat"}.get(status, "unknown")
             output["results"].append({"symbol": target["symbol"], "kind": target["kind"],
@@ -347,5 +406,7 @@ def check_header_semantics(expected_report: dict, *, source_bytes: bytes, source
             output["solver_calls"] += 1
         output["status"] = ("checked_local_model" if all(row["matches_model_expectation"] for row in output["results"])
                             else "model_check_inconclusive_or_mismatch")
+    remaining_ms()
     output["check_cid"] = _cid(output, CHECK_SCHEMA)
+    remaining_seconds()
     return output

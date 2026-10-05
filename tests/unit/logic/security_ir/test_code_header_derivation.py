@@ -125,6 +125,153 @@ def test_solver_optional_and_protocol_required():
         api.derive_header_semantics(source_bytes=PROGRAM.encode(), source_path="../headers.py", protocol=PROTOCOL)
 
 
+@pytest.mark.parametrize("kind", ["admission_timeout", "query_timeout", "cancelled", "os_error", "missing_executable"])
+def test_leased_checker_preserves_native_failure_cause_without_fallback_probe(monkeypatch, kind):
+    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
+    from ipfs_datasets_py.logic.backends.smt import differential
+
+    failure = (bounded.LeaseCancelledError("authored cancellation") if kind == "cancelled"
+        else OSError("authored process failure") if kind == "os_error"
+        else FileNotFoundError("authored removed executable") if kind == "missing_executable"
+        else bounded.LeaseTimeoutError("authored deadline"))
+    diagnostic = dict(schema="bounded-header-checker-failure@1",
+        phase="child_admission" if kind == "admission_timeout" else "query",
+        reason=kind if kind != "query_timeout" else "deadline")
+    failure.header_checker_diagnostic = diagnostic
+    if kind == "admission_timeout":
+        failure.admission_observation = {"schema": "resource-admission-observation@1", "primary_gate": "memory_pressure"}
+    calls = []
+
+    def run(*args):
+        calls.append(args)
+        raise failure
+
+    def forbidden_probe(*args, **kwargs):
+        pytest.fail("leased failure attempted an unowned version subprocess")
+
+    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
+    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *args, **kwargs: run)
+    monkeypatch.setattr(differential.subprocess, "run", forbidden_probe)
+    with pytest.raises(bounded.BoundedHeaderCheckerError) as error:
+        api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=20., parent_lease=object())
+    assert len(calls) == 1
+    assert error.value.__cause__ is failure
+    assert error.value.header_checker_diagnostic == diagnostic
+    if kind == "admission_timeout":
+        assert error.value.__cause__.admission_observation is failure.admission_observation
+
+
+def test_leased_inconclusive_result_cannot_trigger_unowned_version_probe(monkeypatch):
+    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
+    from ipfs_datasets_py.logic.backends.smt import differential
+
+    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
+    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *args, **kwargs:
+        lambda *args: differential.SmtRawSolverOutput(timed_out=True, returncode=None))
+    monkeypatch.setattr(differential.subprocess, "run", lambda *args, **kwargs:
+        pytest.fail("leased inconclusive result attempted an unowned version subprocess"))
+    result = api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
+        protocol=PROTOCOL, timeout_seconds=20., parent_lease=object())
+    assert result["status"] == "model_check_inconclusive_or_mismatch"
+    assert all(row["solver_answer"] == "unknown" and row["solver_version"] == ""
+        for row in result["results"])
+    assert not result["proof_authority"] and not result["completion_authority"]
+
+
+@pytest.mark.parametrize("timeout", [True, 0, -1, float("inf"), float("nan"), 301, "1"])
+def test_invalid_deadline_cannot_reach_derivation_or_solver(monkeypatch, timeout):
+    monkeypatch.setattr(api, "validate_header_semantics", lambda *a, **k:
+        pytest.fail("invalid budget reached source derivation"))
+    with pytest.raises(ValueError, match="deadline"):
+        api.check_header_semantics({}, source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=timeout)
+
+
+def test_lease_requires_deadline_and_native_lease_type(monkeypatch):
+    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
+    with pytest.raises(ValueError, match="aggregate deadline"):
+        api.check_header_semantics({}, source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, parent_lease=object())
+    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
+    with pytest.raises(TypeError, match="native datasets parent lease"):
+        api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=10, parent_lease=object())
+
+
+def test_precancelled_check_never_rebuilds_or_dispatches(monkeypatch):
+    import threading
+    cancel = threading.Event()
+    cancel.set()
+    monkeypatch.setattr(api, "validate_header_semantics", lambda *a, **k:
+        pytest.fail("cancelled request reached source derivation"))
+    with pytest.raises(InterruptedError, match="cancelled"):
+        api.check_header_semantics({}, source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=10, cancel_event=cancel)
+
+
+def test_all_obligations_share_one_decreasing_deadline(monkeypatch):
+    from types import SimpleNamespace
+    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
+    from ipfs_datasets_py.logic.backends.smt.differential import SmtRawSolverOutput
+    clock = SimpleNamespace(now=100.)
+    monkeypatch.setattr(api, "time", SimpleNamespace(monotonic=lambda: clock.now))
+    monkeypatch.setattr(api.shutil, "which", lambda value: "/usr/bin/true")
+    limits = []
+    def run(script, bounds):
+        limits.append(bounds.timeout_ms)
+        clock.now += 1
+        return SmtRawSolverOutput(stdout="unknown\n", solver_version="authored clock control")
+    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *a, **k: run)
+    with pytest.raises(TimeoutError, match="deadline expired"):
+        api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=2.5, parent_lease=object())
+    assert limits == [2500, 1500, 500]
+
+
+@pytest.mark.parametrize("drift", ["bytes", "selected_path"])
+def test_leased_executable_drift_cannot_produce_checked_receipt(monkeypatch, tmp_path, drift):
+    from ipfs_datasets_py.logic.security_ir import bounded_header_checker as bounded
+    from ipfs_datasets_py.logic.backends.smt.differential import SmtRawSolverOutput
+    selected = [tmp_path / "solver"]
+    selected[0].write_bytes(b"authored solver identity")
+    monkeypatch.setattr(api.shutil, "which", lambda value: str(selected[0]))
+    def run(*args):
+        if drift == "bytes":
+            selected[0].write_bytes(b"changed solver identity")
+        else:
+            replacement = tmp_path / "other-solver"
+            replacement.write_bytes(selected[0].read_bytes())
+            selected[0] = replacement
+        return SmtRawSolverOutput(stdout="unknown\n", solver_version="authored drift control")
+    monkeypatch.setattr(bounded, "bounded_header_runner", lambda *a, **k: run)
+    with pytest.raises(bounded.BoundedHeaderCheckerError, match="executable changed"):
+        api.check_header_semantics(derive(), source_bytes=PROGRAM.encode(), source_path="headers.py",
+            protocol=PROTOCOL, timeout_seconds=10, parent_lease=object())
+
+
+@pytest.mark.parametrize("guarded", [False, True])
+def test_real_leased_z3_checks_all_source_bound_obligations(guarded):
+    from tests.unit.logic.security_ir.test_bounded_header_checker_native import AuthoredParent
+    from ipfs_datasets_py.logic.security_ir.bounded_header_checker import HEADER_EXECUTION_PROFILE
+    z3 = shutil.which("z3")
+    assert z3 is not None, "native bounded integration qualification requires installed Z3"
+    source = PROGRAM
+    if guarded:
+        source = contracts.analyze_http_header_contracts(source, protocol=PROTOCOL).candidate.source
+    parent = AuthoredParent()
+    report = derive(source)
+    check = api.check_header_semantics(report, source_bytes=source.encode(), source_path="headers.py",
+        protocol=PROTOCOL, z3_executable=z3, timeout_seconds=30, parent_lease=parent)
+    assert check["execution_profile"] == HEADER_EXECUTION_PROFILE
+    assert check["solver_executable_sha256"] == hashlib.sha256(Path(z3).read_bytes()).hexdigest()
+    assert check["status"] == "checked_local_model"
+    assert check["solver_calls"] == parent.release_count == len(report["smt_targets"]) == 6
+    assert all(row["matches_model_expectation"] and row["solver_version"] for row in check["results"])
+    assert not any(check[key] for key in ("proof_authority", "completion_authority",
+        "mutation_authority", "source_semantics_verified", "whole_program_proved"))
+
+
 def test_unicode_comment_does_not_change_byte_span_geometry():
     source = "# é\u2028line\u2029not-an-AST-line\n" + PROGRAM
     report = derive(source)
