@@ -1,0 +1,695 @@
+{
+  "schema": "codebase-ir-cell-routing-handoff/v1",
+  "captured_at_utc": "2026-10-03T14:02:21.402918+00:00",
+  "parent_commit": "88da35ffde25cd872d86d43a2a9b44b3ef58e981",
+  "scope": "Pure standalone metadata resolver with archived authenticated inventory copies; exact references, no fallback; package/runtime/store/model/proof authority pending.",
+  "api": "resolve_ir_cell_route(directory_plan_pin, inventory_pins, request, *, max_reference_bytes=512MiB)",
+  "pin_fields": [
+    "path",
+    "bytes",
+    "sha256"
+  ],
+  "request_fields": [
+    "ir_family_id",
+    "dimension",
+    "dimension_role",
+    "task_id",
+    "checkpoint_sha256"
+  ],
+  "explicit_null_selection": "Selects no checkpoint; no dimension/family/default fallback.",
+  "inventory_pin_contract": "Explicit list/tuple of12 authenticated copies; canonical logical directory locator and cell identity, not currentness of original physical manifest paths.",
+  "selected_tests_passed": 139,
+  "passed_phase_reports": 417,
+  "test_functions": 46,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "initial_startup_exit_code": 3,
+  "initial_startup_tests_collected": 0,
+  "initial_startup_effect_denials": 1,
+  "startup_correction": "V1 pytest default writable /dev/null logging refused; immutable v1 evidence retained. V2 changes only pytest log-file destination and launcher harness filename.",
+  "actual_inventory_route_requests": 25,
+  "explicit_checkpoint_selections": 13,
+  "verified_checkpoint_reference_records": 13,
+  "unique_cached_split_files": 12,
+  "descriptor_source_pin_verified": true,
+  "original_inherited_assets_preserved": 26,
+  "original_inventory_documents_preserved": 13,
+  "prior_authority_files_preserved": 2286,
+  "complete_unique_preserved_files": 2310,
+  "admitted_project_source_files": 2,
+  "admitted_external_python_sources": 452,
+  "successful_guarded_source_loads": 112,
+  "inherited_native_extensions_preserved_not_loaded": 1,
+  "native_extension_validation_phases": 0,
+  "inherited_cid_data_tables_preserved_not_loaded": 2,
+  "physical_cell_stores_created": 0,
+  "model_executions": 0,
+  "training_runs": 0,
+  "new_embeddings_generated": 0,
+  "guarded_subprocesses": 0,
+  "guarded_databases": 0,
+  "guarded_network_operations": 0,
+  "cell_summary": [
+    {
+      "cell_id": "codebase_ir_384d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 384,
+      "declared_checkpoint_records": 2,
+      "verified_checkpoint_records": 2,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "registered shared parent envelope",
+        "unpromoted repository child envelope"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/cc/cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f",
+          "bytes": 1009515,
+          "sha256": "cc025fbc017849b806d60f191397fa03759f732a8406cbdcb3558ba3871b2a6f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/codebase-source384-20261002/qualified-02/test_real_fit_registry_replay_current/models/06/069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930",
+          "bytes": 304490,
+          "sha256": "069458d8266e0ffce07415e49b8b2ae87dcca4374e5a9aec43844b6c69e85930"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/codebase_ir/384d.json",
+        "bytes": 8393,
+        "sha256": "d01836c6d11996d6d4e88a7d2722fca63004ed4fea19e08f331db65903b4fdc4"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 512,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "codebase_ir_768d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 768,
+      "declared_checkpoint_records": 0,
+      "verified_checkpoint_records": 0,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [],
+      "selected_checkpoint_pins": [],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/codebase_ir/768d.json",
+        "bytes": 7034,
+        "sha256": "4f2476246a11e0e53f4e18ec82c53b160fa7d39e8b27cf91ef85f865de039177"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 8192,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "codebase_ir_8d",
+      "ir_family_id": "codebase_ir",
+      "dimension": 8,
+      "declared_checkpoint_records": 2,
+      "verified_checkpoint_records": 2,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "trained structural parent",
+        "trained structural child"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/parent-checkpoint.json",
+          "bytes": 673933,
+          "sha256": "53318593b6aa77d5d352c9499c48d92d513215c8d2f945f7d6838205528ba17c"
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/codebase-source-training-qualification-20261002/child-checkpoint.json",
+          "bytes": 815238,
+          "sha256": "c00a0c54f8b1adb24d1822ab2ac98cec2d414e5b2ec55fad9da69ad7630be6a6"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/codebase_ir/8d.json",
+        "bytes": 7862,
+        "sha256": "bb4d7a74ec581e32c19800333dfcbf2bb175e753e975375f5a3efbbf5c66a2a1"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": null,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "latent"
+      ]
+    },
+    {
+      "cell_id": "intent_ir_384d",
+      "ir_family_id": "intent_ir",
+      "dimension": 384,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 4,
+      "verified_cached_split_files": 4,
+      "declared_checkpoint_roles": [
+        "published development GTE-conditioned GRU"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/intent_ir/checkpoint.json",
+          "bytes": 586049,
+          "sha256": "f031dc5a3dfb9b4fd9e7a8bfbe0f188393edd3afdcc3f18c06c84f4749c6db55"
+        }
+      ],
+      "cached_vector_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/train.json",
+          "bytes": 3116227,
+          "sha256": "9d642ce65ac25ec9cb05b14db34aecb3584a648b6c2da4c3cb15c40ef1e7f8aa"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/validation.json",
+          "bytes": 1039515,
+          "sha256": "8478295c9c2a2e7158c8fdede1e3b5043e7278c0531020e4e8e0c7ffd27be404"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/test.json",
+          "bytes": 1038586,
+          "sha256": "775e8f91e4d485d34c58f256624670c32fe2a1c44f951f660027a0759c58aacc"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/intent_ir/canary.json",
+          "bytes": 519725,
+          "sha256": "38dc9c77b3a9bb4ca584b7baef2cd9f84ecb6290ad781b4a6dbcff2744b2474b"
+        }
+      ],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/intent_ir/384d.json",
+        "bytes": 9678,
+        "sha256": "0b8b99e966316e16f641359d19a9bdab1e0b2536d400761a88edbb99a4b9e437"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 512,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "intent_ir_768d",
+      "ir_family_id": "intent_ir",
+      "dimension": 768,
+      "declared_checkpoint_records": 0,
+      "verified_checkpoint_records": 0,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [],
+      "selected_checkpoint_pins": [],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/intent_ir/768d.json",
+        "bytes": 7061,
+        "sha256": "c66c360cc797cbe7b74a08bed90102d22719937a7c7cb46d44f9f70d94af8a98"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 8192,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "intent_ir_8d",
+      "ir_family_id": "intent_ir",
+      "dimension": 8,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "trained compiler-conditional path/value head"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/intent_ir/resumed/checkpoint.json",
+          "bytes": 25559,
+          "sha256": "3f61850d111893b8010ffcb360599cbcebd32165a9699133c87dde26e2d274c1"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/intent_ir/8d.json",
+        "bytes": 7440,
+        "sha256": "4ff8cbbf4dc5696603ea97f5f57db9415f679148d1b9f13a9a1883a9b5886af5"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": null,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "latent"
+      ]
+    },
+    {
+      "cell_id": "legal_ir_384d",
+      "ir_family_id": "legal_ir",
+      "dimension": 384,
+      "declared_checkpoint_records": 3,
+      "verified_checkpoint_records": 3,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 4,
+      "verified_cached_split_files": 4,
+      "declared_checkpoint_roles": [
+        "retained source GRU donor",
+        "compatible alternative GRU",
+        "published development parser-assisted package"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+          "bytes": 614534,
+          "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/semantic-1729-checkpoint.json",
+          "bytes": 621716,
+          "sha256": "36b6b3a5a31ce88748a7ff69f1ab55f16dae79a78bfb635436a7b13a34c9cbf2"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/legal_ir/checkpoint.json",
+          "bytes": 1715990,
+          "sha256": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da"
+        }
+      ],
+      "cached_vector_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/train.json",
+          "bytes": 3113459,
+          "sha256": "00f4074cca56daed9f766e74c90d3d35e608bfb1058c24db99fc30250314704f"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/validation.json",
+          "bytes": 1038480,
+          "sha256": "6a07b7a4d7c73802fc4a31a2666adcb312706fcc3deffbc46626d9d8914d43c9"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/test.json",
+          "bytes": 1037637,
+          "sha256": "33288ea40ee902788bb012b98dd48a767405c18090b92981ef82d680ddee0d72"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/legal_ir/canary.json",
+          "bytes": 519374,
+          "sha256": "ac7c55bb4d70f1428d5ecd81595b0546fa325bfb7f4c9ab67ad010dcdba813ec"
+        }
+      ],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/legal_ir/384d.json",
+        "bytes": 10568,
+        "sha256": "77492b849bd2fa75a55a5d4f79de8eb5a3f6059346ab931df9ed5ccda75e1776"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 512,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "legal_ir_768d",
+      "ir_family_id": "legal_ir",
+      "dimension": 768,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "authenticated inherited initialization"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/student-initialization.json",
+          "bytes": 6873498,
+          "sha256": "7443c8a60cb1f95e9a35017edcd394c0f47fd457c3733e0863d37bfc09a09a12"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/legal_ir/768d.json",
+        "bytes": 7577,
+        "sha256": "7c48396a3d0332b0dacbb248fdd5c6ab037080475ebde137aa2217973d514595"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 8192,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "legal_ir_8d",
+      "ir_family_id": "legal_ir",
+      "dimension": 8,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "trained historical formula donor"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/modal-joint-e2e-20261001-final/legacy_v1/formula-head.json",
+          "bytes": 128924,
+          "sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/legal_ir/8d.json",
+        "bytes": 7495,
+        "sha256": "6c5515387d1280ff0dbe55270bd655b612cc6ae2c76293f1c7bc3e77f4f49b0f"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": null,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "security_ir_384d",
+      "ir_family_id": "security_ir",
+      "dimension": 384,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 4,
+      "verified_cached_split_files": 4,
+      "declared_checkpoint_roles": [
+        "published development GTE-conditioned GRU"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/ir-384-hub-release-20261002/packages/security_ir/checkpoint.json",
+          "bytes": 597741,
+          "sha256": "855b3d6d85bb59e165930785bd49711df0fcc8fbc8e11329e2f4b65125520441"
+        }
+      ],
+      "cached_vector_pins": [
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/train.json",
+          "bytes": 3202749,
+          "sha256": "99d856ef2a70f1a44c992f6f31dd35cd1f491db93f147065db51aa635d7c6876"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/validation.json",
+          "bytes": 1068258,
+          "sha256": "e719430c2db18dde3d3e49ca831755a4569c975f2eff12bd1db7dba2c82cf8b3"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/test.json",
+          "bytes": 1067558,
+          "sha256": "e2e590c68d00454600ce355bbc5bae57843786bd52704d61f7fb85dec761ac25"
+        },
+        {
+          "path": "/home/barberb/lift_coding/artifacts/source-native-v3-20261001/run-02/security_ir/canary.json",
+          "bytes": 534505,
+          "sha256": "014c2029ed820a8431a11d636db342a97364611ad676aef67ebc789093014aed"
+        }
+      ],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/security_ir/384d.json",
+        "bytes": 9757,
+        "sha256": "36fab9a4d7976cc5e791db062919f8d3ff6a30969414a5dad809c197a7beaf21"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 512,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "security_ir_768d",
+      "ir_family_id": "security_ir",
+      "dimension": 768,
+      "declared_checkpoint_records": 0,
+      "verified_checkpoint_records": 0,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [],
+      "selected_checkpoint_pins": [],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/security_ir/768d.json",
+        "bytes": 7126,
+        "sha256": "990f57bb94f99cdbffe328549ae8baea39390faab1fd3be864d6ffed109a9fee"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": 8192,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "input_embedding"
+      ]
+    },
+    {
+      "cell_id": "security_ir_8d",
+      "ir_family_id": "security_ir",
+      "dimension": 8,
+      "declared_checkpoint_records": 1,
+      "verified_checkpoint_records": 1,
+      "unavailable_checkpoint_records": 0,
+      "cached_split_files": 0,
+      "verified_cached_split_files": 0,
+      "declared_checkpoint_roles": [
+        "trained compiler-conditional path/value head"
+      ],
+      "selected_checkpoint_pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/decoder-e2e-20261001/native-20261001T0130/security_ir/resumed/checkpoint.json",
+          "bytes": 92660,
+          "sha256": "4807bdfd76f4e43bd969296dbd2e1fc29e9afc2aa76df9115a78dc17b581e6c4"
+        }
+      ],
+      "cached_vector_pins": [],
+      "inventory": {
+        "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inputs/inventories/security_ir/8d.json",
+        "bytes": 7507,
+        "sha256": "e9441e3a56c98133aa02e19b8f70b80c03357ec3d15c47f852a713c9616e1d7a"
+      },
+      "budget_status": {
+        "hard_encoder_token_limit": null,
+        "qualified_source_token_limit": null,
+        "source_token_budget_qualified": false
+      },
+      "runtime_admitted": false,
+      "model_task_qualified": false,
+      "physical_store_created": false,
+      "requested_dimension_roles": [
+        "latent"
+      ]
+    }
+  ],
+  "receipt_links": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/admission.json",
+      "bytes": 1982,
+      "sha256": "83bd3910c77c9310445008b486681aa248be0ddadf4e3f1bd0fada2952949e33"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/dependency-profile.json",
+      "bytes": 99856,
+      "sha256": "6e466cc61bd0cf747a0c2058ce6115c9fbee47618926edd88dfc616d3e93b7a8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/inventory-inputs.json",
+      "bytes": 30619,
+      "sha256": "3f08e81319b69db4aff0be0aef2cf29596ebe21624c5c792fb2121f8b01adbdc"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/preservation-start.json",
+      "bytes": 658088,
+      "sha256": "75be2fbf45883f014e2597391034eb06b47f227acd4199d0485cf5cbd1dde751"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/preservation-end.json",
+      "bytes": 658088,
+      "sha256": "f68791e9a639c8f59ec5ad1871b17115e9f307d1b2caf1a877ce536a1185c420"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/gap-status.json",
+      "bytes": 20247,
+      "sha256": "8a5bdd6c5ba3443f547289bd91948b5a502fede69297c6e7992e57dac07d99ce"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v1/result.json",
+      "bytes": 2724,
+      "sha256": "bfa9a25ce4d578d90a3dcb9af4e0e8de5139ca7bbac0293ee44cb01fea71afd5"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v1/run.log",
+      "bytes": 2837,
+      "sha256": "04fbfb505a1af5f68634a79ec2e253df1ed4a9ca9252a5eb375b9c35de09190d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v1/import-origins.json",
+      "bytes": 58503,
+      "sha256": "fd9ed3cd51bf39d11cc67120f39af8e8c419f9d0a1896e65e28b7866c91253de"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v1/effect-observations.json",
+      "bytes": 423,
+      "sha256": "3c83db2b75ce11825f7a7c48e0af0a3fa1e4507191f9b2a51211fdf0572b3539"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v1/plugin-registries.json",
+      "bytes": 121,
+      "sha256": "9ffa12e2ea57701e4b1a141634dd692622f3305d836a92d0d3cf851e6f2e853d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/result.json",
+      "bytes": 137237,
+      "sha256": "df95d9fbe2132adc5a0f969367f0a9ebb6618672353059d74360458837f7c1a3"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/run.log",
+      "bytes": 160,
+      "sha256": "c6a911088d94de1e4c8841716fbe75229ac3f82de36d2d60d7bf4f4542935e70"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/import-origins.json",
+      "bytes": 58503,
+      "sha256": "fd9ed3cd51bf39d11cc67120f39af8e8c419f9d0a1896e65e28b7866c91253de"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/effect-observations.json",
+      "bytes": 432,
+      "sha256": "5c030814ef01496fcef773d44fefdafaa22bddb764624ed855461484f500a8e1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/plugin-registries.json",
+      "bytes": 26410,
+      "sha256": "5e087054905ffa6cedb86c94eed69a6e9428982670ed0d2acba2b9fc066d5ef4"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/result.json",
+      "bytes": 1944,
+      "sha256": "93fd0692ed5455036f2c8ca83dff96939e22032aba23a8dce8f0d42c7bd3b016"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/import-origins.json",
+      "bytes": 984,
+      "sha256": "50acc3d8f3d6fe8e8059608e3da0215cb1f22388c38e2971681ea743a0d22bdf"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/effect-observations.json",
+      "bytes": 342,
+      "sha256": "3eff7702f8ddd80e3fc7c35e7edba6730ae01bf0245c100b36beff452d37194b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/plugin-registries.json",
+      "bytes": 121,
+      "sha256": "9ffa12e2ea57701e4b1a141634dd692622f3305d836a92d0d3cf851e6f2e853d"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-tests-v2/junit.xml",
+      "bytes": 26297,
+      "sha256": "61b8247086046e0382b356892413e2a4eb7f820b0a5fa0bdc2d5e1e69fe9c5f9"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/codebase-ir-cell-routing-qualification-20261003/runs/routing-inventories-v2/routes.json",
+      "bytes": 389654,
+      "sha256": "b82e272a948a853ce193b873383d8763e8778a7389b21b9c3ca65a421ccc447c"
+    }
+  ],
+  "documentation_sources": [
+    "https://huggingface.co/thenlper/gte-small",
+    "https://huggingface.co/Alibaba-NLP/gte-multilingual-base"
+  ],
+  "runtime_release_qualified": false,
+  "full_package_integration_qualified": false,
+  "model_task_qualified": false,
+  "training_admitted": false,
+  "promotion_admitted": false,
+  "physical_cell_store_qualified": false,
+  "proof_authority": false,
+  "full_source_dependency_closure_qualified": false,
+  "native_shared_library_closure_attested": false,
+  "native_git_configuration_consumption_atomic": false,
+  "fresh_interpreter_restart_qualified": false,
+  "teacher_evaluation_exposure_audit_required": true,
+  "prior_legal_exposed_metrics_are_not_teacher_qualification": true
+}

@@ -25,6 +25,7 @@ CODEBASE_SOURCE_FEATURE_VERSION = "source_bound_feature_v1"
 CODEBASE_SOURCE_FEATURE_SCHEMA = "codebase-ir-source-bound-feature-targets@1"
 LEGAL_VERSIONS = ("legacy_v1", "legacy_v1_optimized", "current_v2")
 LEARNED_FORMULA_VERSION = "source_conditioned_formula_v1"
+GROUPED_FORMULA_VERSION = "source_conditioned_grouped_v2"
 NATIVE_FORMULA_VERSION = "native_formula_v1"
 PUBLISHED_384_VERSION = "published_384_v1"
 MAX_CANDIDATE_BYTES = 32 * 1024 * 1024
@@ -151,6 +152,31 @@ def describe_runtime(domain, version):
                     "scope": "single_typed_deontic_rule_training_vocabulary"},
                 "source_identity": _source_identity(paths),
                 "qualification_requirements": requirements, **features.FALSE}
+    if domain == "legal_ir" and version == GROUPED_FORMULA_VERSION:
+        # Discovery reads identities without importing Torch or loading weights.
+        paths.extend((name, root.parent.parent / name) for name in (
+            "logic/formalization/autoencoder/legal_grouped_span_decoder_v2.py",
+            "logic/deontic/coordination_decoder.py"))
+        return {"schema": SCHEMA, "domain": domain, "runtime_version": version,
+                "runtime_id": domain + ":" + version, "lineage_id": version,
+                "input_representation": "source_text_and_explicit_caller_modal_scope", "dimension": None,
+                "input_fields": ["source_text", "modal_scope"], "numeric_vector_conditioning": False,
+                "caller_modal_scope_required_for_prediction": True,
+                "state_schema": "legal-grouped-span-decoder-checkpoint/v2",
+                "output_schema": "legal-coordination-decode-request/v1",
+                "capabilities": ["load_checkpoint", "infer", "decode_formal_logic"],
+                "integrated": True, "experimental": True, "release_stage": "experimental",
+                "formal_decoder": {"available": True, "modes": ["learned_grouped"],
+                    "independent_learned_formula_decoder": True, "head_required": True,
+                    "scope": "ordered_2_to_8_actor_modality_action_members_with_declared_modal_scope",
+                    "member_count": {"minimum": 2, "maximum": 8},
+                    "connective": "inclusive_or", "binding_profile": "universal_actor_predicate"},
+                "supported_logic_families": ["deontic_fol"],
+                "all_family_requirements_satisfied": False,
+                "source_conditioned": True, "latent_conditioned": False,
+                "source_semantics_verified": False, "proof_ready": False,
+                "source_identity": _source_identity(paths),
+                "qualification_requirements": requirements, **features.FALSE}
     if domain == "legal_ir":
         _require(version in LEGAL_VERSIONS, "unknown legal runtime version")
         namespace = root / "autoencoder_lineages"
@@ -209,7 +235,7 @@ def list_runtimes():
              ((namespace / (version + ".py")) if version == "legacy_v1_optimized"
               else (namespace / version / "__init__.py")).is_file()]
     return [describe_runtime(domain, PUBLISHED_384_VERSION) for domain in ("legal_ir", *NATIVE_DOMAINS)] + [
-        describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION)] + [
+        describe_runtime("legal_ir", version) for version in (*legal, LEARNED_FORMULA_VERSION, GROUPED_FORMULA_VERSION)] + [
         describe_runtime(domain, version) for domain in NATIVE_DOMAINS
         for version in ("native_v1", "native_v2", NATIVE_FORMULA_VERSION)] + [
         describe_runtime(CODEBASE_DOMAIN, CODEBASE_FEATURE_VERSION),
@@ -663,6 +689,73 @@ class LearnedFormulaRuntime:
         return {**result, "runtime_id": "legal_ir:" + LEARNED_FORMULA_VERSION}
 
 
+class GroupedFormulaRuntime:
+    """Opt-in inference over an exact local grouped-v2 checkpoint.
+
+    Scope is a caller declaration, not an inferred legal interpretation. The
+    strict owner restores model and optimizer state; this adapter exposes no
+    training, candidate registration, migration, or numerical-vector input.
+    """
+    def __init__(self, *, checkpoint_path, checkpoint_sha256):
+        _require(isinstance(checkpoint_path, (str, Path)), "grouped checkpoint requires a local path")
+        _require(type(checkpoint_sha256) is str and re.fullmatch(r"[0-9a-f]{64}", checkpoint_sha256),
+                 "grouped checkpoint requires an exact SHA-256")
+        path = Path(checkpoint_path)
+        _require(path.is_file(), "grouped checkpoint file does not exist")
+        with path.open("rb") as handle:
+            raw = handle.read(100_000_001)
+        _require(0 < len(raw) <= 100_000_000, "grouped checkpoint exceeds byte bound")
+        _require(hashlib.sha256(raw).hexdigest() == checkpoint_sha256, "grouped checkpoint SHA-256 mismatch")
+
+        def unique_object(pairs):
+            result = {}
+            for key, value in pairs:
+                _require(key not in result, "duplicate grouped checkpoint JSON key")
+                result[key] = value
+            return result
+
+        def reject_constant(value):
+            raise RuntimeVersionError("nonfinite grouped checkpoint JSON: " + value)
+
+        checkpoint = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_object, parse_constant=reject_constant)
+        from ...logic.formalization.autoencoder import legal_grouped_span_decoder_v2 as grouped
+        model, _optimizer, steps = grouped.restore_grouped_span_checkpoint(checkpoint)
+        self._model = model
+        self._steps = steps
+        self._checkpoint_sha256 = checkpoint_sha256
+        self._checkpoint_seal = checkpoint["checkpoint_sha256"]
+        self._producer = _copy(checkpoint["producer"])
+        self._descriptor = describe_runtime("legal_ir", GROUPED_FORMULA_VERSION)
+
+    def describe(self):
+        return {**_copy(self._descriptor), "checkpoint_sha256": self._checkpoint_sha256,
+                "checkpoint_content_sha256": self._checkpoint_seal,
+                "checkpoint_producer": _copy(self._producer), "optimizer_steps": self._steps,
+                "checkpoint_present": True, "trained_checkpoint_present": self._steps > 0}
+
+    def infer(self, source_text, *, modal_scope=None):
+        """Pass only raw source and a caller scope to the unchanged neural owner."""
+        _require(type(source_text) is str, "grouped inference requires raw source_text")
+        from ...logic.formalization.autoencoder import legal_grouped_span_decoder_v2 as grouped
+        result = grouped.predict_grouped_span_decoder(self._model, source_text, modal_scope)
+        return {**result, "runtime_id": "legal_ir:" + GROUPED_FORMULA_VERSION,
+                "checkpoint_sha256": self._checkpoint_sha256, "experimental": True,
+                "source_conditioned": True, "latent_conditioned": False,
+                "requires_validation": True, "accepted": False, "kernel_checked": False,
+                "lake_executed": False, **features.FALSE}
+
+    def decode_formal_logic(self, source_text, *, modal_scope=None):
+        """Render only an emitted closed request; preserve neural refusals."""
+        result = self.infer(source_text, modal_scope=modal_scope)
+        formal = None
+        if result["request"] is not None:
+            from ...logic.deontic.coordination_decoder import CoordinationDecodeRequest, decode_coordination_request
+            formal = decode_coordination_request(CoordinationDecodeRequest.from_dict(result["request"]))
+        return {**result, "formal_output": formal, "formula_count": int(formal is not None),
+                "decoded_formulas_generated": formal is not None,
+                "blockers": result["blockers"] + ([] if formal is None else formal["blockers"])}
+
+
 class NativeFormulaRuntime:
     """Separate categorical decoder training, exact resume and inference paths.
 
@@ -744,6 +837,8 @@ def open_runtime(domain, version, **binding):
         return NativeFormulaRuntime(domain, **binding)
     if domain == "legal_ir" and version == LEARNED_FORMULA_VERSION:
         return LearnedFormulaRuntime(**binding)
+    if domain == "legal_ir" and version == GROUPED_FORMULA_VERSION:
+        return GroupedFormulaRuntime(**binding)
     if domain == "legal_ir":
         return LegalRuntime(version, **binding)
     return NativeRuntime(domain, **binding)
@@ -958,6 +1053,7 @@ __all__ = ["RuntimeVersionError", "list_runtimes", "describe_runtime", "prepare_
            "open_runtime", "build_native_runtime", "load_version", "open_formal_decoder",
            "NativeRuntime", "LegalRuntime", "StreamedFormalRuntime", "LearnedFormulaRuntime",
            "LEARNED_FORMULA_VERSION", "NATIVE_FORMULA_VERSION", "NativeFormulaRuntime",
+           "GROUPED_FORMULA_VERSION", "GroupedFormulaRuntime",
            "build_native_formula_runtime", "CodebaseFeatureRuntime", "build_codebase_feature_runtime",
            "CODEBASE_DOMAIN", "CODEBASE_FEATURE_VERSION", "CODEBASE_SOURCE_FEATURE_VERSION",
            "CODEBASE_SOURCE_FEATURE_SCHEMA", "SourceBoundCodebaseFeatureRuntime",
