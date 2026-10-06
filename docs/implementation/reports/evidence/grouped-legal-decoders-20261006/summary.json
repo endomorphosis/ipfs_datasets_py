@@ -1,0 +1,163 @@
+{
+  "schema": "grouped-legal-decoder-contributed-findings/v1",
+  "reviewed_datasets_main": "795d960170214d03e2eaf4c0a13ad4eb922c5c08",
+  "reviewed_workspace_main": "b0ba1aaa9c8a3f1d0e42bca31aa710f1108c686e",
+  "profile": "source_conditioned_grouped_v2",
+  "input_fields": [
+    "source_text",
+    "modal_scope"
+  ],
+  "output_schema": "legal-coordination-decode-request/v1",
+  "checkpoint_schema": "legal-grouped-span-decoder-checkpoint/v2",
+  "producer": {
+    "implementation_sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8",
+    "semantic_decoder_sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f",
+    "torch_version": "2.13.0+cu130",
+    "tokenizer_profile": "unicode_word_or_punctuation_utf8_offsets/v1",
+    "byte_encoder_profile": "masked_two_conv3_gelu_mean_max/v2"
+  },
+  "target_logic": "deontic_fol",
+  "numeric_vector_conditioning": false,
+  "source_scope_inferred": false,
+  "selected_epoch": 3,
+  "selected_steps": 480,
+  "completed_recipe_steps": 2400,
+  "parameter_count": 306317,
+  "training_fit": {
+    "positive_exact_count": 1278,
+    "positive_count": 1280,
+    "negative_learned_refusal_count": 1259,
+    "negative_safe_refusal_count": 1277,
+    "negative_count": 1280,
+    "negative_emitted_request_count": 3,
+    "mixed_exact_count": 2537,
+    "case_count": 2560,
+    "mixed_safe_exact_count": 2555,
+    "support_classification_correct": 2537,
+    "positive_false_abstention_count": 2,
+    "negative_incidental_block_count": 18,
+    "mixed_exact_rate": 0.991015625,
+    "support_classifier_available": true
+  },
+  "fresh_final": {
+    "positive_exact_count": 64,
+    "positive_count": 64,
+    "negative_learned_refusal_count": 55,
+    "negative_safe_refusal_count": 62,
+    "negative_count": 64,
+    "negative_emitted_request_count": 2,
+    "mixed_exact_count": 119,
+    "case_count": 128,
+    "mixed_exact_rate": 0.9296875,
+    "mixed_safe_exact_count": 126,
+    "support_classification_correct": 119,
+    "support_classifier_available": true,
+    "positive_false_abstention_count": 0,
+    "negative_incidental_block_count": 7
+  },
+  "same_panel_v1": {
+    "positive_exact_count": 40,
+    "positive_count": 64,
+    "negative_learned_refusal_count": 0,
+    "negative_safe_refusal_count": 45,
+    "negative_count": 64,
+    "negative_emitted_request_count": 19,
+    "mixed_exact_count": 40,
+    "case_count": 128,
+    "mixed_exact_rate": 0.3125,
+    "mixed_safe_exact_count": 85,
+    "support_classification_correct": null,
+    "support_classifier_available": false,
+    "positive_false_abstention_count": 0,
+    "negative_incidental_block_count": 45
+  },
+  "comparison_is_controlled_architecture_ablation": false,
+  "fresh_final_source_cluster_count": 38,
+  "real_uscode_probe": {
+    "official_paragraphs": 7,
+    "prediction_calls": 14,
+    "actual_neural_forward_calls": 14,
+    "status_counts": {
+      "abstained": 14
+    },
+    "logic_requests_emitted": 0,
+    "reviewed_reference_ir": false,
+    "real_uscode_formalization_coverage_established": false,
+    "semantic_accuracy": null
+  },
+  "native_build_scope": {
+    "actual_generated_selection_outputs_used": true,
+    "member_count": 8,
+    "positive_lake_build_legal_passed": true,
+    "false_scope_claim_rejected": true,
+    "source_and_teacher_helpers_poisoned": 12,
+    "source_semantics_verified": false,
+    "proof_ready": false
+  },
+  "known_short_modal_stress": {
+    "actual_forward_calls": 108,
+    "maximum_feature_difference": 3.9671618938446045,
+    "minimum_feature_difference": 3.9671618938446045,
+    "mutated_learned_abstention_count": 27,
+    "mutated_schema_and_native_syntax_valid_count": 0,
+    "mutated_status_counts": {
+      "abstained": 27
+    },
+    "mutated_support_probability_range": [
+      1.283916299144039e-05,
+      0.00044461508514359593
+    ],
+    "original_predicted_and_mutated_learned_abstention_count": 27,
+    "original_status_counts": {
+      "predicted": 27
+    },
+    "original_support_probability_range": [
+      0.9951937794685364,
+      0.9996888637542725
+    ],
+    "stress_examples": 27,
+    "structural_raw_predictions_equal_count": 0,
+    "unique_source_groups": 15
+  },
+  "checkpoint_sha256": "efd7f7e71159592672769c7f580112917381e9a854f021a72f8de1613d299b95",
+  "publication": {
+    "repo_id": "Publicus/legal-ir-autoencoder",
+    "repo_type": "model",
+    "revision": "726386d3cb0ef068f275d4ded97fef71fdfeebf0",
+    "prefix": "experiments/grouped-span-head-v2-20261006/run-02",
+    "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/726386d3cb0ef068f275d4ded97fef71fdfeebf0/experiments/grouped-span-head-v2-20261006/run-02",
+    "downloaded_checkpoint_bytes_match": true,
+    "downloaded_checkpoint_strictly_restored": true
+  },
+  "v1_publication_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/80087f53b1dff4811623079dd7d642347d6232bb/experiments/grouped-span-head-20261006/run-03",
+  "remaining_gaps": [
+    "Fresh final profile refusals miss nine negative cases; seven are incidentally blocked and two still emit unsupported requests.",
+    "Selected in-sample model falsely abstains on two positives and emits requests for three negatives.",
+    "Local byte-neighborhood pooling still permits long-token collisions.",
+    "Seven real US Code paragraphs produce only refusals: no real-law formalization coverage or reviewed semantic accuracy established.",
+    "Create independently reviewed legal source/context targets, and distinguish profile support from legal validity.",
+    "Extend typed targets for qualifiers, nested/exclusive alternatives and broader logic families.",
+    "Bind actual 8D/384D/768D encoder/vector/checkpoint lineage before latent-conditioned training.",
+    "Run controlled architecture/objective/data ablations on new independent final references.",
+    "Investigate the 45 retained expanded failures."
+  ],
+  "reviewed_legal_gold": false,
+  "source_semantics_verified": false,
+  "qualified": false,
+  "proof_ready": false,
+  "original_completion": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-grouped-head-v2-20261006/completion.json",
+    "sha256": "ad163f658519ff7ca9dab8fbcebd366bdb2bb883f7a0207e8f9559879dc6f233",
+    "bytes": 58903
+  },
+  "consolidation_provenance": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/scientific-provenance-inventory.json",
+    "sha256": "59e4f3f0ac4484dee1348768c58ef9860da1ea22fa16e683cb0ef9b9548f6744",
+    "bytes": 238396
+  },
+  "current_main_replay": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/main-native-replay/results.json",
+    "sha256": "c8548ecef2c12b54526f4f4bdfefaea8c40032c7367abb2502ad4ee18a99d755",
+    "bytes": 132436
+  }
+}

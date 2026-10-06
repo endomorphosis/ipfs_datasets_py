@@ -28,6 +28,39 @@ compressed source encoding. Width alone never selects a checkpoint, decoder or
 runtime. Continue to use [explicit version selection](versioned_runtime_interface.md)
 and [input/artifact contracts](artifacts_and_inputs.md).
 
+## Grouped source decoder contribution
+
+The follow-up review pins datasets main
+`795d960170214d03e2eaf4c0a13ad4eb922c5c08` and workspace main
+`b0ba1aaa9c8a3f1d0e42bca31aa710f1108c686e`. The original 16 report
+blobs remain present and unchanged. The more recent
+[contextual checkpoint replay](contextual_legal_reconstruction_runtime.md) and
+[normative wording training](normative_wording_training.md) remain separate
+completed studies; their cohorts and target grammars differ from the new heads.
+
+[Grouped legal decoders](grouped_legal_decoders.md) add a source-only 2–8-member
+profile, its closed semantic request/evaluator, and a separate v2 reader in the
+existing runtime registry. V2 uses local ordered byte convolutions and a learned
+profile-support gate. It requires the caller's modal scope and has no 8D/384D/768D
+vector input. It contributes a wider ordered output contract alongside the
+existing one-rule source/formula and native768 span owners.
+
+The selected v2 has 64/64 exact authored positives on a fresh final panel, versus
+40/64 for published v1 under different training recipes. It learns 55/64
+unsupported-profile refusals; seven more are structurally blocked and two still
+emit requests. The seven retained official paragraphs produce only refusals.
+These results do not establish real-law accuracy. Both checkpoints remain
+experimental; qualification and the eight-family Legal floor remain open.
+
+The original grouped source-parser/compiler integration depends on a wider
+unpublished scanner/fidelity closure. This contribution keeps that closure
+separate from the standalone learned heads; it does not replace current parser,
+feature, contextual replay, or vector-decoder owners. Historical Intent/Codebase
+handoffs are retained with an explicit
+[historical index](pilots/intent_codebase_grounding/historical_handoff_index.md).
+An older UI codec needed for original source-pinned replay remains a retained
+version, rather than the current default.
+
 ## Read the combined results
 
 The latest [paraphrase modality comparison](../implementation/reports/evidence/decoder-paraphrase-modality-20261004/README.md)
