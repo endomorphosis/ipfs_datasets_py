@@ -132,6 +132,8 @@ campaign cap remained 145 GB, with 141,066,115,047 bytes charged at finalization
 
 ## Next training slice and reuse
 
+The specified broader TRAIN wording comparison has now completed. The [paired normative training report](normative_wording_training.md) records the 384D improvement from 55/60 to 60/60 on separately sealed development wording, the unchanged 768D exactness with slightly worse loss, exact zero replay and retained qualification boundaries. Its original meanings were previously exposed, so this is not fresh semantic holdout evidence.
+
 The existing R4 head is already correct on all 180 TRAIN modality examples.
 Making those predictions more confident is insufficient. The next specified
 comparison expands TRAIN wording while preserving the original 90 rule

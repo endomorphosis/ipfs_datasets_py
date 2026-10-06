@@ -1,0 +1,1229 @@
+{
+  "admitted": false,
+  "archive_bytes": 63429970,
+  "archive_path": "artifacts/autoencoder-wording-fit-20261006/review-evidence.tar.gz",
+  "archive_repository": "workspace origin/main",
+  "archive_sha256": "94e54907605464e2f948edd164e883288f763426b880776673faf72b55d2acb2",
+  "checkpoint_promoted": false,
+  "complete": true,
+  "duplicated_training_input_envelopes_bound_by_manifest": true,
+  "duplicated_training_input_envelopes_bundled": false,
+  "evaluation_manifest_sha256": "23d544ef7c3ed6bf1b36d37b93c34e2be27b0872e4fcc3c6f01a08712990a34a",
+  "first_preparation_launched": false,
+  "first_preparation_seal_failure_preserved": true,
+  "local_authenticated_dependencies_required": true,
+  "member_count": 300,
+  "members": {
+    "artifacts/autoencoder-wording-fit-20261006/build_public_evidence.py": {
+      "bytes": 7528,
+      "sha256": "993fd3a7f2d4ad618b85aeaf7eef9f68258a731a5085bd4d1883639128a80678"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/audit.py": {
+      "bytes": 8941,
+      "sha256": "b4133d2e78dd26743617cf2704ad3f364545ac4ac1d62cccd465d18e2ec88c0b"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/codec.json": {
+      "bytes": 588,
+      "sha256": "f8a2fa384ae91a9e6c93ac1a8f5fb1d7b20d5ea354443c4a86bb3210ac984c82"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/development-corpus-receipt.json": {
+      "bytes": 6457,
+      "sha256": "343c191c2747ea80c6fe4af151a07ae94d563a74c64879516a874f3df5d3a922"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/development-references.json": {
+      "bytes": 173559,
+      "sha256": "5e593f816f742666d54a3f38b38d615da6844a42fef5421d5f65531b32888055"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/generate.py": {
+      "bytes": 8333,
+      "sha256": "cf2f10cdb1373fedf53ed6fb0c92eb6c72d8b5a3abb3fb07f42e557ef7489137"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/independent-audit.json": {
+      "bytes": 632,
+      "sha256": "f323cf54d634eaa1bb16bb8f2141f219301494e9af5edb0c6c1debff8596658e"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/new-training-source-exclusion.json": {
+      "bytes": 19389,
+      "sha256": "f19451dab2f62366b363ac408046dcbbeb0a73465f6221f15e150a4c66732ee1"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/original-validation-bank-used.json": {
+      "bytes": 31473,
+      "sha256": "d26837ece6145ca8052a170fdb561a19fd40fb9cb2ffe24a62e63631c5f99a2c"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/prior-source-inventories.json": {
+      "bytes": 191638,
+      "sha256": "69e5919392633f524072f709201c168f97f859738c505893eaef596fa3fe834f"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/recipe.json": {
+      "bytes": 2299,
+      "sha256": "1b050bcce90f8cfba0c3d2ea2b93e187841e43454d93ec591d353d3891494a04"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/reconstruction-transitions.json": {
+      "bytes": 5773,
+      "sha256": "f02898085b75f1d5d5cd42db28f7703b16ba5dac8a4ea53638d2668e56056a07"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/seal-manifest.json": {
+      "bytes": 24516,
+      "sha256": "db14a2588caf7310b0ab9b7dd2809e7dd5a96a59c68a3889fffbff81da31b288"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/source-rows.json": {
+      "bytes": 11199,
+      "sha256": "3606bbc7abcae9fcb6cdb45a5756fc8f10c16feb9d45f45ca8e45b76e4b2d625"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/tests-output.txt": {
+      "bytes": 1163,
+      "sha256": "d33a4fdb16d78675f752b17dd164531fb07733de6afec4393282c33ba3fe9de5"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/tests.json": {
+      "bytes": 676,
+      "sha256": "e61a53be4022beb0fe78b205144df3498edf52e00d4e618cadf4de2440b6ace1"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/development/tests.xml": {
+      "bytes": 14401,
+      "sha256": "e7ab95f9d54c9ab496a16468efcde198a56011c584f12d16a3d1de023fc73c8e"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/initial-git-and-protected-checkpoint.json": {
+      "bytes": 778,
+      "sha256": "9417cc5a20ef82a58bfe4ec86ea930d7b6c9d1d4b3fd9e834cf8a79cdf0bc310"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/pipeline/evaluation-sealer-readiness.json": {
+      "bytes": 1809,
+      "sha256": "ba62e1d8b2cf5e8999893d9d032dceaed4739687052dd45c7c7a92d97dc65bc5"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/pipeline/publisher-synthetic-validation.json": {
+      "bytes": 1885,
+      "sha256": "c93ee518a22199a03ff89febe0f2c33fd6c54fa0bd24745219ecaf02bf142090"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/pipeline/seal_evaluation.py": {
+      "bytes": 11574,
+      "sha256": "9b671aa7e219c74d12614c976e4eefc940cbecdd5308adb8a67c1944087e0cc6"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/audit_completed_fits.py": {
+      "bytes": 26684,
+      "sha256": "03357c066532ef11e224db19103815a94aacb19c4560d1fff260baecb90ea1f0"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/audit_native_preparation.py": {
+      "bytes": 28407,
+      "sha256": "dd39d455b4ef21cff5f76ed931aa087ccd9f240abe1cc6770ca22657f85bd5b1"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/audit_preflight_training_readiness.py": {
+      "bytes": 18571,
+      "sha256": "5911a34872a88d4799db88ee772e1193f776fe6314f9aa5b98dcdce3ac5df6d8"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/audit_saved_wording_outputs.py": {
+      "bytes": 24785,
+      "sha256": "1d03a9b055953c099604fb97ceee46effc76e9834930761aeb281dcb55745f2d"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/check_evaluation_readiness.py": {
+      "bytes": 8963,
+      "sha256": "c99cc8adc20f030357c3e430e7c467088c876f3087d7d69e6c52a509f4dacef5"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/check_native_adapter.py": {
+      "bytes": 9238,
+      "sha256": "cd4e395b7e237ee5a30f5704ea37ecd09eb89bdae64354d16d089ad1247d2d4e"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/check_preflight_readiness.py": {
+      "bytes": 18195,
+      "sha256": "833ed108e286a9d3b8c3c2dcf29335acc746f27e8a5b0ea44f1149a83520ff95"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/check_preparation_driver.py": {
+      "bytes": 14186,
+      "sha256": "958016f53d7d66a9fcf5a8a1fc918519c1c6d0ad0dc5b493051aebe23ecb9c67"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/check_preparation_readiness.py": {
+      "bytes": 12574,
+      "sha256": "3b215b49160ed98f1e730fde2b1470038c2507de2b856357a2bb4dd01b680df2"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/development_results_audit.json": {
+      "bytes": 54574,
+      "sha256": "cfae558d027a3251afedc1d3483f34c6b6d8d40a8bc11f5a416623c041be8c9b"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/final_pure_test_inventory.json": {
+      "bytes": 2428,
+      "sha256": "7805a8528a317745e350a365db364a35515d89674062fb2ce6d5e5c4343fa01d"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/fit_audit.json": {
+      "bytes": 457197,
+      "sha256": "badcefc700849cb874595bfa7c0746890f5f175a81cf887515a49b0e1b09c460"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/native_adapter_independent_checks.json": {
+      "bytes": 25605,
+      "sha256": "3a4fca6d9d7c46115e43b133494f6d55d1ff27caaa705f46b598d7afd7639a8d"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/native_adapter_review.json": {
+      "bytes": 6663,
+      "sha256": "e2e2711bb643b51796ea5fe5291780fa88398edce66e099f108d277ef96ca161"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/native_adapter_tests_final.xml": {
+      "bytes": 7156,
+      "sha256": "d1553a86fd1c76f463ed18314050d83793c5aa15043e924f8b21f6eab38c46d5"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/native_adapter_tests_initial.xml": {
+      "bytes": 4636,
+      "sha256": "d8e0e07f4726e179d024898830da39e0f7254a2f50674eb612607f47976d301c"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/native_preparation_audit.json": {
+      "bytes": 253570,
+      "sha256": "d97ca1d0485aa0c43dd6dec68d24812dc1c279b502ef9020511e034920cfb806"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/paired_modality_fixes.json": {
+      "bytes": 20236,
+      "sha256": "49689c04c76ad32a01a1bbe83e195689c80966c56f3e5e5985d9f935128b7d4c"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/postfit_audit_math_smoke.json": {
+      "bytes": 634,
+      "sha256": "0eff225d4d57802ad91e500ece017b7c1f68137cec515ca07582545a5bc77ecc"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/postfit_observer_integration.md": {
+      "bytes": 5679,
+      "sha256": "e9f8067e465a1800ea4e4c7ccb76ce55aef4cbea4b2f1165e2752e349e075333"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/postfit_observer_integration_review.json": {
+      "bytes": 1200,
+      "sha256": "771170ede54bb041b52fdc0b3da778e49d6b35931f0a99147ff939adfaf9dedf"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/preflight_audit.json": {
+      "bytes": 359174,
+      "sha256": "a0d9da46a8b366ef350d347ea0c4deba8cc14822e18448d3e222c91fae8ec045"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/preparation_driver_independent_checks.json": {
+      "bytes": 70744,
+      "sha256": "05209ed4d5f7de8360f1d2c9df2d2821a38141fe23cbdcfd7ee7c2480f93ddb9"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/preparation_readiness.json": {
+      "bytes": 449766,
+      "sha256": "ee3fa77bb93f319d553fce28092aafb22f372ea85661ed2e6e638abb88261d37"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/prospective_wording_results.md": {
+      "bytes": 5125,
+      "sha256": "0375a74c603f7e9df8ca99f178f4683fe6f077c3eafa636032ac645e09093ab1"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_adapter_review.json": {
+      "bytes": 11802,
+      "sha256": "cc2b7e627e233b80e2ff8d533578b1c77258dddf4938745cbe1988a36486c20a"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_adapter_review_tests.xml": {
+      "bytes": 14727,
+      "sha256": "9c5bb05079e5d6ee038be7d0a429548a2357ea42caac019b3578e8c38c44dfcb"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_adapter_updated_observer_tests.xml": {
+      "bytes": 18380,
+      "sha256": "089a7f4e4a1be25f56daf9e3e240ee099754776b6f2082779f628cfc85b2d923"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_sources_tests_final.json": {
+      "bytes": 2580,
+      "sha256": "9c6dfeb6acfd974e03883e208445fff962aa022e3494f93b6f7febe277744823"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_sources_tests_final.txt": {
+      "bytes": 1239,
+      "sha256": "b56ae5223eff92123be8d5e2b8165c5e95b28745e65b793383b5511aff27c5d5"
+    },
+    "artifacts/autoencoder-wording-fit-20261006/review/training_sources_tests_final.xml": {
+      "bytes": 20565,
+      "sha256": "db7b638793040a800f90954f222777ab1fa7c2ff62f438861a7ec86352cc5944"
+    },
+    "external/ipfs_datasets/docs/autoencoders/normative_wording_training.md": {
+      "bytes": 13198,
+      "sha256": "ad19daea21c4bb2bd2ddef48c9c942a5f68edc00b40605553f89daf0ec0beb19"
+    },
+    "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-normative-wording-20261006/results.json": {
+      "bytes": 2902845,
+      "sha256": "afa30e5df3e789fd77170507f90c303814e1bf7ec8f21b6276ac07a7896c9496"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-20261006/preparation-seal-failure.json": {
+      "bytes": 431,
+      "sha256": "abd1e7b0a99686bb409475883fdededc820116fbbf878f136d9bc085ac2acca1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-20261006/seal_preparation.py": {
+      "bytes": 4823,
+      "sha256": "0d92e89af3246d1de792957064a4b14a8e808206e9a15f023253d175fa6d4c7f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "1e8df6f0ff649bb0992022737c69482737387c27bee6e944504e69570e591cd5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "10169bfb4616aef1c9c0a5a47111117a624da37c337310fd90a046c46b8d5bec"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/command.json": {
+      "bytes": 6434,
+      "sha256": "8da789dcdea4920e470228e8d942410bb163e92798509ca7a734a05199f20140"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "9846aa18217f1b88bb909c180770bf80fe54887ce79d1e91bf3ab5ddca10ef88"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/resource-observations.json": {
+      "bytes": 1744,
+      "sha256": "a1c4911cebc514e31eaeadaebd09ce39efcfb12acda53e462c46ceddb5e15026"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/resources-final.json": {
+      "bytes": 5835,
+      "sha256": "79da3ac0a98b38ee277d1f1a770a8b6062fd3891ee8df3cde3e423ec3681664c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/resources-start.json": {
+      "bytes": 3181,
+      "sha256": "348b2e6601e7fd3b6826c07481abdd1155c94d90cbcbb37d6476701b5f80d20e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/last-attempt-predictions.json": {
+      "bytes": 17307,
+      "sha256": "c50828da64fff063a8f090b14c59fc1bb9c49d819a809042e673a6e091f0c8f5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/last-attempt-score.json": {
+      "bytes": 458054,
+      "sha256": "4a10b52bb40e283857cd3350972cfdfdeb715859bea4bd131345aee3b5245f6e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/last-attempt-source-head-formula-join.json": {
+      "bytes": 192540,
+      "sha256": "6e5f82d369497d3f5eb8c54220755bcb4843c0fd2fc40e812f8f40644dded5ff"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/last-attempt-source-head-score.json": {
+      "bytes": 201593,
+      "sha256": "8293903d9e680423b6b587eba83359272554a271c77ef50a89bfa50463de14cb"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/last-attempt-source-head-trace.json": {
+      "bytes": 584489,
+      "sha256": "6653dceef29fe463ab5a9fb45669d0bbf9b37613589ab4b9e6010537e0bd00c0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/selected-predictions.json": {
+      "bytes": 17307,
+      "sha256": "d49bf3f236b603a540238c0b194bccfc333220d8c88a2e5f5d0e203643d65dc1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/selected-score.json": {
+      "bytes": 458054,
+      "sha256": "3a8da7dc92a39d5e3472e1109662f48eaeaced30c9e1ec880b35323ace6791b1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/selected-source-head-formula-join.json": {
+      "bytes": 192540,
+      "sha256": "6e5f82d369497d3f5eb8c54220755bcb4843c0fd2fc40e812f8f40644dded5ff"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/selected-source-head-score.json": {
+      "bytes": 201593,
+      "sha256": "96ffe002d67c3da6c3ad94e8f6ec95dd62e1101bc45302058299bb3a6beed784"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-ce/selected-source-head-trace.json": {
+      "bytes": 584489,
+      "sha256": "9b9d928b59ea0a2645dfe4bcbb263220ee1c1b2f6eab580d961e8bc2c93105d8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/last-attempt-predictions.json": {
+      "bytes": 17307,
+      "sha256": "7a4f2685071101498651df5672abceda4b7c9d51531e45eae22f13c49cd0cc67"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/last-attempt-score.json": {
+      "bytes": 458091,
+      "sha256": "4e53d152647c05947dec36d92586e9fe54f77d681b2a9412183b326cc3ceb91a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/last-attempt-source-head-formula-join.json": {
+      "bytes": 192815,
+      "sha256": "12da56573c995357c39dc844604025ec10e9afb16ce10f8e8c3fa1aa75291850"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/last-attempt-source-head-score.json": {
+      "bytes": 201848,
+      "sha256": "5befe9a197d02793a3460a3e117b1aa6bebdfd82c6ca7928641e7dbe776020e6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/last-attempt-source-head-trace.json": {
+      "bytes": 585098,
+      "sha256": "84521204ad7757a7aacf1c8d38421cb6a86f96eba218bd5c417f17b313fe9b6b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/selected-predictions.json": {
+      "bytes": 17306,
+      "sha256": "96d75a55cade4a2bafb4fa26b5304bea259ade3e160ac63802380f961678f865"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/selected-score.json": {
+      "bytes": 458090,
+      "sha256": "5c2c41d31d2dba0575ec0188d57b3b37af91d4bc413f33385959849af8e59cbe"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/selected-source-head-formula-join.json": {
+      "bytes": 192815,
+      "sha256": "12da56573c995357c39dc844604025ec10e9afb16ce10f8e8c3fa1aa75291850"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/selected-source-head-score.json": {
+      "bytes": 201848,
+      "sha256": "fb6ec2e9f016983b0329746f1913a4d298240c1595b390b3553ace04e8b1daed"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/384-normative-wording-zero/selected-source-head-trace.json": {
+      "bytes": 585097,
+      "sha256": "1efa2439e218b5a8587ec18167e8be3d5cee1974a1ef7dc55c35710b852cf538"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/last-attempt-predictions.json": {
+      "bytes": 17306,
+      "sha256": "d6eef1c9126007d3d6ef78835c5eaf0ce151304b3ff6ed9972db25201f983b07"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/last-attempt-score.json": {
+      "bytes": 458135,
+      "sha256": "37febfd596e06ca5363183b436c67a6e5ca8f97220d07015760253ee459816b1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/last-attempt-source-head-formula-join.json": {
+      "bytes": 192740,
+      "sha256": "5182157c6a12e91ac35dbfcfb67b094f9a7bdf9ec47736d4ed716767dc86ed99"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/last-attempt-source-head-score.json": {
+      "bytes": 201793,
+      "sha256": "b127d0b6b34ac3aa5d6b1ea54cdffa2c532cfff3bcae4b7b5a8dd4cd501e3b8d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/last-attempt-source-head-trace.json": {
+      "bytes": 584729,
+      "sha256": "2f88bcf204db4079fac8b823c5457291350583add0d8262c83036dd11bc0459d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/selected-predictions.json": {
+      "bytes": 17306,
+      "sha256": "e5c473cd06abc9ff2f4a206bdf8ccbc318991f80454926cfe662677d93863e7f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/selected-score.json": {
+      "bytes": 458135,
+      "sha256": "d87699db5dc8b706e1399c461702abcdc4a94474b608d546f6260a6ae6d1d6c0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/selected-source-head-formula-join.json": {
+      "bytes": 192740,
+      "sha256": "5182157c6a12e91ac35dbfcfb67b094f9a7bdf9ec47736d4ed716767dc86ed99"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/selected-source-head-score.json": {
+      "bytes": 201793,
+      "sha256": "ae680bbe99d18a8422c8b2a60c883165284e678d782d73cd1513c1a4b5b76495"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-ce/selected-source-head-trace.json": {
+      "bytes": 584729,
+      "sha256": "2a92865709f74aa0935dcab8b54611261c1705b7c3f8515779ead78ead35c22b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/last-attempt-predictions.json": {
+      "bytes": 17306,
+      "sha256": "c7a95ceaf02dae2e1bea7bffd78dbf415975fca949f2d89f2b984468066457d6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/last-attempt-score.json": {
+      "bytes": 458041,
+      "sha256": "c185a985feaf632139573cc84daa0ecd65bc7425ba94ff48194d5f6ef286f2a4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/last-attempt-source-head-formula-join.json": {
+      "bytes": 192759,
+      "sha256": "ad44bb12482003dc93d798a0e47c3438b615cd11f9486dbb2b7d423ad829a7da"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/last-attempt-source-head-score.json": {
+      "bytes": 201812,
+      "sha256": "c0c2857c0bc788e77d1faa90286d606690881979ab9e8822310d423d477b660c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/last-attempt-source-head-trace.json": {
+      "bytes": 585004,
+      "sha256": "40664ded70f894717bfd13c5723b80ddbf216556853419f9dd560084a53d55ac"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/selected-predictions.json": {
+      "bytes": 17304,
+      "sha256": "69058908acd36499527f374bdd6a42d6df3214e0b02162ffdd3123c13d07ce9b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/selected-score.json": {
+      "bytes": 458042,
+      "sha256": "d97d93cdabbc67facc09f40efa3e4b65c598cb505d09e9d91d46c1721716920e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/selected-source-head-formula-join.json": {
+      "bytes": 192759,
+      "sha256": "ad44bb12482003dc93d798a0e47c3438b615cd11f9486dbb2b7d423ad829a7da"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/selected-source-head-score.json": {
+      "bytes": 201812,
+      "sha256": "cc58bb9ae814e4f2a039b9af7cbc4c60ec9a7a181801318f70b8612091230bd1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/768-normative-wording-zero/selected-source-head-trace.json": {
+      "bytes": 585002,
+      "sha256": "999f2cdf8ebe0893bde29353cb6e900cc1beaca6e6c1c17165f5a2cb5a45d4a9"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/predictions-complete.json": {
+      "bytes": 10087,
+      "sha256": "2ad5ac692eba3bacb144082acd03cc350ac10fe7a6363b7c5949767790aef278"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/sealed-recipe.json": {
+      "bytes": 689698,
+      "sha256": "bada0aeaa1d24e044f100259614eec07ed9cf344b6df64453116f4f8842cd094"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/evaluation-r1/results/summary.json": {
+      "bytes": 56048,
+      "sha256": "27645b9d3ae6d87d5b6045b0aa7aecee6afbc544526bdc2469f54f3342d9c35c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 105415,
+      "sha256": "c1663820492a6879b14ab89dfd9b052105cf16378bb015fea08c3220d83456e0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/normative_wording_modality_auxiliary.py": {
+      "bytes": 9634,
+      "sha256": "48b7a3b2a0e5b69ae292f2c02dc0e87d92de4ffb4443bfba5ae52695b9a4320a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/normative_wording_training_sources.py": {
+      "bytes": 14474,
+      "sha256": "15458de60d79304d4fb676913ee4b3d4578bdc21b85a5437b998c5503f3fb288"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": {
+      "bytes": 13994,
+      "sha256": "789f47047badfa30553940547c2db28f08afa1052f1bcc5ace68dbccedc2ccac"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/prospective_wording_source_inputs.py": {
+      "bytes": 10857,
+      "sha256": "6cb67453e22bf6f9c36fb056a75dd022bf46d11286a846adcaa03baacdc987dc"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/benchmark_normative_wording_training.py": {
+      "bytes": 12978,
+      "sha256": "e9231f6fa2bccc329539da089568254181756245333d1418249a6dbfe1c6507e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": {
+      "bytes": 26383,
+      "sha256": "d84974df896df766794069da01319ef0d7473eb2907f4a6a540a0661f6b193e8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/evaluate_normative_wording_development.py": {
+      "bytes": 28346,
+      "sha256": "6be7e03656087fa9b5607b7e82b4a0a1244ca920cad8a81d64510f140962cfc6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": {
+      "bytes": 1694,
+      "sha256": "17525c855995dda7714682188fe7b68f9d3e9195ec73839a346afad498824e9f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": {
+      "bytes": 13087,
+      "sha256": "37c22dbdec537a6b8690feb42c0dfdf083c4934aab159108cdfda03e602e9b84"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/scripts/ops/autoencoder/prepare_normative_wording_sources.py": {
+      "bytes": 12023,
+      "sha256": "c863dbfbbd43d021fb103ec78e61c19a8e07b917a3c54236978d99d9451f2917"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_normative_wording_development.py": {
+      "bytes": 13784,
+      "sha256": "cd10307d3c3a02cb6131b8894d7275d061f521213eb4f1566d5f032d94681da0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_normative_wording_modality_auxiliary.py": {
+      "bytes": 13491,
+      "sha256": "05e89ab067336a2bdd40d7222320a30ba1b5250a4d2ab5472d73727f1cd9bb78"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_normative_wording_training_runner.py": {
+      "bytes": 3556,
+      "sha256": "96e513a3244c22d74f20b6bc5c0094dd00dbfd3455617e01d776db6d98103865"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_normative_wording_training_sources.py": {
+      "bytes": 14460,
+      "sha256": "f9c0ebd846c1541c76ef67c49bba06fe1006cd8e1edec9af402cc43f0e998fe5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": {
+      "bytes": 7961,
+      "sha256": "c316c1d88c2265a25c77e13710ec6b1298f429dd956dbe6aaa447e5f6d35c4e6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": {
+      "bytes": 5207,
+      "sha256": "41dbdf2fcf7ef5159d24509f02af97049389b773c2bde6fe9c21f1b9f3890c09"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": {
+      "bytes": 9231,
+      "sha256": "b0d1f897e4fd05919d7aa7b84081fff201461588d2ed851fcf5a3323fed8e722"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": {
+      "bytes": 7177,
+      "sha256": "034da61052cf05538873876fb5f1f78df27c683a265c73d1a9797475fc703f98"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_prospective_wording_source_inputs.py": {
+      "bytes": 7334,
+      "sha256": "5ec6f4e6762a29826bf83f50110c33153ddaf1a254912f4f793892a607b96593"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/normative-auxiliary-schedule.json": {
+      "bytes": 271776,
+      "sha256": "ca2b374ee79898f6225d0c54480189358335b38b41f3aa6e0bd5dfdd27f36f80"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/original-primary-schedule-384.json": {
+      "bytes": 1747896,
+      "sha256": "f495c410e8f9ce1895a37c6ef6d126e2551127349cb4933f5a7b1df6607022da"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/original-primary-schedule-768.json": {
+      "bytes": 256643,
+      "sha256": "67f5b1e23ccaf3897e37099140e2c51a686c9417086937faebccc344bf611646"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1-guardian-exit.json": {
+      "bytes": 63,
+      "sha256": "534f3b7adc18d9504723ae1af775da43c7be38325d5be873d01368c7e14af4b2"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1-guardian.log": {
+      "bytes": 5112,
+      "sha256": "9e9e8f680a77a5fe66ec4e107053fce84f63cdf524b911b95e65da15f76d7e6b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1-lease-observations.jsonl": {
+      "bytes": 47831,
+      "sha256": "dd1453ac366440129c91ee0e590f66baf1369b196be2e0e5d8736c5cd8516b86"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "fa4e91b9631dcc1add5168f53ba252bfdc417440b8bedafc4e8b2edf82e47472"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "af567d747aaa5b9b42db3cc4be51b732088ef3a8ab063588fb31330f8bcbc97b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "adf76db04ccd3c90c2401a398e09417c41fc4dca65065a44d11a1c6136a345c0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/command.json": {
+      "bytes": 6459,
+      "sha256": "6e211feee7cd13d84701b17f3fc0f91a6328049be27837d756716754539b11e9"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "2688208d2689b2ea82a19145ac2535bc8cb7c3ae6be83e6594be882033505905"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/resource-observations.json": {
+      "bytes": 1741,
+      "sha256": "d65554ea46d70cec949399452efcb13838fb326a73232f37776eec406990a5a4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/resources-final.json": {
+      "bytes": 5837,
+      "sha256": "fdf23c86f3f3e9b062d86e0d5863557cd4b39dd62973033276f73fd0a43ffdc7"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/resources-start.json": {
+      "bytes": 3181,
+      "sha256": "196513f97f5a18997e7c07a6da28e64067667d1250c0aa8cec1e0836c9f46146"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-ce/auxiliary-cache-receipt.json": {
+      "bytes": 75190,
+      "sha256": "f4cda9c822a4b4bf1f5ab80f1b77c9156de98f464b012e36ba2487bfaaa5a331"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-ce/parent-paraphrase-readout.json": {
+      "bytes": 168333,
+      "sha256": "6c6d63dde4f6173f4c458979bdd37bfa9cd3b6e7229e712219e1ec08de155557"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-ce/parent-validation.json": {
+      "bytes": 1995432,
+      "sha256": "d5f2057f12887fbf040d7445671d1f67a84443e801cca1374b6bfc73964374ec"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-zero/auxiliary-cache-receipt.json": {
+      "bytes": 75190,
+      "sha256": "c5a2b7e87253db2d18db51015ae638235b73a7dde8c67c149683be15df80127e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-zero/parent-paraphrase-readout.json": {
+      "bytes": 168333,
+      "sha256": "109ac75fca74e21926cb27355f116989fef0105f02d42d2a262b42e79a699e57"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/normative-wording-zero/parent-validation.json": {
+      "bytes": 1995430,
+      "sha256": "daeed508032f21993355a6a6897c062e04cfdd1c343220e9cfa23c31f53f0ec0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 214115,
+      "sha256": "9de96e54e22b1a2344eb274286889df49502f40cd5860cdf6d81571874cd80de"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/sealed-recipe.json": {
+      "bytes": 606088,
+      "sha256": "bd2737bbf118da7a4208f77912cb4498fd2601218d8a35a287f3ec0acc23de18"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-384-r1/results/summary.json": {
+      "bytes": 86634,
+      "sha256": "d64e5b7e641b5c007997bddfcd4ee3c5583346be34f170b6bc54151cd6f71352"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "3d35d6af616e2e6f83a9d20260134c534458807961166951256a30921f1e16d0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1-guardian.log": {
+      "bytes": 5114,
+      "sha256": "d5fbe2e7cd57c4bd9e44aa4206a1f0f29c5b295f01acd10d9e20b8da6a122d02"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1-lease-observations.jsonl": {
+      "bytes": 33691,
+      "sha256": "b2892de044e4f4753cc90cbf6f21439dee67593536d0aef7d83d277800ec400f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1-scheduler-adoption.json": {
+      "bytes": 4644,
+      "sha256": "62e8225023085809450c8544ed86bca325f7bc364e8719db828356e83e600b2e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "d9399ecfc65f39d6791f228ec4998a63c7c543cb3417a9133d4e1713c402e28c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "354c101d26ead6e2b01d613981fddf1986634e6fa10cd867b64094467504e479"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/command.json": {
+      "bytes": 6458,
+      "sha256": "f27784c38ae581345eb50a1eabebfd8db98b6a1aaff8f19668d8323f8fa21c56"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "d3f740a37514040373716f5575898d9ed1c63c9d4f9d112b11dab263cbb9b545"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/resources-final.json": {
+      "bytes": 5840,
+      "sha256": "93d3aae3013d4448c5df77dffd6afea9499ab9b969958cddda881bb655bd34fb"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/resources-start.json": {
+      "bytes": 3183,
+      "sha256": "0f29c8c31352b19c8287eace4523de0c6eec67a1839c1affff89a67717db14c7"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-ce/auxiliary-cache-receipt.json": {
+      "bytes": 75191,
+      "sha256": "7b83b9e17883fe2dc1a0ed50abb1ad6683075a8b69eb2fa61d435965004b84d0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-ce/parent-paraphrase-readout.json": {
+      "bytes": 167357,
+      "sha256": "390faa1c20c1fba31c121b4addacfe971a27922d2589ad3f1ef5ffd068a20253"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-ce/parent-validation.json": {
+      "bytes": 2385637,
+      "sha256": "b6735bbe270fa4f9b74b6873881f30a0b7ca9740b577ff1ecaa98f87172597bb"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-zero/auxiliary-cache-receipt.json": {
+      "bytes": 75191,
+      "sha256": "680841690c39c36518160516aa05b3ed36d9275c6d4e2a3483918382f3485b1d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-zero/parent-paraphrase-readout.json": {
+      "bytes": 167357,
+      "sha256": "68fb3ba20ab55c7dad62dca7fdd7fa268d7e5eb107ce2180f0dcc1312880a302"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/normative-wording-zero/parent-validation.json": {
+      "bytes": 2385640,
+      "sha256": "919baa8ceb05a592707fb8456de6b5efeac07c72a5ce705055bfb68fa53f53c5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 214115,
+      "sha256": "cf51fb4e5ede25770f4a6c1ebbe9f5e2b4a5e986e86f44550f93ad667e53c63f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/sealed-recipe.json": {
+      "bytes": 606088,
+      "sha256": "bd2737bbf118da7a4208f77912cb4498fd2601218d8a35a287f3ec0acc23de18"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preflight-768-r1/results/summary.json": {
+      "bytes": 85247,
+      "sha256": "fb7b48c204e2da5869157d7e7320f1fd781165d56d316ff1c765c29c94e84993"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-manifest.json": {
+      "bytes": 266586,
+      "sha256": "1ca6fabff769aa4e0ba5513ce97958c8872c0b375a80fb2e0b10850f5bc7e352"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-plan.json": {
+      "bytes": 200970,
+      "sha256": "c1b7eda913c978168d8c7f47756caad119a3497971df71e820cd8af4414bb0b7"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1-guardian-exit.json": {
+      "bytes": 63,
+      "sha256": "734a378291ab9779ee00a848c73b08dad06b460e0c0a4115a10984bf2e4e5fcd"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1-guardian.log": {
+      "bytes": 5108,
+      "sha256": "94d5e124d6e46f405efd717acade349a2541b30f9860483ed73922fee61a6661"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1-lease-observations.jsonl": {
+      "bytes": 78948,
+      "sha256": "7bdaea49b63ac6f98527cbd66a9d7d58bb6c7babeedb175ada59f433fc50abcc"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "7eb0a815e4b7d2d103c92d6ed1a5bf025a3f699dda1dcfc6d4d3c2186760aa82"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/child-exit.json": {
+      "bytes": 322,
+      "sha256": "52001def047f9b73f8aa0048d7d98a3466e2e6dbd29aab9a445ce06e24d0ab44"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "12496d0910668214eb8301ecd2ba10df07a848b80d0815c43d3abd58ccb89933"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/child.log": {
+      "bytes": 5862,
+      "sha256": "5cc33fc34e13023617df4e7de7e8b0e8e6d4b54ed2fe639bedff3bc3773e2d54"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/command.json": {
+      "bytes": 6433,
+      "sha256": "7f58a3749a472d31118cf55b93398640a7dff8d62b09d0abce7d4b532c62dac2"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "421247be5c25e2ecc618eba920166b2d85a716424740e868ec3a58bd0efc0d9e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/resource-observations.json": {
+      "bytes": 3502,
+      "sha256": "21129e9589d790c92f76cec3a2fb12bc58520ba33593afdfd5b3c8264f73db33"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/resources-final.json": {
+      "bytes": 5833,
+      "sha256": "547d729843bd47300b7a868042a0262a903fbeb498a8391b490402f2cfed63df"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/resources-start.json": {
+      "bytes": 3179,
+      "sha256": "530ff151254a63ec8b9c67a70f6bfc0583345fe7e534ecd6cbd61365663aad96"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/clause-training-references.json": {
+      "bytes": 407222,
+      "sha256": "8d8566e698b239b2ac08db0f810f1a9faa720878c537af8c619bf89833a1da69"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/dev-source384-artifacts/source-texts.txt": {
+      "bytes": 3276,
+      "sha256": "95e8b6f5913107546b4e3dbfadeea3cd914059ae8db0bbe9b714871695d16d8b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/development-inputs-384.json": {
+      "bytes": 1503960,
+      "sha256": "6dc6975cad64cb32411a0d0388cf05479aa50a834d934bc17bebc6aabb3a6130"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/development-inputs-768.json": {
+      "bytes": 2968149,
+      "sha256": "f101a59db2e5aaa46447117ba24307d45c9aa111d846ce31d5d8805cb5df796a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/development-production-384.json": {
+      "bytes": 763695,
+      "sha256": "9ec904b4c2d940e67a5b049369ee046f7a85efc5c2eb12aab7255f3b219c7f31"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/development-production-768.json": {
+      "bytes": 2016192,
+      "sha256": "d266920582fc6d22ea0db8e365e9c9dc2be56f9554b7ff9e60dc2a2b4e686cc5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/development-source-plan.json": {
+      "bytes": 57031,
+      "sha256": "b9647060ce9650bdc7b3bf5157f51c9252552149c8d8eabf6631375fc2918c9e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/dimension-inputs-384.json": {
+      "bytes": 3412011,
+      "sha256": "93737d59036f3eea57ed26092984b740190e23dac6167b62a738b158041491c3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/dimension-inputs-768.json": {
+      "bytes": 6729278,
+      "sha256": "730500367a90d84a2097ffe323b5b141c157640a841fb58f9f7f56d864a44c0d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/original-training-bank-used.json": {
+      "bytes": 38792,
+      "sha256": "97a928de6fb124cf01ea24fefa7ac43c94352de748354422fdcdb35f34216b10"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/pre-native-source-seal.json": {
+      "bytes": 515,
+      "sha256": "01c34b13e32d1fa1dd9b111a9bd51e0c3bdd63a1469d50e233352ea003875ab8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/prior-source-inventories.json": {
+      "bytes": 159490,
+      "sha256": "a0a9dac3c0af1b827a249d617a9d8ac1aafc8e8097c4146f5fa53895ab9886ca"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/production-384.json": {
+      "bytes": 2771964,
+      "sha256": "ec810170b36ddf99b7b75ace60ec26795898c847d78074608560bc40a97fece3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/production-768.json": {
+      "bytes": 7295459,
+      "sha256": "dcbdcb0ca045c645dac6883d2040e6b5a7555bf801492c765a7cdb86dc394747"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/source-plan.json": {
+      "bytes": 134911,
+      "sha256": "d7cc529b9a9ca971e148c893957f52ad8aa39b25df2c616bb6e125bfded5624a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/source-rows.json": {
+      "bytes": 18524,
+      "sha256": "bd109a8d20d8c810a7dc3bc012c0c25a6b89647f5ae1709aec3166551a752969"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/summary.json": {
+      "bytes": 32110,
+      "sha256": "f468e15a9ec16a917fbd5589d4ecda697524199c1eafbfd258c80cd5ce962cb4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/train-source384-artifacts/training-source-texts.txt": {
+      "bytes": 24988,
+      "sha256": "d1e3e1d05913ebaaaeb3991632b5c17b60390c25ceb771db0773e97f0185f0b9"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/training-corpus-receipt.json": {
+      "bytes": 5458,
+      "sha256": "96ca7739f2ae28a514260f497cc073d8b689a1853deb2d0bd9f3d8878dfd5534"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/training-references.json": {
+      "bytes": 243776,
+      "sha256": "cf3e9138454c16a53ff35b4a33f2110bfe1eedb2a22b00bab3cb11f1655e9195"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/review/preflight-384-readiness.json": {
+      "bytes": 1031707,
+      "sha256": "22228b1fd94ee6121503a2cc2dc72facb6d6d34ab671f47ee2f099d389a1c7e1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/review/preflight-768-readiness.json": {
+      "bytes": 1031707,
+      "sha256": "c201af6421896c735ece563d78ca167b061ef5a48e159a4a329b85adc1292551"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/review/training-384-readiness.json": {
+      "bytes": 352946,
+      "sha256": "84afe9c23634bbf72fdffcbdbbd56c0cda76a5baccabea3c442d40210e82e7f1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/review/training-768-readiness.json": {
+      "bytes": 353240,
+      "sha256": "8104cc3343f4b74b201090d1efc9b485b98013ee4a6552b163343bf29b243d21"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/run_guardian.py": {
+      "bytes": 2522,
+      "sha256": "25a1254e785ccd656c9e50fceba0d6a70e8c0345b0abf6633748b880ab1e151e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/run_reserved.py": {
+      "bytes": 17042,
+      "sha256": "44e4ec9655b34cf82f5729e27ee0f9ffa96bb2fafc21e581d3b72fca5030d8db"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/seal_preparation.py": {
+      "bytes": 5174,
+      "sha256": "08c1af6e567317d22e390a9174976f159a632ed16ea815c36624c541e7fb7fc1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/seal_training.py": {
+      "bytes": 7207,
+      "sha256": "367c1dc47a17931c03d68a7e55a77a2701f43bccef19adc011e5f2c30c2e9177"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "a73522bd4402b64a53f90ff49daa201c8cd72bf87fd49cb7c2d3337b7d693c7a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1-guardian.log": {
+      "bytes": 5113,
+      "sha256": "1f789291ef5b2138e67f77565e1ac06fbbd7bf111a09107cfc5219d6b5589741"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1-lease-observations.jsonl": {
+      "bytes": 180673,
+      "sha256": "db96bb52d928f26e664b196240c8fee3b93842c1ce3332cea9e989b5ef4e5842"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "5820d5afc268a7c7bac31b97986722cab198d9637dade3694fa901598e8acc12"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "2d59f01f011f15261c5ead90b0c2e4c49f162c711c1e95b252622a8e80d120dc"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "dec7ff306eafb731b6e30d0f5030dcd9d509922adb6cffcb855d7b8fca8d3616"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/child.log": {
+      "bytes": 1873,
+      "sha256": "7a8b5ed66657778e32977eb2a5f23d961c4106863cc250bb99e17cb056d66c1b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/command.json": {
+      "bytes": 6457,
+      "sha256": "f528fc6b03f93f07f43021ba2d3e04f16d91854185f0a1fb14bf049449e79c86"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "e42db5db533cb7beb5da561fd5c692ce68ffb2335c2b9a150ba2abedba25154f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/resource-observations.json": {
+      "bytes": 5262,
+      "sha256": "d2c9a8eba8f7077867aea7f982379d9017d6d9fe1bf45b123e43c1de123f7461"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/resources-final.json": {
+      "bytes": 5838,
+      "sha256": "0ccb4d492d123da19e19a036e11b17383aa8fdf8164ac99e2e36d0060ca16b55"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/resources-start.json": {
+      "bytes": 3180,
+      "sha256": "358e8bda46aafcd5e23a433d6ff4680fb57db4121c1f8e80fe62191c4366f3ac"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/auxiliary-cache-receipt.json": {
+      "bytes": 75191,
+      "sha256": "0b6c4220d1817366d899e09a549a5d1a20e53d4cdf20af4c8e752411daab9be1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/last-attempt/evaluation-training.json": {
+      "bytes": 2069772,
+      "sha256": "9fdc1e810b2ce937b7b20a926c8b54f28a97191526f13821ee098c5aa6058a71"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/last-attempt/evaluation-validation.json": {
+      "bytes": 2075730,
+      "sha256": "a29ba5981db5e0f52ef7270f02703027ed737f091ab18bea685bd1fdb2a7b393"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 167798,
+      "sha256": "adf468a7fbf6d06bd89a0f3fedb457678ec5b85fb12a24f9971d3b3f9d34fe9f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/parent-paraphrase-readout.json": {
+      "bytes": 168334,
+      "sha256": "85d75cbff2258d2b18aba425af00e9ae6e5d39abdaaea177fa8985a5971c805e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/parent-validation.json": {
+      "bytes": 1995432,
+      "sha256": "80db16433212740e2d8208e2cfc7a7532b5a37888a4c0b49f0f9611eebd16b58"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/retained-endpoints.json": {
+      "bytes": 1794,
+      "sha256": "44676bb69db4224497b87a4bd263c42e00106424dedf55a82c647b4bc09f63bb"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected/evaluation-training.json": {
+      "bytes": 2069774,
+      "sha256": "8417549c2129818cdddfecab815f61904f36931fe74b398c444e888500ad799b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected/evaluation-validation.json": {
+      "bytes": 2075731,
+      "sha256": "5f4e1d8b7f9630fb19416b28dbd6959741b04752cb238ed9d912ce12e1a6962d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected/paraphrase-modality-readout.json": {
+      "bytes": 167799,
+      "sha256": "121d522a1c6d00b5e1ad383d1a1cbb1b3cc904c8ecd512be51621d698c10f880"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/summary.json": {
+      "bytes": 335650,
+      "sha256": "3eba32931648c31fd3830c2c805649553afbaec3a0bd1bc45f6c84d931e66e3a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/training.json": {
+      "bytes": 21204607,
+      "sha256": "02c5d22475f5fb323c04314780496050c2714ee71dc8a43599301135e3964a3d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/auxiliary-cache-receipt.json": {
+      "bytes": 75191,
+      "sha256": "b71a45cc618aec0f491a2fbb2bb8fdd852de9f0548319df729b66b77abf96486"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/last-attempt/evaluation-training.json": {
+      "bytes": 2072252,
+      "sha256": "ae40cc4a59de6c7853f478ce674e2cd73fa8f9f65d1b0c5533c645f878b49b71"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/last-attempt/evaluation-validation.json": {
+      "bytes": 2078068,
+      "sha256": "bc2795d008e4478056c691699d8aa5c3dae8d0a5154bd73cb1bf367286f4b402"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 168154,
+      "sha256": "07b59ecd892bec01ac5942b82a224d28f746b15237e0990194d96e9eb8346310"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/parent-paraphrase-readout.json": {
+      "bytes": 168334,
+      "sha256": "bd55d02e8f5c57d5a482de1b782f374bd953c972ac1af0bdb7d58d620f1e8248"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/parent-validation.json": {
+      "bytes": 1995432,
+      "sha256": "875a3b63246c97343b715354bc89bdc9009215f45d7813dded7a0bd07052fe3c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/retained-endpoints.json": {
+      "bytes": 1802,
+      "sha256": "d5fdee76055f793a63e56888226796349acb96399bda176d8292695fbcbef0f5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected/evaluation-training.json": {
+      "bytes": 2072254,
+      "sha256": "7d9574cfce7388d621f5becc9b0a0cff4c8957c0c740da287924fff239f5efc8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected/evaluation-validation.json": {
+      "bytes": 2078069,
+      "sha256": "201751d8655bf1bfc0a7954222ddf381af246d98081b7b9b42c06e302f0de4e6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected/paraphrase-modality-readout.json": {
+      "bytes": 168154,
+      "sha256": "27c152e32fc66eac9aea4d8077d2fe136c9181122fab289efefe10bed2f10530"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/summary.json": {
+      "bytes": 335702,
+      "sha256": "9738bfbe104a1079df3e7ed8db77cb0ee884e637134448c52c2c2610bfacaf1e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/training.json": {
+      "bytes": 21207622,
+      "sha256": "89dd4c5bb4a853e373516ae1393516f16d408a8ede8d6074d73ca4d5671a0967"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 214115,
+      "sha256": "9de96e54e22b1a2344eb274286889df49502f40cd5860cdf6d81571874cd80de"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/sealed-recipe.json": {
+      "bytes": 606088,
+      "sha256": "bd2737bbf118da7a4208f77912cb4498fd2601218d8a35a287f3ec0acc23de18"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/summary.json": {
+      "bytes": 31832,
+      "sha256": "e674a3d983d2add4ddf161e8ae25eff24f34ff8beb56836c97ef010cc547647f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "7c7f22388a8dad31cfa8fd3a40f2cb16da48715776ac0181bae6a2a4a0f0f117"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1-guardian.log": {
+      "bytes": 5117,
+      "sha256": "f93c970a833b4b20d75de970fa87d5e4ba75dabae6b54f9985304b0aefac0f73"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1-lease-observations.jsonl": {
+      "bytes": 225131,
+      "sha256": "dc30e30619b158e7f2d0c5e467dc9262c6f0f9aca756e86e61290f62a11bf4d6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1-scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "d5527506670b0093e13124f10832a574237123d3344b0c667d37121d4e05fc3e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "6f98c7e84d93dd56a3e328c250b5812285d58e1f1285fb454d0075deebb8b917"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/child-identity.json": {
+      "bytes": 43,
+      "sha256": "f899ce56417ef816cae458e50c90d3972bb3771be464ecf534326a87576cbbd8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/child.log": {
+      "bytes": 1873,
+      "sha256": "e61340990795fdbd660ec634e5597b964629f9b7c82b582556de53282d97ae52"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/command.json": {
+      "bytes": 6457,
+      "sha256": "4482e9db496f1a4086b627ae485f0edb6d15f32201866cbdc96666d78d9e21de"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "48912b46f2b0c8d561bf9bc8bdd432b07a7de965268e8502c26a583a9487d1db"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/resource-observations.json": {
+      "bytes": 7029,
+      "sha256": "4b2e72e8a26691b84ec40fecf1889ded5baf500c3e16c354bcca0969dfe72866"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/resources-final.json": {
+      "bytes": 5843,
+      "sha256": "d07b9e9a617f728c56a32e8429c80c3579c13d597e5306e906c48118536da3d6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/resources-start.json": {
+      "bytes": 3180,
+      "sha256": "dadad317badfc6d024987f136210db8add3607901cf6234989cf48d8db1770a0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/auxiliary-cache-receipt.json": {
+      "bytes": 75190,
+      "sha256": "14420b556feb28f4b4a61654df15a66f48eea9b91c883ae765c9527fcaeb0972"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/last-attempt/evaluation-training.json": {
+      "bytes": 2463244,
+      "sha256": "d820988bda77aeef79d84c0835ec8cd8460071012c457205eee2b256e45e69d2"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/last-attempt/evaluation-validation.json": {
+      "bytes": 2467405,
+      "sha256": "4a87ccbd5e8fabca5d41afeea277127757b85f28b116b208ddef57f9f8bc4f84"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 167130,
+      "sha256": "0d414a8af87eef002cbd48b553b483328adadd5ebc901e0dc8e06319255d94c3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/parent-paraphrase-readout.json": {
+      "bytes": 167357,
+      "sha256": "054f32f8f6a628b9a5d80918b43f175e8378436c5d402d1209471b662c9d3585"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/parent-validation.json": {
+      "bytes": 2385639,
+      "sha256": "d811898bec8b1d578808b0f550b73bbf493305ea2ce9d769b444de9ce28c1a24"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/retained-endpoints.json": {
+      "bytes": 1794,
+      "sha256": "e465cfc731b806810851faa58256634fbed01035c5dbc566c6d98ff44d9aee9a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected/evaluation-training.json": {
+      "bytes": 2463244,
+      "sha256": "b8985584ddba0efc8185e198168998065ce76deb3caaf1bd57ec6fe83456234d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected/evaluation-validation.json": {
+      "bytes": 2467403,
+      "sha256": "9c203cdd11fe9531dddc88f9921185f81010f64f5a56e962d8916acf6bf3ba0b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected/paraphrase-modality-readout.json": {
+      "bytes": 167130,
+      "sha256": "1b1417766854d7c4704873b4e4dd47d3b537207f8eff7ec26dbf88cb910cbcbe"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/summary.json": {
+      "bytes": 335644,
+      "sha256": "375ee460b695e9158e728e66c852115590bd15109132869d4a8afbf6b7f88d5d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/training.json": {
+      "bytes": 20421997,
+      "sha256": "2c608400403eb95d9a40bf33160e5278b3188bea67b93070424e0794fef8dac9"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/auxiliary-cache-receipt.json": {
+      "bytes": 75190,
+      "sha256": "3f8f25387a76664cf149db7f06583f9cc78c4671925f7bb999077bf3524c0db7"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/last-attempt/evaluation-training.json": {
+      "bytes": 2463994,
+      "sha256": "a81fcb56d606b7451a09dc88bf458440c32b8e1b72bf9ed14752d6f93cc87dac"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/last-attempt/evaluation-validation.json": {
+      "bytes": 2467969,
+      "sha256": "a0aea7156bfa1e06994de29873407ce2b0c44fcfc7da52514b7c6cc4aa94d988"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/last-attempt/paraphrase-modality-readout.json": {
+      "bytes": 167205,
+      "sha256": "9639d1046dbfcb6d359264765a08814ff911dbc1135b14b0cb8462af7ec9ae2b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/parent-paraphrase-readout.json": {
+      "bytes": 167356,
+      "sha256": "e688475649255738b6fb505a34ca96d914cbf9d225543970140b2809fc84ce66"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/parent-validation.json": {
+      "bytes": 2385640,
+      "sha256": "f1a72231e5ade221fe8fa02e47d89a44871f683145c37f006b82c941bd814d07"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/retained-endpoints.json": {
+      "bytes": 1802,
+      "sha256": "c4513ea42365d25b68998e872408ba7e9c76421e21268cd9bca9641ecd6f7d94"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected/evaluation-training.json": {
+      "bytes": 2463994,
+      "sha256": "78064fcaaadd1bb5dd7bb0d28f7142d6f5ea17e917f98c44a175449249038044"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected/evaluation-validation.json": {
+      "bytes": 2467968,
+      "sha256": "87ebb2689092d9842d39a159ea8666cc087b2786eb61cab07f029a97f2df3e3a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected/paraphrase-modality-readout.json": {
+      "bytes": 167204,
+      "sha256": "a9f9bd2aa52f642e2985a44705ad39cdfc089eab1f367e7984facb52c8514a52"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/summary.json": {
+      "bytes": 335697,
+      "sha256": "a4946c8af075bf53ebd96a01cf39dc66f984abc58ee47c6b7bb4b99d4d8c19e7"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/training.json": {
+      "bytes": 20419112,
+      "sha256": "e36b3d710f68f89d0944aa64b455bccb3c41bd40d9c7dbbcae4dd8669e214005"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/predeclared-auxiliary-schedule.json": {
+      "bytes": 214115,
+      "sha256": "cf51fb4e5ede25770f4a6c1ebbe9f5e2b4a5e986e86f44550f93ad667e53c63f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/preprocessing.json": {
+      "bytes": 2864122,
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/sealed-recipe.json": {
+      "bytes": 606088,
+      "sha256": "bd2737bbf118da7a4208f77912cb4498fd2601218d8a35a287f3ec0acc23de18"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/summary.json": {
+      "bytes": 30447,
+      "sha256": "85641637b63e05aa3f8f7e4ddaaf5e652a54e74037250a049630b027fea88f5a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-manifest.json": {
+      "bytes": 342687,
+      "sha256": "45a48f359ce7db22f82296f64777dde6f190800e3b20176a98c93b5cddedbc00"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-plan.json": {
+      "bytes": 278518,
+      "sha256": "e8e8cf90a9974d0634976a0d765abafc3e7071d1f9a6ff300d42d86e19ca3401"
+    }
+  },
+  "model_assets_bundled": false,
+  "original_control_panel_bodies_bundled": false,
+  "original_control_panel_digests_and_compact_metrics_bundled": true,
+  "predecessor_source_trees_bundled": false,
+  "preparation_manifest_sha256": "1ca6fabff769aa4e0ba5513ce97958c8872c0b375a80fb2e0b10850f5bc7e352",
+  "private_checkpoint_tensors_bundled": false,
+  "publication_reviewer_bundled_separately": true,
+  "qualified": false,
+  "schema": "published-normative-wording-evidence-manifest/v1",
+  "source_provenance_scope": "explicit authenticated historical numerical closure;not current compiler benchmark",
+  "training_manifest_sha256": "45a48f359ce7db22f82296f64777dde6f190800e3b20176a98c93b5cddedbc00"
+}
