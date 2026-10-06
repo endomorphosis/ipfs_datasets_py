@@ -1,0 +1,331 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconcile-20261006/datasets-publication.json": {
+      "bytes": 1168,
+      "sha256": "b777fb44d618b18a787b8d5d345af80e9831b9717ef4ddc7ba3f37c406cf9961"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconcile-20261006/retention/execution-readiness.json": {
+      "bytes": 40993,
+      "sha256": "4fcac174ef2bbff6ff4d1d0a32ecd047251a274a86019713c57f53fb41650e29"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconcile-20261006/retention/review_resource_execution.py": {
+      "bytes": 23329,
+      "sha256": "40a558c245c766679cf431f5edb517518af6480886c16a8819b761dfbd9047bb"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconcile-20261006/workspace-publication.json": {
+      "bytes": 3185,
+      "sha256": "850c70f028d49bf5320d3b029c6d75e834eed593adc34f93399c6fb2b952fa64"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/evaluation-manifest.json": {
+      "bytes": 327444,
+      "sha256": "589e08ea17147019b68f34fe740401deec978163449daae5e8144358952219fc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/evaluation-plan.json": {
+      "bytes": 323039,
+      "sha256": "3b3e0597906192d94da94e85abcee732d4a669d2a7c059ebda7d459bc614e1db"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "97072e4bcd10eb07346c386b033678da20e2740e09a6c7cc69dfc8e27eff9f16"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1-guardian.log": {
+      "bytes": 5125,
+      "sha256": "00f77ba3c3666d58f2258d1b07e3f489e54b8feca73aaa51585a6f5e10d0e359"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1-lease-observations.jsonl": {
+      "bytes": 38752,
+      "sha256": "0b509202a75aaee9f2225119387cf94ae93c2f3a754e00c870b349a255cf0fd7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "d699e3149131fb25f8435613f083602a97ab75223a8939958f2ddb8efcb749c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "4057e17fff55ea013ac013cc7427f2f6e903edbae94757ca25d909abda9f9be6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "3c2331e14b4cbc208d705bd563e367df1eed7a3ca8d8ceb5db9c4a516e128f8b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/command.json": {
+      "bytes": 6466,
+      "sha256": "d739c3f2f81cb79b4c580eb0c335b8a5bd30bb5b3e6dba78c2b9e1c41b27820b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "bd623c577355f66a834f1475613c023549f033f68ff176af7e1f22b1dac713ab"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/resource-observations.json": {
+      "bytes": 1744,
+      "sha256": "952fd6e556a40a2106ff0e1cb962919e8a04f35e695d4dc3e2ef2cba03077c3b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/resources-final.json": {
+      "bytes": 5851,
+      "sha256": "6e5b450bc3b6b90f7e35567ea420ba13bbc75aa89a08319b08fa5ee69eaec969"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/resources-start.json": {
+      "bytes": 3188,
+      "sha256": "7809cbb42305f3c06438d152479f26361c68e144903d44626bc04051f6901fe4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/results/summary.json": {
+      "bytes": 43996,
+      "sha256": "cb1c36c1bb7005e8b63f2bdbba7d64ceff0e41e16e3cba4af156ccdc4e628b57"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/run_guardian.py": {
+      "bytes": 2522,
+      "sha256": "25a1254e785ccd656c9e50fceba0d6a70e8c0345b0abf6633748b880ab1e151e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/run_reserved.py": {
+      "bytes": 17158,
+      "sha256": "5e16b2f0093a8ebf55987d023721d7f0eba5cbdbbd8b24a32bb632a6b67857bb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    }
+  },
+  "attempt_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1",
+  "audit_execution_flags": {
+    "Git_mutated": false,
+    "leases_or_scheduler_state_mutated": false,
+    "model_executed": false,
+    "model_imported": false,
+    "predictions_parsed": false,
+    "reference_bodies_parsed": false,
+    "source_modified": false,
+    "tensor_values_read": false,
+    "tests_rerun": false
+  },
+  "checks": [
+    {
+      "detail": "Terminal outer receipt, reserved-wrapper log and reaped child exit all record success; summary complete metadata exists.",
+      "id": "actual-complete-and-successful",
+      "passed": true
+    },
+    {
+      "detail": "The exact published integration prerequisite preceded this evaluation attempt; readiness was granted for this root and phase.",
+      "id": "final-readiness-for-this-evaluation",
+      "passed": true
+    },
+    {
+      "detail": "One CPU, 1536 MiB, one child slot, 100 MB attempt claim and a 600 s admission bound are explicit.",
+      "id": "evaluation-command-and-limits",
+      "passed": true
+    },
+    {
+      "detail": "Admitted producer pins match independently rehashed archived owner and frozen dependency scheduler; no live scheduler substitution.",
+      "id": "archived-owner-and-frozen-scheduler",
+      "passed": true
+    },
+    {
+      "detail": "All five executed guardian wrappers retain their exact final-readiness hashes and byte counts.",
+      "id": "frozen-guardian-wrappers-still-match-readiness",
+      "passed": true
+    },
+    {
+      "detail": "Reservation, own lease, guardian owner and child PID/birth agree across admission, use and release.",
+      "id": "exact-owned-identity-chain",
+      "passed": true
+    },
+    {
+      "detail": "The guardian-local adoption receipt records no reset, capacity/proof changes, foreign lease actions or global client replacement.",
+      "id": "adoption-preserves-shared-policy",
+      "passed": true
+    },
+    {
+      "detail": "The independently hashed public watchdog log matches the final resource receipt seal.",
+      "id": "watchdog-log-hash",
+      "passed": true
+    },
+    {
+      "detail": "Every present-lease sample is healthy, uncancelled, unexpired and matches the captured owner identity.",
+      "id": "sampled-own-lease-healthy",
+      "passed": true
+    },
+    {
+      "detail": "Known shared scheduler configuration remains unchanged at all 38 observations.",
+      "id": "sampled-configuration-unchanged",
+      "passed": true
+    },
+    {
+      "detail": "All 34 child-monitor observations satisfy the reviewed 5 s observation-gap bound.",
+      "id": "monitor-gap-bounded",
+      "passed": true
+    },
+    {
+      "detail": "Public events persist no capability and claim sampled coverage only; the observer does not mutate scheduler state.",
+      "id": "sampled-observer-read-only-and-no-continuous-claim",
+      "passed": true
+    },
+    {
+      "detail": "Post-finalize observation and a fresh read-only scheduler snapshot both show this lease absent.",
+      "id": "lease-absent-after-release",
+      "passed": true
+    },
+    {
+      "detail": "The current read-only scheduler configuration snapshot retains the adopted configuration hash.",
+      "id": "current-config-still-matches",
+      "passed": true
+    },
+    {
+      "detail": "Current ledger own row equals the durable final receipt and is released without cleanup error; foreign rows were not edited by this audit.",
+      "id": "released-owned-disk-record",
+      "passed": true
+    },
+    {
+      "detail": "The resource owner asserts artifact durability before release; no reservation overrun or replacement child is recorded.",
+      "id": "durable-before-release",
+      "passed": true
+    },
+    {
+      "detail": "Both runtime samples and the fresh final census stay within sampled RSS, child count, attempt and named-root charge limits.",
+      "id": "all-resource-observations-bounded",
+      "passed": true
+    },
+    {
+      "detail": "Recorded final census and an independent current /proc snapshot show no owned leader or live process-group member.",
+      "id": "owned-leader-reaped-and-group-empty",
+      "passed": true
+    },
+    {
+      "detail": "One fresh final global census checks the full own claim before exactly 100 MB of reservation arithmetic is removed.",
+      "id": "one-fresh-final-census-and-full-claim-release",
+      "passed": true
+    },
+    {
+      "detail": "A fresh metadata-only owned-attempt census preserves identity and remains under 100 MB; later resource receipt writes are explicit.",
+      "id": "attempt-census-identity-and-current-size",
+      "passed": true
+    },
+    {
+      "detail": "Outer, reserved-wrapper, reap, monitored launch and driver times remain separate; no isolated CPU or inference time is inferred.",
+      "id": "honest-distinct-time-scopes",
+      "passed": true
+    },
+    {
+      "detail": "Summary metadata grants no training, fresh semantic holdout, qualification, proof or formalization authority.",
+      "id": "evaluation-does-not-grant-formalization-authority",
+      "passed": true
+    }
+  ],
+  "completion_signal": "Parent explicitly confirmed guardian session 30469 terminal exit 0 before this review.",
+  "current_shared_state_observations": {
+    "disk_ledger_snapshot": {
+      "bytes": 6064682,
+      "sha256": "6cdff41601c33dc073d9982716094e98b1213a2b5a215871cf6c5023afcd6e72"
+    },
+    "own_disk_status": "released",
+    "own_lease_present": false,
+    "read_only": true,
+    "scheduler_configuration_matches": true,
+    "scheduler_snapshot": {
+      "bytes": 1491,
+      "sha256": "a4d2858897e51999ce17d992a1810edd42a2c9b02f6887de72f0a839f438ff58"
+    },
+    "snapshot_hashes_are_not_immutable_artifact_bindings": true
+  },
+  "dimension": null,
+  "findings": [],
+  "formalized": false,
+  "fresh_owned_process_snapshot": {
+    "leader": null,
+    "live_processes": 0,
+    "live_rss_bytes": 0,
+    "members": [],
+    "observed_at_unix": 1791299036.529227,
+    "processes_disappeared_during_scan": 0,
+    "scope": "one fresh /proc identity/group snapshot; no command lines or environments"
+  },
+  "limitations": [
+    "Cooperative reservation and sampled usage checks are not kernel quotas or continuous peak-RSS proof.",
+    "Watchdog monitoring stops before finalization; the 14.815 s finalization interval has endpoint observations, not continuous lease coverage.",
+    "The finalization byte census precedes writing resources-final.json; the independent terminal metadata census reports both sizes.",
+    "Shared-state snapshots concern this reservation and configuration; concurrent foreign progress is permitted and no foreign-state immutability is claimed.",
+    "Prediction values, reference bodies and tensor values were not read; numerical result validity is reviewed separately."
+  ],
+  "passed": true,
+  "phase": "evaluation",
+  "proof_authority": false,
+  "resource_policy": {
+    "attempt_reserved_bytes": 100000000,
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "memory_mib": 1536,
+    "named_roots_limit_bytes": 145000000000
+  },
+  "resource_summary": {
+    "current_metadata_only_attempt_census": {
+      "apparent_bytes": 14573363,
+      "entry_count": 36,
+      "observed_at_unix": 1791299036.5294309,
+      "regular_file_count": 31,
+      "root": {
+        "device": 66306,
+        "inode": 74335887,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1"
+      },
+      "scope": "fresh metadata-only census; no file values read",
+      "special_file_count": 0,
+      "symlink_count": 0
+    },
+    "finalization_attempt_bytes": 14567512,
+    "finalization_profile": {
+      "global_accounting_seconds": 14.716623146960046,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 0.00024235498858615756,
+      "process_check_seconds": 0.018448420043569058,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.0004615740035660565
+    },
+    "maximum_sampled_group_rss_bytes": 784658432,
+    "post_release_named_roots_charged_bytes": 141738155698,
+    "pre_release_named_roots_charged_bytes": 141838155698,
+    "runtime_resource_sample_count": 2
+  },
+  "reviewed_at_unix": 1791299036.5295632,
+  "run_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006",
+  "schema": "retention-resource-execution-independent-review/v1",
+  "source_semantics_verified": false,
+  "teacher_qualified": false,
+  "timing_seconds": {
+    "isolated_child_execution": null,
+    "launch_return_through_child_reap_wall": 34.730785888037644,
+    "outer_guardian_subprocess_wall": 66.36360993201379,
+    "reserved_wrapper_admission_through_child_reap_wall": 49.53258714801632,
+    "reserved_wrapper_admission_through_finalize_wall": 64.37015626701759,
+    "retention_driver_self_reported_wall": 28.500170369981788
+  },
+  "training_executed_by_audit": false,
+  "watchdog_summary": {
+    "absent_lease_observations": 1,
+    "continuous_coverage_claimed": false,
+    "event_count": 39,
+    "maximum_all_sample_gap_seconds": 14.815310837992001,
+    "maximum_monitor_gap_seconds": 1.0146915400400758,
+    "minimum_sampled_remaining_ttl_seconds": 90.68548130989075,
+    "monitor_observations": 34,
+    "observation_count": 38,
+    "pre_finalize_remaining_ttl_seconds": 115.18508648872375,
+    "present_lease_observations": 37
+  }
+}

@@ -1,0 +1,884 @@
+{
+  "schema": "latest-pr1271-autoencoder-integration-review/v1",
+  "passed": true,
+  "findings": [],
+  "reviewed_commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+  "reviewed_baselines": [
+    "795d960170214d03e2eaf4c0a13ad4eb922c5c08",
+    "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+  ],
+  "parents": [
+    "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+    "004887f6250b083e0b095d5ac7563bc5bb792491"
+  ],
+  "checks": [
+    {
+      "id": "27scopedpaths",
+      "passed": true
+    },
+    {
+      "id": "mergeparents_a3f_and_grouped004887",
+      "passed": true
+    },
+    {
+      "id": "v2producer_source_matches_published_sha",
+      "passed": true
+    },
+    {
+      "id": "semantic_sharedowner_matchesproducer",
+      "passed": true
+    },
+    {
+      "id": "newrawsource_lane_notvector_width",
+      "passed": true
+    },
+    {
+      "id": "grouped_separate_checkpoint_contract",
+      "passed": true
+    },
+    {
+      "id": "semantic_gold_and_proof_masks_false",
+      "passed": true
+    },
+    {
+      "id": "actual_scoped_lake_witness_does_not_qualify_sources",
+      "passed": true
+    },
+    {
+      "id": "four_contribution_current_reviewed_pin:ipfs_datasets_py/logic/deontic/coordination_decoder.py",
+      "passed": true
+    },
+    {
+      "id": "four_contribution_current_reviewed_pin:ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py",
+      "passed": true
+    },
+    {
+      "id": "four_contribution_current_reviewed_pin:tests/unit/logic/test_deontic_grouped_decoder.py",
+      "passed": true
+    },
+    {
+      "id": "four_contribution_current_reviewed_pin:tests/unit/logic/test_deontic_grouped_decoder_boundaries.py",
+      "passed": true
+    },
+    {
+      "id": "all_prior_dataset_reports_unchanged",
+      "passed": true
+    },
+    {
+      "id": "retention_observer_pin_unchanged",
+      "passed": true
+    },
+    {
+      "id": "a3f_metadata_retained_in_merge",
+      "passed": true
+    },
+    {
+      "id": "registry_gap_identified_no_false_canonicalrouteclaim",
+      "passed": true
+    }
+  ],
+  "source_paths": [
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/grouped_legal_decoders.md",
+        "git_blob": "e5b72457c19d8f0533b88fdbf1308c3ac06b5ba7",
+        "bytes": 8776,
+        "sha256": "221bf9eaf93b8db4e57a90017f01303894e4d24483988f5b99c7ff64f81402d0"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/cell_routing_handoff.json",
+        "git_blob": "cb59ad2049a3d3fc4ff97a3620d8d76acc6a5785",
+        "bytes": 28691,
+        "sha256": "bd37dc85cd23f36b1bcf30695ae3bb56674bac139ce01c0f0466cb024daa3291"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/cell_routing_handoff.md",
+        "git_blob": "3d1cc46bd62a394b8afd2a324a964884abd11f56",
+        "bytes": 13148,
+        "sha256": "c0f1ee29a0d188ffb0750cb2b06e6f38abda6d8065db0e33035b5a2b0bf667b4"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/decoder_format_handoff.json",
+        "git_blob": "b47142ea3288ce9bcca56ddefc6a2f7d1fea9f0b",
+        "bytes": 7188,
+        "sha256": "ea4cd3a66bf3fa9134a88c6dbd143f75369aa4708e544e08c3dbfd0aa7c8d1b7"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/decoder_format_handoff.md",
+        "git_blob": "100405a1d45d779c351fb3855036d866caa8bad9",
+        "bytes": 12776,
+        "sha256": "56b913587a21dd44e97e19ffff5d2be826da2aaa2e87dc598727c56f8b89e08c"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/decoder_profile_inventory_handoff.json",
+        "git_blob": "4ac1418559a884fe0beaf8cb2f8095bb0b38570d",
+        "bytes": 12408,
+        "sha256": "6fde5a8adaa68730058679722e4ec521312ac725033dc1f4395cbf5bc49c6246"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/decoder_profile_inventory_handoff.md",
+        "git_blob": "cfc21f594a3ccc3ada3a498d72eb1870a34426a4",
+        "bytes": 9629,
+        "sha256": "52d0459199e9b1819f2c897b565772ffa4debab37296bc5b76831a021e2e43f7"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/historical_handoff_index.md",
+        "git_blob": "19ee04a4ca653e9f18c1827c1825ba0b360ecb60",
+        "bytes": 3220,
+        "sha256": "cea8adb3d3a2cc7de260f1262b67ebc295a486d15bc71da5a0cbc33fdc518fdc"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/numerical_replay_handoff.json",
+        "git_blob": "dd1e119e562913d98ccd33c6eb441d61d184cedd",
+        "bytes": 53630,
+        "sha256": "ba05379dda8d7215d0c907b78b18e85dec703f6d98923a5da8c46388f908da60"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/numerical_replay_handoff.md",
+        "git_blob": "e13790db64a384696f5efc8012333c0f261eadae",
+        "bytes": 12577,
+        "sha256": "24f44c8351d273e50bcb41f6d684a1ab742d3326dde8904769c1062dea2482f1"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/runtime_routing_handoff.json",
+        "git_blob": "a117902515364f93ede0a3b252b9f368c6bcb3e0",
+        "bytes": 22303,
+        "sha256": "035578e2629d1b728fbfae8b177ab23a2ca628ef428a8a376451fdb34d5924e9"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/pilots/intent_codebase_grounding/runtime_routing_handoff.md",
+        "git_blob": "d1fbf99cd843f4923ea5d8c5420c62893868dcd4",
+        "bytes": 8806,
+        "sha256": "e1d61c57126a5e4553296d8a0758654bdf4d398d59efecfdc5bc62a4122a8615"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/autoencoders/progress_integration.md",
+        "git_blob": "0f224f89d4fbb8e06275a4e6421a8ac904f71066",
+        "bytes": 10560,
+        "sha256": "ddecdb35d83ed3a21a05525495d6baf0bbccfcb63358d316e6c14b85e64c8d54"
+      },
+      "change_from_a3f": "modified",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 8586,
+        "sha256": "e06d241532ae8ddaa6be94fc5d2a0406358540651f7ab665afc70082a2be90f7",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "docs/implementation/reports/evidence/grouped-legal-decoders-20261006/summary.json",
+        "git_blob": "a2accc1fcb5765993da35757bb41a593c4d694b6",
+        "bytes": 6729,
+        "sha256": "94fe7cfd1c736b2a6bb310f920a5cbc258731fef9f73a5c79ae173a5591827ec"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py",
+        "git_blob": "d125e9108e49dacf8568450cba17c3a49f7193ef",
+        "bytes": 6557,
+        "sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 6557,
+        "sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "ipfs_datasets_py/logic/deontic/coordination_decoder.py",
+        "git_blob": "22d8260dd03cc2cf4d262138161adbe6cda31bcb",
+        "bytes": 13298,
+        "sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 13298,
+        "sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder.py",
+        "git_blob": "d262c36eb036ba5b516636f152038ab81ee19d94",
+        "bytes": 29370,
+        "sha256": "d03c343d6130e4cb099468dbd605e524fdb15bd21092bc4f526c35c4167c9d51"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 29370,
+        "sha256": "d03c343d6130e4cb099468dbd605e524fdb15bd21092bc4f526c35c4167c9d51",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder_v2.py",
+        "git_blob": "b34ca1d3406645e8edf58b651dff3049e583741f",
+        "bytes": 33948,
+        "sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 33948,
+        "sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+        "git_blob": "f3e844c05792b4cb8facceb0513c736be69afcf6",
+        "bytes": 64337,
+        "sha256": "33c249b72f374f51675cde95aafcf13370f59cb2e248246f72b92095668d1955"
+      },
+      "change_from_a3f": "modified",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 58156,
+        "sha256": "ca31983a5f514c7f5cf8b1b9250ef92e1beb13c0a2305381aac575931e79b4ac",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_deontic_grouped_decoder.py",
+        "git_blob": "ed3b52182827cd6c58e3b5963eaa4fad123cb69a",
+        "bytes": 12277,
+        "sha256": "c8f5d26d9e0ee6abcd18059389d9a267d0f645b22e381386120e191a65315c80"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 11558,
+        "sha256": "de59814005b798404996a6d8a207bb7b17f806c93c8ea590eb483cbd60a8afb4",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_deontic_grouped_decoder_boundaries.py",
+        "git_blob": "a89c3a67a90895446ef27200bdd7255153d938aa",
+        "bytes": 13556,
+        "sha256": "b932ea70a7f3cc26037055271894ede450e44030bf017001fb7eab53cc9f4b40"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 12950,
+        "sha256": "aa799e28e8e01d5e27ac650ad0158b5974bf65c96521737a23f0f83dccc8e719",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_legal_grouped_phase1_integration.py",
+        "git_blob": "127135af815271476ca2b3d7db9e0c329944043a",
+        "bytes": 8925,
+        "sha256": "6c3b7653741ae3d03264fdb629cede9df233616c5ef1d41a816f579afd6e0b20"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_legal_grouped_span_decoder.py",
+        "git_blob": "0ece79f9b824d23d61711a3e7585e66e500fc529",
+        "bytes": 9694,
+        "sha256": "a78722d83c41717bb34756d8da5870589b185022872617f1fc08819e5e3842c8"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 9694,
+        "sha256": "a78722d83c41717bb34756d8da5870589b185022872617f1fc08819e5e3842c8",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_legal_grouped_span_decoder_boundaries.py",
+        "git_blob": "6cfe658152fa4332130a34648a5a591982abf0a0",
+        "bytes": 12618,
+        "sha256": "14edafadfd0dad249dc098c492d3ac9ec8a6766694cc396a181478f2b734fd6c"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 11544,
+        "sha256": "61a5fe1b430517362e6331ace33c7f34efa282d4987cfe1761b3651a9e97bb4b",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_legal_grouped_span_decoder_v2.py",
+        "git_blob": "3f76f27535d0e5ecaf46223a21199af1492d4746",
+        "bytes": 11468,
+        "sha256": "d8704282b322c91c2c075e38b92b1ce8a49bc0373ae05c1667762b3f2535c840"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "identical",
+      "current": {
+        "bytes": 11468,
+        "sha256": "d8704282b322c91c2c075e38b92b1ce8a49bc0373ae05c1667762b3f2535c840",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/logic/test_legal_grouped_span_decoder_v2_boundaries.py",
+        "git_blob": "91b131c981e640b8c6a763b0ad3b7c516050998a",
+        "bytes": 16523,
+        "sha256": "f46517946f54971183bf4ea62573c5efcd956cd44199b6542609b87ce78e114f"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "modified",
+      "current": {
+        "bytes": 15449,
+        "sha256": "08ee59189e648e31f1d8f50c881cf24bc91c34f017d32cfac84920d73f7ff0c1",
+        "mode": "100644"
+      }
+    },
+    {
+      "source": {
+        "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+        "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "path": "tests/unit/optimizers/logic_theorem_optimizer/test_grouped_formula_runtime.py",
+        "git_blob": "c0e6685576e8393fe01357081cac70017ae282c3",
+        "bytes": 12462,
+        "sha256": "587ec09322852c3e8765d059ae13fe0a455f0d91e5cd7cb89ffdef31db36bce0"
+      },
+      "change_from_a3f": "added",
+      "canonical_status": "missing",
+      "current": null
+    }
+  ],
+  "canonical_counts": {
+    "missing": 15,
+    "modified": 6,
+    "identical": 6,
+    "nonregular": 0
+  },
+  "scoped_canonical_Git_status": [
+    {
+      "git_status": " M",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py"
+    },
+    {
+      "git_status": "??",
+      "path": "docs/autoencoders/progress_integration.md"
+    },
+    {
+      "git_status": "??",
+      "path": "ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py"
+    },
+    {
+      "git_status": "??",
+      "path": "ipfs_datasets_py/logic/deontic/coordination_decoder.py"
+    },
+    {
+      "git_status": "??",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder.py"
+    },
+    {
+      "git_status": "??",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder_v2.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_deontic_grouped_decoder.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_deontic_grouped_decoder_boundaries.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_legal_grouped_span_decoder.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_legal_grouped_span_decoder_boundaries.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_legal_grouped_span_decoder_v2.py"
+    },
+    {
+      "git_status": "??",
+      "path": "tests/unit/logic/test_legal_grouped_span_decoder_v2_boundaries.py"
+    }
+  ],
+  "compatibility_with_our_four_paths": [
+    {
+      "path": "ipfs_datasets_py/logic/deontic/coordination_decoder.py",
+      "main_sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f",
+      "current_sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f",
+      "matches_our_reviewed_candidate": true,
+      "relation": "identical shared production owner"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/legal_coordination_evaluation.py",
+      "main_sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f",
+      "current_sha256": "8a8bf1842caa91cef2c5799eb7f1252f9c284ff4317cc2ec5b7f20ab1159b90f",
+      "matches_our_reviewed_candidate": true,
+      "relation": "identical shared production owner"
+    },
+    {
+      "path": "tests/unit/logic/test_deontic_grouped_decoder.py",
+      "main_sha256": "c8f5d26d9e0ee6abcd18059389d9a267d0f645b22e381386120e191a65315c80",
+      "current_sha256": "de59814005b798404996a6d8a207bb7b17f806c93c8ea590eb483cbd60a8afb4",
+      "matches_our_reviewed_candidate": true,
+      "relation": "reviewed bounded negative-control test adaptation preserved"
+    },
+    {
+      "path": "tests/unit/logic/test_deontic_grouped_decoder_boundaries.py",
+      "main_sha256": "b932ea70a7f3cc26037055271894ede450e44030bf017001fb7eab53cc9f4b40",
+      "current_sha256": "aa799e28e8e01d5e27ac650ad0158b5974bf65c96521737a23f0f83dccc8e719",
+      "matches_our_reviewed_candidate": true,
+      "relation": "reviewed bounded negative-control test adaptation preserved"
+    }
+  ],
+  "dirty_registry_gap": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+    "current_sha256": "ca31983a5f514c7f5cf8b1b9250ef92e1beb13c0a2305381aac575931e79b4ac",
+    "main_sha256": "33c249b72f374f51675cde95aafcf13370f59cb2e248246f72b92095668d1955",
+    "current_has_version_constant": false,
+    "current_has_runtime_class": false,
+    "main_has_route": true,
+    "default_activation_requested": false
+  },
+  "preserved_prior_dataset_study_reports": [
+    {
+      "path": "docs/autoencoders/legacy_linguistic_validation_20261001.md",
+      "bytes": 6239,
+      "sha256": "8636b914d225b62704575cf6914a19eca966ff514574a481a660a368a5b9b05a",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-four-width-20261004/results.json",
+      "bytes": 389091,
+      "sha256": "bf46e66c8e2763550b89dfaee5b6b81a9244021bc962e7560877327e723b8d0b",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-conditioning-20261004/results.json",
+      "bytes": 27951,
+      "sha256": "e32d1e0cdad4b652e2b50f8b92eed9faccea2d99e4d8bfe741fea47591d6e285",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-generalization-20261004/results.json",
+      "bytes": 26924,
+      "sha256": "2cca4ec7083e0719f8d71540849a9267e79d75c8db4b76c5665049f1b70b57f7",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-training-mixture-20261004/results.json",
+      "bytes": 3049472,
+      "sha256": "faf44e25cf2fea5ffce229b617314f185314747b3606da2e45b80d5ad2e0ebac",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-paraphrase-modality-20261004/results.json",
+      "bytes": 3547468,
+      "sha256": "9c90c25559dcec91afaa62d4f153d952f123643fadbf85e14490a6531c7c2a4d",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/decoder-source-margin-20261004/README.md",
+      "bytes": 6276,
+      "sha256": "e70a1ea684e5f4a89fb709f6c3941295bb4b2fbafdca06fc1204aef2d925f918",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/intent-ui-coverage-20261002/results.json",
+      "bytes": 647843,
+      "sha256": "39435863a6425a050849e11c475caf9b77f6f3e8596adc4c83fa6021ef0b97b1",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/autoencoders/complete_features_and_ui_fidelity.md",
+      "bytes": 24229,
+      "sha256": "f5d10ecc2a3ae860bc2840b08ba9612a10a86793233ca9627b92524abbc5a517",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/implementation/reports/evidence/ui-modal-coverage-20261002/results.json",
+      "bytes": 307406,
+      "sha256": "1a0e0f61648c8b22e338d06ee075849117ec5108e498227937affa6e4e617f95",
+      "same_795d_and_0f": true
+    },
+    {
+      "path": "docs/security_formula_decoder.md",
+      "bytes": 8596,
+      "sha256": "49ff05e3c08d85a55959080512db88eb38ecd14108ae42bf65f46d92beca3398",
+      "same_795d_and_0f": true
+    }
+  ],
+  "unchanged_retention_observer_source": {
+    "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/generated_scalar_observation.py",
+    "git_blob": "3e1ccb9cd49dfd5788d9136507f7de83de45e1b0",
+    "bytes": 23798,
+    "sha256": "1f1d35f7fd90df0396f3222676f2ffd11f17e2b1b2c79c0a79f1600488eb08d8"
+  },
+  "unchanged_contextual_metadata_source": {
+    "repository": "/home/barberb/lift_coding/external/ipfs_datasets",
+    "commit": "0f36163a585a9bf514c41d8eabe202936c000705",
+    "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+    "git_blob": "444dde0da7d0e8460da0c6968707be7808006e02",
+    "bytes": 36594,
+    "sha256": "773e30977478921c31fbc075b5357339cc13e8e920ba93be85b5160b7f442a15"
+  },
+  "published_grouped_findings": {
+    "schema": "grouped-legal-decoder-contributed-findings/v1",
+    "reviewed_datasets_main": "795d960170214d03e2eaf4c0a13ad4eb922c5c08",
+    "reviewed_workspace_main": "b0ba1aaa9c8a3f1d0e42bca31aa710f1108c686e",
+    "profile": "source_conditioned_grouped_v2",
+    "input_fields": [
+      "source_text",
+      "modal_scope"
+    ],
+    "output_schema": "legal-coordination-decode-request/v1",
+    "checkpoint_schema": "legal-grouped-span-decoder-checkpoint/v2",
+    "producer": {
+      "implementation_sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8",
+      "semantic_decoder_sha256": "49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f",
+      "torch_version": "2.13.0+cu130",
+      "tokenizer_profile": "unicode_word_or_punctuation_utf8_offsets/v1",
+      "byte_encoder_profile": "masked_two_conv3_gelu_mean_max/v2"
+    },
+    "target_logic": "deontic_fol",
+    "numeric_vector_conditioning": false,
+    "source_scope_inferred": false,
+    "selected_epoch": 3,
+    "selected_steps": 480,
+    "completed_recipe_steps": 2400,
+    "parameter_count": 306317,
+    "training_fit": {
+      "positive_exact_count": 1278,
+      "positive_count": 1280,
+      "negative_learned_refusal_count": 1259,
+      "negative_safe_refusal_count": 1277,
+      "negative_count": 1280,
+      "negative_emitted_request_count": 3,
+      "mixed_exact_count": 2537,
+      "case_count": 2560,
+      "mixed_safe_exact_count": 2555,
+      "support_classification_correct": 2537,
+      "positive_false_abstention_count": 2,
+      "negative_incidental_block_count": 18,
+      "mixed_exact_rate": 0.991015625,
+      "support_classifier_available": true
+    },
+    "fresh_final": {
+      "positive_exact_count": 64,
+      "positive_count": 64,
+      "negative_learned_refusal_count": 55,
+      "negative_safe_refusal_count": 62,
+      "negative_count": 64,
+      "negative_emitted_request_count": 2,
+      "mixed_exact_count": 119,
+      "case_count": 128,
+      "mixed_exact_rate": 0.9296875,
+      "mixed_safe_exact_count": 126,
+      "support_classification_correct": 119,
+      "support_classifier_available": true,
+      "positive_false_abstention_count": 0,
+      "negative_incidental_block_count": 7
+    },
+    "same_panel_v1": {
+      "positive_exact_count": 40,
+      "positive_count": 64,
+      "negative_learned_refusal_count": 0,
+      "negative_safe_refusal_count": 45,
+      "negative_count": 64,
+      "negative_emitted_request_count": 19,
+      "mixed_exact_count": 40,
+      "case_count": 128,
+      "mixed_exact_rate": 0.3125,
+      "mixed_safe_exact_count": 85,
+      "support_classification_correct": null,
+      "support_classifier_available": false,
+      "positive_false_abstention_count": 0,
+      "negative_incidental_block_count": 45
+    },
+    "comparison_is_controlled_architecture_ablation": false,
+    "fresh_final_source_cluster_count": 38,
+    "real_uscode_probe": {
+      "official_paragraphs": 7,
+      "prediction_calls": 14,
+      "actual_neural_forward_calls": 14,
+      "status_counts": {
+        "abstained": 14
+      },
+      "logic_requests_emitted": 0,
+      "reviewed_reference_ir": false,
+      "real_uscode_formalization_coverage_established": false,
+      "semantic_accuracy": null
+    },
+    "native_build_scope": {
+      "actual_generated_selection_outputs_used": true,
+      "member_count": 8,
+      "positive_lake_build_legal_passed": true,
+      "false_scope_claim_rejected": true,
+      "source_and_teacher_helpers_poisoned": 12,
+      "source_semantics_verified": false,
+      "proof_ready": false
+    },
+    "known_short_modal_stress": {
+      "actual_forward_calls": 108,
+      "maximum_feature_difference": 3.9671618938446045,
+      "minimum_feature_difference": 3.9671618938446045,
+      "mutated_learned_abstention_count": 27,
+      "mutated_schema_and_native_syntax_valid_count": 0,
+      "mutated_status_counts": {
+        "abstained": 27
+      },
+      "mutated_support_probability_range": [
+        1.283916299144039e-05,
+        0.00044461508514359593
+      ],
+      "original_predicted_and_mutated_learned_abstention_count": 27,
+      "original_status_counts": {
+        "predicted": 27
+      },
+      "original_support_probability_range": [
+        0.9951937794685364,
+        0.9996888637542725
+      ],
+      "stress_examples": 27,
+      "structural_raw_predictions_equal_count": 0,
+      "unique_source_groups": 15
+    },
+    "checkpoint_sha256": "efd7f7e71159592672769c7f580112917381e9a854f021a72f8de1613d299b95",
+    "publication": {
+      "repo_id": "Publicus/legal-ir-autoencoder",
+      "repo_type": "model",
+      "revision": "726386d3cb0ef068f275d4ded97fef71fdfeebf0",
+      "prefix": "experiments/grouped-span-head-v2-20261006/run-02",
+      "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/726386d3cb0ef068f275d4ded97fef71fdfeebf0/experiments/grouped-span-head-v2-20261006/run-02",
+      "downloaded_checkpoint_bytes_match": true,
+      "downloaded_checkpoint_strictly_restored": true
+    },
+    "v1_publication_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/80087f53b1dff4811623079dd7d642347d6232bb/experiments/grouped-span-head-20261006/run-03",
+    "remaining_gaps": [
+      "Fresh final profile refusals miss nine negative cases; seven are incidentally blocked and two still emit unsupported requests.",
+      "Selected in-sample model falsely abstains on two positives and emits requests for three negatives.",
+      "Local byte-neighborhood pooling still permits long-token collisions.",
+      "Seven real US Code paragraphs produce only refusals: no real-law formalization coverage or reviewed semantic accuracy established.",
+      "Create independently reviewed legal source/context targets, and distinguish profile support from legal validity.",
+      "Extend typed targets for qualifiers, nested/exclusive alternatives and broader logic families.",
+      "Bind actual 8D/384D/768D encoder/vector/checkpoint lineage before latent-conditioned training.",
+      "Run controlled architecture/objective/data ablations on new independent final references.",
+      "Investigate the 45 retained expanded failures."
+    ],
+    "reviewed_legal_gold": false,
+    "source_semantics_verified": false,
+    "qualified": false,
+    "proof_ready": false,
+    "original_completion": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-grouped-head-v2-20261006/completion.json",
+      "sha256": "ad163f658519ff7ca9dab8fbcebd366bdb2bb883f7a0207e8f9559879dc6f233",
+      "bytes": 58903
+    },
+    "consolidation_provenance": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/scientific-provenance-inventory.json",
+      "sha256": "59e4f3f0ac4484dee1348768c58ef9860da1ea22fa16e683cb0ef9b9548f6744",
+      "bytes": 238396
+    },
+    "current_main_replay": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/main-native-replay/results.json",
+      "sha256": "c8548ecef2c12b54526f4f4bdfefaea8c40032c7367abb2502ad4ee18a99d755",
+      "bytes": 132436
+    }
+  },
+  "scientific_scope": {
+    "input": "Raw UTF8 source plus explicit caller modal scope; no vector/latent conditioning.",
+    "target": "Ordered2–8actor/action/O-P-F members under inclusive OR and universal actor binding; onlydeontic_fol.",
+    "v1_and_v2": "Separate strict checkpoints/producer pins; v2twoConv3 support-gate architecture. V1/v2 comparison changes recipes and is not a controlled architecture ablation.",
+    "training": "Selected480AdamWupdates at epoch3,306317parameters; full recipe2400updates/38400balanced row presentations. Existing source-AE/formula-head counts cannot be pooled.",
+    "fresh_final": "128authoredcases from38correlated source-parent clusters, references sealed before fitting and scored after selection; now exposed.64/64positives,55/64learnednegative refusals,7incidentalblocks,2unsupportedemissions.",
+    "real_source": "Sevenretained2024officialparagraphs produce14/14refusals across two explicit scopes, with no reviewed targetIR or legal formalization coverage.",
+    "native_witness": "An actual generated eight-member selection witness passes lake build legal; false scope claim rejected. This demonstrates scoped constructed semantics and grants no blanket output/source proof authority.",
+    "loss": "SupportBCE for all examples; count/scope/modality/spanpointerCE only supported positives. Negative-only batches leave structural gradients/moments idle while shared/support trunk changes.",
+    "remaining": "Zero independently reviewed admitted legal semantic pairs; qualifiers,nested/exclusive alternatives,broaderfamilies,legal-scope interpretation,long-token collision fixes and real latent-conditioning lineage remain open.",
+    "historical_handoffs": "Ten restoredMarkdown/JSONhandoffs plus historicalindex retain old recorded defaults/status/scores; they do not create current runtime/teacher qualification. Older sourcegroupcompiler dependencyport still reported20missingdefinitions/6differentdefinitions on795dmain; no broad parserport reviewed here."
+  },
+  "proposed_canonical_followup": {
+    "restore_missing_only": [
+      "docs/autoencoders/grouped_legal_decoders.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/cell_routing_handoff.json",
+      "docs/autoencoders/pilots/intent_codebase_grounding/cell_routing_handoff.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/decoder_format_handoff.json",
+      "docs/autoencoders/pilots/intent_codebase_grounding/decoder_format_handoff.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/decoder_profile_inventory_handoff.json",
+      "docs/autoencoders/pilots/intent_codebase_grounding/decoder_profile_inventory_handoff.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/historical_handoff_index.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/numerical_replay_handoff.json",
+      "docs/autoencoders/pilots/intent_codebase_grounding/numerical_replay_handoff.md",
+      "docs/autoencoders/pilots/intent_codebase_grounding/runtime_routing_handoff.json",
+      "docs/autoencoders/pilots/intent_codebase_grounding/runtime_routing_handoff.md",
+      "docs/implementation/reports/evidence/grouped-legal-decoders-20261006/summary.json",
+      "tests/unit/logic/test_legal_grouped_phase1_integration.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_grouped_formula_runtime.py"
+    ],
+    "preserve_modified": [
+      "docs/autoencoders/progress_integration.md",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_runtime_registry.py",
+      "tests/unit/logic/test_deontic_grouped_decoder.py",
+      "tests/unit/logic/test_deontic_grouped_decoder_boundaries.py",
+      "tests/unit/logic/test_legal_grouped_span_decoder_boundaries.py",
+      "tests/unit/logic/test_legal_grouped_span_decoder_v2_boundaries.py"
+    ],
+    "registry": "Prepare bounded additive a3f→0f published registry hunks over exact current dirty preimage; do not replace whole registry or activate defaults.",
+    "safe_runtime_api_tests": [
+      "test_explicit_profile_preserves_all_previous_runtime_selections",
+      "test_wrong_domain_or_version_never_opens_grouped_model",
+      "test_duplicate_and_nonfinite_json_rejected_even_with_matching_file_hash"
+    ],
+    "safe_test_limits": "Whole grouped-runtime suite constructs/restores tiny models; do not run broadly under a no-model task. Only the listed11metadata/refusal/parser cases omit checkpoint/runtime fixtures; module importsTorch and autouse threadsetup so an explicitly bounded test process is still needed."
+  },
+  "execution": {
+    "models": false,
+    "encoder": false,
+    "training": false,
+    "native_validator": false,
+    "lake": false,
+    "download": false,
+    "fetch": false,
+    "staging": false,
+    "source_edits": false,
+    "Git_mutations": false,
+    "review_artifact_writes_only": true
+  },
+  "semantic_qualification_granted": false,
+  "proof_authority": false
+}

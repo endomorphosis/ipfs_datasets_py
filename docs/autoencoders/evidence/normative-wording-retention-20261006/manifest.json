@@ -1,0 +1,35 @@
+{
+  "assets": {
+    "canonical-runtime-restoration.json": {
+      "bytes": 10728,
+      "sha256": "a8b51e27ac46959f7e2661e6fb149d13b9e94bfe402be430e3e881c828559677"
+    },
+    "independent-resource-review.json": {
+      "bytes": 16240,
+      "sha256": "452593f28f0d94124037323ac56cb75bddaae3bce7043b123c5a8d2eabbb2340"
+    },
+    "independent-result-review.json": {
+      "bytes": 423463,
+      "sha256": "abc9f0a49b18806374046b536d1381bf4318e6c37fc645016f56f74d6d1bd3a8"
+    },
+    "latest-pr1271-review.json": {
+      "bytes": 37297,
+      "sha256": "ac7cf742aedf65a9a8f55c1406ef341a3e075d5425cf1e0581b37edf7a8a4f51"
+    },
+    "summary.json": {
+      "bytes": 43996,
+      "sha256": "cb1c36c1bb7005e8b63f2bdbba7d64ceff0e41e16e3cba4af156ccdc4e628b57"
+    }
+  },
+  "checkpoint_promoted": false,
+  "complete_archive_manifest_path": "artifacts/autoencoder-retention-integration-20261006/retention-evidence-manifest.json",
+  "qualification_granted": false,
+  "schema": "normative-wording-retention-published-evidence/v1",
+  "summary_source_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/results/summary.json",
+  "training_executed": false,
+  "workspace_archive": {
+    "bytes": 4146645,
+    "sha256": "650ec3df8f4216eccb044376fd83f86895226f6b8c11546a3abf3525782e78d4"
+  },
+  "workspace_archive_path": "artifacts/autoencoder-retention-integration-20261006/retention-evidence.tar.gz"
+}
