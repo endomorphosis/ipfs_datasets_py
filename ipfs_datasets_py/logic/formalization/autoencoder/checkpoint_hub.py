@@ -246,3 +246,59 @@ def publish_package(directory, *, domain, repository_id, release_id, model_card)
         commit_message="Publish " + domain + " 384D development checkpoint " + release_id, operations=operations)
     descriptor["revision"] = commit.oid
     return validate_descriptor(descriptor, domain=domain)
+
+
+def open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+                            cache_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Opt in to exact-cell experimental cached replay, without Hub/default lookup.
+
+    All bindings and target-free cached inputs authenticate before fixed existing
+    runtime loading. Loading may execute the Legal package fixture; numerical
+    qualification and runtime release admission remain separate operations.
+    """
+    from .ir_cell_runtime import _open_ir_cell_autoencoder
+    return _open_ir_cell_autoencoder(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, cache_split=cache_split,
+        row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def preflight_ir_cell_cached_targets(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+                                    cache_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Evaluate stored canonical target coverage without loading a model.
+
+    Explicit original asset/row bindings are required. Targets stay inside the
+    evaluator; lexical coverage grants no grammar, quality or teacher status.
+    """
+    from .ir_cell_target_compatibility import preflight_ir_cell_cached_targets as preflight
+    return preflight(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, cache_split=cache_split,
+        row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request, *, package_manifest_pin,
+        corpus_pin, corpus_split, row_ids, max_reference_bytes=512 * 1024 * 1024):
+    """Opt in to exact original Intent/Security package corpus replay.
+
+    Fixed checkpoint fitting manifests and original source/vector identities
+    authenticate before loading. Targets and native evidence are never inputs.
+    """
+    from .ir_original_corpus_runtime import _open_ir_original_corpus_autoencoder
+    return _open_ir_original_corpus_autoencoder(directory_plan_pin, inventory_pins, request,
+        package_manifest_pin=package_manifest_pin, corpus_pin=corpus_pin,
+        corpus_split=corpus_split, row_ids=row_ids, max_reference_bytes=max_reference_bytes)
+
+
+def open_ir_decoder_format_autoencoder(directory_plan_pin, inventory_pins, request, *, format_request,
+        package_manifest_pin, corpus_pin, corpus_split, row_ids,
+        max_reference_bytes=512 * 1024 * 1024):
+    """Open an original Intent/Security fragment head with an explicit format.
+
+    Family, schema version, decoder task and exact codec/checkpoint bindings are
+    checked before loading. A fragment head cannot stand in for a document,
+    text-reconstruction or logic-output decoder. Model quality remains separate.
+    """
+    from .ir_decoder_format_runtime import _open_ir_decoder_format_autoencoder
+    return _open_ir_decoder_format_autoencoder(directory_plan_pin, inventory_pins, request,
+        format_request=format_request, package_manifest_pin=package_manifest_pin,
+        corpus_pin=corpus_pin, corpus_split=corpus_split, row_ids=row_ids,
+        max_reference_bytes=max_reference_bytes)

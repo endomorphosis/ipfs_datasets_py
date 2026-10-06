@@ -1,19 +1,22 @@
 # Training the separate 8D, 384D, 768D and 4096D decoders
 
-The four-width request first needs a representation and decoder readiness check.
-The October 4 comparison trains separate Legal formula sidecars for the available
-8D, 384D and 768D source representations. The 4096D lane still requires a trusted
-native input producer and an explicitly compatible decoder. Its embedding
-throughput receipts and synthetic decoder controls are not trained checkpoints.
+This guide records a sequence of October 4 experiments. The first comparison
+trains separate Legal formula sidecars for 8D, 384D and 768D sources; 4096D was
+unavailable in that comparison. Later sections record authenticated native
+4096D inputs and real decoder-head training: the two-clause pilot fits 2/2 TRAIN
+rules, while both broader 12-clause arms reconstruct 0/12 exposed development
+rules exactly. These are separate cohorts and profiles, with no production
+promotion. See the [combined progress review](progress_integration.md) for the
+relationship to the other agents' source-autoencoder and formalization studies.
 
 ## Representations and scope
 
-| Width | Source representation | This comparison |
+| Width | Source representation | First comparison only |
 | --- | --- | --- |
 | 8 | Historical linguistic feature hash | Separate learned formula sidecar; preserves the linguistic teacher |
 | 384 | Local pinned GTE-small semantic embeddings | Separate formula sidecar |
 | 768 | Local pinned multilingual GTE semantic embeddings | Separate formula sidecar |
-| 4096 | Local Leanstral language-model representation | Native-owner integration and matching source inputs still required |
+| 4096 | Local Leanstral language-model representation | Unavailable in the first comparison; later native/head experiments are recorded below |
 
 The first three lanes use existing cached vectors for identical source texts.
 They have different source producers, so their comparison is not an isolated
@@ -143,7 +146,10 @@ experiments rather than a common auxiliary-loss default. The next fidelity work
 must address the 8D source sidecar's weak reconstruction and the development versus
 regression tradeoffs at 384D and 768D.
 
-## What the 4096D lane still needs
+## Initial 4096D readiness gap
+
+This subsection records the gap before the later native-owner and head pilots.
+The executed follow-ups below retain their own source profiles and cohorts.
 
 The local 4096D benchmark contains 800 different single-clause sources: none
 matches the existing 239 paragraph/clause literals or the original 180-clause
