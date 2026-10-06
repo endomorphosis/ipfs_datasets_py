@@ -12,7 +12,6 @@ import json
 
 from . import decoder_cardinality_experiment as cardinality
 from . import decoder_distillation_experiment as core
-from .long_span_decoder_training import reference_weights
 
 SCHEMA = "source-value-decoder-development/v1"
 SOURCE_FIELDS = ("actor", "action", "modality", "object")
@@ -76,6 +75,10 @@ def reference_source_values(rows, references, codec, *, validate_rule, max_rules
     must be ignored by auxiliary CE. This is training/evaluation preparation,
     not a generation API. Qualifiers still receive the complete sequence loss.
     """
+    # Training reference preparation stays lazy; cached inference needs only
+    # the numerical source-value protocol from this module.
+    from .long_span_decoder_training import reference_weights
+
     _require(type(max_rules) is int and 1 <= max_rules <= MAX_RULES, "bounded source slot count required")
     reference_weights(rows, references, codec, strategy="reference_ce", validate_rule=validate_rule)
     positions = {token: index for index, token in enumerate(codec["target_vocabulary"])}
