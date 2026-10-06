@@ -220,3 +220,21 @@ def test_nested_private_state_cannot_invent_runtime_authority_or_native_identity
     with pytest.raises(runtime.ContextualLegalRuntimeError):
         open_contextual(data)
     assert loader["loads"] == []
+
+
+def test_repinned_paragraph_vector_is_caller_bound_without_saved_producer_authentication(data, loader):
+    changed = [float(index == 2) for index in range(data["dimension"])]
+    data["rows"][0]["input"] = changed
+    repin(data)
+    plan = prepare(data)
+    assert loader["loads"] == []
+    selected = {row["id"]: row["input"] for row in plan["source_inputs"]["rows"]}
+    assert selected["source:0"] == changed
+    contract = plan["input_contract"]
+    assert contract["paragraph_vector_binding"] == "caller_pinned_asset_bytes"
+    assert contract["saved_paragraph_vector_producer_authenticated"] is False
+    assert all(value is False for value in plan["authority"].values())
+    description = open_contextual(data).describe()
+    assert description["input_contract"] == contract
+    assert all(value is False for value in description["authority"].values())
+    assert loader["calls"] == []

@@ -1,0 +1,13 @@
+{
+  "schema": "independent-review-harness-diagnostic/v1",
+  "failed_phase": "comparison_with_sanitized_retained_metadata_plan",
+  "error": "KeyError: source_inputs",
+  "production_384_metadata_preparation_succeeded": true,
+  "second_lane_attempted": false,
+  "cause": "Retained public metadata plan omits raw source_inputs; the reviewer harness wrongly assumed that optional payload remained.",
+  "correction": "Compare prepared packets with independently byte-authenticated original source/cache assets instead.",
+  "model_loaded": false,
+  "model_inference_executed": false,
+  "training_executed": false,
+  "proof_authority": false
+}

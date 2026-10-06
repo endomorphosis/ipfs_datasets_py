@@ -479,6 +479,7 @@ def _prepare(options):
         codec=checkpoint["codec"], codec_sha256=_digest(checkpoint["codec"]), model_tensor_sha256=checkpoint["tensor_sha256"],
         input_transform_sha256=_digest(checkpoint["input_transform"]), saved_preprocessing_sha256=_digest(preprocessing),
         input_contract=dict(paragraph_width=dimension, clause_width=dimension, max_source_clauses=8,
+            paragraph_vector_binding="caller_pinned_asset_bytes", saved_paragraph_vector_producer_authenticated=False,
             clause_vectors="original_raw_cached_vectors", transform_order="saved_TRAIN_input_transform_then_zero_pad_to_eight",
             decoder_feature_normalizations="saved_separate_paragraph_and_clause_stages_once", source_only=True),
         numerical_setup=dict(device="cpu", dtype="float32", required_cpu_threads=1, caller_configures_threads_explicitly=True),
@@ -533,6 +534,7 @@ class _ContextualLegalAutoencoder:
         plan = json.loads(self._plan_bytes)
         return {"schema": "contextual-legal-ir-runtime-description/v1", "request": plan["request"],
             "artifact_receipts": plan["artifact_receipts"], "source_owner_receipts": plan["source_owner_receipts"],
+            "input_contract": plan["input_contract"],
             "row_ids": plan["row_ids"], "state_serialization_schema": plan["state_serialization_schema"],
             "native_ir_schema_version": None, "decoder_profile_id": None, "decoder_format_id": None,
             "complete_runtime_io_contract": False, "model_load_started": True, "model_load_performed": True,

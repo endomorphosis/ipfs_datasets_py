@@ -155,8 +155,17 @@ endpoint checks are not an atomic cross-file snapshot. A late refusal retains
 raw candidates only as diagnostics with truthful call-boundary flags.
 
 This version replays the retained validation source inventory, allowing an
-explicit ordered selection of its rows. Rehashed foreign vectors, relabelled
-source rows and substituted context packets fail the saved inventory joins.
+explicit ordered selection of its rows. Relabelled source rows and substituted
+clause vectors or context packets fail the saved source/text and context-digest
+joins. Paragraph vectors have a narrower binding: their width, finite values,
+unit norm and caller-selected asset bytes are checked, but the saved validation
+inventory contains no paragraph-vector digest or producer receipt. A different
+same-width unit paragraph vector can therefore pass when its input file is
+explicitly repinned. Both the prepared plan and runtime description report
+`paragraph_vector_binding: caller_pinned_asset_bytes` and
+`saved_paragraph_vector_producer_authenticated: false`; this does not qualify
+that vector's encoder provenance or semantic correctness. The retained 44-asset
+qualification still binds and reuses the exact original paragraph vectors.
 Inputs contain exactly `id`, `source_text` and `input`, with separately bound
 literal-clause descriptors; they cannot contain target IDs, labels or gold IR.
 

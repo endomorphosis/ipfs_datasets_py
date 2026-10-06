@@ -1,0 +1,65 @@
+{
+  "schema": "autoencoder-provenance-honesty-patch-independent-review/v1",
+  "approved": true,
+  "findings": [],
+  "reviewed_four_file_pins": [
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "bytes": 36594,
+      "sha256": "773e30977478921c31fbc075b5357339cc13e8e920ba93be85b5160b7f442a15"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "bytes": 13460,
+      "sha256": "907f802e33121913a242482f898286243bfe160fffe966716860bb3f2c606965"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "bytes": 15551,
+      "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006/docs/autoencoders/paraphrase_modality_diagnostics.md",
+      "bytes": 9689,
+      "sha256": "ff8a25cd9b6548377f04f91d88e92b2b4f83e07597b8a33dc43a463263e310b1"
+    }
+  ],
+  "metadata_controls_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/honesty-original-metadata-controls.json",
+    "bytes": 9186,
+    "sha256": "349ded197c764927cc77d0cf4b24f6afa650360686f6d9c90de47713f5908ed8"
+  },
+  "metadata_reproducer_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/check_metadata_honesty_patch.py",
+    "bytes": 5433,
+    "sha256": "ae3d5f818001e0969d476538dfcbf7d28f8bb378596f2f4af4c1fd1a65ab306a"
+  },
+  "synthetic_boundary_observation_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary.json",
+    "bytes": 7774,
+    "sha256": "7407e81d7a5f67394aaf8bccd0bd340e734b2b3e8717677931760f3e381cd36a"
+  },
+  "corrected_harness_diagnostic_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/honesty-metadata-diagnostic-01.json",
+    "bytes": 636,
+    "sha256": "dfe7cfaad057d82ae60a139650f947e79e95d2bf4caa8bccc7d05b4cc6e98e84"
+  },
+  "reviewed_changes": [
+    "Prepare exposes caller-pinned paragraph custody and false saved producer authentication; describe returns the same detached input contract.",
+    "The positive repinned-vector test admits only inert private fixture bytes and asserts false producer/quality authority without inference.",
+    "Contextual prose differentiates unchanged saved clause/context joins from caller-bound paragraph bytes and preserves the original44-asset actual qualification.",
+    "Paraphrase status attributes completed measurements to the independently sealed normative successor, without declaring the older scratch file its execution receipt."
+  ],
+  "independently_executed_scope": "Original384/76848-row metadata preparation on current new source; no tensor/model load, numerical generation, training, encoder, database or network execution.",
+  "source_inputs_and_selected_tensor_identities_unchanged": true,
+  "all_authority_false": true,
+  "original_asset_endpoints_unchanged": true,
+  "numerical_owner_modified": false,
+  "old_receipts_modified": false,
+  "new_qualification_claims": false,
+  "limits": [
+    "This additive metadata/documentation change does not create an independently authenticated paragraph producer receipt or a native runtime profile.",
+    "The original37c2 frozen numerical replay remains historical qualified-scope evidence; this review performs metadata parity rather than another numerical replay.",
+    "Caller-pinned model/source bytes and cooperative endpoint fences retain their prior boundaries. Existing source-bound sealed plans must use fresh reviewed preparation on changed source; old pins/receipts are not rewritten."
+  ]
+}

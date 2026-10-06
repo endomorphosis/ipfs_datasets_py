@@ -1,0 +1,141 @@
+{
+  "schema": "contextual-paragraph-caller-pin-boundary-observation/v1",
+  "synthetic_untrained_fixture": true,
+  "original_metadata_prepared": true,
+  "caller_rehashed_changed_paragraph_vector_metadata_prepared": true,
+  "unchanged_asset_pins": {
+    "checkpoint_pin": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/checkpoint.json",
+      "bytes": 431254,
+      "sha256": "cf8e500bc54627c0d3a0eeb2ba9c3b7814b3ebb3196423c0c82b57654f66d0a3"
+    },
+    "preprocessing_pin": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/preprocessing.json",
+      "bytes": 10594,
+      "sha256": "222b5abf1b4f9e53007e129fbbea6ef3ab580dd982325ad0a408e47ce3a7c1d2"
+    },
+    "donor_checkpoint_pin": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/donor.json",
+      "bytes": 103270,
+      "sha256": "97b4a0dbc1cbd1bb7a77f29ff296ddc6e510f8ff76ac3e124a62926428f93e09"
+    },
+    "source_contexts_pin": {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/contexts.json",
+      "bytes": 3851,
+      "sha256": "44b329eefe61f178831f6df4bf31e153ea09935bcac94d2fc312d249021eac36"
+    }
+  },
+  "paragraph_assets_before_after": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/rows.json",
+      "bytes": 3209,
+      "sha256": "ce0e8bdbc918442b7be4aa74d628f7c56dadc2895e322020fe6d2378fce61321"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary-fixture/rows.json",
+      "bytes": 3209,
+      "sha256": "9a03286ee4cb1a2c065f41a454ec37501972ab4348060b2c0f272d56207c64e9"
+    }
+  ],
+  "changed_source_row_id": "source:0",
+  "source_text_context_inventory_and_model_bytes_unchanged": true,
+  "source_owner_pins": [
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "bytes": 36421,
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "bytes": 15840,
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "bytes": 11090,
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "bytes": 13794,
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "bytes": 25942,
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "bytes": 21833,
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "bytes": 19729,
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "bytes": 26392,
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "bytes": 37989,
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "bytes": 14873,
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "bytes": 20524,
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "bytes": 14958,
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "bytes": 14249,
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "bytes": 12563,
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    }
+  ],
+  "source_endpoints_unchanged": true,
+  "model_loaded": false,
+  "model_inference_executed": false,
+  "embeddings_generated": false,
+  "training_executed": false,
+  "database_or_network_executed": false,
+  "original_assets_read_or_mutated": false,
+  "authority": {
+    "database_write_executed": false,
+    "embeddings_generated": false,
+    "encoder_executed": false,
+    "full_source_dependency_closure_qualified": false,
+    "learned_source_text_reconstruction_qualified": false,
+    "model_task_qualified": false,
+    "native_ir_format_qualified": false,
+    "network_executed": false,
+    "proof_authority": false,
+    "quality_qualified": false,
+    "runtime_admitted": false,
+    "runtime_release_qualified": false,
+    "source_semantics_verified": false,
+    "source_token_budget_qualified": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "scope": "Caller-supplied paragraph asset SHA authenticates selected bytes. Saved source IDs/text and clause-context digest do not independently authenticate historical paragraph vector production. Actual original44-file-pinned replay is unaffected.",
+  "recommendation": "State caller pin custody and independent producer correspondence separately. Before admitting different paragraph assets, require an explicit source/vector receipt join (or a saved authenticated per-row input-vector inventory), without rewriting historical checkpoint/preprocessing pins."
+}

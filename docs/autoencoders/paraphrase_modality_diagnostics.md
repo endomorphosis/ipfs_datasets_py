@@ -134,16 +134,22 @@ campaign cap remained 145 GB, with 141,066,115,047 bytes charged at finalization
 
 The specified broader TRAIN wording comparison has now completed. The [paired normative training report](normative_wording_training.md) records the 384D improvement from 55/60 to 60/60 on separately sealed development wording, the unchanged 768D exactness with slightly worse loss, exact zero replay and retained qualification boundaries. Its original meanings were previously exposed, so this is not fresh semantic holdout evidence.
 
-The existing R4 head is already correct on all 180 TRAIN modality examples.
-Making those predictions more confident is insufficient. The next specified
-comparison expands TRAIN wording while preserving the original 90 rule
-identities, complete roles, original batches and full-vocabulary loss. Freeze
-two new balanced normative strata, provenance/exclusions, native preparation,
-zero/positive controls and a prospective development seal before fitting.
-Keep the current v3 cohort exposed and out of TRAIN. The workspace
+The earlier R4 head was already correct on all 180 TRAIN modality examples.
+Making those predictions more confident was insufficient. That diagnosis
+motivated an initial scratch proposal to expand TRAIN wording while preserving
+the original 90 rule identities, complete roles, original batches and
+full-vocabulary loss. It specified two balanced normative strata,
+provenance/exclusions, native preparation, zero/positive controls and a
+prospective development seal, with the v3 cohort exposed and out of TRAIN.
+The workspace
 `artifacts/autoencoder-next-gap-20261006/data/next-wording-training-spec.md`
-contains the concrete rendering, packing, cache, loss and resource contract.
-This specification has not yet been executed.
+retains that initial rendering, packing, cache, loss and resource proposal. That
+scratch file is not the completed run's execution or qualification receipt. The
+completed successor above used its own sealed normative wording recipe, source
+inventories and readiness reviews, documented
+in [the paired training report](normative_wording_training.md). Its completed
+status and measurements apply to that frozen successor, not to the scratch
+proposal or the earlier diagnostic arms.
 
 The other agents' 64-source corpus has reusable native 384D/768D caches, but its
 formal reviews remain pending and every semantic mask is zero. Its richer

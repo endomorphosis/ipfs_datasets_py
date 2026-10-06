@@ -1,0 +1,49 @@
+{
+  "schema": "contextual-input-provenance-evidence-retention/v1",
+  "scope": "Additive input-contract metadata and corrected documentation; no numerical model replay or new model qualification. Original source caches and checkpoint bytes were not mutated.",
+  "files": [
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/paragraph-pin-boundary.json",
+      "retained_path": "paragraph-pin-boundary.json",
+      "bytes": 7774,
+      "sha256": "7407e81d7a5f67394aaf8bccd0bd340e734b2b3e8717677931760f3e381cd36a"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/reproduce_paragraph_pin_boundary.py",
+      "retained_path": "reproduce_paragraph_pin_boundary.py",
+      "bytes": 5779,
+      "sha256": "e9d99a4524dffb4e082e5a47dfef948ec478d3344e3e371cea20b958c80e4ba9"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/honesty-patch-independent-review.json",
+      "retained_path": "honesty-patch-independent-review.json",
+      "bytes": 4120,
+      "sha256": "33461ba035d4209a4581f5ccd97960009b3a08b08463da183d302e773a77f2eb"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/honesty-original-metadata-controls.json",
+      "retained_path": "honesty-original-metadata-controls.json",
+      "bytes": 9186,
+      "sha256": "349ded197c764927cc77d0cf4b24f6afa650360686f6d9c90de47713f5908ed8"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/check_metadata_honesty_patch.py",
+      "retained_path": "check_metadata_honesty_patch.py",
+      "bytes": 5433,
+      "sha256": "ae3d5f818001e0969d476538dfcbf7d28f8bb378596f2f4af4c1fd1a65ab306a"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/semantic/honesty-metadata-diagnostic-01.json",
+      "retained_path": "honesty-metadata-diagnostic-01.json",
+      "bytes": 636,
+      "sha256": "dfe7cfaad057d82ae60a139650f947e79e95d2bf4caa8bccc7d05b4cc6e98e84"
+    },
+    {
+      "source": "/home/barberb/lift_coding/artifacts/autoencoder-progress-reconciliation-20261006/honesty-controls.xml",
+      "retained_path": "honesty-controls.xml",
+      "bytes": 35104,
+      "sha256": "a63c3260ab7683d54eaea75f0a6e683ff74e91b99fe3ad23382f268c04f4d6c3"
+    }
+  ],
+  "excluded": "Generated synthetic fixture tensor JSON, real checkpoint/cache payloads, and historical numerical qualification receipts are not copied or rewritten."
+}
