@@ -1,0 +1,337 @@
+{
+  "admitted": false,
+  "archive_bytes": 3579396,
+  "archive_path": "artifacts/autoencoder-next-gap-20261006/review-evidence.tar.gz",
+  "archive_repository": "workspace origin/main",
+  "archive_sha256": "5718a88ac5761109344e486ec4bd80a52dc02b8daa81404ce61798f7666af594",
+  "checkpoint_promoted": false,
+  "final_input_manifest_sha256": "2175f3505c53425ed5cc26868ed840955a6acc3df64a28bcfc0dec8793f1c7a5",
+  "final_plan_sha256": "e4056fdd24c6fbaed6849bf63773af6b75d8a955c3a932945c2c3b7fd6dd65f4",
+  "first_preparation_launched": false,
+  "first_preparation_seal_preserved": true,
+  "frozen_extension_count": 11,
+  "input_count": 1178,
+  "local_saved_dependencies_required": true,
+  "member_count": 78,
+  "members": {
+    "artifacts/autoencoder-next-gap-20261006/build_public_evidence.py": {
+      "bytes": 6911,
+      "sha256": "60296f6da3e3b5c4cb961c19d221446356b7c2b2605da980e9e6317a088b8ac0"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/README.md": {
+      "bytes": 8933,
+      "sha256": "aa27cce2fbc9cb4220cdd3a08f59e129cdbc78a1922f1a4c2e07de5c312856b3"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/attempt-01.json": {
+      "bytes": 521,
+      "sha256": "dd97ce96ebdc309dcf446e161db13339c4fce3406f8639de7d167605e4ceabd2"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/audit_saved_training_data.py": {
+      "bytes": 16713,
+      "sha256": "f49a020a05fe9b5c0b0567e47b75d79ee3c761670490069142340269c19d54f9"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/cache-pair-map.json": {
+      "bytes": 48244,
+      "sha256": "334507c3f1f9633f513e7aefe96a21cc54bb8ca46a5701fbbc217ad37700aa5e"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/next-wording-training-spec.md": {
+      "bytes": 18231,
+      "sha256": "05070e9719aa1e1e7179a4a44c8c49c7212ad4f7def1621a54995dcd860cd7bc"
+    },
+    "artifacts/autoencoder-next-gap-20261006/data/readiness-audit.json": {
+      "bytes": 26318,
+      "sha256": "dddba2bff32abc665dff0040571ce507b2eaa801a40ab884054c1131dd3602d1"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/audit_readiness.py": {
+      "bytes": 12128,
+      "sha256": "b3a2ee105cc2cf9863f344dafb2910d4fe9b6e064ce3162353052b96baa7fb1b"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/audit_scalar_outputs.py": {
+      "bytes": 12810,
+      "sha256": "a195da4966d2bc93d8ad0f874133b7dbc349b6b790f8afe48724bac86fc704c3"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/completed_findings.md": {
+      "bytes": 6714,
+      "sha256": "6e0a4a1a871ff0287adc794c8ad7f38a5937029950d9257d9336f46fa3c8d59d"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/findings.json": {
+      "bytes": 155564,
+      "sha256": "1aefd10dbd4ff406f08a670162185bec5a1bde22b90837c65235c1d29bb05408"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/independent-cold-preflight.json": {
+      "bytes": 324,
+      "sha256": "b0466863abedc2d08f0f0ad67bae010d394b265712895f29097ac8514e259d70"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/independent-numerical-audit.json": {
+      "bytes": 207449,
+      "sha256": "ba2b50eb3e2a2c77265146b7de0a5231025275dcd58c1f9f7c008298afa56f0f"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/independent-readiness.json": {
+      "bytes": 359282,
+      "sha256": "5a0ca0fded70460350ebd825654034d965828bfaf641dec51e4c87eab93d0fae"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/matched-formula-transitions.json": {
+      "bytes": 34722,
+      "sha256": "ff8081ab98425afe3e22adbdf08681aa7a5529f8714516d27a6951c96ebcb6f8"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/read_saved_evidence.py": {
+      "bytes": 7717,
+      "sha256": "0b711b3ec44d5226036bc22b7dafa4ec9487da88a5f480e01f3e502f088a9524"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/readiness-first-seal-superseded.json": {
+      "bytes": 764,
+      "sha256": "2ca1eedd23b00f2c8f404db921ee7974e35bf1616c289feabdb1cd957387c116"
+    },
+    "artifacts/autoencoder-next-gap-20261006/diagnosis/recommendation.md": {
+      "bytes": 10500,
+      "sha256": "38d2477056f377d1f611c33108cc55a32e0cd47a48096e6e24cc061614d680a6"
+    },
+    "artifacts/autoencoder-next-gap-20261006/initial-git-and-protected-checkpoint.json": {
+      "bytes": 890,
+      "sha256": "aa9127677ea6b12dcd28ab75c14aa7584396b36cce406f0cddffb028fe43e914"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/README.md": {
+      "bytes": 2026,
+      "sha256": "47fe57f710135f0d741c4b816d627dcf8d18f6208fe8209f6639811d63e0df05"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/review.json": {
+      "bytes": 25277,
+      "sha256": "455f0ff2c38d6516acb98a62e00cdda1f2822468e1f1a3cf01290efa764194be"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests-r2-receipt.json": {
+      "bytes": 847,
+      "sha256": "8a040da1eebefbeeb3b0e1a80497f987944a89a5c6fc86a5e0ba9dde4540d978"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests-r2.log": {
+      "bytes": 1240,
+      "sha256": "c855350253debca287b04bb9652f68d4b564a76b724581c8d59d1873a2f8de80"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests-r2.xml": {
+      "bytes": 13174,
+      "sha256": "a9c7da95a7432903224edd58cfeefea05f6f5a3f7fa1bf3bf58169b47bd0ec05"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests-receipt.json": {
+      "bytes": 743,
+      "sha256": "d6833c0765cced3af98dba426309055483a76ecd0d52337b9b93e0d127bd9f1e"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests.log": {
+      "bytes": 1237,
+      "sha256": "9f917828a13ce1441c83a4f5ec8ce6957423cd618aba5345279ebc15d017416c"
+    },
+    "artifacts/autoencoder-next-gap-20261006/runner_review/tests.xml": {
+      "bytes": 11521,
+      "sha256": "689a9f07aa92e5e8ab453a1d8b8edcb4cb59b7e74b80f87fd330b4ea13e5d35e"
+    },
+    "external/ipfs_datasets/docs/autoencoders/paraphrase_modality_diagnostics.md": {
+      "bytes": 8892,
+      "sha256": "974a936b570306068b8d239caca2da742c5da1b6ba07cce9e29761432863c5b3"
+    },
+    "external/ipfs_datasets/docs/implementation/reports/evidence/decoder-paraphrase-modality-margins-20261006/results.json": {
+      "bytes": 13017,
+      "sha256": "a55318ad277812712fcded9cfc3ac9f8a8c0dd2031e22fc9c9c6b38892d32d81"
+    },
+    "external/ipfs_datasets/scripts/ops/autoencoder/diagnose_paraphrase_modality_margins.py": {
+      "bytes": 21843,
+      "sha256": "86906fcbaeb348d418e7d0fed6a9faf5510b61c139ea35db0f9d6dc4086d621e"
+    },
+    "external/ipfs_datasets/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_margins.py": {
+      "bytes": 17420,
+      "sha256": "9509ceaf65172c793df423736d5eb8617357a4ee85221d4f3b9dd227dfa57565"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-20261006/diagnostic-manifest.json": {
+      "bytes": 300494,
+      "sha256": "efbea2249426e18c2ec2a99baee0b0a500129c22b9220bd1cc651ffc30566293"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-20261006/diagnostic-plan.json": {
+      "bytes": 294689,
+      "sha256": "317cdb5eab766a1c9cf7026ee3e098462e6591eb5c68c4c4bba5ea8d3cdf4ff4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-20261006/superseded-preparation.json": {
+      "bytes": 603,
+      "sha256": "28c2e832136755774c9bfab6a725121637f3a33072aba7ba51ee354889d108a3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-manifest.json": {
+      "bytes": 300518,
+      "sha256": "2175f3505c53425ed5cc26868ed840955a6acc3df64a28bcfc0dec8793f1c7a5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-plan.json": {
+      "bytes": 294713,
+      "sha256": "e4056fdd24c6fbaed6849bf63773af6b75d8a955c3a932945c2c3b7fd6dd65f4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1-lease-observations.jsonl": {
+      "bytes": 38699,
+      "sha256": "04fc19e0a357bc8d68efcc3c24044673650000507dcae6485d961495168f5b2d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1-scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "5ada46198d756c59381cdfefed59224df5d59e417290cb4afea28bb8394e999d"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/child-exit.json": {
+      "bytes": 323,
+      "sha256": "05fb0f226bc4d658a2afe10dfbf58cfee3dedccb9e3bfab1042eeeb7c31cae85"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/child-identity.json": {
+      "bytes": 44,
+      "sha256": "3be8e4513838e546c57b1022718a486dc717a63599bfa1f505fc05cc4d0616a9"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/child.log": {
+      "bytes": 1674,
+      "sha256": "80633b4fc45621a5a5c2203d00ea83a4412b2d1b0366cfea5b07cd2749289302"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/command.json": {
+      "bytes": 6461,
+      "sha256": "808c6cf1c9a0015e6368e3e55556589cf6d80321a301a53f7b2a92045f22b289"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "d48fb1873ec0c67aa4d58f40c9819907bffb4109bf1954bac0e63adf19cd77d8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/resource-observations.json": {
+      "bytes": 1746,
+      "sha256": "8e7dff30c98ab221e158ac8a371e3b669557795440a53b738c228e980e6fae3b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/resources-final.json": {
+      "bytes": 5853,
+      "sha256": "22bcdfcb26eb96361a2c4a2a9a1633a90894642f65033294ff2fa602b025cbe8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/resources-start.json": {
+      "bytes": 3187,
+      "sha256": "9e728e3e616c54a432a08525524db3f75b6f46f2da834d1cc962007914164ec3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-ce-selected/score.json": {
+      "bytes": 598657,
+      "sha256": "ba799791efbe809319427990e04d4f92899d4f9d1b69ba51218b32833aea26bc"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-ce-selected/trace.json": {
+      "bytes": 1666374,
+      "sha256": "460a20ca15305cdb82fbbc42b9aa59a8ce12cdf06b13c02ab1217886a957a154"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-zero-selected/score.json": {
+      "bytes": 598443,
+      "sha256": "26a07346f21d445cc2ee0bf623806a50d1aa00d6209c6bb298b199c5c0ee1ff5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-zero-selected/trace.json": {
+      "bytes": 1666360,
+      "sha256": "ba1d5a301fbb83cc2d8c6a0c9cf07a09abf894ce0ed125e0feabff08b72b41b2"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-ce-selected/score.json": {
+      "bytes": 597085,
+      "sha256": "9a0d8436f4b5d2b1c0db6974189e2ab8725ea4f539130c77277206e1f3d0c6ff"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-ce-selected/trace.json": {
+      "bytes": 1665497,
+      "sha256": "0332324a221acb7264dcc820c79c4858021e08702d49f7320670d898ccb938f1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-zero-selected/score.json": {
+      "bytes": 597107,
+      "sha256": "cf3850d0eb3cc1d02ffb37509d86e3e525c9b0e6189e5cdb678e6fb598d122c5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-zero-selected/trace.json": {
+      "bytes": 1665510,
+      "sha256": "c5ad1387130facddcf46f9b38477675a58a5d6876d89d0d48d0861522d99977b"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/sealed-recipe.json": {
+      "bytes": 580684,
+      "sha256": "375412cd7a74690a1064d3cb7b580b2ec82e0525cfe7ddd3b91ab8510afadbc1"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/summary.json": {
+      "bytes": 37229,
+      "sha256": "4e810a8ee59459a41c15d49efa5f53a2ffd27e78530abf48f367bce19e8bd2e5"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/traces-complete.json": {
+      "bytes": 3720,
+      "sha256": "bc5dcf3c41ea54edb255ff63f67cc94c811dc4306d55848520f7098b3cd54611"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 105415,
+      "sha256": "c1663820492a6879b14ab89dfd9b052105cf16378bb015fea08c3220d83456e0"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": {
+      "bytes": 13994,
+      "sha256": "789f47047badfa30553940547c2db28f08afa1052f1bcc5ace68dbccedc2ccac"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/scripts/ops/autoencoder/benchmark_paraphrase_modality_training.py": {
+      "bytes": 26383,
+      "sha256": "d84974df896df766794069da01319ef0d7473eb2907f4a6a540a0661f6b193e8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/scripts/ops/autoencoder/diagnose_paraphrase_modality_margins.py": {
+      "bytes": 21843,
+      "sha256": "86906fcbaeb348d418e7d0fed6a9faf5510b61c139ea35db0f9d6dc4086d621e"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/scripts/ops/autoencoder/evaluate_paraphrase_modality_styles.py": {
+      "bytes": 1694,
+      "sha256": "17525c855995dda7714682188fe7b68f9d3e9195ec73839a346afad498824e9f"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/scripts/ops/autoencoder/evaluate_training_mixture_styles.py": {
+      "bytes": 13087,
+      "sha256": "37c22dbdec537a6b8690feb42c0dfdf083c4934aab159108cdfda03e602e9b84"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_auxiliary_training.py": {
+      "bytes": 7961,
+      "sha256": "c316c1d88c2265a25c77e13710ec6b1298f429dd956dbe6aaa447e5f6d35c4e6"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_margins.py": {
+      "bytes": 17420,
+      "sha256": "9509ceaf65172c793df423736d5eb8617357a4ee85221d4f3b9dd227dfa57565"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_styles.py": {
+      "bytes": 5207,
+      "sha256": "41dbdf2fcf7ef5159d24509f02af97049389b773c2bde6fe9c21f1b9f3890c09"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_integration.py": {
+      "bytes": 9231,
+      "sha256": "b0d1f897e4fd05919d7aa7b84081fff201461588d2ed851fcf5a3323fed8e722"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/experiment-source/tests/unit/logic/formalization/autoencoder/test_paraphrase_modality_training_runner.py": {
+      "bytes": 7177,
+      "sha256": "034da61052cf05538873876fb5f1f78df27c683a265c73d1a9797475fc703f98"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/guardian-adaptation.json": {
+      "bytes": 579,
+      "sha256": "0f64ff9041a3a8a952b20351869e4b913baff641379db80aae97664f2fac29df"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/guardian-exit.json": {
+      "bytes": 70,
+      "sha256": "822b7d81b454e89d592db4d61a34d9159503926f1b999360c78d90c6d4fb2d1c"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/guardian-static-review.json": {
+      "bytes": 2477,
+      "sha256": "88922ab150d589e6a24155cb6f1ea6366b42aaf11ae3a306fa0376878a32cbd4"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/guardian.log": {
+      "bytes": 5127,
+      "sha256": "6e8c6e2bf9e327a6826d2fe6b9a02f9bfdc3482f5fdae0472b50c41d06f49948"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/run_guardian.py": {
+      "bytes": 1725,
+      "sha256": "df9f169ab2900269ba6b322a488e638230183295ac62919af4fa7f015f1be516"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/run_reserved.py": {
+      "bytes": 16665,
+      "sha256": "0d82941e1175cf4d66c8d52d452954a7d7d9e70c4cdd06d6da5901455f8868c8"
+    },
+    "external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/seal_diagnostic.py": {
+      "bytes": 5215,
+      "sha256": "564f14483e3c552fe5e889c0ac40403e5b46e323421ebb53c62512a8fab006f2"
+    }
+  },
+  "model_assets_bundled": false,
+  "predecessor_source_trees_bundled": false,
+  "private_checkpoint_tensors_bundled": false,
+  "provenance_scope": "authenticated historical numerical producers; not current compiler",
+  "schema": "published-paraphrase-modality-evidence-manifest/v1",
+  "source_runner_tests": 73,
+  "training_executed": false
+}

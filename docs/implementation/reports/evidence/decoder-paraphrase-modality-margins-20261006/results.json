@@ -1,0 +1,342 @@
+{
+  "admitted": false,
+  "all_archived_predictions_exact": true,
+  "charged_bytes_at_finalization": 141066115047,
+  "checkpoint_promoted": false,
+  "comparison_scope": "previously_exposed_authored_v3; four selected states",
+  "compiler_output_executed": false,
+  "complete": true,
+  "convergence_proven": false,
+  "decoder_states_executed": 4,
+  "downloads_performed": false,
+  "driver_elapsed_seconds": 25.252092897018883,
+  "encoder_executed": false,
+  "formal_status": {
+    "compiler_output": "not_executed",
+    "family_semantic_validation": "not_executed",
+    "generated_scalar_observation": "complete",
+    "lean_lake_admission": "not_executed"
+  },
+  "formalized": false,
+  "fresh_holdout": false,
+  "guardian_elapsed_seconds": 67.00649715500185,
+  "independent_check_count": 66467,
+  "independent_float32_coordinates_checked": 92160,
+  "lake_executed": false,
+  "legal_ir_bridge_evaluation_executed": false,
+  "legal_ir_target_count": null,
+  "maximum_component_metric_absolute_difference": 0.0,
+  "new_decoder_loss_or_predictions_improved": false,
+  "next_training_recipe_status": "specified_only; not_executed",
+  "panels": [
+    {
+      "arm": "paraphrase-modality-zero",
+      "dimension": 384,
+      "exact_paragraphs": 20,
+      "generation_seconds": 0.5267429730156437,
+      "generation_seconds_per_paragraph": 0.010973811937825909,
+      "last_attempt_alias_tensor_equal": true,
+      "per_field": {
+        "action": {
+          "combined_correct": 179,
+          "recurrent_correct": 92,
+          "scored": 180,
+          "source_correct": 179,
+          "source_correct_combined_wrong": 0
+        },
+        "actor": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "modality": {
+          "combined_correct": 139,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 139,
+          "source_correct_combined_wrong": 0
+        },
+        "object": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        }
+      },
+      "role": "selected",
+      "rule_count": 180,
+      "sample_count": 48,
+      "score_ref": {
+        "bytes": 598443,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-zero-selected/score.json",
+        "sha256": "26a07346f21d445cc2ee0bf623806a50d1aa00d6209c6bb298b199c5c0ee1ff5"
+      },
+      "scored_sites": 720,
+      "scoring_seconds": 0.21807544503826648,
+      "state_ref": {
+        "bytes": 2798244,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-zero/selected-state.json",
+        "sha256": "51803e508a1d0b95de46ae8eec7cac625c79fff98d52200278b66f44db7a8cb8",
+        "tensor_sha256": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3"
+      },
+      "trace_ref": {
+        "bytes": 1666360,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-zero-selected/trace.json",
+        "sha256": "ba1d5a301fbb83cc2d8c6a0c9cf07a09abf894ce0ed125e0feabff08b72b41b2"
+      },
+      "unscored_sites": 0,
+      "unvisited_reference_sites": 0
+    },
+    {
+      "arm": "paraphrase-modality-ce",
+      "dimension": 384,
+      "exact_paragraphs": 19,
+      "generation_seconds": 0.5301210960024036,
+      "generation_seconds_per_paragraph": 0.011044189500050075,
+      "last_attempt_alias_tensor_equal": true,
+      "per_field": {
+        "action": {
+          "combined_correct": 179,
+          "recurrent_correct": 88,
+          "scored": 180,
+          "source_correct": 179,
+          "source_correct_combined_wrong": 0
+        },
+        "actor": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "modality": {
+          "combined_correct": 136,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 137,
+          "source_correct_combined_wrong": 1
+        },
+        "object": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        }
+      },
+      "role": "selected",
+      "rule_count": 180,
+      "sample_count": 48,
+      "score_ref": {
+        "bytes": 598657,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-ce-selected/score.json",
+        "sha256": "ba799791efbe809319427990e04d4f92899d4f9d1b69ba51218b32833aea26bc"
+      },
+      "scored_sites": 720,
+      "scoring_seconds": 0.21767199999885634,
+      "state_ref": {
+        "bytes": 2798199,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-384-r2/results/paraphrase-modality-ce/selected-state.json",
+        "sha256": "14e7df15703f5ac2bc79e48569f2983eabde5fc5d6d84c77be7cbb56066d89d5",
+        "tensor_sha256": "808a1c903ce90cf0500fd09d01257136f13c5c74d30620d8d0f9bf0a1a81a501"
+      },
+      "trace_ref": {
+        "bytes": 1666374,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/384-paraphrase-modality-ce-selected/trace.json",
+        "sha256": "460a20ca15305cdb82fbbc42b9aa59a8ce12cdf06b13c02ab1217886a957a154"
+      },
+      "unscored_sites": 0,
+      "unvisited_reference_sites": 0
+    },
+    {
+      "arm": "paraphrase-modality-zero",
+      "dimension": 768,
+      "exact_paragraphs": 46,
+      "generation_seconds": 0.6778844529762864,
+      "generation_seconds_per_paragraph": 0.0141225927703393,
+      "last_attempt_alias_tensor_equal": true,
+      "per_field": {
+        "action": {
+          "combined_correct": 180,
+          "recurrent_correct": 60,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "actor": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "modality": {
+          "combined_correct": 178,
+          "recurrent_correct": 14,
+          "scored": 180,
+          "source_correct": 178,
+          "source_correct_combined_wrong": 0
+        },
+        "object": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        }
+      },
+      "role": "selected",
+      "rule_count": 180,
+      "sample_count": 48,
+      "score_ref": {
+        "bytes": 597107,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-zero-selected/score.json",
+        "sha256": "cf3850d0eb3cc1d02ffb37509d86e3e525c9b0e6189e5cdb678e6fb598d122c5"
+      },
+      "scored_sites": 720,
+      "scoring_seconds": 0.33165966701926664,
+      "state_ref": {
+        "bytes": 4778676,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-zero/selected-state.json",
+        "sha256": "6dadd10c8585328a3b35215ddc3fae71d9b6dce13869d1c8c48981b669b7d429",
+        "tensor_sha256": "991f9a1abdf01b72ac5f827adde5ef7be5af28fc0dc3a3db8e4e6e2d8816f379"
+      },
+      "trace_ref": {
+        "bytes": 1665510,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-zero-selected/trace.json",
+        "sha256": "c5ad1387130facddcf46f9b38477675a58a5d6876d89d0d48d0861522d99977b"
+      },
+      "unscored_sites": 0,
+      "unvisited_reference_sites": 0
+    },
+    {
+      "arm": "paraphrase-modality-ce",
+      "dimension": 768,
+      "exact_paragraphs": 46,
+      "generation_seconds": 0.6704861629987136,
+      "generation_seconds_per_paragraph": 0.013968461729139866,
+      "last_attempt_alias_tensor_equal": true,
+      "per_field": {
+        "action": {
+          "combined_correct": 180,
+          "recurrent_correct": 60,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "actor": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        },
+        "modality": {
+          "combined_correct": 178,
+          "recurrent_correct": 14,
+          "scored": 180,
+          "source_correct": 178,
+          "source_correct_combined_wrong": 0
+        },
+        "object": {
+          "combined_correct": 180,
+          "recurrent_correct": 0,
+          "scored": 180,
+          "source_correct": 180,
+          "source_correct_combined_wrong": 0
+        }
+      },
+      "role": "selected",
+      "rule_count": 180,
+      "sample_count": 48,
+      "score_ref": {
+        "bytes": 597085,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-ce-selected/score.json",
+        "sha256": "9a0d8436f4b5d2b1c0db6974189e2ab8725ea4f539130c77277206e1f3d0c6ff"
+      },
+      "scored_sites": 720,
+      "scoring_seconds": 0.3316186729934998,
+      "state_ref": {
+        "bytes": 4779346,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/training-768-r2/results/paraphrase-modality-ce/selected-state.json",
+        "sha256": "01b38795fbba91e63ff1238b575f4fc332da9b627c0ad7c5cc86a25ceaf622fa",
+        "tensor_sha256": "ee73bb29fab864ca1a0f40666f1a4dca6d5d62a12190b888492b8bf05cc8ab67"
+      },
+      "trace_ref": {
+        "bytes": 1665497,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-margins-r2-20261006/diagnostic-r1/results/768-paraphrase-modality-ce-selected/trace.json",
+        "sha256": "0332324a221acb7264dcc820c79c4858021e08702d49f7320670d898ccb938f1"
+      },
+      "unscored_sites": 0,
+      "unvisited_reference_sites": 0
+    }
+  ],
+  "protected_teacher_modified": false,
+  "qualified": false,
+  "recipe": {
+    "admitted": false,
+    "all_predictions_before_reference_load": true,
+    "archived_generation_parity_required": true,
+    "arms": [
+      "paraphrase-modality-zero",
+      "paraphrase-modality-ce"
+    ],
+    "batch_size": 8,
+    "bridge_names": [],
+    "cache_scope": "warm authenticated source vectors; no encoder forward",
+    "checkpoint_promoted": false,
+    "comparison_seal": "4e09fd75f40e410d1a53f7f13d01c034c1b0bcae5254a5f7f195754d7db16eac",
+    "context_tokens": 512,
+    "convergence_proven": false,
+    "dimensions": [
+      384,
+      768
+    ],
+    "distribution": "previously_exposed_authored_modality_holdout_v3",
+    "downloads_performed": false,
+    "encoder_executed": false,
+    "extra_forward_passes_for_decomposition": 0,
+    "formalized": false,
+    "fresh_holdout": false,
+    "greedy_passes_per_model": 1,
+    "lake_executed": false,
+    "legal_ir_evaluate_provers": false,
+    "max_seconds_entire_run": 600,
+    "max_seconds_per_panel": 30,
+    "max_trace_memory_bytes": 134217728,
+    "metric_disk_cache_used": false,
+    "model_copies_during_observation": 0,
+    "native_validation_executed": false,
+    "observer_sha256": "1f1d35f7fd90df0396f3222676f2ffd11f17e2b1b2c79c0a79f1600488eb08d8",
+    "optimizer_steps": 0,
+    "output_tokens": 512,
+    "panel_count": 4,
+    "previously_exposed": true,
+    "proof_authority": false,
+    "qualified": false,
+    "roles": [
+      "selected"
+    ],
+    "roundtrip_ok": false,
+    "samples_per_panel": 48,
+    "schema": "paraphrase-modality-margin-diagnostic-plan/v1",
+    "seed": 1729,
+    "source_semantics_verified": false,
+    "temperature": 0,
+    "training_executed": false,
+    "used_for_selection": false,
+    "vocabulary_size": 32,
+    "workers": 1
+  },
+  "reservation_memory_mb": 1536,
+  "reservation_storage_bytes": 100000000,
+  "resources_released": true,
+  "retained_attempt_bytes": 9690794,
+  "roundtrip_ok": false,
+  "schema": "published-paraphrase-modality-diagnostic/v1",
+  "storage_cap_bytes": 145000000000,
+  "training_executed": false
+}
