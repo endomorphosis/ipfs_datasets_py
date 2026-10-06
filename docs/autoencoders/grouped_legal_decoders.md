@@ -147,3 +147,7 @@ and six differ. They are retained in the reconciliation inventory, rather than
 overwriting current parser/default behavior in this additive contribution.
 Qualifiers, nested/exclusive alternatives, broader families, legal scope
 interpretation and actual latent conditioning remain further work.
+
+## Matched support-boundary follow-up
+
+The [continuation and qualifier transport study](grouped_support_boundary_training.md) compares identical warm starts with position-local negative augmentation. It records a refusal improvement, the fresh positive tradeoff, retained original positives, immutable new experimental checkpoints, and a zero-admission occurrence bridge for future qualifier heads. Existing producer bytes and default weights remain unchanged.

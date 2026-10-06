@@ -1,0 +1,119 @@
+{
+  "schema": "grouped-boundary-continuation-summary/v1",
+  "parent_checkpoint_sha256": "efd7f7e71159592672769c7f580112917381e9a854f021a72f8de1613d299b95",
+  "training_updates_per_arm": 200,
+  "actual_additional_updates": 400,
+  "row_presentations": 6400,
+  "learning_rate": 0.0005,
+  "fixed_support_threshold": 0.5,
+  "architecture_changed": false,
+  "latent_conditioned": false,
+  "legal_gold": false,
+  "fresh_final_now_exposed": true,
+  "source_parent_clusters": 38,
+  "models": {
+    "original_negatives": {
+      "selected_additional_updates": 100,
+      "selected_steps": 580,
+      "checkpoint_sha256": "402dca5fde0a32612a99b2ba4b3f4082cda5b7737bc44f948e20d3d733808be6",
+      "fresh_final": {
+        "positive_exact_count": 56,
+        "positive_count": 64,
+        "negative_learned_refusal_count": 21,
+        "negative_safe_refusal_count": 41,
+        "negative_count": 64,
+        "negative_emitted_request_count": 23,
+        "mixed_exact_count": 77,
+        "case_count": 128,
+        "mixed_exact_rate": 0.6015625,
+        "mixed_safe_exact_count": 97,
+        "support_classification_correct": 85,
+        "support_classifier_available": true,
+        "positive_false_abstention_count": 0,
+        "negative_incidental_block_count": 20
+      },
+      "exposed_retention": {
+        "positive_exact_count": 128,
+        "positive_count": 128,
+        "negative_learned_refusal_count": 124,
+        "negative_safe_refusal_count": 127,
+        "negative_count": 128,
+        "negative_emitted_request_count": 1,
+        "mixed_exact_count": 252,
+        "case_count": 256,
+        "mixed_exact_rate": 0.984375,
+        "mixed_safe_exact_count": 255,
+        "support_classification_correct": 252,
+        "support_classifier_available": true,
+        "positive_false_abstention_count": 0,
+        "negative_incidental_block_count": 3
+      },
+      "official_requests_emitted": 0
+    },
+    "position_local_negatives": {
+      "selected_additional_updates": 200,
+      "selected_steps": 680,
+      "checkpoint_sha256": "0174d11019a0a4eb894337f7f3d79a9dec7a2e11b0e406832d27312cee05daba",
+      "fresh_final": {
+        "positive_exact_count": 55,
+        "positive_count": 64,
+        "negative_learned_refusal_count": 54,
+        "negative_safe_refusal_count": 57,
+        "negative_count": 64,
+        "negative_emitted_request_count": 7,
+        "mixed_exact_count": 109,
+        "case_count": 128,
+        "mixed_exact_rate": 0.8515625,
+        "mixed_safe_exact_count": 112,
+        "support_classification_correct": 116,
+        "support_classifier_available": true,
+        "positive_false_abstention_count": 2,
+        "negative_incidental_block_count": 3
+      },
+      "exposed_retention": {
+        "positive_exact_count": 128,
+        "positive_count": 128,
+        "negative_learned_refusal_count": 128,
+        "negative_safe_refusal_count": 128,
+        "negative_count": 128,
+        "negative_emitted_request_count": 0,
+        "mixed_exact_count": 256,
+        "case_count": 256,
+        "mixed_exact_rate": 1.0,
+        "mixed_safe_exact_count": 256,
+        "support_classification_correct": 256,
+        "support_classifier_available": true,
+        "positive_false_abstention_count": 0,
+        "negative_incidental_block_count": 0
+      },
+      "official_requests_emitted": 0
+    }
+  },
+  "hub_publication": {
+    "repo": "Publicus/legal-ir-autoencoder",
+    "revision": "27667843f4a6cfda36f4763b27d08a080cad9fd3",
+    "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/27667843f4a6cfda36f4763b27d08a080cad9fd3",
+    "prefix": "experiments/grouped-boundary-20261006/run-01",
+    "previous_revision": "aed9bff916e52f43f378dc31c93f98e8a9f52ed1",
+    "parent_commit_guard_used": true
+  },
+  "test_counts": {
+    "tests": 571,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "exact_prediction_replays": 256,
+  "lake_build_legal_passed": true,
+  "false_scope_claim_rejected": true,
+  "native_scope_is_constructed_not_legal_truth": true,
+  "source_semantics_verified": false,
+  "default_promotion": false,
+  "new_scope_adapter": "untrained_single_rule_opaque_condition_occurrence_transport_with_all_masks_zero",
+  "law_cache_intake": {
+    "formal_logic_text_rows": 372,
+    "training_qualified": 0,
+    "independent_validation": 0,
+    "used_as_training_gold": 0
+  }
+}
