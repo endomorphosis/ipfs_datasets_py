@@ -12,7 +12,10 @@ This contribution was reconciled against datasets main
 remain present with identical bytes. Recent
 [normative wording](normative_wording_training.md) and
 [contextual reconstruction](contextual_legal_reconstruction_runtime.md) work
-remains intact. No historical 8D teacher, selected vector decoder, source-AE
+remains intact. The concurrent [working-copy and twenty-study reconciliation](progress_reconciliation_20261006.md)
+adds recovery, evidence and retention planning to this same effort; its grouped
+interface is the renderer used by these learned heads. Their overlapping test
+populations remain separate measurements. No historical 8D teacher, selected vector decoder, source-AE
 checkpoint, native768 span model, or default runtime is replaced.
 
 ## Owners and compatibility

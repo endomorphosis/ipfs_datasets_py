@@ -168,3 +168,81 @@ def test_checkpoint_producer_content_contract_is_preserved_in_candidate():
     assert pins['semantic_decoder_sha256'] == '49b01d995d30e20c42576f446c419b337d5d92d89d060390d6624a511415024f'
     assert sha256(Path(v1.__file__).read_bytes()).hexdigest() == 'd03c343d6130e4cb099468dbd605e524fdb15bd21092bc4f526c35c4167c9d51'
     assert v1.CHECKPOINT_SCHEMA != v2.CHECKPOINT_SCHEMA
+
+
+@pytest.mark.parametrize('module', [v1, v2], ids=['v1', 'v2'])
+def test_source_prediction_and_native_render_isolate_real_helpers_and_cached_aliases(monkeypatch, module):
+    import sys
+    from importlib import import_module
+    from ipfs_datasets_py.logic.deontic import decoder as legacy_decoder
+
+    scope = 'modal_over_actions'
+    instance = model(module)
+    monkeypatch.setattr(instance, 'forward', fixed_heads(module, scope))
+
+    # Deny imports as well as package-attribute access, even if a prior test
+    # loaded an optional source grouping/interpretation module.
+    for name in ('ipfs_datasets_py.logic.deontic.coordination',
+                 'ipfs_datasets_py.logic.autoformal.legal_coordination'):
+        parent_name, _, child_name = name.rpartition('.')
+        parent = import_module(parent_name)
+        monkeypatch.delattr(parent, child_name, raising=False)
+        monkeypatch.setitem(sys.modules, name, None)
+        with pytest.raises(ModuleNotFoundError) as error:
+            import_module(name)
+        assert error.value.name == name
+        assert not hasattr(parent, child_name)
+
+    guarded = [(deontic_parser, name) for name in (
+        'extract_normative_elements', 'analyze_normative_sentence', 'classify_modal')]
+    guarded.append((legacy_decoder, 'decode_legal_norm_ir'))
+    if hasattr(deontic_parser, '_unresolved_duty_disjunction_groups'):
+        guarded.append((deontic_parser, '_unresolved_duty_disjunction_groups'))
+    guarded.extend((module, name) for name in (
+        '_labels', 'GroupedSpanTarget', 'GroupedSpanExample', 'train_grouped_span_step'))
+    if module is v2:
+        guarded.append((v1, 'predict_grouped_span_decoder'))
+    original_helpers = tuple(getattr(owner, name) for owner, name in guarded)
+
+    # Seed prior from-import references so a broken identity guard cannot pass
+    # merely because today's modules happen not to capture a forbidden helper.
+    namespaces = (semantic, v1, v2, evaluation)
+    for namespace in namespaces:
+        monkeypatch.setattr(namespace, '_isolation_cached_parser',
+                            deontic_parser.extract_normative_elements, raising=False)
+        monkeypatch.setattr(namespace, '_isolation_cached_decoder',
+                            legacy_decoder.decode_legal_norm_ir, raising=False)
+    cached_aliases = [(namespace, name) for namespace in namespaces
+                      for name, value in tuple(vars(namespace).items())
+                      if any(value is original for original in original_helpers)]
+    for owner, name in guarded + cached_aliases:
+        monkeypatch.setattr(owner, name, deny)
+    for namespace in namespaces:
+        assert (namespace, '_isolation_cached_parser') in cached_aliases
+        assert (namespace, '_isolation_cached_decoder') in cached_aliases
+    # These calls demonstrate that both real owners and captured aliases fail
+    # if inference or rendering attempts a parser, teacher, or fallback path.
+    for owner, name in guarded + cached_aliases:
+        with pytest.raises(AssertionError, match='Forbidden source parser'):
+            getattr(owner, name)()
+
+    result = module.predict_grouped_span_decoder(instance, SOURCE, scope)
+    assert result['status'] == 'predicted' and result['blockers'] == []
+    request = semantic.CoordinationDecodeRequest.from_dict(result['request'])
+    assert request.to_dict() == expected(scope).to_dict()
+    assert result['predicted_character_spans'] == [
+        {'actor': [4, 9], 'action': [16, 30]}, {'actor': [4, 9], 'action': [40, 54]}]
+    assert result['targets_used_at_inference'] is False
+    assert result['proof_ready'] is result['source_semantics_verified'] is False
+    rendered = semantic.decode_coordination_request(request)
+    assert rendered['family_validation']['passed'] is True
+    assert rendered['native_validation']['validator'] == 'strict_native_reparse_and_exact_AST'
+    assert rendered['native_payload']['payload']['formulas'][0]['ast'] == rendered['native_ast']
+    assert rendered['native_ast']['node_type'] == 'DeonticFormula'
+    assert rendered['lean_body'] and rendered['context'] == 'source_withheld_semantic_ir'
+    for flag in ('proof_ready', 'source_semantics_verified', 'admitted', 'formalized'):
+        assert rendered[flag] is False
+    report = evaluation.evaluate_coordination_outputs([expected(scope)], [result['request']])
+    assert report['case_count'] == report['passed_count'] == 1
+    assert report['model_calls'] == report['training_calls'] == 0
+    assert report['proof_ready'] is report['source_semantics_verified'] is False
