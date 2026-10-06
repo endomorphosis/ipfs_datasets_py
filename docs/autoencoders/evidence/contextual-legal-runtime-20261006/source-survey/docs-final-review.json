@@ -1,0 +1,137 @@
+{
+  "accelerate_document_delta_claims_match_completed_execution_review": true,
+  "datasets_final_document_exact_requested_pin": true,
+  "file_pins_after": [
+    {
+      "bytes": 14867,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "fb2059be730ef00f485b1344bff600f3acb309b96cee55d2e9378ae87f2ac598"
+    },
+    {
+      "bytes": 15009,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-accelerate-20261006/docs/agent_supervisor/contextual_ir_checkpoint_recovery.md",
+      "sha256": "88693f214e86f6792f28c0c87507f92e570df4dfe1415613b9a2cd5e39a2269b"
+    },
+    {
+      "bytes": 89547,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-accelerate-20261006/docs/agent_supervisor/terminal_symbolic_capabilities.md",
+      "sha256": "6cf504d040e5b60cbb24648ed0b22ac55a4f77e0140fe523fecae12faee709b3"
+    },
+    {
+      "bytes": 8892,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/paraphrase_modality_diagnostics.md",
+      "sha256": "974a936b570306068b8d239caca2da742c5da1b6ba07cce9e29761432863c5b3"
+    },
+    {
+      "bytes": 13017,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/implementation/reports/evidence/decoder-paraphrase-modality-margins-20261006/results.json",
+      "sha256": "a55318ad277812712fcded9cfc3ac9f8a8c0dd2031e22fc9c9c6b38892d32d81"
+    },
+    {
+      "bytes": 19438,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/implementation/reports/evidence/decoder-paraphrase-modality-margins-20261006/manifest.json",
+      "sha256": "463862484c92e22acc51a2ff7e4d952dcbcd77bda29801c27d5d48cc72e27ab4"
+    }
+  ],
+  "file_pins_before": [
+    {
+      "bytes": 14867,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "fb2059be730ef00f485b1344bff600f3acb309b96cee55d2e9378ae87f2ac598"
+    },
+    {
+      "bytes": 15009,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-accelerate-20261006/docs/agent_supervisor/contextual_ir_checkpoint_recovery.md",
+      "sha256": "88693f214e86f6792f28c0c87507f92e570df4dfe1415613b9a2cd5e39a2269b"
+    },
+    {
+      "bytes": 89547,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-accelerate-20261006/docs/agent_supervisor/terminal_symbolic_capabilities.md",
+      "sha256": "6cf504d040e5b60cbb24648ed0b22ac55a4f77e0140fe523fecae12faee709b3"
+    },
+    {
+      "bytes": 8892,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/paraphrase_modality_diagnostics.md",
+      "sha256": "974a936b570306068b8d239caca2da742c5da1b6ba07cce9e29761432863c5b3"
+    },
+    {
+      "bytes": 13017,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/implementation/reports/evidence/decoder-paraphrase-modality-margins-20261006/results.json",
+      "sha256": "a55318ad277812712fcded9cfc3ac9f8a8c0dd2031e22fc9c9c6b38892d32d81"
+    },
+    {
+      "bytes": 19438,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/implementation/reports/evidence/decoder-paraphrase-modality-margins-20261006/manifest.json",
+      "sha256": "463862484c92e22acc51a2ff7e4d952dcbcd77bda29801c27d5d48cc72e27ab4"
+    }
+  ],
+  "files_unchanged_during_review": true,
+  "findings": [],
+  "four_families_three_widths_schema_version_task_run_separation_preserved": true,
+  "native_checkpoint_schema_profile_format_unknown_and_false_authority_preserved": true,
+  "new_prose_task_separate_from_semanticIR_and_FOL_TDFOL_heads": true,
+  "no_new_model_registry_HF_weights_or_embeddings_claim": true,
+  "parallel_declared_lower_TRAIN_loss_did_not_repair_errors_matches_linked_doc": true,
+  "parallel_diagnostic_panels_metadata_verified": [
+    {
+      "arm": "paraphrase-modality-zero",
+      "combined_modality_correct": 139,
+      "dimension": 384,
+      "exact_paragraphs": 20,
+      "sample_count": 48,
+      "source_correct_combined_wrong": 0,
+      "source_modality_correct": 139
+    },
+    {
+      "arm": "paraphrase-modality-ce",
+      "combined_modality_correct": 136,
+      "dimension": 384,
+      "exact_paragraphs": 19,
+      "sample_count": 48,
+      "source_correct_combined_wrong": 1,
+      "source_modality_correct": 137
+    },
+    {
+      "arm": "paraphrase-modality-zero",
+      "combined_modality_correct": 178,
+      "dimension": 768,
+      "exact_paragraphs": 46,
+      "sample_count": 48,
+      "source_correct_combined_wrong": 0,
+      "source_modality_correct": 178
+    },
+    {
+      "arm": "paraphrase-modality-ce",
+      "combined_modality_correct": 178,
+      "dimension": 768,
+      "exact_paragraphs": 46,
+      "sample_count": 48,
+      "source_correct_combined_wrong": 0,
+      "source_modality_correct": 178
+    }
+  ],
+  "parallel_source_head_modality_error_claim_matches_linked_result_metadata": true,
+  "parallel_state_cohort_scope_kept_separate_from_original48IR_regression": true,
+  "prior_docs_review_pin": {
+    "bytes": 3905,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/docs-review.json",
+    "sha256": "bcb2cc5983b9814e87f2c6cb914961ac6ba1f2e2479ebe38abbd44e41081a4f3"
+  },
+  "prior_execution_review_pin": {
+    "bytes": 54202,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/execution-review.json",
+    "sha256": "d7d36eebeaac7fba77e283203adb56484cd1b47658f641c29c01f2a5beacc6ef"
+  },
+  "prior_review_records_not_rewritten": true,
+  "qualifiers_empty_exposed512_not8192_or_fresh_holdout_scope_preserved": true,
+  "raw48IR_180rules_720scalar_fields_and0UTF8_NFCtext_claims_match_execution": true,
+  "registration_increment_historical_no_inference_scope_separate_from_later_replay": true,
+  "remaining_findings": 0,
+  "review_conclusion": "Final datasets document exact frozen pin and both accelerate documentation deltas are consistent with retained evidence. Alternate diagnostic20/19/46 scores are separate checkpoint/cohort observations; normative tensor/codec transfer manifest requirement does not claim new training. No remaining documentation findings.",
+  "review_kind": "read_only_final_delta_and_linked_metadata_inspection",
+  "reviewed_at_utc": "2026-10-06T13:34:56.134050+00:00",
+  "schema": "contextual-legal-runtime-final-documentation-supplemental-review/v1",
+  "source_edits": false,
+  "tensor_transfer_names_shapes_dtypes_codec_mapping_requirement_is_future_plan_only": true,
+  "tests_models_training_or_registry_or_HF_actions": false
+}

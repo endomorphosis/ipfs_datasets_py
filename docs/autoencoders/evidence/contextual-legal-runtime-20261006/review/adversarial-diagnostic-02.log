@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006
+configfile: pytest.ini
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 151 items
+
+tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py . [  0%]
+........................................................................ [ 48%]
+........................................................................ [ 96%]
+......                                                                   [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-diagnostic-02.xml -
+============================= 151 passed in 15.13s =============================

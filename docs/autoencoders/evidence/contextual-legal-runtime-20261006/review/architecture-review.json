@@ -1,0 +1,845 @@
+{
+  "adversarial_test_plan": [
+    "unknown headers/selector fields/unsupported family,width,role,schema/task; bool dimension/limits/indices",
+    "gold/reference/target_ids injection in source-only rows or contexts; callable/object values",
+    "missing/extra state names, ragged or oversized arrays, FP32 overflow/NaN/infinity/bools",
+    "int64 seed/version floats/bools/wrong values; forged self-hashed tensor dtype/shape inventory",
+    "weights/tensor/codec order/digest changes; incorrect transform/normalization/header joins",
+    "same-size content drift, samebytes inode exchange, symlink/hardlink/FIFO/traversal unsafe input pins",
+    "swapped source rowID/text/vector, mixed widths, reordered context segments, wrong UTF8 offsets or vector digests",
+    "state/preproc/source-owner changes after prep/open or during inference; source aliases and module-origin mismatches",
+    "invalid cap/deadline; late deadline/failure reports cannot promote partial candidate or claim no load",
+    "subprocess meta_path torch/ML bomb validates metadata preparation; valid positive calls use genuine owner checks and explicit fixture-only identity table patches",
+    "genuine retained cached replay separate from synthetic boundary controls; meaningful historical output parity and NoGold evaluator separation"
+  ],
+  "current_numerical_owner_closure_matches_original": true,
+  "limitations": [
+    "Stdlib little-endian typed digest reproduces these two saved CPU states; production must explicitly require the supported platform byte order or define a portable digest contract.",
+    "Metadata geometry and digest validation does not prove runtime numerical parity. That needs separately budgeted actual current-owner cached replay.",
+    "This review surveys current API/source contracts; root and contract/numeric owners are designing the new public wrapper."
+  ],
+  "operations": {
+    "database_opened_or_mutated": false,
+    "model_loaded": false,
+    "network_calls": 0,
+    "original_assets_mutated": false,
+    "source_code_modified": false,
+    "torch_imported": false,
+    "training_or_inference_executed": false
+  },
+  "recommended_boundary": [
+    "Prepare metadata without importing torch/ML; only explicit open may construct numeric tensors/model.",
+    "Require exact10 selector fields, original checkpoint/preprocessing/source-only/context pins and named actual source owner closure. Native schema/profile/format nulls remain distinct from wire serialization schema.",
+    "Bound strictJSON duplicate fields/depth/nodes/bytes; exact32-key geometry and typed FP32/int64 scalars checked before tensor allocation, rejecting bool/nonfinite/FP32 overflow/ragged shape.",
+    "Validate codec schema32 ordered tokens/hash, model/head hidden geometry,512 output cap and version/seed integers. Recompute canonical JSON weights digest and typed names/dtypes/shapes/contiguous-byte tensor digest.",
+    "Strict full restore is insufficient to call nested custom validators. Explicitly validate raw native slice and frozen projection/buffers/normalization receipts before loading the outer wrapper.",
+    "Saved normalization metadata is float64 statistics while buffers are float32; compare after explicit float32 rounding, not raw Python equality.",
+    "Apply TRAIN-only input transform to real source clauses first, then zero-pad to8 and derive bool mask from literal source counts. Separate frozen model feature normalizations are not preapplied again.",
+    "Generation receives only closed{id,source_text,input} rows plus exact literal source context descriptors. No target/reference/target_ids/model prefixes are supplied. Frozen learned count statistics may preserve authenticated training-label provenance.",
+    "Bound CPU batching,512 output tokens and finite cooperative deadlines; inference_mode/eval, no optimizer/training/source encoder/torch.load/pickle/default Hub fallback. Keep weight/mode/RNG and original asset endpoints observed.",
+    "Cold reopen and before/after inference repeat exact source/cache/header/pin checks. Post-load failures preserve attempted/started observations instead of pretending no model loading occurred.",
+    "Keep candidates unqualified and explicit EOS/refusal/output-limit statuses. Structural JSON is separate from semantic quality, source prose reconstruction, native schema qualification, teacher/runtime/proof admission."
+  ],
+  "retained_state_observations": [
+    {
+      "JSON_weights_digest_verified": true,
+      "NoGold_saved_count_prior_scope": "authenticated_training_count_labels_only",
+      "aggregate_scalar_count": 104140,
+      "architecture_schema": "ordered-clause-recurrent-source-decoder-development/v1",
+      "decoder_output_budget": 512,
+      "dimension": 384,
+      "input_transform": {
+        "mode": "center_rms",
+        "origin": "training_only",
+        "scale": 0.2684342563152313
+      },
+      "int64_buffers": {
+        "head_initialization_seed": 1729,
+        "ordered_clause_recurrent_version": 1
+      },
+      "model_state_entries": 32,
+      "original_state_pin": {
+        "bytes": 2799098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+      },
+      "tensor_inventory": [
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.field_readout.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.field_readout.weight",
+          "scalar_count": 2048,
+          "shape": [
+            32,
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.source_projection.bias",
+          "scalar_count": 64,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.source_projection.weight",
+          "scalar_count": 24576,
+          "shape": [
+            64,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.condition.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.condition.weight",
+          "scalar_count": 12288,
+          "shape": [
+            32,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.bias_hh_l0",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.bias_ih_l0",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.weight_hh_l0",
+          "scalar_count": 3072,
+          "shape": [
+            96,
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.weight_ih_l0",
+          "scalar_count": 1536,
+          "shape": [
+            96,
+            16
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.output.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.output.weight",
+          "scalar_count": 1024,
+          "shape": [
+            32,
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_down.bias",
+          "scalar_count": 8,
+          "shape": [
+            8
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_down.weight",
+          "scalar_count": 3072,
+          "shape": [
+            8,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_up.bias",
+          "scalar_count": 384,
+          "shape": [
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_up.weight",
+          "scalar_count": 3072,
+          "shape": [
+            384,
+            8
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.target_embedding.weight",
+          "scalar_count": 512,
+          "shape": [
+            32,
+            16
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.source_to_embedding.weight",
+          "scalar_count": 6144,
+          "shape": [
+            16,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_head.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_head.weight",
+          "scalar_count": 12288,
+          "shape": [
+            32,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_prior_logits",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.source_mean",
+          "scalar_count": 384,
+          "shape": [
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.source_scale",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_source_mean",
+          "scalar_count": 384,
+          "shape": [
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_source_scale",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_to_embedding.weight",
+          "scalar_count": 2048,
+          "shape": [
+            16,
+            128
+          ]
+        },
+        {
+          "JSON_scalar_type": "int",
+          "dtype_contract": "torch.int64",
+          "name": "head_initialization_seed",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.field_readout.bias",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.field_readout.weight",
+          "scalar_count": 6144,
+          "shape": [
+            96,
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.source_projection.bias",
+          "scalar_count": 64,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.source_projection.weight",
+          "scalar_count": 24576,
+          "shape": [
+            64,
+            384
+          ]
+        },
+        {
+          "JSON_scalar_type": "int",
+          "dtype_contract": "torch.int64",
+          "name": "ordered_clause_recurrent_version",
+          "scalar_count": 1,
+          "shape": []
+        }
+      ],
+      "tensor_sha256": "6a527b568c1ec834fc6704a9d12a17532840076432a93dc1390c59c92d483ec3",
+      "typed_tensor_SHA256_reconstructed_without_torch": true
+    },
+    {
+      "JSON_weights_digest_verified": true,
+      "NoGold_saved_count_prior_scope": "authenticated_training_count_labels_only",
+      "aggregate_scalar_count": 191308,
+      "architecture_schema": "ordered-clause-recurrent-source-decoder-development/v1",
+      "decoder_output_budget": 512,
+      "dimension": 768,
+      "input_transform": {
+        "mode": "center_rms",
+        "origin": "training_only",
+        "scale": 0.44104841351509094
+      },
+      "int64_buffers": {
+        "head_initialization_seed": 1729,
+        "ordered_clause_recurrent_version": 1
+      },
+      "model_state_entries": 32,
+      "original_state_pin": {
+        "bytes": 4781613,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+      },
+      "tensor_inventory": [
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.field_readout.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.field_readout.weight",
+          "scalar_count": 2048,
+          "shape": [
+            32,
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.source_projection.bias",
+          "scalar_count": 64,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "action_head.source_projection.weight",
+          "scalar_count": 49152,
+          "shape": [
+            64,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.condition.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.condition.weight",
+          "scalar_count": 24576,
+          "shape": [
+            32,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.bias_hh_l0",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.bias_ih_l0",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.weight_hh_l0",
+          "scalar_count": 3072,
+          "shape": [
+            96,
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.decoder.weight_ih_l0",
+          "scalar_count": 1536,
+          "shape": [
+            96,
+            16
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.output.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.output.weight",
+          "scalar_count": 1024,
+          "shape": [
+            32,
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_down.bias",
+          "scalar_count": 8,
+          "shape": [
+            8
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_down.weight",
+          "scalar_count": 6144,
+          "shape": [
+            8,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_up.bias",
+          "scalar_count": 768,
+          "shape": [
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.projection_up.weight",
+          "scalar_count": 6144,
+          "shape": [
+            768,
+            8
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.body.target_embedding.weight",
+          "scalar_count": 512,
+          "shape": [
+            32,
+            16
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.body.source_to_embedding.weight",
+          "scalar_count": 12288,
+          "shape": [
+            16,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_head.bias",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_head.weight",
+          "scalar_count": 24576,
+          "shape": [
+            32,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.count_prior_logits",
+          "scalar_count": 32,
+          "shape": [
+            32
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.source_mean",
+          "scalar_count": 768,
+          "shape": [
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "body.source_scale",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_source_mean",
+          "scalar_count": 768,
+          "shape": [
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_source_scale",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "clause_to_embedding.weight",
+          "scalar_count": 2048,
+          "shape": [
+            16,
+            128
+          ]
+        },
+        {
+          "JSON_scalar_type": "int",
+          "dtype_contract": "torch.int64",
+          "name": "head_initialization_seed",
+          "scalar_count": 1,
+          "shape": []
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.field_readout.bias",
+          "scalar_count": 96,
+          "shape": [
+            96
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.field_readout.weight",
+          "scalar_count": 6144,
+          "shape": [
+            96,
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.source_projection.bias",
+          "scalar_count": 64,
+          "shape": [
+            64
+          ]
+        },
+        {
+          "JSON_scalar_type": "float",
+          "dtype_contract": "torch.float32",
+          "name": "non_action_head.source_projection.weight",
+          "scalar_count": 49152,
+          "shape": [
+            64,
+            768
+          ]
+        },
+        {
+          "JSON_scalar_type": "int",
+          "dtype_contract": "torch.int64",
+          "name": "ordered_clause_recurrent_version",
+          "scalar_count": 1,
+          "shape": []
+        }
+      ],
+      "tensor_sha256": "8900d69fb00c17a54b7d3cbe6fbd2c24651b614839ad57c588d0f04dc308fada",
+      "typed_tensor_SHA256_reconstructed_without_torch": true
+    }
+  ],
+  "reviewed_head": "7a16fc06578abbf3cc95ad3ed8e4fa8a33b1ea0d",
+  "schema": "contextual-legal-runtime-independent-architecture-review/v1",
+  "source_comparison": [
+    {
+      "current_pin": {
+        "bytes": 26392,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+        "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 26392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+        "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 19729,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+        "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 19729,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+        "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 14249,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+        "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 14249,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+        "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 11090,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+        "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 11090,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+        "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 37989,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+        "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 37989,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+        "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 13794,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+        "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 13794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+        "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 21833,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+        "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 21833,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+        "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 14873,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+        "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 14873,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+        "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 25942,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+        "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 25942,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+        "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 20524,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+        "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 20524,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+        "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py"
+    },
+    {
+      "current_pin": {
+        "bytes": 14816,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+        "sha256": "dcc63a3bd10c1a699fbd0addfb44a04ffab8cbf6b4594164bb4ed824bdb5dbf1"
+      },
+      "exact_frozen_bytes": true,
+      "frozen_pin": {
+        "bytes": 14816,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+        "sha256": "dcc63a3bd10c1a699fbd0addfb44a04ffab8cbf6b4594164bb4ed824bdb5dbf1"
+      },
+      "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py"
+    }
+  ]
+}

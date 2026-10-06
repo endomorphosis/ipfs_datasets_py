@@ -1,0 +1,107 @@
+{
+  "schema": "contextual-legal-runtime-independent-final-facade-review/v1",
+  "approved": true,
+  "findings": [],
+  "reviewed_runtime_pin": {
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+    "bytes": 36421,
+    "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+  },
+  "reviewed_numeric_pin": {
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+    "bytes": 15840,
+    "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+  },
+  "reviewed_output_pin": {
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+    "bytes": 13756,
+    "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+  },
+  "reviewed_basic_test_pin": {
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+    "bytes": 12563,
+    "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+  },
+  "reviewed_adversarial_test_pin": {
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+    "bytes": 27539,
+    "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+  },
+  "controls_receipt_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final-receipt.json",
+    "bytes": 9400,
+    "sha256": "0dd785f1ddc2797429c36404626ff110f1db721cfb4f9aa8572a991f41b3f0c4"
+  },
+  "controls_junit_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final.xml",
+    "bytes": 32932,
+    "sha256": "d317f3c5b51442e0ae44bcdddd6974b70beabf8afd58be01dd82f248261b5863"
+  },
+  "controls_log_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final.log",
+    "bytes": 945,
+    "sha256": "aa096174ebfa33bdfb73cbf57c279965f07762c405212370d87937eb23f83581"
+  },
+  "independently_executed_controls": {
+    "tests": 152,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "endpoint_source_closure_stable": true,
+  "reviewed_original_metadata_plans": [
+    {
+      "dimension": 384,
+      "metadata_plan_pin": {
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-metadata-plan.json",
+        "bytes": 43214,
+        "sha256": "a8ae1307d14c38327d776281bb534b8fc2bac3119cb92da9ab2584f5a99c1d79"
+      },
+      "selected_original_tensor_sha256": "6a527b568c1ec834fc6704a9d12a17532840076432a93dc1390c59c92d483ec3",
+      "source_rows": 48,
+      "metadata_only": true,
+      "all_authority_false": true
+    },
+    {
+      "dimension": 768,
+      "metadata_plan_pin": {
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-metadata-plan.json",
+        "bytes": 43215,
+        "sha256": "d54e0935cd343d21bd02f3f6caad930799c29d804dcb5d5b36d971456b24fa65"
+      },
+      "selected_original_tensor_sha256": "8900d69fb00c17a54b7d3cbe6fbd2c24651b614839ad57c588d0f04dc308fada",
+      "source_rows": 48,
+      "metadata_only": true,
+      "all_authority_false": true
+    }
+  ],
+  "corrected_boundary": {
+    "issue": "A parent directory rename followed by a symlink to unchanged same-inode files previously bypassed later canonical-path endpoints.",
+    "historical_failure_pin": {
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-parent-endpoint-diagnostic.xml",
+      "bytes": 843,
+      "sha256": "2bfd4458932add7f84bd146cf1c3d07920a9d09236a009444984b4e5b5e82f2a"
+    },
+    "historical_failure_count": 1,
+    "correction": "_witness now rechecks strict canonical path equality at each file endpoint.",
+    "corrected_control": "test_parent_directory_exchange_cannot_turn_canonical_pins_into_later_aliases passes in final152 controls."
+  },
+  "reviewed_contracts": [
+    "The public five-field LegalIR input-embedding selector accepts separate384/768 semantic_IR_reconstruction checkpoint paths; foreign family/task/extra schema-profile-format fields refuse. Native schema/profile/format remain explicit null observations, distinct from private state serialization.",
+    "Metadata preparation is stdlib-only, bounded, caller-pinned and source-only. It authenticates32 saved tensors, exact float32 geometry/finite representability, two exact int64 architecture buffers, codec/initializer/donor/transform and distinct frozen feature normalization joins before numerical loading.",
+    "The full positive synthetic preparation succeeds in a fresh subprocess refusing ML/database imports, network connections and child processes. Source input rows, context descriptors and selected IDs exclude current labels/gold/reference/target prefixes.",
+    "All asset/source pins must be canonical existing single-link regular files; bounded streamed readonly descriptors use NOFOLLOW/NONBLOCK/CLOEXEC, stable descriptor/path endpoint identities and closing full asset/source fences. Imported source origins are verified before and after explicit numerical calls.",
+    "The numerical owner rebuilds only the reviewed constructor chain from the authenticated saved original donor; explicit raw native-state validation precedes outer strict load and frozen-projection/digest checks. Torch loading is explicit and lazy; inference is greedy CPUfloat32 eval/inference mode from source-only paragraph and ordered clause caches.",
+    "Saved TRAIN input transformation is applied to real clause vectors before zero padding to8; separate saved paragraph/clause feature normalization runs once inside the model. Vocabulary32 is distinct from decoder output cap512;8192 qualification staysfalse.",
+    "Failures retain truthful model-load/inference started/completed observations and raw post-inference candidate evidence. These observations never grant runtime/teacher/quality/source-fidelity/proof authority.",
+    "Output inspection preserves original generated rule order and EOS/error status separately from actual native canonical normalization. Reference IR agreement is post-generation; deterministic source-withheld text rendering has no originating-source fallback. UTF8 exact and NFC/whitespace text equality remain distinct from semantic equivalence."
+  ],
+  "limits": [
+    "This independent review executed portable synthetic metadata/custody controls with inert fixed numerical restore/infer functions, not retained-model generation, training, target replay or quality qualification. Root owns actual frozen original48-row numerical parity/evaluation.",
+    "Caller-supplied private-format byte pins are structurally authenticated reusable states; admission does not assert that every caller artifact is one of the historical original trained assets. The two reviewed original metadata plans and separate root generation custody evidence bind those concrete assets.",
+    "Per-file endpoint fences and module-origin checks are cooperative observations, not an atomic multi-file snapshot, continuous path/source currentness or attestation of mutable process memory.",
+    "Metadata cache source/hash/offset/order binding does not prove that a cached embedding captures the legal meaning of its source. It generates no new embedding and has no reference labels in the generation packet.",
+    "Current source_value owner has the reviewed lazy training-import placement change; earlier architecture/source-survey all11-byte-identical statements are historical. Fresh current source pins and exact loaded numerical architecture/tensor parity must support final execution claims.",
+    "The current numeric path supports384/768 LegalIR cached experiments.8D/other IR families, trained original-prose decoding, native ABI/profile qualification, long-span8192 inputs and planner/proof admission remain separate work."
+  ]
+}

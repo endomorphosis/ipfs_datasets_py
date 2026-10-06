@@ -1,0 +1,177 @@
+{
+  "all_source_matches_committed_git_objects": true,
+  "checks": [
+    {
+      "errors": 0,
+      "failures": 0,
+      "path": "contextual-runtime-tests.xml",
+      "sha256": "2fb4eb8ace3a065d1376c3e9dd09b52cf3e4c418ccbdfdb82f3d3d6c728b28e5",
+      "skips": 0,
+      "tests": 244
+    },
+    {
+      "errors": 0,
+      "failures": 0,
+      "path": "historical-owner-regression.xml",
+      "sha256": "2c42d12ae17f78675c50f665701949edfd38f7173ac0fc2abc87654f2edb890f",
+      "skips": 0,
+      "tests": 210
+    }
+  ],
+  "native_profile_qualified": false,
+  "proof_authority": false,
+  "qualified_source_commit": "37c2d63f0bf9490e5b019788afcafbc3b806d8c7",
+  "schema": "contextual-legal-committed-source-qualification/v1",
+  "source_entries": [
+    {
+      "bytes": 19729,
+      "git_blob_oid": "0b799eb139f499e7be724674e552bdc771105043",
+      "name": "action_factorized_clause_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    {
+      "bytes": 109257,
+      "git_blob_oid": "1bf4da481ff84ccb3554ae0dd1126dfc4cbffb6b",
+      "name": "canonical_contracts",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13437,
+      "git_blob_oid": "1c9e3ac68d938d912ad6174f5257e8cd3d6a81cf",
+      "name": "canonical_decompiler",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    {
+      "bytes": 14249,
+      "git_blob_oid": "04e8237a468e2483e398a0eaf0d69fe582208720",
+      "name": "clause_source_context",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "bytes": 21833,
+      "git_blob_oid": "d5b11b856ce6763797a98d5d6cf1f635e2e02e91",
+      "name": "clause_source_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    {
+      "bytes": 15840,
+      "git_blob_oid": "50e331a8a76abef452967c9a5c5021df77b90879",
+      "name": "contextual_legal_ir_numeric",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    {
+      "bytes": 13756,
+      "git_blob_oid": "bd97b3eff1ebcfff359c1854dfd1bd8998037bfa",
+      "name": "contextual_legal_ir_output",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "bytes": 36421,
+      "git_blob_oid": "ee70391c1afa83a341d14ddae9d156d6e7e2e22f",
+      "name": "contextual_legal_ir_runtime",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    {
+      "bytes": 14873,
+      "git_blob_oid": "e6e5aa2d82d938317ffc1805f019316c6d87324a",
+      "name": "decoder_cardinality_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    {
+      "bytes": 37989,
+      "git_blob_oid": "b34e432149831f6db9050cd70f5a27a1823842fa",
+      "name": "decoder_distillation_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "bytes": 13794,
+      "git_blob_oid": "f467a99696f0f367f32166ba3045eac801813c26",
+      "name": "decoder_distillation_experiment_v2",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    {
+      "bytes": 17329,
+      "git_blob_oid": "b8ef63ff16af02fbad65ee483692fc2583b61749",
+      "name": "decoder_source_fidelity",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "bytes": 11090,
+      "git_blob_oid": "dfb6c1886cfc365906ac7bfbb7b7a13659361d1c",
+      "name": "dimension_native_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    {
+      "bytes": 26392,
+      "git_blob_oid": "62b291df1c338bd3bc6937f59e84de38517e84a9",
+      "name": "ordered_clause_recurrent_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "bytes": 25942,
+      "git_blob_oid": "f5ff6cca91eb81c839ae1f135bbbc7127d55ac38",
+      "name": "projected_source_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    {
+      "bytes": 20524,
+      "git_blob_oid": "c57883345648b5d60e453cf3ca0b3c6601167d63",
+      "name": "shared_slot_source_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    {
+      "bytes": 14958,
+      "git_blob_oid": "807db7726e21c6e687e1318324a60f0b22eb650a",
+      "name": "source_value_decoder_experiment",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    {
+      "bytes": 11167,
+      "git_blob_oid": "7899d9c689b95d294f529cab42941fe8a9d607d9",
+      "name": "test_contextual_legal_ir_numeric.py",
+      "repository_path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "a12691031cb0ac91c9886ff396c6671a160aec1b3ec8e02dfaa6651533be58df"
+    },
+    {
+      "bytes": 10987,
+      "git_blob_oid": "e37c7a061a420efc72184f69f7fdb2708081d72b",
+      "name": "test_contextual_legal_ir_output.py",
+      "repository_path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    {
+      "bytes": 12563,
+      "git_blob_oid": "730b3fcba0dc7374b06a8bf7f845130b6f7f3447",
+      "name": "test_contextual_legal_ir_runtime.py",
+      "repository_path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    },
+    {
+      "bytes": 27539,
+      "git_blob_oid": "f402d77dd983d585095de54cad18d1fa81159736",
+      "name": "test_contextual_legal_ir_runtime_adversarial.py",
+      "repository_path": "tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+      "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+    }
+  ],
+  "source_pin_count": 21,
+  "teacher_qualified": false,
+  "total_tests": 454
+}

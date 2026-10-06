@@ -1,0 +1,257 @@
+{
+  "all_retained_bytes_match_originals": true,
+  "database_copied": false,
+  "file_count": 41,
+  "files": [
+    {
+      "bytes": 141231,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-fresh-source-only-candidates.json",
+      "relative_path": "384-fresh-source-only-candidates.json",
+      "sha256": "1c59f99df7453841818b2d2f43524c36fa9030e0aa068f376bd80241c8f4edf3"
+    },
+    {
+      "bytes": 43214,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-metadata-plan.json",
+      "relative_path": "384-metadata-plan.json",
+      "sha256": "a8ae1307d14c38327d776281bb534b8fc2bac3119cb92da9ab2584f5a99c1d79"
+    },
+    {
+      "bytes": 21317,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+      "relative_path": "384-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 553913,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+      "relative_path": "384-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 315861,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-source-withheld-text-rendering.json",
+      "relative_path": "384-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 141232,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-fresh-source-only-candidates.json",
+      "relative_path": "768-fresh-source-only-candidates.json",
+      "sha256": "9dfcade8a446865a56960ae36562a25ac4289f471b70aa5ed3cfb6f3607cf046"
+    },
+    {
+      "bytes": 43215,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-metadata-plan.json",
+      "relative_path": "768-metadata-plan.json",
+      "sha256": "d54e0935cd343d21bd02f3f6caad930799c29d804dcb5d5b36d971456b24fa65"
+    },
+    {
+      "bytes": 21317,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+      "relative_path": "768-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 553913,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+      "relative_path": "768-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 315861,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-source-withheld-text-rendering.json",
+      "relative_path": "768-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 8028,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/committed-source-qualification.json",
+      "relative_path": "committed-source-qualification.json",
+      "sha256": "4b035d25c5145815a915eff42d9b0d81cc98135c50bb1d5f8ec198cf4f0a9103"
+    },
+    {
+      "bytes": 51045,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/contextual-runtime-tests.xml",
+      "relative_path": "contextual-runtime-tests.xml",
+      "sha256": "2fb4eb8ace3a065d1376c3e9dd09b52cf3e4c418ccbdfdb82f3d3d6c728b28e5"
+    },
+    {
+      "bytes": 21275,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.json",
+      "relative_path": "generation-qualification.json",
+      "sha256": "734343f3dca0068fafe5d75c07ba51a193f8fe0a48e48eea2c15a15167fb41d2"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.stderr.log",
+      "relative_path": "generation-qualification.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1316,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.stdout.log",
+      "relative_path": "generation-qualification.stdout.log",
+      "sha256": "1e9b74045a980e723486177a906194b61e4f1dbc5d8433bfc003925b7782e0f7"
+    },
+    {
+      "bytes": 40921,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/historical-owner-regression.xml",
+      "relative_path": "historical-owner-regression.xml",
+      "sha256": "2c42d12ae17f78675c50f665701949edfd38f7173ac0fc2abc87654f2edb890f"
+    },
+    {
+      "bytes": 15878,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+      "relative_path": "qualify_original_assets.py",
+      "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+    },
+    {
+      "bytes": 27061,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-diagnostic-01.xml",
+      "relative_path": "review/adversarial-diagnostic-01.xml",
+      "sha256": "a85e1f4d1576bdc6caeee3a13d6fb676c918aa66214d45f2d2d2cc7ee3b26ecc"
+    },
+    {
+      "bytes": 953,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-diagnostic-02.log",
+      "relative_path": "review/adversarial-diagnostic-02.log",
+      "sha256": "24b930745a83ac6b49065140afb6ace00bc8451bd600b02a6dcdbe8fa849c8a4"
+    },
+    {
+      "bytes": 32724,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-diagnostic-02.xml",
+      "relative_path": "review/adversarial-diagnostic-02.xml",
+      "sha256": "1e47c6753782162955c4c2c07fc4859a16399c5e2948651c84d61306f4a30b3b"
+    },
+    {
+      "bytes": 9400,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final-receipt.json",
+      "relative_path": "review/adversarial-final-receipt.json",
+      "sha256": "0dd785f1ddc2797429c36404626ff110f1db721cfb4f9aa8572a991f41b3f0c4"
+    },
+    {
+      "bytes": 945,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final.log",
+      "relative_path": "review/adversarial-final.log",
+      "sha256": "aa096174ebfa33bdfb73cbf57c279965f07762c405212370d87937eb23f83581"
+    },
+    {
+      "bytes": 32932,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-final.xml",
+      "relative_path": "review/adversarial-final.xml",
+      "sha256": "d317f3c5b51442e0ae44bcdddd6974b70beabf8afd58be01dd82f248261b5863"
+    },
+    {
+      "bytes": 843,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/adversarial-parent-endpoint-diagnostic.xml",
+      "relative_path": "review/adversarial-parent-endpoint-diagnostic.xml",
+      "sha256": "2bfd4458932add7f84bd146cf1c3d07920a9d09236a009444984b4e5b5e82f2a"
+    },
+    {
+      "bytes": 31658,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/architecture-review.json",
+      "relative_path": "review/architecture-review.json",
+      "sha256": "f999fe08a304db9b3cbc10fbfd9aec9bd783e0fb8bceda2e8079a483769dea7c"
+    },
+    {
+      "bytes": 8301,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/review/final-facade-review.json",
+      "relative_path": "review/final-facade-review.json",
+      "sha256": "d7a3ce6d6c2e87379cf47f37923a5d85b074a8b763985ea68275583b9b5ddb02"
+    },
+    {
+      "bytes": 22379,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.json",
+      "relative_path": "separate-evaluation.json",
+      "sha256": "e05bd76ef4577698f0cd5aeb3b8676974d661f22808aebed58c7626f9543361b"
+    },
+    {
+      "bytes": 0,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.stderr.log",
+      "relative_path": "separate-evaluation.stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 2529,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.stdout.log",
+      "relative_path": "separate-evaluation.stdout.log",
+      "sha256": "7ec4588e53e72a19b12bbcd8a006676bcfd40cfcb6c271c5394b42c4c469e71a"
+    },
+    {
+      "bytes": 6877,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/docs-final-review.json",
+      "relative_path": "source-survey/docs-final-review.json",
+      "sha256": "e03dca39f813335a74b0b2eafee42274d4a68100bccfeabe2f3831057725de91"
+    },
+    {
+      "bytes": 3905,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/docs-review.json",
+      "relative_path": "source-survey/docs-review.json",
+      "sha256": "bcb2cc5983b9814e87f2c6cb914961ac6ba1f2e2479ebe38abbd44e41081a4f3"
+    },
+    {
+      "bytes": 54202,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/execution-review.json",
+      "relative_path": "source-survey/execution-review.json",
+      "sha256": "d7d36eebeaac7fba77e283203adb56484cd1b47658f641c29c01f2a5beacc6ef"
+    },
+    {
+      "bytes": 14349,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/lazy-training-import-review.json",
+      "relative_path": "source-survey/lazy-training-import-review.json",
+      "sha256": "d7d1bf35b63192a2276fb72a42f13fb8459621b3872754b39efb5c23781dc6c9"
+    },
+    {
+      "bytes": 15573,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/numeric-post-freeze-review.json",
+      "relative_path": "source-survey/numeric-post-freeze-review.json",
+      "sha256": "2c67b501a1337c7a832b4b226408e49f91c462ebf0ddbc98d12388ac72f89328"
+    },
+    {
+      "bytes": 2188,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/numeric-restoration-smoke.json",
+      "relative_path": "source-survey/numeric-restoration-smoke.json",
+      "sha256": "ff412c8aa43b2972a8b3c1c7226176b0e43a3f795a7a6ce76b76894622adeb00"
+    },
+    {
+      "bytes": 9550,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/output-review.json",
+      "relative_path": "source-survey/output-review.json",
+      "sha256": "f9f00809321daac7a585a9d4f7f3d5c2cab4a2aa9a6f0bd52de39a50882c9306"
+    },
+    {
+      "bytes": 6416,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/qualification-driver-review.json",
+      "relative_path": "source-survey/qualification-driver-review.json",
+      "sha256": "b712ca935c7362c2c67ef873504e6f7b37bf717c853caee1cb25eaa9fe683352"
+    },
+    {
+      "bytes": 20867,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/review_execution.py",
+      "relative_path": "source-survey/review_execution.py",
+      "sha256": "da254d64bb2ba9a8b57e8bbb9e2246e324564773b2b0767b8d5d34c759cd418f"
+    },
+    {
+      "bytes": 6948,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/review_lazy_reference_import.py",
+      "relative_path": "source-survey/review_lazy_reference_import.py",
+      "sha256": "8008d3cc39efec964ba28638c4a05b00bd142f707cb33842d4c487825ef5dad9"
+    },
+    {
+      "bytes": 72367,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/source-survey.json",
+      "relative_path": "source-survey/source-survey.json",
+      "sha256": "b440e299626e201b9bdae9c52083ed0c29312fd138380a5e07f27e551d2cda2b"
+    },
+    {
+      "bytes": 11289,
+      "original_path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/survey.py",
+      "relative_path": "source-survey/survey.py",
+      "sha256": "353f11f055b8599b8efddc026d7a291b39991aeebcc19a2c231d1076b0c55d08"
+    }
+  ],
+  "qualified_source_commit": "37c2d63f0bf9490e5b019788afcafbc3b806d8c7",
+  "raw_model_weights_or_embedding_caches_copied": false,
+  "schema": "contextual-legal-runtime-evidence-retention/v1",
+  "scope": "Retained local observations; source/profile/teacher/proof authority remain separate."
+}

@@ -1,0 +1,175 @@
+{
+  "confirmed_boundaries": {
+    "IR_reference_metrics_are_separate_from_generation": true,
+    "UTF8_exact_and_NFC_whitespace_equality_are_distinct": true,
+    "all_source_semantic_teacher_proof_holdout_authority_false": true,
+    "canonical_exact_is_contract_equivalence_not_legal_meaning_equivalence": true,
+    "canonical_qualifier_sort_dedup_separate_from_raw_facets": true,
+    "canonical_rule_sort_separate_from_ordered_exact": true,
+    "decompiler_is_existing_deterministic_source_withheld_baseline": true,
+    "decompiler_only_receives_generated_canonical_IR_and_row_identity": true,
+    "duplicate_JSON_keys_rejected_by_strict_parser": true,
+    "failed_or_incomplete_generated_IR_has_no_source_fallback": true,
+    "gold_fields_in_generated_row_refused": true,
+    "native_checkpoint_profile_schema_versions_not_invented_by_output_owner": true,
+    "ordered_generated_payload_preserved": true,
+    "parse_uses_only_generated_content_and_declared_codec": true,
+    "reference_denominators_preserved_for_missing_predictions": true,
+    "text_case_punctuation_and_word_order_preserved_in_metrics": true,
+    "whole_rule_duplicates_not_silently_deduplicated_by_native_owner": true
+  },
+  "file_pins_after": [
+    {
+      "bytes": 13524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "bef06676ca282441541c0e7d5ac49887cbc089d0e30103b1ab83f0fe508c0740"
+    },
+    {
+      "bytes": 9894,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "92432b8a180aa0a87710443e21a31918ac6d011bd886688cd514819a28a4746a"
+    },
+    {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    }
+  ],
+  "file_pins_before": [
+    {
+      "bytes": 13524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "bef06676ca282441541c0e7d5ac49887cbc089d0e30103b1ab83f0fe508c0740"
+    },
+    {
+      "bytes": 9894,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "92432b8a180aa0a87710443e21a31918ac6d011bd886688cd514819a28a4746a"
+    },
+    {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    }
+  ],
+  "files_unchanged": true,
+  "final_review": {
+    "None_True_finished_refused_tests_cover_inspection_and_scoring": true,
+    "deadline_negative_scoring_test_confirms_unscorable_failure": true,
+    "deadline_receipt_preserved_as_explicit_unscorable_failure": true,
+    "explicit_status_enum": [
+      "eos",
+      "output_limit",
+      "invalid_special_token",
+      "deadline"
+    ],
+    "explicit_status_type_and_enum_confirmed": true,
+    "final_file_pins": [
+      {
+        "bytes": 13756,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+        "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+      },
+      {
+        "bytes": 10987,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+        "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+      },
+      {
+        "bytes": 17329,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+        "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+      },
+      {
+        "bytes": 109257,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      {
+        "bytes": 13437,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+        "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+      }
+    ],
+    "findings_closed": [
+      "explicit_generation_status_required"
+    ],
+    "fixed_denominators_confirmed_by_scoring_source_inspection": true,
+    "no_remaining_findings": true,
+    "parent_reported_output_tests_passed": 32,
+    "parent_test_count_independently_rerun": false,
+    "post_review_files_unchanged": true,
+    "previous_review_pin": {
+      "bytes": 6468,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/output-review.json",
+      "sha256": "9ff38b902fe73ca8c8f3722c050c0b215002cfa71da01386fc6d7cd1731a1e5e"
+    },
+    "previous_review_pin_before_deadline_precision": {
+      "bytes": 8829,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/output-review.json",
+      "sha256": "a43f4cf1de3ee28db8e635ee779c859c765f125e6f2af350c05fc58eb8eab2e4"
+    },
+    "reviewed_at_utc": "2026-10-06T13:10:05.686053+00:00",
+    "tests_rerun_by_this_review": false
+  },
+  "findings": [
+    {
+      "current_behavior": "The generated-row owner requires a generation_status key, but accepts None. Existing fidelity._prediction skips status validation when status is None. A valid content payload with eos_reached=True can consequently become a complete candidate without an explicit status string.",
+      "evidence": [
+        {
+          "function": "_predictions",
+          "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py"
+        },
+        {
+          "function": "_prediction",
+          "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+          "specific_condition": "if status is not None:"
+        }
+      ],
+      "id": "explicit_generation_status_required",
+      "recommendation": "Require an explicit supported generation_status string or record a status error before completeness. Deadline must remain an incomplete/error observation without output repair.",
+      "severity": "narrow_incomplete_receipt_acceptance",
+      "status": "fixed_by_root_and_source_verified",
+      "test_gap": "Existing mutation tests do not include generation_status=None."
+    }
+  ],
+  "function_lines": {
+    "_codec": 37,
+    "_identity": 31,
+    "_native_ir": 61,
+    "_predictions": 49,
+    "_require": 26,
+    "_validate_rule": 67,
+    "inspect_contextual_legal_predictions": 72,
+    "render_contextual_legal_text_candidates": 153,
+    "score_contextual_legal_predictions": 116,
+    "score_legal_text_reconstructions": 189
+  },
+  "important_scope": "CanonicalRoundTripIR@1 is the actual inspection/renderer contract interface. It does not retroactively establish a native schema version, format ID, profile ID, semantic quality, legal-text reconstruction head or runtime authority for either retained checkpoint. Existing qualifiers are empty in the original48-row corpus; perfect qualifier counts must not imply unseen qualifier generalization.",
+  "review_conclusion": "No remaining output findings. Explicit eos/output_limit/invalid_special_token/deadline status is required. Deadline remains an unscorable failure with fixed reference denominators; generated raw/canonical observations, evaluation references and deterministic text baseline remain separate and unqualified.",
+  "review_kind": "read_only_source_and_test_inspection",
+  "reviewed_at_utc": "2026-10-06T13:04:55.653412+00:00",
+  "schema": "contextual-legal-generated-output-independent-review/v1",
+  "source_edited": false,
+  "tests_or_models_rerun": false
+}

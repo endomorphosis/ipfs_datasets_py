@@ -1,0 +1,365 @@
+{
+  "completed": true,
+  "database_or_network_executed": false,
+  "datasets_head": "37c2d63f0bf9490e5b019788afcafbc3b806d8c7",
+  "donor_pin_after": {
+    "bytes": 614534,
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "donor_pin_before": {
+    "bytes": 614534,
+    "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+    "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+  },
+  "encoder_executed": false,
+  "fitting_executed": false,
+  "fresh_holdout": false,
+  "lanes": [
+    {
+      "ambient_rng_preserved": true,
+      "cached_inputs_unchanged": true,
+      "candidate_pin": {
+        "bytes": 141231,
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-fresh-source-only-candidates.json",
+        "sha256": "1c59f99df7453841818b2d2f43524c36fa9030e0aa068f376bd80241c8f4edf3"
+      },
+      "dimension": 384,
+      "elapsed_seconds": 6.089992674009409,
+      "eos_reached": 48,
+      "model_tensor_sha256": "6a527b568c1ec834fc6704a9d12a17532840076432a93dc1390c59c92d483ec3",
+      "row_count": 48,
+      "source_clause_occurrences": 180,
+      "weights_unchanged": true
+    },
+    {
+      "ambient_rng_preserved": true,
+      "cached_inputs_unchanged": true,
+      "candidate_pin": {
+        "bytes": 141232,
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-fresh-source-only-candidates.json",
+        "sha256": "9dfcade8a446865a56960ae36562a25ac4289f471b70aa5ed3cfb6f3607cf046"
+      },
+      "dimension": 768,
+      "elapsed_seconds": 6.852296695986297,
+      "eos_reached": 48,
+      "model_tensor_sha256": "8900d69fb00c17a54b7d3cbe6fbd2c24651b614839ad57c588d0f04dc308fada",
+      "row_count": 48,
+      "source_clause_occurrences": 180,
+      "weights_unchanged": true
+    }
+  ],
+  "legal_prose_reconstruction_measured": false,
+  "native_profile_qualified": false,
+  "observed_at_utc": "2026-10-06T13:23:31.292269+00:00",
+  "optimizer_executed": false,
+  "original_files_after": [
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 1510086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    {
+      "bytes": 532522,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+      "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+    },
+    {
+      "bytes": 2295925,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+      "sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 2864122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    {
+      "bytes": 1051554,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+      "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+    },
+    {
+      "bytes": 4520563,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+      "sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529"
+    }
+  ],
+  "original_files_before": [
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 1510086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    {
+      "bytes": 532522,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+      "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+    },
+    {
+      "bytes": 2295925,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+      "sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 2864122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    {
+      "bytes": 1051554,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+      "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+    },
+    {
+      "bytes": 4520563,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+      "sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529"
+    }
+  ],
+  "original_targets_opened_during_generation": false,
+  "preparation_torch_free": true,
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "contextual-legal-original-assets-generation-qualification/v1",
+  "script_pin": {
+    "bytes": 15878,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+    "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+  },
+  "source_only_generation": true,
+  "source_pins_after": {
+    "action_factorized_clause_decoder_experiment": {
+      "bytes": 19729,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    "canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "canonical_decompiler": {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    "clause_source_context": {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    "clause_source_decoder_experiment": {
+      "bytes": 21833,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    "contextual_legal_ir_numeric": {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    "contextual_legal_ir_output": {
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    "contextual_legal_ir_runtime": {
+      "bytes": 36421,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    "decoder_cardinality_experiment": {
+      "bytes": 14873,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    "decoder_distillation_experiment": {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "decoder_distillation_experiment_v2": {
+      "bytes": 13794,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "decoder_source_fidelity": {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    "dimension_native_decoder_experiment": {
+      "bytes": 11090,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    "ordered_clause_recurrent_decoder_experiment": {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    "projected_source_decoder_experiment": {
+      "bytes": 25942,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    "shared_slot_source_decoder_experiment": {
+      "bytes": 20524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    "source_value_decoder_experiment": {
+      "bytes": 14958,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    "test_contextual_legal_ir_numeric.py": {
+      "bytes": 11167,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "a12691031cb0ac91c9886ff396c6671a160aec1b3ec8e02dfaa6651533be58df"
+    },
+    "test_contextual_legal_ir_output.py": {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    "test_contextual_legal_ir_runtime.py": {
+      "bytes": 12563,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    },
+    "test_contextual_legal_ir_runtime_adversarial.py": {
+      "bytes": 27539,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+      "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+    }
+  },
+  "source_pins_before": {
+    "action_factorized_clause_decoder_experiment": {
+      "bytes": 19729,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    "canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "canonical_decompiler": {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    "clause_source_context": {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    "clause_source_decoder_experiment": {
+      "bytes": 21833,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    "contextual_legal_ir_numeric": {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    "contextual_legal_ir_output": {
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    "contextual_legal_ir_runtime": {
+      "bytes": 36421,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    "decoder_cardinality_experiment": {
+      "bytes": 14873,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    "decoder_distillation_experiment": {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "decoder_distillation_experiment_v2": {
+      "bytes": 13794,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "decoder_source_fidelity": {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    "dimension_native_decoder_experiment": {
+      "bytes": 11090,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    "ordered_clause_recurrent_decoder_experiment": {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    "projected_source_decoder_experiment": {
+      "bytes": 25942,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    "shared_slot_source_decoder_experiment": {
+      "bytes": 20524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    "source_value_decoder_experiment": {
+      "bytes": 14958,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    "test_contextual_legal_ir_numeric.py": {
+      "bytes": 11167,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "a12691031cb0ac91c9886ff396c6671a160aec1b3ec8e02dfaa6651533be58df"
+    },
+    "test_contextual_legal_ir_output.py": {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    "test_contextual_legal_ir_runtime.py": {
+      "bytes": 12563,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    },
+    "test_contextual_legal_ir_runtime_adversarial.py": {
+      "bytes": 27539,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+      "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+    }
+  }
+}

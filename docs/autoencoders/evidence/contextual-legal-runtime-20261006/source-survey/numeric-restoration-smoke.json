@@ -1,0 +1,52 @@
+{
+  "schema": "contextual-native-restoration-smoke/v1",
+  "lanes": [
+    {
+      "dimension": 384,
+      "tensor_sha256": "6a527b568c1ec834fc6704a9d12a17532840076432a93dc1390c59c92d483ec3",
+      "restored_complete_tensor_count": 32,
+      "architecture_checked_exact": true,
+      "original_donor_checked_exact": true,
+      "ambient_rng_preserved": true,
+      "seconds": 0.15807442099321634,
+      "pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+          "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00",
+          "bytes": 2799098
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+          "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f",
+          "bytes": 1510086
+        }
+      ],
+      "generated": false,
+      "trained": false
+    },
+    {
+      "dimension": 768,
+      "tensor_sha256": "8900d69fb00c17a54b7d3cbe6fbd2c24651b614839ad57c588d0f04dc308fada",
+      "restored_complete_tensor_count": 32,
+      "architecture_checked_exact": true,
+      "original_donor_checked_exact": true,
+      "ambient_rng_preserved": true,
+      "seconds": 0.2664750710246153,
+      "pins": [
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+          "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4",
+          "bytes": 4781613
+        },
+        {
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+          "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae",
+          "bytes": 2864122
+        }
+      ],
+      "generated": false,
+      "trained": false
+    }
+  ],
+  "all_authority_false": true
+}

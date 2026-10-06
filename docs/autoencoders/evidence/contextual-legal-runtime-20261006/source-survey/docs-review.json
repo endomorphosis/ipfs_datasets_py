@@ -1,0 +1,62 @@
+{
+  "confirmed": {
+    "13current_source_owners_and10exact_plus1import_only_delta_correct": true,
+    "caller_one_CPU_thread_configuration_correct": true,
+    "decoder512_budget_distinct_from32vocab_and_future8192_encoder_scope": true,
+    "four_IR_families_three_dimensions_output_schemas_tasks_ablations_separate": true,
+    "native_checkpoint_schema_profile_format_readiness_not_inferred_from_canonical_parse": true,
+    "no8D_other_family_or8192_runtime_route_qualification_claimed": true,
+    "no_newModelManager_or_HF_write_claim_in_this_increment": true,
+    "on_the_fly_training_new_run_and_generation_immutability_kept": true,
+    "only_existing_Legal384768_cached_routes_claimed": true,
+    "ordered_IR_vs_canonical_contract_vs_UTF8_NFCtext_metrics_separate": true,
+    "prepare_standard_library_only_and_open_lazy_CPU_boundary_correct": true,
+    "proof_cache_candidates_separate_from_checker_witnesses_and_planner_admission": true,
+    "public_positional_request_and_keyword_pins_example_matches_actual_API": true,
+    "raw_source_transform_once_then8slotpadding_then_separate_feature_norms_correct": true,
+    "selected32_and_donor13_strict_state_checks_correct": true,
+    "source_withheld_decompiler_baseline_not_trained_original_prose_head": true
+  },
+  "doc_pin_after": {
+    "bytes": 10745,
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+    "sha256": "f143bebae8cb11407b4cfc37ed8432404e86756ff98a65927206016e2fee6d58"
+  },
+  "doc_pin_after_real_metrics": {
+    "bytes": 14140,
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+    "sha256": "c0678f8a6ba23f69a35005a785c501acdd7f4284919c0aa102a9e1f1c0a5e0fa"
+  },
+  "doc_pin_before": {
+    "bytes": 10745,
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+    "sha256": "f143bebae8cb11407b4cfc37ed8432404e86756ff98a65927206016e2fee6d58"
+  },
+  "doc_unchanged_during_review": true,
+  "final_real_metric_section_review_pin": {
+    "bytes": 54202,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/execution-review.json",
+    "sha256": "d7d36eebeaac7fba77e283203adb56484cd1b47658f641c29c01f2a5beacc6ef"
+  },
+  "findings": [
+    {
+      "id": "extra_prediction_vs_extra_rule_wording",
+      "reason": "Scorer rejects unknown/duplicate prediction row IDs. Missing rows retain fixed reference denominators; extra generated rules are counted.",
+      "status": "fixed_by_root_and_source_verified",
+      "suggested_text": "Missing predictions remain failed rows in fixed reference denominators. Malformed/deadline outputs remain errors, extra generated rules are counted, and unknown or duplicate prediction identities are rejected."
+    }
+  ],
+  "previous_review_pin_before_final_metrics": {
+    "bytes": 2971,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/docs-review.json",
+    "sha256": "5affe0ac052d59bfbcd20d674d91e3388b64e5cd102d1e9fbcf8e6839d2b7373"
+  },
+  "real_reconstruction_metric_evidence_section_not_yet_reviewed": false,
+  "remaining_findings": 0,
+  "review_conclusion": "No remaining API, scope or executed metric findings. Both lane IR48/48,180rules,720main fields, empty qualifiers, deterministic text0/48 under both metrics, registrar example and244+210tests are independently verified from persisted rows/receipts. No reviewer model/test rerun.",
+  "review_kind": "read_only_technical_scope_and_API_inspection",
+  "reviewed_at_utc": "2026-10-06T13:21:35.337465+00:00",
+  "schema": "contextual-legal-runtime-documentation-independent-review/v1",
+  "source_edits": false,
+  "tests_or_models_rerun": false
+}

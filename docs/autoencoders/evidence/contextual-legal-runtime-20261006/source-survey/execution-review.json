@@ -1,0 +1,1036 @@
+{
+  "all_native_profile_teacher_production_holdout_proof_authority_false": true,
+  "all_reviewed_file_pins_after": [
+    {
+      "bytes": 21275,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.json",
+      "sha256": "734343f3dca0068fafe5d75c07ba51a193f8fe0a48e48eea2c15a15167fb41d2"
+    },
+    {
+      "bytes": 22379,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.json",
+      "sha256": "e05bd76ef4577698f0cd5aeb3b8676974d661f22808aebed58c7626f9543361b"
+    },
+    {
+      "bytes": 72367,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/source-survey.json",
+      "sha256": "b440e299626e201b9bdae9c52083ed0c29312fd138380a5e07f27e551d2cda2b"
+    },
+    {
+      "bytes": 2376560,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/inference-result.json",
+      "sha256": "72ff17e1845beb9b398ac9acec35e0c9425e597a1e071a4e157d258f255eb8eb"
+    },
+    {
+      "bytes": 15878,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+      "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+    },
+    {
+      "bytes": 19729,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "bytes": 21833,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    {
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "bytes": 36421,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    {
+      "bytes": 14873,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "bytes": 13794,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "bytes": 11090,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "bytes": 25942,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    {
+      "bytes": 20524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    {
+      "bytes": 14958,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    {
+      "bytes": 11167,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "a12691031cb0ac91c9886ff396c6671a160aec1b3ec8e02dfaa6651533be58df"
+    },
+    {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    {
+      "bytes": 12563,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    },
+    {
+      "bytes": 27539,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+      "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+    },
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 1510086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    {
+      "bytes": 532522,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+      "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+    },
+    {
+      "bytes": 2295925,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+      "sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 2864122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    {
+      "bytes": 1051554,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+      "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+    },
+    {
+      "bytes": 4520563,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+      "sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529"
+    },
+    {
+      "bytes": 614534,
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    {
+      "bytes": 6398,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/docs/autoencoders/ir_progress_recovery.md",
+      "sha256": "85d73aa103b676ee8da77cef0aa5175f02eeb47bf8f90b8c7c5455231a172234"
+    },
+    {
+      "bytes": 8586,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/docs/autoencoders/progress_integration.md",
+      "sha256": "e06d241532ae8ddaa6be94fc5d2a0406358540651f7ab665afc70082a2be90f7"
+    },
+    {
+      "bytes": 16384,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "sha256": "80da578b0b67ec9867012535df0e51d06ca72ea4ae397e07c922713dc3d9691f"
+    },
+    {
+      "bytes": 22669,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_format_runtime.py",
+      "sha256": "e5521f573a5d592c2f452742c827104fe613d227591a04ab255ec46b2d34e33b"
+    },
+    {
+      "bytes": 20396,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+      "sha256": "bc8aab1ba3a53b91c0e39fc813983657e52e07118a14c0d65c3c4e2aa660face"
+    },
+    {
+      "bytes": 14204,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_hub_publish.py",
+      "sha256": "bf6e0faa7f78054b3bfa751a10b854249b2174b53b83981091b653c5572d9780"
+    },
+    {
+      "bytes": 29300,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+      "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+    },
+    {
+      "bytes": 1040710,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/all_weights/prior-coverage-01.json",
+      "sha256": "4969f73a7b6138343cc100f9e4ea88373f091b52b17bd0d1f804e697389776dd"
+    },
+    {
+      "bytes": 472138,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/all_weights/prior-remote-verification-01.json",
+      "sha256": "a6a582859a5cbb63eb5610ef75392b5c8c5cd6cb30e7576c944eae8afd0fdee5"
+    },
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 29957,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-upload-01/commit-created.json",
+      "sha256": "b51abd45cd1d68d167537dbf8bce1a590479340ef8412e5bda9cc049d58bd4ce"
+    },
+    {
+      "bytes": 55536,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-upload-01/publication.json",
+      "sha256": "47d75bbdf56702d4e0e741db4d9442ab440313c8dcbc8e2d024062a4b89745c6"
+    },
+    {
+      "bytes": 103914,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional_decoder_publication_plan.json",
+      "sha256": "833ff8e593ef3962f9aa34b41a8e49fb15453b4c2cf7e11b8085dda723e035e6"
+    },
+    {
+      "bytes": 7273,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/preparation.json",
+      "sha256": "0fc30d678fa26f94297885e82a56f5b50752404fed01979566577da508dae420"
+    },
+    {
+      "bytes": 7138,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/replay.py",
+      "sha256": "8382b20cd94970fab264ba731a23f2e365f2ad650b003dbdbf0652e47df25b29"
+    },
+    {
+      "bytes": 31339,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/scored-result.json",
+      "sha256": "b1ca6e82c3e68ce1fae18006db9ce16652e37e1c5174ba4f73eb53b6c33f32f5"
+    },
+    {
+      "bytes": 6877,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/score_contextual.py",
+      "sha256": "f2be56f7f8409f0eae186ed91a8ad6ae775f7f0fc1a41c3bfc2f766110c7dd90"
+    },
+    {
+      "bytes": 102696,
+      "path": "/home/barberb/lift_coding/artifacts/supervisor-decoder-contract-20261006/retained-decoder-contract-survey.json",
+      "sha256": "244c2d69445e39be5ef077c629153f6f0622b7848e2cf95a604e32d3e2924c99"
+    },
+    {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "bytes": 34576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/scripts/ops/autoencoder/benchmark_clause_context_source_training.py",
+      "sha256": "e200a0289bac009f48d038b88da31472d4c7159a36c267cf781d595c6bc24a4f"
+    },
+    {
+      "bytes": 21010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/scripts/ops/autoencoder/benchmark_ordered_clause_recurrent_training.py",
+      "sha256": "cafe6a5eef51cce0ab01537ec899549e6c412c0913841708dfdafcd5363b0c9e"
+    },
+    {
+      "bytes": 3032308,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/source-contexts.json",
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    {
+      "bytes": 841411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/training-rows.json",
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    {
+      "bytes": 5960181,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/source-contexts.json",
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    {
+      "bytes": 1621518,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/training-rows.json",
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    {
+      "bytes": 279507,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/evaluation-manifest-r2.json",
+      "sha256": "d1096667f78c736daaa1abefc2c1ad9ae75133b1c4bcb67732b9f8628edb540e"
+    },
+    {
+      "bytes": 12525,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/experiment-source/scripts/ops/autoencoder/benchmark_selected_checkpoint_continuation.py",
+      "sha256": "39ad1308160766875cb670f92f8c783a01f6309b952277d37042aff7ec3110a5"
+    },
+    {
+      "bytes": 146849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-manifest.json",
+      "sha256": "aeb47fbc8c5563abad0f6cce2776291581b686d727afb0bbf8109aa49d026930"
+    },
+    {
+      "bytes": 147708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-plan.json",
+      "sha256": "ca115255d2f0403863fc7faf3e6c394b983074f483d7b565456d0ab10e4f54de"
+    },
+    {
+      "bytes": 2077106,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected/evaluation-validation.json",
+      "sha256": "e9a4aa20effbe283731c772af0f43c4fce8577a65fc15065ddff6c50d2c396b6"
+    },
+    {
+      "bytes": 333836,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/summary.json",
+      "sha256": "b7bf5a06fa6181130657dd3438edf5f3ad620bcd0aa363531c0341865f5b329c"
+    },
+    {
+      "bytes": 2467463,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected/evaluation-validation.json",
+      "sha256": "2e22c25fdeba1e620c31cfaba8e0e5a623b221673cf13ed7d57346e5b757de7c"
+    },
+    {
+      "bytes": 333828,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/summary.json",
+      "sha256": "84bbb101747de409cb60607653973f5fb353fdc8bb752a12dccc4f997a213219"
+    },
+    {
+      "bytes": 141231,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-fresh-source-only-candidates.json",
+      "sha256": "1c59f99df7453841818b2d2f43524c36fa9030e0aa068f376bd80241c8f4edf3"
+    },
+    {
+      "bytes": 1802992,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-candidates.json",
+      "sha256": "94bc4aba998afb490e903da76579dc63f9324737c4a1fcf0e9396c0014e805bb"
+    },
+    {
+      "bytes": 553913,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 315861,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 141232,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-fresh-source-only-candidates.json",
+      "sha256": "9dfcade8a446865a56960ae36562a25ac4289f471b70aa5ed3cfb6f3607cf046"
+    },
+    {
+      "bytes": 2325658,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-candidates.json",
+      "sha256": "66ccfa52204a19d50694d556afb868e4a3482ddabc5f54988f30befe9c5be355"
+    },
+    {
+      "bytes": 553913,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 315861,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 51045,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/contextual-runtime-tests.xml",
+      "sha256": "2fb4eb8ace3a065d1376c3e9dd09b52cf3e4c418ccbdfdb82f3d3d6c728b28e5"
+    },
+    {
+      "bytes": 40921,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/historical-owner-regression.xml",
+      "sha256": "2c42d12ae17f78675c50f665701949edfd38f7173ac0fc2abc87654f2edb890f"
+    },
+    {
+      "bytes": 14140,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "c0678f8a6ba23f69a35005a785c501acdd7f4284919c0aa102a9e1f1c0a5e0fa"
+    }
+  ],
+  "all_reviewed_file_pins_before": [
+    {
+      "bytes": 21275,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.json",
+      "sha256": "734343f3dca0068fafe5d75c07ba51a193f8fe0a48e48eea2c15a15167fb41d2"
+    },
+    {
+      "bytes": 22379,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.json",
+      "sha256": "e05bd76ef4577698f0cd5aeb3b8676974d661f22808aebed58c7626f9543361b"
+    },
+    {
+      "bytes": 72367,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/source-survey.json",
+      "sha256": "b440e299626e201b9bdae9c52083ed0c29312fd138380a5e07f27e551d2cda2b"
+    },
+    {
+      "bytes": 2376560,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/inference-result.json",
+      "sha256": "72ff17e1845beb9b398ac9acec35e0c9425e597a1e071a4e157d258f255eb8eb"
+    },
+    {
+      "bytes": 15878,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+      "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+    },
+    {
+      "bytes": 19729,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 13437,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py",
+      "sha256": "79eeb9072e74e68dc5fab7640b5ad49e82131d0f35232ff473c7f2dfbe232c64"
+    },
+    {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "bytes": 21833,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    {
+      "bytes": 13756,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_output.py",
+      "sha256": "0477aaa5222523e27f4010644ad5bfac67720a793fcccc53b48593e4321c31a7"
+    },
+    {
+      "bytes": 36421,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "e9191bcbca77d7e73830bc7096ceb719288e18493cb3c30db35843fbf5c0238e"
+    },
+    {
+      "bytes": 14873,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "bytes": 13794,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    {
+      "bytes": 11090,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "bytes": 25942,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    {
+      "bytes": 20524,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    {
+      "bytes": 14958,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    {
+      "bytes": 11167,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_numeric.py",
+      "sha256": "a12691031cb0ac91c9886ff396c6671a160aec1b3ec8e02dfaa6651533be58df"
+    },
+    {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_output.py",
+      "sha256": "7e2ed28f2795b0736eac77a550d9cecfecc37aa711b532c574b94b7a5da92cea"
+    },
+    {
+      "bytes": 12563,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py",
+      "sha256": "1b83e9ef3baec6f3d9b12d32179c9520229c45c471f1d7b299496e8d4f744e62"
+    },
+    {
+      "bytes": 27539,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime_adversarial.py",
+      "sha256": "6213be7010a7dbfebadb0b29f786513d9be9a34a39a0b3d8a6f0f5d3af9828ce"
+    },
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 1510086,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/preprocessing.json",
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    {
+      "bytes": 532522,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-inputs.json",
+      "sha256": "722f9909868d545b54d5a1fe5a19880ccefa8e21d1d7f9b6fd1548d78494e7da"
+    },
+    {
+      "bytes": 2295925,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-contexts.json",
+      "sha256": "3f124ce3210c68207d8405311742e5d5bedb43eab4f7c93cbf833aa7f5a223a2"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 2864122,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/preprocessing.json",
+      "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+    },
+    {
+      "bytes": 1051554,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-inputs.json",
+      "sha256": "e44720b13acb52306bb951ff500aa067a3c4ebe4a060139367e1d465e6511bd4"
+    },
+    {
+      "bytes": 4520563,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-contexts.json",
+      "sha256": "a8353fe8311702f4adeb1aa483cdda218a48cc1327309737b5f0680d2a8b2529"
+    },
+    {
+      "bytes": 614534,
+      "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    {
+      "bytes": 6398,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/docs/autoencoders/ir_progress_recovery.md",
+      "sha256": "85d73aa103b676ee8da77cef0aa5175f02eeb47bf8f90b8c7c5455231a172234"
+    },
+    {
+      "bytes": 8586,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/docs/autoencoders/progress_integration.md",
+      "sha256": "e06d241532ae8ddaa6be94fc5d2a0406358540651f7ab665afc70082a2be90f7"
+    },
+    {
+      "bytes": 16384,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/checkpoint_hub.py",
+      "sha256": "80da578b0b67ec9867012535df0e51d06ca72ea4ae397e07c922713dc3d9691f"
+    },
+    {
+      "bytes": 22669,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_format_runtime.py",
+      "sha256": "e5521f573a5d592c2f452742c827104fe613d227591a04ab255ec46b2d34e33b"
+    },
+    {
+      "bytes": 20396,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+      "sha256": "bc8aab1ba3a53b91c0e39fc813983657e52e07118a14c0d65c3c4e2aa660face"
+    },
+    {
+      "bytes": 14204,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_hub_publish.py",
+      "sha256": "bf6e0faa7f78054b3bfa751a10b854249b2174b53b83981091b653c5572d9780"
+    },
+    {
+      "bytes": 29300,
+      "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+      "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+    },
+    {
+      "bytes": 1040710,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/all_weights/prior-coverage-01.json",
+      "sha256": "4969f73a7b6138343cc100f9e4ea88373f091b52b17bd0d1f804e697389776dd"
+    },
+    {
+      "bytes": 472138,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/all_weights/prior-remote-verification-01.json",
+      "sha256": "a6a582859a5cbb63eb5610ef75392b5c8c5cd6cb30e7576c944eae8afd0fdee5"
+    },
+    {
+      "bytes": 2799098,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/384-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+    },
+    {
+      "bytes": 4781613,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/checkpoints/decoder-selected-continuation-20261004/768-selected-followup-lr0001-1729/selected-state.json",
+      "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+    },
+    {
+      "bytes": 29957,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-upload-01/commit-created.json",
+      "sha256": "b51abd45cd1d68d167537dbf8bce1a590479340ef8412e5bda9cc049d58bd4ce"
+    },
+    {
+      "bytes": 55536,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-upload-01/publication.json",
+      "sha256": "47d75bbdf56702d4e0e741db4d9442ab440313c8dcbc8e2d024062a4b89745c6"
+    },
+    {
+      "bytes": 103914,
+      "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/huggingface/additional_decoder_publication_plan.json",
+      "sha256": "833ff8e593ef3962f9aa34b41a8e49fb15453b4c2cf7e11b8085dda723e035e6"
+    },
+    {
+      "bytes": 7273,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/preparation.json",
+      "sha256": "0fc30d678fa26f94297885e82a56f5b50752404fed01979566577da508dae420"
+    },
+    {
+      "bytes": 7138,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/replay.py",
+      "sha256": "8382b20cd94970fab264ba731a23f2e365f2ad650b003dbdbf0652e47df25b29"
+    },
+    {
+      "bytes": 31339,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/scored-result.json",
+      "sha256": "b1ca6e82c3e68ce1fae18006db9ce16652e37e1c5174ba4f73eb53b6c33f32f5"
+    },
+    {
+      "bytes": 6877,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/score_contextual.py",
+      "sha256": "f2be56f7f8409f0eae186ed91a8ad6ae775f7f0fc1a41c3bfc2f766110c7dd90"
+    },
+    {
+      "bytes": 102696,
+      "path": "/home/barberb/lift_coding/artifacts/supervisor-decoder-contract-20261006/retained-decoder-contract-survey.json",
+      "sha256": "244c2d69445e39be5ef077c629153f6f0622b7848e2cf95a604e32d3e2924c99"
+    },
+    {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    {
+      "bytes": 26392,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    {
+      "bytes": 34576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/scripts/ops/autoencoder/benchmark_clause_context_source_training.py",
+      "sha256": "e200a0289bac009f48d038b88da31472d4c7159a36c267cf781d595c6bc24a4f"
+    },
+    {
+      "bytes": 21010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r3-20261004/experiment-source/scripts/ops/autoencoder/benchmark_ordered_clause_recurrent_training.py",
+      "sha256": "cafe6a5eef51cce0ab01537ec899549e6c412c0913841708dfdafcd5363b0c9e"
+    },
+    {
+      "bytes": 3032308,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/source-contexts.json",
+      "sha256": "85415c5cef1c25450119cc419797c7f53b2817658d975cd4b357fdde01362a8c"
+    },
+    {
+      "bytes": 841411,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/384/training-rows.json",
+      "sha256": "854c059a7f7b2f9285eac10795191a9439b24ad6141d80406ffa9d6726892359"
+    },
+    {
+      "bytes": 5960181,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/source-contexts.json",
+      "sha256": "88406d13f72794934d4c9dc8aa69238004e1f6c5d7bd855ba319c14486392104"
+    },
+    {
+      "bytes": 1621518,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-four-width-20261004/training-r1/results/768/training-rows.json",
+      "sha256": "a66ba07b38d101b48f8cd995cc82b2f22f220323ba6f7fc676b87638c4e05254"
+    },
+    {
+      "bytes": 279507,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/evaluation-manifest-r2.json",
+      "sha256": "d1096667f78c736daaa1abefc2c1ad9ae75133b1c4bcb67732b9f8628edb540e"
+    },
+    {
+      "bytes": 12525,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/experiment-source/scripts/ops/autoencoder/benchmark_selected_checkpoint_continuation.py",
+      "sha256": "39ad1308160766875cb670f92f8c783a01f6309b952277d37042aff7ec3110a5"
+    },
+    {
+      "bytes": 146849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-manifest.json",
+      "sha256": "aeb47fbc8c5563abad0f6cce2776291581b686d727afb0bbf8109aa49d026930"
+    },
+    {
+      "bytes": 147708,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-plan.json",
+      "sha256": "ca115255d2f0403863fc7faf3e6c394b983074f483d7b565456d0ab10e4f54de"
+    },
+    {
+      "bytes": 2077106,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected/evaluation-validation.json",
+      "sha256": "e9a4aa20effbe283731c772af0f43c4fce8577a65fc15065ddff6c50d2c396b6"
+    },
+    {
+      "bytes": 333836,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/summary.json",
+      "sha256": "b7bf5a06fa6181130657dd3438edf5f3ad620bcd0aa363531c0341865f5b329c"
+    },
+    {
+      "bytes": 2467463,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected/evaluation-validation.json",
+      "sha256": "2e22c25fdeba1e620c31cfaba8e0e5a623b221673cf13ed7d57346e5b757de7c"
+    },
+    {
+      "bytes": 333828,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/summary.json",
+      "sha256": "84bbb101747de409cb60607653973f5fb353fdc8bb752a12dccc4f997a213219"
+    },
+    {
+      "bytes": 141231,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-fresh-source-only-candidates.json",
+      "sha256": "1c59f99df7453841818b2d2f43524c36fa9030e0aa068f376bd80241c8f4edf3"
+    },
+    {
+      "bytes": 1802992,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-candidates.json",
+      "sha256": "94bc4aba998afb490e903da76579dc63f9324737c4a1fcf0e9396c0014e805bb"
+    },
+    {
+      "bytes": 553913,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 315861,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 141232,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-fresh-source-only-candidates.json",
+      "sha256": "9dfcade8a446865a56960ae36562a25ac4289f471b70aa5ed3cfb6f3607cf046"
+    },
+    {
+      "bytes": 2325658,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-candidates.json",
+      "sha256": "66ccfa52204a19d50694d556afb868e4a3482ddabc5f54988f30befe9c5be355"
+    },
+    {
+      "bytes": 553913,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+      "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+    },
+    {
+      "bytes": 21317,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+      "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+    },
+    {
+      "bytes": 315861,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-source-withheld-text-rendering.json",
+      "sha256": "e03810e46abf68b532b47e6de5ea289b529d5c452319eddabae817edcc8dd58b"
+    },
+    {
+      "bytes": 51045,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/contextual-runtime-tests.xml",
+      "sha256": "2fb4eb8ace3a065d1376c3e9dd09b52cf3e4c418ccbdfdb82f3d3d6c728b28e5"
+    },
+    {
+      "bytes": 40921,
+      "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/historical-owner-regression.xml",
+      "sha256": "2c42d12ae17f78675c50f665701949edfd38f7173ac0fc2abc87654f2edb890f"
+    },
+    {
+      "bytes": 14140,
+      "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "c0678f8a6ba23f69a35005a785c501acdd7f4284919c0aa102a9e1f1c0a5e0fa"
+    }
+  ],
+  "all_reviewed_files_unchanged": true,
+  "completed": true,
+  "doc_metrics_API_scope_findings": [],
+  "frozen21_source_pins_freshly_match": true,
+  "generation_receipt_pin": {
+    "bytes": 21275,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/generation-qualification.json",
+    "sha256": "734343f3dca0068fafe5d75c07ba51a193f8fe0a48e48eea2c15a15167fb41d2"
+  },
+  "lanes": [
+    {
+      "EOS": 48,
+      "NFC_whitespace_text_exact": 0,
+      "UTF8_text_exact": 0,
+      "by_facet": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "candidate_pin": {
+        "bytes": 141231,
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/384-fresh-source-only-candidates.json",
+        "sha256": "1c59f99df7453841818b2d2f43524c36fa9030e0aa068f376bd80241c8f4edf3"
+      },
+      "canonical_contract_exact": 48,
+      "dimension": 384,
+      "main_scalar_fields_correct": 720,
+      "no_model_or_source_or_reference_IR_passed_to_renderer": true,
+      "old_raw_token_status_EOS_exact": true,
+      "ordered_IR_exact": 48,
+      "original_checkpoint_pin": {
+        "bytes": 2799098,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/384-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "0ac5c21656187d1d8040a02bcc0b4716a8093db17f05adc9a22e99d5b6b2cc00"
+      },
+      "reference_qualifiers_all_empty": true,
+      "rows": 48,
+      "rule_count_distribution": {
+        "1": 12,
+        "2": 12,
+        "4": 12,
+        "8": 12
+      },
+      "rules": 180,
+      "source_withheld_text_count": 48
+    },
+    {
+      "EOS": 48,
+      "NFC_whitespace_text_exact": 0,
+      "UTF8_text_exact": 0,
+      "by_facet": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "candidate_pin": {
+        "bytes": 141232,
+        "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/768-fresh-source-only-candidates.json",
+        "sha256": "9dfcade8a446865a56960ae36562a25ac4289f471b70aa5ed3cfb6f3607cf046"
+      },
+      "canonical_contract_exact": 48,
+      "dimension": 768,
+      "main_scalar_fields_correct": 720,
+      "no_model_or_source_or_reference_IR_passed_to_renderer": true,
+      "old_raw_token_status_EOS_exact": true,
+      "ordered_IR_exact": 48,
+      "original_checkpoint_pin": {
+        "bytes": 4781613,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/training-r1/results/768-selected-followup-lr0001-1729/selected-state.json",
+        "sha256": "8892a3261c0750a6247ba5400069ed18cad3354426e2095ed1d295287e3559b4"
+      },
+      "reference_qualifiers_all_empty": true,
+      "rows": 48,
+      "rule_count_distribution": {
+        "1": 12,
+        "2": 12,
+        "4": 12,
+        "8": 12
+      },
+      "rules": 180,
+      "source_withheld_text_count": 48
+    }
+  ],
+  "metric_section_doc_pin": {
+    "bytes": 14140,
+    "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+    "sha256": "c0678f8a6ba23f69a35005a785c501acdd7f4284919c0aa102a9e1f1c0a5e0fa"
+  },
+  "model_training_or_generation_rerun": false,
+  "no_remaining_findings": true,
+  "observed_at_utc": "2026-10-06T13:29:50.130751+00:00",
+  "original44_custody_files_freshly_match": true,
+  "original_historical_candidate_manifest_and_files_exact": true,
+  "reconstruction_interpretation": "Both retained cached lanes reproduce the original authored semantic rule outputs exactly. Canonical inspection is actual current contract conformance, with checkpoint native schema/profile/format identities still null. The deterministic generated-IR-to-text baseline returns48 texts per lane but recovers0 original texts under either metric. Empty qualifiers and exposed48-row/512-token corpus do not qualify nonempty qualifiers, new source groups,8192 spans, trained original-prose reconstruction, teacher or proof authority.",
+  "required8_assets_and_donor_freshly_match": true,
+  "review_method": "stdlib saved-row recomputation and fresh byte pin joins; no project/model imports",
+  "saved_JUnit_counts": {
+    "contextual-runtime-tests.xml": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 244
+    },
+    "historical-owner-regression.xml": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 210
+    }
+  },
+  "schema": "contextual-legal-completed-execution-independent-review/v1",
+  "script_pin": {
+    "bytes": 20867,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/review_execution.py",
+    "sha256": "da254d64bb2ba9a8b57e8bbb9e2246e324564773b2b0767b8d5d34c759cd418f"
+  },
+  "separate_evaluation_receipt_pin": {
+    "bytes": 22379,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/separate-evaluation.json",
+    "sha256": "e05bd76ef4577698f0cd5aeb3b8676974d661f22808aebed58c7626f9543361b"
+  },
+  "source_commit": "37c2d63f0bf9490e5b019788afcafbc3b806d8c7",
+  "source_edited": false,
+  "torch_imported": false,
+  "total_saved_tests_passed": 454,
+  "verified_doc_example": [
+    {
+      "dimension": 384,
+      "id": "authored-paragraph:validation:1:a06861d00057e7c87e59b07f0ffae619addc655c0c1aeee2b079993e1c101173",
+      "original_text": "The registrar is allowed to preserve the archive.",
+      "rendered_text": "Registrar may preserve archive."
+    },
+    {
+      "dimension": 768,
+      "id": "authored-paragraph:validation:1:a06861d00057e7c87e59b07f0ffae619addc655c0c1aeee2b079993e1c101173",
+      "original_text": "The registrar is allowed to preserve the archive.",
+      "rendered_text": "Registrar may preserve archive."
+    }
+  ]
+}

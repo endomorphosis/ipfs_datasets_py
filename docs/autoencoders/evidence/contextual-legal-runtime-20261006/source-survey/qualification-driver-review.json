@@ -1,0 +1,114 @@
+{
+  "claim_scope": "Source review only. No fresh generation/evaluation success or semantic/generalization qualification is claimed by reviewer.",
+  "confirmed": {
+    "all_original_generation_inputs_supplied_from_retained_source_only_caches": true,
+    "all_proof_teacher_native_profile_holdout_authority_false": true,
+    "fitting_and_training_helper_calls_patched_to_fail": true,
+    "generation_open_allowlist_exact8_lane_assets_plus_original_donor": true,
+    "historical44_evidence_excluded_from_generation_byte_hashes": true,
+    "known_original_reference_and_old_candidate_paths_forbidden_by_audit": true,
+    "metadata_preparation_before_torch_import": true,
+    "optimizer_constructor_patched_to_fail": true,
+    "original_donor_numerical_packet_narrowed_to_codec_config_model_state_by_facade": true,
+    "qualifiers_empty_exposed_panel_scope_declared": true,
+    "raw_parity_includes_token_ids_EOS_status": true,
+    "separate_IR_text_metric_functions_and_source_withheld_renderer": true,
+    "socket_connect_and_getaddrinfo_blocked_during_generation": true,
+    "source_weight_and_rng_checks_present": true,
+    "transformer_sentence_transformer_duckdb_ducklake_imports_blocked": true
+  },
+  "driver_pin": {
+    "bytes": 15878,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+    "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+  },
+  "driver_pin_after_final_review": {
+    "bytes": 15878,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/qualify_original_assets.py",
+    "sha256": "2a976023ada55059bf55f778a10ef9e13a39221c412a374b4f4bcbe87c6f6119"
+  },
+  "driver_source_review_ready_for_frozen_generation_evaluation_run": true,
+  "driver_unchanged_during_final_review": true,
+  "final_corrections": {
+    "evaluator_exact_two_unique_lane_dimensions_and_order_checked": true,
+    "generation_audit_forbids_known_original44_evidence_except_required_assets": true,
+    "generation_hashes_exact8_lane_assets_plus_donor_only": true,
+    "historical_manifest_pin_freshly_matches_expected": {
+      "bytes": 2376560,
+      "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/inference-result.json",
+      "sha256": "72ff17e1845beb9b398ac9acec35e0c9425e597a1e071a4e157d258f255eb8eb"
+    },
+    "historical_old_candidate_pins_freshly_match_manifest_and_constants": [
+      {
+        "dimension": 384,
+        "pin": {
+          "bytes": 1802992,
+          "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/384-source-only-candidates.json",
+          "sha256": "94bc4aba998afb490e903da76579dc63f9324737c4a1fcf0e9396c0014e805bb"
+        }
+      },
+      {
+        "dimension": 768,
+        "pin": {
+          "bytes": 2325658,
+          "path": "/home/barberb/lift_coding/artifacts/ir-semantic-reconstruction-replay-20261004/contextual384-768-v1/768-source-only-candidates.json",
+          "sha256": "66ccfa52204a19d50694d556afb868e4a3482ddabc5f54988f30befe9c5be355"
+        }
+      }
+    ],
+    "modal_import_bomb_covers_actual_optimizer_namespace": true,
+    "old_candidate_parse_uses_same_verified_bytes": true,
+    "reviewer_tests_models_or_phase_reruns": false
+  },
+  "final_generation_receipt_observed": false,
+  "findings": [
+    {
+      "current_fix": "Generate hashes only8 exact required lane assets plus donor; historical44 byte preservation checks occur in evaluatorprocess.",
+      "id": "reference_evaluation_byte_hashes_during_generation",
+      "previous_behavior": "Broad original44 preservation hashing opened both historical selected/evaluation-validation.json files containing expected_ir and old predictions.",
+      "status": "fixed_by_root_and_final_source_verified"
+    },
+    {
+      "current_behavior": "evaluate zips survey and generation lanes without exact2 unique dimension/count validation or per-lane dimension join.",
+      "id": "exact_two_lane_join_before_evaluation",
+      "recommendation": "Require unique exact lane sets384/768 and join by dimension before scoring.",
+      "status": "fixed_by_root_and_final_source_verified"
+    },
+    {
+      "current_behavior": "Old candidates are read/parsed before pin(old), without verifying immutable historical inference-result candidate_report pins.",
+      "id": "historical_candidate_pin_join",
+      "recommendation": "In evaluation only, verify expected old384/768candidate file SHA and parse same bytes or fence before/after; bind parity to historical inference-result pin.",
+      "status": "fixed_by_root_and_final_source_verified"
+    },
+    {
+      "current_behavior": "modal_latent_formula rejection is nested under autoencoder PACKAGE prefix, while actual retained modal owner lives under optimizers.logic_theorem_optimizer.",
+      "id": "actual_modal_import_guard_namespace",
+      "recommendation": "Check actual modal namespace independently of autoencoder training prefix; no numerical source change needed.",
+      "status": "fixed_by_root_and_final_source_verified"
+    }
+  ],
+  "historical_candidate_expected_pins": [
+    {
+      "dimension": 384,
+      "sha256": "94bc4aba998afb490e903da76579dc63f9324737c4a1fcf0e9396c0014e805bb"
+    },
+    {
+      "dimension": 768,
+      "sha256": "66ccfa52204a19d50694d556afb868e4a3482ddabc5f54988f30befe9c5be355"
+    }
+  ],
+  "previous_review_pin_before_final_corrections": {
+    "bytes": 3967,
+    "path": "/home/barberb/lift_coding/artifacts/contextual-legal-runtime-20261006/source-survey/qualification-driver-review.json",
+    "sha256": "7295955ea40694ee22be6a1b678561934c58e01c730625d795f294b622c02a9e"
+  },
+  "qualified_driver_claim_ready": false,
+  "remaining_findings": 0,
+  "review_conclusion": "No remaining driver source findings. Ready for root-owned frozen generation/evaluation; no final successful run or model quality receipt is inferred from this source review.",
+  "review_kind": "read_only_source_and_existing_metadata_inspection",
+  "reviewed_at_utc": "2026-10-06T13:18:44.751824+00:00",
+  "reviewed_process_contract": "CLI choice generate/evaluate invokes separate phases; evaluation has no numerical owner load and confirms torch-free process.",
+  "schema": "contextual-legal-original-assets-driver-independent-review/v1",
+  "source_edits": false,
+  "test_model_generation_evaluation_runs_by_reviewer": false
+}
