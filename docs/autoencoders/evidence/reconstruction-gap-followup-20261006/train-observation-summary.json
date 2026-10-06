@@ -1,0 +1,2057 @@
+{
+  "actual_reference_scalar_sites": 5760,
+  "all_four_original_train_generation_parity_exact": true,
+  "all_predictions_durable_before_posthoc_reference_load": true,
+  "authority": {
+    "admitted": false,
+    "checkpoint_promoted": false,
+    "convergence_proven": false,
+    "downloads_performed": false,
+    "encoder_executed": false,
+    "formalized": false,
+    "fresh_holdout": false,
+    "independent_semantic_holdout": false,
+    "lake_executed": false,
+    "proof_authority": false,
+    "qualified": false,
+    "roundtrip_ok": false,
+    "source_semantics_verified": false,
+    "training_executed": false,
+    "used_for_selection": false
+  },
+  "auxiliary_384_source_only_misses": [
+    {
+      "cohort": "normative_train",
+      "combined": {
+        "argmax_token_id": 11,
+        "full_vocabulary_cross_entropy": 0.619098205890019,
+        "target_minus_best_other": 0.7031316757202148,
+        "target_minus_emitted": 0.0
+      },
+      "combined_label": "deliver",
+      "distinct_exposed_v3_action_comparison": {
+        "actual_prefix_equal_reference_prefix": true,
+        "combined": {
+          "argmax_token_id": 19,
+          "full_vocabulary_cross_entropy": 1.6208694852302088,
+          "target_minus_best_other": -1.2993097305297852,
+          "target_minus_emitted": -1.2993097305297852
+        },
+        "combined_argmax_token": "\"publish\"",
+        "generated": "publish",
+        "gold": "deliver",
+        "id": "fresh-modality-v3:1f7951e5ba6f6e294f297250d1f4e508122d00d60db2b1dbfc37f307ef069afb",
+        "recurrent": {
+          "argmax_token_id": 19,
+          "full_vocabulary_cross_entropy": 1.6295313545558914,
+          "target_minus_best_other": -0.3269081115722656,
+          "target_minus_emitted": -0.3269081115722656
+        },
+        "slot": 3,
+        "source": {
+          "argmax_token_id": 19,
+          "full_vocabulary_cross_entropy": 1.7159274605971753,
+          "target_minus_best_other": -0.9724016189575195,
+          "target_minus_emitted": -0.9724016189575195
+        },
+        "source_argmax_token": "\"publish\"",
+        "source_clause": "The prohibition is against the treasurer delivering the notice.",
+        "template_family": "norm_noun_subject"
+      },
+      "expected_rule": {
+        "action": "deliver",
+        "actor": "secretary",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "F",
+        "object": "notice",
+        "temporal": []
+      },
+      "field": "action",
+      "formula_correct": true,
+      "generated_rule": {
+        "action": "deliver",
+        "actor": "secretary",
+        "conditions": [],
+        "exceptions": [],
+        "modality": "F",
+        "object": "notice",
+        "temporal": []
+      },
+      "id": "normative-training-v1:b24a601a158944ebfefa8e7b2a98fea912f8e707c66b98c1f48ae2be125cd742",
+      "position": 40,
+      "recurrent": {
+        "argmax_token_id": 11,
+        "full_vocabulary_cross_entropy": 1.535543577470543,
+        "target_minus_best_other": 0.017464160919189453,
+        "target_minus_emitted": 0.0
+      },
+      "slot": 1,
+      "source": {
+        "argmax_token_id": 8,
+        "full_vocabulary_cross_entropy": 1.0745021264641066,
+        "target_minus_best_other": -0.262833833694458,
+        "target_minus_emitted": 0.0
+      },
+      "source_clause": "This regulation bans the secretary from delivering the notice.",
+      "source_label": "approve",
+      "source_sha256": "b24a601a158944ebfefa8e7b2a98fea912f8e707c66b98c1f48ae2be125cd742",
+      "source_text": "This regulation grants the notary permission to examine the notice.\n\nThis regulation bans the secretary from delivering the notice."
+    }
+  ],
+  "cohorts_are_separate": true,
+  "complete": true,
+  "full32_distributions_independently_recomputed": 17280,
+  "inherited_train_validation_metadata_loaded_before_collection": true,
+  "interpretation": "Auxiliary generated TRAIN formulas and modality source/combined argmaxes are exact at both widths. Same-bank combined-modality CE would be confidence-only. A384 source-only action miss remains but is corrected by actual combined generation; prioritize balanced independently reviewed wording coverage.",
+  "method": "stdlib inspection and exact count recomputation from saved traces/joins/fidelity; no model or numerical-owner import/run",
+  "no_labels_or_reference_counts_used_as_model_inputs": true,
+  "panels": [
+    {
+      "archived_original_predictions": {
+        "bytes": 2072254,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected/evaluation-training.json",
+        "sha256": "7d9574cfce7388d621f5becc9b0a0cff4c8957c0c740da287924fff239f5efc8"
+      },
+      "arm": "normative-wording-zero",
+      "artifacts": {
+        "predictions_ref": {
+          "bytes": 52066,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-predictions.json",
+          "sha256": "beb43c0a082158e2b6a32462aa402a3f4d09baf1fdaf685aa52c1408aac0182c"
+        },
+        "score_ref": {
+          "bytes": 1264785,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-score.json",
+          "sha256": "f66e4f15427d750bd545a0cc5f8fad13d2871d8490bd443bf5be2b6c3ceeeeb0"
+        },
+        "source_head_formula_join_ref": {
+          "bytes": 1062131,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-formula-join.json",
+          "sha256": "1332343af742e1d1992ee9e3cf2ff449e2d4ff83f2a68c563e780c2917dcf4b7"
+        },
+        "source_head_score_ref": {
+          "bytes": 1203610,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-score.json",
+          "sha256": "26eefa0d191366f758d9dc5bb9b9caaf272428e12d2263c5a79d40e052d22554"
+        },
+        "source_head_trace_ref": {
+          "bytes": 3329194,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-trace.json",
+          "sha256": "740e9fe1994f30cb5b58b38ded3d0d60086c176aefbf330b5a699775c605f3f4"
+        },
+        "state_ref": {
+          "bytes": 2798242,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+          "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+        }
+      },
+      "by_cohort": {
+        "normative_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 179,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 121,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 19,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 19,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 59,
+            "whole_rules_missing": 59
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 11.831560611724854,
+                "margin_mean": 6.9687989698515995,
+                "margin_min": 0.8910322189331055,
+                "mean_cross_entropy": 0.016862194065030554,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 106,
+                "margin_max": 1.2697267532348633,
+                "margin_mean": 0.05894058810340034,
+                "margin_min": -1.249922275543213,
+                "mean_cross_entropy": 1.3132769898251042,
+                "nonpositive_margins": 74,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 179,
+                "margin_max": 9.096016749739647,
+                "margin_mean": 5.633453345867909,
+                "margin_min": -0.26233768463134766,
+                "mean_cross_entropy": 0.03799337810390944,
+                "nonpositive_margins": 1,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 18.187890648841858,
+                "margin_mean": 14.060114470455382,
+                "margin_min": 8.00571346282959,
+                "mean_cross_entropy": 1.6819377778788513e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.0484204292297363,
+                "margin_mean": -3.35719526608785,
+                "margin_min": -5.472548484802246,
+                "mean_cross_entropy": 3.733590606900233,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 17.71021604537964,
+                "margin_mean": 13.941166899787882,
+                "margin_min": 7.724819540977478,
+                "mean_cross_entropy": 2.0200757426122903e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 121,
+                "margin_max": 18.657007694244385,
+                "margin_mean": 6.675956040620804,
+                "margin_min": -8.434886932373047,
+                "mean_cross_entropy": 1.3071967723146753,
+                "nonpositive_margins": 59,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.9226052761077881,
+                "margin_mean": -1.6721969935629102,
+                "margin_min": -3.009737253189087,
+                "mean_cross_entropy": 2.3941365405950688,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 121,
+                "margin_max": 18.516266107559204,
+                "margin_mean": 6.701672783713891,
+                "margin_min": -8.289894342422485,
+                "mean_cross_entropy": 1.2652109909603069,
+                "nonpositive_margins": 59,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 22.708995819091797,
+                "margin_mean": 17.98737740781572,
+                "margin_min": 12.996995687484741,
+                "mean_cross_entropy": 1.2080995393206865e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.8080759048461914,
+                "margin_mean": -1.3079057282871671,
+                "margin_min": -2.2012763023376465,
+                "mean_cross_entropy": 1.8831624085689587,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 23.51503562927246,
+                "margin_mean": 18.206637540128497,
+                "margin_min": 13.264577388763428,
+                "mean_cross_entropy": 1.3745885019863142e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 19,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 121,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.03983400585025961
+        },
+        "original_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 11.742017030715942,
+                "margin_mean": 8.31817540327708,
+                "margin_min": 5.09952974319458,
+                "mean_cross_entropy": 0.000964234920226254,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 132,
+                "margin_max": 1.2979187965393066,
+                "margin_mean": 0.263661077287462,
+                "margin_min": -0.8487300872802734,
+                "mean_cross_entropy": 1.142723794568342,
+                "nonpositive_margins": 48,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 9.297670364379883,
+                "margin_mean": 7.022578694464432,
+                "margin_min": 4.576361358165741,
+                "mean_cross_entropy": 0.004334989024522063,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.735167741775513,
+                "margin_mean": 15.71330072482427,
+                "margin_min": 11.335828304290771,
+                "mean_cross_entropy": 8.420761928245529e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.164703607559204,
+                "margin_mean": -3.1377527329656814,
+                "margin_min": -5.137990713119507,
+                "mean_cross_entropy": 3.5545725194795086,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 19.553783893585205,
+                "margin_mean": 15.615687262277222,
+                "margin_min": 11.571569561958313,
+                "mean_cross_entropy": 9.853793761196685e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 21.68990445137024,
+                "margin_mean": 16.414117829004923,
+                "margin_min": 11.749688148498535,
+                "mean_cross_entropy": 4.7013214328946634e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.8605616092681885,
+                "margin_mean": -1.6216529316372341,
+                "margin_min": -2.4659712314605713,
+                "mean_cross_entropy": 2.34958361780133,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 21.833334922790527,
+                "margin_mean": 16.412534676492214,
+                "margin_min": 11.885432124137878,
+                "mean_cross_entropy": 5.111434482883857e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 21.757238388061523,
+                "margin_mean": 17.45752704143524,
+                "margin_min": 13.436623573303223,
+                "mean_cross_entropy": 1.3706167334919745e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.7839970588684082,
+                "margin_mean": -1.2786573105388217,
+                "margin_min": -2.103116512298584,
+                "mean_cross_entropy": 1.866592292180159,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 22.90717601776123,
+                "margin_mean": 17.658705314000446,
+                "margin_min": 13.144764423370361,
+                "mean_cross_entropy": 1.9621298125037534e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.001514904979893114
+        }
+      },
+      "dimension": 384,
+      "greedy_seconds_96_cached_paragraphs": 0.917544525989797,
+      "role": "selected",
+      "scoring_seconds": 0.7871591080329381,
+      "selected_last_identical_tensor_alias": true,
+      "source_head_scoring_seconds": 0.4317578619811684,
+      "state_ref": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+        "tensor_sha256": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3"
+      }
+    },
+    {
+      "archived_original_predictions": {
+        "bytes": 2069774,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected/evaluation-training.json",
+        "sha256": "8417549c2129818cdddfecab815f61904f36931fe74b398c444e888500ad799b"
+      },
+      "arm": "normative-wording-ce",
+      "artifacts": {
+        "predictions_ref": {
+          "bytes": 52067,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-predictions.json",
+          "sha256": "12d5c3b353ee9e08c7f3fec75f4902ad81e62d9528730232a2e5f54ed92e5b16"
+        },
+        "score_ref": {
+          "bytes": 1265185,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-score.json",
+          "sha256": "4fc1c30aa6c09cbefcb6a00e3d793aaa90f2c518e5571ff29b5a7c17f25ceaad"
+        },
+        "source_head_formula_join_ref": {
+          "bytes": 1059327,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-formula-join.json",
+          "sha256": "abdca9c64bf2294f1ba474f229739bef07a529ac9f8c79d8aea8ff0da2b911e9"
+        },
+        "source_head_score_ref": {
+          "bytes": 1200925,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-score.json",
+          "sha256": "2e959513d0ed464132a5cc3d7b11e5fb7f4371701bbdabf7b8104376474d0675"
+        },
+        "source_head_trace_ref": {
+          "bytes": 3327072,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-trace.json",
+          "sha256": "e0fbe58d0c8bf52d36daac4e85df27f679932c133875ea51be54009ce559db4c"
+        },
+        "state_ref": {
+          "bytes": 2797392,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+          "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+        }
+      },
+      "by_cohort": {
+        "normative_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 179,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 11.864733219146729,
+                "margin_mean": 6.908547698126899,
+                "margin_min": 0.6385793685913086,
+                "mean_cross_entropy": 0.018576119770946024,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 99,
+                "margin_max": 1.2517685890197754,
+                "margin_mean": 0.017008090019226076,
+                "margin_min": -1.248866081237793,
+                "mean_cross_entropy": 1.3447237298876769,
+                "nonpositive_margins": 81,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 179,
+                "margin_max": 9.0942845903337,
+                "margin_mean": 5.632989265565347,
+                "margin_min": -0.262833833694458,
+                "mean_cross_entropy": 0.03801324646608211,
+                "nonpositive_margins": 1,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 18.376396417617798,
+                "margin_mean": 14.260993801885181,
+                "margin_min": 7.892814636230469,
+                "mean_cross_entropy": 1.5329028869290637e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.9315178394317627,
+                "margin_mean": -3.2801794674661426,
+                "margin_min": -5.443408489227295,
+                "mean_cross_entropy": 3.685399369822772,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 17.75231170654297,
+                "margin_mean": 14.158805396594108,
+                "margin_min": 7.838993430137634,
+                "mean_cross_entropy": 1.6440014189081058e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 18.159330129623413,
+                "margin_mean": 7.469400868150923,
+                "margin_min": 0.7187175750732422,
+                "mean_cross_entropy": 0.023234659810364967,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.7397322654724121,
+                "margin_mean": -1.6741415566868252,
+                "margin_min": -3.1745874881744385,
+                "mean_cross_entropy": 2.399186307058229,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 18.434726238250732,
+                "margin_mean": 7.558599398730116,
+                "margin_min": 1.164494514465332,
+                "mean_cross_entropy": 0.020812593865377836,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 22.98243236541748,
+                "margin_mean": 17.77540724409951,
+                "margin_min": 11.569159746170044,
+                "mean_cross_entropy": 2.483034990853462e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.8177146911621094,
+                "margin_mean": -1.32406081755956,
+                "margin_min": -2.204472780227661,
+                "mean_cross_entropy": 1.8953761713734454,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 23.929207801818848,
+                "margin_mean": 18.04622424311108,
+                "margin_min": 11.835426807403564,
+                "mean_cross_entropy": 2.4562388966210667e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.002790528652612238
+        },
+        "original_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 11.746152877807617,
+                "margin_mean": 8.316729726394017,
+                "margin_min": 5.103769302368164,
+                "mean_cross_entropy": 0.0009685606382721189,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 132,
+                "margin_max": 1.2939395904541016,
+                "margin_mean": 0.26299616230858697,
+                "margin_min": -0.8462214469909668,
+                "mean_cross_entropy": 1.1449469167692536,
+                "nonpositive_margins": 48,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 9.29884958267212,
+                "margin_mean": 7.022338723220552,
+                "margin_min": 4.57554817199707,
+                "mean_cross_entropy": 0.004332647827110348,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.728157997131348,
+                "margin_mean": 15.888354066676564,
+                "margin_min": 11.529827117919922,
+                "mean_cross_entropy": 7.240217110984461e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.0589892864227295,
+                "margin_mean": -3.1383952650758955,
+                "margin_min": -5.163259029388428,
+                "mean_cross_entropy": 3.552515189094209,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 19.778749465942383,
+                "margin_mean": 15.79070887958838,
+                "margin_min": 11.731056690216064,
+                "mean_cross_entropy": 8.416707839822537e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 21.51971435546875,
+                "margin_mean": 15.430148878362443,
+                "margin_min": 8.048405647277832,
+                "mean_cross_entropy": 6.793890030080499e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.6744394302368164,
+                "margin_mean": -1.6027458826700847,
+                "margin_min": -2.540846347808838,
+                "mean_cross_entropy": 2.3368686256088065,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 21.652588367462158,
+                "margin_mean": 15.419656104478054,
+                "margin_min": 7.605944395065308,
+                "mean_cross_entropy": 1.045611663120659e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 21.252737998962402,
+                "margin_mean": 17.40360238817003,
+                "margin_min": 13.68917465209961,
+                "mean_cross_entropy": 1.2435029941057804e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.7945652008056641,
+                "margin_mean": -1.272549237145318,
+                "margin_min": -2.097689151763916,
+                "mean_cross_entropy": 1.8631879923117194,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 22.301059246063232,
+                "margin_mean": 17.694321919812097,
+                "margin_min": 13.438108444213867,
+                "mean_cross_entropy": 2.0516810403689885e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.0015179723844366264
+        }
+      },
+      "dimension": 384,
+      "greedy_seconds_96_cached_paragraphs": 0.9418171980069019,
+      "role": "selected",
+      "scoring_seconds": 0.701208979007788,
+      "selected_last_identical_tensor_alias": true,
+      "source_head_scoring_seconds": 0.4304103059694171,
+      "state_ref": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+        "tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594"
+      }
+    },
+    {
+      "archived_original_predictions": {
+        "bytes": 2463994,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected/evaluation-training.json",
+        "sha256": "78064fcaaadd1bb5dd7bb0d28f7142d6f5ea17e917f98c44a175449249038044"
+      },
+      "arm": "normative-wording-zero",
+      "artifacts": {
+        "predictions_ref": {
+          "bytes": 52067,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-predictions.json",
+          "sha256": "a243f1146065387082b1c8ff591c0d3e9192a762d52c6d67a1e2847700190c8f"
+        },
+        "score_ref": {
+          "bytes": 1263625,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-score.json",
+          "sha256": "bb39e81e820b3d27b7f8ea9aa99807811469f8425f31d691c426bc8920d068f0"
+        },
+        "source_head_formula_join_ref": {
+          "bytes": 1060944,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-formula-join.json",
+          "sha256": "68b56d81554afcdf1ecd53b651c4158b790da2a20ed17118607bba7533b525ce"
+        },
+        "source_head_score_ref": {
+          "bytes": 1202512,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-score.json",
+          "sha256": "df3b486e9d0e7137f9b82b4ef69ddc71451ea7691f63061842e6b5e44e406218"
+        },
+        "source_head_trace_ref": {
+          "bytes": 3329143,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-trace.json",
+          "sha256": "21e85d7de331d5a66a1b1cff48f76daf0f5429750f3a5fcf47ff0b050b083b55"
+        },
+        "state_ref": {
+          "bytes": 4778674,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected-state.json",
+          "sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f"
+        }
+      },
+      "by_cohort": {
+        "normative_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 164,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 38,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 38,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 15,
+            "whole_rules_missing": 15
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 12.817177295684814,
+                "margin_mean": 7.143248971303304,
+                "margin_min": 1.7476272583007812,
+                "mean_cross_entropy": 0.009126302652442991,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 53,
+                "margin_max": 0.6540141105651855,
+                "margin_mean": -0.17597978909810383,
+                "margin_min": -1.45949125289917,
+                "mean_cross_entropy": 1.6193333580900593,
+                "nonpositive_margins": 127,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 11.209173202514648,
+                "margin_mean": 6.784309483758019,
+                "margin_min": 1.4562227725982666,
+                "mean_cross_entropy": 0.017862001652443973,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.103875637054443,
+                "margin_mean": 15.008362152841356,
+                "margin_min": 7.887871742248535,
+                "mean_cross_entropy": 5.227649690010673e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.204951524734497,
+                "margin_mean": -2.791404777103,
+                "margin_min": -4.218233585357666,
+                "mean_cross_entropy": 3.2807793231414824,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 18.4623019695282,
+                "margin_mean": 14.96626156727337,
+                "margin_min": 8.05594539642334,
+                "mean_cross_entropy": 4.393247214502022e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 165,
+                "margin_max": 23.226573944091797,
+                "margin_mean": 14.039139440324572,
+                "margin_min": -7.227935791015625,
+                "mean_cross_entropy": 0.2197510138117886,
+                "nonpositive_margins": 15,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 15,
+                "margin_max": 0.16646480560302734,
+                "margin_mean": -0.9803233040703667,
+                "margin_min": -2.6253862380981445,
+                "mean_cross_entropy": 2.004349029903274,
+                "nonpositive_margins": 165,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 164,
+                "margin_max": 24.738268852233887,
+                "margin_mean": 14.283235883712768,
+                "margin_min": -7.381566762924194,
+                "mean_cross_entropy": 0.23278555740934545,
+                "nonpositive_margins": 16,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 24.034855842590332,
+                "margin_mean": 17.166386347346837,
+                "margin_min": 10.215339183807373,
+                "mean_cross_entropy": 1.7425704260097696e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.3151121139526367,
+                "margin_mean": -0.8687139007780287,
+                "margin_min": -1.7083814144134521,
+                "mean_cross_entropy": 1.6587972826252049,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 24.476417541503906,
+                "margin_mean": 17.268768052260082,
+                "margin_min": 10.531184673309326,
+                "mean_cross_entropy": 1.5105953414609432e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 38,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 165,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.008243915182655376
+        },
+        "original_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 13.506425380706787,
+                "margin_mean": 9.528527992301518,
+                "margin_min": 5.943594455718994,
+                "mean_cross_entropy": 0.0004939597576206742,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 87,
+                "margin_max": 0.7299051284790039,
+                "margin_mean": -0.009000725216335721,
+                "margin_min": -1.3280577659606934,
+                "mean_cross_entropy": 1.4841433817617207,
+                "nonpositive_margins": 93,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 12.501997113227844,
+                "margin_mean": 9.00284211512448,
+                "margin_min": 5.469837665557861,
+                "mean_cross_entropy": 0.001972791265935594,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.46214485168457,
+                "margin_mean": 16.422918747531043,
+                "margin_min": 13.01149606704712,
+                "mean_cross_entropy": 2.7327095826695174e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.9684953689575195,
+                "margin_mean": -2.7549554573165045,
+                "margin_min": -4.1573967933654785,
+                "mean_cross_entropy": 3.252522951417168,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 19.292706727981567,
+                "margin_mean": 16.361997858652224,
+                "margin_min": 13.108865067362785,
+                "mean_cross_entropy": 2.989309002702593e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 20.962510108947754,
+                "margin_mean": 17.106342344151603,
+                "margin_min": 13.255482196807861,
+                "mean_cross_entropy": 1.5575808135616223e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 18,
+                "margin_max": 0.17029333114624023,
+                "margin_mean": -1.1131027539571126,
+                "margin_min": -3.0982308387756348,
+                "mean_cross_entropy": 2.085226028554329,
+                "nonpositive_margins": 162,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 21.61109972000122,
+                "margin_mean": 17.211024814512996,
+                "margin_min": 13.298974990844727,
+                "mean_cross_entropy": 2.2092815045048218e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 23.586464881896973,
+                "margin_mean": 17.721543277634513,
+                "margin_min": 12.115932941436768,
+                "mean_cross_entropy": 1.973344186131006e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.24664592742919922,
+                "margin_mean": -0.8373857590887281,
+                "margin_min": -2.1852145195007324,
+                "mean_cross_entropy": 1.6557329092264408,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 24.1295804977417,
+                "margin_mean": 17.772938191890717,
+                "margin_min": 12.28418517112732,
+                "mean_cross_entropy": 3.255385016862375e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.0015014521820790577
+        }
+      },
+      "dimension": 768,
+      "greedy_seconds_96_cached_paragraphs": 1.2304247239953838,
+      "role": "selected",
+      "scoring_seconds": 0.8421565679600462,
+      "selected_last_identical_tensor_alias": true,
+      "source_head_scoring_seconds": 0.660620451963041,
+      "state_ref": {
+        "bytes": 4778674,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+        "tensor_sha256": "991f9a1abdf01b72ac5f827adde5ef7be5af28fc0dc3a3db8e4e6e2d8816f379"
+      }
+    },
+    {
+      "archived_original_predictions": {
+        "bytes": 2463244,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected/evaluation-training.json",
+        "sha256": "b8985584ddba0efc8185e198168998065ce76deb3caaf1bd57ec6fe83456234d"
+      },
+      "arm": "normative-wording-ce",
+      "artifacts": {
+        "predictions_ref": {
+          "bytes": 52066,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-predictions.json",
+          "sha256": "292f4fefd2cef135ac51e6c2e6df953262c35d6eeb251ed97e888a56a369ac81"
+        },
+        "score_ref": {
+          "bytes": 1264357,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-score.json",
+          "sha256": "f90324b1bcad3d6c344f9472729f911949300c51b24578dfb6891545d90bafa6"
+        },
+        "source_head_formula_join_ref": {
+          "bytes": 1060242,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-formula-join.json",
+          "sha256": "49d2c36200a581e238ebe04cfadfec46e8804e5c34f82d1b938504cb96e79c77"
+        },
+        "source_head_score_ref": {
+          "bytes": 1201842,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-score.json",
+          "sha256": "72b53aca9594eb25bcb08e66605b0b4443250c1fcf2eadd6d1a76d18db4a09a4"
+        },
+        "source_head_trace_ref": {
+          "bytes": 3327691,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-trace.json",
+          "sha256": "3d61ea8819982cfa68dddf3829a24fb3629c0e0c9dd2166be94ee7b13a51e268"
+        },
+        "state_ref": {
+          "bytes": 4779949,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected-state.json",
+          "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3"
+        }
+      },
+      "by_cohort": {
+        "normative_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 12.806349754333496,
+                "margin_mean": 7.139836421277788,
+                "margin_min": 1.7526187896728516,
+                "mean_cross_entropy": 0.009211934990219146,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 50,
+                "margin_max": 0.6511468887329102,
+                "margin_mean": -0.18418922954135472,
+                "margin_min": -1.4618330001831055,
+                "mean_cross_entropy": 1.6234597153547188,
+                "nonpositive_margins": 130,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 11.204647839069366,
+                "margin_mean": 6.783684600572775,
+                "margin_min": 1.4572503566741943,
+                "mean_cross_entropy": 0.017830953589723326,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.30661940574646,
+                "margin_mean": 14.832653679450353,
+                "margin_min": 6.686441898345947,
+                "mean_cross_entropy": 1.63838323523476e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.2423923015594482,
+                "margin_mean": -2.804954602983263,
+                "margin_min": -4.227625608444214,
+                "mean_cross_entropy": 3.288613675166096,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 19.00219440460205,
+                "margin_mean": 14.794446523764378,
+                "margin_min": 6.850152015686035,
+                "mean_cross_entropy": 1.3405058440765474e-05,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 22.02180290222168,
+                "margin_mean": 13.618239692846934,
+                "margin_min": 3.0512170791625977,
+                "mean_cross_entropy": 0.0006390439848746234,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 14,
+                "margin_max": 0.1301560401916504,
+                "margin_mean": -1.0049714644749959,
+                "margin_min": -2.6677072048187256,
+                "mean_cross_entropy": 2.0107066981898636,
+                "nonpositive_margins": 166,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 23.159061908721924,
+                "margin_mean": 13.92292141602892,
+                "margin_min": 2.9357895851135254,
+                "mean_cross_entropy": 0.0007039621314924391,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 24.106226921081543,
+                "margin_mean": 16.725472855567933,
+                "margin_min": 10.095279216766357,
+                "mean_cross_entropy": 2.172768416504785e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.3200111389160156,
+                "margin_mean": -0.8675058457586501,
+                "margin_min": -1.7175788879394531,
+                "mean_cross_entropy": 1.6568292630386894,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 24.70866107940674,
+                "margin_mean": 16.818392872810364,
+                "margin_min": 10.40899133682251,
+                "mean_cross_entropy": 2.0324251822264236e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.0019184661358627518
+        },
+        "original_train": {
+          "fields": {
+            "action": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "actor": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "modality": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            },
+            "object": {
+              "reference_sites": 180,
+              "source_correct": 180,
+              "source_correct_formula_wrong": 0,
+              "unavailable": 0,
+              "unvisited": 0,
+              "visited": 180
+            }
+          },
+          "formula_metrics": {
+            "all_rules_preserved": 48,
+            "duplicate_rules": 0,
+            "eos_count": 48,
+            "expected_rules": 180,
+            "generated_rules": 180,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 48,
+            "parsed_documents": 48,
+            "prediction_missing_rows": 0,
+            "rows": 48,
+            "syntax_valid": 48,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 180,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "full32_actual_prefix_distributions": {
+            "action": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 13.497485637664795,
+                "margin_mean": 9.530710461404588,
+                "margin_min": 5.919578552246094,
+                "mean_cross_entropy": 0.0004945616478265179,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 85,
+                "margin_max": 0.7236499786376953,
+                "margin_mean": -0.015767330593532986,
+                "margin_min": -1.32448148727417,
+                "mean_cross_entropy": 1.4869469376964077,
+                "nonpositive_margins": 95,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 12.500980973243713,
+                "margin_mean": 9.002134336202612,
+                "margin_min": 5.470126450061798,
+                "mean_cross_entropy": 0.001969123563671587,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "actor": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 19.92457103729248,
+                "margin_mean": 16.354019588232042,
+                "margin_min": 12.938958168029785,
+                "mean_cross_entropy": 3.156580601941054e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -1.0101792812347412,
+                "margin_mean": -2.7663674698935616,
+                "margin_min": -4.139912366867065,
+                "mean_cross_entropy": 3.25947697383749,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 19.56110405921936,
+                "margin_mean": 16.324766503212352,
+                "margin_min": 12.871792554855347,
+                "mean_cross_entropy": 3.559607331362871e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "modality": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 22.126262187957764,
+                "margin_mean": 16.130557082759008,
+                "margin_min": 9.887035369873047,
+                "mean_cross_entropy": 1.6805817017326615e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 17,
+                "margin_max": 0.13386106491088867,
+                "margin_mean": -1.1308335979779562,
+                "margin_min": -3.088608741760254,
+                "mean_cross_entropy": 2.0914380645289583,
+                "nonpositive_margins": 163,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 21.183531761169434,
+                "margin_mean": 16.346459609270095,
+                "margin_min": 10.018649697303772,
+                "mean_cross_entropy": 1.7403800298490226e-06,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            },
+            "object": {
+              "combined": {
+                "argmax_correct": 180,
+                "margin_max": 23.328379154205322,
+                "margin_mean": 17.582925629615783,
+                "margin_min": 12.145039319992065,
+                "mean_cross_entropy": 2.0049607215947655e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              },
+              "recurrent": {
+                "argmax_correct": 0,
+                "margin_max": -0.2572352886199951,
+                "margin_mean": -0.8424621449576484,
+                "margin_min": -2.208324670791626,
+                "mean_cross_entropy": 1.6573985755839722,
+                "nonpositive_margins": 180,
+                "visited": 180
+              },
+              "source": {
+                "argmax_correct": 180,
+                "margin_max": 23.89421558380127,
+                "margin_mean": 17.643876773781248,
+                "margin_min": 12.310661554336548,
+                "mean_cross_entropy": 3.902517492271329e-07,
+                "nonpositive_margins": 0,
+                "visited": 180
+              }
+            }
+          },
+          "ordered_exact": 48,
+          "paragraphs": 48,
+          "rules": 180,
+          "scalar_sites": 720,
+          "seven_facets": {
+            "action": {
+              "correct": 180,
+              "total": 180
+            },
+            "actor": {
+              "correct": 180,
+              "total": 180
+            },
+            "conditions": {
+              "correct": 180,
+              "total": 180
+            },
+            "exceptions": {
+              "correct": 180,
+              "total": 180
+            },
+            "modality": {
+              "correct": 180,
+              "total": 180
+            },
+            "object": {
+              "correct": 180,
+              "total": 180
+            },
+            "temporal": {
+              "correct": 180,
+              "total": 180
+            }
+          },
+          "teacher_forced_target_tokens": 6228,
+          "teacher_forced_token_cross_entropy": 0.0015046508490335136
+        }
+      },
+      "dimension": 768,
+      "greedy_seconds_96_cached_paragraphs": 1.232560453005135,
+      "role": "selected",
+      "scoring_seconds": 0.8535940389847383,
+      "selected_last_identical_tensor_alias": true,
+      "source_head_scoring_seconds": 0.7637427090085112,
+      "state_ref": {
+        "bytes": 4779949,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+        "tensor_sha256": "3fe21b42657bf33f5d0d129d538b72dbb5808f9cc491a3822abd902b13a74b6d"
+      }
+    }
+  ],
+  "qualifier_labels_empty_on_both_cohorts": true,
+  "resource_receipt_summary": {
+    "child_process_slots": 1,
+    "continuous_lease_coverage_claimed": false,
+    "cpu_slots": 1,
+    "finalization_census_attempt_bytes": 28329248,
+    "independent_resource_review_pending": true,
+    "maximum_sampled_group_RSS_bytes": 783077376,
+    "memory_reservation_MiB": 1536,
+    "own_lease_released": true,
+    "post_release_configuration_matches": true,
+    "sample_count": 2,
+    "storage_reservation_bytes": 100000000,
+    "terminal_cancelled_flag_scope": "scheduler missing-lease lookup after release, not a continuous-coverage claim"
+  },
+  "schema": "compact-train-readout-observation/v1",
+  "source_input_pins": 1162,
+  "summary": {
+    "bytes": 105505,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/summary.json",
+    "sha256": "ff91fc49df6f60f895c507f8f242828755c2a36bc3f4d15d69e8fbe2a697caab"
+  },
+  "timing": {
+    "end_to_end_autoformalization_measured": false,
+    "greedy_scope": "one96-paragraph source-only pass per endpoint; setup/scoring/encoder/native/Lake excluded",
+    "launch_return_through_reap_wall_seconds": 39.16515269305091,
+    "numerical_driver_seconds": 34.19171127298614,
+    "outer_guardian_seconds": 71.007891190995,
+    "reserved_wrapper_through_child_exit_seconds": 54.531432533985935
+  },
+  "upstream_asset_availability": {
+    "all_four_selected_endpoint_hashes_match_registered_and_published_assets": true,
+    "ordinary_working_copy_availability_inferred": false,
+    "proof_authority": false,
+    "publication_bindings": {
+      "artifacts/normative-checkpoint-availability-20261006/completion.json": {
+        "bytes": 5077,
+        "commit": "0440a869aac1feb6f40d2e33fd28ecf7d1795411",
+        "path": "artifacts/normative-checkpoint-availability-20261006/completion.json",
+        "repository": "endomorphosis/lift_coding",
+        "sha256": "e95054c7f08e41f25e517ed829973a13c900ab7549adc5684fae577829c55ab2",
+        "url": "https://github.com/endomorphosis/lift_coding/blob/0440a869aac1feb6f40d2e33fd28ecf7d1795411/artifacts/normative-checkpoint-availability-20261006/completion.json"
+      },
+      "implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md": {
+        "bytes": 6909,
+        "commit": "0440a869aac1feb6f40d2e33fd28ecf7d1795411",
+        "path": "implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md",
+        "repository": "endomorphosis/lift_coding",
+        "sha256": "8cae8492de1444c8d16f38bf567a0bd4c92a02c4f45b1f49e9a69bf630f85836",
+        "url": "https://github.com/endomorphosis/lift_coding/blob/0440a869aac1feb6f40d2e33fd28ecf7d1795411/implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md"
+      }
+    },
+    "registered_selected_last_serializations": 8,
+    "runtime_ready": false,
+    "selected_last_are_aliases_not_replications": true,
+    "teacher_qualified": false,
+    "unique_tensor_endpoints": 4
+  }
+}

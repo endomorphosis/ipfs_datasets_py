@@ -1,0 +1,249 @@
+{
+  "all_four_original_train_tokens_status_EOS_parity": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/diagnosis/numeric-diagnosis.json": {
+      "bytes": 487540,
+      "sha256": "cebe2566589be995b422cb2b44cd13f9c051cdf1f3004a9fdcce129247b978e8"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/documentation/evidence/fixed-prefix-scale-summary.json": {
+      "bytes": 24588,
+      "sha256": "2809aef1065847ef50a6e58101563757105ba1c7b273ef5ccc5235a0fd969365"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/documentation/evidence/qualifier-preflight-summary.json": {
+      "bytes": 3815,
+      "sha256": "c5099069ed6da68bd4cde54a56023353f06ee2a86cbbb4abcf87ee5b8c42b9d1"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/documentation/evidence/train-observation-summary.json": {
+      "bytes": 79560,
+      "sha256": "b98e0607279988805179f3b062b53bd2753d36b4b7074b5892d245c6830849f1"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/implementation-freeze.json": {
+      "bytes": 2132,
+      "sha256": "dc05931b1043baab454936892fe8df9c6e38188652c7bcb536c402bd8928b17a"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/implementation-validation.json": {
+      "bytes": 3644,
+      "sha256": "4a194ba451bbf57da93a366a0ebad3f56accaaaa86ab2a2441c43f4c6cb287d7"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/preflight-tests-freeze.xml": {
+      "bytes": 6748,
+      "sha256": "c559cfa6530e33977deb8f9640a3dbcf8366697742410a97c24ec37d4bfa49bd"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/qualifier-review.json": {
+      "bytes": 49593,
+      "sha256": "5d209855b3e5eb347aae4db3f2ca42e33aeaace6877a2586ba841309bc7af99c"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/qualifier-review.md": {
+      "bytes": 5547,
+      "sha256": "b76f6458f7886b189061ee50f538e1cad8f561f4dffbc380802eea38f9adcb92"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/source-pins.json": {
+      "bytes": 17968,
+      "sha256": "0250cfa99a0d2884fb630c4e0e652d092cb0eb98a5fc5685eaf45263d54b0f3e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/train-observation/observation-manifest.json": {
+      "bytes": 298697,
+      "sha256": "6396b6a64f44a36aa429f54be77e12d4275bc4b990c53592e0ab88687484a582"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/train-observation/observation-plan.json": {
+      "bytes": 289799,
+      "sha256": "d2ac586f2f144e737e736d3ab49e594c917dafc745be57a41c3bf1611257a8a0"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/train-observation/source-freeze.json": {
+      "bytes": 3305,
+      "sha256": "68307b0646c5cc4966159b79496e6aa5aa0355776b1a8f3672c372c358959c8f"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-wording-fit-20261006/development/codec.json": {
+      "bytes": 588,
+      "sha256": "f8a2fa384ae91a9e6c93ac1a8f5fb1d7b20d5ea354443c4a86bb3210ac984c82"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_qualifier_training_preflight.py": {
+      "bytes": 14908,
+      "sha256": "58ebc41a4ea1f93d3497108ebd54ea3611bc652b5d74284214b13bb74a535489"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_qualifier_training_preflight.py": {
+      "bytes": 16352,
+      "sha256": "57563f10077d8f978c66b5f0554cc618d34949b32455a1a1270438693129f913"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json": {
+      "bytes": 2797392,
+      "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected/evaluation-training.json": {
+      "bytes": 2069774,
+      "sha256": "8417549c2129818cdddfecab815f61904f36931fe74b398c444e888500ad799b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json": {
+      "bytes": 2798242,
+      "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected/evaluation-training.json": {
+      "bytes": 2072254,
+      "sha256": "7d9574cfce7388d621f5becc9b0a0cff4c8957c0c740da287924fff239f5efc8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected-state.json": {
+      "bytes": 4779949,
+      "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected/evaluation-training.json": {
+      "bytes": 2463244,
+      "sha256": "b8985584ddba0efc8185e198168998065ce76deb3caaf1bd57ec6fe83456234d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected-state.json": {
+      "bytes": 4778674,
+      "sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected/evaluation-training.json": {
+      "bytes": 2463994,
+      "sha256": "78064fcaaadd1bb5dd7bb0d28f7142d6f5ea17e917f98c44a175449249038044"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1-guardian-exit.json": {
+      "bytes": 60,
+      "sha256": "2054bdf856e7bb9874d5a548631106ca3d0b0447bdb747604e0cd870b915ac48"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/child-exit.json": {
+      "bytes": 324,
+      "sha256": "b3a195138ad8c9315e459e6f27ec79f90eccd26220f4282ebbcf317c422b48bd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/resource-observations.json": {
+      "bytes": 1743,
+      "sha256": "514c07ee5e649834005f60aef86d3a75a54307a609d0c0f6474c2ab55a8b40d4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/resources-final.json": {
+      "bytes": 5863,
+      "sha256": "d94184fb93f820f08bb49b0b7fdc2c420489847a693be979f5c2e6bf767d9607"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-predictions.json": {
+      "bytes": 52067,
+      "sha256": "12d5c3b353ee9e08c7f3fec75f4902ad81e62d9528730232a2e5f54ed92e5b16"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-score.json": {
+      "bytes": 1265185,
+      "sha256": "4fc1c30aa6c09cbefcb6a00e3d793aaa90f2c518e5571ff29b5a7c17f25ceaad"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-formula-join.json": {
+      "bytes": 1059327,
+      "sha256": "abdca9c64bf2294f1ba474f229739bef07a529ac9f8c79d8aea8ff0da2b911e9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-score.json": {
+      "bytes": 1200925,
+      "sha256": "2e959513d0ed464132a5cc3d7b11e5fb7f4371701bbdabf7b8104376474d0675"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-ce/selected-source-head-trace.json": {
+      "bytes": 3327072,
+      "sha256": "e0fbe58d0c8bf52d36daac4e85df27f679932c133875ea51be54009ce559db4c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-predictions.json": {
+      "bytes": 52066,
+      "sha256": "beb43c0a082158e2b6a32462aa402a3f4d09baf1fdaf685aa52c1408aac0182c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-score.json": {
+      "bytes": 1264785,
+      "sha256": "f66e4f15427d750bd545a0cc5f8fad13d2871d8490bd443bf5be2b6c3ceeeeb0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-formula-join.json": {
+      "bytes": 1062131,
+      "sha256": "1332343af742e1d1992ee9e3cf2ff449e2d4ff83f2a68c563e780c2917dcf4b7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-score.json": {
+      "bytes": 1203610,
+      "sha256": "26eefa0d191366f758d9dc5bb9b9caaf272428e12d2263c5a79d40e052d22554"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/384-normative-wording-zero/selected-source-head-trace.json": {
+      "bytes": 3329194,
+      "sha256": "740e9fe1994f30cb5b58b38ded3d0d60086c176aefbf330b5a699775c605f3f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-predictions.json": {
+      "bytes": 52066,
+      "sha256": "292f4fefd2cef135ac51e6c2e6df953262c35d6eeb251ed97e888a56a369ac81"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-score.json": {
+      "bytes": 1264357,
+      "sha256": "f90324b1bcad3d6c344f9472729f911949300c51b24578dfb6891545d90bafa6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-formula-join.json": {
+      "bytes": 1060242,
+      "sha256": "49d2c36200a581e238ebe04cfadfec46e8804e5c34f82d1b938504cb96e79c77"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-score.json": {
+      "bytes": 1201842,
+      "sha256": "72b53aca9594eb25bcb08e66605b0b4443250c1fcf2eadd6d1a76d18db4a09a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-ce/selected-source-head-trace.json": {
+      "bytes": 3327691,
+      "sha256": "3d61ea8819982cfa68dddf3829a24fb3629c0e0c9dd2166be94ee7b13a51e268"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-predictions.json": {
+      "bytes": 52067,
+      "sha256": "a243f1146065387082b1c8ff591c0d3e9192a762d52c6d67a1e2847700190c8f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-score.json": {
+      "bytes": 1263625,
+      "sha256": "bb39e81e820b3d27b7f8ea9aa99807811469f8425f31d691c426bc8920d068f0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-formula-join.json": {
+      "bytes": 1060944,
+      "sha256": "68b56d81554afcdf1ecd53b651c4158b790da2a20ed17118607bba7533b525ce"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-score.json": {
+      "bytes": 1202512,
+      "sha256": "df3b486e9d0e7137f9b82b4ef69ddc71451ea7691f63061842e6b5e44e406218"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/768-normative-wording-zero/selected-source-head-trace.json": {
+      "bytes": 3329143,
+      "sha256": "21e85d7de331d5a66a1b1cff48f76daf0f5429750f3a5fcf47ff0b050b083b55"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/predictions-complete.json": {
+      "bytes": 5418,
+      "sha256": "fec91404ac7c11127cbbabcf00a0704d71a5bc4e55b187cce10044e21de7e58f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-train-readout-observation-20261006/train-observation-r1/results/summary.json": {
+      "bytes": 105505,
+      "sha256": "ff91fc49df6f60f895c507f8f242828755c2a36bc3f4d15d69e8fbe2a697caab"
+    },
+    "git:0440a869aac1feb6f40d2e33fd28ecf7d1795411:artifacts/normative-checkpoint-availability-20261006/completion.json": {
+      "bytes": 5077,
+      "commit": "0440a869aac1feb6f40d2e33fd28ecf7d1795411",
+      "path": "artifacts/normative-checkpoint-availability-20261006/completion.json",
+      "repository": "endomorphosis/lift_coding",
+      "sha256": "e95054c7f08e41f25e517ed829973a13c900ab7549adc5684fae577829c55ab2",
+      "url": "https://github.com/endomorphosis/lift_coding/blob/0440a869aac1feb6f40d2e33fd28ecf7d1795411/artifacts/normative-checkpoint-availability-20261006/completion.json"
+    },
+    "git:0440a869aac1feb6f40d2e33fd28ecf7d1795411:implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md": {
+      "bytes": 6909,
+      "commit": "0440a869aac1feb6f40d2e33fd28ecf7d1795411",
+      "path": "implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md",
+      "repository": "endomorphosis/lift_coding",
+      "sha256": "8cae8492de1444c8d16f38bf567a0bd4c92a02c4f45b1f49e9a69bf630f85836",
+      "url": "https://github.com/endomorphosis/lift_coding/blob/0440a869aac1feb6f40d2e33fd28ecf7d1795411/implementation_plan/docs/60-normative-checkpoint-availability-2026-10-06.md"
+    }
+  },
+  "canonical_mutations": false,
+  "checks": [
+    "Four-state completion, durable pre-reference barrier and explicit inherited metadata exception; all scientific authority masks false.",
+    "384-normative-wording-zero: selected tensor identity, same-pass/no-mask traces,96 sources/360 rules/1440 events and all48 archived original tokens/status/EOS exact.",
+    "384-normative-wording-zero/original_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "384-normative-wording-zero/normative_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "384-normative-wording-ce: selected tensor identity, same-pass/no-mask traces,96 sources/360 rules/1440 events and all48 archived original tokens/status/EOS exact.",
+    "384-normative-wording-ce/original_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "384-normative-wording-ce/normative_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "768-normative-wording-zero: selected tensor identity, same-pass/no-mask traces,96 sources/360 rules/1440 events and all48 archived original tokens/status/EOS exact.",
+    "768-normative-wording-zero/original_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "768-normative-wording-zero/normative_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "768-normative-wording-ce: selected tensor identity, same-pass/no-mask traces,96 sources/360 rules/1440 events and all48 archived original tokens/status/EOS exact.",
+    "768-normative-wording-ce/original_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "768-normative-wording-ce/normative_train: all seven facets, complete formula counts, token-weighted teacher CE and all12 visited full32 route summaries agree.",
+    "All four observed E selected state containers/tensors match upstream published and registered endpoints; selected/last aliases stay distinct from replications and qualification."
+  ],
+  "encoders_or_training_or_Lake_executed": false,
+  "findings": [],
+  "full32_distributions_recomputed": 17280,
+  "independence_scope": "Arithmetic recomputation from saved vectors without frozen numerical owners; author documentation check, separate-agent actual-output reviews still required.",
+  "models_imported_or_executed": false,
+  "numerical_owners_imported_or_executed": false,
+  "passed": true,
+  "required_separate_agent_numerical_or_resource_review_replaced": false,
+  "reviewer_authored_private_TRAIN_observer": true,
+  "scalar_sites_checked": 5760,
+  "schema": "independent-saved-output-documentation-check/v1"
+}

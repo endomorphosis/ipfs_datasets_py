@@ -1,0 +1,109 @@
+{
+  "Constitution_formalized": false,
+  "always_false_authority_flags": [
+    "train_eligible",
+    "qualified",
+    "admitted",
+    "Lean_admitted",
+    "formalized",
+    "proof_authority",
+    "source_semantics_verified"
+  ],
+  "api": "preflight_qualifier_cohort(rows, *, word_codec=None, review_inputs=None)",
+  "byte_output_cap": 512,
+  "checked_corpus_evidence": {
+    "authored_native_case_count": 3,
+    "authored_native_case_split": "two train, one tuning; fixture premises; no natural-source translation or independent holdout",
+    "label_intake": {
+      "formal_targets_admitted": 0,
+      "labels_admitted": 0,
+      "semantic_label_admission_implemented": false,
+      "zero_mask_values": 320
+    },
+    "normative_preparation_receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/training-corpus-receipt.json",
+    "review34": {
+      "declared_completed_annotation_count": 0,
+      "human_reviews_authenticated": 0,
+      "independent_reviews_authenticated": 0,
+      "item_count": 34,
+      "status_counts": {
+        "agreed_multiple_reviews": 0,
+        "ambiguous": 0,
+        "disputed": 0,
+        "pending": 34,
+        "single_review": 0,
+        "unsupported": 0
+      },
+      "submission_count": 0
+    },
+    "review64": {
+      "declared_completed_annotation_count": 0,
+      "human_reviews_authenticated": 0,
+      "independent_reviews_authenticated": 0,
+      "input_item_count": 64,
+      "masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "status_counts": {
+        "agreed_multiple_reviews": 0,
+        "ambiguous": 0,
+        "disputed": 0,
+        "pending": 64,
+        "single_review": 0,
+        "unsupported": 0
+      },
+      "submission_count": 0
+    }
+  },
+  "current_intake_train_eligible": false,
+  "defaults_activated": false,
+  "existing_codecs_modified": false,
+  "findings": [],
+  "implementation_freeze": {
+    "bytes": 2132,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/implementation-freeze.json",
+    "sha256": "dc05931b1043baab454936892fe8df9c6e38188652c7bcb536c402bd8928b17a"
+  },
+  "implementation_validation": {
+    "bytes": 3644,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/implementation-validation.json",
+    "sha256": "4a194ba451bbf57da93a366a0ebad3f56accaaaa86ab2a2441c43f4c6cb287d7"
+  },
+  "input_bounds": {
+    "bytes_max": 16777216,
+    "rows_max": 64,
+    "rows_min": 1
+  },
+  "models_or_encoders_or_training_or_Lake_executed": false,
+  "module": {
+    "bytes": 14908,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_qualifier_training_preflight.py",
+    "sha256": "58ebc41a4ea1f93d3497108ebd54ea3611bc652b5d74284214b13bb74a535489"
+  },
+  "new_reviewed_TRAIN_qualifier_pairs_available": false,
+  "passed": true,
+  "refused_public_byte_fixture_tokens": 579,
+  "review_replay_is_training_authority": false,
+  "review_to_cohort_binding_assessed": false,
+  "schema": "compact-canonical-qualifier-preflight/v1",
+  "test_result": {
+    "errors": "0",
+    "failures": "0",
+    "hostname": "spark-b271",
+    "name": "pytest",
+    "skipped": "0",
+    "tests": "37",
+    "time": "0.228",
+    "timestamp": "2026-10-06T16:15:59.044630+00:00"
+  },
+  "tests": {
+    "bytes": 16352,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/tests/unit/logic/legal_ir/test_canonical_qualifier_training_preflight.py",
+    "sha256": "57563f10077d8f978c66b5f0554cc618d34949b32455a1a1270438693129f913"
+  },
+  "word_codec_source_target_caps": 64
+}

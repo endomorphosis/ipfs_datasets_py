@@ -1,0 +1,123 @@
+{
+  "Constitution_formalized": false,
+  "archive": {
+    "bytes": 8815502,
+    "path": "artifacts/autoencoder-next-reconstruction-gap-20261006/reconstruction-gap-evidence.tar.gz",
+    "sha256": "b46e285619c42946ee3d33f409b6d335c4a33bb84a98252474e2b77033d036a7"
+  },
+  "archive_entries": 95,
+  "archive_uncompressed_bytes": 38327216,
+  "authored_compact_summary_pending_marker_is_historical": true,
+  "checkpoint_promoted_by_observation": false,
+  "compact_files": {
+    "docs/autoencoders/evidence/reconstruction-gap-followup-20261006/fixed-prefix-scale-summary.json": {
+      "bytes": 24588,
+      "sha256": "2809aef1065847ef50a6e58101563757105ba1c7b273ef5ccc5235a0fd969365"
+    },
+    "docs/autoencoders/evidence/reconstruction-gap-followup-20261006/independent-saved-output-summary-check.json": {
+      "bytes": 18686,
+      "sha256": "ac93553bf3943bd493239c5c40eb307703578e62e036af493d4977a21e6d9928"
+    },
+    "docs/autoencoders/evidence/reconstruction-gap-followup-20261006/next-training-plan.json": {
+      "bytes": 6154,
+      "sha256": "823fc9698ce1b46a32317e9b2fc41896982848d86be0a40eacde5e6184257b6b"
+    },
+    "docs/autoencoders/evidence/reconstruction-gap-followup-20261006/qualifier-preflight-summary.json": {
+      "bytes": 3815,
+      "sha256": "c5099069ed6da68bd4cde54a56023353f06ee2a86cbbb4abcf87ee5b8c42b9d1"
+    },
+    "docs/autoencoders/evidence/reconstruction-gap-followup-20261006/train-observation-summary.json": {
+      "bytes": 79560,
+      "sha256": "b98e0607279988805179f3b062b53bd2753d36b4b7074b5892d245c6830849f1"
+    },
+    "docs/autoencoders/reconstruction_gap_followup_20261006.md": {
+      "bytes": 11297,
+      "sha256": "81272e0a2afc72a7f61dd2dabc9834702775b08a5134ad72c413eb6cce56470e"
+    }
+  },
+  "complete_TRAIN_observation": {
+    "endpoints": 4,
+    "full32_distributions_total": 17280,
+    "paragraphs_per_endpoint": 96,
+    "rules_per_endpoint": 360,
+    "scalar_sites_per_endpoint": 1440,
+    "scalar_sites_total": 5760
+  },
+  "convergence_proven": false,
+  "encoder_executed_by_observation": false,
+  "findings": [],
+  "formalized": false,
+  "independent_reviews": {
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/diagnosis/diagnosis-readiness.json": {
+      "bytes": 3050,
+      "sha256": "db1df25879d089dbf01cc31dad6f2659fa45998ccd57aceaed5593de98af5edf"
+    },
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/guardian/terminal-resource-independent-review.json": {
+      "bytes": 377767,
+      "sha256": "8b5bffd7e9c15cdecebc91448b08265ec1811dfe41aeb3e0b4db2822b95ebebf"
+    },
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/pipeline/publisher-independent-review.json": {
+      "bytes": 7104,
+      "sha256": "33007914c50f17fad6ed301c9ee2afb4babf48fc13255b01e474681ee22de32c"
+    },
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/qualifier-review/independent-preflight-review.json": {
+      "bytes": 24518,
+      "sha256": "64037f6102c34c4e28c7080877b6a704320f5166dfa74478064afab5a3dab0e5"
+    },
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/train-observation/actual-result-independent-review.json": {
+      "bytes": 127488,
+      "sha256": "c1d7eac80cbe52bbbe7b265f8d024dc7636116ed9a8348ea387cc1ee145dceb5"
+    },
+    "artifacts/autoencoder-next-reconstruction-gap-20261006/train-observation/independent-runner-readiness.json": {
+      "bytes": 353053,
+      "sha256": "e15162b010a641db2a06cc68ba117141d9ab5135929537464784c6eacb929b25"
+    }
+  },
+  "independent_semantic_holdout": false,
+  "lake_executed": false,
+  "latest_agent_followup": {
+    "architectures_and_cohorts_kept_separate": true,
+    "authored_compact_resource_pending_marker": "historical author-time metadata; completed independent reviews are bound by evidence index",
+    "datasets_parent": "1c1f91c8010ce058243734f143587e92fab2f0a2",
+    "existing_direct_qualifier_owners_changed": false,
+    "findings": [],
+    "grouped_boundary_reported_final": {
+      "control_exact_positives": 56,
+      "control_learned_refusals": 21,
+      "positive_total": 64,
+      "targeted_exact_positives": 55,
+      "targeted_learned_refusals": 54,
+      "targeted_unsupported_requests_emitted": 7,
+      "unsupported_total": 64
+    },
+    "new_inference_or_training_execution": false,
+    "new_occurrence_proposal_admission_masks_zero": true,
+    "new_qualification_granted": false,
+    "new_source_transport_untrained": true,
+    "new_work_inherited_from_current_main": true,
+    "passed": true,
+    "primary_git_blobs": [
+      {
+        "bytes": 7804,
+        "commit": "1c1f91c8010ce058243734f143587e92fab2f0a2",
+        "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_scope_span_proposal.py",
+        "repository": "datasets",
+        "sha256": "8491ff3b855f10f5474f3c924401157c010d0c9fa997737cec058be171dc8f65"
+      },
+      {
+        "bytes": 5743,
+        "commit": "1c1f91c8010ce058243734f143587e92fab2f0a2",
+        "path": "docs/autoencoders/grouped_support_boundary_training.md",
+        "repository": "datasets",
+        "sha256": "0ec8f1dec05890e5733c890cb48e23a7943095cd1461b54894669ecbcdc61bc9"
+      }
+    ],
+    "schema": "latest-agent-followup-reconciliation/v1",
+    "unavailable_context_remains_ineligible": true,
+    "workspace_parent": "2d4f840583ffe916d416f101e4a570a5d4856e37"
+  },
+  "passed": true,
+  "qualification": false,
+  "schema": "reconstruction-gap-followup-evidence-index/v1",
+  "training_executed_by_observation": false
+}

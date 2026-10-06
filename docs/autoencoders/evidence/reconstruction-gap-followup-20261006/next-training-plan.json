@@ -1,0 +1,64 @@
+{
+  "schema": "next-balanced-source-coverage-proposal/v1",
+  "status": "data_and_protocol_proposal_only",
+  "new_fitting_approved_by_this_plan": false,
+  "training_executed": false,
+  "models_or_encoders_executed_by_this_plan": false,
+  "downloads_performed": false,
+  "checkpoint_selected_or_promoted": false,
+  "qualified": false,
+  "admitted": false,
+  "proof_authority": false,
+  "source_semantics_verified": false,
+  "Constitution_formalized": false,
+  "evidence_basis": {
+    "completed_TRAIN_observation": "train-observation-summary.json",
+    "completed_exposed_v3_diagnosis": "fixed-prefix-scale-summary.json",
+    "auxiliary_generated_TRAIN_formulas": "384D and 768D each 96/96 exact, split into 48 original and 48 normative",
+    "auxiliary_TRAIN_modality_source_and_combined": "Both 180/180 in both cohorts at each width; no source-correct/generated-wrong TRAIN scalar.",
+    "auxiliary_384_normative_source_action": "179/180; one approve-for-deliver source argmax, corrected to deliver by actual combined generation.",
+    "objective_interpretation": "Repeating current source or combined modality CE on the same complete TRAIN bank is a confidence-only experiment. No combined TRAIN modality error is demonstrated. It is not the preferred next repair claim."
+  },
+  "principal_next_step": {
+    "action": "Prepare and independently review balanced new source wording before choosing another objective or fitting.",
+    "meanings": "Preserve the exact frozen original 90 unique seven-facet rule identities, including actor/action/object/modality and empty qualifiers.",
+    "candidate_bank": "Two new independently reviewed wording families, one rendition of each unchanged 90 rule per family: 180 clauses total; six modality/template strata of 30.",
+    "coverage": [
+      "Balance obligations, permissions and prohibitions across the complete 30 actor/action/object groups.",
+      "Cover varied actor placement, action gerunds and modality/negation attachment, including deliver/notice prohibition wordings without copying exposed-v3 sources.",
+      "Retain all proposed rows and strata in review, preparation and evaluation; no selecting only easy or failed cases."
+    ],
+    "source_separation": "Exclude all exposed-v3 source strings/groups and sealed 60 development sources from new TRAIN or checkpoint selection. Document source-group overlap and meaning exposure; literal novelty alone is not a fresh semantic holdout.",
+    "review_requirement": "Obtain independent source/formal-pair review and resolve unsupported or ambiguous labels before any future fit; transport success alone supplies no semantic authority.",
+    "future_matched_comparison": "If a separate fit protocol is later authorized, compare a 384D existing-bank continuation and new-bank continuation from the same frozen selected384D auxiliary tensor with identical architecture, updates, objective weighting and original decoder/count rows. Keep width-specific native inputs and 768D controls separate.",
+    "current_plan_scope": "No optimizer recipe is activated, no new data is silently admitted, and no numerical continuation is performed by this plan."
+  },
+  "optional_action_head_hypothesis": {
+    "justification": "A declared existing TRAIN source-only action error is present, while actual combined generation already corrects it.",
+    "future_protocol_requirement": "Any source-action auxiliary requires a separate versioned private adapter and matched zero-graph control, all 180 normative TRAIN action sites and complete original TRAIN retention; do not train only the one miss or import v3 labels.",
+    "current_owner_limit": "The frozen normative modality auxiliary targets non-action parameters; it does not automatically constitute an action-head training owner.",
+    "claim_limit": "Repairing a source-only TRAIN argmax would not demonstrate a combined reconstruction repair or generalization."
+  },
+  "required_measurement": {
+    "actual_generation": "One actual source-only greedy rollout per declared endpoint; source/combined argmax diagnostics never replace emitted formulas.",
+    "readouts": "Retain full32 source, recurrent and combined distributions at actually visited prefixes; no modality-only mask or reference-built prefix.",
+    "accounting": "Keep cohort/width/arm separate, all ordered rules, all seven facets, complete scalar denominators, extra/missing/invalid/EOS counts and unvisited/null sites.",
+    "references": "Collect durable predictions/traces before separate posthoc references; explicitly disclose any inherited TRAIN metadata loader access.",
+    "controls": "Retain all four immutable E tensor endpoints, archive original TRAIN token/status/EOS parity, and distinguish selected/last aliases from independent replications."
+  },
+  "qualifier_lane": {
+    "separate_from_normative32V": true,
+    "preflight": "Opt-in canonical qualifier representability preflight; no automatic training or label admission.",
+    "requirements": "Independently reviewed nonempty qualifier pairs and explicit compatible codec/decoder lineage before fitting. Preserve ordered occurrences, scope, exact temporal/duration interpretation and explicit context; do not flatten unsupported structures.",
+    "current_reviewed_corpus": "Existing 64-item packet pending, zero authenticated reviews/admitted targets; authored caller premises are not reviewed natural-source translations."
+  },
+  "fixed_boundaries": {
+    "context_tokens": 512,
+    "output_tokens": 512,
+    "temperature": 0,
+    "workers": 1,
+    "native_cache_profiles": "Preserve exact width-specific profiles and provenance; no encoder forward, downloads, truncation or context increase. Historical original 768D 8192-token producer profile remains historical.",
+    "frozen_owners": "Keep S/M2/E closures, original 90/180 rule identities, frozen32-value normative codec, 8D linguistic teacher, 4096D lineage and restart12 checkpoint unchanged.",
+    "gates": "Source-fidelity, modality/native-family, proof and Lake gates retain their existing requirements. Only applicable actual lake build <Lib> grants Lean admission; no shortcut or default activation."
+  }
+}
