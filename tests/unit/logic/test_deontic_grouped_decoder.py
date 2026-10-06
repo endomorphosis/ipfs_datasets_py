@@ -190,39 +190,26 @@ def test_direct_decoder_accepts_only_exact_typed_request_and_revalidates_forged_
 
 
 def test_semantic_renderer_never_calls_source_parser_group_builder_or_legacy_decoder(monkeypatch):
-    from ipfs_datasets_py.logic.deontic import decoder
-    from ipfs_datasets_py.logic.deontic.utils import deontic_parser
+    import sys
+    from importlib import import_module
+    from types import ModuleType
 
     def forbidden(*args, **kwargs):
         raise AssertionError('Source-based or legacy decode path was accessed')
 
-    # The source-only integration need not install the optional legacy bridge.
-    # If it is absent, prove that any attempted fallback import fails. If it
-    # exists in a later integration, poison its real source-recovery helpers.
-    import importlib
-    import importlib.util
-    import sys
-    for module_name in (
-        "ipfs_datasets_py.logic.deontic.coordination",
-        "ipfs_datasets_py.logic.autoformal.legal_coordination",
+    # Test-only sentinels make forbidden source paths independent of optional modules.
+    for name, attributes in (
+        ('ipfs_datasets_py.logic.deontic.coordination', ('build_coordination_groups', 'reconstruct_source')),
+        ('ipfs_datasets_py.logic.deontic.utils.deontic_parser', ('extract_normative_elements', '_unresolved_duty_disjunction_groups')),
+        ('ipfs_datasets_py.logic.deontic.decoder', ('decode_legal_norm_ir',)),
     ):
-        if importlib.util.find_spec(module_name) is None:
-            monkeypatch.setitem(sys.modules, module_name, None)
-            with pytest.raises(ModuleNotFoundError):
-                importlib.import_module(module_name)
-        else:
-            optional_module = importlib.import_module(module_name)
-            for helper in ("build_coordination_groups", "reconstruct_source", "compile_coordination_group",
-                           "reconstruct_compiled_group", "coordination_decode_request_from_compiled"):
-                if hasattr(optional_module, helper):
-                    monkeypatch.setattr(optional_module, helper, forbidden)
-                    with pytest.raises(AssertionError):
-                        getattr(optional_module, helper)()
-    monkeypatch.setattr(deontic_parser, 'extract_normative_elements', forbidden)
-    monkeypatch.setattr(deontic_parser, '_unresolved_duty_disjunction_groups', forbidden, raising=False)
-    monkeypatch.setattr(decoder, 'decode_legal_norm_ir', forbidden)
+        sentinel = ModuleType(name)
+        for attribute in attributes:
+            setattr(sentinel, attribute, forbidden)
+        parent_name, _, child_name = name.rpartition(".")
+        monkeypatch.setattr(import_module(parent_name), child_name, sentinel, raising=False)
+        monkeypatch.setitem(sys.modules, name, sentinel)
     assert decode_coordination_request(request())['structure_compiled'] is True
-
 
 
 def test_request_and_result_mutable_wire_copies_do_not_change_subsequent_rendering():

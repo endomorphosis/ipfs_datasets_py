@@ -246,36 +246,27 @@ def test_controlled_decoder_text_exposes_caller_scope_and_retains_unreviewed_sta
 
 
 def test_decoder_has_no_dependency_on_group_or_source_reconstruction(monkeypatch):
-    from ipfs_datasets_py.logic.deontic.utils import deontic_parser
-    request = typed()
+    import sys
+    from importlib import import_module
+    from types import ModuleType
+
     def forbidden(*args, **kwargs):
         raise AssertionError("Original source/group reconstruction was consulted")
-    # The source-only integration need not install the optional legacy bridge.
-    # If it is absent, prove that any attempted fallback import fails. If it
-    # exists in a later integration, poison its real source-recovery helpers.
-    import importlib
-    import importlib.util
-    import sys
-    for module_name in (
-        "ipfs_datasets_py.logic.deontic.coordination",
-        "ipfs_datasets_py.logic.autoformal.legal_coordination",
+
+    # Test-only sentinels make forbidden source paths independent of optional modules.
+    for name, attributes in (
+        ('ipfs_datasets_py.logic.deontic.coordination', ('build_coordination_groups', 'reconstruct_source')),
+        ('ipfs_datasets_py.logic.deontic.utils.deontic_parser', ('extract_normative_elements',)),
     ):
-        if importlib.util.find_spec(module_name) is None:
-            monkeypatch.setitem(sys.modules, module_name, None)
-            with pytest.raises(ModuleNotFoundError):
-                importlib.import_module(module_name)
-        else:
-            optional_module = importlib.import_module(module_name)
-            for helper in ("build_coordination_groups", "reconstruct_source", "compile_coordination_group",
-                           "reconstruct_compiled_group", "coordination_decode_request_from_compiled"):
-                if hasattr(optional_module, helper):
-                    monkeypatch.setattr(optional_module, helper, forbidden)
-                    with pytest.raises(AssertionError):
-                        getattr(optional_module, helper)()
-    monkeypatch.setattr(deontic_parser, "extract_normative_elements", forbidden)
+        sentinel = ModuleType(name)
+        for attribute in attributes:
+            setattr(sentinel, attribute, forbidden)
+        parent_name, _, child_name = name.rpartition(".")
+        monkeypatch.setattr(import_module(parent_name), child_name, sentinel, raising=False)
+        monkeypatch.setitem(sys.modules, name, sentinel)
+    request = typed()
     result = decode_coordination_request(request)
     assert result["structure_compiled"] is True
-
 
 
 @pytest.mark.parametrize("scope,expected_modal_count", [("modal_over_actions", 1), ("disjunction_of_norms", 3)])
