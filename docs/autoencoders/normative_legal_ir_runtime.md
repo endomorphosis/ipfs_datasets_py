@@ -108,3 +108,7 @@ its balanced independently reviewed wording proposal: another same-bank modality
 loss does not address a demonstrated TRAIN reconstruction error. Nonempty
 qualifiers, exact original-text reconstruction and 8D/384D-to-768D transfer
 remain separate decoder/data/qualification tasks.
+
+For a separately bound existing source cohort, see the additive
+[retained native-cache runtime](normative_cached_legal_ir_runtime.md). The
+original split gate described here remains unchanged.

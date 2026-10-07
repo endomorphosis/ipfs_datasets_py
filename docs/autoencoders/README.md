@@ -11,6 +11,7 @@ belong to their named backend; they are not interchangeable across backends.
 
 | I need to… | Start here |
 | --- | --- |
+| Replay selected normative Legal384/768 states on their original or separately bound retained native caches | [Original cached replay](normative_legal_ir_runtime.md), [retained native caches](normative_cached_legal_ir_runtime.md) |
 | Reconcile other agents' branches, findings and decoder progress | [Shared progress and formalization priorities](progress_integration.md) |
 | Select a version across Legal, Security, Intent and UI/UX | [Versioned runtime interface](versioned_runtime_interface.md) |
 | Inspect required logic families, decoder losses and Lake coverage | [Logic output requirements and inventory](logic_output_requirements.md) |

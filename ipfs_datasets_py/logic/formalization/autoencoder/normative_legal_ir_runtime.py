@@ -30,18 +30,18 @@ _VOCABULARY = ["<pad>", "<bos>", "<eos>", '"F"', '"O"', '"P"', '"action"',
     '"trustee"', ",", ":", "[", "]", "{", "}"]
 
 
-def _validate_request(request):
+def _validate_request(request, *, _decoder_contract_id=DECODER_CONTRACT_ID):
     contextual._require(type(request) is dict and set(request) == _REQUEST_FIELDS,
                         "closed seven-field normative request required")
     contextual._require(type(request["decoder_contract_id"]) is str
-        and request["decoder_contract_id"] == DECODER_CONTRACT_ID,
+        and request["decoder_contract_id"] == _decoder_contract_id,
         "exact opt-in normative decoder contract required")
     contextual._require(type(request["training_recipe_name"]) is str
         and request["training_recipe_name"] in _RECIPES, "explicit supported normative recipe required")
 
 
-def _capture(request, *, source_owner_pins, **kwargs):
-    _validate_request(request)
+def _capture(request, *, source_owner_pins, _decoder_contract_id=DECODER_CONTRACT_ID, **kwargs):
+    _validate_request(request, _decoder_contract_id=_decoder_contract_id)
     contextual._require(type(source_owner_pins) is dict
         and set(source_owner_pins) == set(SOURCE_OWNER_NAMES), "exact fifteen-owner normative source closure required")
     legacy = {name: source_owner_pins[name] for name in contextual.SOURCE_OWNER_NAMES}
@@ -58,13 +58,13 @@ def _capture(request, *, source_owner_pins, **kwargs):
     return options
 
 
-def _prepare(options):
+def _prepare(options, *, _decoder_contract_id=DECODER_CONTRACT_ID, _source_packet=None):
     request = options["normative_request"]
-    _validate_request(request)
+    _validate_request(request, _decoder_contract_id=_decoder_contract_id)
     contextual._require(contextual._raw({key: request[key] for key in contextual._REQUEST_FIELDS})
         == contextual._raw(options["request"]), "normative and native request identities differ")
     recipe = _RECIPES[request["training_recipe_name"]]
-    plan, prepared, witnesses = contextual._prepare(options, _selected_recipe=recipe)
+    plan, prepared, witnesses = contextual._prepare(options, _selected_recipe=recipe, _source_packet=_source_packet)
     contextual._require(contextual._raw(prepared["checkpoint"]["codec"]) == contextual._raw({
         "schema": "typed-json-lexical/v1", "target_vocabulary": _VOCABULARY}),
         "exact inherited normative32 vocabulary and ordering required")
@@ -74,7 +74,7 @@ def _prepare(options):
     selector.update(record_id=registration.ir_model_asset_record_id(request["ir_family_id"],
         request["dimension"], request["dimension_role"], role, request["checkpoint_sha256"]),
         role=role, schema_version=None, profile_id=None, format_id=None)
-    plan.update(schema=SCHEMA, request=dict(request), decoder_contract_id=DECODER_CONTRACT_ID,
+    plan.update(schema=SCHEMA, request=dict(request), decoder_contract_id=_decoder_contract_id,
         saved_training_recipe=dict(recipe), model_manager_selector=selector,
         model_manager_binding_resolved=False,
         decoder_contract=dict(schema="normative-cached-decoder-contract/v1",

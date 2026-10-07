@@ -314,3 +314,15 @@ def open_normative_legal_ir_autoencoder(request, **kwargs):
     """Explicitly restore a selected normative decoder using unchanged cached inputs."""
     from .normative_legal_ir_runtime import open_normative_legal_ir_autoencoder as open_runtime
     return open_runtime(request, **kwargs)
+
+
+def prepare_normative_cached_legal_ir_runtime(request, **kwargs):
+    """Validate a retained native source cache against a selected normative state."""
+    from .normative_cached_legal_ir_runtime import prepare_normative_cached_legal_ir_runtime as prepare
+    return prepare(request, **kwargs)
+
+
+def open_normative_cached_legal_ir_autoencoder(request, **kwargs):
+    """Restore a normative decoder with independently bound retained input caches."""
+    from .normative_cached_legal_ir_runtime import open_normative_cached_legal_ir_autoencoder as open_runtime
+    return open_runtime(request, **kwargs)

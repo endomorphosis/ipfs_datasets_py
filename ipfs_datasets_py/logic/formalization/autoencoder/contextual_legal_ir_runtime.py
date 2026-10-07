@@ -374,9 +374,9 @@ def _documents(checkpoint, preprocessing, donor, dimension, *, _selected_recipe=
             "donor_checkpoint": {key: donor[key] for key in ("codec", "config", "model_state")}}
 
 
-def _sources(rows, contexts, dimension, row_ids, source_binding):
+def _source_rows(rows, contexts, dimension, row_ids):
     _require(type(rows) is list and 1 <= len(rows) <= 4096 and type(contexts) is dict, "closed source-only cached split required")
-    by_id, normalized, sources = {}, set(), []
+    by_id, normalized = {}, set()
     for index, row in enumerate(rows):
         _require(type(row) is dict and set(row) == {"id", "source_text", "input"}, "source-only row must exclude gold/targets")
         _text(row["id"], 512, "source row id")
@@ -408,17 +408,11 @@ def _sources(rows, contexts, dimension, row_ids, source_binding):
             byte += len(encoded) + 2
         by_id[row["id"]] = (index, row, descriptor)
         normalized.add(norm)
-        sources.append(row["id"])
     _require(set(contexts) == set(by_id) and all(identifier in by_id for identifier in row_ids), "exact selected source/context membership required")
-    _require(type(source_binding) is dict and source_binding.get("schema") == "training-source-clause-context/v1"
-        and source_binding.get("reference_labels_accessed") is False, "saved target-free source binding required")
-    validation = source_binding.get("validation")
-    _require(type(validation) is dict and validation.get("schema") == "source-clause-context/v1"
-        and type(validation.get("dimension")) is int and validation["dimension"] == dimension
-        and validation.get("reference_labels_accessed") is False
-        and validation.get("contexts_sha256") == _digest(contexts), "saved original source-context split digest differs")
-    inventory = [{"id": row["id"], "source_sha256": contexts[row["id"]]["source_sha256"]} for row in rows]
-    _require(_raw(validation.get("source_inventory")) == _raw(inventory), "saved original source-only row inventory/order differs")
+    return by_id
+
+
+def _selected_sources(by_id, row_ids):
     selected, selected_contexts, receipts = [], {}, []
     for identifier in row_ids:
         index, row, descriptor = by_id[identifier]
@@ -428,6 +422,20 @@ def _sources(rows, contexts, dimension, row_ids, source_binding):
             input_sha256=_digest(row["input"]), context_sha256=_digest(descriptor),
             source_clause_count=len(descriptor["segments"]), source_padding_mask=[True]*len(descriptor["segments"])+[False]*(8-len(descriptor["segments"]))))
     return {"rows": selected, "contexts": selected_contexts}, receipts
+
+
+def _sources(rows, contexts, dimension, row_ids, source_binding):
+    by_id = _source_rows(rows, contexts, dimension, row_ids)
+    _require(type(source_binding) is dict and source_binding.get("schema") == "training-source-clause-context/v1"
+        and source_binding.get("reference_labels_accessed") is False, "saved target-free source binding required")
+    validation = source_binding.get("validation")
+    _require(type(validation) is dict and validation.get("schema") == "source-clause-context/v1"
+        and type(validation.get("dimension")) is int and validation["dimension"] == dimension
+        and validation.get("reference_labels_accessed") is False
+        and validation.get("contexts_sha256") == _digest(contexts), "saved original source-context split digest differs")
+    inventory = [{"id": row["id"], "source_sha256": contexts[row["id"]]["source_sha256"]} for row in rows]
+    _require(_raw(validation.get("source_inventory")) == _raw(inventory), "saved original source-only row inventory/order differs")
+    return _selected_sources(by_id, row_ids)
 
 
 def _capture(request, checkpoint_pin, preprocessing_pin, donor_checkpoint_pin, source_inputs_pin,
@@ -459,7 +467,7 @@ def _capture(request, checkpoint_pin, preprocessing_pin, donor_checkpoint_pin, s
             "deadline_seconds": deadline_seconds, "max_reference_bytes": max_reference_bytes}
 
 
-def _prepare(options, *, _selected_recipe=None):
+def _prepare(options, *, _selected_recipe=None, _source_packet=None):
     pins = options["pins"]
     witnesses = {name: _witness(pin["path"]) for name, pin in pins.items()}
     documents = {name: _json(_read(pin, retain=True)) for name, pin in pins.items() if not name.startswith("source:")}
@@ -471,8 +479,11 @@ def _prepare(options, *, _selected_recipe=None):
                           _selected_recipe=_selected_recipe)
     _require(documents["checkpoint"]["lineage"]["teacher_checkpoint_sha256"] == pins["donor_checkpoint"]["sha256"],
              "exact donor checkpoint lineage pin differs")
-    inputs, row_receipts = _sources(documents["source_inputs"], documents["source_contexts"], dimension, options["row_ids"],
-                                  documents["preprocessing"].get("source_binding"))
+    if _source_packet is None:
+        inputs, row_receipts = _sources(documents["source_inputs"], documents["source_contexts"], dimension, options["row_ids"],
+                                      documents["preprocessing"].get("source_binding"))
+    else:
+        inputs, row_receipts = _source_packet(documents, options, dimension)
     checkpoint, preprocessing = documents["checkpoint"], documents["preprocessing"]
     plan = dict(schema=SCHEMA, request=options["request"], artifact_receipts={name: pin for name, pin in pins.items() if not name.startswith("source:")},
         source_owner_receipts={name[7:]: pin for name, pin in pins.items() if name.startswith("source:")},
