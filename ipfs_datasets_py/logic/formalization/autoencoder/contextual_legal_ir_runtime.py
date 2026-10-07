@@ -262,16 +262,18 @@ def _normalization(value, dimension):
         and _raw(value["scale"]) == _raw(value.get("fitted_training_scale")), "saved fitted normalization differs")
 
 
-def _documents(checkpoint, preprocessing, donor, dimension):
+def _documents(checkpoint, preprocessing, donor, dimension, *, _selected_recipe=None):
     _require(type(checkpoint) is dict and checkpoint.get("schema") == "private-native-dimension-source-state/v1"
         and type(checkpoint.get("dimension")) is int and checkpoint["dimension"] == dimension,
         "exact retained private-state schema and native input width required")
     _require(set(checkpoint) == {"architecture", "codec", "dimension", "initializer_receipt", "input_transform", "lineage",
         "model_state", "recipe", "role", "schema", "selected", "tensor_sha256", "weights_sha256", *_STATE_FALSE},
         "closed complete retained state required")
+    selected_recipe = ({"name": "continue-lr0001", "learning_rate": .0001}
+                       if _selected_recipe is None else _selected_recipe)
     _require(all(checkpoint[key] is False for key in _STATE_FALSE) and checkpoint["selected"] is True
-        and checkpoint["role"] == "selected" and _raw(checkpoint["recipe"]) == _raw({"name": "continue-lr0001", "learning_rate": .0001}),
-        "exact selected continuation and false authority required")
+        and checkpoint["role"] == "selected" and _raw(checkpoint["recipe"]) == _raw(selected_recipe),
+        "exact selected recipe and false authority required")
     architecture = checkpoint["architecture"]
     _require(type(architecture) is dict and architecture.get("schema") == "ordered-clause-recurrent-source-decoder-development/v1"
         and type(architecture.get("dimension")) is int and architecture["dimension"] == dimension
@@ -457,7 +459,7 @@ def _capture(request, checkpoint_pin, preprocessing_pin, donor_checkpoint_pin, s
             "deadline_seconds": deadline_seconds, "max_reference_bytes": max_reference_bytes}
 
 
-def _prepare(options):
+def _prepare(options, *, _selected_recipe=None):
     pins = options["pins"]
     witnesses = {name: _witness(pin["path"]) for name, pin in pins.items()}
     documents = {name: _json(_read(pin, retain=True)) for name, pin in pins.items() if not name.startswith("source:")}
@@ -465,7 +467,8 @@ def _prepare(options):
         if name.startswith("source:"):
             _read(pin)
     dimension = options["request"]["dimension"]
-    prepared = _documents(documents["checkpoint"], documents["preprocessing"], documents["donor_checkpoint"], dimension)
+    prepared = _documents(documents["checkpoint"], documents["preprocessing"], documents["donor_checkpoint"], dimension,
+                          _selected_recipe=_selected_recipe)
     _require(documents["checkpoint"]["lineage"]["teacher_checkpoint_sha256"] == pins["donor_checkpoint"]["sha256"],
              "exact donor checkpoint lineage pin differs")
     inputs, row_receipts = _sources(documents["source_inputs"], documents["source_contexts"], dimension, options["row_ids"],
@@ -516,15 +519,16 @@ def _verify_origins(plan):
 
 
 class _ContextualLegalAutoencoder:
-    def __init__(self, owner, model, options, plan, witnesses):
+    def __init__(self, owner, model, options, plan, witnesses, *, _prepare_plan=None):
         self._owner, self._model = owner, model
+        self._prepare_plan = _prepare if _prepare_plan is None else _prepare_plan
         self._options_bytes, self._plan_bytes = _raw(options), _raw(plan)
         self._witnesses = witnesses
         self._inference_started = self._inferred = False
 
     def _recheck(self):
         options = json.loads(self._options_bytes)
-        plan, _, _ = _prepare(options)
+        plan, _, _ = self._prepare_plan(options)
         _require(_raw(plan) == self._plan_bytes, "contextual captured plan changed after opening")
         _verify_origins(plan)
         _fence(options["pins"], self._witnesses)
