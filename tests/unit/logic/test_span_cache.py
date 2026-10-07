@@ -1,12 +1,12 @@
 """Sealed span cache skips compiles and unseals dependents when terms change."""
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
 import pyarrow.parquet as pq
 import pytest
-
 from ipfs_datasets_py.huggingface.autoformal_span_cache import (
     AutoformalSpanCacheError,
     build_span_cache_package,
@@ -15,6 +15,7 @@ from ipfs_datasets_py.huggingface.autoformal_span_cache import (
 from ipfs_datasets_py.logic.autoformal.span_cache import (
     SpanCache,
     SpanCacheError,
+    SpanCacheTextLimits,
     span_groups_from_parquet,
     terms_from_rule,
 )
@@ -131,8 +132,9 @@ def test_sparse_status_file_retry_is_immutable_across_enqueue_ticks(tmp_path):
 
 
 def test_sparse_history_migration_rolls_back_partial_insert_and_retries(tmp_path, monkeypatch):
-    import duckdb
     import json
+
+    import duckdb
 
     path = tmp_path / "cache.duckdb"
     cache = SpanCache(path)
@@ -715,3 +717,261 @@ def test_parquet_reader_pins_sealed_spans_only(tmp_path: Path) -> None:
         span_groups_from_parquet(resume)
     with pytest.raises(AutoformalSpanCacheError, match="resume-checkpoint"):
         build_span_cache_package([_agreed()], tmp_path / "resume-checkpoint.parquet")
+
+
+_TEXT_WRITE_ROUTES = ("enqueue", "census_seal", "census_gap", "claimed_seal", "claimed_gap", "seal")
+
+
+def _text_write(cache, route, rows):
+    if route == "enqueue":
+        return cache.enqueue(rows)
+    if route.startswith("census_"):
+        return cache.apply_census(
+            {"rows": [{**row, "agrees": route == "census_seal"} for row in rows]},
+            path_hashes={"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "changed"},
+        )
+    if route.startswith("claimed_"):
+        return cache.complete_claimed(
+            [{**row, "agrees": route == "claimed_seal"} for row in rows]
+        )
+    assert route == "seal" and len(rows) == 1
+    return cache._seal_row(rows[0], code_identity="test", path_hashes={})
+
+
+@pytest.mark.parametrize("route", _TEXT_WRITE_ROUTES)
+def test_long_unicode_text_is_exact_through_write_reopen_and_export(tmp_path, route):
+    source = "法律🙂 shall preserve café.\n" * 2000 + "source tail"
+    decompiled = "🙂 Agency must preserve 完全 text.\n" * 2000 + "decompiled tail"
+    assert len(source) > 32 * 1024 and len(decompiled) > 32 * 1024
+    path = tmp_path / "cache.duckdb"
+    cache = SpanCache(path)
+    try:
+        if route.startswith("claimed_"):
+            cache.enqueue([{"source_span_id": "long", "text": source}])
+            assert cache.claim_batch("writer", limit=1)[0]["text"] == source
+        _text_write(cache, route, [{**_agreed("long"), "text": source, "decompiled": decompiled}])
+        stored = cache._db.execute(
+            "SELECT source_text, source_sha256, decompiled FROM span_cache WHERE source_span_id='long'"
+        ).fetchone()
+        expected_decompiled = "" if route == "enqueue" else decompiled
+        assert stored == (source, hashlib.sha256(source.encode("utf-8")).hexdigest(), expected_decompiled)
+        assert hashlib.sha256(stored[2].encode("utf-8")).hexdigest() == hashlib.sha256(
+            expected_decompiled.encode("utf-8")
+        ).hexdigest()
+        if route in ("census_seal", "claimed_seal", "seal"):
+            replay = cache.skip_compile("long", source_text=source)
+            assert replay["source_text"] == source and replay["decompiled"] == decompiled
+            assert replay["admitted"] is False and replay["formalized"] is False
+            exported = cache.sealed_rows()[0]
+            assert exported["source_text"] == source and exported["decompiled"] == decompiled
+            term = cache._db.execute(
+                "SELECT value, value_sha256 FROM sealed_terms WHERE kind='decompiled'"
+            ).fetchone()
+            assert term == (decompiled, hashlib.sha256(decompiled.encode("utf-8")).hexdigest())
+            package = build_span_cache_package(cache.sealed_rows(), tmp_path / "published")
+            assert package["row_count"] == 1
+            raw = pq.read_table(tmp_path / "published" / "sealed-spans.parquet").to_pylist()[0]
+            assert raw["source_text"] == source and raw["decompiled"] == decompiled
+    finally:
+        cache.close()
+    cache = SpanCache(path)
+    try:
+        assert cache._db.execute(
+            "SELECT source_text, source_sha256, decompiled FROM span_cache WHERE source_span_id='long'"
+        ).fetchone() == stored
+    finally:
+        cache.close()
+
+
+@pytest.mark.parametrize("route,field", [
+    (route, field) for route in _TEXT_WRITE_ROUTES for field in ("text", "decompiled")
+    if (route, field) != ("enqueue", "decompiled")
+])
+def test_oversized_utf8_field_refuses_before_any_write(tmp_path, route, field):
+    cache = SpanCache(tmp_path / "cache.duckdb", text_limits=SpanCacheTextLimits(max_text_bytes=64))
+    try:
+        cache.apply_census(
+            {"rows": [_agreed("old")]},
+            path_hashes={"ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "original"},
+        )
+        if route.startswith("claimed_"):
+            cache.enqueue([{"source_span_id": "new", "text": "small"}])
+            cache.claim_batch("writer", limit=1)
+        rows = [{**_agreed("new"), field: "é" * 33}]
+        if route != "seal":
+            rows.insert(0, _agreed("first"))
+            if route == "claimed_gap":
+                cache.enqueue([{"source_span_id": "first", "text": "small"}])
+        before = _local_tables(cache, include_agents=True)
+        with pytest.raises(SpanCacheError, match="max_text_bytes=64"):
+            _text_write(cache, route, rows)
+        assert _local_tables(cache, include_agents=True) == before
+    finally:
+        cache.close()
+
+
+@pytest.mark.parametrize("route", ["enqueue", "census_seal", "census_gap", "claimed_seal", "claimed_gap"])
+@pytest.mark.parametrize("budget", ["bytes", "rows"])
+def test_write_batch_budget_refuses_every_row_before_mutation(tmp_path, route, budget):
+    limits = SpanCacheTextLimits(
+        max_text_bytes=64, max_batch_text_bytes=100 if budget == "bytes" else 1024,
+        max_batch_rows=1 if budget == "rows" else 4,
+    )
+    cache = SpanCache(tmp_path / "cache.duckdb", text_limits=limits)
+    rows = [{**_agreed(name), "text": "x" * 60, "decompiled": ""} for name in ("first", "second")]
+    try:
+        if route.startswith("claimed_"):
+            for row in rows:
+                cache.enqueue([{**row, "text": "small"}])
+            cache.claim_batch("writer", limit=2)
+        before = _local_tables(cache, include_agents=True)
+        match = "max_batch_text_bytes=100" if budget == "bytes" else "max_batch_rows=1"
+        with pytest.raises(SpanCacheError, match=match):
+            _text_write(cache, route, rows)
+        assert _local_tables(cache, include_agents=True) == before
+    finally:
+        cache.close()
+
+
+@pytest.mark.parametrize("route", _TEXT_WRITE_ROUTES)
+def test_supplied_source_hash_cannot_describe_only_a_truncated_prefix(tmp_path, route):
+    source = "x" * (32 * 1024) + "unseen suffix"
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    row = {**_agreed("long"), "text": source, "source_sha256": hashlib.sha256(
+        source[:32 * 1024].encode("utf-8")
+    ).hexdigest()}
+    try:
+        if route.startswith("claimed_"):
+            cache.enqueue([{**row, "source_sha256": ""}])
+            cache.claim_batch("writer", limit=1)
+        before = _local_tables(cache, include_agents=True)
+        with pytest.raises(SpanCacheError, match="complete source UTF-8 bytes"):
+            _text_write(cache, route, [row])
+        assert _local_tables(cache, include_agents=True) == before
+        row["source_sha256"] = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        _text_write(cache, route, [row])
+        assert cache._db.execute("SELECT source_sha256 FROM span_cache").fetchone()[0] == row["source_sha256"]
+    finally:
+        cache.close()
+
+
+def test_only_actual_enqueue_writes_consume_text_budget(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb", text_limits=SpanCacheTextLimits(
+        max_text_bytes=64, max_batch_text_bytes=64, max_batch_rows=1,
+    ))
+    try:
+        cache.enqueue([{"source_span_id": "old", "text": "original"}])
+        huge = "x" * 1000
+        assert cache.enqueue([
+            {"source_span_id": "old", "text": huge},
+            {"text": huge},
+            {"source_span_id": "empty", "text": "", "decompiled": huge},
+            {"source_span_id": "new", "text": "small", "decompiled": huge},
+            {"source_span_id": "new", "text": huge},
+        ]) == 1
+        assert cache._db.execute("SELECT source_text FROM span_cache WHERE source_span_id='old'").fetchone()[0] == "original"
+        assert cache._db.execute("SELECT source_text, decompiled FROM span_cache WHERE source_span_id='new'").fetchone() == ("small", "")
+    finally:
+        cache.close()
+
+
+def test_skipped_invalid_and_nonpersisted_gap_rows_do_not_poison_write_batch(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb", text_limits=SpanCacheTextLimits(max_text_bytes=64))
+    huge = "x" * 1000
+    try:
+        result = cache.apply_census({"rows": [
+            {**_agreed("skip"), "skipped": True, "text": huge},
+            {"agrees": True, "text": huge},
+            {"source_span_id": "unwritten", "agrees": False, "text": "", "decompiled": huge},
+            {"source_span_id": "unwritten-invalid", "agrees": False, "text": "", "decompiled": "\ud800"},
+            _agreed("kept"),
+        ]})
+        assert result["sealed"] == 1
+        assert cache._db.execute("SELECT source_span_id FROM span_cache").fetchall() == [("kept",)]
+        cache.complete_claimed([{"source_span_id": "unknown", "text": huge, "decompiled": huge, "agrees": False}])
+        cache.complete_claimed([{"source_span_id": "unknown-invalid", "text": "\ud800", "decompiled": "\ud800", "agrees": False}])
+        assert cache._db.execute("SELECT source_span_id FROM span_cache").fetchall() == [("kept",)]
+    finally:
+        cache.close()
+
+
+def test_later_gap_for_an_earlier_insert_is_preflighted(tmp_path):
+    cache = SpanCache(tmp_path / "cache.duckdb", text_limits=SpanCacheTextLimits(max_text_bytes=64))
+    try:
+        before = _local_tables(cache)
+        with pytest.raises(SpanCacheError, match="max_text_bytes=64"):
+            cache.complete_claimed([_agreed("new"), {"source_span_id": "new", "text": "", "decompiled": "x" * 65}])
+        assert _local_tables(cache) == before
+    finally:
+        cache.close()
+
+
+def test_reopening_or_reenqueue_never_rewrites_historical_truncated_bytes(tmp_path):
+    full = "x" * (32 * 1024) + "historically omitted"
+    historical = full[:32 * 1024]
+    path = tmp_path / "cache.duckdb"
+    cache = SpanCache(path)
+    cache.apply_census({"rows": [{**_agreed(), "text": historical}]})
+    before = _local_tables(cache)
+    cache.close()
+    cache = SpanCache(path)
+    try:
+        assert _local_tables(cache) == before
+        assert cache.enqueue([{**_agreed(), "text": full}]) == 0
+        assert _local_tables(cache) == before
+        assert cache.skip_compile("s1", source_text=full) is None
+        row = cache._db.execute("SELECT source_text, source_sha256, status, reason FROM span_cache").fetchone()
+        assert row == (historical, hashlib.sha256(historical.encode("utf-8")).hexdigest(), "unsealed", "source_changed")
+    finally:
+        cache.close()
+
+
+def test_remote_resume_matches_complete_long_source_without_importing_text(tmp_path):
+    source = "🙂 law " * 7000 + "tail"
+    writer = SpanCache(tmp_path / "remote.duckdb")
+    reader = SpanCache(tmp_path / "local.duckdb")
+    try:
+        writer.register_agent("remote", dataset_id="dataset")
+        reader.register_agent("local", dataset_id="dataset")
+        writer.apply_census({"rows": [{**_agreed("long"), "text": source}]})
+        reader.enqueue([{"source_span_id": "long", "text": source}])
+        remote = tmp_path / "remote.parquet"
+        writer.write_resume_parquet(remote)
+        assert "source_text" not in pq.read_table(remote).schema.names
+        before = _local_tables(reader)
+        result = reader.upsert_remote_resume(remote, agent_id="local")
+        assert result["source_matched_status_counts"] == {"sealed": 1}
+        assert result["sealed"] == 0 and result["advisory_only"] is True
+        assert _local_tables(reader) == before
+        after = _local_tables(reader, include_agents=True)
+        assert reader.upsert_remote_resume(remote, agent_id="local")["agents_imported"] == 0
+        assert _local_tables(reader, include_agents=True) == after
+    finally:
+        writer.close()
+        reader.close()
+
+
+@pytest.mark.parametrize("field", ["text", "decompiled"])
+def test_invalid_utf8_refuses_before_first_census_write(tmp_path, field):
+    cache = SpanCache(tmp_path / "cache.duckdb")
+    try:
+        before = _local_tables(cache)
+        with pytest.raises(SpanCacheError, match="not valid UTF-8"):
+            cache.apply_census({"rows": [_agreed("first"), {**_agreed("invalid"), field: "\ud800"}]})
+        assert _local_tables(cache) == before
+    finally:
+        cache.close()
+
+
+@pytest.mark.parametrize("field", ["max_text_bytes", "max_batch_text_bytes", "max_batch_rows"])
+@pytest.mark.parametrize("value", [0, -1, True, 1.5])
+def test_text_limits_require_positive_integer_budgets(field, value):
+    with pytest.raises(SpanCacheError, match="positive integer"):
+        SpanCacheTextLimits(**{field: value})
+
+
+def test_invalid_limits_object_cannot_create_database_directory(tmp_path):
+    path = tmp_path / "not-created" / "cache.duckdb"
+    with pytest.raises(SpanCacheError, match="text_limits must be SpanCacheTextLimits"):
+        SpanCache(path, text_limits={"max_text_bytes": 64})
+    assert not path.parent.exists()

@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
 from .supervisor_queue import EDIT_SCOPES, canonical_bytes
-
 
 SCHEMA = "uscode-autoformal-span-cache/v1"
 MAX_TEXT = 32 * 1024
@@ -102,6 +102,26 @@ CREATE TABLE IF NOT EXISTS lean_terms (
 
 class SpanCacheError(RuntimeError):
     """The span queue cannot continue without inventing cache authority."""
+
+
+@dataclass(frozen=True)
+class SpanCacheTextLimits:
+    """UTF-8 limits for new source/decompilation writes, never truncation sizes.
+
+    The legacy ``MAX_TEXT`` character cutoff remains an historical constant;
+    it is not applied to new writes. Limits cover the persisted text fields,
+    not arbitrary rule payloads, Parquet decoding or total process RSS.
+    """
+
+    max_text_bytes: int = 1024 * 1024
+    max_batch_text_bytes: int = 64 * 1024 * 1024
+    max_batch_rows: int = 4096
+
+    def __post_init__(self) -> None:
+        for name in ("max_text_bytes", "max_batch_text_bytes", "max_batch_rows"):
+            value = getattr(self, name)
+            if type(value) is not int or value <= 0:
+                raise SpanCacheError(f"{name} must be a positive integer")
 
 
 def _sha(text: str) -> str:
@@ -426,7 +446,10 @@ def progress_fingerprint(
 class SpanCache:
     """File-backed DuckDB queue of pending, sealed, and unsealed spans."""
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, *, text_limits: SpanCacheTextLimits | None = None):
+        if text_limits is not None and not isinstance(text_limits, SpanCacheTextLimits):
+            raise SpanCacheError("text_limits must be SpanCacheTextLimits")
+        self.text_limits = text_limits if text_limits is not None else SpanCacheTextLimits()
         import duckdb
 
         destination = Path(path)
@@ -1115,33 +1138,88 @@ class SpanCache:
             [key, value],
         )
 
-    def enqueue(self, spans: Sequence[Mapping[str, Any]]) -> int:
-        """Insert pending spans. Existing sealed rows keep their seal."""
-
-        prepared: list[tuple[str, str, str, str]] = []
-        seen: set[str] = set()
-        for span in spans:
-            if not isinstance(span, Mapping):
-                continue
-            span_id = str(span.get("source_span_id") or span.get("id") or "")
-            text = str(span.get("text") or span.get("source_text") or "")[:MAX_TEXT]
-            if not span_id or not text or span_id in seen:
-                continue
-            seen.add(span_id)
-            prepared.append((span_id, _sha(text), str(span.get("legal_id") or ""), text))
-        if not prepared:
-            return 0
+    def _existing_span_ids(self, ids: Sequence[str]) -> set[str]:
         existing: set[str] = set()
-        ids = [row[0] for row in prepared]
         for offset in range(0, len(ids), 400):
             chunk = ids[offset : offset + 400]
+            if not chunk:
+                continue
             placeholders = ", ".join(["?"] * len(chunk))
             found = self._db.execute(
                 f"SELECT source_span_id FROM span_cache WHERE source_span_id IN ({placeholders})",
                 chunk,
             ).fetchall()
             existing.update(str(row[0]) for row in found)
-        fresh = [row for row in prepared if row[0] not in existing]
+        return existing
+
+    def _validate_text_batch(self, rows: Sequence[Mapping[str, Any]]) -> None:
+        """Refuse the entire actual write set before any persistent mutation."""
+
+        limits = self.text_limits
+        if len(rows) > limits.max_batch_rows:
+            raise SpanCacheError(f"text write batch exceeds max_batch_rows={limits.max_batch_rows}")
+        total = 0
+        for row in rows:
+            text = str(row.get("text") or row.get("source_text") or "")
+            for field, value in (("source_text", text), ("decompiled", str(row.get("decompiled") or ""))):
+                if len(value) > limits.max_text_bytes:
+                    raise SpanCacheError(f"{field} exceeds max_text_bytes={limits.max_text_bytes}")
+                try:
+                    encoded = value.encode("utf-8")
+                except UnicodeEncodeError as exc:
+                    raise SpanCacheError(f"{field} is not valid UTF-8") from exc
+                size = len(encoded)
+                if size > limits.max_text_bytes:
+                    raise SpanCacheError(f"{field} exceeds max_text_bytes={limits.max_text_bytes}")
+                total += size
+                if total > limits.max_batch_text_bytes:
+                    raise SpanCacheError(
+                        f"text write batch exceeds max_batch_text_bytes={limits.max_batch_text_bytes}"
+                    )
+            supplied_hash = row.get("source_sha256")
+            if supplied_hash and supplied_hash != _sha(text):
+                raise SpanCacheError("source_sha256 does not match complete source UTF-8 bytes")
+
+    def _census_write_rows(self, rows: Sequence[Mapping[str, Any]], *, enqueue: bool) -> list[Mapping[str, Any]]:
+        """Identify text that INSERT or UPDATE will persist, including earlier inserts."""
+
+        known = self._existing_span_ids([
+            str(row.get("source_span_id") or row.get("id") or "") for row in rows
+        ])
+        writes: list[Mapping[str, Any]] = []
+        for row in rows:
+            span_id = str(row.get("source_span_id") or row.get("id") or "")
+            text = str(row.get("text") or row.get("source_text") or "")
+            inserted = row.get("agrees") is True or (enqueue and bool(text))
+            if inserted or span_id in known:
+                writes.append(row)
+            if inserted:
+                known.add(span_id)
+        return writes
+
+    def enqueue(self, spans: Sequence[Mapping[str, Any]]) -> int:
+        """Insert exact pending text or refuse before writes. Existing rows stay intact."""
+
+        candidates: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for span in spans:
+            if not isinstance(span, Mapping):
+                continue
+            span_id = str(span.get("source_span_id") or span.get("id") or "")
+            text = str(span.get("text") or span.get("source_text") or "")
+            if not span_id or not text or span_id in seen:
+                continue
+            seen.add(span_id)
+            candidates.append({**span, "source_span_id": span_id, "text": text, "decompiled": ""})
+        if not candidates:
+            return 0
+        existing = self._existing_span_ids([row["source_span_id"] for row in candidates])
+        new_rows = [row for row in candidates if row["source_span_id"] not in existing]
+        self._validate_text_batch(new_rows)
+        fresh = [
+            (row["source_span_id"], _sha(row["text"]), str(row.get("legal_id") or ""), row["text"])
+            for row in new_rows
+        ]
         if fresh:
             self._db.executemany(
                 """
@@ -1282,8 +1360,15 @@ class SpanCache:
         code_identity: str = "",
         path_hashes: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Seal agreeing spans and keep gaps on the queue. Not an admit."""
+        """Seal or gap exact text; validate all writes before compiler changes."""
 
+        rows = [
+            dict(row) for row in agreement.get("rows") or []
+            if isinstance(row, Mapping) and not row.get("skipped")
+            and (row.get("source_span_id") or row.get("id"))
+        ]
+        write_rows = self._census_write_rows(rows, enqueue=True)
+        self._validate_text_batch(write_rows)
         hashes = dict(path_hashes or {})
         identity = code_identity or (compiler_identity(hashes) if hashes else self._meta("code_identity"))
         if hashes:
@@ -1291,12 +1376,12 @@ class SpanCache:
         else:
             change = {"changed_paths": [], "unsealed": 0, "code_identity": identity}
         sealed = 0
-        gaps = 0
-        for row in agreement.get("rows") or []:
-            if not isinstance(row, Mapping) or row.get("skipped"):
-                continue
+        # Preserve legacy gap accounting for unknown empty rows, but do not
+        # encode or bind payloads that cannot be persisted by an UPDATE.
+        gaps = len(rows) - len(write_rows)
+        for row in write_rows:
             span_id = str(row.get("source_span_id") or row.get("id") or "")
-            text = str(row.get("text") or row.get("source_text") or "")[:MAX_TEXT]
+            text = str(row.get("text") or row.get("source_text") or "")
             if not span_id:
                 continue
             self.enqueue([{"source_span_id": span_id, "text": text, "legal_id": row.get("legal_id")}])
@@ -1316,7 +1401,7 @@ class SpanCache:
                         _sha(text),
                         str(row.get("legal_id") or ""),
                         text,
-                        str(row.get("decompiled") or "")[:MAX_TEXT],
+                        str(row.get("decompiled") or ""),
                         str(row.get("reason") or ""),
                         _repair_json(row.get("repair")),
                         span_id,
@@ -1345,9 +1430,10 @@ class SpanCache:
         code_identity: str,
         path_hashes: Mapping[str, str],
     ) -> None:
+        self._validate_text_batch([row])
         span_id = str(row.get("source_span_id") or row.get("id") or "")
-        text = str(row.get("text") or row.get("source_text") or "")[:MAX_TEXT]
-        decompiled = str(row.get("decompiled") or "")[:MAX_TEXT]
+        text = str(row.get("text") or row.get("source_text") or "")
+        decompiled = str(row.get("decompiled") or "")
         rule = dict(row.get("rule") or {}) if isinstance(row.get("rule"), Mapping) else {}
         self._db.execute(
             """
@@ -1456,13 +1542,19 @@ class SpanCache:
         code_identity: str = "",
         path_hashes: Mapping[str, str] | None = None,
     ) -> dict[str, Any]:
-        """Seal or gap a claimed batch. Does not admit."""
+        """Seal or gap exact claimed text; refuse oversized batches before writes."""
 
+        rows = [
+            dict(row) for row in rows
+            if isinstance(row, Mapping) and row.get("source_span_id")
+        ]
+        write_rows = self._census_write_rows(rows, enqueue=False)
+        self._validate_text_batch(write_rows)
         hashes = dict(path_hashes or {})
         identity = code_identity or self._meta("code_identity")
         sealed = 0
-        gaps = 0
-        for row in rows:
+        gaps = len(rows) - len(write_rows)
+        for row in write_rows:
             if not isinstance(row, Mapping):
                 continue
             span_id = str(row.get("source_span_id") or "")
@@ -1472,7 +1564,7 @@ class SpanCache:
                 self._seal_row(row, code_identity=identity, path_hashes=hashes)
                 sealed += 1
             else:
-                text = str(row.get("text") or row.get("source_text") or "")[:MAX_TEXT]
+                text = str(row.get("text") or row.get("source_text") or "")
                 self._db.execute(
                     """
                     UPDATE span_cache
@@ -1485,7 +1577,7 @@ class SpanCache:
                         _sha(text),
                         str(row.get("legal_id") or ""),
                         text,
-                        str(row.get("decompiled") or "")[:MAX_TEXT],
+                        str(row.get("decompiled") or ""),
                         str(row.get("reason") or "compiler_abstain"),
                         _repair_json(row.get("repair")),
                         span_id,
