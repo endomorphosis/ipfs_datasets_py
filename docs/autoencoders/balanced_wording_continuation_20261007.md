@@ -70,3 +70,8 @@ The [evidence index](evidence/balanced-wording-20261007/evidence-index.json) bin
 The standalone [replay preparation helper](../../scripts/ops/autoencoder/dual_bank_wording_replay/dual_bank_retention.py) exports `build_schedule`, `validate_schedule` and `retention_gate`. Its sibling tests cover budget conservation, full coverage, malformed receipts and complete formula retention. It neither invokes nor modifies a trainer. The proposed fit still needs a reviewed dual-cache adapter and truthful per-bank training receipts.
 
 The [main/worktree reconciliation](https://github.com/endomorphosis/lift_coding/blob/main/artifacts/autoencoder-balanced-wording-20261007/publication/final-main-worktree-reconciliation.md) also records older local-only tips and remaining provenance review. Their experimental cards and source material remain separate from live model owners; archived findings are not a runtime port or checkpoint promotion. Existing upstream cached-inference and source-span-decoder contributions are preserved by building this commit on current main.
+
+The additive [dual-bank trainer adapter](dual_bank_wording_training_adapter.md)
+now provides separately validated caches, bank-local dispatch and reconciled
+per-bank training receipts. Its retained-parent forward probe executed no
+optimizer updates; the new matched retention fit remains a separate experiment.
