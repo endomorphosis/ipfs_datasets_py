@@ -1,0 +1,176 @@
+{
+  "schema": "uscode-all-span-pipeline-read-only-survey/v1",
+  "source_root": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+  "source_commit": "75f57f9eeff052a5718fd1f2c6a4b73de3784af8",
+  "observed_origin_main": "75f57f9eeff052a5718fd1f2c6a4b73de3784af8",
+  "agents_files_observed": [],
+  "source_tree_clean": true,
+  "scope": "Read-only current-main code and local worktree/branch inventory; no live dataset census, training, corpus downloads, database writes, or publication.",
+  "main_integrated_research": [
+    "1530efd07 source-span pilot",
+    "e35aef47e trigger readout",
+    "7b93b2d97 support/action residual",
+    "6791fc5d6 dual-bank replay",
+    "75f57f9ee original-parent reconciliation and retained checkpoint availability"
+  ],
+  "reuse_entrypoints": [
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/paired_span_census.py",
+      "callables": [
+        "load_paired_census_bundle",
+        "decode_artifact",
+        "build_paired_census",
+        "write_paired_census_bundle"
+      ],
+      "scope": "Hash-bounded paired bundle load/export and lossless original artifacts."
+    },
+    {
+      "path": "scripts/ops/legal_ir/import_span_cache_exchange.py",
+      "callables": [
+        "download_bundle",
+        "plan_import",
+        "materialize_import"
+      ],
+      "scope": "Both paired and legacy exchanges; plan-only default, explicit reviewed native repair materialization."
+    },
+    {
+      "path": "scripts/ops/legal_ir/run_legacy_span_cuda.py",
+      "callables": [
+        "engine",
+        "recover",
+        "publish_pending",
+        "stage"
+      ],
+      "scope": "Existing resident-CUDA single-writer progress engine; current model is legacy mock8 compiler guidance only."
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "callables": [
+        "prepare_progress_index",
+        "progress_coverage",
+        "iter_joined_section_batches"
+      ],
+      "scope": "Exact progress-to-source joins, nontruncating bounded source scan, stable historical identities."
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/paired_span_publication.py",
+      "callables": [
+        "publish_paired_manifest"
+      ],
+      "scope": "Append-only parent-commit-bound paired manifests and remote file validation."
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_publication.py",
+      "callables": [
+        "verify_and_evict_published_batch",
+        "cleanup_published_batches"
+      ],
+      "scope": "Only evict after exact-commit remote artifact verification."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_embedding_reuse.py",
+      "callables": [
+        "prepare_cached_embedding_reuse"
+      ],
+      "scope": "Metadata-only source/task/profile/asset cache matching, at most4096rows; no encoder execution."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py",
+      "callables": [
+        "prepare_normative_cached_legal_ir_runtime",
+        "open_normative_cached_legal_ir_autoencoder"
+      ],
+      "scope": "Authenticated historical216source-only native384/768 cache replay; not arbitrary new corpus."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "callables": [
+        "embed_rows"
+      ],
+      "scope": "Authenticated complete native768 loading/densepath/forward observation; new bounded-token producer profile must be declared."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py",
+      "callables": [
+        "build_ir_decoder_profile_inventory",
+        "resolve_ir_decoder_profile_route"
+      ],
+      "scope": "Explicit decoder profile/format/request routing."
+    },
+    {
+      "path": "scripts/ops/legal_ir/route_legal_uscode_context.py",
+      "callables": [
+        "route_manifest"
+      ],
+      "scope": "Complete denominator source-kind routing; presently exposed five-section context manifest."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_legal_text_roundtrip.py",
+      "callables": [
+        "score_legal_original_text_roundtrip"
+      ],
+      "scope": "Source-wording reconstruction separately from semantic formula exactness."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/learned_formula_observation.py",
+      "callables": [
+        "capture_learned_formula_observations",
+        "validate_learned_formula_observation"
+      ],
+      "scope": "Source-only runtime observation with explicit lineage legal_ir:source_conditioned_formula_v1; no gold or proof authority."
+    },
+    {
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+      "callables": [
+        "import_ir_model_manager_records"
+      ],
+      "scope": "Explicit source/task/family/dimension checkpoint binding imports with fresh readback."
+    }
+  ],
+  "gaps": [
+    {
+      "id": "paired-feed",
+      "detail": "SpanCacheFeed has only legacy exchange-manifest regexp/tree root and load_exchange_bundle; paired-v1/v2 default data are unsupported."
+    },
+    {
+      "id": "lossless-source",
+      "detail": "SpanCache.enqueue slices text to MAX_TEXT; existing legacy_span_intake rejects/tracks unmatched longtext instead of truncating."
+    },
+    {
+      "id": "corpus-cache-reader",
+      "detail": "normative_cached runtime hardcodes historical216receipts and batch_size4; generalize in separate versioned adapter retaining original replay."
+    },
+    {
+      "id": "native768-budget",
+      "detail": "Retained native768 cache execution profile512tokens;8192is historical model/profile ceiling, not exercised span coverage."
+    },
+    {
+      "id": "codec-ceiling",
+      "detail": "Closed target vocabulary cannot cover arbitrary statutory source atoms merely by expanding input dimension; source-copy/byte/subword successor needs new lineage."
+    },
+    {
+      "id": "lake-production",
+      "detail": "12cell directory storage planned_not_created; ducklake layout adapter required. IsolatedNativeDuckLakeHistory is metadata-only production=False and256MiB."
+    },
+    {
+      "id": "training-quality",
+      "detail": "HF train labels and compiler agreement do not qualify legal semantics; source-bound reviewed grouped targets required."
+    },
+    {
+      "id": "generation-identity",
+      "detail": "Legacy span-only sealed status/skip cannot serve newcheckpoint processing status; use composite source/model/schema/task/profile/compiler key."
+    }
+  ],
+  "proposed_execution_order": [
+    "Pin immutable dataset/source revisions and page everymanifest; inventory each config as observations, goals, artifacts, sourceinventory or progress without doublecounting.",
+    "Define all-span denominator and semantic-source/context bytes with perrecord states for unmatched, missingcontext, notes/history, unsupported, overbudget; preserve historicalobservations.",
+    "Extend paired feed support and add lossless arbitrarybounded cache reader; exactsource + producer/tokenprofile + assets caches only; no padded nativewidths.",
+    "Create LegalIR8/384/768 separate queues/indexes/registries and task/schema/profile/checkpoint identities; sharedimmutable sourceCAS, serializedowner perphysicalDuckDB.",
+    "Run diagnostic inference pilots8 then128 then1024 with raw/greedy/EOS provenance, complete denominator outputs and holdout review; maintain originalregression panels.",
+    "Qualify reviewed gold and split bysource-section/dependencygroups before training; freeze fresh blindevaluation; replay donors plus incremental targetrepresentation upgrades.",
+    "Warm768 from compatible trained8/384 heads with same-source nativepairs and held-frozen-head controls; validate512\u21921024\u21922048\u21924096\u21928192 independently.",
+    "Scale resumable shards acrossallmanifestedspans with resourceadmission, boundedoutbox/backpressure and exact-commitpublication validation.",
+    "Store formal candidates separately from checker-bound proofreceipts; supervisor planner admits only appropriate checkedsource/model/checker generations.",
+    "Separately qualify productionDuckLake layout/activation; continue DuckDBauthority and immutableParquet/CAS meanwhile."
+  ]
+}

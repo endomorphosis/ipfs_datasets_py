@@ -1,0 +1,123 @@
+{
+  "blocking_conceptual_findings": [],
+  "checked_gates": {
+    "all_span_accounting_distinct_from_formalization": true,
+    "compiler_and_model_proposal_not_gold": true,
+    "connected_derivative_groups_before_fit": true,
+    "encoder_output_geometry_separate": true,
+    "family_dimension_schema_task_separation": true,
+    "historical_pinset_not_blanket_dataset_block": true,
+    "new_confirmation_avoids_exposed_panels": true,
+    "no_duplicate_fit_claim": true,
+    "no_model_training_executed_by_plan": true,
+    "proof_source_fidelity_separate": true,
+    "raw64wide_byte_features_distinct_from_native_widths": true,
+    "reference_scoring_after_durable_generation": true,
+    "retained_original_assets": true,
+    "text_retrieval_not_learned_reconstruction": true
+  },
+  "corrections": [
+    {
+      "current": "measured forwards used512 inputtokens",
+      "id": "R1",
+      "location": "Researchtable native768row",
+      "reason": "Actualinputlength differsfrom configuredceiling.",
+      "replace_with": "measured producer runs imposed a512-token inputceiling; retainedexposed-v3 inputs were12–111 multilingualtokens",
+      "required": true
+    },
+    {
+      "change": "Explicitly enumerate authenticnative8D feature/spaCy/retainedproducerinput lineage andexistingcompatiblecheckpoint/task, alongside8Dprojectedlatents andlegacyhash diagnostics. Missing8Dproducerfeatures require their own measuredjob; unsupported8Dformulahead scope gets explicitdisposition. NewGTE jobs needonly384/768.",
+      "id": "R2",
+      "location": "Phase2 andparallel8Droute",
+      "reason": "Userrequestedallthree pathsinparallel; projected8D andmock8D are not substitutes forhistoricalnative8Dfeatures.",
+      "required": true
+    },
+    {
+      "change": "ForLean admissionrequireactual source-bound lake build <Lib> atpinned source/formal/toolchain/axiompolicy. Rawlean compilation remains diagnostic and cannotfill admitted/proofauthorityfields.",
+      "id": "R3",
+      "location": "Proofindex andM6acceptance",
+      "reason": "PreservesexistingexplicitLean/Lakeadmissioncontract.",
+      "required": true
+    },
+    {
+      "change": "Addplanned12cellHF repositorymap orper-cellhub_repository_id fields, withschema/task/run/versionprefixes beneath eachcell; existingrelease repositoriesremainuntouched andnewrepositoriespublic asauthorized.",
+      "id": "R4",
+      "location": "Familydimensionstore/checkpointpublication",
+      "reason": "Userexplicitlyrequestedseparateinventories,databases andHFrepositories foreachfamily/dimension.",
+      "required": true
+    },
+    {
+      "change": "Link/pinthe genuineoriginalcontextual384/768IR+textreceipts; callcohortsame48authoredemptyqualifieroriginalparagraphs, separatefromexposed-v3. Textbaselinewas deterministic source-withheldrendering withno learnedtextdecoder.",
+      "id": "R5",
+      "location": "Source references and48/48IR0/48texttable",
+      "reason": "Bothscoresverified buttraceableprimaryevidence makes interpretationclear.",
+      "required": false
+    },
+    {
+      "change": "Predeclarepilot-derived per-scope fidelity/refusal/critical-error andcostthresholds, cluster-awareuncertainty/reporting andconfirmation sample sizing beforefit; includeseedreplications whenpilot variance warrants. Separateinverse-fullwidthrepresentationcontrols from true reducedlatent capacitystudies.",
+      "id": "R6",
+      "location": "Pilotexit andlearningacceptance",
+      "reason": "Comprehensiveplan needsmeasurablepromotiondecision withoutclaimingunmeasuredthresholdperformance.",
+      "required": false
+    }
+  ],
+  "disposition": "approved_with_small_corrections",
+  "mutations": "Onlythisownedreviewreceiptwritten; reviewedplanandforeign code/trees unchanged.",
+  "reviewed_plan": {
+    "bytes": 31966,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/PLAN.md",
+    "sha256": "c3d7b9c47f3a21158ebee7a220312acb6ab2679a5d55edad316a196c8ca3ea71"
+  },
+  "same_cohort_across_widths": true,
+  "schema": "uscode-all-span-plan-research-review/v1",
+  "scope": "Independent retained-research reuse, fidelity/teacher/split gates, four-family/three-width/task separation and model/proof authority boundaries. Does not independently authenticate new Hub corpus counts or localhostresource census.",
+  "separate_evaluation_pin": {
+    "bytes": 22379,
+    "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/contextual-legal-runtime-20261006/separate-evaluation.json",
+    "sha256": "e05bd76ef4577698f0cd5aeb3b8676974d661f22808aebed58c7626f9543361b"
+  },
+  "verified_original_reconstruction_claims": [
+    {
+      "NFC_whitespace_exact": 0,
+      "canonical_contract_exact": 48,
+      "dimension": 384,
+      "independent_legal_equivalence_measured": false,
+      "ir_pin": {
+        "bytes": 553913,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-semantic-ir-evaluation.json",
+        "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+      },
+      "ordered_IR_exact": 48,
+      "original_UTF8_exact": 0,
+      "source_paragraphs": 48,
+      "source_rules": 180,
+      "text_pin": {
+        "bytes": 21317,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/contextual-legal-runtime-20261006/384-original-text-evaluation.json",
+        "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+      },
+      "trained_text_decoder_observed": false
+    },
+    {
+      "NFC_whitespace_exact": 0,
+      "canonical_contract_exact": 48,
+      "dimension": 768,
+      "independent_legal_equivalence_measured": false,
+      "ir_pin": {
+        "bytes": 553913,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-semantic-ir-evaluation.json",
+        "sha256": "d347e4cc6c69cd8d8b2f75b552f861f1f1dd092c02c8a8e64e769745b124c61f"
+      },
+      "ordered_IR_exact": 48,
+      "original_UTF8_exact": 0,
+      "source_paragraphs": 48,
+      "source_rules": 180,
+      "text_pin": {
+        "bytes": 21317,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/contextual-legal-runtime-20261006/768-original-text-evaluation.json",
+        "sha256": "62e2f6764fb3e010a7502af0bfaf54b82b8df5658087d612a6f203b5c1aa0491"
+      },
+      "trained_text_decoder_observed": false
+    }
+  ]
+}

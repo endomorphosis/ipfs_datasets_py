@@ -1,0 +1,101 @@
+{
+  "schema": "uscode-all-span-plan-evidence-index/v1",
+  "dataset_revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "source_revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+  "dataset_record_count": 443904,
+  "record_count_scope": "original queue span rows; unique IDs/source joins await first full census",
+  "files": [
+    {
+      "path": "coverage-findings.md",
+      "bytes": 8192,
+      "sha256": "1ef92722cbc493c98746d57eadb72eeb12eadc77a1397c4fc9c7a80e27d01565",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/coverage-findings.md"
+    },
+    {
+      "path": "progress-record-scope.json",
+      "bytes": 8354,
+      "sha256": "b085c9e51f7a1fa8bd5ddba5d70199a6b5a1adbfc778fd8a72498479398c561e",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/progress-record-scope.json"
+    },
+    {
+      "path": "existing-source-parquet-survey.json",
+      "bytes": 1784,
+      "sha256": "bbdb17d20725e2cf6c9348589e988557dfa3a5eb21c51e176b54108c699f2e23",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/existing-source-parquet-survey.json"
+    },
+    {
+      "path": "metadata-survey.json",
+      "bytes": 14576,
+      "sha256": "865414fb0e89619d52e41110b3404dc5563ae17bedfa172e604abb4f8e908110",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/metadata-survey.json"
+    },
+    {
+      "path": "original-schema-samples.json",
+      "bytes": 49150,
+      "sha256": "895da05b6feaa09f57fd220829edf24ce54662c0889a36f4c8d8288c833b079a",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/original-schema-samples.json"
+    },
+    {
+      "path": "pipeline-survey.json",
+      "bytes": 8436,
+      "sha256": "176dd82d0f51c4cde093663dacf2a93666f70a5a30ee1baa2846c773fa435c05",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/pipeline-survey/pipeline-survey.json"
+    },
+    {
+      "path": "pipeline-review.json",
+      "bytes": 6483,
+      "sha256": "1b348cc66ea13a1ffa6b220b059f39792e202d95a8ce21da9249fc369b5a650e",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/pipeline-survey/plan-review.json"
+    },
+    {
+      "path": "pipeline-review-final.json",
+      "bytes": 3354,
+      "sha256": "b1daa3d77b90c5f0479bd8d82e1ee1c4c943335a9521d3e9d8c88f31bf1939fb",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/pipeline-survey/plan-review-final.json"
+    },
+    {
+      "path": "research-survey.json",
+      "bytes": 22308,
+      "sha256": "ccf5b752697277d04419cd84ef6e853eb025f276fe6911d559288ae04bc78bd1",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/research-survey/research-survey.json"
+    },
+    {
+      "path": "research-review.json",
+      "bytes": 6721,
+      "sha256": "ebbbea43c10479928559cba7bbb640cc27c4121a9861bcabb04b07ff0c0264ed",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/research-survey/plan-research-review-r1.json"
+    },
+    {
+      "path": "research-review-final.json",
+      "bytes": 2893,
+      "sha256": "44428bd200dc3f33228065aa70a8776e631bd6f58cd7d928d0cc90efb7342df5",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/research-survey/plan-research-review-final.json"
+    },
+    {
+      "path": "dataset-plan-review.json",
+      "bytes": 4483,
+      "sha256": "1222b7e82a62e65b23376308e53bfd786b0213cbeaac5589ec1560872bbda0fc",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/plan-dataset-review.json"
+    },
+    {
+      "path": "plan-review-amendments.json",
+      "bytes": 1152,
+      "sha256": "77a3ccf5a57e82fb31b1f87e1a54a940e633546d3f43540c4332389b66f5c25f",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/plan-review-amendments.json"
+    },
+    {
+      "path": "manifest-closure-survey.json.gz",
+      "bytes": 226435,
+      "sha256": "0006074d487e39c82fc39ffa9527f3f83c335194537912bc269b740290f53d70",
+      "uncompressed_bytes": 2093588,
+      "uncompressed_sha256": "01514979a9871fffac9edf157592d147c2193b122c1cef41dcbd3542e5b13b2f",
+      "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/manifest-closure-survey.json"
+    }
+  ],
+  "no_model_or_training_execution": true,
+  "no_database_or_enqueue_actions": true,
+  "full_source_corpus_downloaded": false,
+  "full_artifact_bodies_expanded": false,
+  "reviewed_plan_source_sha256": "55a3c8e1ceb93e238b9a48fd0ce8296e409fecd1bdd5e18dd9da49cab39708dc",
+  "published_document_sha256": "5d031145b0b58070b4f90b59165d50e225e007d7193c129aa754072642bc2748"
+}

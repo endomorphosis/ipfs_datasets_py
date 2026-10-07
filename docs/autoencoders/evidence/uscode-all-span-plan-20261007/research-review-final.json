@@ -1,0 +1,49 @@
+{
+  "amendments_pin": {
+    "bytes": 1152,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/plan-review-amendments.json",
+    "sha256": "77a3ccf5a57e82fb31b1f87e1a54a940e633546d3f43540c4332389b66f5c25f"
+  },
+  "checks": {
+    "actual_lake_build": true,
+    "authentic8D_or_qualified_projection": true,
+    "configured_ceiling_and_actual_lengths": true,
+    "diagnostic_accounting_independent_training": true,
+    "durable_cursor_pending_failures": true,
+    "exact_historical_pinset_scope_not_blanket": true,
+    "explicit12_cell_hub_map": true,
+    "historical_conditioned_not_source_only": true,
+    "missing8D_features_jobs": true,
+    "original_primary_receipt_links": true,
+    "original_text_deterministic_untrained_scope": true,
+    "parallel_online_generations_no_finalfit": true,
+    "planned_hub_cells_not_deployed_claim": true,
+    "prefit_threshold_freeze": true,
+    "preserve8D384Dparallel": true,
+    "raw64_not_fictitious_gte_dimension": true,
+    "separate_leakage_context_dependency_graph": true,
+    "shared_context_transductive_disclosure": true,
+    "source_group_uncertainty": true,
+    "task_schema_profile_run_role_releases": true,
+    "truncation_all_producer_boundaries": true,
+    "weight_transfer_distinct_from_teacher_qualification": true
+  },
+  "disposition": "approved",
+  "findings": [],
+  "mutation_scope": "Only thisowned final review receipt written.",
+  "optional_measurement_followup": "When anactualcapacitystudy is declared, separatelyname full-width inversePCA/AE reconstruction versus true reducedlatent conditioning andmeasure parameter/count/cost differences. Thisdoes not blockinventory/transport planpublication.",
+  "original_measurement_attribution": "Source-only model IR evaluation establishes48/48referenceIR agreement; deterministicsource-withheld text rendering establishes0/48UTF8andNFC/whitespaceoriginal-proseagreement, onthe same48authoredempty-qualifieroriginalparagraphs across384/768. No trainedtextdecoderexecution orindependentlegal equivalence follows.",
+  "passed": true,
+  "plan_pin": {
+    "bytes": 35978,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/PLAN.md",
+    "sha256": "55a3c8e1ceb93e238b9a48fd0ce8296e409fecd1bdd5e18dd9da49cab39708dc"
+  },
+  "prior_research_review_pin": {
+    "bytes": 6721,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/research-survey/plan-research-review-r1.json",
+    "sha256": "ebbbea43c10479928559cba7bbb640cc27c4121a9861bcabb04b07ff0c0264ed"
+  },
+  "review_scope": "Focused final amendment review only. Prior primary48/48IR and0/48original-text receipt verification reused by its exact prior review pin; no cold asset reads, model restoration, training, enqueue, corpus rescan or foreign-tree mutation.",
+  "schema": "uscode-all-span-plan-final-research-review/v1"
+}

@@ -1,0 +1,22 @@
+{
+  "schema": "uscode-all-span-plan-review-amendments/v1",
+  "reviewed_original_sha256": "c3d7b9c47f3a21158ebee7a220312acb6ab2679a5d55edad316a196c8ca3ea71",
+  "final_plan_sha256": "55a3c8e1ceb93e238b9a48fd0ce8296e409fecd1bdd5e18dd9da49cab39708dc",
+  "final_plan_bytes": 35978,
+  "changes": [
+    "Producer ceiling versus actual token lengths clarified",
+    "Explicit8D feature/cache producer route",
+    "Source-withheld original-text control scope and direct receipts",
+    "Twelve logical family/dimension HF repository map with separate task/schema prefixes",
+    "Cursor/durable descriptor pending retries match implementation",
+    "Lossless input across census/seal/resume/publication",
+    "Training leakage graph distinct from contextual/proof dependency graph",
+    "Full diagnostic accounting independent of new fit success",
+    "Explicit source-bound lake build and assumption/toolchain policy",
+    "Prior-target-conditioning and frozen prefit thresholds",
+    "Separate immutable TRAIN-only online generations",
+    "Plain number/dimension spacing"
+  ],
+  "model_or_database_execution": false,
+  "training_or_enqueue_requested": false
+}

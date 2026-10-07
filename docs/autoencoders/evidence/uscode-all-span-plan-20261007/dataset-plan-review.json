@@ -1,0 +1,148 @@
+{
+  "schema": "uscode-span-processing-plan-dataset-review/v1",
+  "scope": "Independent documentary census/source/provenance/arithmetic review; no numerical model run or implementation qualification",
+  "plan": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/PLAN.md",
+    "bytes": 31966,
+    "sha256": "c3d7b9c47f3a21158ebee7a220312acb6ab2679a5d55edad316a196c8ca3ea71"
+  },
+  "passed": true,
+  "checks": [
+    {
+      "check": "Pinned source-cache revision",
+      "passed": true,
+      "evidence": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "check": "Full file and byte inventory",
+      "passed": true,
+      "evidence": {
+        "files": 6016,
+        "bytes": 4870101925
+      }
+    },
+    {
+      "check": "Occurrence ledger and metadata scopes",
+      "passed": true,
+      "evidence": {
+        "span": 443904,
+        "meta": 1
+      }
+    },
+    {
+      "check": "Original queue statuses exact",
+      "passed": true,
+      "evidence": {
+        "gap": 421525,
+        "sealed": 22379,
+        "progress": 1
+      }
+    },
+    {
+      "check": "Archived status cannot short-circuit new-task work",
+      "passed": true,
+      "evidence": "Coverage is task and generation scoped"
+    },
+    {
+      "check": "Pending counter is not a unique-source denominator",
+      "passed": true,
+      "evidence": 3820263
+    },
+    {
+      "check": "Document counters do not silently reconcile",
+      "passed": true,
+      "evidence": {
+        "processed_documents": 60068,
+        "source_rows": 60077
+      }
+    },
+    {
+      "check": "Existing source verified and reused",
+      "passed": true,
+      "evidence": {
+        "bytes": 374277662,
+        "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "rows": 60077
+      }
+    },
+    {
+      "check": "Paired bundle closure and entity row scope",
+      "passed": true,
+      "evidence": {
+        "artifacts": 10091,
+        "goals": 4740,
+        "paired_spans": 4888
+      }
+    },
+    {
+      "check": "Modal counts explicitly producer-reported",
+      "passed": true,
+      "evidence": {
+        "reported_parsed": 443904,
+        "reported_formula_count": 639347
+      }
+    },
+    {
+      "check": "Viewer rows not summed as spans",
+      "passed": true,
+      "evidence": "Configuration counts have distinct observation, artifact and goal scope"
+    },
+    {
+      "check": "Unique IDs deferred to full scan",
+      "passed": true,
+      "evidence": "The current survey did not scan full ID columns"
+    },
+    {
+      "check": "Historical 64-valid-document identity groups retained",
+      "passed": true,
+      "evidence": "Canonical legacy_span_intake.py constants and implementation corroborate this contract"
+    },
+    {
+      "check": "Different source CIDs not deduplicated by text",
+      "passed": true,
+      "evidence": "Source keys retain physical row, CID and extraction provenance"
+    },
+    {
+      "check": "Rights metadata is correctly scoped",
+      "passed": true,
+      "evidence": "Pinned card_data has no license key; no legal-rights conclusion drawn"
+    },
+    {
+      "check": "Legacy 8D diagnostic provenance not semantic GTE",
+      "passed": true,
+      "evidence": "mock:stable-sha256"
+    },
+    {
+      "check": "No historical-v1 learned-origin upgrade",
+      "passed": true,
+      "evidence": "All remote paired paths are v1; local v2 supports new authentic observations"
+    },
+    {
+      "check": "Footer/range survey not claimed as whole-file queue authentication",
+      "passed": true,
+      "evidence": "Complete source file hash authenticated; queue only partial ranges and footer scoped in cited receipt"
+    },
+    {
+      "check": "Float32 vector arithmetic",
+      "passed": true,
+      "evidence": {
+        "occurrences": 443904,
+        "bytes_by_dimension": {
+          "8": 14204928,
+          "384": 681836544,
+          "768": 1363673088
+        },
+        "combined_bytes": 2059714560
+      }
+    },
+    {
+      "check": "Vector estimates are floors not deployed-store sizes",
+      "passed": true,
+      "evidence": "A vector-per-occurrence calculation excludes task/window replication and other assets"
+    }
+  ],
+  "findings": [],
+  "required_corrections": [],
+  "reviewed_source_revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "mutations": "Review receipt only; plan, external databases, models, remote repositories and shared survey inputs unchanged"
+}

@@ -1,0 +1,350 @@
+{
+  "schema": "uscode-resume-checkpoint-scope-survey/v1",
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "path": "autoformal/uscode/resume-checkpoint.parquet",
+  "file_bytes": 52701179,
+  "footer_rows": 443905,
+  "projection_columns": [
+    "record_kind",
+    "dataset_id",
+    "agent_id",
+    "role",
+    "documents",
+    "source_parquet",
+    "status",
+    "sealed",
+    "sealed_count",
+    "gap_count",
+    "pending_count"
+  ],
+  "projection_compressed_column_bytes": {
+    "record_kind": 261,
+    "dataset_id": 263,
+    "agent_id": 42434,
+    "role": 241,
+    "documents": 241,
+    "source_parquet": 385,
+    "status": 42426,
+    "sealed": 33060,
+    "sealed_count": 241,
+    "gap_count": 241,
+    "pending_count": 241
+  },
+  "downloaded_range_bytes": 185570,
+  "range_receipts": [
+    {
+      "start": 52635643,
+      "bytes": 65536,
+      "content_range": "bytes 52635643-52701178/52701179"
+    },
+    {
+      "start": 4,
+      "bytes": 57,
+      "content_range": "bytes 4-60/52701179"
+    },
+    {
+      "start": 61,
+      "bytes": 53,
+      "content_range": "bytes 61-113/52701179"
+    },
+    {
+      "start": 114,
+      "bytes": 11864,
+      "content_range": "bytes 114-11977/52701179"
+    },
+    {
+      "start": 11978,
+      "bytes": 53,
+      "content_range": "bytes 11978-12030/52701179"
+    },
+    {
+      "start": 12084,
+      "bytes": 53,
+      "content_range": "bytes 12084-12136/52701179"
+    },
+    {
+      "start": 12137,
+      "bytes": 53,
+      "content_range": "bytes 12137-12189/52701179"
+    },
+    {
+      "start": 8465577,
+      "bytes": 11860,
+      "content_range": "bytes 8465577-8477436/52701179"
+    },
+    {
+      "start": 8477437,
+      "bytes": 9215,
+      "content_range": "bytes 8477437-8486651/52701179"
+    },
+    {
+      "start": 14664720,
+      "bytes": 53,
+      "content_range": "bytes 14664720-14664772/52701179"
+    },
+    {
+      "start": 14664773,
+      "bytes": 53,
+      "content_range": "bytes 14664773-14664825/52701179"
+    },
+    {
+      "start": 14664826,
+      "bytes": 53,
+      "content_range": "bytes 14664826-14664878/52701179"
+    },
+    {
+      "start": 29249951,
+      "bytes": 53,
+      "content_range": "bytes 29249951-29250003/52701179"
+    },
+    {
+      "start": 29249898,
+      "bytes": 53,
+      "content_range": "bytes 29249898-29249950/52701179"
+    },
+    {
+      "start": 23095192,
+      "bytes": 9144,
+      "content_range": "bytes 23095192-23104335/52701179"
+    },
+    {
+      "start": 29250004,
+      "bytes": 53,
+      "content_range": "bytes 29250004-29250056/52701179"
+    },
+    {
+      "start": 14678310,
+      "bytes": 53,
+      "content_range": "bytes 14678310-14678362/52701179"
+    },
+    {
+      "start": 14666456,
+      "bytes": 53,
+      "content_range": "bytes 14666456-14666508/52701179"
+    },
+    {
+      "start": 14678363,
+      "bytes": 53,
+      "content_range": "bytes 14678363-14678415/52701179"
+    },
+    {
+      "start": 14678204,
+      "bytes": 53,
+      "content_range": "bytes 14678204-14678256/52701179"
+    },
+    {
+      "start": 14666509,
+      "bytes": 11695,
+      "content_range": "bytes 14666509-14678203/52701179"
+    },
+    {
+      "start": 14666399,
+      "bytes": 57,
+      "content_range": "bytes 14666399-14666455/52701179"
+    },
+    {
+      "start": 23083501,
+      "bytes": 11691,
+      "content_range": "bytes 23083501-23095191/52701179"
+    },
+    {
+      "start": 43813781,
+      "bytes": 53,
+      "content_range": "bytes 43813781-43813833/52701179"
+    },
+    {
+      "start": 43813728,
+      "bytes": 53,
+      "content_range": "bytes 43813728-43813780/52701179"
+    },
+    {
+      "start": 37679736,
+      "bytes": 9063,
+      "content_range": "bytes 37679736-37688798/52701179"
+    },
+    {
+      "start": 43813834,
+      "bytes": 53,
+      "content_range": "bytes 43813834-43813886/52701179"
+    },
+    {
+      "start": 29263442,
+      "bytes": 53,
+      "content_range": "bytes 29263442-29263494/52701179"
+    },
+    {
+      "start": 29251622,
+      "bytes": 53,
+      "content_range": "bytes 29251622-29251674/52701179"
+    },
+    {
+      "start": 29263495,
+      "bytes": 53,
+      "content_range": "bytes 29263495-29263547/52701179"
+    },
+    {
+      "start": 29263336,
+      "bytes": 53,
+      "content_range": "bytes 29263336-29263388/52701179"
+    },
+    {
+      "start": 29251675,
+      "bytes": 11661,
+      "content_range": "bytes 29251675-29263335/52701179"
+    },
+    {
+      "start": 29251565,
+      "bytes": 57,
+      "content_range": "bytes 29251565-29251621/52701179"
+    },
+    {
+      "start": 37668079,
+      "bytes": 11657,
+      "content_range": "bytes 37668079-37679735/52701179"
+    },
+    {
+      "start": 52673508,
+      "bytes": 53,
+      "content_range": "bytes 52673508-52673560/52701179"
+    },
+    {
+      "start": 52673455,
+      "bytes": 53,
+      "content_range": "bytes 52673455-52673507/52701179"
+    },
+    {
+      "start": 48932996,
+      "bytes": 5612,
+      "content_range": "bytes 48932996-48938607/52701179"
+    },
+    {
+      "start": 52673561,
+      "bytes": 53,
+      "content_range": "bytes 52673561-52673613/52701179"
+    },
+    {
+      "start": 43822796,
+      "bytes": 53,
+      "content_range": "bytes 43822796-43822848/52701179"
+    },
+    {
+      "start": 43815452,
+      "bytes": 53,
+      "content_range": "bytes 43815452-43815504/52701179"
+    },
+    {
+      "start": 43822849,
+      "bytes": 53,
+      "content_range": "bytes 43822849-43822901/52701179"
+    },
+    {
+      "start": 43822690,
+      "bytes": 53,
+      "content_range": "bytes 43822690-43822742/52701179"
+    },
+    {
+      "start": 43815505,
+      "bytes": 7185,
+      "content_range": "bytes 43815505-43822689/52701179"
+    },
+    {
+      "start": 43815395,
+      "bytes": 57,
+      "content_range": "bytes 43815395-43815451/52701179"
+    },
+    {
+      "start": 48925815,
+      "bytes": 7181,
+      "content_range": "bytes 48925815-48932995/52701179"
+    },
+    {
+      "start": 52675429,
+      "bytes": 29,
+      "content_range": "bytes 52675429-52675457/52701179"
+    },
+    {
+      "start": 52675400,
+      "bytes": 29,
+      "content_range": "bytes 52675400-52675428/52701179"
+    },
+    {
+      "start": 52675026,
+      "bytes": 26,
+      "content_range": "bytes 52675026-52675051/52701179"
+    },
+    {
+      "start": 52675458,
+      "bytes": 29,
+      "content_range": "bytes 52675458-52675486/52701179"
+    },
+    {
+      "start": 52674729,
+      "bytes": 29,
+      "content_range": "bytes 52674729-52674757/52701179"
+    },
+    {
+      "start": 52674591,
+      "bytes": 51,
+      "content_range": "bytes 52674591-52674641/52701179"
+    },
+    {
+      "start": 52674758,
+      "bytes": 173,
+      "content_range": "bytes 52674758-52674930/52701179"
+    },
+    {
+      "start": 52674671,
+      "bytes": 29,
+      "content_range": "bytes 52674671-52674699/52701179"
+    },
+    {
+      "start": 52674642,
+      "bytes": 29,
+      "content_range": "bytes 52674642-52674670/52701179"
+    },
+    {
+      "start": 52674558,
+      "bytes": 33,
+      "content_range": "bytes 52674558-52674590/52701179"
+    },
+    {
+      "start": 52674989,
+      "bytes": 37,
+      "content_range": "bytes 52674989-52675025/52701179"
+    }
+  ],
+  "record_kind_counts": {
+    "span": 443904,
+    "meta": 1
+  },
+  "status_counts": {
+    "gap": 421525,
+    "sealed": 22379,
+    "progress": 1
+  },
+  "source_parquet_counts": {
+    "": 443904,
+    "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8": 1
+  },
+  "dataset_id_counts": {
+    "": 443904,
+    "justicedao/ipfs_uscode": 1
+  },
+  "non_span_metadata_rows": [
+    {
+      "record_kind": "meta",
+      "dataset_id": "justicedao/ipfs_uscode",
+      "agent_id": "",
+      "role": "",
+      "documents": 60068,
+      "source_parquet": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "status": "progress",
+      "sealed": false,
+      "sealed_count": 22379,
+      "gap_count": 421525,
+      "pending_count": 3820263
+    }
+  ],
+  "scope": "Pinned queue record counts and source pointers only; unique span/text identities not scanned; partial-file ranges do not authenticate the complete 52.7MB file."
+}
