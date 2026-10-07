@@ -10,6 +10,12 @@ Its [16-study evidence matrix](https://github.com/endomorphosis/lift_coding/blob
 binds exact report revisions and hashes. These are observations with different
 datasets, objectives and representation contracts; their scores cannot be pooled.
 
+The [October 7 reconciliation](https://github.com/endomorphosis/lift_coding/blob/main/implementation_plan/docs/61-autoencoder-reconciliation-2026-10-07.md)
+checks the newer grouped support training and normative reconstruction diagnosis
+against effective Git trees, local branches and worktrees. See the
+[combined owner boundary](#october-7-combined-owner-boundary) below before preparing
+another experiment. The revisions above remain historical review inputs.
+
 ## Preserve the distinct owners
 
 | Owner | Output or representation | How it contributes to text-to-logic |
@@ -138,3 +144,52 @@ identical, modified and missing paths. It performs no model or proof execution.
 Modified files need review against later improvements; missing live dependencies
 need tested restoration. Historical evidence can be recovered with exact source
 hashes and a bounded scope without reactivating old training or promotion policy.
+
+## October 7 combined owner boundary
+
+The reviewed datasets main is `497362d8aa117a210769423ec6a14d8010d4588c`;
+the reviewed workspace main is `021ffee3f6894c4112d6951dad62cb29461cdac1`.
+The workspace pins that exact package revision. The grouped runtime/guards,
+[support-boundary training](grouped_support_boundary_training.md), and
+[normative reconstruction diagnosis](reconstruction_gap_followup_20261006.md)
+are already combined there. Our six selected grouped source/guide files and
+21 prior workspace contribution files retain their exact bytes. An older
+joint-conditioning branch has identical experiment artifacts on main; its two
+differing plan files supply no missing experiment. Deferred parser/temporal and 4096D
+source additions remain retained evidence requiring their own dependency ports.
+
+| Completed lane | Measured result | Remaining boundary |
+| --- | --- | --- |
+| Native 384D/768D auxiliary formula decoders | Each width reproduces 96/96 exposed original plus normative TRAIN paragraphs; exposed v3 remains 31/48 versus 48/48 | Fresh reviewed wording, native input provenance and nonempty qualifier coverage |
+| Raw-source grouped v2 continuation | Fresh authored exact-positive-or-learned-refusal improves 60.2% to 85.2%; exact positives change 56/64 to 55/64; unsupported emissions change 23/64 to 7/64 | Seven unsupported misspellings remain; all 14 official-source probes refuse; no latent input |
+| Existing raw/PCA/AE downstream controls | Identical IR/status/reason on 192 source/seed pairs, with the same frozen raw-trained decoder per seed | Matched decoder fitting per representation and actual reduced-latent inference remain unmeasured |
+| Scope occurrence proposal and qualifier preflight | Source-bound unreviewed occurrences and complete-cohort transport diagnosis | Reviewed source meaning/context, compatible target codec, occurrence attachment and review-to-cohort binding |
+
+The widths and cohorts remain separate. Selected/last checkpoint aliases are not
+independent repetitions. Historical lineage inventories describe their recorded
+parents and preparation status; newer completed endpoints are an evidence overlay,
+not a reason to rewrite their parent provenance or activate default runtimes.
+
+The new [owner integration tests](../../tests/unit/logic/legal_ir/test_scope_proposal_preflight_integration.py)
+exercise the actual proposal and preflight together. Caller-authored seven-facet
+fixtures remain separate from predictions. Unavailable context blocks transport
+before scope compatibility is assessed, and omitting context cannot rebind the
+source declaration. An unresolved TRAIN row blocks complete vocabulary fitting;
+an unresolved tuning row remains counted. A supplied vocabulary, proposal envelope,
+or missing target cannot grant admission or infer a seven-facet label. All admission
+flags and proposal masks remain zero. Fifteen new cases pass; the affected owner
+panel has 203 passes with no skips, with the strengthened binding case rerun.
+This contribution changes tests and documentation only.
+
+Before another fit, prepare balanced reviewed wording and separately reviewed
+nonempty qualifiers, retain every rejected/ambiguous item and reserve fresh source
+groups. Both auxiliary TRAIN modality heads and emitted formulas are already exact,
+so repeating the same combined-modality objective does not address a demonstrated
+TRAIN error. The isolated 384D source-only action miss is corrected by actual
+combined generation and needs a separately matched action-head hypothesis. A later
+raw/PCA/AE comparison must train the same output grammar under matched initialization,
+updates, selection and decoding budgets, with authentic width-specific vectors.
+Actual generated rules, all seven facets, invalid/missing/extra outputs and source
+coverage must be measured alongside loss. The existing review, family and native
+build owners retain their admission requirements; this reconciliation executes
+no model, encoder, optimizer or Lake command.

@@ -27,3 +27,10 @@ Prediction fields are closed: `schema=legal-scope-span-prediction/v1`, `interpre
 This adapter is untrained proposal transport. The current grouped v2 head cannot supply its extra modality/object/condition endpoints. It emits no formula/AST/Lean, does not interpret an opaque condition as material implication, and leaves all five admission masks zero. Source coverage is unassessed, context is unavailable and the full source retains a review-required marker. Modal class and attachment can be wrong even when their transport is valid; they receive no semantic qualification. Broad families, shared/nested qualifiers, explicit quantifier/binder meaning and reviewed source targets remain further work.
 
 The fresh Dataset Viewer audit observes 372 `formal_logic_text` rows, all marked `training_qualified=false`, `independent_validation=false`, `admitted=false` and `producer_origin=source_bridge_target`. The open-US-law default view is a 51-jurisdiction census. These observations were not used as reviewed semantic gold. Future qualifier training should reuse the existing statement-scope, review-intake and lane/contrastive owners with separately qualified occurrence targets.
+
+The newer [qualifier preflight and normative diagnosis](reconstruction_gap_followup_20261006.md)
+are now on the same main branch. The [shared owner integration](progress_integration.md#october-7-combined-owner-boundary)
+tests proposal transport against that preflight without deriving training labels or
+resolving unavailable context. An explicit seven-facet caller premise does not admit
+the proposal. The combined findings prioritize fresh reviewed wording and qualifiers
+before another fit, while preserving the distinct raw-source and native-vector heads.
