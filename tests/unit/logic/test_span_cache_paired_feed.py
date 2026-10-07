@@ -1,4 +1,5 @@
 """Real typed paired bytes exercise the feed; remote transport is inert."""
+from contextlib import contextmanager
 from copy import deepcopy
 import hashlib
 import json
@@ -11,7 +12,7 @@ import pytest
 
 from ipfs_datasets_py.logic.autoformal import paired_span_census as paired
 from ipfs_datasets_py.logic.autoformal.span_cache_feed import (
-    FeedError, HubExchangeClient, SpanCacheFeed, paired_source_records,
+    FeedError, HubExchangeClient,
 )
 from tests.unit.logic.test_span_cache_feed import A, B, Remote, make_bundle, open_feed
 
@@ -412,3 +413,84 @@ def test_paired_ready_repository_parent_alias_is_refused(tmp_path):
         failed = feed.poll_once()
         assert failed["records"] == []
         assert "filesystem alias" in failed["errors"][0]["message"]
+
+
+class _FailDurableReady:
+    """Real local transactions, with a failure before UPDATE or before COMMIT."""
+
+    def __init__(self, manager, failed_path, failure_phase):
+        self.manager = manager
+        self.failed_path = failed_path
+        self.failure_phase = failure_phase
+
+    @contextmanager
+    def short_writer_transaction(self):
+        owner = self
+        with self.manager.short_writer_transaction() as connection:
+            class Connection:
+                ready_written = False
+
+                def execute(self, sql, *args):
+                    failing = (sql.startswith("UPDATE feed_bundles SET status='ready'")
+                               and args[0][-1] == owner.failed_path)
+                    if failing and owner.failure_phase == "update":
+                        raise OSError("injected durable-ready UPDATE failure")
+                    result = connection.execute(sql, *args)
+                    self.ready_written |= failing
+                    return result
+
+            wrapped = Connection()
+            yield wrapped
+            if wrapped.ready_written and self.failure_phase == "commit":
+                raise OSError("injected durable-ready COMMIT failure")
+
+    def close(self):
+        return self.manager.close()
+
+
+@pytest.mark.parametrize("failure_phase", ["update", "commit"])
+def test_failed_durable_ready_transaction_delivers_nothing_and_retries(tmp_path, failure_phase):
+    remote, fixture, entry, manifest = paired_remote(tmp_path)
+    with open_feed(tmp_path, remote) as feed:
+        manager = feed._manager
+        feed._manager = _FailDurableReady(manager, entry["path"], failure_phase)
+        failed = feed.poll_once()
+        assert failed["records"] == [] and failed["new_bundles"] == []
+        assert failed["decoded_bytes"] == 0 and failed["counts"] == {"pending": 1}
+        assert failed["errors"][0]["error"] == "OSError"
+        with pytest.raises(FeedError, match="acknowledgement"):
+            feed.acknowledge(entry["path"], fingerprint=manifest["fingerprint"])
+        feed._manager = manager
+        recovered = feed.poll_once()
+        assert recovered["errors"] == [] and recovered["counts"] == {"ready": 1}
+        assert len(recovered["records"]) == len(recovered["new_bundles"]) == 1
+        assert recovered["records"][0]["observations"][0]["paired_row"] == fixture["paired_spans"][0]
+        assert recovered["decoded_bytes"] > 0
+        feed.acknowledge(entry["path"], fingerprint=manifest["fingerprint"])
+        assert feed.poll_once()["counts"] == {"acknowledged": 1}
+
+
+@pytest.mark.parametrize("failure_phase", ["update", "commit"])
+def test_failed_later_bundle_cannot_merge_observations_into_successful_source(tmp_path, failure_phase):
+    first, _, entry1, manifest1 = paired_remote(tmp_path, label="paired-first")
+    second, _, entry2, manifest2 = paired_remote(tmp_path, label="paired-second")
+    remote = Remote([entry1, entry2], {**first.files[A], **second.files[A]})
+    with open_feed(tmp_path, remote) as feed:
+        manager = feed._manager
+        feed._manager = _FailDurableReady(manager, entry2["path"], failure_phase)
+        failed = feed.poll_once()
+        assert failed["counts"] == {"pending": 1, "ready": 1}
+        assert [bundle["manifest_in_repo"] for bundle in failed["new_bundles"]] == [entry1["path"]]
+        assert len(failed["records"]) == 1
+        assert len(failed["records"][0]["observations"]) == 1
+        assert failed["records"][0]["provenance"]["observations"] == failed["records"][0]["observations"]
+        assert failed["records"][0]["observations"][0]["manifest_in_repo"] == entry1["path"]
+        feed._manager = manager
+        feed.acknowledge(entry1["path"], fingerprint=manifest1["fingerprint"])
+        recovered = feed.poll_once()
+        assert recovered["errors"] == []
+        assert recovered["counts"] == {"acknowledged": 1, "ready": 1}
+        assert len(recovered["records"]) == len(recovered["new_bundles"]) == 1
+        assert recovered["records"][0]["observations"][0]["manifest_in_repo"] == entry2["path"]
+        feed.acknowledge(entry2["path"], fingerprint=manifest2["fingerprint"])
+        assert feed.poll_once()["records"] == []

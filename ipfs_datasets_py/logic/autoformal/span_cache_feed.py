@@ -621,9 +621,6 @@ class SpanCacheFeed:
                     previous = merged_records.get(record["record_id"])
                     if previous is not None and _stable_source(previous) != _stable_source(record):
                         raise FeedError("stable source fields changed under an existing record identity")
-                for record in records:
-                    _merge_source(merged_records, record)
-                total_decoded += candidate_decoded
                 delivered = {"manifest_path": str(manifest), "manifest_in_repo": path, "revision": revision,
                              "fingerprint": loaded["fingerprint"],
                              "census_row_count": len(loaded["paired_spans"] if paired else loaded["census_rows"]),
@@ -633,10 +630,16 @@ class SpanCacheFeed:
                     delivered.update(bundle_schema=loaded["schema_version"],
                                      artifact_count=len(loaded["artifacts"]), table_paths=loaded["table_paths"],
                                      manifest_sha256=loaded["manifest_sha256"])
-                ready.append(delivered)
                 with self._manager.short_writer_transaction() as cx:
                     cx.execute("UPDATE feed_bundles SET status='ready',manifest_path=?,fingerprint=?,last_attempt=?,attempts=attempts+1,error='' WHERE path=?",
                                [str(manifest), loaded["fingerprint"], time.time(), path])
+                # A ready response must be acknowledgeable against committed
+                # inbox state. Failed writes/commits leave no partial bundle
+                # or observations in this poll's delivered results.
+                for record in records:
+                    _merge_source(merged_records, record)
+                total_decoded += candidate_decoded
+                ready.append(delivered)
             except Exception as exc:
                 errors.append({"phase": "bundle", "manifest_in_repo": path, "revision": revision,
                                "error": type(exc).__name__, "message": str(exc)[:500]})
