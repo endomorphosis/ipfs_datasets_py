@@ -201,3 +201,20 @@ Actual generated rules, all seven facets, invalid/missing/extra outputs and sour
 coverage must be measured alongside loss. The existing review, family and native
 build owners retain their admission requirements; this reconciliation executes
 no model, encoder, optimizer or Lake command.
+
+## October 7 single-rule occurrence pilot
+
+The completed [source occurrence decoder pilot](../implementation/legal_scope_span_decoder_pilot_20261007.md)
+adds an explicit raw-source five-facet head with optional opaque conditions and
+learned profile refusal. Its matched kernel-1/kernel-3 arms each complete 240
+updates and 3,840 row presentations; selected checkpoints are at updates 120
+and 240. On 64 authored final positive/negative pairs, exact positive proposals
+are 5/64 versus 12/64 and learned unsupported refusals are 57/64 versus 59/64.
+The ordered arm has 47/64 raw all-span exactness but only 25/64 exact O/P/F
+classes, motivating a separately matched learned-trigger readout hypothesis
+with new final groups. These are experimental authored construction targets;
+caller attachment is a premise, all admission masks remain zero and formal
+output is null. No Lake or real-law accuracy is claimed. Existing model
+lineages and runtime selections are preserved. Custom JSON checkpoints and
+exact full-Adam restore are retained at
+[Publicus/legal-ir-autoencoder: experiments/single-rule-scope-20261007/run-01](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/main/experiments/single-rule-scope-20261007/run-01).
