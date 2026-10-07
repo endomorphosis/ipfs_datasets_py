@@ -1,0 +1,118 @@
+{
+  "admitted": false,
+  "full_checks_and_reference_maps_retained_in_evidence_archive": true,
+  "phases": [
+    {
+      "artifact": {
+        "bytes": 1381833,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-replay-20261007/independent-review/actual-preflight-384-r1-independent-review.json",
+        "sha256": "4b559a178d5c9265be9b5dcbb7c935b82a61f992c2bdb2ebb41f7ee14a0e9019"
+      },
+      "artifact_bindings": 1288,
+      "audit_imported_models": false,
+      "checks": 8971,
+      "findings": [],
+      "passed": true,
+      "resources": {
+        "continuous_coverage_claimed": false,
+        "current_foreign_scheduler_read_or_modified": false,
+        "durable_own_lease_released": true,
+        "final_attempt_census_bytes": 37799183,
+        "final_group_live_process_count": 0,
+        "final_named_root_charge_bytes": 142051673060,
+        "maximum_saved_group_RSS_bytes": 798195712,
+        "memory_MiB": 1536,
+        "named_root_cap_bytes": 145000000000,
+        "own_present_lease_sample_count": 36,
+        "peak_RSS_measured": false,
+        "periodic_sample_count": 2,
+        "reservation_bytes": 100000000
+      },
+      "schema": "dual-bank-replay-actual-preflight-independent-review/v1",
+      "timing": {
+        "driver_seconds": 32.691324955027085,
+        "generation_seconds": 0.4818433500477113,
+        "guardian_outer_seconds": 65.42660627799341,
+        "launch_return_through_reap_seconds": 34.18599593901308,
+        "scalar_scoring_seconds": null,
+        "scalar_scoring_timing_scope": "No separate scalar-scoring elapsed field was retained; no timing is inferred.",
+        "scope": "Zero-fit decoder inference on cached source features; timings do not measure encoder production, compiler bridges, Lake/proof or end-to-end autoformalization.",
+        "source_bank_seconds": {
+          "balanced": 0.01869373902445659,
+          "control": 0.018814587965607643
+        }
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 1140771,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-replay-20261007/independent-review/actual-training-384-r1-independent-review.json",
+        "sha256": "09f3ba6bf9fe02c388e411cdb8f7985f841ef38ae7d1e12789d24947ea89765e"
+      },
+      "artifact_bindings": 1303,
+      "audit_imported_models": false,
+      "checks": 7203,
+      "findings": [],
+      "passed": true,
+      "resources": {
+        "continuous_coverage_claimed": false,
+        "durable_lease_released": true,
+        "final_attempt_census_bytes": 131347683,
+        "final_live_group_processes": 0,
+        "final_named_root_charge_bytes": 143458440866,
+        "foreign_scheduler_read_or_modified": false,
+        "maximum_saved_group_RSS_bytes": 1198592000,
+        "memory_MiB": 1536,
+        "named_root_cap_bytes": 145000000000,
+        "owned_present_lease_samples": 114,
+        "peak_RSS_measured": false,
+        "periodic_sample_count": 6,
+        "storage_reservation_bytes": 400000000
+      },
+      "schema": "dual-bank-replay-native384-training-independent-review/v1",
+      "timing": {
+        "driver_seconds": 102.20215756300604,
+        "launch_return_through_reap_seconds": 112.5061513450346,
+        "outer_guardian_seconds": 143.80931297002826,
+        "scope": "One fresh-optimizer170-step numerical replay fit plus original exposed panels/source-bank readouts using cached384 features and frozen historical owners; no encoder/native compiler/Lean/end-to-end speed claim."
+      }
+    },
+    {
+      "artifact": {
+        "bytes": 6027292,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-replay-20261007/independent-review/actual-evaluation-r1-independent-review.json",
+        "sha256": "898539453d4ea0e4317d10984ecc4de007557587f0688d03895a410570a335e1"
+      },
+      "artifact_bindings": 1377,
+      "audit_imported_models": false,
+      "checks": 49248,
+      "findings": [],
+      "passed": true,
+      "resources": {
+        "continuous_coverage_claimed": false,
+        "current_foreign_scheduler_read_or_modified": false,
+        "final_attempt_census_bytes": 26127268,
+        "final_live_group_processes": 0,
+        "final_named_root_charge_bytes": 143549691872,
+        "maximum_saved_group_RSS_bytes": 808333312,
+        "memory_MiB": 1536,
+        "named_root_cap_bytes": 145000000000,
+        "own_lease_durably_released": true,
+        "peak_RSS_measured": false,
+        "periodic_sample_count": 2,
+        "present_own_lease_samples": 37,
+        "storage_reservation_bytes": 100000000
+      },
+      "schema": "dual-bank-replay-native384-postfit-evaluation-independent-review/v1",
+      "timing": {
+        "driver_seconds": 29.038325095025357,
+        "launch_return_through_reap_seconds": 34.453077672980726,
+        "outer_guardian_seconds": 65.86341046303278,
+        "scope": "8 physical same-pass greedy panels and pure posthoc scoring on cached384 features; no teacher-forced loss, reconstruction MSE, new encoder, native compiler, Lake/proof or end-to-end speed measurement."
+      }
+    }
+  ],
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "dual-bank-replay-phase-audits-compact/v1"
+}

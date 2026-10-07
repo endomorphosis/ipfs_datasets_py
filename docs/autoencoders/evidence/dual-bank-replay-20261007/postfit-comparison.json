@@ -1,0 +1,3552 @@
+{
+  "Constitution_formalized": false,
+  "OS_cache_state_uncontrolled": true,
+  "admitted": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/next-retention-plan/proposed-dual-bank-schedule.json": {
+      "bytes": 443751,
+      "sha256": "11a9c660f5101dbcf2981cfa0d451d13c6a81ebbc75b7ad2699e07d37106e2e1"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/assembled-inputs-r1/balanced-source-inventory.json": {
+      "bytes": 21752796,
+      "sha256": "48ca58d67e6da85ece58e70b6c6d91210d9d983530f8eae8980ada8799a26c60"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/assembled-inputs-r1/control-source-inventory.json": {
+      "bytes": 14233629,
+      "sha256": "a9d3a6962986ec674d7673a609a23af614aef6b797b99903979c2c645c2fd57b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/actual-formula-fidelity.json": {
+      "bytes": 156830,
+      "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/posthoc-scalar-score.json": {
+      "bytes": 598775,
+      "sha256": "deda3ff8d023559e0dcb4578d8b6078901db31511c3b1ae5495066148de927c7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/source-head-trace.json": {
+      "bytes": 1665425,
+      "sha256": "5647cef3bda215d2d064a64f8b59abb9339e91fd0ca66f580b1f47bb2b1c205a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/actual-formula-fidelity.json": {
+      "bytes": 159962,
+      "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/posthoc-scalar-score.json": {
+      "bytes": 599355,
+      "sha256": "2e5b53d9914e79f83cd6140ef1bd4396118ecfcdb411375d1d606939b9d0e7bd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/source-head-trace.json": {
+      "bytes": 1664407,
+      "sha256": "83900764189f395cec0e4fc2083fbcb8ba44086988021845494df95e03870c9a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/actual-formula-fidelity.json": {
+      "bytes": 155878,
+      "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/posthoc-scalar-score.json": {
+      "bytes": 603363,
+      "sha256": "04150286097d52c0fce24066f9424163252bf1da4bf1be36afab77291ed9865d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/source-head-trace.json": {
+      "bytes": 1665926,
+      "sha256": "16177775a6430403998e87a1ea325a6b7db2224864616e04610c2cdb9794a155"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/summary.json": {
+      "bytes": 96894,
+      "sha256": "bf82fc26aad348a01404c88428f70ab4f105e5eb8e4eb45c7886a417cd74fec8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1-guardian-exit.json": {
+      "bytes": 62,
+      "sha256": "a7a77fe8949efdbd9efafe67c3bcb9fc463a4361a7594e2b81db39f52f086513"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/resources-final.json": {
+      "bytes": 5829,
+      "sha256": "47343ec442d780ede644f6da83c0902c740a5a62a6a326246709ee1591b59d7a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/scalar-formula-join.json": {
+      "bytes": 723259,
+      "sha256": "12067e5eb0ba0097a3040acbd623493e13d22f832a1c4d92f91e546cb72da296"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/actual-formula-fidelity.json": {
+      "bytes": 156830,
+      "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/posthoc-scalar-score.json": {
+      "bytes": 598933,
+      "sha256": "af81519957df3f4f66c11188b3c5e9339885c392d097f8a104c478dedcbd31ef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/scalar-formula-join.json": {
+      "bytes": 725327,
+      "sha256": "25bef057ad3d5bb8e4e8708ff143b4bddf9c8da14452e90de9153a36f2869fea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/source-head-trace.json": {
+      "bytes": 1665208,
+      "sha256": "e66e323d7a8b65b0efe8f869da0e99f584f2a301fb8d8461e8d3c7215a47a832"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/actual-formula-fidelity.json": {
+      "bytes": 159962,
+      "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/posthoc-scalar-score.json": {
+      "bytes": 599264,
+      "sha256": "80eee48c0ac59912f2dbb2d73cca36f801acb340a6155c9fd1183ff053b2c725"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/scalar-formula-join.json": {
+      "bytes": 725840,
+      "sha256": "aa72b868bf4aa5635acf74fa6bea6f94f6dc40b6da9ee0068ba4927829f195ba"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/source-head-trace.json": {
+      "bytes": 1664462,
+      "sha256": "67d427949c37d16d1039f636653ea14bd2b3136bf0bc712091127b908d33b321"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/actual-formula-fidelity.json": {
+      "bytes": 155878,
+      "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/posthoc-scalar-score.json": {
+      "bytes": 603458,
+      "sha256": "5c88bdd3400805197c7ced5128d9faf338ad0634cd602da96842d7efcd58c547"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/scalar-formula-join.json": {
+      "bytes": 730936,
+      "sha256": "59dee6a4ff48b7c877e4ecd52b3c60af9716abd25c52ec4701310c9a23bd7120"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/source-head-trace.json": {
+      "bytes": 1665981,
+      "sha256": "4e37cfb1b51a0e7375d247ca427fe90c62038761cdfe2f7dd369e73a5b2a4f8d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/scalar-formula-join.json": {
+      "bytes": 723259,
+      "sha256": "12067e5eb0ba0097a3040acbd623493e13d22f832a1c4d92f91e546cb72da296"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/actual-formula-fidelity.json": {
+      "bytes": 156830,
+      "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/posthoc-scalar-score.json": {
+      "bytes": 598933,
+      "sha256": "c0daa8f22bb3f80035219a5c1cc42d46222f4082a2d95de1355ebd94618b6cf2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/scalar-formula-join.json": {
+      "bytes": 725327,
+      "sha256": "25bef057ad3d5bb8e4e8708ff143b4bddf9c8da14452e90de9153a36f2869fea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/source-head-trace.json": {
+      "bytes": 1665208,
+      "sha256": "bf7c2cf8a10a3c719a0fa60ce53e385ec48f0419ff61e55a95c62f34f18057e4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/actual-formula-fidelity.json": {
+      "bytes": 159962,
+      "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/posthoc-scalar-score.json": {
+      "bytes": 599264,
+      "sha256": "74f00d00d17031f165d88b16957ca1a77a24cc84b459d91ba776715b51b3ab1a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/scalar-formula-join.json": {
+      "bytes": 725840,
+      "sha256": "aa72b868bf4aa5635acf74fa6bea6f94f6dc40b6da9ee0068ba4927829f195ba"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/source-head-trace.json": {
+      "bytes": 1664461,
+      "sha256": "5cfc79b2418af90ae836d8cadacf75be436679383cf046e630016f9cab77446f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/actual-formula-fidelity.json": {
+      "bytes": 155878,
+      "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/posthoc-scalar-score.json": {
+      "bytes": 603458,
+      "sha256": "36bd0ac9a50f489b253a79d722be02effafe30ca8a625c98a4029081e74bd8ca"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/scalar-formula-join.json": {
+      "bytes": 730936,
+      "sha256": "59dee6a4ff48b7c877e4ecd52b3c60af9716abd25c52ec4701310c9a23bd7120"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/source-head-trace.json": {
+      "bytes": 1665980,
+      "sha256": "94f4097afc65e11e7d221687ce8b307afa803cc06b2f4e4e693a31225bb1a2ed"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/summary.json": {
+      "bytes": 63968,
+      "sha256": "0e088d052f9726727a021e63d7e470d36f22dc6ece4384cca72fa715ba69bc1d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/preflight-384-r1/results/summary.json": {
+      "bytes": 36683,
+      "sha256": "dcbd3fd1ea1a7a618c0800ac85d991ba5145cecc0577d564b051295c48238c52"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/balanced-source-bank-readout.json": {
+      "bytes": 775641,
+      "sha256": "7ff2b948f9ef9672b9fd1c3a2d89c52f922c7f699a5f265dd8cef65c739278a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/control-source-bank-readout.json": {
+      "bytes": 771117,
+      "sha256": "4748f815519d8648cd1b38e60a62f07ac9cb2ec354bea856854f7b93a6955eeb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/balanced-source-bank-readout.json": {
+      "bytes": 775638,
+      "sha256": "74b9a43721f8584e26d939cda654ba2ea3765a85c0a63d6818a3aa9be312febc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/control-source-bank-readout.json": {
+      "bytes": 771117,
+      "sha256": "8eca12e7880d247bfea5c5cbee3323f46f0dfb72aa351ffc0d425cbf67be3839"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/summary.json": {
+      "bytes": 318318,
+      "sha256": "d13a61cab057416aad6627fa74e846f1c19560344415ce12828b8e1473c38e05"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/summary.json": {
+      "bytes": 37254,
+      "sha256": "6d82009eb298792786a2aa1bda7e609e29decf0e5e43e42d4b7d71ba3c8ea1b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-manifest.json": {
+      "bytes": 312764,
+      "sha256": "40a4be04a2f44b6abe4ddb85dbe38373caf8a0fe55d11d62f2896fb817f0b0e1"
+    }
+  },
+  "auxiliary_chronology_changed": true,
+  "bank_mix_effect_causally_isolated": false,
+  "baseline_formula_tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c",
+  "baseline_scope": "Archived control selected full formula/site panels; actual unchanged parent auxiliary-bank floors. No fresh matched control or new semantic holdout.",
+  "baseline_source_bank_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+  "bridge_names": [],
+  "cached_native_inputs": true,
+  "checkpoint_promoted": false,
+  "complete": true,
+  "context_tokens": 512,
+  "convergence_proven": false,
+  "cpu_slots": 1,
+  "decisions": {
+    "last-attempt": {
+      "admitted": false,
+      "allowed_numerical_continuation": true,
+      "bank_and_formula_gates_both_required": true,
+      "checkpoint_promoted": false,
+      "encoder_executed": false,
+      "execution_readiness_granted": false,
+      "exposed_v3_used_for_selection": false,
+      "findings": [],
+      "formalized": false,
+      "fresh_holdout": false,
+      "implemented_in_real_trainer": false,
+      "independent_semantic_holdout": false,
+      "lake_executed": false,
+      "models_executed": false,
+      "native_vectors_revalidated": false,
+      "no_improvement_claim": true,
+      "numerical_retention_passed": true,
+      "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+      "proof_authority": false,
+      "qualified": false,
+      "schema": "dual-authored-wording-numerical-retention-gate/v1",
+      "source_provenance_authenticated": false,
+      "source_semantics_verified": false,
+      "training_cohorts": [
+        "original_train48",
+        "normative_train48",
+        "new_balanced_train48"
+      ],
+      "training_executed": false
+    },
+    "selected": {
+      "admitted": false,
+      "allowed_numerical_continuation": true,
+      "bank_and_formula_gates_both_required": true,
+      "checkpoint_promoted": false,
+      "encoder_executed": false,
+      "execution_readiness_granted": false,
+      "exposed_v3_used_for_selection": false,
+      "findings": [],
+      "formalized": false,
+      "fresh_holdout": false,
+      "implemented_in_real_trainer": false,
+      "independent_semantic_holdout": false,
+      "lake_executed": false,
+      "models_executed": false,
+      "native_vectors_revalidated": false,
+      "no_improvement_claim": true,
+      "numerical_retention_passed": true,
+      "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+      "proof_authority": false,
+      "qualified": false,
+      "schema": "dual-authored-wording-numerical-retention-gate/v1",
+      "source_provenance_authenticated": false,
+      "source_semantics_verified": false,
+      "training_cohorts": [
+        "original_train48",
+        "normative_train48",
+        "new_balanced_train48"
+      ],
+      "training_executed": false
+    }
+  },
+  "evaluation_driver_seconds": 29.038325095025357,
+  "fits": 1,
+  "formalized": false,
+  "legal_ir_evaluate_provers": false,
+  "metric_disk_cache_used": false,
+  "output_tokens": 512,
+  "panels": [
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 48,
+        "control-wording-ce": 48
+      },
+      "cohort": "original_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.4473580539925024,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.32243878301233053,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 123,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 33,
+        "control-wording-ce": 48
+      },
+      "cohort": "normative_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.479209593962878,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.32955517800292,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 97,
+            "reference_sites": 180,
+            "source_correct": 179,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 48,
+        "control-wording-ce": 48
+      },
+      "cohort": "new_balanced_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.4794031790224835,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.32656455400865525,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 104,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 19,
+        "control-wording-ce": 33
+      },
+      "cohort": "exposed_v3_48",
+      "formula_metrics": {
+        "all_rules_preserved": 30,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 30,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 23,
+        "whole_rules_missing": 23
+      },
+      "generation_seconds": 0.5057774920132942,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 161,
+          "source_correct_formula_wrong": 3,
+          "source_incorrect": 19,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.3296142819453962,
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 158,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 179,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 179,
+            "recurrent_correct": 84,
+            "reference_sites": 180,
+            "source_correct": 179,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 158,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 158,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 161,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": [
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.729308126629846,
+                "target_minus_best_other": -2.6617517471313477,
+                "target_minus_emitted": -2.6617517471313477
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+              "position": 25,
+              "prefix_sha256": "9fd7327e3255c9e99c64dd679275b4bb3d84ac32d2e597b10013f38cb8aa8c7a",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.198735257975261,
+                "target_minus_best_other": -2.7174465656280518,
+                "target_minus_emitted": -0.5944986343383789
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.1864860761148197,
+                "target_minus_best_other": -2.0672526359558105,
+                "target_minus_emitted": -2.0672526359558105
+              },
+              "source_clause_sha256": "fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.5840489510719973,
+                "target_minus_best_other": -2.364846706390381,
+                "target_minus_emitted": -2.364846706390381
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+              "position": 25,
+              "prefix_sha256": "2316cc3ab7c68a63a3eb0b544ce4fd5d4f38188c2fe4429f37c71b0e9395f06a",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.5264577023413164,
+                "target_minus_best_other": -3.2141523361206055,
+                "target_minus_emitted": -0.5749924182891846
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.113040103508143,
+                "target_minus_best_other": -1.7898543775081635,
+                "target_minus_emitted": -1.7898543775081635
+              },
+              "source_clause_sha256": "f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9dae75a705fbe1215e8d42e41a360eec6d3eb5866457517b93621d6c23cb3d1a",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.658381615624485,
+                "target_minus_best_other": -2.5823373794555664,
+                "target_minus_emitted": -2.5823373794555664
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9dae75a705fbe1215e8d42e41a360eec6d3eb5866457517b93621d6c23cb3d1a",
+              "position": 25,
+              "prefix_sha256": "2369004c5fbbf8f590cd3d02211a7a703ed84653e0f58af0120599894ec29fcf",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.915437569657592,
+                "target_minus_best_other": -2.3520193099975586,
+                "target_minus_emitted": -0.608917236328125
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.1079223892886185,
+                "target_minus_best_other": -1.97342050075531,
+                "target_minus_emitted": -1.97342050075531
+              },
+              "source_clause_sha256": "ddff4ee5db61b18f4b6f0d280de19ea34a6aa30ec39b21dc8d049b41bd7131e7",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "secretary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:5d5c1194ed14efbe5e307d9a5f75a9c12bff8f22584f782877fb3ed3f4ea474e",
+            "observed": {
+              "actual_next_token_id": 3,
+              "combined": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.0770922607665119,
+                "target_minus_best_other": -0.2451457977294922,
+                "target_minus_emitted": -0.2451457977294922
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:5d5c1194ed14efbe5e307d9a5f75a9c12bff8f22584f782877fb3ed3f4ea474e",
+              "position": 58,
+              "prefix_sha256": "80baca5081261b10d2f8825788a0418905d23819897358e29aba081a93496fd4",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.28139499522464,
+                "target_minus_best_other": -2.808851480484009,
+                "target_minus_emitted": -0.2042088508605957
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 0.8835140474995011,
+                "target_minus_best_other": -0.04093742370605469,
+                "target_minus_emitted": -0.04093742370605469
+              },
+              "source_clause_sha256": "42bc5226ab1a13dae613627c4295eec2ace50298acce84f3e83278918563158d",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.7249979909178146,
+                "target_minus_best_other": -0.040747642517089844,
+                "target_minus_emitted": -0.040747642517089844
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+              "position": 25,
+              "prefix_sha256": "0d4d23fcec50ff5e53fbfd0006b8c00178bc2038c371267e16b70beacf41a092",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.082787322909157,
+                "target_minus_best_other": -2.585226058959961,
+                "target_minus_emitted": -0.6090817451477051
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.46035654781510393,
+                "target_minus_best_other": 0.5683341026306152,
+                "target_minus_emitted": 0.5683341026306152
+              },
+              "source_clause_sha256": "e4babc75f3a049169269da09825a8d901f442c265171c8e2a3b5645b0e4a3892",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:a5a854e4c7081610e7444964bdcf072192d45eb9043688c8a08db2e41f806dfd",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.193294258359236,
+                "target_minus_best_other": -0.8281869888305664,
+                "target_minus_emitted": -0.8281869888305664
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:a5a854e4c7081610e7444964bdcf072192d45eb9043688c8a08db2e41f806dfd",
+              "position": 58,
+              "prefix_sha256": "c169f6e4b06ccb4f8d7139f46520372f111921e7503fd0f8fdc059584062d3b1",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.989064809240423,
+                "target_minus_best_other": -2.3385586738586426,
+                "target_minus_emitted": -0.595961332321167
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.8190875650877736,
+                "target_minus_best_other": -0.23222589492797852,
+                "target_minus_emitted": -0.23222589492797852
+              },
+              "source_clause_sha256": "357eb109dbb257999512bcaf094c493b904efeb1a0a2baa987a400be773ad2e8",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.6973650454981017,
+                "target_minus_best_other": -1.4895477294921875,
+                "target_minus_emitted": -1.4895477294921875
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 25,
+              "prefix_sha256": "d1bbb3594fb732603b37893a4bb6d0e56a85437d5f2ba58bdaa6b9531ac44d53",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0922307913090563,
+                "target_minus_best_other": -2.6367664337158203,
+                "target_minus_emitted": -0.61141037940979
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.2312421926394257,
+                "target_minus_best_other": -0.8781373500823975,
+                "target_minus_emitted": -0.8781373500823975
+              },
+              "source_clause_sha256": "3c38cf20ae278494794d8d1d4d2f2424b2f0f204a7050a380e4cdf137dcbae77",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.4856842134479011,
+                "target_minus_best_other": -1.1976284980773926,
+                "target_minus_emitted": -1.1976284980773926
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 58,
+              "prefix_sha256": "be2673c692e0a4b91b760ca4330b06fe267fff958910a926ee3fa160bc2ba530",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.82019961403447,
+                "target_minus_best_other": -2.086589813232422,
+                "target_minus_emitted": -0.5976479053497314
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.066586079852657,
+                "target_minus_best_other": -0.599980354309082,
+                "target_minus_emitted": -0.599980354309082
+              },
+              "source_clause_sha256": "05b9504cb64a694517e1dc1c1b249ccac020ce11614fc0bd7d982e41cc9effde",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.1765989015549323,
+                "target_minus_best_other": -3.021721839904785,
+                "target_minus_emitted": -3.021721839904785
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 124,
+              "prefix_sha256": "30feea2018d96a83fce27ea91154ff1196089364e97782bc859198d3c4172892",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0735392984711964,
+                "target_minus_best_other": -2.5690529346466064,
+                "target_minus_emitted": -0.5915801525115967
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.6598358453866715,
+                "target_minus_best_other": -2.430141568183899,
+                "target_minus_emitted": -2.430141568183899
+              },
+              "source_clause_sha256": "9fa5fb8a17b03ebdeb1b1d3b22bace09607bb9ddd06efa85c39055f279992826",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:8835448c9336b1328baa0a581a6d82f71d2495e44c3f9ea4c6d75e0420072352",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8584013451019352,
+                "target_minus_best_other": -1.630643367767334,
+                "target_minus_emitted": -1.630643367767334
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:8835448c9336b1328baa0a581a6d82f71d2495e44c3f9ea4c6d75e0420072352",
+              "position": 157,
+              "prefix_sha256": "6e3300cae434b1269b296988f2d0558b20e847c0a66f3d532d01167431969715",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.159170658886363,
+                "target_minus_best_other": -2.718522548675537,
+                "target_minus_emitted": -0.6014461517333984
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.3959370524102628,
+                "target_minus_best_other": -1.029197096824646,
+                "target_minus_emitted": -1.029197096824646
+              },
+              "source_clause_sha256": "b759a87ee7078f751643391761b39a7db1e4393980206b6fc3b7c682755e4a91",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.3761500827733393,
+                "target_minus_best_other": -2.27840518951416,
+                "target_minus_emitted": -2.27840518951416
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 91,
+              "prefix_sha256": "74f5ab6579a664c74a61e082435c79fe8a1628ecdc9cf1a794f27e7eb5619ea7",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0892701631272788,
+                "target_minus_best_other": -2.630216121673584,
+                "target_minus_emitted": -0.6026465892791748
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8476283951361534,
+                "target_minus_best_other": -1.6757588386535645,
+                "target_minus_emitted": -1.6757588386535645
+              },
+              "source_clause_sha256": "25751825089a8e0932b0896d7b83319b4941d44f9f93ee6705f593b65e243cee",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.5993563616880015,
+                "target_minus_best_other": -3.521721124649048,
+                "target_minus_emitted": -3.521721124649048
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 124,
+              "prefix_sha256": "1db9d8dedd401b526a5e23c5e1f6e8dab5b45df5567b8f27635ecf5e9b9f7cb3",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.846449357061047,
+                "target_minus_best_other": -2.1027204990386963,
+                "target_minus_emitted": -0.5923581123352051
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.0487340442917747,
+                "target_minus_best_other": -2.929362714290619,
+                "target_minus_emitted": -2.929362714290619
+              },
+              "source_clause_sha256": "f5f0af45c1a1abe30912a22c466171919fe3342a6548fd3731bd42ac57d5129a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.45830659957716,
+                "target_minus_best_other": -2.3680686950683594,
+                "target_minus_emitted": -2.3680686950683594
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 157,
+              "prefix_sha256": "98fde4e400a0884defc187e3b94f9b18f15a13fd99c229094474919923f23084",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.287020440828927,
+                "target_minus_best_other": -2.8708488941192627,
+                "target_minus_emitted": -0.6013107299804688
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.925471284357683,
+                "target_minus_best_other": -1.7667577266693115,
+                "target_minus_emitted": -1.7667577266693115
+              },
+              "source_clause_sha256": "e3aa2897242a617245295df3efaba78d61a84d5a4fe28e35cde5877fbfa2d6ea",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.395577811506877,
+                "target_minus_best_other": -2.2997379302978516,
+                "target_minus_emitted": -2.2997379302978516
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+              "position": 91,
+              "prefix_sha256": "b193aa77eed6b8ef2d2764c5f11fd466ad26a63181066abdd8609729cc5ebda8",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.941308733973515,
+                "target_minus_best_other": -2.228025436401367,
+                "target_minus_emitted": -0.5931510925292969
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8737375250006059,
+                "target_minus_best_other": -1.7065861225128174,
+                "target_minus_emitted": -1.7065861225128174
+              },
+              "source_clause_sha256": "6e82fb6faca448159b9def16e28330a93b4c03bbbc7fb13c25bd3789330565b5",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+            "observed": {
+              "actual_next_token_id": 3,
+              "combined": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.8054570587689502,
+                "target_minus_best_other": -1.2645225524902344,
+                "target_minus_emitted": -1.2645225524902344
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+              "position": 190,
+              "prefix_sha256": "4211d3bf57d3b0472aaca4b4dff06cdcc0f448786d866b2194ae045c2f9a543c",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.4475498432176703,
+                "target_minus_best_other": -3.0406250953674316,
+                "target_minus_emitted": -0.19057488441467285
+              },
+              "slot": 5,
+              "source": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.573334670513161,
+                "target_minus_best_other": -1.0739473104476929,
+                "target_minus_emitted": -1.0739473104476929
+              },
+              "source_clause_sha256": "ffc61753cb2929c83560ab03f96b779ee432148fd85ef4bfea2a3f91a21ea94d",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 5
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:03c682c1f16ef204b0276081ea44c3abf9ba937b98d76fd7c593a6ce32d71c37",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.252790121463125,
+                "target_minus_best_other": -3.210048198699951,
+                "target_minus_emitted": -3.210048198699951
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:03c682c1f16ef204b0276081ea44c3abf9ba937b98d76fd7c593a6ce32d71c37",
+              "position": 190,
+              "prefix_sha256": "af9c9f7801476d06adcae17d265f9fbb7efe4c0bb77076d90870f7f26faf3b20",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.878695811071916,
+                "target_minus_best_other": -2.222963571548462,
+                "target_minus_emitted": -0.5947511196136475
+              },
+              "slot": 5,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.6903775157708605,
+                "target_minus_best_other": -2.615296959877014,
+                "target_minus_emitted": -2.615296959877014
+              },
+              "source_clause_sha256": "dafea0907303724be2f001b0cb11680ac92b975503b594726c961bfce7bd102f",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 5
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "action",
+            "id": "fresh-modality-v3:1f7951e5ba6f6e294f297250d1f4e508122d00d60db2b1dbfc37f307ef069afb",
+            "observed": {
+              "actual_next_token_id": 19,
+              "combined": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.4247449869178075,
+                "target_minus_best_other": -1.0452241897583008,
+                "target_minus_emitted": -1.0452241897583008
+              },
+              "field": "action",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:1f7951e5ba6f6e294f297250d1f4e508122d00d60db2b1dbfc37f307ef069afb",
+              "position": 106,
+              "prefix_sha256": "f50dda7dc5eaf699c2a9697f4d71657c1b705e76c98026195c01e22840ad9c83",
+              "recurrent": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.6592074898943432,
+                "target_minus_best_other": -0.2781062126159668,
+                "target_minus_emitted": -0.2781062126159668
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.5309007119413902,
+                "target_minus_best_other": -0.767117977142334,
+                "target_minus_emitted": -0.767117977142334
+              },
+              "source_clause_sha256": "a95535397b88760007dea37990045566317758da469cf7e08279af41fe599fcc",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 11
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:2113edbf2cd932152c7ba058e29db5270b9e7d1cafe86135ae7321f5af37eed2",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.9378459547235867,
+                "target_minus_best_other": -2.883387565612793,
+                "target_minus_emitted": -2.883387565612793
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:2113edbf2cd932152c7ba058e29db5270b9e7d1cafe86135ae7321f5af37eed2",
+              "position": 58,
+              "prefix_sha256": "02972fcaab7c85052f08f4a6a2f96e173d167984be8cdcaec7dde147508cf5d2",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.8483489600173755,
+                "target_minus_best_other": -2.1393909454345703,
+                "target_minus_emitted": -0.6008429527282715
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.3797347553252752,
+                "target_minus_best_other": -2.2825446128845215,
+                "target_minus_emitted": -2.2825446128845215
+              },
+              "source_clause_sha256": "dd88c6468709732990a9278effec40f777051a45a681a8c621909331048bea4e",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:c6f8c178e1798bdd9d4e7f9e8781e3abd8cdf32b21a76ac968e70c6269635f44",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.963515944120946,
+                "target_minus_best_other": -3.944312572479248,
+                "target_minus_emitted": -3.944312572479248
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:c6f8c178e1798bdd9d4e7f9e8781e3abd8cdf32b21a76ac968e70c6269635f44",
+              "position": 58,
+              "prefix_sha256": "4ffbdbd1f371d31b60f72dfa0728df8ce99a104dac4cc29c1e2c7069937972a2",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0630070704677124,
+                "target_minus_best_other": -2.588710308074951,
+                "target_minus_emitted": -0.6035127639770508
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.3756401338880977,
+                "target_minus_best_other": -3.3407998085021973,
+                "target_minus_emitted": -3.3407998085021973
+              },
+              "source_clause_sha256": "b887e78c89cb87c9ee5ae5dd298ca49cae709cb467c9e398a572d411fa2e277a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9f89bc72d3b05b42dd1cf24f23d932335a9ea919f9cad606feaa108ba3b4fa92",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.687932486043838,
+                "target_minus_best_other": -3.6625070571899414,
+                "target_minus_emitted": -3.6625070571899414
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9f89bc72d3b05b42dd1cf24f23d932335a9ea919f9cad606feaa108ba3b4fa92",
+              "position": 124,
+              "prefix_sha256": "f84636b57828587d84c1ac1944d1366a5eb2b16543ef7477cb08886ccc6abfec",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.820031972862309,
+                "target_minus_best_other": -2.096752166748047,
+                "target_minus_emitted": -0.6009368896484375
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.1074480507190794,
+                "target_minus_best_other": -3.061570405960083,
+                "target_minus_emitted": -3.061570405960083
+              },
+              "source_clause_sha256": "a703d78952785f410fcd49d63235d159b3f10123ba6b77c26dadfa0a375b6c86",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.9090143204232355,
+                "target_minus_best_other": -0.39330101013183594,
+                "target_minus_emitted": -0.39330101013183594
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+              "position": 91,
+              "prefix_sha256": "8145dae2dd3b71608c4ea4af462a47941f54016c4d3995b41d568b4a8403d43f",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.265277388375173,
+                "target_minus_best_other": -2.8135430812835693,
+                "target_minus_emitted": -0.591320276260376
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.5990379539320676,
+                "target_minus_best_other": 0.19801998138427734,
+                "target_minus_emitted": 0.19801998138427734
+              },
+              "source_clause_sha256": "bc90b9c2b8b8ebbb4a09e0b6b1e6e485da0264a589f3c247d2b5b4160b70b221",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.9695913325799879,
+                "target_minus_best_other": -0.4927654266357422,
+                "target_minus_emitted": -0.4927654266357422
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b",
+              "position": 91,
+              "prefix_sha256": "5f4281ccb92fd7182afd48a6d6daa48b7513207cfaa39d0196a12fa1be59e246",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.306654505630404,
+                "target_minus_best_other": -2.8962442874908447,
+                "target_minus_emitted": -0.6032392978668213
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.6394494652386493,
+                "target_minus_best_other": 0.1104741096496582,
+                "target_minus_emitted": 0.1104741096496582
+              },
+              "source_clause_sha256": "7fb27597e43d363a28b27c66b3f53c37a4eb0523cbba6529d5a02f105d2d58b8",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:91e5a48ee548d0b4045c4772d529f8c7fc6fe58a397ed4c4640decd4edf36063",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.5760948579723717,
+                "target_minus_best_other": -1.3440914154052734,
+                "target_minus_emitted": -1.3440914154052734
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:91e5a48ee548d0b4045c4772d529f8c7fc6fe58a397ed4c4640decd4edf36063",
+              "position": 157,
+              "prefix_sha256": "9281299100154eaee58e508570a0954d8c5f95898ed4e7cb42e26ab8ede7246f",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.8072536146588503,
+                "target_minus_best_other": -2.0232295989990234,
+                "target_minus_emitted": -0.6005518436431885
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.132838989466812,
+                "target_minus_best_other": -0.743539571762085,
+                "target_minus_emitted": -0.743539571762085
+              },
+              "source_clause_sha256": "4275f088847fb8e2ef072993634cf289804be115d882d9104c0b696e9454372a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          }
+        ]
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 48,
+        "control-wording-ce": 48
+      },
+      "cohort": "original_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.46718645602231845,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.33537458401406184,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 123,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 33,
+        "control-wording-ce": 48
+      },
+      "cohort": "normative_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.5036056599928997,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.32559795200359076,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 97,
+            "reference_sites": 180,
+            "source_correct": 179,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 48,
+        "control-wording-ce": 48
+      },
+      "cohort": "new_balanced_train48",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "generation_seconds": 0.5553483719704673,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.3257208970026113,
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 104,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": []
+      }
+    },
+    {
+      "archived_ordered_exact": {
+        "balanced-wording-ce": 19,
+        "control-wording-ce": 33
+      },
+      "cohort": "exposed_v3_48",
+      "formula_metrics": {
+        "all_rules_preserved": 30,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 30,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 23,
+        "whole_rules_missing": 23
+      },
+      "generation_seconds": 0.5128467019530945,
+      "model_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 161,
+          "source_correct_formula_wrong": 3,
+          "source_incorrect": 19,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "scoring_seconds": 0.4381233910098672,
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 158,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_recurrent_combined_formula": {
+        "fields": {
+          "action": {
+            "combined_correct": 179,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 179,
+            "recurrent_correct": 84,
+            "reference_sites": 180,
+            "source_correct": 179,
+            "visited": 180
+          },
+          "actor": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          },
+          "modality": {
+            "combined_correct": 158,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 158,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 161,
+            "visited": 180
+          },
+          "object": {
+            "combined_correct": 180,
+            "combined_correct_formula_wrong": 0,
+            "combined_wrong_formula_correct": 0,
+            "formula_correct": 180,
+            "recurrent_correct": 0,
+            "reference_sites": 180,
+            "source_correct": 180,
+            "visited": 180
+          }
+        },
+        "wrong_sites": [
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.729308126629846,
+                "target_minus_best_other": -2.6617517471313477,
+                "target_minus_emitted": -2.6617517471313477
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+              "position": 25,
+              "prefix_sha256": "9fd7327e3255c9e99c64dd679275b4bb3d84ac32d2e597b10013f38cb8aa8c7a",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.198735257975261,
+                "target_minus_best_other": -2.7174465656280518,
+                "target_minus_emitted": -0.5944986343383789
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.1864860761148197,
+                "target_minus_best_other": -2.0672526359558105,
+                "target_minus_emitted": -2.0672526359558105
+              },
+              "source_clause_sha256": "fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.5840489510719973,
+                "target_minus_best_other": -2.364846706390381,
+                "target_minus_emitted": -2.364846706390381
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+              "position": 25,
+              "prefix_sha256": "2316cc3ab7c68a63a3eb0b544ce4fd5d4f38188c2fe4429f37c71b0e9395f06a",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.5264577023413164,
+                "target_minus_best_other": -3.2141523361206055,
+                "target_minus_emitted": -0.5749924182891846
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.113040103508143,
+                "target_minus_best_other": -1.7898543775081635,
+                "target_minus_emitted": -1.7898543775081635
+              },
+              "source_clause_sha256": "f7de99dc2faad8a6e0a9bff7e16cc824e59084e4ded8fec66bac21843f5e4e55",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9dae75a705fbe1215e8d42e41a360eec6d3eb5866457517b93621d6c23cb3d1a",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.658381615624485,
+                "target_minus_best_other": -2.5823373794555664,
+                "target_minus_emitted": -2.5823373794555664
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9dae75a705fbe1215e8d42e41a360eec6d3eb5866457517b93621d6c23cb3d1a",
+              "position": 25,
+              "prefix_sha256": "2369004c5fbbf8f590cd3d02211a7a703ed84653e0f58af0120599894ec29fcf",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.915437569657592,
+                "target_minus_best_other": -2.3520193099975586,
+                "target_minus_emitted": -0.608917236328125
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.1079223892886185,
+                "target_minus_best_other": -1.97342050075531,
+                "target_minus_emitted": -1.97342050075531
+              },
+              "source_clause_sha256": "ddff4ee5db61b18f4b6f0d280de19ea34a6aa30ec39b21dc8d049b41bd7131e7",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "secretary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:5d5c1194ed14efbe5e307d9a5f75a9c12bff8f22584f782877fb3ed3f4ea474e",
+            "observed": {
+              "actual_next_token_id": 3,
+              "combined": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.0770922607665119,
+                "target_minus_best_other": -0.2451457977294922,
+                "target_minus_emitted": -0.2451457977294922
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:5d5c1194ed14efbe5e307d9a5f75a9c12bff8f22584f782877fb3ed3f4ea474e",
+              "position": 58,
+              "prefix_sha256": "80baca5081261b10d2f8825788a0418905d23819897358e29aba081a93496fd4",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.28139499522464,
+                "target_minus_best_other": -2.808851480484009,
+                "target_minus_emitted": -0.2042088508605957
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 0.8835140474995011,
+                "target_minus_best_other": -0.04093742370605469,
+                "target_minus_emitted": -0.04093742370605469
+              },
+              "source_clause_sha256": "42bc5226ab1a13dae613627c4295eec2ace50298acce84f3e83278918563158d",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.7249979909178146,
+                "target_minus_best_other": -0.040747642517089844,
+                "target_minus_emitted": -0.040747642517089844
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+              "position": 25,
+              "prefix_sha256": "0d4d23fcec50ff5e53fbfd0006b8c00178bc2038c371267e16b70beacf41a092",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.082787322909157,
+                "target_minus_best_other": -2.585226058959961,
+                "target_minus_emitted": -0.6090817451477051
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.46035654781510393,
+                "target_minus_best_other": 0.5683341026306152,
+                "target_minus_emitted": 0.5683341026306152
+              },
+              "source_clause_sha256": "e4babc75f3a049169269da09825a8d901f442c265171c8e2a3b5645b0e4a3892",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:a5a854e4c7081610e7444964bdcf072192d45eb9043688c8a08db2e41f806dfd",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.193294258359236,
+                "target_minus_best_other": -0.8281869888305664,
+                "target_minus_emitted": -0.8281869888305664
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:a5a854e4c7081610e7444964bdcf072192d45eb9043688c8a08db2e41f806dfd",
+              "position": 58,
+              "prefix_sha256": "c169f6e4b06ccb4f8d7139f46520372f111921e7503fd0f8fdc059584062d3b1",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.989064809240423,
+                "target_minus_best_other": -2.3385586738586426,
+                "target_minus_emitted": -0.595961332321167
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.8190875650877736,
+                "target_minus_best_other": -0.23222589492797852,
+                "target_minus_emitted": -0.23222589492797852
+              },
+              "source_clause_sha256": "357eb109dbb257999512bcaf094c493b904efeb1a0a2baa987a400be773ad2e8",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.6973650454981017,
+                "target_minus_best_other": -1.4895477294921875,
+                "target_minus_emitted": -1.4895477294921875
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 25,
+              "prefix_sha256": "d1bbb3594fb732603b37893a4bb6d0e56a85437d5f2ba58bdaa6b9531ac44d53",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0922307913090563,
+                "target_minus_best_other": -2.6367664337158203,
+                "target_minus_emitted": -0.61141037940979
+              },
+              "slot": 0,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.2312421926394257,
+                "target_minus_best_other": -0.8781373500823975,
+                "target_minus_emitted": -0.8781373500823975
+              },
+              "source_clause_sha256": "3c38cf20ae278494794d8d1d4d2f2424b2f0f204a7050a380e4cdf137dcbae77",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 0
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.4856842134479011,
+                "target_minus_best_other": -1.1976284980773926,
+                "target_minus_emitted": -1.1976284980773926
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 58,
+              "prefix_sha256": "be2673c692e0a4b91b760ca4330b06fe267fff958910a926ee3fa160bc2ba530",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.82019961403447,
+                "target_minus_best_other": -2.086589813232422,
+                "target_minus_emitted": -0.5976479053497314
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.066586079852657,
+                "target_minus_best_other": -0.599980354309082,
+                "target_minus_emitted": -0.599980354309082
+              },
+              "source_clause_sha256": "05b9504cb64a694517e1dc1c1b249ccac020ce11614fc0bd7d982e41cc9effde",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.1765989015549323,
+                "target_minus_best_other": -3.021721839904785,
+                "target_minus_emitted": -3.021721839904785
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:49b5ff821271d381aeee3016efde2bb39a2b2508c01c867d3d954904322ba6b9",
+              "position": 124,
+              "prefix_sha256": "30feea2018d96a83fce27ea91154ff1196089364e97782bc859198d3c4172892",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0735392984711964,
+                "target_minus_best_other": -2.5690529346466064,
+                "target_minus_emitted": -0.5915801525115967
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.6598358453866715,
+                "target_minus_best_other": -2.430141568183899,
+                "target_minus_emitted": -2.430141568183899
+              },
+              "source_clause_sha256": "9fa5fb8a17b03ebdeb1b1d3b22bace09607bb9ddd06efa85c39055f279992826",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "examine",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:8835448c9336b1328baa0a581a6d82f71d2495e44c3f9ea4c6d75e0420072352",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8584013451019352,
+                "target_minus_best_other": -1.630643367767334,
+                "target_minus_emitted": -1.630643367767334
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:8835448c9336b1328baa0a581a6d82f71d2495e44c3f9ea4c6d75e0420072352",
+              "position": 157,
+              "prefix_sha256": "6e3300cae434b1269b296988f2d0558b20e847c0a66f3d532d01167431969715",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.159170658886363,
+                "target_minus_best_other": -2.718522548675537,
+                "target_minus_emitted": -0.6014461517333984
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.3959370524102628,
+                "target_minus_best_other": -1.029197096824646,
+                "target_minus_emitted": -1.029197096824646
+              },
+              "source_clause_sha256": "b759a87ee7078f751643391761b39a7db1e4393980206b6fc3b7c682755e4a91",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.3761500827733393,
+                "target_minus_best_other": -2.27840518951416,
+                "target_minus_emitted": -2.27840518951416
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 91,
+              "prefix_sha256": "74f5ab6579a664c74a61e082435c79fe8a1628ecdc9cf1a794f27e7eb5619ea7",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0892701631272788,
+                "target_minus_best_other": -2.630216121673584,
+                "target_minus_emitted": -0.6026465892791748
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8476283951361534,
+                "target_minus_best_other": -1.6757588386535645,
+                "target_minus_emitted": -1.6757588386535645
+              },
+              "source_clause_sha256": "25751825089a8e0932b0896d7b83319b4941d44f9f93ee6705f593b65e243cee",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "notary",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.5993563616880015,
+                "target_minus_best_other": -3.521721124649048,
+                "target_minus_emitted": -3.521721124649048
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 124,
+              "prefix_sha256": "1db9d8dedd401b526a5e23c5e1f6e8dab5b45df5567b8f27635ecf5e9b9f7cb3",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.846449357061047,
+                "target_minus_best_other": -2.1027204990386963,
+                "target_minus_emitted": -0.5923581123352051
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.0487340442917747,
+                "target_minus_best_other": -2.929362714290619,
+                "target_minus_emitted": -2.929362714290619
+              },
+              "source_clause_sha256": "f5f0af45c1a1abe30912a22c466171919fe3342a6548fd3731bd42ac57d5129a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.45830659957716,
+                "target_minus_best_other": -2.3680686950683594,
+                "target_minus_emitted": -2.3680686950683594
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7fbd6bbfd4f98f5438bdb7252fe8b91f4728adc82087dc4d28e1fc95e0c3390d",
+              "position": 157,
+              "prefix_sha256": "98fde4e400a0884defc187e3b94f9b18f15a13fd99c229094474919923f23084",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.287020440828927,
+                "target_minus_best_other": -2.8708488941192627,
+                "target_minus_emitted": -0.6013107299804688
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.925471284357683,
+                "target_minus_best_other": -1.7667577266693115,
+                "target_minus_emitted": -1.7667577266693115
+              },
+              "source_clause_sha256": "e3aa2897242a617245295df3efaba78d61a84d5a4fe28e35cde5877fbfa2d6ea",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.395577811506877,
+                "target_minus_best_other": -2.2997379302978516,
+                "target_minus_emitted": -2.2997379302978516
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+              "position": 91,
+              "prefix_sha256": "b193aa77eed6b8ef2d2764c5f11fd466ad26a63181066abdd8609729cc5ebda8",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.941308733973515,
+                "target_minus_best_other": -2.228025436401367,
+                "target_minus_emitted": -0.5931510925292969
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.8737375250006059,
+                "target_minus_best_other": -1.7065861225128174,
+                "target_minus_emitted": -1.7065861225128174
+              },
+              "source_clause_sha256": "6e82fb6faca448159b9def16e28330a93b4c03bbbc7fb13c25bd3789330565b5",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "publish",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+            "observed": {
+              "actual_next_token_id": 3,
+              "combined": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.8054570587689502,
+                "target_minus_best_other": -1.2645225524902344,
+                "target_minus_emitted": -1.2645225524902344
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:4f5344ca1448f567134964455d2b7e74b20c1cf2be397b4b97fa1795a2674acf",
+              "position": 190,
+              "prefix_sha256": "4211d3bf57d3b0472aaca4b4dff06cdcc0f448786d866b2194ae045c2f9a543c",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.4475498432176703,
+                "target_minus_best_other": -3.0406250953674316,
+                "target_minus_emitted": -0.19057488441467285
+              },
+              "slot": 5,
+              "source": {
+                "argmax_token_id": 3,
+                "full_vocabulary_cross_entropy": 1.573334670513161,
+                "target_minus_best_other": -1.0739473104476929,
+                "target_minus_emitted": -1.0739473104476929
+              },
+              "source_clause_sha256": "ffc61753cb2929c83560ab03f96b779ee432148fd85ef4bfea2a3f91a21ea94d",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 5
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:03c682c1f16ef204b0276081ea44c3abf9ba937b98d76fd7c593a6ce32d71c37",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.252790121463125,
+                "target_minus_best_other": -3.210048198699951,
+                "target_minus_emitted": -3.210048198699951
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:03c682c1f16ef204b0276081ea44c3abf9ba937b98d76fd7c593a6ce32d71c37",
+              "position": 190,
+              "prefix_sha256": "af9c9f7801476d06adcae17d265f9fbb7efe4c0bb77076d90870f7f26faf3b20",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.878695811071916,
+                "target_minus_best_other": -2.222963571548462,
+                "target_minus_emitted": -0.5947511196136475
+              },
+              "slot": 5,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.6903775157708605,
+                "target_minus_best_other": -2.615296959877014,
+                "target_minus_emitted": -2.615296959877014
+              },
+              "source_clause_sha256": "dafea0907303724be2f001b0cb11680ac92b975503b594726c961bfce7bd102f",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 5
+          },
+          {
+            "expected_rule": {
+              "action": "deliver",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "action",
+            "id": "fresh-modality-v3:1f7951e5ba6f6e294f297250d1f4e508122d00d60db2b1dbfc37f307ef069afb",
+            "observed": {
+              "actual_next_token_id": 19,
+              "combined": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.4247449869178075,
+                "target_minus_best_other": -1.0452241897583008,
+                "target_minus_emitted": -1.0452241897583008
+              },
+              "field": "action",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:1f7951e5ba6f6e294f297250d1f4e508122d00d60db2b1dbfc37f307ef069afb",
+              "position": 106,
+              "prefix_sha256": "f50dda7dc5eaf699c2a9697f4d71657c1b705e76c98026195c01e22840ad9c83",
+              "recurrent": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.6592074898943432,
+                "target_minus_best_other": -0.2781062126159668,
+                "target_minus_emitted": -0.2781062126159668
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 19,
+                "full_vocabulary_cross_entropy": 1.5309007119413902,
+                "target_minus_best_other": -0.767117977142334,
+                "target_minus_emitted": -0.767117977142334
+              },
+              "source_clause_sha256": "a95535397b88760007dea37990045566317758da469cf7e08279af41fe599fcc",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 11
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:2113edbf2cd932152c7ba058e29db5270b9e7d1cafe86135ae7321f5af37eed2",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.9378459547235867,
+                "target_minus_best_other": -2.883387565612793,
+                "target_minus_emitted": -2.883387565612793
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:2113edbf2cd932152c7ba058e29db5270b9e7d1cafe86135ae7321f5af37eed2",
+              "position": 58,
+              "prefix_sha256": "02972fcaab7c85052f08f4a6a2f96e173d167984be8cdcaec7dde147508cf5d2",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.8483489600173755,
+                "target_minus_best_other": -2.1393909454345703,
+                "target_minus_emitted": -0.6008429527282715
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 2.3797347553252752,
+                "target_minus_best_other": -2.2825446128845215,
+                "target_minus_emitted": -2.2825446128845215
+              },
+              "source_clause_sha256": "dd88c6468709732990a9278effec40f777051a45a681a8c621909331048bea4e",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:c6f8c178e1798bdd9d4e7f9e8781e3abd8cdf32b21a76ac968e70c6269635f44",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.963515944120946,
+                "target_minus_best_other": -3.944312572479248,
+                "target_minus_emitted": -3.944312572479248
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:c6f8c178e1798bdd9d4e7f9e8781e3abd8cdf32b21a76ac968e70c6269635f44",
+              "position": 58,
+              "prefix_sha256": "4ffbdbd1f371d31b60f72dfa0728df8ce99a104dac4cc29c1e2c7069937972a2",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.0630070704677124,
+                "target_minus_best_other": -2.588710308074951,
+                "target_minus_emitted": -0.6035127639770508
+              },
+              "slot": 1,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.3756401338880977,
+                "target_minus_best_other": -3.3407998085021973,
+                "target_minus_emitted": -3.3407998085021973
+              },
+              "source_clause_sha256": "b887e78c89cb87c9ee5ae5dd298ca49cae709cb467c9e398a572d411fa2e277a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 1
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "registrar",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9f89bc72d3b05b42dd1cf24f23d932335a9ea919f9cad606feaa108ba3b4fa92",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.687932486043838,
+                "target_minus_best_other": -3.6625070571899414,
+                "target_minus_emitted": -3.6625070571899414
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9f89bc72d3b05b42dd1cf24f23d932335a9ea919f9cad606feaa108ba3b4fa92",
+              "position": 124,
+              "prefix_sha256": "f84636b57828587d84c1ac1944d1366a5eb2b16543ef7477cb08886ccc6abfec",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.820031972862309,
+                "target_minus_best_other": -2.096752166748047,
+                "target_minus_emitted": -0.6009368896484375
+              },
+              "slot": 3,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 3.1074480507190794,
+                "target_minus_best_other": -3.061570405960083,
+                "target_minus_emitted": -3.061570405960083
+              },
+              "source_clause_sha256": "a703d78952785f410fcd49d63235d159b3f10123ba6b77c26dadfa0a375b6c86",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 3
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "archive",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.9090143204232355,
+                "target_minus_best_other": -0.39330101013183594,
+                "target_minus_emitted": -0.39330101013183594
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+              "position": 91,
+              "prefix_sha256": "8145dae2dd3b71608c4ea4af462a47941f54016c4d3995b41d568b4a8403d43f",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.265277388375173,
+                "target_minus_best_other": -2.8135430812835693,
+                "target_minus_emitted": -0.591320276260376
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.5990379539320676,
+                "target_minus_best_other": 0.19801998138427734,
+                "target_minus_emitted": 0.19801998138427734
+              },
+              "source_clause_sha256": "bc90b9c2b8b8ebbb4a09e0b6b1e6e485da0264a589f3c247d2b5b4160b70b221",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "preserve",
+              "actor": "trustee",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 0.9695913325799879,
+                "target_minus_best_other": -0.4927654266357422,
+                "target_minus_emitted": -0.4927654266357422
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b",
+              "position": 91,
+              "prefix_sha256": "5f4281ccb92fd7182afd48a6d6daa48b7513207cfaa39d0196a12fa1be59e246",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 3.306654505630404,
+                "target_minus_best_other": -2.8962442874908447,
+                "target_minus_emitted": -0.6032392978668213
+              },
+              "slot": 2,
+              "source": {
+                "argmax_token_id": 4,
+                "full_vocabulary_cross_entropy": 0.6394494652386493,
+                "target_minus_best_other": 0.1104741096496582,
+                "target_minus_emitted": 0.1104741096496582
+              },
+              "source_clause_sha256": "7fb27597e43d363a28b27c66b3f53c37a4eb0523cbba6529d5a02f105d2d58b8",
+              "source_correct": true,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 2
+          },
+          {
+            "expected_rule": {
+              "action": "approve",
+              "actor": "treasurer",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "O",
+              "object": "notice",
+              "temporal": []
+            },
+            "field": "modality",
+            "id": "fresh-modality-v3:91e5a48ee548d0b4045c4772d529f8c7fc6fe58a397ed4c4640decd4edf36063",
+            "observed": {
+              "actual_next_token_id": 5,
+              "combined": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.5760948579723717,
+                "target_minus_best_other": -1.3440914154052734,
+                "target_minus_emitted": -1.3440914154052734
+              },
+              "field": "modality",
+              "formula_field_correct": false,
+              "id": "fresh-modality-v3:91e5a48ee548d0b4045c4772d529f8c7fc6fe58a397ed4c4640decd4edf36063",
+              "position": 157,
+              "prefix_sha256": "9281299100154eaee58e508570a0954d8c5f95898ed4e7cb42e26ab8ede7246f",
+              "recurrent": {
+                "argmax_token_id": 28,
+                "full_vocabulary_cross_entropy": 2.8072536146588503,
+                "target_minus_best_other": -2.0232295989990234,
+                "target_minus_emitted": -0.6005518436431885
+              },
+              "slot": 4,
+              "source": {
+                "argmax_token_id": 5,
+                "full_vocabulary_cross_entropy": 1.132838989466812,
+                "target_minus_best_other": -0.743539571762085,
+                "target_minus_emitted": -0.743539571762085
+              },
+              "source_clause_sha256": "4275f088847fb8e2ef072993634cf289804be115d882d9104c0b696e9454372a",
+              "source_correct": false,
+              "status": "visited",
+              "target_token_id": 4
+            },
+            "slot": 4
+          }
+        ]
+      }
+    }
+  ],
+  "physical_panels": 8,
+  "proof_authority": false,
+  "qualified": false,
+  "reference_paragraphs": 384,
+  "reference_rules": 1440,
+  "reference_scalar_sites": 5760,
+  "schema": "dual-bank-replay-postfit-comparison/v1",
+  "selected_last_tensor_alias": true,
+  "temperature": 0,
+  "timing_scope": "Cached authored decoder fit/source-only generation; no encoder, current compiler, bridge-on IR, native-family or Lake throughput.",
+  "training_call_seconds": 43.47308465099195,
+  "training_rows_per_second": 28.063341025702037,
+  "workers": 1
+}
