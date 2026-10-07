@@ -238,3 +238,23 @@ caller attachment is not learned. Existing model/runtime selections are
 preserved; no real-law or Lake accuracy is claimed. Custom checkpoint restore
 and read-only 256/256 final-output replay are retained in the
 [trigger-readout artifact lane](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/09ac0af19c801b53216f83c3544c8d54b763f091/experiments/trigger-readout-20261007/run-01).
+
+## October 7: support and action residual comparison
+
+The [support/action pilot](../implementation/legal_scope_support_action_pilot_20261007.md)
+freezes the selected trigger parent and trains linear (195) versus MLP (6,339) residual
+parameters on the same fresh schedule. Both finish 240 actual joint AdamW calls
+and select 120. All 16 batch records are encoded: support BCE includes eight negatives;
+action endpoints use eight positives. Class/presence/nonaction pointers stay fixed.
+Fresh 64-supported/64-unsupported scores are parent 28, linear 37, MLP 39 whole exact;
+raw action spans 48/58/62, with unsupported emissions 7/11/12. Positive gains do
+not remove the measured refusal tradeoff; no default model is promoted.
+Earlier exposed cohorts retain all parent whole successes but add unsupported
+emissions. A label-informed posthoc intersection stays within parent emission sets,
+with fresh 29/64 whole and 7/64 unsupported for either arm; its policy needs a new
+predeclared evaluation. Raw scores and checkpoint selection remain unchanged.
+The exact corpus, barriers, checkpoints and independent reviews are retained at
+[the experiment artifact lane](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/f2e6e9ad6b693a605066146dd8985f036fcaa50a/experiments/support-action-20261007/run-01).
+131 decoder/owner tests and eight pure selector fixtures pass; 768 saved selected
+outputs replay exactly. All outputs remain zero-mask proposals/null formal
+output; latent 8D/384D/768D, US Code review, native family/Lake qualification remain open.
