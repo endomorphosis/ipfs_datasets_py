@@ -302,3 +302,15 @@ def open_ir_decoder_format_autoencoder(directory_plan_pin, inventory_pins, reque
         format_request=format_request, package_manifest_pin=package_manifest_pin,
         corpus_pin=corpus_pin, corpus_split=corpus_split, row_ids=row_ids,
         max_reference_bytes=max_reference_bytes)
+
+
+def prepare_normative_legal_ir_runtime(request, **kwargs):
+    """Opt in to metadata-only selection of a normative Legal384/768 state."""
+    from .normative_legal_ir_runtime import prepare_normative_legal_ir_runtime as prepare
+    return prepare(request, **kwargs)
+
+
+def open_normative_legal_ir_autoencoder(request, **kwargs):
+    """Explicitly restore a selected normative decoder using unchanged cached inputs."""
+    from .normative_legal_ir_runtime import open_normative_legal_ir_autoencoder as open_runtime
+    return open_runtime(request, **kwargs)

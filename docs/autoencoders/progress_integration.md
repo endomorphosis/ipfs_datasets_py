@@ -18,6 +18,14 @@ another experiment. The revisions above remain historical review inputs.
 
 ## Preserve the distinct owners
 
+The October 7 [normative cached-runtime follow-through](normative_legal_ir_runtime.md)
+reuses the four published selected Legal384/768 endpoints with an explicit
+recipe/task/codec/source contract. All four reproduce their original contextual
+parents' 48 cached outputs exactly; this is retention parity, not fresh semantic
+evaluation. Native qualification remains false. The overnight
+[TRAIN observation and next data proposal](reconstruction_gap_followup_20261006.md)
+remain the guide for subsequent fitting.
+
 | Owner | Output or representation | How it contributes to text-to-logic |
 | --- | --- | --- |
 | Protected 8D linguistic teacher | Feature reconstruction and deterministic linguistic IR | Preserve teacher replay and its original training method; verify parser omissions before distillation |
