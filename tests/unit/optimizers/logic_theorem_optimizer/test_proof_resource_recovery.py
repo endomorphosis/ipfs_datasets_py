@@ -201,6 +201,114 @@ def test_child_and_root_share_pacing_without_double_accounting(owners):
             assert first.try_acquire("hammer", memory_mb=64, parent=parent) is None
 
 
+@pytest.mark.parametrize("cpu_slots", [5, 8])
+def test_waiting_root_memory_demand_does_not_block_reserved_child(tmp_path, cpu_slots):
+    # Source384 replay reserves 6144 MiB, then obtains child leases inside that
+    # envelope. Another replay cannot fit concurrently in the live headroom;
+    # its refusal must not prevent the admitted replay from finishing.
+    host = ProofHostResources(cpu_slots, 16384, 10123)
+    cfg = config(tmp_path / "scheduler.json", lambda: host,
+        total_cpu_slots=cpu_slots, total_memory_mb=16384,
+        proof_memory_headroom_mb=2048)
+    first = mod.GlobalResourceScheduler(cfg)
+    second = mod.GlobalResourceScheduler(cfg)
+    with first.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                       child_process_slots=3, timeout=0) as parent:
+        with pytest.raises(mod.LeaseTimeoutError) as failed:
+            second.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                           child_process_slots=3, timeout=0)
+        sample = failed.value.admission_observation["last_sample"]
+        assert sample["reason"] == "proof_memory_headroom"
+        assert sample["reserved_root_memory_mb"] == 6144
+        assert sample["additional_request_memory_mb"] == 6144
+        reopened = mod.GlobalResourceScheduler(cfg)
+        with reopened.acquire("snapshot_evaluation", cpu_slots=1, memory_mb=4096,
+                              child_process_slots=1, parent=parent, timeout=0):
+            snap = first.snapshot()
+            assert snap["active_root_lease_count"] == 1
+            assert snap["active_child_lease_count"] == 1
+            assert snap["allocated"]["memory_mb"] == 6144
+            assert snap["proof_backoff"] == snap["proof_recovery"] == {}
+            for request in (
+                dict(cpu_slots=3, memory_mb=1, child_process_slots=1),
+                dict(cpu_slots=1, memory_mb=3000, child_process_slots=1),
+                dict(cpu_slots=1, memory_mb=1, child_process_slots=3),
+            ):
+                assert reopened.try_acquire("snapshot_evaluation", parent=parent, **request) is None
+    with second.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                        child_process_slots=3, timeout=0):
+        pass
+    assert first.snapshot()["active_lease_count"] == 0
+    assert first.snapshot()["waiting_request_count"] == 0
+
+
+@pytest.mark.parametrize("failure,reason", [
+    ({"available_memory_mb": 8191}, "proof_memory_headroom"),
+    ({"memory_stall_percent": 90}, "proof_memory_stall"),
+    ({"cpu_stall_percent": 90}, "proof_cpu_stall"),
+    ({"io_stall_percent": 90}, "proof_io_stall"),
+    (None, "proof_resource_telemetry_unknown"),
+])
+def test_new_root_still_shares_pressure_on_existing_envelopes(tmp_path, failure, reason):
+    healthy = ProofHostResources(8, 16384, 10123)
+    observed = [healthy]
+    def sample():
+        if observed[0] is None:
+            raise OSError("unavailable")
+        return observed[0]
+    scheduler = mod.GlobalResourceScheduler(config(tmp_path / "scheduler.json", sample,
+        total_memory_mb=16384, proof_memory_headroom_mb=2048))
+    with scheduler.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                           child_process_slots=3, timeout=0) as parent:
+        observed[0] = None if failure is None else replace(healthy, **failure)
+        assert scheduler.try_acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144) is None
+        assert scheduler.snapshot()["proof_backoff"]["reason"] == reason
+        assert scheduler.try_acquire("snapshot_evaluation", memory_mb=4096, parent=parent) is None
+        assert scheduler.snapshot()["active_child_lease_count"] == 0
+    assert scheduler.snapshot()["active_lease_count"] == 0
+
+
+def test_continuously_waiting_root_does_not_poison_child_or_smaller_root(tmp_path):
+    host = ProofHostResources(8, 16384, 10123)
+    cfg = config(tmp_path / "scheduler.json", lambda: host,
+        total_memory_mb=16384, proof_memory_headroom_mb=2048)
+    first, second = mod.GlobalResourceScheduler(cfg), mod.GlobalResourceScheduler(cfg)
+    waiting, cancel = threading.Event(), threading.Event()
+    outcomes = []
+    original = second._can_grant
+    def observed_gate(*args, **kwargs):
+        allowed = original(*args, **kwargs)
+        if not allowed:
+            waiting.set()
+        return allowed
+    second._can_grant = observed_gate
+    def wait_for_root():
+        try:
+            with second.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                                timeout=5, cancel_event=cancel):
+                outcomes.append("granted")
+        except Exception as exc:
+            outcomes.append(type(exc))
+    with first.acquire("snapshot_evaluation", cpu_slots=3, memory_mb=6144,
+                       child_process_slots=3, timeout=0) as parent:
+        thread = threading.Thread(target=wait_for_root)
+        thread.start()
+        try:
+            assert waiting.wait(2)
+            with parent.acquire_child(memory_mb=4096, timeout=0):
+                assert first.snapshot()["waiting_request_count"] == 1
+            # Its fairness probe checks the older, too-large waiter again.
+            with first.acquire("snapshot_evaluation", memory_mb=512, timeout=0):
+                assert first.snapshot()["active_root_lease_count"] == 2
+        finally:
+            cancel.set()
+            thread.join(2)
+        assert not thread.is_alive()
+        assert outcomes == [mod.LeaseCancelledError]
+    assert first.snapshot()["active_lease_count"] == 0
+    assert first.snapshot()["waiting_request_count"] == 0
+
+
 def test_validation_bypasses_only_extra_pacing(owners):
     first, second, clock, observed = owners
     pressure_then_healthy(owners)

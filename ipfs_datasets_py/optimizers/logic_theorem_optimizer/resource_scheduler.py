@@ -1539,9 +1539,25 @@ class GlobalResourceScheduler:
                     except Exception:
                         pass
             if reason:
-                self._record_pressure(state, reason, now)
+                # An extra root may not fit even though already admitted
+                # envelopes still have their full conservative headroom.
+                # Refuse that request without imposing a shared cooldown:
+                # its waiting demand must not stop children from draining
+                # those envelopes. Actual pressure on existing reservations,
+                # missing telemetry and every other pressure gate remain
+                # shared refusals, including for child work.
+                additional_memory_refusal = (
+                    reason == "proof_memory_headroom" and host is not None
+                    and additional is not None and additional > 0
+                    and reserved is not None and reserved > 0
+                    and host.available_memory_mb >= self.config.proof_memory_headroom_mb + reserved
+                )
+                if not additional_memory_refusal:
+                    self._record_pressure(state, reason, now)
                 self._record_proof_refusal(state, waiter, host=host, reason=reason, gate="envelope",
-                    decision_cycle_at=now, demand=demand, backoff_until=backoff.get("until"), error_type=error_type)
+                    decision_cycle_at=now, demand=demand,
+                    backoff_until=None if additional_memory_refusal else backoff.get("until"),
+                    error_type=error_type)
                 return False
             backoff.clear()
             if self.config.proof_recovery_enabled:
