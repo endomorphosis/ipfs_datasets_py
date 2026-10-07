@@ -287,3 +287,8 @@ All six research states and selected-zero aliases are preserved at
 170 executed test cases have source-qualified provenance,23 pure selector fixtures
 pass and 1,024 selected outputs replay exactly. No defaults, latent weights or
 legal/native-family/Lake admissions change; masks remain zero and formal output null.
+
+
+## October 7: bounded all-span intake implementation
+
+The [intake progress report](uscode_span_intake_progress_20261007.md) records paired-v1/v2 feed support, full UTF-8 cache writes and a restartable source census. All335 integrated controls pass. A bounded fresh-process resume preserves9748 prefix occurrences and reaches18342 occurrences across128 source sections, including2165 exact archived joins; the remaining441739 archived IDs await further source scanning. The archive export and full source inventory have different scopes, and inferred larger totals remain conditional. Original assets and historical IDs remain intact; token counts, learned reconstruction and proof results are not inferred from this census. [Compact receipts](evidence/uscode-span-intake-20261007/index.json) preserve the failed larger-batch attempt, successful recovery and independent31-check replay.

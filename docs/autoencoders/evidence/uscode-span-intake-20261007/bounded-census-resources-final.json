@@ -1,0 +1,131 @@
+{
+  "cleanup_error": null,
+  "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "record": {
+    "artifacts_durable_asserted": true,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 75023750,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02"
+    },
+    "attempt_exceeded_reservation": false,
+    "child": {
+      "birth": "40484749",
+      "pid": 409511
+    },
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "created_at": 1791386773.969527,
+    "external_charges": {},
+    "final_accounting": {
+      "additional_requested_bytes": 0,
+      "charged_bytes": 142898074628,
+      "inventory": {
+        "apparent_bytes": 95133074628,
+        "entry_count": 1363260,
+        "special_file_count": 10,
+        "symlink_count": 732
+      },
+      "limit_bytes": 145000000000,
+      "minimum_filesystem_free_bytes": 160300408832,
+      "observed_apparent_bytes": 95133074628,
+      "outstanding_full_reservations_bytes": 47765000000,
+      "scope": "named_roots_only_apparent_bytes"
+    },
+    "final_attempt_bytes": 8701600,
+    "final_external_charged_bytes": 0,
+    "final_total_charged_bytes": 8701600,
+    "finalization_profile": {
+      "global_accounting_seconds": 14.500686890969519,
+      "global_inventory_count": 1,
+      "ledger_lock_wait_seconds": 0.0002488500322215259,
+      "process_check_seconds": 0.01754327700473368,
+      "schema_version": "daemon-resource-finalization-profile/v1",
+      "scope": "one_fresh_locked_census_with_full_claim_checked_before_release",
+      "strict_attempt_inventory_count": 1,
+      "strict_attempt_inventory_seconds": 0.0002419220400042832
+    },
+    "last_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 8701600,
+      "attempt_limit_bytes": 64000000,
+      "charged_bytes": 142962074628,
+      "checked_at": 1791386803.3926263,
+      "external_charged_bytes": 0,
+      "group_rss": {
+        "available": true,
+        "live_processes": 0,
+        "rss_bytes": 0
+      },
+      "inventory": {
+        "apparent_bytes": 95133074628,
+        "entry_count": 1363260,
+        "special_file_count": 10,
+        "symlink_count": 732
+      },
+      "limit_bytes": 145000000000,
+      "memory_limit_bytes": 1610612736,
+      "minimum_filesystem_free_bytes": 160300408832,
+      "observed_apparent_bytes": 95133074628,
+      "outstanding_full_reservations_bytes": 47829000000,
+      "process_slot_estimate_exceeded": false,
+      "reserved_child_process_slots": 1,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 8701600
+    },
+    "memory_mb": 1536,
+    "owner_pid": 405894,
+    "prior_children": [],
+    "released_at": 1791386803.4015777,
+    "reservation_id": "8258db6b4c6c4c57b6e86a3bd42f84c3",
+    "scheduler_lane": "hammer_lean",
+    "status": "released",
+    "storage_bytes": 64000000,
+    "workload": "canonical_trainer"
+  },
+  "reservation_id": "8258db6b4c6c4c57b6e86a3bd42f84c3",
+  "resource_lease": {
+    "acquired_at": 1791386774.0131464,
+    "cancelled": true,
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "gpu_memory_mb": 0,
+    "lane": "hammer_lean",
+    "lease_id": "ea2eaa293c534938974133002a0d1e9c",
+    "memory_mb": 1536,
+    "owner_pid": 405894,
+    "parent_lease_id": null,
+    "released": true,
+    "requires_gpu": false,
+    "unified_memory_mb": 0,
+    "wait_seconds": 5.119945853948593e-07
+  },
+  "roots": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 533856,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "scheduler_lane": "hammer_lean",
+  "schema": "daemon-resource-reservations-v1",
+  "status": "released",
+  "storage_limit_bytes": 145000000000,
+  "workload": "canonical_trainer"
+}

@@ -1,0 +1,36 @@
+{
+  "queue": {
+    "bytes": 52701179,
+    "elapsed_seconds": 31.076,
+    "models_executed": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+    "path_in_repo": "autoformal/uscode/resume-checkpoint.parquet",
+    "proof_authority": false,
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "revision": "765176c6db79ba65c1697c21dead43666350b730",
+    "schema": "uscode-source-census-input-download/v1",
+    "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+    "training_executed": false,
+    "verified": true
+  },
+  "source": {
+    "repository_id": "justicedao/ipfs_uscode",
+    "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "bytes": 374277662,
+    "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+  },
+  "queue_census": {
+    "rows": 443905,
+    "span_rows": 443904,
+    "distinct_span_ids": 443904,
+    "distinct_identity_triples": 443904,
+    "meta_document_count": 60068,
+    "sealed": 22379,
+    "gap": 421525,
+    "pending_count_is_not_unique_spans": true
+  },
+  "models_executed": false,
+  "training_executed": false,
+  "proof_authority": false
+}

@@ -39,10 +39,15 @@ python scripts/ops/legal_ir/census_uscode_sources.py \
   --source-parquet /LOCAL/laws.parquet \
   --source-sha256 4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8 \
   --output-directory /OWNED/source-census-generation \
-  --section-batch-size 16 --max-batches 2 \
+  --section-batch-size 1 --max-batches 16 \
   --memory-mb 1024 --storage-max-bytes 134217728 \
   --max-row-group-bytes 2147483648
 ```
+
+The first real run refused a later sixteen-section batch at its configured
+span/byte limit. A one-section resume completed the bounded diagnostic window.
+Larger batches need measured fit; a single oversized section needs an explicit
+disposition or a separately reviewed streaming interface, never silent clipping.
 
 Resume the same command/output directory after removing `--max-batches`; changing
 `--section-batch-size` is safe. A complete run produces `census.duckdb`, pinned

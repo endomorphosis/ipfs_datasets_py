@@ -1,0 +1,66 @@
+{
+  "schema": "uscode-span-intake-evidence-index/v1",
+  "scope": "bounded source-only diagnostic; complete_source_scan=false; no inference/training/proof",
+  "files": {
+    "source-inputs.json": {
+      "bytes": 1425,
+      "sha256": "cdf8563c39b1d4b8d841c41ba154addd8f0a6115e3f31692b30861f75e9a6b6e"
+    },
+    "bounded-census-manifest.json": {
+      "bytes": 1711,
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    "bounded-census-report.json": {
+      "bytes": 6427,
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70"
+    },
+    "bounded-census-child-exit.json": {
+      "bytes": 515,
+      "sha256": "bd6e31c5f99ed70c120efa3f3211a55af3a4dc3326e11d8d9f393045eb2929da"
+    },
+    "bounded-census-resources-final.json": {
+      "bytes": 4383,
+      "sha256": "f33ced4ab4d5b1913b79a75b1466cd2dbd891487cd8127092cd29f94b67a937b"
+    },
+    "failed-census-claim-release.json": {
+      "bytes": 7828,
+      "sha256": "79efdd5847a6b901d44fa41963c45395ef21587b526010c5cadcc590f8764282"
+    },
+    "original-partial-report.json": {
+      "bytes": 6346,
+      "sha256": "e94e87e0668b6410309e51eaf5bf3f8b691a568ab4503a770db24e5a3b7b05f8"
+    },
+    "original-census-child-exit.json": {
+      "bytes": 515,
+      "sha256": "8d635823681e94519e56d59b1fa9d0b4fe6095481a8cd7a83410c5f45bb174f4"
+    },
+    "review/independent-results-review.json": {
+      "bytes": 26177,
+      "sha256": "788b949e4ee8dd57ed98fd4e10fdafb6b315720285310f96b4312cfe600d959b"
+    },
+    "review/historical-clipping-audit.json": {
+      "bytes": 64514,
+      "sha256": "b95f948d67c45fd88707e69efe05b3c56dd83bd3c0aafdf88412ef94097e9da0"
+    },
+    "review/paired-feed-ready-order-resolution.json": {
+      "bytes": 3755,
+      "sha256": "0a7113349757fa23b82a0359e2c7d9f2546dcdedc030960dce6d974732560a61"
+    },
+    "validation/integrated-controls-receipt.json": {
+      "bytes": 1112,
+      "sha256": "9e8275ef35f37b271702d3c085311f6e9029bd110175548178b7af0deb136778"
+    },
+    "validation/integrated-controls.xml": {
+      "bytes": 53528,
+      "sha256": "d6ebd015e8c4cb62bc59bd3da3fb5bea3a608944bf3d3e80fa9d4b636c0e6360"
+    },
+    "lossless-implementation-receipt.json": {
+      "bytes": 4794,
+      "sha256": "7b05d048eade450c8e482425b07b337a5a2608c5d52a94c755bdeac17fe87ec6"
+    },
+    "census-implementation-receipt.json": {
+      "bytes": 2937,
+      "sha256": "0a746833d018f8377d7e7b3056fbd34fffeb3545efe4f04be328649e52e3ed6f"
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "admitted": false,
+  "complete_source_scan": false,
+  "durable_inventory": "census.duckdb/source_occurrences; ledger indexes are TEMP and rebuilt from the pinned queue",
+  "exports": [
+    {
+      "bytes": 630,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census-disposition-counts.parquet",
+      "sha256": "b06d472f3a64138c186a36c0c5b938a15d550085f7079aae769ccca6015e3bee"
+    }
+  ],
+  "extraction_text_scope": "Exact historical normalized sentence bytes; original section bytes remain in the pinned source artifact",
+  "formalized": false,
+  "full_parquet_exported": false,
+  "inference_executed": false,
+  "manifest_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+  "output_bytes_before_report": 8665381,
+  "schema": "uscode-source-occurrence-census/v1",
+  "scope": "Exact historical extraction/source joins only; no model, training, admission, or imported remote completion authority",
+  "source_text_storage": "No copied source text; occurrence hashes and physical source-row references bind the pinned original artifact",
+  "statistics": {
+    "byte_cohorts": {
+      "le_4096": 411,
+      "le_512": 17931
+    },
+    "distinct_nonempty_ledger_span_id_count": 443904,
+    "distinct_regenerated_span_id_count": 18342,
+    "distinct_source_section_offset_count": 128,
+    "intake_control_counts": {
+      "candidate_span_count": 18342,
+      "duplicate_candidate_count": 0,
+      "empty_section_count": 0,
+      "legal_id_mismatch_count": 0,
+      "matched_count": 2165,
+      "source_hash_mismatch_count": 0,
+      "unlisted_source_count": 16177
+    },
+    "largest_occurrences": [
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "652055dad9e30cd3874d12a213d999f9ed666a7ac7c2e2fe6a7919c4334b275c",
+        "source_span_id": "uscode-span-9dd96bf4240f748494e4ea638ef1505c26a5cac3c96cd2eb6d2b782597a4deac",
+        "token_count": null,
+        "unicode_characters": 3931,
+        "utf8_bytes": 3939
+      },
+      {
+        "legal_id": "usc:us:10:394",
+        "source_section_offset": 112,
+        "source_sha256": "9db63cce9baa4398a71e261ac2f3444a1ba81256635cbfbc0953c95672b8df75",
+        "source_span_id": "uscode-span-6b61396dd81518d73a20b17638e368b5d921d7fba1bca0f732473893f048d5bf",
+        "token_count": null,
+        "unicode_characters": 2607,
+        "utf8_bytes": 2613
+      },
+      {
+        "legal_id": "usc:us:10:394",
+        "source_section_offset": 112,
+        "source_sha256": "bd3188c4ecbd0c3eb87016b17a82e79be77a240c2f888ad9992c72b3161a8a5d",
+        "source_span_id": "uscode-span-bad82d7d2d12a06090a93a6eaf49123200f7b36196e0da302737626897d85fb0",
+        "token_count": null,
+        "unicode_characters": 2308,
+        "utf8_bytes": 2312
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "5bbd54fe4a9ee1da016af1ae0c9af32791aeec1aac79e1a44164931c23185f75",
+        "source_span_id": "uscode-span-4ba5ccf96aa5ecf7c11495d884f230c07a1fccb9aa7f6abd120f0d04c704d405",
+        "token_count": null,
+        "unicode_characters": 1985,
+        "utf8_bytes": 1989
+      },
+      {
+        "legal_id": "usc:us:10:397",
+        "source_section_offset": 115,
+        "source_sha256": "35e729c872ee0e44b3c562529b99f2b4f5e326e9cc21b8ef4a81b2e14e1e0c40",
+        "source_span_id": "uscode-span-5618ad6e81bab80e48a1d923149d03cf468e1b29387b38b5bcefb434a8e19042",
+        "token_count": null,
+        "unicode_characters": 1752,
+        "utf8_bytes": 1754
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "a4039a5740e264303f47dedb7b40b23cf773bd37caaa10af1f6cb2420f0446ff",
+        "source_span_id": "uscode-span-02a800a1881e35950cf9df0eee04abd407d015142ada1fb30f1c01429a5a55e0",
+        "token_count": null,
+        "unicode_characters": 1665,
+        "utf8_bytes": 1671
+      },
+      {
+        "legal_id": "usc:us:10:384",
+        "source_section_offset": 103,
+        "source_sha256": "521f7fd188d55f497f5c18c34d1da306f021e47256016fe0eafae1554b6a60e7",
+        "source_span_id": "uscode-span-ffddf79947dee31e1d0a3a72c498157f8c522ab2160d848cfe95450cba615e05",
+        "token_count": null,
+        "unicode_characters": 1652,
+        "utf8_bytes": 1658
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "59e8881e4b485fe4e0dcaf99d0084957a6e65912ae311d7827d55560079b2550",
+        "source_span_id": "uscode-span-65638c7df39575c34c5d8646f2667dac948a583c62f1a4ae1d64335aef2ca206",
+        "token_count": null,
+        "unicode_characters": 1635,
+        "utf8_bytes": 1641
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "c6da1d02ebb30c8055f83be595a6da630cca320b3f7b4f6fa4e275eb48a566f4",
+        "source_span_id": "uscode-span-d77c3e0e020254e38615ce4d894bafb9b8d1b9305ecb42b0706ff40e723be5c3",
+        "token_count": null,
+        "unicode_characters": 1583,
+        "utf8_bytes": 1587
+      },
+      {
+        "legal_id": "usc:us:10:301",
+        "source_section_offset": 64,
+        "source_sha256": "f1f37051d8b7c174b4430e85bad994611f4f4a488f075c5543a83b654433ba06",
+        "source_span_id": "uscode-span-84b0441c605e5dedfaac4659027a1b94538d03ed22a39e00f8b1cd42b5d9c183",
+        "token_count": null,
+        "unicode_characters": 1515,
+        "utf8_bytes": 1519
+      }
+    ],
+    "ledger_conflicting_id_count": 0,
+    "ledger_disposition_counts": {
+      "excluded_nonspan": 1,
+      "matched": 2165,
+      "pending_source_scan": 441739
+    },
+    "ledger_invalid_record_count": 0,
+    "ledger_row_count": 443905,
+    "ledger_span_record_count": 443904,
+    "next_section": 128,
+    "record_kind_counts": {
+      "meta": 1,
+      "span": 443904
+    },
+    "source_disposition_counts": {
+      "matched": 2165,
+      "unlisted_source": 16177
+    },
+    "source_lengths": {
+      "above_historical_32768_characters": 0,
+      "above_new_1048576_utf8_bytes": 0,
+      "max_unicode_characters": 3931,
+      "max_utf8_bytes": 3939,
+      "total_unicode_characters": 1489416,
+      "total_utf8_bytes": 1502974
+    },
+    "source_occurrence_count": 18342,
+    "token_cohorts": null
+  },
+  "token_counts_measured": false,
+  "training_executed": false
+}

@@ -1,0 +1,29 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "--basetemp",
+    "/tmp/pytest-of-barberb/uscode-intake-root-controls-iy8sxp9r/fixtures",
+    "--junitxml",
+    "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/validation/integrated-controls.xml",
+    "tests/unit/logic/test_span_cache.py",
+    "tests/unit/logic/test_span_cache_quack.py",
+    "tests/unit/logic/test_span_cache_feed.py",
+    "tests/unit/logic/test_span_cache_paired_feed.py",
+    "tests/unit/logic/test_span_cache_exchange.py",
+    "tests/unit/logic/test_span_cache_exchange_validation.py",
+    "tests/unit/logic/test_span_cache_exchange_outputs.py",
+    "tests/unit/logic/test_paired_span_census.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py"
+  ],
+  "returncode": 0,
+  "elapsed_seconds": 43.166,
+  "source_commit": "5626e3dd04b8fa41a767ee7e21ad23faf2b5cd6c",
+  "temporary_synthetic_fixtures_removed": true,
+  "models_trained": false
+}
