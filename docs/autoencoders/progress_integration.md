@@ -218,3 +218,23 @@ output is null. No Lake or real-law accuracy is claimed. Existing model
 lineages and runtime selections are preserved. Custom JSON checkpoints and
 exact full-Adam restore are retained at
 [Publicus/legal-ir-autoencoder: experiments/single-rule-scope-20261007/run-01](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/main/experiments/single-rule-scope-20261007/run-01).
+
+## October 7 frozen-donor trigger readout pilot
+
+The completed [learned-trigger readout pilot](../implementation/legal_scope_trigger_readout_pilot_20261007.md)
+fits two matched 4,355-parameter class adapters while preserving the prior
+ordered donor, support and all occurrence endpoints. On a fresh authored panel,
+donor/global/predicted-trigger O/P/F class exactness is 19/64, 29/64 and 47/64;
+exact emitted positives are 11/64, 17/64 and 30/64, including 4/32, 7/32 and
+12/32 exact nonempty-condition proposals. Each adapter completes 240 updates;
+selection chooses global update 120 and predicted-trigger update 240. Both arms
+present 7,680 input records in total, but encode only 3,840 positives and ignore
+3,840 negatives. Frozen positive refusals remain 19/64, positive blocks 2/64,
+learned negative refusals 53/64 and unsupported emissions 6/64. Fourteen model
+RSS observations give a sampled peak of 723.6 MiB, not an absolute peak or kernel
+cap; owned cleanup and release succeed while the prior failed 200 MB claim
+remains retained. All admission masks remain zero, formal output is null, and
+caller attachment is not learned. Existing model/runtime selections are
+preserved; no real-law or Lake accuracy is claimed. Custom checkpoint restore
+and read-only 256/256 final-output replay are retained in the
+[trigger-readout artifact lane](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/09ac0af19c801b53216f83c3544c8d54b763f091/experiments/trigger-readout-20261007/run-01).
