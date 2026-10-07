@@ -268,3 +268,22 @@ The [retained wording reconstruction plan](retained_wording_checkpoint_availabil
 ## Processing every US Code span from the retained cache
 
 The [all-span processing plan](uscode_all_span_processing_plan_20261007.md) starts from 443,904 archived intake records at immutable cache 765176c6, with canonical source joins and separate namespace coverage. It reuses current learned assets and preserves the legacy mock 8D compiler lane as diagnostics. Paired-feed support, lossless ingestion and arbitrary bounded native-cache routing precede pilot inference; full diagnostic accounting does not require a successful new fit. The plan keeps family/dimension/schema/task inventories, learned text reconstruction, reviewed semantics and source-bound proof receipts separate. Numerical processing and training have not started under this planning contribution.
+
+## October 7: matched support gates retain the cold fallback
+
+The [support-gate pilot](../implementation/legal_scope_support_gate_pilot_20261007.md)
+freezes the selected support/action MLP and compares two 3,169-parameter support
+heads using the same contextual 64/ordered-byte 33 bundle and seeded tensors.
+Only global versus predicted-modality coverage pooling differs. Both finish 240
+BCE-only updates on 16 sources each; class, presence and all five pointers stay fixed.
+A new bank excludes all three prior banks and preserves factorial/negative balances.
+Predeclared positive-retention and negative-emission floors reject every trained
+120/240 state, selecting the actual cold step 0 in both arms. New final results
+therefore stay 38/64 whole exact and 13/64 unsupported, with 61/64 raw action spans;
+all three earlier cohorts and 384 archived parent dictionaries are retained exactly.
+Lower local TRAIN BCE and unsupported-emission counts do not qualify an accuracy improvement.
+All six research states and selected-zero aliases are preserved at
+[the experiment artifact lane](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/ae5a6b555f66f9ea7cdf3f46a03c689d07485bb5/experiments/support-gate-20261007/run-01).
+170 executed test cases have source-qualified provenance,23 pure selector fixtures
+pass and 1,024 selected outputs replay exactly. No defaults, latent weights or
+legal/native-family/Lake admissions change; masks remain zero and formal output null.
