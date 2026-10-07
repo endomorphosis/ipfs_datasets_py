@@ -1,0 +1,146 @@
+{
+  "Constitution_formalized": false,
+  "admitted": false,
+  "archive_members": 494,
+  "archive_source_bytes": 233307180,
+  "checkpoint_promoted": false,
+  "compact_files": {
+    "docs/autoencoders/balanced_wording_continuation_20261007.md": {
+      "bytes": 11835,
+      "sha256": "c2daca5895be24b4e1630cb54e759568616d225939351cf1dfc1bc7fb2820919"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/candidate-review.json": {
+      "bytes": 23749,
+      "sha256": "2899d2b5a0b302af0c1cbb797087ffc2c3a25ae82843f47b115ef209fc205d53"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/comparison-protocol.json": {
+      "bytes": 4255,
+      "sha256": "3ba0029bfe86d7ca45948bc4da7d8c847b21e97f0e10ac3e14a7163e8a7e4b8f"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/evaluation-compact.json": {
+      "bytes": 477360,
+      "sha256": "d8a68018f193c3e1511e9f2d695c427195be7f6e892bb5dcf1254d6fec8ef75f"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/native-preparation-review.json": {
+      "bytes": 351478,
+      "sha256": "85e7f4c8bf4cec3fa5707e8a41da36b5b2d54e968c52419a9dcbcbdf50e5df7c"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/parent-comparison.json": {
+      "bytes": 7432,
+      "sha256": "2543cfa503edc1f8dab67667b9c6d91e78f8795937cfddeb7e956af9b4bbe52e"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/preflight-compact.json": {
+      "bytes": 19148,
+      "sha256": "55edf668acf5d1ae7cee7dceb10ac30b33c02f7f8f4d30eef6cfaec8a8e2bfb6"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/reconstruction-decision.json": {
+      "bytes": 2849,
+      "sha256": "40f7098d844e50f98c9918692d0c7df4a98d4a59d6c2b951c7c811bcae7267ff"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/replay-contract.json": {
+      "bytes": 4537,
+      "sha256": "05e1d875d44c08287c69fa009fdf31ec0b59e8d5cb426cf4eefa3166bfe92f1c"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/replay-coverage.json": {
+      "bytes": 2139,
+      "sha256": "c08f96a09541ed50b4b10fafd03001b8f5c5df09423edfc01a0aab312b1e52b9"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/sampled-outputs.json": {
+      "bytes": 28295,
+      "sha256": "08d554e627b0c0bad6ce705c8f14b2dcbc8a3d98e13aebade0694997e6892372"
+    },
+    "docs/autoencoders/evidence/balanced-wording-20261007/training-compact.json": {
+      "bytes": 112928,
+      "sha256": "24d9456d2d86b472d3a1907d8fee2635c33717198e10fab8d6077e725a8ec7a1"
+    },
+    "scripts/ops/autoencoder/dual_bank_wording_replay/dual_bank_retention.py": {
+      "bytes": 26660,
+      "sha256": "15accfcf8bbc4e578e32ca7842ac338be2b563458c4c90a85fbe18429da000f1"
+    },
+    "scripts/ops/autoencoder/dual_bank_wording_replay/test_dual_bank_retention.py": {
+      "bytes": 17284,
+      "sha256": "9161ee5cd16bc08db76e4635ec2b6d1d15b3199fb7b686fd846f47c1188bc589"
+    }
+  },
+  "convergence_proven": false,
+  "experiment_archive": {
+    "bytes": 57431839,
+    "path": "artifacts/autoencoder-balanced-wording-20261007/balanced-wording-evidence.tar.gz",
+    "sha256": "22b23d4b72a8b7c864986289c052b5e0dd64bb500f6a29d9d7e2761b613582bc"
+  },
+  "findings": [],
+  "formalized": false,
+  "fresh_holdout": false,
+  "historical_source_retention_files": {
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/README.md": {
+      "bytes": 1341,
+      "sha256": "c1a60b00f4a887d764e46af51e9c7bc0455a118009e2614dbe3d11c17c84e4c8"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/extract_historical_source.py": {
+      "bytes": 12500,
+      "sha256": "d0333e08ce20c6c63cfb0defa340bf45c6ad9539841e5fb882e605144eb91dce"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/historical-source-evidence.tar.gz": {
+      "bytes": 219425,
+      "sha256": "141496f4845338519013490dafc56c41fa056644ae56d18892e598d6dd2f73e7"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/independent-review.json": {
+      "bytes": 230531,
+      "sha256": "4dc7ecc330abfd17b449101f62f1ffe17c0001e22b06f88613bed61b7f564eaf"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/manifest.json": {
+      "bytes": 181307,
+      "sha256": "184bbf98d48ba677764d0de45b6f145d14504840dd30b3df366bcfe3a33b394c"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/producer-verification.json": {
+      "bytes": 2060,
+      "sha256": "82c2aaf8764734c79924576b47edd91c7eaf7633b2cd803e2517610ad2f75388"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/source-results-freeze.json": {
+      "bytes": 2365,
+      "sha256": "ccf2c93df298220acabbdc3c2cbde880710bf46fbf05b2377476d7f5295cc732"
+    }
+  },
+  "huggingface_upload_performed": false,
+  "independent_reviews": {
+    "artifacts/autoencoder-balanced-wording-20261007/archive-review/actual-archive-independent-review.json": {
+      "bytes": 3166,
+      "sha256": "c64d335dbb1e6246e75fe3c7e1c331a5d0b9f18992201989f42280c07b64d898"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/documentation-review/evidence-documentation-and-retention-source-review.json": {
+      "bytes": 36648,
+      "sha256": "78c2d49a23b137102a9e52728f5a78dba19c3909a21f68fe981cf36e24e1b58f"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/historical-source-retention/independent-review.json": {
+      "bytes": 230531,
+      "sha256": "4dc7ecc330abfd17b449101f62f1ffe17c0001e22b06f88613bed61b7f564eaf"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/pipeline/publisher-independent-review.json": {
+      "bytes": 5838,
+      "sha256": "341f1a696637854447807b445d6ff16b901fc326b71798cc131770e0e1811302"
+    },
+    "artifacts/autoencoder-balanced-wording-20261007/pipeline/replay-helper-independent-review.json": {
+      "bytes": 9217,
+      "sha256": "839ab3dad8b2b622edd51e26fee577ff94112856286fc17757ea5f54a00fa783"
+    }
+  },
+  "lake_executed": false,
+  "numerical_outcome": {
+    "balanced_exposed_v3": 19,
+    "balanced_replacement_rejected": true,
+    "balanced_retained_normative": 33,
+    "cohort_denominator": 48,
+    "control_exposed_v3": 33,
+    "parent_exposed_v3": 31
+  },
+  "passed": true,
+  "physical_evaluation_panels": 16,
+  "physical_paragraph_outputs": 768,
+  "qualified": false,
+  "reference_rules": 2880,
+  "replay_fit_executed": false,
+  "replay_helper_wired_into_trainer": false,
+  "scalar_reference_sites": 11520,
+  "schema": "balanced-wording-completed-evidence-index/v1",
+  "source_semantics_verified": false
+}

@@ -1,0 +1,50 @@
+{
+  "actual_frozen_source_rows_used_for_pure_census": true,
+  "admitted": false,
+  "bank_local_ordinals_validated": true,
+  "bank_members_validated": {
+    "balanced": 180,
+    "control": 180
+  },
+  "checkpoint_promoted": false,
+  "complete": true,
+  "encoder_executed": false,
+  "execution_readiness_granted": false,
+  "formalized": false,
+  "fresh_holdout": false,
+  "independent_semantic_holdout": false,
+  "input_files": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/assembled-inputs-r1/original90-rules.json": {
+      "bytes": 15096,
+      "sha256": "852d77775fe5f38072c5d859016af39dfee2ca1f6d5545e17b9fdd2695029f36"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-bank.json": {
+      "bytes": 1852008,
+      "sha256": "3d1c0fe819c4f328483ceb8b2e71d28a0573724a8aef4d13445f2c797d82a15e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-bank.json": {
+      "bytes": 1853154,
+      "sha256": "c4c31efe3bdff193472ccbafe5e0ad3ab939285e485a16a5f2a480cbab05e9e9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/paired-source-schedule.json": {
+      "bytes": 215055,
+      "sha256": "786125add0636e47bfbe7d8468cc57d6665b32bd1199459c84f3b28a724c2350"
+    }
+  },
+  "lake_executed": false,
+  "models_executed": false,
+  "native_vectors_revalidated": false,
+  "numerical_or_model_execution": false,
+  "optimizer_steps": 170,
+  "original_rule_pairs_preserved": true,
+  "proof_authority": false,
+  "proposed_schedule": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/next-retention-plan/proposed-dual-bank-schedule.json",
+    "sha256": "11a9c660f5101dbcf2981cfa0d451d13c6a81ebbc75b7ad2699e07d37106e2e1"
+  },
+  "qualified": false,
+  "source_presentations": 1020,
+  "source_provenance_authenticated": false,
+  "source_semantics_verified": false,
+  "training_executed": false
+}

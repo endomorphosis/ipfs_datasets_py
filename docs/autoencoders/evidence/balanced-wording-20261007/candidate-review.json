@@ -1,0 +1,505 @@
+{
+  "all270_authored_records_accounted": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/README.md": {
+      "bytes": 4280,
+      "sha256": "8e152654800d869e6e5b2b0e57858ea8e14f0ffd338c4e87b8b6690309dcaa1d"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/draft-readiness.json": {
+      "bytes": 4696,
+      "sha256": "c6a4dd2dc34c7409b0ba1446ba55057a8087c145fd0190fe462f0c0f822b773f"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/pure-contract-tests.log": {
+      "bytes": 2523,
+      "sha256": "4c0c55dbe6ee7fc3b5727a75169e34dfcde2ee6b62271f51086f26c8af3be0e3"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/author-check.json": {
+      "bytes": 11992,
+      "sha256": "a74f5ab3331133e46e299b31be7cc857eee94b18aeeba51c499e347f816c1052"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/candidate-bank.json": {
+      "bytes": 777089,
+      "sha256": "6f685e61ec236216a1a1b171a3dc3ed30f5740d6248c8becba9255bceabe3698"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/clause-references.json": {
+      "bytes": 633015,
+      "sha256": "5fba1bb06aee8436a0acb4ad8aee3b111298db7f86ec9b3e6a9af42ca02b83e3"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/control-treatment-pairing-census.json": {
+      "bytes": 254926,
+      "sha256": "a0a929570fbd50c4da4ea0f0df17c2027debe58f2414d4bfacfddbeaa4b69485"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/original90-target-identities.json": {
+      "bytes": 169450,
+      "sha256": "9ab31f749988e5966845ce99864e8d9a61dce57de953bc6949bcc2a97a44c96b"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/overlap-and-exposure.json": {
+      "bytes": 13452,
+      "sha256": "0740c4c0ff50cfa860f36b8077a79250685c3899ac80660104779ae9f2bb644b"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/pairing-census.json": {
+      "bytes": 149853,
+      "sha256": "59f444ac779e352c62d0734fa2ba79d45dbffa8f2ab902bf392db3b01ca1d8eb"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/prior-source-inventories.json": {
+      "bytes": 231859,
+      "sha256": "c3d4c95c2e60550622a6e38d3521c9ade2764228119bd749c2ecea341c7f1e4b"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/private-packing-preview-recipe.json": {
+      "bytes": 4377,
+      "sha256": "5657b8bca7a491ad68f0bcaed327221808a070742b44fb0cc9573f4f17eb8e66"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/references.json": {
+      "bytes": 373101,
+      "sha256": "44f1d766696ca1e84d8b0d73e312562fdc9d3827fbcb067a27967d3d968a9785"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/rejected-drafts.json": {
+      "bytes": 398906,
+      "sha256": "af08528d25de467765f5f286c94705a8cc44bda31a178bebacc69f158fa4a959"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/source-receipt.json": {
+      "bytes": 7914,
+      "sha256": "53c28df5a3bada9dd5671272d4b3961d0e153f28ddae927b8e0ddcf1060d7dd0"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3/source-rows.json": {
+      "bytes": 16353,
+      "sha256": "18a33db236de3465b7793cb667f7438f8cc71a9e2311c14c59a182c5586ffd5e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/source/build_balanced_wording_candidates.py": {
+      "bytes": 43288,
+      "sha256": "802bf91d12e2ce5dc4d7103af0c0081dd9ab56eade31094caea768212d8d07a4"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/tests/test_candidate_contracts.py": {
+      "bytes": 8686,
+      "sha256": "fe0241eb60389663342748160ff7cf12e6ee10bed4b9ef084d47e5f1425decf8"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/review/audit_candidate_bank.py": {
+      "bytes": 22259,
+      "sha256": "856e9396268dfdf0b4e81b833257abd5c7492fbb76641d8e5cbda3705855a972"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/review/candidate-audit-pure-tests-receipt.json": {
+      "bytes": 1031,
+      "sha256": "d1835ee6fb63cef6ff400fc8b0f7c42e441f5364cb915d553f4d318fb9e9c036"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/review/candidate-audit-pure-tests.log": {
+      "bytes": 1815,
+      "sha256": "7aadc28b51357d74cb937efbfbff46caf2c8c844cc14e8bf8e3359ea6fa34058"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/review/candidate-pair-review-rows-draft-r3.jsonl": {
+      "bytes": 125502,
+      "sha256": "cb1fc08e3e0b538a4882c2b6216ec2042a44150d09e2b1c66497b39d526a4544"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/review/test_candidate_audit_contracts.py": {
+      "bytes": 5880,
+      "sha256": "beb7f3cd1c8d95275dc69e226d66b7d639a2259171fcecc406d8d6fa7e28ca3b"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-next-reconstruction-gap-20261006/documentation/evidence/next-training-plan.json": {
+      "bytes": 6154,
+      "sha256": "823fc9698ce1b46a32317e9b2fc41896982848d86be0a40eacde5e6184257b6b"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-wording-fit-20261006/development/codec.json": {
+      "bytes": 588,
+      "sha256": "f8a2fa384ae91a9e6c93ac1a8f5fb1d7b20d5ea354443c4a86bb3210ac984c82"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-wording-fit-20261006/development/development-corpus-receipt.json": {
+      "bytes": 6457,
+      "sha256": "343c191c2747ea80c6fe4af151a07ae94d563a74c64879516a874f3df5d3a922"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-wording-fit-20261006/development/source-rows.json": {
+      "bytes": 11199,
+      "sha256": "3606bbc7abcae9fcb6cdb45a5756fc8f10c16feb9d45f45ca8e45b76e4b2d625"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/holdout-receipt.json": {
+      "bytes": 7369,
+      "sha256": "74521017d61a57f3304135da2d542d6a434237ba62a2f5d97e5fde41a2da0ba3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/source-rows.json": {
+      "bytes": 15508,
+      "sha256": "2d02869053b31a5d0bd6d2fc98bb664909f7e3341f089a8b78fb5edf8882e5d9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/clause-training-references.json": {
+      "bytes": 407222,
+      "sha256": "8d8566e698b239b2ac08db0f810f1a9faa720878c537af8c619bf89833a1da69"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/prior-source-inventories.json": {
+      "bytes": 159490,
+      "sha256": "a0a9dac3c0af1b827a249d617a9d8ac1aafc8e8097c4146f5fa53895ab9886ca"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/source-rows.json": {
+      "bytes": 18524,
+      "sha256": "bd109a8d20d8c810a7dc3bc012c0c25a6b89647f5ae1709aec3166551a752969"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/training-corpus-receipt.json": {
+      "bytes": 5458,
+      "sha256": "96ca7739f2ae28a514260f497cc073d8b689a1853deb2d0bd9f3d8878dfd5534"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/preparation-r1/results/training-references.json": {
+      "bytes": 243776,
+      "sha256": "cf3e9138454c16a53ff35b4a33f2110bfe1eedb2a22b00bab3cb11f1655e9195"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r4-20261004/preparation-r1/results/original-training-bank-used.json": {
+      "bytes": 38792,
+      "sha256": "97a928de6fb124cf01ea24fefa7ac43c94352de748354422fdcdb35f34216b10"
+    }
+  },
+  "authored_fixture_pair_review_passed": true,
+  "authority_masks_false": true,
+  "checks": [
+    {
+      "detail": "No builder imported/executed; saved recipe pins its exact source.",
+      "id": "exact-private-builder-byte-binding",
+      "passed": true
+    },
+    {
+      "detail": "Only saved original TRAIN target IDs supply candidate labels; no v3/development target bodies are read.",
+      "id": "exact-original-180-and-codec-file-pins",
+      "passed": true
+    },
+    {
+      "detail": "All exact ordered IDs, facets and both saved source aliases are independently reconstructed.",
+      "id": "independent-original90-two-alias-ledger",
+      "passed": true
+    },
+    {
+      "detail": "All literal phrases were inspected as90 paired renditions, with O/P/F cue/agent/action/object attachment checked under the declared fixture reading.",
+      "id": "all180-authored-wording-pairs-reviewed",
+      "passed": true
+    },
+    {
+      "detail": "Each90 original meaning appears exactlyonce per family; all30 content groups carry O/P/F in each family.",
+      "id": "six-complete30-clause-strata",
+      "passed": true
+    },
+    {
+      "detail": "Complete bank checksums are recalculated, including retained row order.",
+      "id": "candidate-canonical-content-digests",
+      "passed": true
+    },
+    {
+      "detail": "No performance selection: for-phrase ambiguity revision remains independently accounted for.",
+      "id": "all90-rejected-agency-drafts-retained",
+      "passed": true
+    },
+    {
+      "detail": "Thirteen original E source-only inventories plus current48 TRAIN and explicit primary sealed60/v3 aliases; aliases are not new independent corpora.",
+      "id": "sixteen-complete-byte-pinned-source-inventories",
+      "passed": true
+    },
+    {
+      "detail": "No literal/normalized clause/paragraph or inventoried source/parent ID collision; no semantic/syntactic independence inferred.",
+      "id": "all-candidate-and-packed-source-exclusions",
+      "passed": true
+    },
+    {
+      "detail": "Each paired paragraph retains original E target-ID sequence, ordered rules and length; all180 clause references are joined.",
+      "id": "all48-complete-E-target-and-order-preserved",
+      "passed": true
+    },
+    {
+      "detail": "No actual encoder token measurement or native vector execution is inferred from short authored text.",
+      "id": "216-native-source-strings-and12-single-aliases",
+      "passed": true
+    },
+    {
+      "detail": "Pairing uses immutable original rule identity+template slot, not a new source hash; all matches and same targets checked.",
+      "id": "all180-matched-control-treatment-keys",
+      "passed": true
+    },
+    {
+      "detail": "Saved build output validated without invoking its owner.",
+      "id": "complete-pure-output-receipt-digests",
+      "passed": true
+    },
+    {
+      "detail": "New family IDs and literal cues do not establish wholly new syntax; no v3 gold parsed or used.",
+      "id": "construction-exposure-declared",
+      "passed": true
+    },
+    {
+      "detail": "Root clarification is explicit; family/content tuples are reporting metadata, not a renamed independent source group.",
+      "id": "operational-provenance-exclusion-policy",
+      "passed": true
+    },
+    {
+      "detail": "All17 current source/test/README/draft bindings match exact bytes; the author synthetic contract receipt is reused, without owner/model execution by this audit.",
+      "id": "author-draft-readiness-and18-pure-contracts-bound",
+      "passed": true
+    },
+    {
+      "detail": "Synthetic controls reject wrong cue/agent/action/object, nonempty qualifiers, authority/context changes, stale IDs/provenance and exact/normalized clause collisions. No candidate builder/numerical owner is imported.",
+      "id": "independent15-pure-mutation-controls",
+      "passed": true
+    },
+    {
+      "detail": "Independent authored-fixture consistency review is separate from natural legal semantics, authenticated human/source-author review, training admission, native-family, proof/Lake or fresh-holdout qualification.",
+      "id": "all-nonauthority-posture-preserved",
+      "passed": true
+    }
+  ],
+  "complete_clause_references": 180,
+  "complete_source_paragraphs": 48,
+  "construction_exposure": "The dummy-subject infinitive is related to the previously exposed expletive_infinitival construction; a new family ID or literal cue does not establish syntactic novelty.",
+  "draft_root": "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/results/draft-r3",
+  "findings": [],
+  "fitting_execution_readiness": false,
+  "matched_control_treatment_pairs": 180,
+  "measurement_limits": [
+    "All90 original meanings and30 content groups are deliberately reused; this is no fresh semantic holdout.",
+    "Exactly16 named inventories are checked, including duplicated primary source aliases; no all-history source independence is claimed.",
+    "Source-group exclusion is exact/normalized strings plus source/clause/paragraph provenance IDs. Family/content tuples are descriptive grouping, not semantic independence.",
+    "Both families have explicit agent attachment under the authored interpretation; no real-law translation or legal force is authenticated.",
+    "All qualifiers are empty; no nonempty qualifier transfer/learning is shown.",
+    "No encoder/source token measurement, optimizer/model/prover/Lake execution or checkpoint selection took place."
+  ],
+  "native_source_strings": 216,
+  "natural_source_semantics_authenticated": false,
+  "natural_source_training_admission": false,
+  "original_content_groups": 30,
+  "packed_source_exclusion_reports": {
+    "composition64": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 64,
+      "source_rows_sha256": "de9443e0d435a86ff3d8b3c08eeaf3af51f9ecb087d9fab1dcc88d005ec5891d",
+      "unique_literal_sources": 64,
+      "unique_normalized_sources": 64
+    },
+    "current_normative_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_r6": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "bc002ccc1e4a8502948166c06cc809cd14c24639ba023a0ad5c8516485844ea7",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_r8": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "03abe5b2ced39fb4eeef36623c9f5956ef35c2b7f8f791ddb5810733793ed690",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_v3": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_v3_primary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "original_train_bank": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 180,
+      "source_rows_sha256": "3cadc9506e3875a4008b61f4ae40a64c1569a2d2a665aa66fcb8d2fbeb7ababb",
+      "unique_literal_sources": 180,
+      "unique_normalized_sources": 180
+    },
+    "paragraph_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527",
+      "unique_literal_sources": 149,
+      "unique_normalized_sources": 149
+    },
+    "paragraph_validation": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "a211a18b19f607c2fd106d8f47a7b6b165219da93b5895a3beb961fdc9c2b04a",
+      "unique_literal_sources": 90,
+      "unique_normalized_sources": 90
+    },
+    "prospective_development_sources": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "f14384255cda7a39429ba080f7b328baec47f201fa7dbe08fe76749444457eae",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "r4_training_paraphrases": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "dedb3f44ab7b11ad24968790fadce4d3520a40488044f0f14b86ba30f827405b",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "raw_canary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 30,
+      "source_rows_sha256": "ea1848c8738354ee67c53857d6d152e2770e3a9f721202daec592f91b0352e52",
+      "unique_literal_sources": 30,
+      "unique_normalized_sources": 30
+    },
+    "raw_test": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "da4a3b0fa758f8ff2b837ecf54bc007ffc9bb21c528f0649b674cc05a7a0f113",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "raw_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 180,
+      "source_rows_sha256": "3cadc9506e3875a4008b61f4ae40a64c1569a2d2a665aa66fcb8d2fbeb7ababb",
+      "unique_literal_sources": 180,
+      "unique_normalized_sources": 180
+    },
+    "raw_validation": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "b1452623e545d1768fb2cec6846a1432191425879d33ce9c7d12a087a6b88abb",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "sealed60_development_primary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "f14384255cda7a39429ba080f7b328baec47f201fa7dbe08fe76749444457eae",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    }
+  },
+  "passed": true,
+  "phase_source_freeze_pending": true,
+  "pure_contracts": {
+    "author_reused": 18,
+    "independent_mutation_controls": 15
+  },
+  "retained_rejected_drafts": 90,
+  "schema": "balanced-authored-candidate-pair-independent-review/v1",
+  "source_exclusion_reports": {
+    "composition64": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 64,
+      "source_rows_sha256": "de9443e0d435a86ff3d8b3c08eeaf3af51f9ecb087d9fab1dcc88d005ec5891d",
+      "unique_literal_sources": 64,
+      "unique_normalized_sources": 64
+    },
+    "current_normative_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_r6": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "bc002ccc1e4a8502948166c06cc809cd14c24639ba023a0ad5c8516485844ea7",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_r8": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "03abe5b2ced39fb4eeef36623c9f5956ef35c2b7f8f791ddb5810733793ed690",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_v3": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "exposed_v3_primary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "original_train_bank": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 180,
+      "source_rows_sha256": "3cadc9506e3875a4008b61f4ae40a64c1569a2d2a665aa66fcb8d2fbeb7ababb",
+      "unique_literal_sources": 180,
+      "unique_normalized_sources": 180
+    },
+    "paragraph_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527",
+      "unique_literal_sources": 149,
+      "unique_normalized_sources": 149
+    },
+    "paragraph_validation": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "a211a18b19f607c2fd106d8f47a7b6b165219da93b5895a3beb961fdc9c2b04a",
+      "unique_literal_sources": 90,
+      "unique_normalized_sources": 90
+    },
+    "prospective_development_sources": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "f14384255cda7a39429ba080f7b328baec47f201fa7dbe08fe76749444457eae",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "r4_training_paraphrases": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 48,
+      "source_rows_sha256": "dedb3f44ab7b11ad24968790fadce4d3520a40488044f0f14b86ba30f827405b",
+      "unique_literal_sources": 216,
+      "unique_normalized_sources": 216
+    },
+    "raw_canary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 30,
+      "source_rows_sha256": "ea1848c8738354ee67c53857d6d152e2770e3a9f721202daec592f91b0352e52",
+      "unique_literal_sources": 30,
+      "unique_normalized_sources": 30
+    },
+    "raw_test": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "da4a3b0fa758f8ff2b837ecf54bc007ffc9bb21c528f0649b674cc05a7a0f113",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "raw_train": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 180,
+      "source_rows_sha256": "3cadc9506e3875a4008b61f4ae40a64c1569a2d2a665aa66fcb8d2fbeb7ababb",
+      "unique_literal_sources": 180,
+      "unique_normalized_sources": 180
+    },
+    "raw_validation": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "b1452623e545d1768fb2cec6846a1432191425879d33ce9c7d12a087a6b88abb",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    },
+    "sealed60_development_primary": {
+      "literal_or_normalized_collisions": 0,
+      "rows": 60,
+      "source_rows_sha256": "f14384255cda7a39429ba080f7b328baec47f201fa7dbe08fe76749444457eae",
+      "unique_literal_sources": 60,
+      "unique_normalized_sources": 60
+    }
+  },
+  "source_pairs_reviewed": 180,
+  "strata": {
+    "dummy_subject_deontic_infinitive_v1:F": 30,
+    "dummy_subject_deontic_infinitive_v1:O": 30,
+    "dummy_subject_deontic_infinitive_v1:P": 30,
+    "possessive_gerund_deontic_subject_v1:F": 30,
+    "possessive_gerund_deontic_subject_v1:O": 30,
+    "possessive_gerund_deontic_subject_v1:P": 30
+  },
+  "unchanged_original_E_paragraph_target_sequences": 48,
+  "unique_original_meanings": 90
+}

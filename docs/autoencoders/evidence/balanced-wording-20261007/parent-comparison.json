@@ -1,0 +1,205 @@
+{
+  "admitted": false,
+  "all48_source_ids_and_expected_rule_bodies_exact": true,
+  "all_source_cohort_geometry_identities_exact": {
+    "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+    "input_transform_sha256": "aaa6c0bfd041e4ddd6ec4d18d35ef5ea8efca8f2b7408e4a467cea64bb0ec8d2",
+    "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+    "source_rows_sha256": "d60f942d80e3d48900df0a2b4c3a37de5f793fbcd2b1d9948a91a4e87d4fb23b"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/evaluation-review/actual-evaluation-r1-independent-review.json": {
+      "bytes": 12012856,
+      "sha256": "e44fa8400b4d80408b0bf78e4b60003356dfe44b1fb97e35051ee3c8368ba089"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-retention-integration-20261006/retention-evidence-manifest.json": {
+      "bytes": 26323,
+      "sha256": "e6a5a420910e74f17b54feaa8c5ce15d069bc58414aa89312a08cbf6b46b565e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json": {
+      "bytes": 156560,
+      "sha256": "79b8eafc67b8673b501b6a4a5d6563ca2df26c019adb4c89ca9d2676f90e5041"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/source-head-trace.json": {
+      "bytes": 1665874,
+      "sha256": "a928d89d93bebe5bd7d0c8befa68a23f499267e27801354728236d2727324ab8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json": {
+      "bytes": 2797392,
+      "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/results/384-normative-wording-ce/selected-predictions.json": {
+      "bytes": 26319,
+      "sha256": "3137971457a9ece0ebfbd71bd28cad8ca8ee7634acd8dc334d0cd981c5360208"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/results/384-normative-wording-ce/selected-score.json": {
+      "bytes": 648156,
+      "sha256": "29432f20088e1810ef82238f3fdc679f4541a426505bdbeefa62ac374840cb16"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-retention-20261006/retention-r1/results/384-normative-wording-ce/selected-source-head-trace.json": {
+      "bytes": 1664906,
+      "sha256": "84953c7caec9cf9af2dde6998040ad13c9d126a376ee3887114ae63d0f661f4a"
+    }
+  },
+  "balanced": {
+    "ordered_exact": 19,
+    "parent_relative_exact_change": -12,
+    "seven_facets": {
+      "action": {
+        "correct": 179,
+        "total": 180,
+        "unordered_correct": 179
+      },
+      "actor": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "conditions": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "exceptions": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "modality": {
+        "correct": 140,
+        "total": 180,
+        "unordered_correct": 140
+      },
+      "object": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "temporal": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      }
+    },
+    "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+  },
+  "balanced_minus_control_exact_change": -14,
+  "control": {
+    "ordered_exact": 33,
+    "parent_relative_exact_change": 2,
+    "seven_facets": {
+      "action": {
+        "correct": 179,
+        "total": 180,
+        "unordered_correct": 179
+      },
+      "actor": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "conditions": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "exceptions": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "modality": {
+        "correct": 161,
+        "total": 180,
+        "unordered_correct": 161
+      },
+      "object": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      },
+      "temporal": {
+        "correct": 180,
+        "total": 180,
+        "unordered_correct": 180
+      }
+    },
+    "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+  },
+  "findings": [],
+  "fresh_holdout": false,
+  "independent_semantic_holdout": false,
+  "main_review": {
+    "bytes": 12012856,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/evaluation-review/actual-evaluation-r1-independent-review.json",
+    "sha256": "e44fa8400b4d80408b0bf78e4b60003356dfe44b1fb97e35051ee3c8368ba089"
+  },
+  "models_or_numerical_owners_or_encoders_executed_by_supplement": false,
+  "native_compiler_or_Lake_executed": false,
+  "parent_48_actual_tokens_and_seven_facets_independently_recounted": true,
+  "parent_formula_metrics": {
+    "all_rules_preserved": 31,
+    "duplicate_rules": 0,
+    "eos_count": 48,
+    "expected_rules": 180,
+    "generated_rules": 180,
+    "invalid_rows": 0,
+    "invalid_rule_count": 0,
+    "order_mismatch_rows": 0,
+    "ordered_exact": 31,
+    "parsed_documents": 48,
+    "prediction_missing_rows": 0,
+    "rows": 48,
+    "syntax_valid": 48,
+    "unscorable_generation_rows": 0,
+    "valid_generated_rules": 180,
+    "whole_rules_extra": 22,
+    "whole_rules_missing": 22
+  },
+  "parent_seven_facets": {
+    "action": {
+      "correct": 179,
+      "total": 180,
+      "unordered_correct": 179
+    },
+    "actor": {
+      "correct": 180,
+      "total": 180,
+      "unordered_correct": 180
+    },
+    "conditions": {
+      "correct": 180,
+      "total": 180,
+      "unordered_correct": 180
+    },
+    "exceptions": {
+      "correct": 180,
+      "total": 180,
+      "unordered_correct": 180
+    },
+    "modality": {
+      "correct": 159,
+      "total": 180,
+      "unordered_correct": 159
+    },
+    "object": {
+      "correct": 180,
+      "total": 180,
+      "unordered_correct": 180
+    },
+    "temporal": {
+      "correct": 180,
+      "total": 180,
+      "unordered_correct": 180
+    }
+  },
+  "parent_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+  "passed": true,
+  "proof_authority": false,
+  "published_parent_archive_manifest": "/home/barberb/lift_coding/artifacts/autoencoder-retention-integration-20261006/retention-evidence-manifest.json",
+  "qualified": false,
+  "schema": "balanced-wording-exposed-v3-parent-comparison-independent-supplement/v1",
+  "scope": "Same exposed-v3 authored source rows, cached paragraph/clause contexts, codec, transform and exact ordered references, at384D/512 output/temp0. Earlier parent31 is authenticated against the published October6 archive member byte pins. The changed model tensor is the intended comparison, not a new independent source benchmark.",
+  "selection_performed": false,
+  "source_semantics_verified": false
+}

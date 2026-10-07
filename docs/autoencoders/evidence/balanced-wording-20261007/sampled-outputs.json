@@ -1,0 +1,1079 @@
+{
+  "Constitution_formalized": false,
+  "admitted": false,
+  "all_samples_authored_previously_exposed": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json": {
+      "bytes": 156558,
+      "sha256": "94ec281ef23e4f1f80b8dffe77c0c5f3e50fe6806ebc75b14ef29679f7364333"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/normative_train48/actual-formula-fidelity.json": {
+      "bytes": 159962,
+      "sha256": "1ae3b4d5608422942d89af8095298ff9a6928e018d6f7ae8a018746a3f462b7e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/original_train48/actual-formula-fidelity.json": {
+      "bytes": 155878,
+      "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json": {
+      "bytes": 156560,
+      "sha256": "79b8eafc67b8673b501b6a4a5d6563ca2df26c019adb4c89ca9d2676f90e5041"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/actual-formula-fidelity.json": {
+      "bytes": 159962,
+      "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/actual-formula-fidelity.json": {
+      "bytes": 155878,
+      "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+    }
+  },
+  "findings": [],
+  "formalized": false,
+  "lake_executed": false,
+  "model_executed": false,
+  "passed": true,
+  "qualified": false,
+  "samples": [
+    {
+      "all_admission_masks_false": true,
+      "authored_source": {
+        "source_sha256": "2781747e520dee4d065cbd179ea0ba1312f691438d25e928a26d8a5c53b71447",
+        "source_text": "The trustee is allowed to approve the archive.",
+        "use": "evaluation_provenance_only"
+      },
+      "cohort": "original_train48",
+      "gold_as_law": false,
+      "id": "authored-paragraph:train:1:2781747e520dee4d065cbd179ea0ba1312f691438d25e928a26d8a5c53b71447",
+      "outputs": {
+        "balanced-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 1,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 1,
+            "generated_rules": 1,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 1,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 1,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/original_train48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "actor": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "conditions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "exceptions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "modality": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "object": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "temporal": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            }
+          }
+        },
+        "control-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 1,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 1,
+            "generated_rules": 1,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 1,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 1,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "actor": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "conditions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "exceptions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "modality": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "object": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "temporal": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            }
+          }
+        }
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "approve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          }
+        ]
+      },
+      "selection": "first row for original; first balanced wrong row for retained/development"
+    },
+    {
+      "all_admission_masks_false": true,
+      "authored_source": {
+        "source_sha256": "6dc6b822739a784739aeb1f38367e569c8ba08a4fe40f42ad7ff11943ecb6713",
+        "source_text": "Under this regulation, the treasurer is authorized to publish the archive.\n\nUnder this regulation, the treasurer is obliged to preserve the archive.\n\nUnder this regulation, the trustee is authorized to approve the archive.\n\nUnder this regulation, the registrar is obliged to deliver the notice.",
+        "use": "evaluation_provenance_only"
+      },
+      "cohort": "normative_train48",
+      "gold_as_law": false,
+      "id": "normative-training-v1:6dc6b822739a784739aeb1f38367e569c8ba08a4fe40f42ad7ff11943ecb6713",
+      "outputs": {
+        "balanced-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 0,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 4,
+            "generated_rules": 4,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 0,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 4,
+            "whole_rules_extra": 1,
+            "whole_rules_missing": 1
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "preserve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "approve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "deliver",
+                "actor": "registrar",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            20,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/normative_train48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "actor": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "conditions": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "exceptions": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "modality": {
+              "correct": 3,
+              "total": 4,
+              "unordered_correct": 3
+            },
+            "object": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "temporal": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            }
+          }
+        },
+        "control-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 1,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 4,
+            "generated_rules": 4,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 1,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 4,
+            "whole_rules_extra": 0,
+            "whole_rules_missing": 0
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "preserve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "approve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              },
+              {
+                "action": "deliver",
+                "actor": "registrar",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            26,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            20,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "actor": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "conditions": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "exceptions": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "modality": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "object": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            },
+            "temporal": {
+              "correct": 4,
+              "total": 4,
+              "unordered_correct": 4
+            }
+          }
+        }
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "publish",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "deliver",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "selection": "first row for original; first balanced wrong row for retained/development"
+    },
+    {
+      "all_admission_masks_false": true,
+      "authored_source": {
+        "source_sha256": "fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+        "source_text": "The trustee is obligated to preserve the archive.",
+        "use": "evaluation_provenance_only"
+      },
+      "cohort": "exposed_v3_48",
+      "gold_as_law": false,
+      "id": "fresh-modality-v3:fc5e287da9b1bef21f873f5a6972bfb9378b2bafefcd77d095f035a2d4502c09",
+      "outputs": {
+        "balanced-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 0,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 1,
+            "generated_rules": 1,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 0,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 1,
+            "whole_rules_extra": 1,
+            "whole_rules_missing": 1
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/balanced-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "actor": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "conditions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "exceptions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "modality": {
+              "correct": 0,
+              "total": 1,
+              "unordered_correct": 0
+            },
+            "object": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "temporal": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            }
+          }
+        },
+        "control-wording-ce": {
+          "counts": {
+            "all_rules_preserved": 0,
+            "duplicate_rules": 0,
+            "eos_count": 1,
+            "expected_rules": 1,
+            "generated_rules": 1,
+            "invalid_rows": 0,
+            "invalid_rule_count": 0,
+            "order_mismatch_rows": 0,
+            "ordered_exact": 0,
+            "parsed_documents": 1,
+            "prediction_missing_rows": 0,
+            "rows": 1,
+            "syntax_valid": 1,
+            "unscorable_generation_rows": 0,
+            "valid_generated_rules": 1,
+            "whole_rules_extra": 1,
+            "whole_rules_missing": 1
+          },
+          "generated_ir": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "trustee",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "generated_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            25,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "model_execution_by_this_sampler": false,
+          "producer_reference": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json",
+          "seven_facets": {
+            "action": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "actor": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "conditions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "exceptions": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "modality": {
+              "correct": 0,
+              "total": 1,
+              "unordered_correct": 0
+            },
+            "object": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            },
+            "temporal": {
+              "correct": 1,
+              "total": 1,
+              "unordered_correct": 1
+            }
+          }
+        }
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          }
+        ]
+      },
+      "selection": "first row for original; first balanced wrong row for retained/development"
+    }
+  ],
+  "samples_represent_full_cohort_rates": false,
+  "schema": "balanced-wording-authored-output-samples/v1"
+}

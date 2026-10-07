@@ -1,0 +1,2927 @@
+{
+  "admitted": false,
+  "arms": {
+    "balanced": {
+      "count_presentations": 1220,
+      "endpoints": {
+        "last-attempt": {
+          "original_panels": {
+            "context-only-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1755219926876983
+            },
+            "context-reverse": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 60,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 84,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2469312008290852
+            },
+            "context-rotate": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 65,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 92,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.217228561601504
+            },
+            "cross-length-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 153,
+                "whole_rules_missing": 153
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "actor": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "conditions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "exceptions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "modality": {
+                  "correct": 32,
+                  "total": 180,
+                  "unordered_correct": 85
+                },
+                "object": {
+                  "correct": 48,
+                  "total": 180,
+                  "unordered_correct": 89
+                },
+                "temporal": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.612846663615301
+            },
+            "recurrent-residual-off": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 47,
+                "invalid_rows": 48,
+                "invalid_rule_count": 47,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 47,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 1,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 47,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.5350407469938716
+            },
+            "source-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1782920999104347
+            },
+            "training": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.6952091342272538e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.001060282516035424
+            },
+            "validation": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0011706012292174706
+            },
+            "zero-condition": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 48,
+                "invalid_rows": 48,
+                "invalid_rule_count": 48,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 48,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.0570017839749042
+            }
+          },
+          "source_bank_readouts": {
+            "balanced": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 180,
+                  "cross_entropy": 0.005403502901494845,
+                  "minimum_target_margin": 3.8288819789886475,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 1.3017765120477205e-06,
+                  "minimum_target_margin": 10.637534976005554,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 9.373866961526447e-05,
+                  "minimum_target_margin": 6.50405752658844,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 8.945576007353869e-08,
+                  "minimum_target_margin": 13.608804702758789,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": []
+            },
+            "control": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 179,
+                  "cross_entropy": 0.032691367222705284,
+                  "minimum_target_margin": -0.26024413108825684,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 8.400028109850016e-06,
+                  "minimum_target_margin": 8.390342831611633,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 170,
+                  "cross_entropy": 0.13603972610842302,
+                  "minimum_target_margin": -2.1938610076904297,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 1.1481876695837753e-07,
+                  "minimum_target_margin": 12.767426013946533,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": [
+                {
+                  "field": "modality",
+                  "margin": -1.1175875663757324,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:2388f63d7e5db9b5de458d4c06e1a39315720df393034edc31ddc1e2099bbaf2",
+                  "source_text": "Under this regulation, the secretary is obliged to preserve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.10758638381958,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:48e6ff228b75755e0d652e54eb19a97768b7e1e289facf65173e034c93e70fbb",
+                  "source_text": "Under this regulation, the registrar is obliged to publish the notice.",
+                  "target": "O"
+                },
+                {
+                  "field": "action",
+                  "margin": -0.26024413108825684,
+                  "predicted_token": "\"approve\"",
+                  "row_id": "clause:5c4dcb095860703badf8eb1eb073c5b567cc4d79c0c0bac1c81a003ad2b80bb1",
+                  "source_text": "This regulation bans the secretary from delivering the notice.",
+                  "target": "deliver"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.37503719329833984,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:617efde249fa74469825a68e94adb120df292d5b8164474769b58681f0d62929",
+                  "source_text": "Under this regulation, the secretary is obliged to preserve the notice.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -2.1938610076904297,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:67c92185aa19ae0e410c19d5c0badecb0cfc3e50503eba3e1c6f65b23cb476e2",
+                  "source_text": "Under this regulation, the trustee is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.4917941093444824,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:8ec0f4ea9b6932a7337dfd2cee610d545e73c4e7cda3596d4c20b1e3c26c4357",
+                  "source_text": "Under this regulation, the treasurer is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.9711003303527832,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:cea52542cf56a5e0f3490670dc74b269ccbdad566c5c8464d5d6a7e152ee028c",
+                  "source_text": "Under this regulation, the secretary is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.46324682235717773,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:dcf2692e68f12f3b9f8797f2c564e299e4348f85801c385f6611f9c32e23d07c",
+                  "source_text": "Under this regulation, the treasurer is obliged to preserve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.058390140533447266,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:e57bd3f18f7cfd076307674d27dc953728822029a628c0736c1a8d049c7f3552",
+                  "source_text": "Under this regulation, the registrar is obliged to examine the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.5269126892089844,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:e8885291266600ce1e9598780d93895bf5db61ce0ce2734ca3743530de3367d1",
+                  "source_text": "This regulation places a duty on the secretary to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.8589653968811035,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:f3d382b8100a5dd983c3a5bb0342a92a0f517960b83716e1b4b219928b230fd2",
+                  "source_text": "Under this regulation, the trustee is obliged to examine the archive.",
+                  "target": "O"
+                }
+              ]
+            }
+          },
+          "state_ref": {
+            "bytes": 2797403,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/last-attempt-state.json",
+            "sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+            "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+          },
+          "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+        },
+        "selected": {
+          "original_panels": {
+            "context-only-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1755219926876983
+            },
+            "context-reverse": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 60,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 84,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2469312008290852
+            },
+            "context-rotate": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 65,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 92,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.217228561601504
+            },
+            "cross-length-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 153,
+                "whole_rules_missing": 153
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "actor": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "conditions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "exceptions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "modality": {
+                  "correct": 32,
+                  "total": 180,
+                  "unordered_correct": 85
+                },
+                "object": {
+                  "correct": 48,
+                  "total": 180,
+                  "unordered_correct": 89
+                },
+                "temporal": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.612846663615301
+            },
+            "recurrent-residual-off": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 47,
+                "invalid_rows": 48,
+                "invalid_rule_count": 47,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 47,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 1,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 47,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.5350407469938716
+            },
+            "source-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1782920999104347
+            },
+            "training": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.6952091342272538e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.001060282516035424
+            },
+            "validation": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0011706012292174706
+            },
+            "zero-condition": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 48,
+                "invalid_rows": 48,
+                "invalid_rule_count": 48,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 48,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.0570017839749042
+            }
+          },
+          "source_bank_readouts": {
+            "balanced": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 180,
+                  "cross_entropy": 0.005403502901494845,
+                  "minimum_target_margin": 3.8288819789886475,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 1.3017765120477205e-06,
+                  "minimum_target_margin": 10.637534976005554,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 9.373866961526447e-05,
+                  "minimum_target_margin": 6.50405752658844,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 8.945576007353869e-08,
+                  "minimum_target_margin": 13.608804702758789,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": []
+            },
+            "control": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 179,
+                  "cross_entropy": 0.032691367222705284,
+                  "minimum_target_margin": -0.26024413108825684,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 8.400028109850016e-06,
+                  "minimum_target_margin": 8.390342831611633,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 170,
+                  "cross_entropy": 0.13603972610842302,
+                  "minimum_target_margin": -2.1938610076904297,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 1.1481876695837753e-07,
+                  "minimum_target_margin": 12.767426013946533,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": [
+                {
+                  "field": "modality",
+                  "margin": -1.1175875663757324,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:2388f63d7e5db9b5de458d4c06e1a39315720df393034edc31ddc1e2099bbaf2",
+                  "source_text": "Under this regulation, the secretary is obliged to preserve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.10758638381958,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:48e6ff228b75755e0d652e54eb19a97768b7e1e289facf65173e034c93e70fbb",
+                  "source_text": "Under this regulation, the registrar is obliged to publish the notice.",
+                  "target": "O"
+                },
+                {
+                  "field": "action",
+                  "margin": -0.26024413108825684,
+                  "predicted_token": "\"approve\"",
+                  "row_id": "clause:5c4dcb095860703badf8eb1eb073c5b567cc4d79c0c0bac1c81a003ad2b80bb1",
+                  "source_text": "This regulation bans the secretary from delivering the notice.",
+                  "target": "deliver"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.37503719329833984,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:617efde249fa74469825a68e94adb120df292d5b8164474769b58681f0d62929",
+                  "source_text": "Under this regulation, the secretary is obliged to preserve the notice.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -2.1938610076904297,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:67c92185aa19ae0e410c19d5c0badecb0cfc3e50503eba3e1c6f65b23cb476e2",
+                  "source_text": "Under this regulation, the trustee is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.4917941093444824,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:8ec0f4ea9b6932a7337dfd2cee610d545e73c4e7cda3596d4c20b1e3c26c4357",
+                  "source_text": "Under this regulation, the treasurer is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -1.9711003303527832,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:cea52542cf56a5e0f3490670dc74b269ccbdad566c5c8464d5d6a7e152ee028c",
+                  "source_text": "Under this regulation, the secretary is obliged to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.46324682235717773,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:dcf2692e68f12f3b9f8797f2c564e299e4348f85801c385f6611f9c32e23d07c",
+                  "source_text": "Under this regulation, the treasurer is obliged to preserve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.058390140533447266,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:e57bd3f18f7cfd076307674d27dc953728822029a628c0736c1a8d049c7f3552",
+                  "source_text": "Under this regulation, the registrar is obliged to examine the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.5269126892089844,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:e8885291266600ce1e9598780d93895bf5db61ce0ce2734ca3743530de3367d1",
+                  "source_text": "This regulation places a duty on the secretary to approve the archive.",
+                  "target": "O"
+                },
+                {
+                  "field": "modality",
+                  "margin": -0.8589653968811035,
+                  "predicted_token": "\"P\"",
+                  "row_id": "clause:f3d382b8100a5dd983c3a5bb0342a92a0f517960b83716e1b4b219928b230fd2",
+                  "source_text": "Under this regulation, the trustee is obliged to examine the archive.",
+                  "target": "O"
+                }
+              ]
+            }
+          },
+          "state_ref": {
+            "bytes": 2797399,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/selected-state.json",
+            "sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+            "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+          },
+          "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+        }
+      },
+      "fresh_optimizer_moments_verified": true,
+      "initial_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "mean_paired_modality_CE": 0.00084581211496751,
+      "mean_paired_weighted_loss": 4.229060634921044e-05,
+      "mean_pre_auxiliary_objective": 0.1953567689832519,
+      "optimizer_steps": 170,
+      "paired_source_presentations": 1020,
+      "row_presentations": 1220,
+      "scheduler_scope": "Fresh declared scheduler and initial rates; scheduler state is not serialized for exact optimizer resume.",
+      "selected_epoch": 40,
+      "selected_last_tensor_alias": true,
+      "selection": "per_length_nonregression_then_fidelity_progress_then_reference_ce",
+      "source_value_presentations": 12800,
+      "target_token_presentations": 112920,
+      "training_call_seconds": 38.546283889969345,
+      "training_owner_seconds": 38.50490304798586,
+      "training_rows_per_second": 31.65026240875772,
+      "used113_source_presentations": 1020
+    },
+    "control": {
+      "count_presentations": 1220,
+      "endpoints": {
+        "last-attempt": {
+          "original_panels": {
+            "context-only-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1839439426390268
+            },
+            "context-reverse": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 60,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 84,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2580778699274926
+            },
+            "context-rotate": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 65,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 92,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2277045103894186
+            },
+            "cross-length-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 153,
+                "whole_rules_missing": 153
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "actor": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "conditions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "exceptions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "modality": {
+                  "correct": 32,
+                  "total": 180,
+                  "unordered_correct": 85
+                },
+                "object": {
+                  "correct": 48,
+                  "total": 180,
+                  "unordered_correct": 89
+                },
+                "temporal": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.6166403298203427
+            },
+            "recurrent-residual-off": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 47,
+                "invalid_rows": 48,
+                "invalid_rule_count": 47,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 47,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 1,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 47,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.5354709919247783
+            },
+            "source-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1867333953014612
+            },
+            "training": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.6952091342272538e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0010605843770021648
+            },
+            "validation": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0011725201389310295
+            },
+            "zero-condition": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 48,
+                "invalid_rows": 48,
+                "invalid_rule_count": 48,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 48,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.069102295255079
+            }
+          },
+          "source_bank_readouts": {
+            "balanced": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 180,
+                  "cross_entropy": 0.005401698761459449,
+                  "minimum_target_margin": 3.8289002776145935,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 1.4094992750932376e-06,
+                  "minimum_target_margin": 10.59745979309082,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 0.012869357514513088,
+                  "minimum_target_margin": 0.983959436416626,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 9.68171518166293e-08,
+                  "minimum_target_margin": 13.887427806854248,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": []
+            },
+            "control": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 179,
+                  "cross_entropy": 0.03270255404228467,
+                  "minimum_target_margin": -0.26044249534606934,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 8.843467772281757e-06,
+                  "minimum_target_margin": 8.304715275764465,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 0.002990705106857271,
+                  "minimum_target_margin": 3.4651923179626465,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 2.2204605194531267e-07,
+                  "minimum_target_margin": 11.810139894485474,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": [
+                {
+                  "field": "action",
+                  "margin": -0.26044249534606934,
+                  "predicted_token": "\"approve\"",
+                  "row_id": "clause:5c4dcb095860703badf8eb1eb073c5b567cc4d79c0c0bac1c81a003ad2b80bb1",
+                  "source_text": "This regulation bans the secretary from delivering the notice.",
+                  "target": "deliver"
+                }
+              ]
+            }
+          },
+          "state_ref": {
+            "bytes": 2797028,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+            "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+            "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+          },
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "selected": {
+          "original_panels": {
+            "context-only-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1839439426390268
+            },
+            "context-reverse": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 28,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 60,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 84,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2580778699274926
+            },
+            "context-rotate": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 36,
+                "ordered_exact": 12,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 27,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 65,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 92,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.2277045103894186
+            },
+            "cross-length-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 153,
+                "whole_rules_missing": 153
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "actor": {
+                  "correct": 15,
+                  "total": 180,
+                  "unordered_correct": 79
+                },
+                "conditions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "exceptions": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                },
+                "modality": {
+                  "correct": 32,
+                  "total": 180,
+                  "unordered_correct": 85
+                },
+                "object": {
+                  "correct": 48,
+                  "total": 180,
+                  "unordered_correct": 89
+                },
+                "temporal": {
+                  "correct": 96,
+                  "total": 180,
+                  "unordered_correct": 96
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.6166403298203427
+            },
+            "recurrent-residual-off": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 47,
+                "invalid_rows": 48,
+                "invalid_rule_count": 47,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 47,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 1,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 47,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.5354709919247783
+            },
+            "source-shuffle": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 151,
+                "whole_rules_missing": 151
+              },
+              "reconstruction_mse_reported": 1.3803391648810532e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "actor": {
+                  "correct": 35,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 69,
+                  "total": 180,
+                  "unordered_correct": 119
+                },
+                "object": {
+                  "correct": 90,
+                  "total": 180,
+                  "unordered_correct": 148
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.1867333953014612
+            },
+            "training": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.6952091342272538e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0010605843770021648
+            },
+            "validation": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 48,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 180,
+                "invalid_rows": 0,
+                "invalid_rule_count": 0,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 48,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 48,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 180,
+                "whole_rules_extra": 0,
+                "whole_rules_missing": 0
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "conditions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "exceptions": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                },
+                "temporal": {
+                  "correct": 180,
+                  "total": 180,
+                  "unordered_correct": 180
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 0.0011725201389310295
+            },
+            "zero-condition": {
+              "expected_rules": 180,
+              "formula_metrics": {
+                "all_rules_preserved": 0,
+                "duplicate_rules": 0,
+                "eos_count": 48,
+                "expected_rules": 180,
+                "generated_rules": 48,
+                "invalid_rows": 48,
+                "invalid_rule_count": 48,
+                "order_mismatch_rows": 0,
+                "ordered_exact": 0,
+                "parsed_documents": 48,
+                "prediction_missing_rows": 0,
+                "rows": 48,
+                "syntax_valid": 0,
+                "unscorable_generation_rows": 0,
+                "valid_generated_rules": 0,
+                "whole_rules_extra": 48,
+                "whole_rules_missing": 180
+              },
+              "reconstruction_mse_reported": 1.3803391936026022e-19,
+              "reconstruction_scope": "Identity projection/numerical reconstruction metric, not an independently learned semantic reconstruction claim.",
+              "rows": 48,
+              "seven_facets": {
+                "action": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "actor": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "conditions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "exceptions": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "modality": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "object": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                },
+                "temporal": {
+                  "correct": 0,
+                  "total": 180,
+                  "unordered_correct": 0
+                }
+              },
+              "token_cross_entropy_recomputed_from_raw_logits": false,
+              "token_cross_entropy_reported": 1.069102295255079
+            }
+          },
+          "source_bank_readouts": {
+            "balanced": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 180,
+                  "cross_entropy": 0.005401698761459449,
+                  "minimum_target_margin": 3.8289002776145935,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 1.4094992750932376e-06,
+                  "minimum_target_margin": 10.59745979309082,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 0.012869357514513088,
+                  "minimum_target_margin": 0.983959436416626,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 9.68171518166293e-08,
+                  "minimum_target_margin": 13.887427806854248,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": []
+            },
+            "control": {
+              "actual_greedy_formula_panel": false,
+              "by_field": {
+                "action": {
+                  "correct": 179,
+                  "cross_entropy": 0.03270255404228467,
+                  "minimum_target_margin": -0.26044249534606934,
+                  "total": 180
+                },
+                "actor": {
+                  "correct": 180,
+                  "cross_entropy": 8.843467772281757e-06,
+                  "minimum_target_margin": 8.304715275764465,
+                  "total": 180
+                },
+                "modality": {
+                  "correct": 180,
+                  "cross_entropy": 0.002990705106857271,
+                  "minimum_target_margin": 3.4651923179626465,
+                  "total": 180
+                },
+                "object": {
+                  "correct": 180,
+                  "cross_entropy": 2.2204605194531267e-07,
+                  "minimum_target_margin": 11.810139894485474,
+                  "total": 180
+                }
+              },
+              "clauses": 180,
+              "full_vocabulary_size": 32,
+              "scalar_sites": 720,
+              "wrong_source_sites": [
+                {
+                  "field": "action",
+                  "margin": -0.26044249534606934,
+                  "predicted_token": "\"approve\"",
+                  "row_id": "clause:5c4dcb095860703badf8eb1eb073c5b567cc4d79c0c0bac1c81a003ad2b80bb1",
+                  "source_text": "This regulation bans the secretary from delivering the notice.",
+                  "target": "deliver"
+                }
+              ]
+            }
+          },
+          "state_ref": {
+            "bytes": 2797024,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+            "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+            "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+          },
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        }
+      },
+      "fresh_optimizer_moments_verified": true,
+      "initial_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "mean_paired_modality_CE": 0.008685449878890614,
+      "mean_paired_weighted_loss": 0.0004342725010193295,
+      "mean_pre_auxiliary_objective": 0.19535781031145769,
+      "optimizer_steps": 170,
+      "paired_source_presentations": 1020,
+      "row_presentations": 1220,
+      "scheduler_scope": "Fresh declared scheduler and initial rates; scheduler state is not serialized for exact optimizer resume.",
+      "selected_epoch": 40,
+      "selected_last_tensor_alias": true,
+      "selection": "per_length_nonregression_then_fidelity_progress_then_reference_ce",
+      "source_value_presentations": 12800,
+      "target_token_presentations": 112920,
+      "training_call_seconds": 38.2611701519927,
+      "training_owner_seconds": 38.21957155800192,
+      "training_rows_per_second": 31.886113131238368,
+      "used113_source_presentations": 1020
+    }
+  },
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2",
+  "checkpoint_promoted": false,
+  "convergence_proven": false,
+  "dimension": 384,
+  "endpoint_source_bank_scalar_sites": 5760,
+  "findings": [],
+  "fresh_semantic_holdout": false,
+  "independent_review": {
+    "bytes": 1792210,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/training-review/actual-training-384-r2-independent-review.json",
+    "sha256": "06f86ffc2ac7863b9770aee63f305f1b1f487ce89104da9b62f1fc59e771e107"
+  },
+  "measurement_limits": [
+    "Parent balanced bank and new48 were already correct before fitting; matched continuation measures confidence/coverage/transfer, not repair of new-bank classification errors.",
+    "Original TRAIN/validation are exposed numerical cohorts; v3/sealed60/balanced48 labels do not select checkpoints and no fresh semantic holdout claim is made.",
+    "Endpoint source-bank argmax is distinct from greedy formula generation. This phase saves36 original greedy panels but no new48 postfit greedy rollout; later posthoc observation is separate.",
+    "Full32 source auxiliary loss is recomputed from stored logits; original decoder teacher-forced CE is an owner-reported aggregate without raw full-token logits.",
+    "Identity/projection MSE is not independently learned semantic reconstruction. Shared global clipping can affect all updates; source-only auxiliary forward ownership is not causal isolation.",
+    "Typed state hashes are recomputed from saved float32/int64 serialized values without constructing numerical tensors.",
+    "Frozen legal_formula_codec._rule schema validation and historical import-tree logs do not grant compiler execution, Lean admission or canonical working-tree throughput evidence.",
+    "Resource and lease samples are bounded observations; neither process peak RSS nor continuous lease coverage is claimed."
+  ],
+  "models_or_numerical_owners_imported_or_executed_by_audit": false,
+  "original_panel_rows": 1728,
+  "original_reference_rule_sites": 6480,
+  "parent_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+  "passed": true,
+  "phase": "training",
+  "physical_original_panels": 36,
+  "postfit_new_wording_greedy_formulas_measured_in_this_phase": false,
+  "proof_authority": false,
+  "qualified": false,
+  "reported_old_normative_source_head_modality_regression_is_not_yet_a_greedy_formula_regression_claim": true,
+  "resources": {
+    "continuous_coverage_claimed": false,
+    "durable_lease_released": true,
+    "final_attempt_census_bytes": 151900366,
+    "final_live_group_processes": 0,
+    "final_named_root_charge_bytes": 142454707377,
+    "foreign_scheduler_read_or_modified": false,
+    "maximum_saved_group_RSS_bytes": 1147809792,
+    "memory_MiB": 1536,
+    "named_root_cap_bytes": 145000000000,
+    "owned_present_lease_samples": 158,
+    "peak_RSS_measured": false,
+    "periodic_sample_count": 8,
+    "storage_reservation_bytes": 400000000
+  },
+  "schema": "balanced-wording-native384-training-compact-evidence/v1",
+  "scientific_interpretation": "Both matched continuations preserve all original conditioned TRAIN/validation formulas. The balanced-wording arm improves new-bank modality confidence but regresses old normative source-head modality accuracy from180 to170 of180, while the control arm preserves old180. This is a confidence/wording-transfer tradeoff on exposed authored meanings, not new-bank classification repair or heldout/proof success.",
+  "source_semantics_verified": false,
+  "timing": {
+    "driver_seconds": 151.617886173015,
+    "launch_return_through_reap_seconds": 156.57359633600572,
+    "outer_guardian_seconds": 187.3074085689732,
+    "scope": "Two fresh-optimizer170-step numerical fits plus original exposed panels/source-bank readouts using cached384 features and frozen historical owners; no encoder/native compiler/Lean/end-to-end speed claim."
+  },
+  "training_executed_by_audit": false,
+  "training_executed_by_audited_attempt": true,
+  "training_full32_modality_distributions_checked": 4080
+}

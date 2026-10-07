@@ -1,0 +1,77 @@
+{
+  "all_qualification_flags_false": true,
+  "alternatives_planning_only": [
+    "lower initial LR changes every original update",
+    "KL/distillation requires new objective/teacher contract",
+    "old6+new6 doubles presentations",
+    "mixed3+3 requires extra forward/aggregation change"
+  ],
+  "entry_points": {
+    "authentic_renderer": "renderer_view + configure_profile; distinct control13/balanced16",
+    "budget_validation": "new private dual validate_auxiliary_report; unchanged validate_original_streams",
+    "dual_cache": "new prepare_tensor_cache: immutable pair sharing one working model; preserve existing validated handles/versions",
+    "dual_loss": "new modality_loss: global step -> bank/local ordinal -> unchanged full32 mean6 loss; nested authentic receipt preserved",
+    "dual_source_descriptor": "new prepare_bank: two separately validated banks with own SHA and envelope",
+    "dual_summary": "explicit per-bank/per-actual-template receipt reconciliation; inherited single-bank template formula is inapplicable",
+    "retention": "postfit gate after unchanged original checkpoint selection; never v3/sealed60 selectors",
+    "trainer_dispatch": "existing normative configure_trainer relative-import isolation"
+  },
+  "execution_readiness_granted": false,
+  "learned_reconstruction_mse_claim": false,
+  "numerical_contract": {
+    "auxiliary_presentations": 1020,
+    "extra_loss_or_projections_added": false,
+    "fresh_optimizer": true,
+    "fresh_scheduler": true,
+    "full_vocabulary_size": 32,
+    "native_context_tokens": 512,
+    "original_row_presentations": 1220,
+    "original_selection_unchanged": true,
+    "output_limit": 512,
+    "parent_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+    "seed": 1729,
+    "source_auxiliary_weight": 0.05,
+    "source_value_presentations": 12800,
+    "steps": 170,
+    "target_token_presentations": 112920
+  },
+  "performance_improvement_claim": false,
+  "proposed_only": true,
+  "real_trainer_wired": false,
+  "schema": "dual-bank-retention-private-integration-design/v1",
+  "scope": "new private helper/driver and metadata receipts; canonical and executed source unchanged",
+  "source_pins": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/experiment-source/balanced_wording_runtime_adapter.py": {
+      "bytes": 20710,
+      "sha256": "334506648a870f0b68bc3a8935f23ed4c8fc71ed3a50a12df285eb21801e0fe6"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/experiment-source/scripts/ops/autoencoder/benchmark_balanced_wording_continuation.py": {
+      "bytes": 25582,
+      "sha256": "a7efdb15f8a0de45226a15ea919859ab87d827831a6293aa307bab01da34ef4e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/training-review/actual-training-384-r2-independent-review.json": {
+      "bytes": 1792210,
+      "sha256": "06f86ffc2ac7863b9770aee63f305f1b1f487ce89104da9b62f1fc59e771e107"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/summary.json": {
+      "bytes": 96894,
+      "sha256": "bf82fc26aad348a01404c88428f70ab4f105e5eb8e4eb45c7886a417cd74fec8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/summary.json": {
+      "bytes": 35974,
+      "sha256": "946da863698dc6118a3a8158c2b72c77b5b45b1fa933363f9954303b392898d8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/normative_wording_modality_auxiliary.py": {
+      "bytes": 9634,
+      "sha256": "48b7a3b2a0e5b69ae292f2c02dc0e87d92de4ffb4443bfba5ae52695b9a4320a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/long_span_source_value_training.py": {
+      "bytes": 105415,
+      "sha256": "c1663820492a6879b14ab89dfd9b052105cf16378bb015fea08c3220d83456e0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-paraphrase-modality-20261004/experiment-source/ipfs_datasets_py/logic/formalization/autoencoder/paraphrase_modality_auxiliary_training.py": {
+      "bytes": 13994,
+      "sha256": "789f47047badfa30553940547c2db28f08afa1052f1bcc5ace68dbccedc2ccac"
+    }
+  }
+}

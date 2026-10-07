@@ -1,0 +1,105 @@
+{
+  "Constitution_formalized": false,
+  "action_contrastive_weight": 0.05,
+  "admitted": false,
+  "alias_policy": "One computed panel may bind both roles only after exact tensor-hash equality; disclose physical and logical denominators.",
+  "arms": [
+    {
+      "bank": "existing E normative180",
+      "role": "control",
+      "weight": 0.05
+    },
+    {
+      "bank": "reviewed draft-r3 balanced180",
+      "role": "balanced",
+      "weight": 0.05
+    }
+  ],
+  "balanced_counts": {
+    "1": 305,
+    "2": 305,
+    "4": 305,
+    "8": 305
+  },
+  "batch_size": 8,
+  "bridges": [],
+  "candidate_freeze": {
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/candidates/source-results-freeze.json",
+    "sha256": "e408d5f67f5ab5d6e39b363753fe76ca2cab7f4641435ce0e1642667210fe52a"
+  },
+  "cardinality_weight": 0.25,
+  "checkpoint_promoted": false,
+  "context_tokens": 512,
+  "count_presentations": 1220,
+  "cpu_slots": 1,
+  "decoder_output_tokens": 512,
+  "dimension": 384,
+  "endpoint_roles": [
+    "selected",
+    "last-attempt"
+  ],
+  "exact_optimizer_resume": false,
+  "formalized": false,
+  "fresh_optimizer": true,
+  "fresh_scheduler": true,
+  "fresh_semantic_holdout": false,
+  "generated_boundary_site_policy": "first_last",
+  "generated_boundary_weight": 0.05,
+  "hardware_scope": "CPU-only fixed comparison; no native family/Lake throughput claims.",
+  "implementation_readiness_pending": true,
+  "initial_all_correct_interpretation": "If the parent makes no new-bank classification errors, report confidence/coverage effects; do not describe classification repair.",
+  "initial_readout": "Same E parent on both full180 clause banks plus actual new48 greedy generation before fitting.",
+  "learning_rate": 0.0001,
+  "legal_ir_evaluate_provers": false,
+  "lineage4096D_modified": false,
+  "matched_sampling": "canonical original-rule SHA256 and template slot; source IDs/hashes remain authentic",
+  "metric_disk_cache_used": false,
+  "native_preparation": "216 genuine local gte-small384 source strings at batch4 with actual tokens <=512, no reference payloads in encoder path.",
+  "non_action_learning_rate_multiplier": 10.0,
+  "optimizer_steps_per_fit": 170,
+  "original_meanings_previously_exposed": true,
+  "parent": {
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+    "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+    "tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594"
+  },
+  "postfit_panels": [
+    "training",
+    "validation",
+    "zero-condition",
+    "source-shuffle",
+    "context-only-shuffle",
+    "cross-length-shuffle",
+    "context-reverse",
+    "context-rotate",
+    "recurrent-residual-off"
+  ],
+  "posthoc_cohorts": [
+    "original_train48",
+    "normative_train48",
+    "new_balanced_train48",
+    "exposed_v3_48"
+  ],
+  "proof_authority": false,
+  "purpose": "Compare broader balanced authored wording to existing normative wording using matched source-auxiliary continuation draws.",
+  "qualified": false,
+  "reporting": "Emitted formulas and all seven facets, omissions/extras/order/EOS, source/recurrent/combined full32 scalar distributions and wrong-site margins; loss and wall-time accounting separately.",
+  "resource_admission_pending": true,
+  "roundtrip_ok": false,
+  "schema": "balanced-wording-continuation-predeclared-protocol/v1",
+  "scope": "Private authored feature/reconstruction diagnostic; not generic feature_pretraining and not formalization qualification.",
+  "seed": 1729,
+  "selection": "Existing original source-fidelity selection unchanged; wording/v3/sealed60 references are not checkpoint selectors.",
+  "source_auxiliary_batch_size": 6,
+  "source_auxiliary_presentations": 1020,
+  "source_auxiliary_strata": "O/P/F x two authored-template slots,30 original rules in each stratum",
+  "source_semantics_verified": false,
+  "source_value_presentations": 12800,
+  "source_value_weight": 0.25,
+  "teacher8D_modified": false,
+  "temperature": 0,
+  "valid_target_token_presentations": 112920,
+  "vocabulary_size": 32,
+  "weights_downloaded": false,
+  "workers": 1
+}

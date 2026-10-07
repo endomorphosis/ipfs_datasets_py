@@ -1,0 +1,70 @@
+{
+  "Constitution_formalized": false,
+  "admitted": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/evaluation-review/actual-evaluation-r1-compact.json": {
+      "bytes": 477360,
+      "sha256": "d8a68018f193c3e1511e9f2d695c427195be7f6e892bb5dcf1254d6fec8ef75f"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/evaluation-review/actual-evaluation-r1-parent-comparison.json": {
+      "bytes": 7432,
+      "sha256": "2543cfa503edc1f8dab67667b9c6d91e78f8795937cfddeb7e956af9b4bbe52e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/predeclared-comparison-protocol.json": {
+      "bytes": 4255,
+      "sha256": "3ba0029bfe86d7ca45948bc4da7d8c847b21e97f0e10ac3e14a7163e8a7e4b8f"
+    },
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/training-review/actual-training-384-r2-compact.json": {
+      "bytes": 112928,
+      "sha256": "24d9456d2d86b472d3a1907d8fee2635c33717198e10fab8d6077e725a8ec7a1"
+    }
+  },
+  "balanced": {
+    "exposed_v3_48": 19,
+    "new_balanced_train48": 48,
+    "normative_train48": 33,
+    "original_train48": 48,
+    "reasons": [
+      "retained complete-formula reconstruction regressed",
+      "exposed development regressed",
+      "new authored bank already reconstructed exactly at parent; confidence improvement alone does not repair coverage"
+    ],
+    "status": "reject replacement continuation"
+  },
+  "checkpoint_promoted": false,
+  "control": {
+    "exposed_v3_48": 33,
+    "new_balanced_train48": 48,
+    "normative_train48": 48,
+    "original_train48": 48,
+    "status": "retained numerical development candidate; not promoted"
+  },
+  "convergence_proven": false,
+  "decision_scope": "posthoc authored numerical reconstruction; not semantic admission or production selection",
+  "endpoint_alias_policy": "selected and last tensors identical within arm; repeated panels not independent fits",
+  "exposed_v3_used_for_checkpoint_selection": false,
+  "exposed_v3_used_for_training": false,
+  "findings": [],
+  "formalized": false,
+  "fresh_holdout": false,
+  "huggingface_upload_performed": false,
+  "independent_semantic_holdout": false,
+  "lake_executed": false,
+  "logical_evaluation_panels": 16,
+  "native_family_validation_performed": false,
+  "original_selection_retroactively_changed": false,
+  "paragraph_denominator_per_cohort": 48,
+  "parent": {
+    "exposed_v3_48": 31,
+    "new_balanced_train48": 48,
+    "normative_train48": 48,
+    "original_train48": 48
+  },
+  "passed": true,
+  "physically_computed_evaluation_panels": 16,
+  "qualified": false,
+  "reference_rule_denominator_per_cohort": 180,
+  "schema": "balanced-wording-reconstruction-decision/v1",
+  "source_and_archived_models_unchanged": true,
+  "source_scalar_reference_sites": 11520
+}
