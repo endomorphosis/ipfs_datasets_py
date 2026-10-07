@@ -258,3 +258,8 @@ The exact corpus, barriers, checkpoints and independent reviews are retained at
 131 decoder/owner tests and eight pure selector fixtures pass; 768 saved selected
 outputs replay exactly. All outputs remain zero-mask proposals/null formal
 output; latent 8D/384D/768D, US Code review, native family/Lake qualification remain open.
+
+
+## Retained wording checkpoint availability and original-parent comparison
+
+The [retained wording reconstruction plan](retained_wording_checkpoint_availability_20261007.md) reconciles the original parent and both saved continuation paths using the original embeddings. The fresh parent scores 31/48 on exposed development wording, archived retained continuation 33/48, and dual replay 30/48; control and dual retain all 48/48 paragraphs on three authored TRAIN cohorts. Nine unchanged raw checkpoint containers are now public and six fitted recipe/role bindings are registered in ModelManager, with all 678 existing records preserved (684 total). The [compact evidence](evidence/retained-wording-20261007/checkpoint-availability.json) records immutable Hub revisions and separate catalog namespaces. These are authored formula metrics and experimental availability; legal-prose equality and independently checked semantics remain separate tasks. The source-span support/action track retains its separate raw-source lineage and refusal findings.

@@ -1,0 +1,914 @@
+{
+  "actual_cleanup_checks": {
+    "all_original_489_foreign_records_reconstruct_exact_prior_SHA": "ed94ce64ce12a1950de745619692d11967c3691673c438f8ff22cb5b6794c96d",
+    "all_original_98_retained_claims_preserved": true,
+    "child_exit_pin": {
+      "bytes": 325,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/child-exit.json",
+      "sha256": "4eb82118b6133a34d3759655931da7e64dbd44685c447c896358472a58f526f6"
+    },
+    "child_returncode": 0,
+    "continuous_lease_coverage_claimed": false,
+    "launch_return_through_reap_wall_seconds": 157.18882843398023,
+    "leader_reaped": true,
+    "lease_binding_pin": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/lease-binding.json",
+      "sha256": "e27ab3edc3ad5a2d2b23cd6a9f884a861044c66ca920c688264c7933503383c1"
+    },
+    "lease_id": "ef3fda987d844d868274a3adcbc9d1c9",
+    "memory_limit_mib": 1536,
+    "outer_elapsed_seconds": 188.24364701798186,
+    "outer_exit_pin": {
+      "bytes": 63,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1-guardian-exit.json",
+      "sha256": "65751331ac511515fa6b05e09f797dc2def40908f41dfd7b6e438faa291425c2"
+    },
+    "outer_returncode": 0,
+    "own_lease_absent_in_shared_state": true,
+    "owned_isolated_group_observed_dead": true,
+    "released_record_equal_current_ledger": true,
+    "reservation_id": "f6d511f71d844ed087fedb99e7ddd9cb",
+    "resources_final_pin": {
+      "bytes": 5859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/resources-final.json",
+      "sha256": "239161d54a5d2676316be231b0de22735a98a864e37f066d02c46f4e1c1c0e66"
+    },
+    "retained_artifacts_bytes": 20305152,
+    "storage_limit_bytes": 100000000,
+    "watchdog_events_pin": {
+      "bytes": 161714,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1-lease-observations.jsonl",
+      "sha256": "0f1ffc39d33a9ffc560003e941c5d108809706405cc7724810d470c633de7bc0"
+    },
+    "watchdog_sampled_healthy_observations": 160
+  },
+  "actual_quality_checks": {
+    "archived_control_vs_dual_v3": {
+      "both_correct": 30,
+      "both_wrong": 15,
+      "comparison_is_posthoc": true,
+      "newly_correct_ids": [],
+      "newly_wrong_ids": [
+        "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+        "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+        "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+      ]
+    },
+    "bank_metrics": {
+      "archived_control:last-attempt": {
+        "balanced": {
+          "action": {
+            "correct": 180,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        },
+        "control": {
+          "action": {
+            "correct": 179,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        }
+      },
+      "archived_control:selected": {
+        "balanced": {
+          "action": {
+            "correct": 180,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        },
+        "control": {
+          "action": {
+            "correct": 179,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        }
+      },
+      "dual:last-attempt": {
+        "balanced": {
+          "action": {
+            "correct": 180,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        },
+        "control": {
+          "action": {
+            "correct": 179,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        }
+      },
+      "dual:selected": {
+        "balanced": {
+          "action": {
+            "correct": 180,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        },
+        "control": {
+          "action": {
+            "correct": 179,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        }
+      },
+      "parent": {
+        "balanced": {
+          "action": {
+            "correct": 180,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        },
+        "control": {
+          "action": {
+            "correct": 179,
+            "total": 180
+          },
+          "actor": {
+            "correct": 180,
+            "total": 180
+          },
+          "modality": {
+            "correct": 180,
+            "total": 180
+          },
+          "object": {
+            "correct": 180,
+            "total": 180
+          }
+        }
+      }
+    },
+    "bank_readout_pins": [
+      {
+        "bytes": 775264,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt/balanced-source-bank-readout.json",
+        "sha256": "82f5ffe6b90a82060bb898686a8da4071d3b920b8af414c23f4a6eb2c7494a71"
+      },
+      {
+        "bytes": 771177,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt/control-source-bank-readout.json",
+        "sha256": "a3d71125ee30a8f0c7c098ac473603d4cb2a33b8b005d3bbc28f7dc9fc5955a0"
+      },
+      {
+        "bytes": 775265,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected/balanced-source-bank-readout.json",
+        "sha256": "65b2f115ce686b7a670d429491643c36696ddbac872a9c9573de470605252c0f"
+      },
+      {
+        "bytes": 771177,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected/control-source-bank-readout.json",
+        "sha256": "a23d91b79be9221f9720a33aa676aabd817bb0e543daf509c17324c63d33e579"
+      },
+      {
+        "bytes": 775641,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/balanced-source-bank-readout.json",
+        "sha256": "7ff2b948f9ef9672b9fd1c3a2d89c52f922c7f699a5f265dd8cef65c739278a4"
+      },
+      {
+        "bytes": 771117,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/control-source-bank-readout.json",
+        "sha256": "4748f815519d8648cd1b38e60a62f07ac9cb2ec354bea856854f7b93a6955eeb"
+      },
+      {
+        "bytes": 775638,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/balanced-source-bank-readout.json",
+        "sha256": "74b9a43721f8584e26d939cda654ba2ea3765a85c0a63d6818a3aa9be312febc"
+      },
+      {
+        "bytes": 771117,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/control-source-bank-readout.json",
+        "sha256": "8eca12e7880d247bfea5c5cbee3323f46f0dfb72aa351ffc0d425cbf67be3839"
+      },
+      {
+        "bytes": 775959,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/balanced-parent-source-readout.json",
+        "sha256": "13fd6a32849f97f9398ca9a986cabb4a153f6ed481fcac2dd34e32ed5644e278"
+      },
+      {
+        "bytes": 771651,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/control-parent-source-readout.json",
+        "sha256": "db517fd3668a75740a4739a02f4bc09b325b18c4944a8c5d77691f826e2a60d0"
+      }
+    ],
+    "closure_bytes": 3234409973,
+    "closure_count": 9564,
+    "closure_sha256": "2507b52998665d45ca833c6d6304c2c98723c932dbc46b069df1957c02aaeb32",
+    "gates": [
+      {
+        "endpoint": "dual",
+        "numerical_retention_passed": true,
+        "per_case_parent_comparison": {
+          "exposed_v3_48": {
+            "both_correct": 30,
+            "both_wrong": 17,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": [
+              "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de"
+            ]
+          },
+          "new_balanced_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "normative_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "original_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          }
+        },
+        "role": "selected"
+      },
+      {
+        "endpoint": "dual",
+        "numerical_retention_passed": true,
+        "per_case_parent_comparison": {
+          "exposed_v3_48": {
+            "both_correct": 30,
+            "both_wrong": 17,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": [
+              "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de"
+            ]
+          },
+          "new_balanced_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "normative_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "original_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          }
+        },
+        "role": "last-attempt"
+      },
+      {
+        "endpoint": "archived_control",
+        "numerical_retention_passed": true,
+        "per_case_parent_comparison": {
+          "exposed_v3_48": {
+            "both_correct": 31,
+            "both_wrong": 15,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [
+              "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+              "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+            ],
+            "newly_wrong_ids": []
+          },
+          "new_balanced_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "normative_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "original_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          }
+        },
+        "role": "selected"
+      },
+      {
+        "endpoint": "archived_control",
+        "numerical_retention_passed": true,
+        "per_case_parent_comparison": {
+          "exposed_v3_48": {
+            "both_correct": 31,
+            "both_wrong": 15,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [
+              "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+              "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+            ],
+            "newly_wrong_ids": []
+          },
+          "new_balanced_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "normative_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          },
+          "original_train48": {
+            "both_correct": 48,
+            "both_wrong": 0,
+            "comparison_is_posthoc": true,
+            "newly_correct_ids": [],
+            "newly_wrong_ids": []
+          }
+        },
+        "role": "last-attempt"
+      }
+    ],
+    "generation_barrier_pin": {
+      "bytes": 3073,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent-predictions-complete.json",
+      "sha256": "a46e062f9a57293c82f0211896d0742e1bcc9f3dbf0ed7881f263f9d2ce4093c"
+    },
+    "manifest_pin": {
+      "bytes": 2279872,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-manifest.json",
+      "sha256": "bc5c8b2bbf373e63bb86aec4517d33642f03978cb8c23bc2b8747d18dc254311"
+    },
+    "panels": [
+      {
+        "cohort": "original_train48",
+        "endpoint": "parent",
+        "expected_rules": 180,
+        "new_generation": true,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/retention-panel.json",
+          "sha256": "89df50a564386191d2a763b6c6888e5e584af40476ec3ac64da83a12463476ef"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665070,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/source-head-trace.json",
+          "sha256": "c33140948668071c56b5f82cb770f0de5264fdb889dbd006bfb13d7868aad0ed"
+        }
+      },
+      {
+        "cohort": "normative_train48",
+        "endpoint": "parent",
+        "expected_rules": 180,
+        "new_generation": true,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/retention-panel.json",
+          "sha256": "9b760a5e17fd38c4bde2a1cfacc53d966e778106d5e671d344fb197e1c78600c"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664091,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/source-head-trace.json",
+          "sha256": "2b6249f5acaf2e8a2fa7576aab8fdf6152ae60d8d8a4e0e1fab31bcc7abd755d"
+        }
+      },
+      {
+        "cohort": "new_balanced_train48",
+        "endpoint": "parent",
+        "expected_rules": 180,
+        "new_generation": true,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/retention-panel.json",
+          "sha256": "0e4052b0056dd11a1f788d167612be8bb10a8af59039ad3c05867fe5b539f514"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664591,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/source-head-trace.json",
+          "sha256": "3eda13b5d19e584be27b0c8b6e6965d7f6334905789b2da55def98bdc02cf1e4"
+        }
+      },
+      {
+        "cohort": "exposed_v3_48",
+        "endpoint": "parent",
+        "expected_rules": 180,
+        "new_generation": true,
+        "ordered_exact": 31,
+        "panel_pin": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/retention-panel.json",
+          "sha256": "974726396b40e439b9e092f56205194aa747cfaadc5a7bf42a4752562298d387"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664906,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/source-head-trace.json",
+          "sha256": "724f274245be06edb66d33bbd92ac7a751393fec14eeb80392567bba5048ae2a"
+        }
+      },
+      {
+        "cohort": "original_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/original_train48/retention-panel.json",
+          "sha256": "81265ab51845ff1ff3f5c312532120c672ae3c70a01fe82a09a08c5ded79840c"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665980,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/source-head-trace.json",
+          "sha256": "94f4097afc65e11e7d221687ce8b307afa803cc06b2f4e4e693a31225bb1a2ed"
+        }
+      },
+      {
+        "cohort": "normative_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/normative_train48/retention-panel.json",
+          "sha256": "e46102769dbabde14c57fbbf4deb0a0a7effe7477ce7ec00c0e73ee04c650ea9"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664461,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/source-head-trace.json",
+          "sha256": "5cfc79b2418af90ae836d8cadacf75be436679383cf046e630016f9cab77446f"
+        }
+      },
+      {
+        "cohort": "new_balanced_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/new_balanced_train48/retention-panel.json",
+          "sha256": "7d8f058fd069aac604547a692fda951288ad911e3f86b65953f00073bc336285"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/source-head-trace.json",
+          "sha256": "bf7c2cf8a10a3c719a0fa60ce53e385ec48f0419ff61e55a95c62f34f18057e4"
+        }
+      },
+      {
+        "cohort": "exposed_v3_48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 30,
+        "panel_pin": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/exposed_v3_48/retention-panel.json",
+          "sha256": "6beda861480b9eab0111d0f1cf459e3c0424938cca4b2ea97d083a0a6b3d68f6"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665829,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/source-head-trace.json",
+          "sha256": "10ea2d8fd39ff47b53dcad9d175496ef069f6c4b4cb3092481168204cd9c70f0"
+        }
+      },
+      {
+        "cohort": "original_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/original_train48/retention-panel.json",
+          "sha256": "81265ab51845ff1ff3f5c312532120c672ae3c70a01fe82a09a08c5ded79840c"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665981,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/source-head-trace.json",
+          "sha256": "4e37cfb1b51a0e7375d247ca427fe90c62038761cdfe2f7dd369e73a5b2a4f8d"
+        }
+      },
+      {
+        "cohort": "normative_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/normative_train48/retention-panel.json",
+          "sha256": "e46102769dbabde14c57fbbf4deb0a0a7effe7477ce7ec00c0e73ee04c650ea9"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664462,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/source-head-trace.json",
+          "sha256": "67d427949c37d16d1039f636653ea14bd2b3136bf0bc712091127b908d33b321"
+        }
+      },
+      {
+        "cohort": "new_balanced_train48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/new_balanced_train48/retention-panel.json",
+          "sha256": "7d8f058fd069aac604547a692fda951288ad911e3f86b65953f00073bc336285"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/source-head-trace.json",
+          "sha256": "e66e323d7a8b65b0efe8f869da0e99f584f2a301fb8d8461e8d3c7215a47a832"
+        }
+      },
+      {
+        "cohort": "exposed_v3_48",
+        "endpoint": "dual",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 30,
+        "panel_pin": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/exposed_v3_48/retention-panel.json",
+          "sha256": "6beda861480b9eab0111d0f1cf459e3c0424938cca4b2ea97d083a0a6b3d68f6"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665829,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/source-head-trace.json",
+          "sha256": "51ac927313455c0358cdd7e12f1f7910f67d4cf05c062a0a8f944a12c713f436"
+        }
+      },
+      {
+        "cohort": "original_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/original_train48/retention-panel.json",
+          "sha256": "0241d21d3b055e10283b63455e336d21b5a0cfcdebe6d5c0565887fe25dddec7"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665926,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/source-head-trace.json",
+          "sha256": "16177775a6430403998e87a1ea325a6b7db2224864616e04610c2cdb9794a155"
+        }
+      },
+      {
+        "cohort": "normative_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/normative_train48/retention-panel.json",
+          "sha256": "e7cbfbb2ef64e6779d607627b2c3877c4e495f843b48a127d66d2ffa33d543fa"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664407,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/source-head-trace.json",
+          "sha256": "83900764189f395cec0e4fc2083fbcb8ba44086988021845494df95e03870c9a"
+        }
+      },
+      {
+        "cohort": "new_balanced_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/new_balanced_train48/retention-panel.json",
+          "sha256": "f39202fe345a5b2fb74bac4a42af0af9360d790e39202c452c850c9f4f2ecdfb"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665425,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/source-head-trace.json",
+          "sha256": "5647cef3bda215d2d064a64f8b59abb9339e91fd0ca66f580b1f47bb2b1c205a"
+        }
+      },
+      {
+        "cohort": "exposed_v3_48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 33,
+        "panel_pin": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/exposed_v3_48/retention-panel.json",
+          "sha256": "afaac3a8ce3810422f8a8634dbe408e977834d16309f89cb2443d316e4ea34af"
+        },
+        "role": "selected",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665874,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/source-head-trace.json",
+          "sha256": "a928d89d93bebe5bd7d0c8befa68a23f499267e27801354728236d2727324ab8"
+        }
+      },
+      {
+        "cohort": "original_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/original_train48/retention-panel.json",
+          "sha256": "0241d21d3b055e10283b63455e336d21b5a0cfcdebe6d5c0565887fe25dddec7"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665928,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/source-head-trace.json",
+          "sha256": "09e3626979d44311f698f2df96b15c29860ae50ed1bc62737713ac6e2664eb32"
+        }
+      },
+      {
+        "cohort": "normative_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/normative_train48/retention-panel.json",
+          "sha256": "e7cbfbb2ef64e6779d607627b2c3877c4e495f843b48a127d66d2ffa33d543fa"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1664406,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/source-head-trace.json",
+          "sha256": "ddc63bbc2214dd32cfa50ea9609ef938855f9796d297e26a154830b5f651809f"
+        }
+      },
+      {
+        "cohort": "new_balanced_train48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 48,
+        "panel_pin": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/new_balanced_train48/retention-panel.json",
+          "sha256": "f39202fe345a5b2fb74bac4a42af0af9360d790e39202c452c850c9f4f2ecdfb"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665425,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/source-head-trace.json",
+          "sha256": "5ca876a30a20d3d31bc2354ea1b3994979d8172b309c280cd112fff6677a4976"
+        }
+      },
+      {
+        "cohort": "exposed_v3_48",
+        "endpoint": "archived_control",
+        "expected_rules": 180,
+        "new_generation": false,
+        "ordered_exact": 33,
+        "panel_pin": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/exposed_v3_48/retention-panel.json",
+          "sha256": "afaac3a8ce3810422f8a8634dbe408e977834d16309f89cb2443d316e4ea34af"
+        },
+        "role": "last-attempt",
+        "rows": 48,
+        "trace_pin": {
+          "bytes": 1665874,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/source-head-trace.json",
+          "sha256": "f211a831d060235827812f7736a0a0b75557dbea4cc047be543cc5025917264c"
+        }
+      }
+    ],
+    "parent_checkpoint_pin": {
+      "bytes": 2797392,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+      "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+      "tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594"
+    },
+    "plan_pin": {
+      "bytes": 2278522,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-plan.json",
+      "sha256": "5ffb558c041d48d920e736006b2c9ef3770563ef92ebe6dda9257fab5d045bb4"
+    },
+    "score_events_checked": 14400,
+    "source_recurrent_combined_CE_max_error": 0.0,
+    "summary_pin": {
+      "bytes": 111219,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/summary.json",
+      "sha256": "3a161aad434d17da6f66bd7e7b51ad52ff40f345a8bca4dde74a7d63a03f7e33"
+    },
+    "trace_sites_checked": 14400
+  },
+  "approved": true,
+  "causal_bank_mixing_effect_claimed": false,
+  "exact_legal_prose_or_proof_qualified": false,
+  "findings": [],
+  "fresh_matched_trial_claimed": false,
+  "interpretation": [
+    "All four TRAIN plus source-bank numerical retention gates pass against the original 0b3c parent.",
+    "Exposed v3 is 31/48 for parent, 30/48 for dual and 33/48 for archived control. Dual loses one parent-correct case and gains none; versus archived control it loses three correct cases and gains none.",
+    "Neither selected/last aliasing nor successful gate retention establishes fresh semantic generalization, exact legal-text reconstruction, formal proof or causal bank-mix improvement."
+  ],
+  "model_rerun_by_reviewer": false,
+  "phase_readiness_pin": {
+    "bytes": 2523044,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/review/retained-parent-evaluation-phase-readiness-r2.json",
+    "sha256": "b7cdb7343cbf4b90405f7ae2eb41eff99b10a4a94b159958687f1b53ffe3d390"
+  },
+  "pure_validator_recomputation": true,
+  "review_side_effect_note": {
+    "bytecode_cache_pins": [
+      {
+        "bytes": 89277,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/experiment-source/scripts/ops/autoencoder/__pycache__/evaluate_dual_bank_wording_continuation.cpython-312.pyc",
+        "sha256": "723bf36c944a4fce72f1b5b58d29f7564e3ddb4e667a7ae6dfe6ab7eb3350451"
+      },
+      {
+        "bytes": 36389,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/experiment-source/scripts/ops/autoencoder/__pycache__/reconcile_retained_dual_bank_outputs.cpython-312.pyc",
+        "sha256": "388657a4c60f461aa2942d3eed51b946848556e91b73998342bd560208dc0fea"
+      }
+    ],
+    "bytecode_cache_pins_are_historical_creation_witnesses": true,
+    "cleanup_authorized_by_parent": true,
+    "cleanup_completed_at_utc": "2026-10-07T13:53:57.316757+00:00",
+    "initial_pure_module_import_generated_two_bytecode_cache_files": true,
+    "no_cache_removal_or_foreign_resource_mutation_performed": false,
+    "no_foreign_resource_mutation_performed": true,
+    "only_two_exact_owned_bytecode_files_removed_after_path_SHA_size_link_and_identity_checks": true,
+    "original_source_model_input_output_bytes_unchanged": true,
+    "subsequent_checks_disabled_bytecode_writes": true,
+    "wholly_owned_empty_bytecode_directory_removed": true
+  },
+  "reviewed_at_utc": "2026-10-07T13:53:16.303295+00:00",
+  "reviewer": "/root/retained_cache_review",
+  "schema": "retained-parent-replay-independent-result-check/v1",
+  "scope": "Actual stdlib local file/pin checks and pure metadata/scoring validator recomputation. Independently reconstructed exact-text source contexts, decoded all 960 raw outputs, recomputed full32 scalar CE/margins/float32 decomposition and ten 180-row bank readouts, and checked local terminal/registry/owned-group cleanup. No model, encoder, optimizer, database connection, network or resource execution by reviewer. Original authored TRAIN/validation metadata was already exposed; v3 remains exposed posthoc development evidence. The initial pure-module imports created two owned Python bytecode caches; both exact files and their wholly owned empty directory were subsequently removed with explicit parent authorization. The final filesystem consists of the intended review receipt changes."
+}

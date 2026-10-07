@@ -1,0 +1,3415 @@
+{
+  "archived_control_vs_dual_v3": {
+    "both_correct": 30,
+    "both_wrong": 15,
+    "comparison_is_posthoc": true,
+    "newly_correct_ids": [],
+    "newly_wrong_ids": [
+      "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+      "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+      "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+    ]
+  },
+  "bank_metrics": {
+    "archived_control:last-attempt": {
+      "balanced": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "control": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      }
+    },
+    "archived_control:selected": {
+      "balanced": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "control": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      }
+    },
+    "dual:last-attempt": {
+      "balanced": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "control": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      }
+    },
+    "dual:selected": {
+      "balanced": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "control": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      }
+    },
+    "parent": {
+      "balanced": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "control": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        }
+      }
+    }
+  },
+  "bank_mixing_effect_causally_isolated": false,
+  "candidate_models_restored": false,
+  "cohort_scope": {
+    "exposed_v3_is_posthoc_not_selector": true,
+    "ordered_rules": 180,
+    "paragraphs": 48,
+    "reference_scalar_sites": 720,
+    "training_cohorts": [
+      "original_train48",
+      "normative_train48",
+      "new_balanced_train48"
+    ]
+  },
+  "comparison_scope": "Original parent formula baseline and original parent bank floors. The older saved gate used archived control formula baseline; it remains a separate historical observation.",
+  "complete": true,
+  "database_snapshots_included": false,
+  "driver_elapsed_seconds": 144.41819618002046,
+  "exact_legal_text_reconstruction_measured": false,
+  "explicit_v3_reference_json_loaded_after_new_predictions_durable": true,
+  "fresh_matched_control": false,
+  "guardian_elapsed_seconds": 188.24364701798186,
+  "inherited_TRAIN_and_validation_labels_already_known": true,
+  "native_runtime_admitted": false,
+  "new_fit_or_embedding_generation": false,
+  "new_prediction_rows": 192,
+  "new_source_only_generation_panels": 4,
+  "original_parent_retention_gates": [
+    {
+      "baseline_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "endpoint": "dual",
+      "exposed_v3_selects": false,
+      "gate": {
+        "admitted": false,
+        "allowed_numerical_continuation": true,
+        "bank_and_formula_gates_both_required": true,
+        "checkpoint_promoted": false,
+        "encoder_executed": false,
+        "execution_readiness_granted": false,
+        "exposed_v3_used_for_selection": false,
+        "findings": [],
+        "formalized": false,
+        "fresh_holdout": false,
+        "implemented_in_real_trainer": false,
+        "independent_semantic_holdout": false,
+        "lake_executed": false,
+        "models_executed": false,
+        "native_vectors_revalidated": false,
+        "no_improvement_claim": true,
+        "numerical_retention_passed": true,
+        "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "dual-authored-wording-numerical-retention-gate/v1",
+        "source_provenance_authenticated": false,
+        "source_semantics_verified": false,
+        "training_cohorts": [
+          "original_train48",
+          "normative_train48",
+          "new_balanced_train48"
+        ],
+        "training_executed": false
+      },
+      "per_case_parent_comparison": {
+        "exposed_v3_48": {
+          "both_correct": 30,
+          "both_wrong": 17,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": [
+            "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de"
+          ]
+        },
+        "new_balanced_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "normative_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "original_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        }
+      },
+      "role": "selected"
+    },
+    {
+      "baseline_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "endpoint": "dual",
+      "exposed_v3_selects": false,
+      "gate": {
+        "admitted": false,
+        "allowed_numerical_continuation": true,
+        "bank_and_formula_gates_both_required": true,
+        "checkpoint_promoted": false,
+        "encoder_executed": false,
+        "execution_readiness_granted": false,
+        "exposed_v3_used_for_selection": false,
+        "findings": [],
+        "formalized": false,
+        "fresh_holdout": false,
+        "implemented_in_real_trainer": false,
+        "independent_semantic_holdout": false,
+        "lake_executed": false,
+        "models_executed": false,
+        "native_vectors_revalidated": false,
+        "no_improvement_claim": true,
+        "numerical_retention_passed": true,
+        "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "dual-authored-wording-numerical-retention-gate/v1",
+        "source_provenance_authenticated": false,
+        "source_semantics_verified": false,
+        "training_cohorts": [
+          "original_train48",
+          "normative_train48",
+          "new_balanced_train48"
+        ],
+        "training_executed": false
+      },
+      "per_case_parent_comparison": {
+        "exposed_v3_48": {
+          "both_correct": 30,
+          "both_wrong": 17,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": [
+            "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de"
+          ]
+        },
+        "new_balanced_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "normative_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "original_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        }
+      },
+      "role": "last-attempt"
+    },
+    {
+      "baseline_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "endpoint": "archived_control",
+      "exposed_v3_selects": false,
+      "gate": {
+        "admitted": false,
+        "allowed_numerical_continuation": true,
+        "bank_and_formula_gates_both_required": true,
+        "checkpoint_promoted": false,
+        "encoder_executed": false,
+        "execution_readiness_granted": false,
+        "exposed_v3_used_for_selection": false,
+        "findings": [],
+        "formalized": false,
+        "fresh_holdout": false,
+        "implemented_in_real_trainer": false,
+        "independent_semantic_holdout": false,
+        "lake_executed": false,
+        "models_executed": false,
+        "native_vectors_revalidated": false,
+        "no_improvement_claim": true,
+        "numerical_retention_passed": true,
+        "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "dual-authored-wording-numerical-retention-gate/v1",
+        "source_provenance_authenticated": false,
+        "source_semantics_verified": false,
+        "training_cohorts": [
+          "original_train48",
+          "normative_train48",
+          "new_balanced_train48"
+        ],
+        "training_executed": false
+      },
+      "per_case_parent_comparison": {
+        "exposed_v3_48": {
+          "both_correct": 31,
+          "both_wrong": 15,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [
+            "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+            "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+          ],
+          "newly_wrong_ids": []
+        },
+        "new_balanced_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "normative_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "original_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        }
+      },
+      "role": "selected"
+    },
+    {
+      "baseline_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "endpoint": "archived_control",
+      "exposed_v3_selects": false,
+      "gate": {
+        "admitted": false,
+        "allowed_numerical_continuation": true,
+        "bank_and_formula_gates_both_required": true,
+        "checkpoint_promoted": false,
+        "encoder_executed": false,
+        "execution_readiness_granted": false,
+        "exposed_v3_used_for_selection": false,
+        "findings": [],
+        "formalized": false,
+        "fresh_holdout": false,
+        "implemented_in_real_trainer": false,
+        "independent_semantic_holdout": false,
+        "lake_executed": false,
+        "models_executed": false,
+        "native_vectors_revalidated": false,
+        "no_improvement_claim": true,
+        "numerical_retention_passed": true,
+        "permission_scope": "eligible to propose a bounded authored diagnostic; independent source/resource readiness remains required",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "dual-authored-wording-numerical-retention-gate/v1",
+        "source_provenance_authenticated": false,
+        "source_semantics_verified": false,
+        "training_cohorts": [
+          "original_train48",
+          "normative_train48",
+          "new_balanced_train48"
+        ],
+        "training_executed": false
+      },
+      "per_case_parent_comparison": {
+        "exposed_v3_48": {
+          "both_correct": 31,
+          "both_wrong": 15,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [
+            "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+            "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b"
+          ],
+          "newly_wrong_ids": []
+        },
+        "new_balanced_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "normative_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        },
+        "original_train48": {
+          "both_correct": 48,
+          "both_wrong": 0,
+          "comparison_is_posthoc": true,
+          "newly_correct_ids": [],
+          "newly_wrong_ids": []
+        }
+      },
+      "role": "last-attempt"
+    }
+  ],
+  "panels": [
+    {
+      "cohort": "original_train48",
+      "endpoint": "parent",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": true,
+      "original_evidence_refs": {
+        "fidelity_ref": {
+          "bytes": 155878,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/actual-formula-fidelity.json",
+          "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+        },
+        "join_ref": {
+          "bytes": 730952,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/scalar-formula-join.json",
+          "sha256": "e948ee83e2d5f9e0604e52d6cd8c669b2cd90e3228b4c645f7242d17b11d079f"
+        },
+        "panel_ref": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/retention-panel.json",
+          "sha256": "89df50a564386191d2a763b6c6888e5e584af40476ec3ac64da83a12463476ef"
+        },
+        "predictions_ref": {
+          "bytes": 26112,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/actual-predictions.json",
+          "sha256": "1939a7f08dfb1ec5b7ba232238b9015ed5abcdc3d1f9e2d43a674c0b051c1071"
+        },
+        "scalar_ref": {
+          "bytes": 603474,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/posthoc-scalar-score.json",
+          "sha256": "2152442ba92ab4044075f744e9cfe03ef7cb4951f7403bd8f9f8a62aff49f300"
+        },
+        "trace_ref": {
+          "bytes": 1665070,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/original_train48/source-head-trace.json",
+          "sha256": "c33140948668071c56b5f82cb770f0de5264fdb889dbd006bfb13d7868aad0ed"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "bbf06f9fa9e9ceec32349246102bf949428c8b8b6422202769b54ac11f5ba058",
+        "source_contexts_sha256": "c8acbcb28bf56a31b825572cc15ac0786ce2965e689ed8fd9ad8dba07a6243b7",
+        "source_text_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527"
+      }
+    },
+    {
+      "cohort": "normative_train48",
+      "endpoint": "parent",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": true,
+      "original_evidence_refs": {
+        "fidelity_ref": {
+          "bytes": 159962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/actual-formula-fidelity.json",
+          "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+        },
+        "join_ref": {
+          "bytes": 725924,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/scalar-formula-join.json",
+          "sha256": "d258610bb3132669f6b430356b7106fc027eb9a0a0fc03ab84f8c82128ff2d96"
+        },
+        "panel_ref": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/retention-panel.json",
+          "sha256": "9b760a5e17fd38c4bde2a1cfacc53d966e778106d5e671d344fb197e1c78600c"
+        },
+        "predictions_ref": {
+          "bytes": 25871,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/actual-predictions.json",
+          "sha256": "6af2b1c2ba8b82dffe239b4fd82614e9303f62b030cbeadd0351df85b9048f79"
+        },
+        "scalar_ref": {
+          "bytes": 599348,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/posthoc-scalar-score.json",
+          "sha256": "de98ea9fa916d0967a00476dbc06a97d3ce56ae996324d60f33a93e40a639bb6"
+        },
+        "trace_ref": {
+          "bytes": 1664091,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/normative_train48/source-head-trace.json",
+          "sha256": "2b6249f5acaf2e8a2fa7576aab8fdf6152ae60d8d8a4e0e1fab31bcc7abd755d"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "66ab613aa0b3bf13c1274cf32f07011ce687db4f0bf2f1de3dadc9c3e05689fe",
+        "source_contexts_sha256": "e33047e11b36e0a41e1f790c6ac66e275bbee597fbe867aa3e87f8a4e84656ac",
+        "source_text_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c"
+      }
+    },
+    {
+      "cohort": "new_balanced_train48",
+      "endpoint": "parent",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": true,
+      "original_evidence_refs": {
+        "fidelity_ref": {
+          "bytes": 156830,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/actual-formula-fidelity.json",
+          "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+        },
+        "join_ref": {
+          "bytes": 725332,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/scalar-formula-join.json",
+          "sha256": "bad3a5b2d953f99681fe33b238f46f527e97d75ad31d180df8f6bdb4433ee9f4"
+        },
+        "panel_ref": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/retention-panel.json",
+          "sha256": "0e4052b0056dd11a1f788d167612be8bb10a8af59039ad3c05867fe5b539f514"
+        },
+        "predictions_ref": {
+          "bytes": 25823,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/actual-predictions.json",
+          "sha256": "c12e33b398691e7960479834cfb107c51c631c0d9f68a712468553836e187ec3"
+        },
+        "scalar_ref": {
+          "bytes": 598938,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/posthoc-scalar-score.json",
+          "sha256": "7bcdf8889d595af6b3d49b9c72195e7f72e4f507a402ae7971a608113dacb5cd"
+        },
+        "trace_ref": {
+          "bytes": 1664591,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/new_balanced_train48/source-head-trace.json",
+          "sha256": "3eda13b5d19e584be27b0c8b6e6965d7f6334905789b2da55def98bdc02cf1e4"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f738d57dcb53e32cc95a7d8173202e959fcf4cc0f1729c727ed0fc266c8125bd",
+        "source_contexts_sha256": "94223d27d55750699cc3e97b40a54f6b52bbf226bdbecab9d2e2a8a6f1aaefb5",
+        "source_text_rows_sha256": "7fe6ce3db5514ff673be8eee14f6423114698d0579e6330db954d1d8463b3fbe"
+      }
+    },
+    {
+      "cohort": "exposed_v3_48",
+      "endpoint": "parent",
+      "formula_metrics": {
+        "all_rules_preserved": 31,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 31,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 22,
+        "whole_rules_missing": 22
+      },
+      "newly_generated": true,
+      "original_evidence_refs": {
+        "fidelity_ref": {
+          "bytes": 156560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/actual-formula-fidelity.json",
+          "sha256": "3e2c544a14d1a36a4dd35fc85e098f13917a487d6fa3ff378e29749046be28b4"
+        },
+        "join_ref": {
+          "bytes": 723350,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/scalar-formula-join.json",
+          "sha256": "73500806beabaa402b7a97fce1b624eb985ea661709fd6011777e6b741b930e8"
+        },
+        "panel_ref": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/retention-panel.json",
+          "sha256": "974726396b40e439b9e092f56205194aa747cfaadc5a7bf42a4752562298d387"
+        },
+        "predictions_ref": {
+          "bytes": 25679,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/actual-predictions.json",
+          "sha256": "fc4f0e083c1db428de06a07b132074478de2ae4701245bddee78b316b8f69216"
+        },
+        "scalar_ref": {
+          "bytes": 597463,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/posthoc-scalar-score.json",
+          "sha256": "4fbe8b189469299471bf9d9d5539b56c2545328a6e043473cc057c5070ff3a78"
+        },
+        "trace_ref": {
+          "bytes": 1664906,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent/exposed_v3_48/source-head-trace.json",
+          "sha256": "724f274245be06edb66d33bbd92ac7a751393fec14eeb80392567bba5048ae2a"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 161,
+          "source_correct_formula_wrong": 2,
+          "source_incorrect": 19,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 159,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f4f0da271b7d00f508b0aeaa87b794da1bcacbc68e7a8a26348e5e0623188add",
+        "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+        "source_text_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c"
+      }
+    },
+    {
+      "cohort": "original_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 155878,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/actual-formula-fidelity.json",
+          "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+        },
+        "panel_ref": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/original_train48/retention-panel.json",
+          "sha256": "81265ab51845ff1ff3f5c312532120c672ae3c70a01fe82a09a08c5ded79840c"
+        },
+        "predictions_ref": {
+          "bytes": 26295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/actual-predictions.json",
+          "sha256": "9d2b3128392b61e4cfb6cc065d6c6558ac3ae5e018efcf6e2353f2b143669dee"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 730936,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/scalar-formula-join.json",
+          "sha256": "59dee6a4ff48b7c877e4ecd52b3c60af9716abd25c52ec4701310c9a23bd7120"
+        },
+        "scalar_score_ref": {
+          "bytes": 603458,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/posthoc-scalar-score.json",
+          "sha256": "36bd0ac9a50f489b253a79d722be02effafe30ca8a625c98a4029081e74bd8ca"
+        },
+        "state_ref": {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665980,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/original_train48/source-head-trace.json",
+          "sha256": "94f4097afc65e11e7d221687ce8b307afa803cc06b2f4e4e693a31225bb1a2ed"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "bbf06f9fa9e9ceec32349246102bf949428c8b8b6422202769b54ac11f5ba058",
+        "source_contexts_sha256": "c8acbcb28bf56a31b825572cc15ac0786ce2965e689ed8fd9ad8dba07a6243b7",
+        "source_text_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527"
+      }
+    },
+    {
+      "cohort": "normative_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 159962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/actual-formula-fidelity.json",
+          "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+        },
+        "panel_ref": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/normative_train48/retention-panel.json",
+          "sha256": "e46102769dbabde14c57fbbf4deb0a0a7effe7477ce7ec00c0e73ee04c650ea9"
+        },
+        "predictions_ref": {
+          "bytes": 26054,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/actual-predictions.json",
+          "sha256": "3dba8fdd0a6eb53ec24bdb5a5cd8ffee06dc3fa987da99108061d78fbddcb6dc"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725840,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/scalar-formula-join.json",
+          "sha256": "aa72b868bf4aa5635acf74fa6bea6f94f6dc40b6da9ee0068ba4927829f195ba"
+        },
+        "scalar_score_ref": {
+          "bytes": 599264,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/posthoc-scalar-score.json",
+          "sha256": "74f00d00d17031f165d88b16957ca1a77a24cc84b459d91ba776715b51b3ab1a"
+        },
+        "state_ref": {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1664461,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/normative_train48/source-head-trace.json",
+          "sha256": "5cfc79b2418af90ae836d8cadacf75be436679383cf046e630016f9cab77446f"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "66ab613aa0b3bf13c1274cf32f07011ce687db4f0bf2f1de3dadc9c3e05689fe",
+        "source_contexts_sha256": "e33047e11b36e0a41e1f790c6ac66e275bbee597fbe867aa3e87f8a4e84656ac",
+        "source_text_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c"
+      }
+    },
+    {
+      "cohort": "new_balanced_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156830,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/actual-formula-fidelity.json",
+          "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+        },
+        "panel_ref": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/new_balanced_train48/retention-panel.json",
+          "sha256": "7d8f058fd069aac604547a692fda951288ad911e3f86b65953f00073bc336285"
+        },
+        "predictions_ref": {
+          "bytes": 26006,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/actual-predictions.json",
+          "sha256": "b91785a6ddd9f67ada128fe6733dc6d4ccc9d67fe350c322ec19cf753ce76006"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725327,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/scalar-formula-join.json",
+          "sha256": "25bef057ad3d5bb8e4e8708ff143b4bddf9c8da14452e90de9153a36f2869fea"
+        },
+        "scalar_score_ref": {
+          "bytes": 598933,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/posthoc-scalar-score.json",
+          "sha256": "c0daa8f22bb3f80035219a5c1cc42d46222f4082a2d95de1355ebd94618b6cf2"
+        },
+        "state_ref": {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/new_balanced_train48/source-head-trace.json",
+          "sha256": "bf7c2cf8a10a3c719a0fa60ce53e385ec48f0419ff61e55a95c62f34f18057e4"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f738d57dcb53e32cc95a7d8173202e959fcf4cc0f1729c727ed0fc266c8125bd",
+        "source_contexts_sha256": "94223d27d55750699cc3e97b40a54f6b52bbf226bdbecab9d2e2a8a6f1aaefb5",
+        "source_text_rows_sha256": "7fe6ce3db5514ff673be8eee14f6423114698d0579e6330db954d1d8463b3fbe"
+      }
+    },
+    {
+      "cohort": "exposed_v3_48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 30,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 30,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 23,
+        "whole_rules_missing": 23
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156558,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/actual-formula-fidelity.json",
+          "sha256": "21e8aa71235b2485bd305e82b2b2b5ae385aa1351e3556037721d129a9cc24df"
+        },
+        "panel_ref": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/selected/exposed_v3_48/retention-panel.json",
+          "sha256": "6beda861480b9eab0111d0f1cf459e3c0424938cca4b2ea97d083a0a6b3d68f6"
+        },
+        "predictions_ref": {
+          "bytes": 25862,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/actual-predictions.json",
+          "sha256": "43986f1e67b2eefe9e2dec768d7cdf34c1a4b8ab3f4c22de9bb049488ee72c37"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 723259,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/scalar-formula-join.json",
+          "sha256": "12067e5eb0ba0097a3040acbd623493e13d22f832a1c4d92f91e546cb72da296"
+        },
+        "scalar_score_ref": {
+          "bytes": 597371,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/posthoc-scalar-score.json",
+          "sha256": "57685ba50537bf9fd53165a4a84e37d0775053d62d779750d6a8eb00edc5df91"
+        },
+        "state_ref": {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665829,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/source-head-trace.json",
+          "sha256": "10ea2d8fd39ff47b53dcad9d175496ef069f6c4b4cb3092481168204cd9c70f0"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 161,
+          "source_correct_formula_wrong": 3,
+          "source_incorrect": 19,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 158,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f4f0da271b7d00f508b0aeaa87b794da1bcacbc68e7a8a26348e5e0623188add",
+        "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+        "source_text_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c"
+      }
+    },
+    {
+      "cohort": "original_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 155878,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/actual-formula-fidelity.json",
+          "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+        },
+        "panel_ref": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/original_train48/retention-panel.json",
+          "sha256": "81265ab51845ff1ff3f5c312532120c672ae3c70a01fe82a09a08c5ded79840c"
+        },
+        "predictions_ref": {
+          "bytes": 26295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/actual-predictions.json",
+          "sha256": "d8ce044165dc5e95a4436b4e7e0e83ed68f6f86c3adb6633f7d11fc65d74af0e"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 730936,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/scalar-formula-join.json",
+          "sha256": "59dee6a4ff48b7c877e4ecd52b3c60af9716abd25c52ec4701310c9a23bd7120"
+        },
+        "scalar_score_ref": {
+          "bytes": 603458,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/posthoc-scalar-score.json",
+          "sha256": "5c88bdd3400805197c7ced5128d9faf338ad0634cd602da96842d7efcd58c547"
+        },
+        "state_ref": {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665981,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/original_train48/source-head-trace.json",
+          "sha256": "4e37cfb1b51a0e7375d247ca427fe90c62038761cdfe2f7dd369e73a5b2a4f8d"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "bbf06f9fa9e9ceec32349246102bf949428c8b8b6422202769b54ac11f5ba058",
+        "source_contexts_sha256": "c8acbcb28bf56a31b825572cc15ac0786ce2965e689ed8fd9ad8dba07a6243b7",
+        "source_text_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527"
+      }
+    },
+    {
+      "cohort": "normative_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 159962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/actual-formula-fidelity.json",
+          "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+        },
+        "panel_ref": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/normative_train48/retention-panel.json",
+          "sha256": "e46102769dbabde14c57fbbf4deb0a0a7effe7477ce7ec00c0e73ee04c650ea9"
+        },
+        "predictions_ref": {
+          "bytes": 26054,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/actual-predictions.json",
+          "sha256": "8e8e209f21f1862f5a4792c85ac84cde59b25ef4d8212032fd65a690be2612ea"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725840,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/scalar-formula-join.json",
+          "sha256": "aa72b868bf4aa5635acf74fa6bea6f94f6dc40b6da9ee0068ba4927829f195ba"
+        },
+        "scalar_score_ref": {
+          "bytes": 599264,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/posthoc-scalar-score.json",
+          "sha256": "80eee48c0ac59912f2dbb2d73cca36f801acb340a6155c9fd1183ff053b2c725"
+        },
+        "state_ref": {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1664462,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/normative_train48/source-head-trace.json",
+          "sha256": "67d427949c37d16d1039f636653ea14bd2b3136bf0bc712091127b908d33b321"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "66ab613aa0b3bf13c1274cf32f07011ce687db4f0bf2f1de3dadc9c3e05689fe",
+        "source_contexts_sha256": "e33047e11b36e0a41e1f790c6ac66e275bbee597fbe867aa3e87f8a4e84656ac",
+        "source_text_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c"
+      }
+    },
+    {
+      "cohort": "new_balanced_train48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156830,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/actual-formula-fidelity.json",
+          "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+        },
+        "panel_ref": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/new_balanced_train48/retention-panel.json",
+          "sha256": "7d8f058fd069aac604547a692fda951288ad911e3f86b65953f00073bc336285"
+        },
+        "predictions_ref": {
+          "bytes": 26006,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/actual-predictions.json",
+          "sha256": "7300986f6cd721f992983580807e285146a64ba8b6c02f2ba0c5c155db4e422b"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725327,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/scalar-formula-join.json",
+          "sha256": "25bef057ad3d5bb8e4e8708ff143b4bddf9c8da14452e90de9153a36f2869fea"
+        },
+        "scalar_score_ref": {
+          "bytes": 598933,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/posthoc-scalar-score.json",
+          "sha256": "af81519957df3f4f66c11188b3c5e9339885c392d097f8a104c478dedcbd31ef"
+        },
+        "state_ref": {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665208,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/new_balanced_train48/source-head-trace.json",
+          "sha256": "e66e323d7a8b65b0efe8f869da0e99f584f2a301fb8d8461e8d3c7215a47a832"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f738d57dcb53e32cc95a7d8173202e959fcf4cc0f1729c727ed0fc266c8125bd",
+        "source_contexts_sha256": "94223d27d55750699cc3e97b40a54f6b52bbf226bdbecab9d2e2a8a6f1aaefb5",
+        "source_text_rows_sha256": "7fe6ce3db5514ff673be8eee14f6423114698d0579e6330db954d1d8463b3fbe"
+      }
+    },
+    {
+      "cohort": "exposed_v3_48",
+      "endpoint": "dual",
+      "formula_metrics": {
+        "all_rules_preserved": 30,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 30,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 23,
+        "whole_rules_missing": 23
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156558,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/actual-formula-fidelity.json",
+          "sha256": "21e8aa71235b2485bd305e82b2b2b5ae385aa1351e3556037721d129a9cc24df"
+        },
+        "panel_ref": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/dual/last-attempt/exposed_v3_48/retention-panel.json",
+          "sha256": "6beda861480b9eab0111d0f1cf459e3c0424938cca4b2ea97d083a0a6b3d68f6"
+        },
+        "predictions_ref": {
+          "bytes": 25862,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/actual-predictions.json",
+          "sha256": "14a121d4a380e32465e9177f027dba30af7a0632f2dafe6863c309590a71bee7"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 723259,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/scalar-formula-join.json",
+          "sha256": "12067e5eb0ba0097a3040acbd623493e13d22f832a1c4d92f91e546cb72da296"
+        },
+        "scalar_score_ref": {
+          "bytes": 597371,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/posthoc-scalar-score.json",
+          "sha256": "ea8de953bd97ad84ddd77e5ee0b2138a2e9d0264b5cb46b5be56cbe71ba5c31f"
+        },
+        "state_ref": {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+          "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+        },
+        "trace_ref": {
+          "bytes": 1665829,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/last-attempt/exposed_v3_48/source-head-trace.json",
+          "sha256": "51ac927313455c0358cdd7e12f1f7910f67d4cf05c062a0a8f944a12c713f436"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 161,
+          "source_correct_formula_wrong": 3,
+          "source_incorrect": 19,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 158,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f4f0da271b7d00f508b0aeaa87b794da1bcacbc68e7a8a26348e5e0623188add",
+        "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+        "source_text_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c"
+      }
+    },
+    {
+      "cohort": "original_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 155878,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/actual-formula-fidelity.json",
+          "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+        },
+        "panel_ref": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/original_train48/retention-panel.json",
+          "sha256": "0241d21d3b055e10283b63455e336d21b5a0cfcdebe6d5c0565887fe25dddec7"
+        },
+        "predictions_ref": {
+          "bytes": 26295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/actual-predictions.json",
+          "sha256": "3a9f8829f821225fbb8a62cfbdf4d8196d0c519d8e9d6c812eb0a42dab0785f0"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 730841,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/scalar-formula-join.json",
+          "sha256": "2d7b82f1a02d44c76dd489a97c06d9be93124f846c38c9f997d6f48bbf20e896"
+        },
+        "scalar_score_ref": {
+          "bytes": 603363,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/posthoc-scalar-score.json",
+          "sha256": "04150286097d52c0fce24066f9424163252bf1da4bf1be36afab77291ed9865d"
+        },
+        "state_ref": {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665926,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/original_train48/source-head-trace.json",
+          "sha256": "16177775a6430403998e87a1ea325a6b7db2224864616e04610c2cdb9794a155"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "bbf06f9fa9e9ceec32349246102bf949428c8b8b6422202769b54ac11f5ba058",
+        "source_contexts_sha256": "c8acbcb28bf56a31b825572cc15ac0786ce2965e689ed8fd9ad8dba07a6243b7",
+        "source_text_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527"
+      }
+    },
+    {
+      "cohort": "normative_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 159962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/actual-formula-fidelity.json",
+          "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+        },
+        "panel_ref": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/normative_train48/retention-panel.json",
+          "sha256": "e7cbfbb2ef64e6779d607627b2c3877c4e495f843b48a127d66d2ffa33d543fa"
+        },
+        "predictions_ref": {
+          "bytes": 26054,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/actual-predictions.json",
+          "sha256": "577ff2a33095dc4e480812967b0f02af6d831af1ae5d839203162cfa9bdce7f5"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725931,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/scalar-formula-join.json",
+          "sha256": "3d594c266038c169fb9f8226d73c2d7e2cca0b68ef91df174c7d081d9dd125ec"
+        },
+        "scalar_score_ref": {
+          "bytes": 599355,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/posthoc-scalar-score.json",
+          "sha256": "2e5b53d9914e79f83cd6140ef1bd4396118ecfcdb411375d1d606939b9d0e7bd"
+        },
+        "state_ref": {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1664407,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/normative_train48/source-head-trace.json",
+          "sha256": "83900764189f395cec0e4fc2083fbcb8ba44086988021845494df95e03870c9a"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "66ab613aa0b3bf13c1274cf32f07011ce687db4f0bf2f1de3dadc9c3e05689fe",
+        "source_contexts_sha256": "e33047e11b36e0a41e1f790c6ac66e275bbee597fbe867aa3e87f8a4e84656ac",
+        "source_text_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c"
+      }
+    },
+    {
+      "cohort": "new_balanced_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156830,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/actual-formula-fidelity.json",
+          "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+        },
+        "panel_ref": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/new_balanced_train48/retention-panel.json",
+          "sha256": "f39202fe345a5b2fb74bac4a42af0af9360d790e39202c452c850c9f4f2ecdfb"
+        },
+        "predictions_ref": {
+          "bytes": 26006,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/actual-predictions.json",
+          "sha256": "ae28e49810a0b1b104b7f00cfadc828b16e3559e6b95bd1461b2cbd9eddd5db1"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725169,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/scalar-formula-join.json",
+          "sha256": "241b5aed267a4573ce1c79b011a76ba3f322f1d5058657194c0d3a6355fa08d2"
+        },
+        "scalar_score_ref": {
+          "bytes": 598775,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/posthoc-scalar-score.json",
+          "sha256": "deda3ff8d023559e0dcb4578d8b6078901db31511c3b1ae5495066148de927c7"
+        },
+        "state_ref": {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665425,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/new_balanced_train48/source-head-trace.json",
+          "sha256": "5647cef3bda215d2d064a64f8b59abb9339e91fd0ca66f580b1f47bb2b1c205a"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f738d57dcb53e32cc95a7d8173202e959fcf4cc0f1729c727ed0fc266c8125bd",
+        "source_contexts_sha256": "94223d27d55750699cc3e97b40a54f6b52bbf226bdbecab9d2e2a8a6f1aaefb5",
+        "source_text_rows_sha256": "7fe6ce3db5514ff673be8eee14f6423114698d0579e6330db954d1d8463b3fbe"
+      }
+    },
+    {
+      "cohort": "exposed_v3_48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 33,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 33,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 20,
+        "whole_rules_missing": 20
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json",
+          "sha256": "79b8eafc67b8673b501b6a4a5d6563ca2df26c019adb4c89ca9d2676f90e5041"
+        },
+        "panel_ref": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/selected/exposed_v3_48/retention-panel.json",
+          "sha256": "afaac3a8ce3810422f8a8634dbe408e977834d16309f89cb2443d316e4ea34af"
+        },
+        "predictions_ref": {
+          "bytes": 25862,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-predictions.json",
+          "sha256": "475db01271a14705083eea35541635b3ad0f4644d2e1623382d9453f3b25661c"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 723266,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/scalar-formula-join.json",
+          "sha256": "4251fda229c699de9a66f5dc1eb081390adffaf85f5f5e888d32ca488d55afa3"
+        },
+        "scalar_score_ref": {
+          "bytes": 597386,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/posthoc-scalar-score.json",
+          "sha256": "60df03d8a1675c1bfb2d2773254b4cb83f860ccbc7e87211c83b60f0f3eb43d3"
+        },
+        "state_ref": {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665874,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/source-head-trace.json",
+          "sha256": "a928d89d93bebe5bd7d0c8befa68a23f499267e27801354728236d2727324ab8"
+        }
+      },
+      "role": "selected",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 166,
+          "source_correct_formula_wrong": 5,
+          "source_incorrect": 14,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 161,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f4f0da271b7d00f508b0aeaa87b794da1bcacbc68e7a8a26348e5e0623188add",
+        "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+        "source_text_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c"
+      }
+    },
+    {
+      "cohort": "original_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 155878,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/actual-formula-fidelity.json",
+          "sha256": "25489442f7a655112b6258e052e3324bd5a335b70e558b9a2cb1a001f0820f86"
+        },
+        "panel_ref": {
+          "bytes": 143990,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/original_train48/retention-panel.json",
+          "sha256": "0241d21d3b055e10283b63455e336d21b5a0cfcdebe6d5c0565887fe25dddec7"
+        },
+        "predictions_ref": {
+          "bytes": 26295,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/actual-predictions.json",
+          "sha256": "4881c0ff1990ed05c6468d5e375686f835697cf043ee9d43718bf7aa6611ec10"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 730841,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/scalar-formula-join.json",
+          "sha256": "2d7b82f1a02d44c76dd489a97c06d9be93124f846c38c9f997d6f48bbf20e896"
+        },
+        "scalar_score_ref": {
+          "bytes": 603363,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/posthoc-scalar-score.json",
+          "sha256": "1f726d9f7d2781b4b282b5bc1ba60ddf520cf45091b0b7bea4a344f3b8b9e401"
+        },
+        "state_ref": {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665928,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/original_train48/source-head-trace.json",
+          "sha256": "09e3626979d44311f698f2df96b15c29860ae50ed1bc62737713ac6e2664eb32"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "bbf06f9fa9e9ceec32349246102bf949428c8b8b6422202769b54ac11f5ba058",
+        "source_contexts_sha256": "c8acbcb28bf56a31b825572cc15ac0786ce2965e689ed8fd9ad8dba07a6243b7",
+        "source_text_rows_sha256": "eb73f475dee5e6f7631b84c2f10bdd1fc660837a639f83acf5be4dd14c050527"
+      }
+    },
+    {
+      "cohort": "normative_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 159962,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/actual-formula-fidelity.json",
+          "sha256": "2c6e6958212644aa43c945932ca4c6383491132ae3be8c8586fa72bbed653f99"
+        },
+        "panel_ref": {
+          "bytes": 148554,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/normative_train48/retention-panel.json",
+          "sha256": "e7cbfbb2ef64e6779d607627b2c3877c4e495f843b48a127d66d2ffa33d543fa"
+        },
+        "predictions_ref": {
+          "bytes": 26054,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/actual-predictions.json",
+          "sha256": "e79ea774ad8520ef4a0ff6c0d62aaf5978b108800a697cb100e2722961c5f723"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725931,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/scalar-formula-join.json",
+          "sha256": "3d594c266038c169fb9f8226d73c2d7e2cca0b68ef91df174c7d081d9dd125ec"
+        },
+        "scalar_score_ref": {
+          "bytes": 599355,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/posthoc-scalar-score.json",
+          "sha256": "7174b6aded4a69bf85098e534bea622421f7b3e37de3b9ea64ab9933ee40d927"
+        },
+        "state_ref": {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1664406,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/normative_train48/source-head-trace.json",
+          "sha256": "ddc63bbc2214dd32cfa50ea9609ef938855f9796d297e26a154830b5f651809f"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 1,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "66ab613aa0b3bf13c1274cf32f07011ce687db4f0bf2f1de3dadc9c3e05689fe",
+        "source_contexts_sha256": "e33047e11b36e0a41e1f790c6ac66e275bbee597fbe867aa3e87f8a4e84656ac",
+        "source_text_rows_sha256": "153f1db61a4cbf88969b940d04706adda0554acc61b3514660f3c28d942fda3c"
+      }
+    },
+    {
+      "cohort": "new_balanced_train48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 48,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 48,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 0,
+        "whole_rules_missing": 0
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156830,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/actual-formula-fidelity.json",
+          "sha256": "c6f99fce278dbb3a9fc4b5dd2c969a59f07296dab5610e713c65e6933843f87d"
+        },
+        "panel_ref": {
+          "bytes": 145518,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/new_balanced_train48/retention-panel.json",
+          "sha256": "f39202fe345a5b2fb74bac4a42af0af9360d790e39202c452c850c9f4f2ecdfb"
+        },
+        "predictions_ref": {
+          "bytes": 26006,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/actual-predictions.json",
+          "sha256": "0fa374ff74c83d1da028146c8c1a748f063b3414184ff3145388d3e78810c14d"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 725169,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/scalar-formula-join.json",
+          "sha256": "241b5aed267a4573ce1c79b011a76ba3f322f1d5058657194c0d3a6355fa08d2"
+        },
+        "scalar_score_ref": {
+          "bytes": 598775,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/posthoc-scalar-score.json",
+          "sha256": "88dcb15cba64f30a4cccf81bdd6c25fc98d66b5881fa240362e0f2756b853195"
+        },
+        "state_ref": {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665425,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/new_balanced_train48/source-head-trace.json",
+          "sha256": "5ca876a30a20d3d31bc2354ea1b3994979d8172b309c280cd112fff6677a4976"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 180,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 180,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f738d57dcb53e32cc95a7d8173202e959fcf4cc0f1729c727ed0fc266c8125bd",
+        "source_contexts_sha256": "94223d27d55750699cc3e97b40a54f6b52bbf226bdbecab9d2e2a8a6f1aaefb5",
+        "source_text_rows_sha256": "7fe6ce3db5514ff673be8eee14f6423114698d0579e6330db954d1d8463b3fbe"
+      }
+    },
+    {
+      "cohort": "exposed_v3_48",
+      "endpoint": "archived_control",
+      "formula_metrics": {
+        "all_rules_preserved": 33,
+        "duplicate_rules": 0,
+        "eos_count": 48,
+        "expected_rules": 180,
+        "generated_rules": 180,
+        "invalid_rows": 0,
+        "invalid_rule_count": 0,
+        "order_mismatch_rows": 0,
+        "ordered_exact": 33,
+        "parsed_documents": 48,
+        "prediction_missing_rows": 0,
+        "rows": 48,
+        "syntax_valid": 48,
+        "unscorable_generation_rows": 0,
+        "valid_generated_rules": 180,
+        "whole_rules_extra": 20,
+        "whole_rules_missing": 20
+      },
+      "newly_generated": false,
+      "original_evidence_refs": {
+        "formula_fidelity_ref": {
+          "bytes": 156560,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/actual-formula-fidelity.json",
+          "sha256": "79b8eafc67b8673b501b6a4a5d6563ca2df26c019adb4c89ca9d2676f90e5041"
+        },
+        "panel_ref": {
+          "bytes": 145541,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/archived_control/last-attempt/exposed_v3_48/retention-panel.json",
+          "sha256": "afaac3a8ce3810422f8a8634dbe408e977834d16309f89cb2443d316e4ea34af"
+        },
+        "predictions_ref": {
+          "bytes": 25862,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/actual-predictions.json",
+          "sha256": "a73ebb04aa0db547ad923dc98645532e671c08da7734b5d236c1b8f2a1d63c01"
+        },
+        "scalar_formula_join_ref": {
+          "bytes": 723266,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/scalar-formula-join.json",
+          "sha256": "4251fda229c699de9a66f5dc1eb081390adffaf85f5f5e888d32ca488d55afa3"
+        },
+        "scalar_score_ref": {
+          "bytes": 597386,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/posthoc-scalar-score.json",
+          "sha256": "1c2ef9a89fbb8c2b4402ce25ad88dc11a3e159edcaefaf9e0c9d948227a0dc32"
+        },
+        "state_ref": {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+          "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+        },
+        "trace_ref": {
+          "bytes": 1665874,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/last-attempt/exposed_v3_48/source-head-trace.json",
+          "sha256": "f211a831d060235827812f7736a0a0b75557dbea4cc047be543cc5025917264c"
+        }
+      },
+      "role": "last-attempt",
+      "scalar_by_field": {
+        "action": {
+          "reference_sites": 180,
+          "source_correct": 179,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 1,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "actor": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "modality": {
+          "reference_sites": 180,
+          "source_correct": 166,
+          "source_correct_formula_wrong": 5,
+          "source_incorrect": 14,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        },
+        "object": {
+          "reference_sites": 180,
+          "source_correct": 180,
+          "source_correct_formula_wrong": 0,
+          "source_incorrect": 0,
+          "source_wrong_formula_correct": 0,
+          "unavailable": 0,
+          "unvisited": 0,
+          "visited": 180
+        }
+      },
+      "seven_facets": {
+        "action": {
+          "correct": 179,
+          "total": 180
+        },
+        "actor": {
+          "correct": 180,
+          "total": 180
+        },
+        "conditions": {
+          "correct": 180,
+          "total": 180
+        },
+        "exceptions": {
+          "correct": 180,
+          "total": 180
+        },
+        "modality": {
+          "correct": 161,
+          "total": 180
+        },
+        "object": {
+          "correct": 180,
+          "total": 180
+        },
+        "temporal": {
+          "correct": 180,
+          "total": 180
+        }
+      },
+      "source_binding": {
+        "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "references_sha256": "f4f0da271b7d00f508b0aeaa87b794da1bcacbc68e7a8a26348e5e0623188add",
+        "source_contexts_sha256": "e42aabe8a6861d54de3a84ca0b18a940a65e13785c6151ad59907506dcbe0a64",
+        "source_text_rows_sha256": "8692cba09b6ca3e9ea179dfaa3c810f5f612f8983727588541e81f998403e02c"
+      }
+    }
+  ],
+  "parent_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+  "proof_authority": false,
+  "qualified": false,
+  "restored_models": 1,
+  "reused_bank_readouts": 10,
+  "reused_saved_candidate_control_panels": 16,
+  "saved_paragraph_vector_producer_authenticated": false,
+  "schema": "retained-wording-original-parent-reconciliation-compact/v1",
+  "source_bank_original_refs": {
+    "archived_control:last-attempt": {
+      "balanced": {
+        "bytes": 775264,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt/balanced-source-bank-readout.json",
+        "sha256": "82f5ffe6b90a82060bb898686a8da4071d3b920b8af414c23f4a6eb2c7494a71"
+      },
+      "control": {
+        "bytes": 771177,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt/control-source-bank-readout.json",
+        "sha256": "a3d71125ee30a8f0c7c098ac473603d4cb2a33b8b005d3bbc28f7dc9fc5955a0"
+      }
+    },
+    "archived_control:selected": {
+      "balanced": {
+        "bytes": 775265,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected/balanced-source-bank-readout.json",
+        "sha256": "65b2f115ce686b7a670d429491643c36696ddbac872a9c9573de470605252c0f"
+      },
+      "control": {
+        "bytes": 771177,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected/control-source-bank-readout.json",
+        "sha256": "a23d91b79be9221f9720a33aa676aabd817bb0e543daf509c17324c63d33e579"
+      }
+    },
+    "dual:last-attempt": {
+      "balanced": {
+        "bytes": 775641,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/balanced-source-bank-readout.json",
+        "sha256": "7ff2b948f9ef9672b9fd1c3a2d89c52f922c7f699a5f265dd8cef65c739278a4"
+      },
+      "control": {
+        "bytes": 771117,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt/control-source-bank-readout.json",
+        "sha256": "4748f815519d8648cd1b38e60a62f07ac9cb2ec354bea856854f7b93a6955eeb"
+      }
+    },
+    "dual:selected": {
+      "balanced": {
+        "bytes": 775638,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/balanced-source-bank-readout.json",
+        "sha256": "74b9a43721f8584e26d939cda654ba2ea3765a85c0a63d6818a3aa9be312febc"
+      },
+      "control": {
+        "bytes": 771117,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected/control-source-bank-readout.json",
+        "sha256": "8eca12e7880d247bfea5c5cbee3323f46f0dfb72aa351ffc0d425cbf67be3839"
+      }
+    },
+    "parent": {
+      "balanced": {
+        "bytes": 775959,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/balanced-parent-source-readout.json",
+        "sha256": "13fd6a32849f97f9398ca9a986cabb4a153f6ed481fcac2dd34e32ed5644e278"
+      },
+      "control": {
+        "bytes": 771651,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/control-parent-source-readout.json",
+        "sha256": "db517fd3668a75740a4739a02f4bc09b325b18c4944a8c5d77691f826e2a60d0"
+      }
+    }
+  },
+  "source_receipt_pins": [
+    {
+      "bytes": 325,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/child-exit.json",
+      "sha256": "4eb82118b6133a34d3759655931da7e64dbd44685c447c896358472a58f526f6"
+    },
+    {
+      "bytes": 63,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1-guardian-exit.json",
+      "sha256": "65751331ac511515fa6b05e09f797dc2def40908f41dfd7b6e438faa291425c2"
+    },
+    {
+      "bytes": 5859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/resources-final.json",
+      "sha256": "239161d54a5d2676316be231b0de22735a98a864e37f066d02c46f4e1c1c0e66"
+    },
+    {
+      "bytes": 3073,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/parent-predictions-complete.json",
+      "sha256": "a46e062f9a57293c82f0211896d0742e1bcc9f3dbf0ed7881f263f9d2ce4093c"
+    },
+    {
+      "bytes": 2920,
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/review/retained-reconciliation-source-freeze.json",
+      "sha256": "ef37b6e1dbeaabba26b7d67f833b24bba8229602626b52aa9ce37c33bb79ff39"
+    }
+  ],
+  "source_semantics_verified": false,
+  "source_vectors_included": false,
+  "summary_pin": {
+    "bytes": 111219,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-retained-parent-reconciliation-20261007/evaluation-r1/results/summary.json",
+    "sha256": "3a161aad434d17da6f66bd7e7b51ad52ff40f345a8bca4dde74a7d63a03f7e33"
+  },
+  "teacher_qualified": false,
+  "weights_included": false
+}

@@ -1,0 +1,201 @@
+{
+  "actual_scope": "Independent stdlib local receipt/binding and all 24 immutable download SHA/size and Git-blob/LFS identity checks. Remote CLI/network operations and prior remote file preservation are producer-observed through the reviewed transport, not independently repeated network operations.",
+  "approved": true,
+  "cross_repository_atomicity_claimed": false,
+  "database_opened_by_reviewer": false,
+  "findings": [],
+  "model_or_encoder_executed_by_reviewer": false,
+  "network_used_by_reviewer": false,
+  "preparation_pin": {
+    "bytes": 11875,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-stage-r1/preparation.json",
+    "sha256": "b73a18ce52c3fcbfe6665044743e505402d79eb0764f12a129f49c6039912ee9"
+  },
+  "publication_executed_by_reviewer": false,
+  "publication_result_pin": {
+    "bytes": 1579,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/publication-result.json",
+    "sha256": "48df66853c89ed72474cea385ec3639e9724d404cb448c548443ea63901c821d"
+  },
+  "repositories": [
+    {
+      "actual_local_immutable_download_pins": [
+        {
+          "bytes": 2797390,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/initial-state.json",
+          "sha256": "5dcf886a3706278a247908e281e459b8e3d0be50243d131ff90d627649274518"
+        },
+        {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+        },
+        {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+        },
+        {
+          "bytes": 2797391,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/initial-state.json",
+          "sha256": "b3a1bd07c9128d0ba06c8f780668cc601a62a563152966fe3e6459dd6bda3d95"
+        },
+        {
+          "bytes": 2797399,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+          "sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+        },
+        {
+          "bytes": 2797403,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+          "sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+        },
+        {
+          "bytes": 2797394,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/initial-state.json",
+          "sha256": "5b70bb9ca4f7e45aebcd664518f47e669db7b7bf6374046194db11f72bee9ee4"
+        },
+        {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+        },
+        {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+        },
+        {
+          "bytes": 104443,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/metadata/authenticated-release.json",
+          "sha256": "69a9a8a8b5e8c4cb46743a0ec68d5c3a7f861e8e1fdd8d7bc78699694bbf3e15"
+        },
+        {
+          "bytes": 1859,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/README.md",
+          "sha256": "f74edfc6bfbd404b49eb768beb17c8414cffc6c19ad3d51a174e712159c42985"
+        },
+        {
+          "bytes": 68316,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/manifest.json",
+          "sha256": "bab0aabf8e3abf6694d8e06db925d4a516143389a2923be7c21e18d92c5d2c33"
+        }
+      ],
+      "before_snapshot_pin": {
+        "bytes": 863198,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/0-before.json",
+        "sha256": "8ea024fc22acb8802b4b81ac73fcd7b6e74759ee64230e475e637f0f054ecc7d"
+      },
+      "downloaded_files_checked": 12,
+      "downloaded_git_blob_or_lfs_identity_matches_native_receipt": true,
+      "native_receipt_pin": {
+        "bytes": 12213,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-native-receipt.json",
+        "sha256": "265f4c10174ec0777ac8226b5a855e26a3651a72ed2acc488002a8ca419d7994"
+      },
+      "producer_reports_existing_visibility_and_all_prior_files_preserved": true,
+      "producer_reports_no_root_readme_or_default_replacement": true,
+      "repository_id": "Publicus/legal-ir-autoencoder",
+      "revision": "b5915b4ad93579dc2755d5357e20cba94698ad6c",
+      "verification_pin": {
+        "bytes": 6598,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-verification.json",
+        "sha256": "64cba6645382469f1ad8d94a7521f3f9d26c409f0f5edae159537ad68b7e1b76"
+      }
+    },
+    {
+      "actual_local_immutable_download_pins": [
+        {
+          "bytes": 2797390,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/initial-state.json",
+          "sha256": "5dcf886a3706278a247908e281e459b8e3d0be50243d131ff90d627649274518"
+        },
+        {
+          "bytes": 2797024,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+          "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+        },
+        {
+          "bytes": 2797028,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+          "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+        },
+        {
+          "bytes": 2797391,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/initial-state.json",
+          "sha256": "b3a1bd07c9128d0ba06c8f780668cc601a62a563152966fe3e6459dd6bda3d95"
+        },
+        {
+          "bytes": 2797399,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+          "sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+        },
+        {
+          "bytes": 2797403,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+          "sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+        },
+        {
+          "bytes": 2797394,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/initial-state.json",
+          "sha256": "5b70bb9ca4f7e45aebcd664518f47e669db7b7bf6374046194db11f72bee9ee4"
+        },
+        {
+          "bytes": 2797164,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+          "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+        },
+        {
+          "bytes": 2797168,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+          "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+        },
+        {
+          "bytes": 104443,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/metadata/authenticated-release.json",
+          "sha256": "69a9a8a8b5e8c4cb46743a0ec68d5c3a7f861e8e1fdd8d7bc78699694bbf3e15"
+        },
+        {
+          "bytes": 1859,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/README.md",
+          "sha256": "f74edfc6bfbd404b49eb768beb17c8414cffc6c19ad3d51a174e712159c42985"
+        },
+        {
+          "bytes": 68321,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/downloads/Publicus--legal-ir-autoencoder-384d/experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/manifest.json",
+          "sha256": "2eecee692ef355e0215ed9e671e97df0fc8861239de861ddf22904e3063d0a64"
+        }
+      ],
+      "before_snapshot_pin": {
+        "bytes": 154844,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/1-before.json",
+        "sha256": "bfb43685fe2059fa3e7d9d84621f44ff1c4a357e1fd246b5fd44c526bffb6f1f"
+      },
+      "downloaded_files_checked": 12,
+      "downloaded_git_blob_or_lfs_identity_matches_native_receipt": true,
+      "native_receipt_pin": {
+        "bytes": 12283,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-384d-native-receipt.json",
+        "sha256": "8ce65a15479099d902cd532639d3ad10aae2a6bf2cd6e70d2524a62d58b421de"
+      },
+      "producer_reports_existing_visibility_and_all_prior_files_preserved": true,
+      "producer_reports_no_root_readme_or_default_replacement": true,
+      "repository_id": "Publicus/legal-ir-autoencoder-384d",
+      "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "verification_pin": {
+        "bytes": 6668,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-384d-verification.json",
+        "sha256": "627ce08d6781a0424708a1d0f0299fdc2aaaf89250fdd4000e1067c6f6585a08"
+      }
+    }
+  ],
+  "reviewed_at_utc": "2026-10-07T13:31:37.560011+00:00",
+  "reviewer": "/root/retained_cache_review",
+  "runtime_or_quality_authority_granted": false,
+  "schema": "retained-wording-publication-independent-result-check/v1",
+  "source_review_pin": {
+    "bytes": 19420,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/review/publication-driver-independent-review-r1.json",
+    "sha256": "1ea1b59b80d67ad683935960524a8d395cdf559b3840aa0494f7d3d615e89317"
+  }
+}

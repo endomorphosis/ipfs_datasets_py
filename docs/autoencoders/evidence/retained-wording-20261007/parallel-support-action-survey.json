@@ -1,0 +1,71 @@
+{
+  "actual_joint_optimizer_calls_per_arm": 240,
+  "all_five_admission_masks": 0,
+  "checkpoint_schema": "legal-scope-support-action-checkpoint/v1",
+  "comparison_limitation": "Different source/task/denominator from48-paragraph/180-rule nativeGTE formula cohort; no cross-cohort score ranking.",
+  "consumes_native_8_384_768_latents": false,
+  "default_replacement": false,
+  "embeddings_generated": false,
+  "feature_profile": "frozen_mean_encoded_support_and_token_action_residual/v1",
+  "final_authored_supported_sources": 64,
+  "final_authored_unsupported_sources": 64,
+  "formal_output": null,
+  "models_or_numerical_libraries_imported": false,
+  "native384_registration_contains_this_track": false,
+  "next_reuse_contract": "Retain exact selected heads/parents/producers; declare native latent role/width/profile/codec and source/token/span joins; pair unchanged available assets on TRAIN only; preserve support/refusal and per-case floors on a new matched final; no direct global-latent-to-pointer substitution.",
+  "parent_checkpoint_sha256": "6e4be3abad5eafa47cc8a496bea561a8b0ea4ccb54db27273278e82e88facd4f",
+  "proof_authority": false,
+  "published_path": "experiments/support-action-20261007/run-01",
+  "published_repository": "Publicus/legal-ir-autoencoder",
+  "published_revision": "f2e6e9ad6b693a605066146dd8985f036fcaa50a",
+  "raw_action_span_exact": {
+    "linear": 58,
+    "mlp": 62,
+    "parent": 48
+  },
+  "read_only": true,
+  "schema": "retained-wording-parallel-support-action-survey/v1",
+  "selected_checkpoint_sha256": {
+    "linear": "741ea06a018d603b268e0acc8efc21d8ae1b9d0e3d1780212746c8a6cfdae2f1",
+    "mlp": "48559399bb22de0fe68908919d225d391880a38f4fab659026d526e19ffc9155"
+  },
+  "selected_update_per_arm": 120,
+  "source_architecture": "frozen ordered byte encoder/BiGRU with64-wide pooled/per-token states",
+  "source_git_blob_pins": [
+    {
+      "bytes": 11886,
+      "commit": "d93f1b79fd6f8e413010bbca506473a8f67dbe1e",
+      "git_blob": "896a9495d08602a6d4609b7b42715d09d2196fd7",
+      "path": "docs/implementation/legal_scope_support_action_pilot_20261007.md",
+      "repository": "ipfs_datasets_py",
+      "sha256": "564a1fe0c87981c563f2d00992935d151d594121150e00b421a8b8f466410c65"
+    },
+    {
+      "bytes": 25504,
+      "commit": "d93f1b79fd6f8e413010bbca506473a8f67dbe1e",
+      "git_blob": "c6260376025a7fa389b57fcb580e266af17ad755",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_scope_support_action.py",
+      "repository": "ipfs_datasets_py",
+      "sha256": "ce7abc45032bee6ac950720d79c8f329c03a68961140c0f2ad9ade8ea923988c"
+    },
+    {
+      "bytes": 10154,
+      "commit": "a1054e10e3f535360ebcfd844c876690cea7c604",
+      "git_blob": "78dbde26c1d7587ebc13b5695862328ab1d6b6ad",
+      "path": "implementation_plan/docs/67-support-action-residual-training-2026-10-07.md",
+      "repository": "lift_coding",
+      "sha256": "9bfdde74ccb146efbf791b6ab95cd4006d4c4e3fc892322889b5924171f63574"
+    }
+  ],
+  "training_rerun": false,
+  "unsupported_emissions": {
+    "linear": 11,
+    "mlp": 12,
+    "parent": 7
+  },
+  "whole_exact_positive": {
+    "linear": 37,
+    "mlp": 39,
+    "parent": 28
+  }
+}
