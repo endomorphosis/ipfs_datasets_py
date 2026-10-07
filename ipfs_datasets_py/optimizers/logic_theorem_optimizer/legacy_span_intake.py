@@ -212,6 +212,7 @@ def iter_joined_section_batches(
     max_batch_bytes: int = 32 * 1024 * 1024,
     max_batch_spans: int = 8192,
     diagnostic_limit: int = 32,
+    include_candidates: bool = False,
 ) -> Iterator[dict[str, Any]]:
     """Yield exact-matched sentences and bounded unmatched diagnostics.
 
@@ -227,6 +228,9 @@ def iter_joined_section_batches(
     call. Its span ordinal accumulates inside that historical group, independent
     of this iterator's output batch size. Resume replays source-prefix sentence
     counts to reconstruct the same ordinals; it never borrows IDs from progress.
+    ``include_candidates=True`` additionally exposes every regenerated source
+    occurrence and its join disposition, including duplicates and unmatched
+    candidates. The default matched-only interface is unchanged.
     """
     if not isinstance(source_revision, str) or not _REVISION.fullmatch(source_revision):
         raise SpanIntakeError("source revision must be a complete commit SHA")
@@ -238,6 +242,8 @@ def iter_joined_section_batches(
         raise SpanIntakeError("section_batch_size must be in 1..256")
     if type(diagnostic_limit) is not int or not 0 <= diagnostic_limit <= 128:
         raise SpanIntakeError("diagnostic_limit must be in 0..128")
+    if type(include_candidates) is not bool:
+        raise SpanIntakeError("include_candidates must be a boolean")
     for label, bound in (("max_section_bytes", max_section_bytes), ("max_batch_bytes", max_batch_bytes),
                          ("max_batch_spans", max_batch_spans)):
         _positive(bound, label)
@@ -343,6 +349,7 @@ def iter_joined_section_batches(
                   "source_hash_mismatch_count": 0, "legal_id_mismatch_count": 0,
                   "empty_section_count": empty_sections}
         rows: list[dict[str, Any]] = []
+        candidate_rows: list[dict[str, Any]] = []
         if candidates:
             temp_name = "legacy_intake_candidates_" + uuid.uuid4().hex
             index.connection.register(temp_name, pa.table({"source_span_id": [r["source_span_id"] for r in candidates]}))
@@ -353,6 +360,13 @@ def iter_joined_section_batches(
             finally:
                 index.connection.unregister(temp_name)
             unique: dict[str, dict[str, Any]] = {}
+            if include_candidates:
+                for candidate in candidates:
+                    source = expected.get(candidate["source_span_id"])
+                    reason = ("unlisted_source" if source is None else
+                              "source_hash_mismatch" if source[0] != candidate["source_sha256"] else
+                              "legal_id_mismatch" if source[1] != candidate["legal_id"] else "matched")
+                    candidate_rows.append({**candidate, "source_join_disposition": reason})
             for row in candidates:
                 span_id = row["source_span_id"]
                 if span_id in unique:
@@ -385,12 +399,14 @@ def iter_joined_section_batches(
         _unchanged(identity)
         _unchanged(index.progress)
         yield {"schema": SCHEMA, "rows": rows, "counts": counts, "unmatched_examples": diagnostics,
+               **({"candidate_rows": candidate_rows} if include_candidates else {}),
                "section_start": max(batch_start, start_section), "next_section": seen,
                "total_sections": total, "done": seen == total,
                "source_parent": source_parent, "progress_parent": progress_parent,
                "admitted": False, "formalized": False, "training_executed": False}
     if start_section == total:
         yield {"schema": SCHEMA, "rows": [], "counts": {}, "unmatched_examples": [],
+               **({"candidate_rows": []} if include_candidates else {}),
                "section_start": total, "next_section": total, "total_sections": total, "done": True,
                "source_parent": source_parent, "progress_parent": progress_parent,
                "admitted": False, "formalized": False, "training_executed": False}
