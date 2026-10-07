@@ -61,6 +61,18 @@
     "census-implementation-receipt.json": {
       "bytes": 2937,
       "sha256": "0a746833d018f8377d7e7b3056fbd34fffeb3545efe4f04be328649e52e3ed6f"
+    },
+    "review/progress-document-review.json": {
+      "bytes": 6696,
+      "sha256": "6e855452c334803fff5ce9c8447bb09120a81104a4d5d926c93c986030a150c0"
+    },
+    "validation/scheduler-integration-controls-receipt.json": {
+      "bytes": 602,
+      "sha256": "353d1306b05c270f95bd738c87798fffc35edd032a9b5ec3384617ef9b90ede3"
+    },
+    "validation/scheduler-integration-controls.xml": {
+      "bytes": 11246,
+      "sha256": "1aab47bea85ea895aad2a2d4fdf34a65e42b1edeb94ff269a8cb70e673c840b7"
     }
   }
 }

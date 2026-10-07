@@ -1,0 +1,19 @@
+{
+  "returncode": 0,
+  "elapsed_seconds": 2.939,
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "--basetemp",
+    "/tmp/pytest-of-barberb/uscode-intake-scheduler-controls-c7glqtis/fixtures",
+    "--junitxml",
+    "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/validation/scheduler-integration-controls.xml",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_proof_resource_recovery.py"
+  ],
+  "source_commit": "e018b38e0a28541f5ddc22b8d78aae773d0a79b5",
+  "temporary_synthetic_fixtures_removed": true
+}
