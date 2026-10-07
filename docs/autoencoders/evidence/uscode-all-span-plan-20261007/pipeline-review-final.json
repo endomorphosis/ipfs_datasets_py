@@ -1,0 +1,42 @@
+{
+  "schema": "uscode-all-span-plan-pipeline-amendment-review/v1",
+  "plan_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/PLAN.md",
+    "bytes": 35978,
+    "sha256": "55a3c8e1ceb93e238b9a48fd0ce8296e409fecd1bdd5e18dd9da49cab39708dc"
+  },
+  "scope": "Focused amendment confirmation against prior pipeline review; no source closure rehash, numerical inference, database/model mutation or tests.",
+  "passed": true,
+  "execution_readiness_granted": false,
+  "checks": {
+    "exact_final_plan_sha256": true,
+    "durable_discovery_page_before_cursor": true,
+    "failed_bundle_remains_pinned_unacknowledged": true,
+    "all_lossless_source_boundaries": true,
+    "leakage_graph_separate_context_graph": true,
+    "full_accounting_independent_newfit": true
+  },
+  "evidence": [
+    {
+      "line": 44,
+      "text": "Reuse identical physical source or embedding bytes through references while preserving every occurrence's source/context binding. Overlapping spans, duplicate sections, textual duplicates and version derivatives belong to leakage-equivalence groups for training/evaluation. Context/proof dependencies use a separate graph: unrestricted statutory crossreference edges could connect most of the corpus. Inspect giant components, keep copied/derived evaluation text and targets out of fitting, and declare whether shared unlabeled contextual material makes an evaluation transductive. These remain distinct occurrences in coverage counts."
+    },
+    {
+      "line": 91,
+      "text": "| Consume paired v1 and v2 with resumable acknowledgement | `logic/autoformal/span_cache_feed.py`, `paired_span_census.load_paired_census_bundle()` | Manifest schema dispatch, bounded listing/download/expansion, exact hash joins, discovery cursor advances only with durable page descriptors; failed bundles remain pending/unacknowledged at their pinned revision, with no skipped inputs |"
+    },
+    {
+      "line": 92,
+      "text": "| Preserve full source text | `span_cache.py`, `legacy_span_intake.iter_joined_section_batches()` | Eliminate silent legacy 32 KiB slicing across enqueue, census application, sealing, resume and publication; preserve exact-byte mismatch/overflow records and long/Unicode fixtures |"
+    },
+    {
+      "line": 152,
+      "text": "After M0\u2013M3 transport, source, routing and resource controls pass, enqueue the full frozen denominator for triage and its eligible diagnostic tasks. Full accounting does not depend on successful new training. Newly trained numerical generations require their own fidelity/retention acceptance; they do not overwrite the diagnostic campaign. Every span receives a terminal disposition for each declared task: completed candidate, reviewed success, unsupported, unrepresentable, needs context, source unresolved, token/output overflow or explicit error. Retryable technical failures remain active with bounded retries; uncertainty or legal disagreement is a durable repair goal. Track active, completed and deferred work separately."
+    },
+    {
+      "line": 189,
+      "text": "| M5 full accounting | Resumable diagnostic/task generations after M0\u2013M3; independent of M4 training success | Every occurrence/task has completed or explained disposition; durable artifacts and remote receipts reconcile |"
+    }
+  ],
+  "findings": []
+}

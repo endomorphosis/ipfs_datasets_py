@@ -1,0 +1,133 @@
+{
+  "schema": "uscode-all-span-plan-pipeline-review/v1",
+  "plan_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/PLAN.md",
+    "bytes": 31966,
+    "sha256": "c3d7b9c47f3a21158ebee7a220312acb6ab2679a5d55edad316a196c8ca3ea71"
+  },
+  "source_commit": "75f57f9eeff052a5718fd1f2c6a4b73de3784af8",
+  "upstream_stop_cleanup_commit": "da21234630 (root reported newer upstream; not available in this local object database; review did not claim byte inspection)",
+  "scope": "Read-only PLAN.md and source code paths; no numerical execution, full census, database/model/network mutation or tests.",
+  "passed": true,
+  "execution_readiness_granted": false,
+  "checks": {
+    "full_identity_census_before_compute": true,
+    "paired_v1_v2_feed_gap_and_ticket": true,
+    "lossless_source_ticket": true,
+    "historical216_replay_unchanged": true,
+    "producer512_vs8192_separate": true,
+    "target_codec_and_task_routing": true,
+    "all_four_ir_three_width_assets_preserved": true,
+    "per_database_serialized_owner": true,
+    "durable_outbox_and_remote_verified_eviction": true,
+    "production_ducklake_false": true,
+    "live_resource_census_required": true,
+    "foreign_resources_preserved": true,
+    "source_candidate_review_checker_distinct": true,
+    "source_generation_task_composite_workkey": true,
+    "fresh_holdout_group_policy": true,
+    "missing_embeddings_declared": true
+  },
+  "corrections": [
+    {
+      "severity": "minor",
+      "plan_line": 80,
+      "ticket": "M1-FEED",
+      "issue": "Unchanged cursor on partial failures differs from existing decoupled discovery/download contract.",
+      "suggested_text": "Cursor advances only with durably recorded page entries; failed bundles remain pending and unacknowledged, pinned to their original revision; no skipped inputs.",
+      "evidence": "span_cache_feed.py:_discover transaction inserts pending descriptors and feed_scan together; poll_once retries failed bundles independently."
+    },
+    {
+      "severity": "minor",
+      "plan_line": 81,
+      "ticket": "M1-SOURCE",
+      "issue": "Nontruncating completion checks must cover all new intake/census/seal/resume boundaries, not solely enqueue.",
+      "suggested_text": "Long-source/Unicode fixtures pass every new intake, result capture, census application, sealing, resume and publication round trip; legacy truncating owners are bypassed or explicitly diagnosed.",
+      "evidence": "span_cache.py slices at enqueue1127, apply_census1299, seal-row1349/1350, and remote resume1475/1488."
+    }
+  ],
+  "ticket_suggestions": [
+    {
+      "id": "M0-INV",
+      "depends": [],
+      "deliverable": "Pinned paginatedmanifest catalog + complete ledger/sourcealias mapping + allnamespace counts + explicit unresolved/conflict rows.",
+      "acceptance": "All archived443904 occurrence rows and metadata accounted for; partial-bundle scans cannot masquerade as corpus census."
+    },
+    {
+      "id": "M0-GROUP",
+      "depends": [
+        "M0-INV"
+      ],
+      "deliverable": "Versioned connected-group policy and exposure ledger.",
+      "acceptance": "Define leakage-equivalence edges separately from context/proof-dependency edges; report giant components/group-size distributions before split assignment; no hidden split leakage or accidental wholecorpus singlecomponent."
+    },
+    {
+      "id": "M1-FEED",
+      "depends": [
+        "M0-INV"
+      ],
+      "deliverable": "Versioned pairedv1/v2 discovery/dispatch + durable inbox with bounded expandedartifact budgets.",
+      "acceptance": "Discovery pageentries/cursor durable together; schema-specific parse; retry/unacknowledged states and exact pinnedrevisions survive failures."
+    },
+    {
+      "id": "M1-SOURCE",
+      "depends": [
+        "M0-INV"
+      ],
+      "deliverable": "Lossless arbitrarylength source/context adapter with explicit offsets.",
+      "acceptance": "Offset units declared for UTF8/codepoints/token positions; >32KiB/nonASCII roundtrips and all resume/census boundaries preserve bytes."
+    },
+    {
+      "id": "M1-QUEUE",
+      "depends": [
+        "M0-INV"
+      ],
+      "deliverable": "Composite-generation task registry with onewriter/ownedleases/durableoutbox.",
+      "acceptance": "Crashinject each output\u2192rowcommit\u2192upload\u2192remoteverify\u2192eviction boundary; retries are idempotent and unknown commit outcomes reconcile."
+    },
+    {
+      "id": "M2-CACHE",
+      "depends": [
+        "M1-SOURCE"
+      ],
+      "deliverable": "Separate bounded native384/768 cache reader and task/profile/codec resolver.",
+      "acceptance": "Existing216 assay unchanged; correctsource/context/producerprofile matches; wrongnativewidth, unknownschema, targetaccess and oversize inputs refuse explicitly."
+    },
+    {
+      "id": "M3-PILOT",
+      "depends": [
+        "M1-FEED",
+        "M1-QUEUE",
+        "M2-CACHE"
+      ],
+      "deliverable": "8/128/1024 source-only observations, reviewed errors and measured capacity model.",
+      "acceptance": "Publish metric definitions and promotion/retention/refusal thresholds before pilot selection; unsupported/unresolved rows remain denominators."
+    },
+    {
+      "id": "M4-LEARN",
+      "depends": [
+        "M0-GROUP",
+        "M3-PILOT"
+      ],
+      "deliverable": "Versioned representabletarget experiment and compatible traineddonor transfer.",
+      "acceptance": "Matchedbudget ablations, copiedtensor evidence, fresh confirmation, unchanged parallelfamilies/widths and exact restoration."
+    },
+    {
+      "id": "M5-ROLL",
+      "depends": [
+        "M3-PILOT"
+      ],
+      "deliverable": "Complete resumable diagnostic/task accounting with no requirement to wait for a successful newfit.",
+      "acceptance": "Every occurrence has disposition for each declaredgenerationtask; all numerical processing mayremain shadow/unqualified until M4 gates."
+    },
+    {
+      "id": "M7-LAKE",
+      "depends": [
+        "M1-QUEUE"
+      ],
+      "deliverable": "Independent productionDuckLake layout/transaction qualification.",
+      "acceptance": "Do not activate isolatedmetadata sink or enlarge its bounds implicitly; serializedDuckDB remains authority until qualification."
+    }
+  ],
+  "overall": "The plan is implementable as phased proposals. All mandatory pipeline gaps and assetseparation constraints are addressed. Two minor acceptancewording corrections and optional ticketprecision improve execution; no planning blocker found."
+}

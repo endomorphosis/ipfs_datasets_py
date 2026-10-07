@@ -1,0 +1,349 @@
+{
+  "acceptance_gates": [
+    "Allphysicalinputrows accounted exactlyonce perdeclaredconfig; malformed/excluded/unavailable remain visible; exactimmutablemanifest/sourceclosure verified.",
+    "Validgenuinelane-specific source-only inputs; no mock8D-to-GTE relabeling, targetconditionedrawclaim, implicittruncation, codecmigration or fabricatednewvectors.",
+    "Frozen completeconnected source/derivative groups andexposureledger beforetrain/selection; entireoverlappingsection/version/context siblings remain samepartition; finalindependentreviewconfirmation outsideoldexposedpanels.",
+    "Per-case originalTRAIN+exposed success retention, no new malformed-trigger/unsupportedemissions underpredeclaredscope, andindependentheldoutwhole-statement/facet/scope fidelity target measured with abstention/coverage jointly.",
+    "OriginallegaltextUTF8exact, normalizedtext, facetwholeIR, allrulescount/order/association, legalmeaningfidelity, structuralcompile andproof acceptance remainseparatemetrics.",
+    "Criticalmeaningomission/negation/modality/exception/binder errors areexplicit; pilotcalibrates thresholds andsample sizes rather thanarbitraryunmeasuredqualityclaims.",
+    "Only actualeligible source-faithful nativefamily/checker builds andpolicy-boundproof receipts qualify proof index entries; Lean needsactuallakebuild target/library.",
+    "Resource andresume pilot empirically measures source/embedding/generation/review/proof throughput,cost anddisk beforeall-span forecast; historical24-spansample isnot corpuswidecost orspeedup."
+  ],
+  "datasets_revision": "75f57f9eeff052a5718fd1f2c6a4b73de3784af8",
+  "date": "2026-10-07",
+  "measured_findings": [
+    {
+      "disposition": "Source-head and emitted-formula metrics differ. Original-parent to dual loses one case and gains none. These are exposed development formula scores, not prose or independent legal fidelity.",
+      "dual_replay_exposed_v3_exact": 30,
+      "facets": 7,
+      "lane": "native LegalIR384 semantic formula",
+      "original_parent_exposed_v3_exact": 31,
+      "paragraph_denominator": 48,
+      "qualifiers": "empty authored TRAIN targets",
+      "retained_continuation_exposed_v3_exact": 33,
+      "train_exact": 48,
+      "train_paragraph_denominator": 48
+    },
+    {
+      "broader_normative_wording_denominator": 60,
+      "broader_normative_wording_exact": 60,
+      "decoder_output_ceiling": 512,
+      "disposition": "768 native inputs and trained endpoints exist, but no executed8192-token legal decoder coverage.",
+      "exposed_v3_denominator": 48,
+      "input_execution_ceiling": 512,
+      "lane": "native LegalIR768 semantic formula",
+      "latest_auxiliary_exposed_v3_exact": 48,
+      "source_geometry_max_clauses": 8
+    },
+    {
+      "deterministic_rendered_original_text_exact": 0,
+      "disposition": "Controlled semantic rendering is lossy. Exact original wording requires separate legal_text_reconstruction head plus lexical/residual contract; raw-source copy/archive cannot count as learned reconstruction.",
+      "ir_denominator": 48,
+      "ir_exact": 48,
+      "lane": "original-text reconstruction",
+      "text_denominator": 48
+    },
+    {
+      "disposition": "Byte-encoder token and mean states; distinct from native8/384/768 latents. Parent successes retained but malformed-trigger false emissions increase; no default promotion.",
+      "feature_width": 64,
+      "lane": "raw-source support/action residual",
+      "linear_unsupported_emitted": 11,
+      "linear_whole_exact": 37,
+      "mlp_unsupported_emitted": 12,
+      "mlp_whole_exact": 39,
+      "negative_denominator": 64,
+      "parent_unsupported_emitted": 7,
+      "parent_whole_exact": 28,
+      "positive_denominator": 64
+    },
+    {
+      "disposition": "All nine improve vectorMSE over untrained states but trail TRAIN-onlyPCA; raw/PCA/AE-conditioned same frozen decoder outputs agree. Representation quality and semantic usefulness remain separately unproved.",
+      "expanded_native_vectors": 192,
+      "lane": "source-only representation autoencoders",
+      "selected_models": 9,
+      "source_count": 64,
+      "widths": [
+        8,
+        384,
+        768
+      ]
+    },
+    {
+      "disposition": "Historical8D vectors include mock:stable-sha256 provenance; guidance through deterministic modalcompiler is not independent learned symbolic decoding; keep target_conditioned and generated/compiled lanes explicit.",
+      "lane": "historical cache8D guided compiler"
+    },
+    {
+      "disposition": "Exact file/codec/recipe/catalog identities establish availability; runtime_release, teacher_qualification andproof_authority remainfalse.",
+      "fitted_bindings_imported": 6,
+      "lane": "availability",
+      "model_manager_count_observed_after_import": 684,
+      "raw_existing_checkpoint_files_published": 9,
+      "unique_fitted_tensors": 3
+    }
+  ],
+  "recommended_work_packages": [
+    {
+      "id": "U0",
+      "work": "Pin immutable requestedcache revision; enumerate every declared format/config/artifact/report/goal, everyphysicalrow, completefailures/missingdocuments. Keep observationrows, unique source spans, aliases and upstreamsections as separatedenominators. Never glob mixed Parquet schemas or reinterpret HF train split as traineligibility."
+    },
+    {
+      "id": "U1",
+      "work": "Create source-first exactUTF8/byte-char-offset/context normalization boundary; immutable source ID, observation ID and derivation lineage. Match all derivative duplicate/overlap/section groups before data splits, include old exposed studies in exposure ledger."
+    },
+    {
+      "id": "U2",
+      "work": "Typed cache eligibility per8/384/768 lane: exact source/context/span bytes, tokenizer/model revision, pooling/normalization, dense versus mock inputs, tokencounts/no-truncation, cachedvectorhash, trainedtransform anddecodercodec. Reuse validold embeddings; materialize missingtrue-native vectors only. Width alone grants no producer compatibility."
+    },
+    {
+      "id": "U3",
+      "work": "Separate LegalIR semanticJSON, originallegaltext, sourceoccurrence, FOL/TDFOL/DCEC/otherfamily projections by schema/version/profile/task/checkpoint, and all4IRfamilies ×3widths in independent inventories/databases/Hub releases. Codebase/Intent/Security routes need explicit downstreamcorrespondence, not copies oflegaldatasets."
+    },
+    {
+      "id": "U4",
+      "work": "Run stratified shadow inference pilot on shortsingle-rule and multi-rule/qualifier/negative/definition/crossreference contexts; frozen original/control/dual/native768 +rawsource heads as separatebaselines. Durable BOS-onlyfree-running predictions precedereferencejoins. Preserve everyabstention, unsupportedprofile, invalid/EOSlimit andcontextdeferral."
+    },
+    {
+      "id": "U5",
+      "work": "Obtain source-blind independent legalfacet/association/scope review and formal-target adjudication; classify acceptunique/alternatives/norule/needscontext/unsupported/unresolved. Source-derived compiler and existing learned predictions are separatelyattributed proposals, never independent gold."
+    },
+    {
+      "id": "U6",
+      "work": "Warmtransfer authenticcompatible8/384 learnedheads into768 interfaces using explicitname/shape/dtype/codec mappings; matchTRAIN-onlysame-source nativevectors; initiallyfreeze copiedbodies thenfit newinterfaces. Distill onlyqualifiedhead/scope tokens; referencesCE authoritative; retain native768parent and8/384 lanes. FreshAdam versusfullresume explicit."
+    },
+    {
+      "id": "U7",
+      "work": "Fix critical binding/qualifier/malformed-trigger gaps on reviewed TRAIN with oldbank replay and percase positive/negative retentiongates. Matchedraw/PCA/AE/sourceonly controls requireequal init/data/updates/selection/budgets. Onefactoratatime forbankmix, schedule, widths, headcapacity andcontext."
+    },
+    {
+      "id": "U8",
+      "work": "Expand512→1024→2048→4096→8192 encoderinput afterlength/token/offset coverage; independentlyversion decoderoutputbudget andhierarchicalstatement-clause+context profile. Preserveoverflow/contextloss, crossreferences andcompletelegalspan boundaries; 8192 encodermetadata doesnot extend512-output/eight-clause decoder."
+    },
+    {
+      "id": "U9",
+      "work": "Rolloutallspans as resumable leased bounded queues with adaptive measuredbatchsizes, cheapmetadata/sourcevalidationfirst, same resident models, explicit CPU/GPU/memory/disk admission. Artifact storageimmutable; oneDuckDB writer percatalog andisolatedDuckLake cell; manifests/watermarks+worker receipts support crashresume withoutsilent skips."
+    },
+    {
+      "id": "U10",
+      "work": "Maintain candidate index separately fromreviewedsourcefaithful logic index andnativechecker/proof cache. Source/model/schema/ontology/checker/dependencyrevision changesinvalidate derivedrecords. Supervisor symbolicplanner retrieves current qualified obligations andexplicit unknowns/repair goals; availabilityorcompilation alone givesnoproofauthority."
+    },
+    {
+      "id": "U11",
+      "work": "Publish append-only pairedbaseline/newoutputs, compacterrorcensus, fullreportclosure, immutableweights andexactModelManager metadata aftershadowacceptance. Merge isolatedworktrees againstincomingmain usingpathwiseeffective-tree retention audit; no oldbranch replay or overwrite."
+    }
+  ],
+  "reusable_owners": [
+    "logic.autoformal.paired_span_census.load_paired_census_bundle / decode_artifact",
+    "optimizers.logic_theorem_optimizer.legacy_span_logic_artifacts.unpack_document",
+    "logic.autoformal.span_cache_exchange; scripts/ops/legal_ir/import_span_cache_exchange.py",
+    "optimizers.logic_theorem_optimizer.autoencoder_uscode_inventory (distinct ipfs_uscode corpus)",
+    "optimizers.logic_theorem_optimizer.autoencoder_source_partitions (freeze full connected groups before exclusions)",
+    "optimizers.logic_theorem_optimizer.autoencoder_embedding_receipt_set (bounded producer leaf membership)",
+    "optimizers.logic_theorem_optimizer.autoencoder_uscode_corpus_rows / autoencoder_uscode_corpus_export",
+    "logic.formalization.autoencoder.gte_decoder_reuse / gte_affine_alignment / gte_decoder_distillation",
+    "logic.legal_ir.canonical_statement_scope / canonical_label_evidence_intake / canonical_label_evidence_intake_workflow",
+    "logic.autoformal.legal_qualified_lake and family-specific canonical lowering owners",
+    "ir_model_manager_import and ir_model_hub_publish exact checkpoint role/task/catalog resolution"
+  ],
+  "rights_scope": {
+    "exact_denied_releases": 21,
+    "historical_denied_ipfs_uscode_revision": "a9720a26a52251526035c2ca8cebea418965bcf9",
+    "interpretation": "No blanketJusticeDAO refusal follows. Record exact upstream source/transformation lineage and task-specific eligibility in a new cache-processing policy; preserve historical exact-revision decisions without relabeling denied metadata as new learned rows.",
+    "later_independent_inventory_ipfs_uscode_revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "pinset_id": "JDAO-PINSET-1",
+    "requested_span_cache_in_denied_release_list": false
+  },
+  "schema": "uscode-all-span-autoencoder-research-survey/v1",
+  "scope": "Read-only synthesis of retained primary repository documents and six selected recent autoencoder branch histories; no exhaustive audit of every unrelated branch, no models, vectors, proof tools, network transfer or foreign-tree mutation.",
+  "selected_branch_retention": [
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "d93f1b79fd6f8e413010bbca506473a8f67dbe1e",
+      "ref": "codex/legal-support-gate-model-20261007-01",
+      "unreachable_commits": 0
+    },
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+      "ref": "codex/legal-support-action-model-20261007-01",
+      "unreachable_commits": 0
+    },
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+      "ref": "codex/legal-trigger-readout-model-20261007-01",
+      "unreachable_commits": 0
+    },
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "1530efd07032bac88229c6c97ca5994d498e6216",
+      "ref": "codex/legal-scope-span-training-20261007-01",
+      "unreachable_commits": 0
+    },
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+      "ref": "codex/source-v2-warm-start-20261004",
+      "unreachable_commits": 0
+    },
+    {
+      "ancestor_of_local_origin_main": true,
+      "commit": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+      "ref": "codex/legal-original-text-roundtrip-retained-20261004",
+      "unreachable_commits": 0
+    }
+  ],
+  "source_pins": [
+    {
+      "bytes": 145695,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/49-autoformalization-joint-embeddings-improvement-plan-2026-10-03.md",
+      "relative_path": "implementation_plan/docs/49-autoformalization-joint-embeddings-improvement-plan-2026-10-03.md",
+      "repository": "workspace",
+      "sha256": "0b78518e3c94fe2cb6657eddbe942132eca170cb63902d48c83de2fc97d72801"
+    },
+    {
+      "bytes": 46069,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/50-autoformalization-alignment-implementation-backlog-2026-10-04.md",
+      "relative_path": "implementation_plan/docs/50-autoformalization-alignment-implementation-backlog-2026-10-04.md",
+      "repository": "workspace",
+      "sha256": "b2f64dddc6e6ea8dc62c1a519872fe23bdd436f7de9269d175513cb3790399f0"
+    },
+    {
+      "bytes": 16244,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/58-autoencoder-progress-integration-2026-10-06.md",
+      "relative_path": "implementation_plan/docs/58-autoencoder-progress-integration-2026-10-06.md",
+      "repository": "workspace",
+      "sha256": "7d37200ab9fe3b4cb9defc9f7de7a2a384874698c3acf845148579d991513d23"
+    },
+    {
+      "bytes": 3843,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/59-autoencoder-progress-reconciliation-2026-10-06.md",
+      "relative_path": "implementation_plan/docs/59-autoencoder-progress-reconciliation-2026-10-06.md",
+      "repository": "workspace",
+      "sha256": "73e85dbdbc28364dcd25586170ed5a69acd3d1cfeb51dad874fada1b104b8a55"
+    },
+    {
+      "bytes": 7913,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/61-autoencoder-reconciliation-2026-10-07.md",
+      "relative_path": "implementation_plan/docs/61-autoencoder-reconciliation-2026-10-07.md",
+      "repository": "workspace",
+      "sha256": "6a6d6124d4bd59b9b084362f26b279d2c6122056dc2c01b8faddd118a206f2c5"
+    },
+    {
+      "bytes": 6154,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/62-normative-decoder-runtime-2026-10-07.md",
+      "relative_path": "implementation_plan/docs/62-normative-decoder-runtime-2026-10-07.md",
+      "repository": "workspace",
+      "sha256": "db648bc6c677c9f33979f6f13c97583a8feaab8d56bbe418960878c4a5484338"
+    },
+    {
+      "bytes": 8924,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/63-retained-native-decoder-inputs-2026-10-07.md",
+      "relative_path": "implementation_plan/docs/63-retained-native-decoder-inputs-2026-10-07.md",
+      "repository": "workspace",
+      "sha256": "578fba4ec67cd3d7cb777c124783ec67cfabbf7aec4eea3c57e44e14ba9ef456"
+    },
+    {
+      "bytes": 6141,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/66-retained-wording-reconciliation-2026-10-07.md",
+      "relative_path": "implementation_plan/docs/66-retained-wording-reconciliation-2026-10-07.md",
+      "repository": "workspace",
+      "sha256": "adce0e9f815afdbe9863ad05755437c144167bc75859eea3715fca73ac067ea7"
+    },
+    {
+      "bytes": 10154,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/67-support-action-residual-training-2026-10-07.md",
+      "relative_path": "implementation_plan/docs/67-support-action-residual-training-2026-10-07.md",
+      "repository": "workspace",
+      "sha256": "9bfdde74ccb146efbf791b6ab95cd4006d4c4e3fc892322889b5924171f63574"
+    },
+    {
+      "bytes": 4929,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/artifacts/autoformalization-alignment-20261003/label_admission_contract_design.md",
+      "relative_path": "artifacts/autoformalization-alignment-20261003/label_admission_contract_design.md",
+      "repository": "workspace",
+      "sha256": "ddf00af08646687c9f35ffffa41db928bbf55580ce2525fc499cc01fe988798d"
+    },
+    {
+      "bytes": 13024,
+      "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/artifacts/autoformalization-alignment-20261003/richer-material-inventory.md",
+      "relative_path": "artifacts/autoformalization-alignment-20261003/richer-material-inventory.md",
+      "repository": "workspace",
+      "sha256": "8713fddcffaf79c6872f1a8ec8bccd7dec7ddb24da76a8b26df5e6350a9cdca9"
+    },
+    {
+      "bytes": 17437,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/gte_decoder_reuse.md",
+      "relative_path": "docs/autoencoders/gte_decoder_reuse.md",
+      "repository": "datasets",
+      "sha256": "5c21a410b800598a36da87d4d5498ae9d8abf657911faa1e299a9eade06257ff"
+    },
+    {
+      "bytes": 22430,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/paired_span_census.md",
+      "relative_path": "docs/autoencoders/paired_span_census.md",
+      "repository": "datasets",
+      "sha256": "55b6f804773afc979bb6f2827040da52597a03e664a31e5fe6c457656b936ea1"
+    },
+    {
+      "bytes": 15183,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/span_exchange_outputs.md",
+      "relative_path": "docs/autoencoders/span_exchange_outputs.md",
+      "repository": "datasets",
+      "sha256": "21102a89ed8470715eb4e991ad6468eef1fa7a195e594d7d15cd769e1e2eafb0"
+    },
+    {
+      "bytes": 13863,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/datasets/uscode_autoformal_span_cache_published_card.md",
+      "relative_path": "docs/datasets/uscode_autoformal_span_cache_published_card.md",
+      "repository": "datasets",
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6"
+    },
+    {
+      "bytes": 14829,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/implementation/reports/autoencoder_uscode_source_inventory.md",
+      "relative_path": "docs/implementation/reports/autoencoder_uscode_source_inventory.md",
+      "repository": "datasets",
+      "sha256": "971cb34172f87b64011d4f80b6ef671495eee6cb188199633cf4fe7ba5c03de0"
+    },
+    {
+      "bytes": 10496,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/implementation/reports/autoencoder_uscode_corpus_export.md",
+      "relative_path": "docs/implementation/reports/autoencoder_uscode_corpus_export.md",
+      "repository": "datasets",
+      "sha256": "2d99291c468d9e4f223b59cb0517a92817ce8603f9bf07a98e7db10ff8bf6580"
+    },
+    {
+      "bytes": 10977,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/implementation/reports/autoencoder_uscode_source_index.md",
+      "relative_path": "docs/implementation/reports/autoencoder_uscode_source_index.md",
+      "repository": "datasets",
+      "sha256": "9c75bb118e4cd43d76a0391dff86feeeada2d2c64edd580396f4cab4d7f192e2"
+    },
+    {
+      "bytes": 1485,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/data/ir_learning/corpora/successor-v1/rights_manifest.json",
+      "relative_path": "data/ir_learning/corpora/successor-v1/rights_manifest.json",
+      "repository": "datasets",
+      "sha256": "20ca50484e765146e85275ca38fd122c51be7886d30ab20244796b251a92c294"
+    },
+    {
+      "bytes": 13797,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/data/ir_learning/corpora/successor-v1/source_releases.json",
+      "relative_path": "data/ir_learning/corpora/successor-v1/source_releases.json",
+      "repository": "datasets",
+      "sha256": "8e20b7c4fb3a510e04bd6955a66fd6d809cd46b59d3e16c5fa1d7467c96ae266"
+    }
+  ],
+  "unresolved_functions_or_evidence": [
+    "Fresh arbitrary-span sourceproducer contract andnew targetgrammar covering unrestrictedlegal symbols/qualifiers/quantifiers/crossreferences.",
+    "Independentnatural-US-Code source/facet/formalreview andadjudication; noexistingresearchresult establisheswholecodebaselegalgold.",
+    "Genuinerichcodecs andnative8/384/768 decoderconditioning forrawsource64-wide support/action heads; no measured latentinterfacebenefit.",
+    "Sourcefaithful exactoriginalprose learner andlexical/residual contract.",
+    "Actual8192-token legaldecode qualification, separatelyexpandedoutputgeometry andnewlongspan heldout references.",
+    "Qualified8D/384D teacher scopes andcompatiblecodec migrations for latestnormative versusolddual-donor architecture.",
+    "Allcacheconfigs currentrow/uniquespandenominator andupstreamdatasetclosure needliveimmutableHub inspection byroot orotheragent.",
+    "Sourcepolicy rights/evidence generation doesnot automatically follow publicdatasetcard or historical siblingdataset rightsmanifest.",
+    "Per-cell database/catalog/proofindex planner integration atallspanscale; currentcachedreplaycatalogresolution isnot fullpipeline default."
+  ],
+  "workspace_revision": "01cac3bff51e51f0d6b36d5b39be8f951bb85712"
+}

@@ -1,0 +1,48 @@
+{
+  "Constitution_formalized": false,
+  "admitted": false,
+  "archive": {
+    "bytes": 62752730,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-replay-20261007/publication/replay-evidence.tar.gz",
+    "sha256": "0b732781a178533a918cf3174759c09a98de92781d77ae63d7166bd0de65220f"
+  },
+  "archive_github": "https://github.com/endomorphosis/lift_coding/blob/main/artifacts/autoencoder-dual-bank-replay-20261007/publication/replay-evidence.tar.gz",
+  "checkpoint_bodies_excluded": 3,
+  "checkpoint_promoted": false,
+  "comparison": "One new384Dtwo-bank fit with archivedcontrol andactualparentbankfloors; original/old/newTRAIN48, exposedv330vscontrol33.",
+  "compressed_reviews": {
+    "actual-evaluation-r1-independent-review.json": {
+      "compressed_bytes": 146741,
+      "compressed_sha256": "adcef4897b6b83718c61bbc88d77bccbcd665c60253d33189843c7d4127566dd",
+      "source_bytes": 6027292,
+      "source_sha256": "898539453d4ea0e4317d10984ecc4de007557587f0688d03895a410570a335e1"
+    },
+    "actual-preflight-384-r1-independent-review.json": {
+      "compressed_bytes": 120957,
+      "compressed_sha256": "69909ae779ab3feabc5df91e70b29b7ab2722ea93bbfb3cf0e90728596660e71",
+      "source_bytes": 1381833,
+      "source_sha256": "4b559a178d5c9265be9b5dcbb7c935b82a61f992c2bdb2ebb41f7ee14a0e9019"
+    },
+    "actual-training-384-r1-independent-review.json": {
+      "compressed_bytes": 94584,
+      "compressed_sha256": "f30f15fc52a8b1c3ddad0abad1e8a39e62fe895a47133fb5c979f8eb9655e708",
+      "source_bytes": 1140771,
+      "source_sha256": "09f3ba6bf9fe02c388e411cdb8f7985f841ef38ae7d1e12789d24947ea89765e"
+    },
+    "postfit-comparison-independent-review.json": {
+      "compressed_bytes": 61867,
+      "compressed_sha256": "75ffc35d389ae1ea6dc96cdad991230749a1d62c659a51f047a65b3f7084a8bc",
+      "source_bytes": 3220946,
+      "source_sha256": "97a8cd24f6277b0990284afac1e2c7d7514131a2da5be18606f15a8a42536d28"
+    }
+  },
+  "member_count": 247,
+  "parent_publications": {
+    "datasets": "b6abb32636e336536fc1cfc0f78bba2dc04703c5",
+    "workspace": "d3a45505848dcff60d0293ac9a3c7eb49293d8ef"
+  },
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "dual-bank-replay-published-evidence-index/v1",
+  "source_bytes": 204736335
+}

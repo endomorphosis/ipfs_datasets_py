@@ -1,0 +1,547 @@
+{
+  "admitted": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/autoencoder-balanced-wording-20261007/runtime/assembled-inputs-r1/control-source-inventory.json": {
+      "bytes": 14233629,
+      "sha256": "a9d3a6962986ec674d7673a609a23af614aef6b797b99903979c2c645c2fd57b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/actual-formula-fidelity.json": {
+      "bytes": 156560,
+      "sha256": "79b8eafc67b8673b501b6a4a5d6563ca2df26c019adb4c89ca9d2676f90e5041"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/control-wording-ce/selected/exposed_v3_48/scalar-formula-join.json": {
+      "bytes": 723266,
+      "sha256": "4251fda229c699de9a66f5dc1eb081390adffaf85f5f5e888d32ca488d55afa3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/evaluation-r1/results/summary.json": {
+      "bytes": 96894,
+      "sha256": "bf82fc26aad348a01404c88428f70ab4f105e5eb8e4eb45c7886a417cd74fec8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/actual-formula-fidelity.json": {
+      "bytes": 156558,
+      "sha256": "21e8aa71235b2485bd305e82b2b2b5ae385aa1351e3556037721d129a9cc24df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/dual-bank-retention-ce/selected/exposed_v3_48/scalar-formula-join.json": {
+      "bytes": 723259,
+      "sha256": "12067e5eb0ba0097a3040acbd623493e13d22f832a1c4d92f91e546cb72da296"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/evaluation-r1/results/summary.json": {
+      "bytes": 63968,
+      "sha256": "0e088d052f9726727a021e63d7e470d36f22dc6ece4384cca72fa715ba69bc1d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-manifest.json": {
+      "bytes": 312764,
+      "sha256": "40a4be04a2f44b6abe4ddb85dbe38373caf8a0fe55d11d62f2896fb817f0b0e1"
+    }
+  },
+  "changed_paragraphs": [
+    {
+      "archived_control_generated_ir": {
+        "rules": [
+          {
+            "action": "examine",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "expected_ir": {
+        "rules": [
+          {
+            "action": "examine",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "id": "fresh-modality-v3:7e64ecff6fe8ab586ab48a108d60c138383bd224a2f872f73aa0c014074b99de",
+      "replay_generated_ir": {
+        "rules": [
+          {
+            "action": "examine",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "The treasurer is obligated to examine the archive.\n\nThe treasurer is barred from preserving the notice.",
+      "transition": "newly_wrong"
+    },
+    {
+      "archived_control_generated_ir": {
+        "rules": [
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "expected_ir": {
+        "rules": [
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "id": "fresh-modality-v3:7e759680c3ce8cd08b9cbcc103e89f51d1bd939581c7ddd039905fa99175843b",
+      "replay_generated_ir": {
+        "rules": [
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "notice",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "Delivering the archive is an obligation of the notary.\n\nApproving the archive is prohibited for the treasurer.\n\nPreserving the archive is an obligation of the trustee.\n\nApproving the notice is prohibited for the registrar.",
+      "transition": "newly_wrong"
+    },
+    {
+      "archived_control_generated_ir": {
+        "rules": [
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "secretary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          }
+        ]
+      },
+      "expected_ir": {
+        "rules": [
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "secretary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          }
+        ]
+      },
+      "id": "fresh-modality-v3:9b241408b1cbe4745fc784df3c612e34599e773f24b522e27f551dfd692fea1b",
+      "replay_generated_ir": {
+        "rules": [
+          {
+            "action": "approve",
+            "actor": "registrar",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "deliver",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "trustee",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "notice",
+            "temporal": []
+          },
+          {
+            "action": "approve",
+            "actor": "treasurer",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "publish",
+            "actor": "notary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "archive",
+            "temporal": []
+          },
+          {
+            "action": "preserve",
+            "actor": "secretary",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "archive",
+            "temporal": []
+          }
+        ]
+      },
+      "source_text": "Approving the archive is prohibited for the registrar.\n\nDelivering the notice is an obligation of the notary.\n\nPreserving the notice is an obligation of the trustee.\n\nPublishing the notice is authorized for the notary.\n\nApproving the notice is authorized for the treasurer.\n\nApproving the archive is authorized for the treasurer.\n\nPublishing the archive is prohibited for the notary.\n\nPreserving the archive is authorized for the secretary.",
+      "transition": "newly_wrong"
+    }
+  ],
+  "comparison": "Archived control selected9e577 vs new replay selected6e47; one fit, differing auxiliary chronology, exposed meanings and targets, no isolated causal or generalization improvement claim.",
+  "complete": true,
+  "fresh_semantic_holdout": false,
+  "paragraph_transitions": {
+    "both_correct": 30,
+    "both_wrong": 15,
+    "newly_wrong": 3
+  },
+  "proof_authority": false,
+  "qualified": false,
+  "scalar_transitions": {
+    "action": {
+      "combined": {
+        "both_correct": 179,
+        "both_wrong": 1
+      },
+      "formula": {
+        "both_correct": 179,
+        "both_wrong": 1
+      },
+      "source": {
+        "both_correct": 179,
+        "both_wrong": 1
+      }
+    },
+    "actor": {
+      "combined": {
+        "both_correct": 180
+      },
+      "formula": {
+        "both_correct": 180
+      },
+      "source": {
+        "both_correct": 180
+      }
+    },
+    "modality": {
+      "combined": {
+        "both_correct": 158,
+        "both_wrong": 19,
+        "newly_wrong": 3
+      },
+      "formula": {
+        "both_correct": 158,
+        "both_wrong": 19,
+        "newly_wrong": 3
+      },
+      "source": {
+        "both_correct": 161,
+        "both_wrong": 14,
+        "newly_wrong": 5
+      }
+    },
+    "object": {
+      "combined": {
+        "both_correct": 180
+      },
+      "formula": {
+        "both_correct": 180
+      },
+      "source": {
+        "both_correct": 180
+      }
+    }
+  },
+  "schema": "dual-bank-replay-exposed-development-error-census/v1",
+  "used_for_fit_or_selection": false,
+  "wrong_combined_by_field_and_expected_modality": [
+    {
+      "count": 1,
+      "expected_modality": "F",
+      "field": "action"
+    },
+    {
+      "count": 22,
+      "expected_modality": "O",
+      "field": "modality"
+    }
+  ]
+}

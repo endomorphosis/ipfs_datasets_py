@@ -1,0 +1,514 @@
+{
+  "schema": "uscode-original-span-schema-sample/v1",
+  "revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "samples": [
+    {
+      "path": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-004d73c94ef41fa944e6e084a9ffd45501e6aeb11c358410cfce89aa49acb2e5-e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf.parquet",
+      "file_bytes": 40819,
+      "footer_bytes": 23806,
+      "num_rows": 8,
+      "num_row_groups": 1,
+      "schema": "schema_version: string\nrepository_id: string\nsource: struct<span_id: string, text: string, text_sha256: string, legal_id: string, revision: string, const (... 14 chars omitted)\n  child 0, span_id: string\n  child 1, text: string\n  child 2, text_sha256: string\n  child 3, legal_id: string\n  child 4, revision: string\n  child 5, constitution: bool\nautoencoder: struct<status: string, model_identity: string, embedding_model: string, semantic_embeddings: bool, f (... 482 chars omitted)\n  child 0, status: string\n  child 1, model_identity: string\n  child 2, embedding_model: string\n  child 3, semantic_embeddings: bool\n  child 4, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 5, source_binding_verified: bool\n  child 6, complete: bool\n  child 7, raw_vector: list<element: double>\n      child 0, element: double\n  child 8, cosine_similarity: double\n  child 9, reconstruction_loss: double\n  child 10, projected_vector: list<element: double>\n      child 0, element: double\n  child 11, projected_cosine_similarity: double\n  child 12, projected_reconstruction_loss: double\n  child 13, projected_target_conditioned: bool\ncompiler: struct<status: string, reason: string, complete: bool, canonical_complete: bool, decompiled: string, (... 513 chars omitted)\n  child 0, status: string\n  child 1, reason: string\n  child 2, complete: bool\n  child 3, canonical_complete: bool\n  child 4, decompiled: string\n  child 5, roundtrip_ok: bool\n  child 6, formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 7, canonical_formal_outputs: list<element: struct<family: string, format: string, payload_json: string, sha256: string, origin: s (... 75 chars omitted)\n      child 0, element: struct<family: string, format: string, payload_json: string, sha256: string, origin: string, indepen (... 60 chars omitted)\n          child 0, family: string\n          child 1, format: string\n          child 2, payload_json: string\n          child 3, sha256: string\n          child 4, origin: string\n          child 5, independent: bool\n          child 6, target_conditioned: bool\n          child 7, syntax_status: string\n  child 8, component_count: int64\n  child 9, components_artifact_sha256: string\n  child 10, components_artifact_pointer: string\nprovenance: struct<agent_id: string, code_identity: string, model_identity: string, batch_id: string, elapsed_se (... 170 chars omitted)\n  child 0, agent_id: string\n  child 1, code_identity: string\n  child 2, model_identity: string\n  child 3, batch_id: string\n  child 4, elapsed_seconds: double\n  child 5, wall_seconds_per_span: double\n  child 6, bridge_names: list<element: string>\n      child 0, element: string\n  child 7, evaluate_provers: bool\n  child 8, disk_cache: bool\n  child 9, parallel_workers: int64\n  child 10, sample_count: int64\nlake: struct<status: string, receipt_sha256: string, admitted: bool>\n  child 0, status: string\n  child 1, receipt_sha256: string\n  child 2, admitted: bool\nsource_target_artifact_sha256: string\nsource_target_artifact_pointer: string\ngoal_ids: list<element: string>\n  child 0, element: string\nadmitted: bool\nformalized: bool\ncomparison: struct<status: string, comparable: bool, agrees: bool, independent: bool, method: string, coverage_s (... 127 chars omitted)\n  child 0, status: string\n  child 1, comparable: bool\n  child 2, agrees: bool\n  child 3, independent: bool\n  child 4, method: string\n  child 5, coverage_scope: string\n  child 6, reason: string\n  child 7, mismatches: list<element: string>\n      child 0, element: string\n  child 8, autoencoder_output_count: int64\n  child 9, compiler_output_count: int64\nobservation_id: string",
+      "range_receipts": [
+        {
+          "http_status": 206,
+          "content_range": "bytes 40811-40818/40819",
+          "etag": "\"f36859aa4e65933593ff133c7d04a9f3f04324d66baa54a1001bbc1015f0a3f8\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-004d73c94ef41fa944e6e084a9ffd45501e6aeb11c358410cfce89aa49acb2e5-e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf.parquet"
+        },
+        {
+          "http_status": 206,
+          "content_range": "bytes 17005-40810/40819",
+          "etag": "\"f36859aa4e65933593ff133c7d04a9f3f04324d66baa54a1001bbc1015f0a3f8\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-004d73c94ef41fa944e6e084a9ffd45501e6aeb11c358410cfce89aa49acb2e5-e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf.parquet"
+        }
+      ],
+      "footer_sha256": "1f535d435190ddc0bb641f863fbfffc87d60aa9ed214a603b12673dd7297e9f2",
+      "scope": "Original pinned file footer; this is not a full file hash verification.",
+      "full_file_receipt": {
+        "path": "autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-004d73c94ef41fa944e6e084a9ffd45501e6aeb11c358410cfce89aa49acb2e5-e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf.parquet",
+        "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/paired-v1/paired_spans/legacy-cuda-census/paired_spans-004d73c94ef41fa944e6e084a9ffd45501e6aeb11c358410cfce89aa49acb2e5-e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf.parquet",
+        "bytes": 40819,
+        "sha256": "e59b8876374cc84ecc8e0010c2263bd5370cbf19def8289a7ccbf29278dfcecf",
+        "git_blob_sha1": "ea4b63f146383953f8de0610f6fb0bdcc32488bd",
+        "identity_verified": true,
+        "etag": null,
+        "repo_commit": null
+      },
+      "first_row": {
+        "schema_version": "uscode-paired-span-census/v1",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "source": {
+          "span_id": "uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656",
+          "text": "The amendment of subsec.",
+          "text_sha256": "61aeaa3c416d7232bfd85dff96a0458b7d3fa8720a89b1add29a05c9c5d02c96",
+          "legal_id": "usc:us:10:7229",
+          "revision": "ipfs-uscode-5016b86a",
+          "constitution": false
+        },
+        "autoencoder": {
+          "status": "guided_output",
+          "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+          "embedding_model": "mock:stable-sha256",
+          "semantic_embeddings": false,
+          "formal_outputs": [
+            {
+              "family": "frame",
+              "format": "modal-ir-formula/v1",
+              "payload_json": "{\"conditions\":[],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7229-uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656-f511cd0e373e5435:f0001\",\"metadata\":{\"aliased_from\":\"the_amendment_of_subsec\",\"cue\":\"__uscode_residual_span_fallback__\",\"fallback_rule\":\"uscode_residual_span_coverage_v1\",\"residual_segment_role\":\"clause\",\"residual_token_count\":4},\"operator\":{\"family\":\"frame\",\"label\":\"ontology_frame\",\"symbol\":\"Frame\",\"system\":\"FRAME_BM25\"},\"predicate\":{\"arguments\":[],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7229\",\"end_char\":24,\"source_id\":\"us-code-usc:us:10:7229-uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656-f511cd0e373e5435\",\"start_char\":0}}",
+              "sha256": "32e14a0bf8da608ddc3d2ccd88a2dc786cf9c7012201f441a73f62e7957a267e",
+              "origin": "autoencoder_guided_compiler",
+              "independent": false,
+              "target_conditioned": true,
+              "syntax_status": "not_checked"
+            }
+          ],
+          "source_binding_verified": true,
+          "complete": true,
+          "raw_vector": [
+            0.11102857914421714,
+            -0.0320416249095172,
+            -0.047843956621816695,
+            0.05170283354353619,
+            0.0679053772905388,
+            0.0680305236110441,
+            -0.09886709764161639,
+            -0.06939656309360201
+          ],
+          "cosine_similarity": 0.2591802780115466,
+          "reconstruction_loss": 0.43366655709830404,
+          "projected_vector": [
+            0.819733,
+            0.95811,
+            -0.408883,
+            0.063569,
+            -0.318177,
+            0.642928,
+            0.694872,
+            -0.933452
+          ],
+          "projected_cosine_similarity": 1.0,
+          "projected_reconstruction_loss": 0.0,
+          "projected_target_conditioned": true
+        },
+        "compiler": {
+          "status": "abstain",
+          "reason": "no_parser_elements",
+          "complete": true,
+          "canonical_complete": false,
+          "decompiled": "",
+          "roundtrip_ok": false,
+          "formal_outputs": [
+            {
+              "family": "frame",
+              "format": "modal-ir-formula/v1",
+              "payload_json": "{\"conditions\":[],\"exceptions\":[],\"formula_id\":\"us-code-usc:us:10:7229-uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656-f511cd0e373e5435:f0001\",\"metadata\":{\"aliased_from\":\"the_amendment_of_subsec\",\"cue\":\"__uscode_residual_span_fallback__\",\"fallback_rule\":\"uscode_residual_span_coverage_v1\",\"residual_segment_role\":\"clause\",\"residual_token_count\":4},\"operator\":{\"family\":\"frame\",\"label\":\"ontology_frame\",\"symbol\":\"Frame\",\"system\":\"FRAME_BM25\"},\"predicate\":{\"arguments\":[],\"name\":\"administrative_notice_hearing\",\"role\":\"clause\"},\"provenance\":{\"citation\":\"usc:us:10:7229\",\"end_char\":24,\"source_id\":\"us-code-usc:us:10:7229-uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656-f511cd0e373e5435\",\"start_char\":0}}",
+              "sha256": "32e14a0bf8da608ddc3d2ccd88a2dc786cf9c7012201f441a73f62e7957a267e",
+              "origin": "deterministic_codec",
+              "independent": false,
+              "target_conditioned": false,
+              "syntax_status": "not_checked"
+            }
+          ],
+          "canonical_formal_outputs": [],
+          "component_count": 0,
+          "components_artifact_sha256": null,
+          "components_artifact_pointer": ""
+        },
+        "provenance": {
+          "agent_id": "legacy-cuda-census",
+          "code_identity": "sha256:55d314fcb9cd258c1e4e576f55b7c2f9880676aba0f4516792db4bececca16d5",
+          "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+          "batch_id": "32bb1388b3d74b18a932e0f516ecdefa",
+          "elapsed_seconds": 16.484265209175646,
+          "wall_seconds_per_span": 2.060533151146956,
+          "bridge_names": [
+            "modal_frame_logic",
+            "deontic_norms",
+            "fol_tdfol",
+            "cec_dcec",
+            "external_prover_router"
+          ],
+          "evaluate_provers": false,
+          "disk_cache": false,
+          "parallel_workers": 1,
+          "sample_count": 8
+        },
+        "lake": {
+          "status": "not_run",
+          "receipt_sha256": null,
+          "admitted": false
+        },
+        "source_target_artifact_sha256": "bb1983b05a2b595f9fcf9197899567b68b43dcc7f0bd202c7f811656d7375dd7",
+        "source_target_artifact_pointer": "/rows/0/logic_target_observation",
+        "goal_ids": [
+          "AFTD-f86ae4b6ff45d72b5063"
+        ],
+        "admitted": false,
+        "formalized": false,
+        "comparison": {
+          "status": "diagnostic_agree",
+          "comparable": true,
+          "agrees": true,
+          "independent": false,
+          "method": "exact_canonical_ast_sequence/v1",
+          "coverage_scope": "all_emitted_formulas_not_semantic_span_coverage",
+          "reason": "identical_formal_representations",
+          "mismatches": [],
+          "autoencoder_output_count": 1,
+          "compiler_output_count": 1
+        },
+        "observation_id": "937349c80fcd70e9938a5e28cbff9786eb02fc48cac97a8c4c3fd706f4905be4"
+      },
+      "source_identity_rows": [
+        {
+          "source": {
+            "span_id": "uscode-span-1b937a1d55e5bc9ea014c4d8f20c151d85df832e462b317ee478003a4da59656",
+            "text": "The amendment of subsec.",
+            "text_sha256": "61aeaa3c416d7232bfd85dff96a0458b7d3fa8720a89b1add29a05c9c5d02c96",
+            "legal_id": "usc:us:10:7229",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "937349c80fcd70e9938a5e28cbff9786eb02fc48cac97a8c4c3fd706f4905be4"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-1a82981a4000629d99cda3910b36e249164a2b59215698ae47fa97ab079cde27",
+            "text": "L.",
+            "text_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+            "legal_id": "usc:us:10:7216",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "4e6731820218fda414f3289ac96039adfabcf6f0f020e425b80a4e9b8885509d"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-029041947fccd8fbab19e91e8def86a498517c4a941b6246e882ed97b710aee5",
+            "text": "5, 1990, 104 Stat.",
+            "text_sha256": "e4f33bab73ce3434bb64b6fac2fd92478f381a99bf7e481adaad2183fc05b945",
+            "legal_id": "usc:us:10:7217",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "d78069fd0d2693865a036f4393efd9e621135c96ee243472ce1162017b63712e"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-0ca4f2f42d7c092e86ed43e6753bae9a968cb2a1ceb41a8169b5b61ff470f331",
+            "text": "10:190.",
+            "text_sha256": "2c2f85e1cbd692d429730229723a47c62becd6b56b8e975bb7e58eb3d703a61a",
+            "legal_id": "usc:us:10:7214",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "7a7ca6dd5d780a8ad6165c4a52cff9dcaf1e1babe9f9777ff334aa1c6b92f89a"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-1817ff95087a399b9307a70ea8f9dfc9b42d419ffbd4c5094d84617516beb7d5",
+            "text": "30, 1993, 107 Stat.",
+            "text_sha256": "025405949bc34a14596770f29cb50f705ceb015cae6ae79dd0c97e25662f0885",
+            "legal_id": "usc:us:10:7229",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "492f7c5781f92fd5982d779e79cd6e5e7568973115b69b0b1a834215dc23edd7"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-03ce6071ff34f15f286989ca6c096d39baab9d38aae54370bdee08d228e30475",
+            "text": "7213 - Corps of Engineers: assignment or transfer of officers to duties involving civil functions From the U.S.",
+            "text_sha256": "b73cd398839cb4abfe40bb2fe8c5faa0f520b9b530fc82e0f7e2e0dcb7d2dd6f",
+            "legal_id": "usc:us:10:7213",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "a85f8f432e11b300a527615f79b64d2c1cad4bbf784d7b4353a74333b87f3fe1"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-01e7aa71ba4468e97ccb13019b7a3202f866e3be61b9614f627eb9c94a2fb31e",
+            "text": "A, title VIII, \u00a7808(b)(5), Aug.",
+            "text_sha256": "9e24925fa6db7b8751fe215294c650112d8288271e80028dd3af592eae3b97bd",
+            "legal_id": "usc:us:10:7203",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "3416904799697eb5802490e8bd8f76e6b11ef41aa551a769e5a3ebd360f3be46"
+        },
+        {
+          "source": {
+            "span_id": "uscode-span-1aae60638645faa4fad2f8bdf4d7ae64d566a51cee809138442ce38c42d8b5ab",
+            "text": "10, 1956, ch.",
+            "text_sha256": "6b2c028dc7819507b66c72d339b79d2aa73f9808686d666551854f6da8010493",
+            "legal_id": "usc:us:10:7203",
+            "revision": "ipfs-uscode-5016b86a",
+            "constitution": false
+          },
+          "observation_id": "ba7e27919268c78f62c1ee2edb8be97ae719d8e6b5c81ed70aa381a2dd7379d5"
+        }
+      ]
+    },
+    {
+      "path": "autoformal/uscode/census/legacy-cuda-census/census-00d1be422c4fe26d99fa954f8395ba18ebd31db9c50ad8c9101ba591152827b3.parquet",
+      "file_bytes": 105140,
+      "footer_bytes": 9783,
+      "num_rows": 32,
+      "num_row_groups": 1,
+      "schema": "schema_version: string\nrecord_kind: string\nrepository_id: string\nagent_id: string\nsource_span_id: string\nlegal_id: string\nsource_text: string\nsource_text_sha256: string\nautoencoder_text: string\ncompiler_decompiled: string\nautoencoder_compiled: string\nagrees: bool\nreason: string\ncompiler_roundtrip: bool\nstrict_compiler_agreement: bool\nconsensus: string\nreplicated: bool\nround_index: int32\nselected_families_json: string\nstitch_json: string\nholdout_scores_json: string\nthreshold_json: string\nbelow_threshold_json: string\ncosine_similarity: double\ncross_entropy_loss: double\nreconstruction_loss: double\nexport_error: string\ninput_json: string\ncomparison_json: string\ncomparison_provenance_json: string\ncomparison_kind: string\nmetric_scope: string\nrelease_id: string\ncode_identity: string\nmodel_identity: string\ncensus_sha256: string\nadmitted: bool\nformalized: bool\nwrote_compiler: bool",
+      "range_receipts": [
+        {
+          "http_status": 206,
+          "content_range": "bytes 105132-105139/105140",
+          "etag": "\"cb94c646d29fcf0d8c1d990b3ee16caa848d1595f0f0c723dcead97f79c87404\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/census/legacy-cuda-census/census-00d1be422c4fe26d99fa954f8395ba18ebd31db9c50ad8c9101ba591152827b3.parquet"
+        },
+        {
+          "http_status": 206,
+          "content_range": "bytes 95349-105131/105140",
+          "etag": "\"cb94c646d29fcf0d8c1d990b3ee16caa848d1595f0f0c723dcead97f79c87404\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/census/legacy-cuda-census/census-00d1be422c4fe26d99fa954f8395ba18ebd31db9c50ad8c9101ba591152827b3.parquet"
+        }
+      ],
+      "footer_sha256": "7dd3a98acf1bc183d1db7c64038f0975570029baab23f229d8c148b11d87be7f",
+      "scope": "Original pinned file footer; this is not a full file hash verification.",
+      "full_file_receipt": {
+        "path": "autoformal/uscode/census/legacy-cuda-census/census-00d1be422c4fe26d99fa954f8395ba18ebd31db9c50ad8c9101ba591152827b3.parquet",
+        "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/census/legacy-cuda-census/census-00d1be422c4fe26d99fa954f8395ba18ebd31db9c50ad8c9101ba591152827b3.parquet",
+        "bytes": 105140,
+        "sha256": "2894eca05d8ca47cac7908c20563d56b3288f8ea85088c256b0f18396ae2f25f",
+        "git_blob_sha1": "8503c2c800fed5ee528bb43235c12b1c2bc7594d",
+        "identity_verified": true,
+        "etag": null,
+        "repo_commit": null
+      },
+      "first_row": {
+        "schema_version": "uscode-autoformal-ae-compiler-census/v2",
+        "record_kind": "span",
+        "repository_id": "justicedao/uscode-autoformal-span-cache",
+        "agent_id": "legacy-cuda-census",
+        "source_span_id": "uscode-span-1d419b413892daeb8a74e4eb205c050cbcecf214cc3153427c1944769bf3306a",
+        "legal_id": "usc:us:10:101",
+        "source_text": "(2) Range activities .\u2014The term \"range activities\" means\u2014 (A) research, development, testing, and evaluation of military munitions, other ordnance, and weapons systems; and (B) the training of members of the armed forces in the use and handling of military munitions, other ordnance, and weapons systems.",
+        "source_text_sha256": "e27dd52b2b6b8c285c7465d85e70584477f0bd66467befc28e6440091525868f",
+        "autoencoder_text": "",
+        "compiler_decompiled": "",
+        "autoencoder_compiled": "",
+        "agrees": false,
+        "reason": "CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type",
+        "compiler_roundtrip": false,
+        "strict_compiler_agreement": false,
+        "consensus": "",
+        "replicated": false,
+        "round_index": 0,
+        "selected_families_json": "[]",
+        "stitch_json": "{}",
+        "holdout_scores_json": "{\"cosine_similarity\":null,\"cross_entropy_loss\":null,\"reconstruction_loss\":null}",
+        "threshold_json": "{}",
+        "below_threshold_json": "[]",
+        "cosine_similarity": null,
+        "cross_entropy_loss": null,
+        "reconstruction_loss": null,
+        "export_error": "",
+        "input_json": "{\"admitted\":false,\"autoencoder_observation\":{\"admitted\":false,\"citation\":\"10 U.S.C. 101\",\"compiler\":{\"admitted\":false,\"compiler_status\":\"abstain\",\"decompiled\":\"\",\"fields\":[\"definition_scope\",\"unsupported_norm_type\"],\"formalized\":false,\"learned_formula_generation\":false,\"reason\":\"CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type\"},\"constitution_source\":false,\"embedding_representation\":{\"algorithm\":\"SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6\",\"constituent_training_representation_verified\":false,\"dimensions\":8,\"embedding_model\":\"mock:stable-sha256\",\"historical_runtime_commit\":\"4f8ec909c82504e64efd5572ca50c7fa2e4f92c0\",\"semantic_embeddings\":false},\"entry_cid\":\"bafkreiekje5v4oxgsh7sqx5qozlnelbx5cxpyoyg36ooge43ucgsgflwby\",\"formalized\":false,\"historical_document_batch_index\":0,\"historical_document_batch_size\":64,\"historical_span_ordinal\":1807,\"identity_reconstruction\":\"historical-64-document-ordinal/v1\",\"lake\":{\"admitted\":false,\"status\":\"not_run\"},\"learned_formula_generation\":false,\"legal_id\":\"usc:us:10:101\",\"legal_ir_target_hash\":\"c9ccb52357e0a3311944ef729a371492bd5796a4c538d6886da3a5c39b3c144b\",\"progress_parent\":{\"bytes\":52701179,\"path\":\"/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime/inputs/7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03.parquet\",\"path_in_repo\":\"autoformal/uscode/resume-checkpoint.parquet\",\"repository_id\":\"justicedao/uscode-autoformal-span-cache\",\"revision\":\"f946ab97260acf795126efb5c84eadc57de26afc\",\"sha256\":\"7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03\"},\"raw_decoder\":{\"cosine_similarity\":0.12419517933830872,\"embedding\":[0.03370399388851536,-0.04958054708277247,-0.11305358061314162,-0.008943620423096743,0.042521361642207045,0.07618989063347423,0.005917733635966329,-0.07498539675612095],\"reconstruction_loss\":0.3028491806806062,\"safety_projection_used\":false},\"safety_projected_decoder\":{\"cosine_similarity\":0.196116135138184,\"embedding\":[0.03370088,-0.08147720000000001,-0.06579504,-0.01927868,0.03269412000000001,0.053186880000000006,0.02449036,-0.0928118],\"reconstruction_loss\":0.2984271103978696,\"safety_projection_used\":true,\"target_conditioned\":true},\"sample_id\":\"us-code-usc:us:10:101-uscode-span-1d419b413892daeb8a74e4eb205c050cbcecf214cc3153427c1944769bf3306a-15ed357958814599\",\"section\":\"101\",\"semantic_qualified\":false,\"source_authority_authenticated\":false,\"source_identity_match\":\"span_id+source_sha256+legal_id\",\"source_parent\":{\"bytes\":374277662,\"historical_document_batch_size\":64,\"identity_reconstruction\":\"historical-64-document-ordinal/v1\",\"path\":\"/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8\",\"path_in_repo\":\"uscode_parquet/laws.parquet\",\"release_id\":\"ipfs-uscode-5016b86a\",\"repository_id\":\"justicedao/ipfs_uscode\",\"revision\":\"5016b86a273ce5e4ffd066c5ae9f5fe494dd417e\",\"sha256\":\"4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8\"},\"source_section_offset\":39,\"source_sha256\":\"e27dd52b2b6b8c285c7465d85e70584477f0bd66467befc28e6440091525868f\",\"source_span_id\":\"uscode-span-1d419b413892daeb8a74e4eb205c050cbcecf214cc3153427c1944769bf3306a\",\"status\":\"diagnostic_observed\",\"text\":\"(2) Range activities .\\u2014The term \\\"range activities\\\" means\\u2014 (A) research, development, testing, and evaluation of military munitions, other ordnance, and weapons systems; and (B) the training of members of the armed forces in the use and handling of military munitions, other ordnance, and weapons systems.\",\"title\":\"10\"},\"autoencoder_text\":\"\",\"batch_observation\":{\"admitted\":false,\"batch_number\":7,\"bridges\":{\"adapter_workers\":1,\"disk_cache\":false,\"evaluate_provers\":false,\"evaluation_invoked\":[\"modal_frame_logic\",\"deontic_norms\",\"fol_tdfol\",\"cec_dcec\",\"external_prover_router\"],\"native_target_timeout_seconds\":0.0,\"native_timeout_fallback_count\":0,\"parallel_workers\":1,\"parallel_workers_used\":1,\"process_metric_caches_may_be_warm\":true,\"projected_observation_bridge_names\":[],\"requested\":[\"modal_frame_logic\",\"deontic_norms\",\"fol_tdfol\",\"cec_dcec\",\"external_prover_router\"],\"target_count\":32},\"campaign\":{\"batch_id\":\"cd5c85d01e6a4e47a42bd2910cccfa9f\",\"compiler_workers\":4,\"cpu_cuda_overlap\":true,\"inference_only\":true,\"progress\":{\"bytes\":52701179,\"path\":\"autoformal/uscode/resume-checkpoint.parquet\",\"repository\":\"justicedao/uscode-autoformal-span-cache\",\"revision\":\"f946ab97260acf795126efb5c84eadc57de26afc\",\"sha256\":\"7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03\"},\"runner_sha256\":\"f5c8f209781971c78455eb7037a115f18358ba5136a1a4a6429d9b048de72e1e\",\"source_sha256\":\"4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8\",\"whole_batch_seconds\":53.51822364702821},\"checkpoint\":{\"bytes\":398209746,\"path\":\"/home/barberb/portland-laws.github.io/ipfs_datasets_py/workspace/todo-queues/legal-ir-autoencoder-canonical.state.json\",\"runtime_loaded_architecture\":\"proof_aware_auxiliary_heads_v2\",\"sha256\":\"7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be\",\"vector_dimensions\":8,\"vector_table_counts\":{\"compiler_quality_embedding_weights\":57,\"decoded_embeddings\":0,\"decompiler_plan_embedding_weights\":12640,\"family_embedding_weights\":8,\"family_legal_ir_view_embedding_weights\":42,\"family_semantic_slot_embedding_weights\":70470,\"family_semantic_slot_legal_ir_view_embedding_weights\":284034,\"feature_embedding_weights\":170821,\"legal_ir_view_embedding_weights\":6,\"logic_signature_embedding_weights\":1777,\"predicate_argument_embedding_weights\":9394,\"round_trip_signal_embedding_weights\":124,\"semantic_slot_embedding_weights\":14014,\"semantic_slot_legal_ir_view_embedding_weights\":57187}},\"compute_backend\":{\"autoencoder_compute_backend\":\"torch_cuda\",\"autoencoder_compute_device\":\"cuda\",\"autoencoder_compute_device_request\":\"cuda\"},\"cuda\":{\"initial_batch_profile\":{\"cuda_device_time_us\":2455.2899999395013,\"cuda_kernel_event_count\":1791,\"profiled\":true},\"peak_allocated_bytes\":929792,\"peak_reserved_bytes\":23068672,\"profiled\":false},\"cuda_allocator_admission\":{\"allocated_bytes\":0,\"allocator_fraction\":0.016435181208681485,\"allocator_fraction_set\":true,\"budget_bytes\":2147483648,\"cuda_version\":\"13.0\",\"device\":0,\"device_name\":\"NVIDIA GB10\",\"free_bytes\":12712214528,\"host_global_gpu_reservation\":false,\"observed_at\":1790754011.986896,\"other_cuda_allocators_limited\":false,\"reserved_bytes\":0,\"safety_bytes\":2147483648,\"scope\":\"resident_worker_pytorch_allocator_and_observed_device_memory\",\"torch_version\":\"2.13.0+cu130\",\"total_bytes\":130663825408},\"device_budget\":{\"admission\":false,\"allocated_bytes\":0,\"budget_bytes\":2147483648,\"cuda_version\":\"13.0\",\"device\":0,\"device_name\":\"NVIDIA GB10\",\"enforcement\":\"cooperative_lock_and_polled_telemetry_not_device_quota\",\"free_bytes\":11521851392,\"host_global_gpu_reservation\":false,\"observed_at\":1790754270.121802,\"reserved_bytes\":23068672,\"safety_bytes\":2147483648,\"scope\":\"campaign_owner_allocator_and_observed_device_free_memory\",\"torch_version\":\"2.13.0+cu130\",\"total_bytes\":130663825408},\"embedding_representation\":{\"algorithm\":\"SHA256(normalized_text)[:16] seed; Python Random.uniform(-1,1); round6\",\"constituent_training_representation_verified\":false,\"dimensions\":8,\"embedding_model\":\"mock:stable-sha256\",\"historical_runtime_commit\":\"4f8ec909c82504e64efd5572ca50c7fa2e4f92c0\",\"semantic_embeddings\":false},\"formalized\":false,\"heldout_canary\":false,\"logic_tree\":{\"compiler\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py\",\"decompiler\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py\",\"parser\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py\"},\"mode\":\"legacy_mock_diagnostic\",\"model_config\":{\"compiler_quality_embedding_weight_scale\":0.5,\"compiler_quality_family_logit_scale\":0.0,\"compute_device\":\"cuda\",\"cosine_reconstruction_weight\":0.5,\"decompiler_plan_embedding_weight_scale\":0.5,\"decompiler_plan_family_logit_scale\":0.0,\"decompiler_plan_legal_ir_view_logit_scale\":0.0,\"embedding_head_update_normalization\":1.0,\"family_embedding_weight_scale\":0.5,\"family_legal_ir_view_embedding_weight_scale\":0.5,\"family_logit_head_update_normalization\":0.0,\"family_semantic_slot_embedding_weight_scale\":0.5,\"family_semantic_slot_legal_ir_view_embedding_weight_scale\":0.5,\"family_semantic_slot_legal_ir_view_logit_scale\":0.0,\"feature_activity_reference\":64,\"feature_codec\":null,\"feature_embedding_weight_scale\":0.5,\"feature_family_logit_scale\":0.0,\"feature_logit_clip\":24.0,\"initial_embedding_rotation_scale\":0.1,\"initial_embedding_scale\":0.02,\"legacy_distillation_adapters\":null,\"legacy_embedding_adapters\":null,\"legal_ir_view_embedding_weight_scale\":0.5,\"legal_ir_view_family_logit_scale\":0.0,\"legal_ir_view_head_update_normalization\":0.0,\"legal_ir_view_logit_scale\":1.0,\"logic_signature_embedding_weight_scale\":0.5,\"logic_signature_family_logit_scale\":0.0,\"logic_signature_legal_ir_view_logit_scale\":0.0,\"max_amendment_operation_features\":64,\"max_applicability_scope_features\":64,\"max_authority_jurisdiction_features\":64,\"max_canonical_ir_graph_features\":64,\"max_clause_topology_features\":64,\"max_codec_feature_keys\":0,\"max_compiler_contract_features\":64,\"max_compiler_latent_profile_features\":48,\"max_condition_consequence_features\":64,\"max_constraint_grounding_features\":64,\"max_contrastive_ir_boundary_features\":64,\"max_coreference_binding_features\":64,\"max_cycle_consistency_features\":64,\"max_decompiler_surface_template_features\":48,\"max_defeasible_priority_features\":64,\"max_definition_grounding_features\":64,\"max_discourse_flow_features\":64,\"max_discretion_standard_features\":64,\"max_enforcement_remedy_features\":64,\"max_entity_binding_features\":64,\"max_enumeration_hierarchy_features\":64,\"max_equivalence_prototype_features\":48,\"max_evidentiary_burden_features\":64,\"max_legal_ir_token_bigram_features\":12,\"max_legal_ir_token_features\":24,\"max_legal_ir_token_trigram_features\":8,\"max_legal_relation_features\":64,\"max_legal_semantic_frame_features\":64,\"max_logic_view_contract_features\":64,\"max_logical_connective_features\":64,\"max_mental_state_features\":64,\"max_normative_polarity_features\":48,\"max_objective_residual_features\":64,\"max_procedural_lifecycle_features\":64,\"max_proof_obligation_features\":64,\"max_provenance_alignment_features\":64,\"max_quantifier_scope_features\":64,\"max_quantitative_formula_features\":64,\"max_reference_dependency_features\":64,\"max_repair_plan_features\":64,\"max_round_trip_bridge_features\":64,\"max_semantic_slot_interactions\":64,\"max_status_transition_features\":64,\"max_temporal_validity_features\":64,\"max_token_bigram_features\":24,\"max_token_features\":48,\"max_token_trigram_features\":12,\"modal_families\":[\"alethic\",\"deontic\",\"temporal\",\"epistemic\",\"doxastic\",\"dynamic\",\"conditional_normative\",\"frame\",\"hybrid\"],\"predicate_argument_embedding_weight_scale\":0.5,\"predicate_argument_family_logit_scale\":0.0,\"predicate_argument_legal_ir_view_logit_scale\":0.0,\"proof_feedback_version_fingerprint\":\"\",\"proof_head_abstention_threshold\":0.55,\"proof_head_logit_clip\":12.0,\"proof_head_max_family_contexts\":32,\"proof_head_max_labels\":64,\"round_trip_signal_embedding_weight_scale\":0.5,\"round_trip_signal_family_logit_scale\":0.0,\"round_trip_signal_legal_ir_view_logit_scale\":0.0,\"semantic_slot_embedding_weight_scale\":0.5,\"semantic_slot_family_logit_scale\":0.0,\"semantic_slot_interaction_weight\":0.35,\"semantic_slot_legal_ir_view_embedding_weight_scale\":0.5,\"semantic_slot_legal_ir_view_family_logit_scale\":0.0,\"semantic_slot_legal_ir_view_logit_scale\":0.0},\"producer_source\":{\"package_root\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py\",\"python_file_count\":7908,\"sha256\":\"f78598ebdf63de287e34bd10797851af73ecbe91f80cdd2bba736238a85802a9\"},\"requested_span_count\":32,\"sample_count\":32,\"sample_error_count\":0,\"schema_version\":\"legacy-span-cuda-diagnostic/v1\",\"semantic_qualified\":false,\"temperature\":0,\"timings\":{\"bridge_on_evaluate_seconds\":24.46609186101705,\"compiler_seconds\":0.0001516819465905428,\"elapsed_seconds\":26.20471427589655,\"producer_guard_seconds\":1.2782404988538474,\"projected_observation_seconds\":0.21074270294047892,\"sample_preparation_seconds\":0.24931240919977427,\"wall_seconds_per_span\":0.8188973211217672},\"training_executed\":false,\"use_sample_memory\":false},\"comparison\":{\"agrees\":false,\"capture\":{\"learned_text_unavailable\":true,\"replicated\":false},\"reason\":\"inference_still_failing\"},\"comparison_provenance\":{\"kind\":\"legacy_cuda_observation\",\"producer_source\":{\"package_root\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py\",\"python_file_count\":7908,\"sha256\":\"f78598ebdf63de287e34bd10797851af73ecbe91f80cdd2bba736238a85802a9\"}},\"compiler_result\":{\"admitted\":false,\"compiler_status\":\"abstain\",\"decompiled\":\"\",\"fields\":[\"definition_scope\",\"unsupported_norm_type\"],\"formalized\":false,\"learned_formula_generation\":false,\"reason\":\"CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type\"},\"cosine_similarity\":null,\"cross_entropy_loss\":null,\"decompiled\":\"\",\"formalized\":false,\"learned_autoencoder_execution\":true,\"learned_formula_generation\":false,\"legal_id\":\"usc:us:10:101\",\"metric_scope\":\"legacy_mock_embedding_diagnostic_not_semantic_or_heldout\",\"raw_batch_metrics\":{\"cosine_loss\":0.8260121515730137,\"cross_entropy_entropy_loss\":0.04332169878499658,\"cross_entropy_excess_loss\":2.153902878551223,\"cross_entropy_loss\":2.1972245773362196,\"embedding_cosine_similarity\":0.17398784842698628,\"frame_ranking_loss\":0.0,\"legal_ir_target_count\":32,\"reconstruction_loss\":0.3663547660868242,\"sample_count\":32,\"symbolic_validity_penalty\":0.84375},\"raw_sample_evaluation\":{\"decoded_embeddings\":[0.03370399388851536,-0.04958054708277247,-0.11305358061314162,-0.008943620423096743,0.042521361642207045,0.07618989063347423,0.005917733635966329,-0.07498539675612095],\"legal_ir_target_hashes\":\"c9ccb52357e0a3311944ef729a371492bd5796a4c538d6886da3a5c39b3c144b\"},\"reason\":\"CanonicalErrorCode.UNSUPPORTED_SEMANTICS:definition_scope,unsupported_norm_type\",\"reconstruction_loss\":null,\"source_span_id\":\"uscode-span-1d419b413892daeb8a74e4eb205c050cbcecf214cc3153427c1944769bf3306a\",\"strict_compiler_agreement\":false,\"text\":\"(2) Range activities .\\u2014The term \\\"range activities\\\" means\\u2014 (A) research, development, testing, and evaluation of military munitions, other ordnance, and weapons systems; and (B) the training of members of the armed forces in the use and handling of military munitions, other ordnance, and weapons systems.\"}",
+        "comparison_json": "{\"agrees\":false,\"capture\":{\"learned_text_unavailable\":true,\"replicated\":false},\"reason\":\"inference_still_failing\"}",
+        "comparison_provenance_json": "{\"binding\":{\"kind\":\"legacy_cuda_observation\",\"producer_source\":{\"package_root\":\"/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py\",\"python_file_count\":7908,\"sha256\":\"f78598ebdf63de287e34bd10797851af73ecbe91f80cdd2bba736238a85802a9\"}},\"kind\":\"retained_comparison\"}",
+        "comparison_kind": "family_projection_not_semantic_equivalence",
+        "metric_scope": "legacy_mock_embedding_diagnostic_not_semantic_or_heldout",
+        "release_id": "ipfs-uscode-5016b86a",
+        "code_identity": "sha256:f78598ebdf63de287e34bd10797851af73ecbe91f80cdd2bba736238a85802a9",
+        "model_identity": "legacy-mock-diagnostic:sha256:7236de26bd3d7f8414ffa04805f1b6e8a8849f9e0103cec6edb4985b911658be",
+        "census_sha256": "18ef9f7f627761a84be2f8240c9bb53999c127d78fd933116b043a0a472aa252",
+        "admitted": false,
+        "formalized": false,
+        "wrote_compiler": false
+      }
+    },
+    {
+      "path": "autoformal/uscode/census-v3/legacy-cuda-census/census-01791d199b0ea58865b9e73aa1f6dc59ab6f2ed72c2c23ff7af7421d02f5e677.parquet",
+      "file_bytes": 14763809,
+      "footer_bytes": 18064,
+      "num_rows": 32,
+      "num_row_groups": 1,
+      "schema": "schema_version: string\nrecord_kind: string\nrepository_id: string\nagent_id: string\nsource_span_id: string\nlegal_id: string\nsource_text: string\nsource_text_sha256: string\nautoencoder_text: string\ncompiler_decompiled: string\nautoencoder_compiled: string\nagrees: bool\nreason: string\ncompiler_roundtrip: bool\nstrict_compiler_agreement: bool\nconsensus: string\nreplicated: bool\nround_index: int32\nselected_families_json: string\nstitch_json: string\nholdout_scores_json: string\nthreshold_json: string\nbelow_threshold_json: string\ncosine_similarity: double\ncross_entropy_loss: double\nreconstruction_loss: double\nexport_error: string\ninput_json: string\ncomparison_json: string\ncomparison_provenance_json: string\ncomparison_kind: string\nmetric_scope: string\nrelease_id: string\ncode_identity: string\nmodel_identity: string\ncensus_sha256: string\nadmitted: bool\nformalized: bool\nwrote_compiler: bool\nautoencoder_output_kind: string\nautoencoder_output_status: string\ncompiler_status: string\ncompiler_reason: string\ncompilation_complete: bool\nautoencoder_raw_decoder_json: string\nautoencoder_safety_projected_decoder_json: string\nembedding_representation_json: string\ncompiler_rules_json: string\ncompiler_components_json: string\nlogic_target_observation_json: string\nbridge_names_json: string\nobserved_logic_families_json: string\nobserved_logic_views_json: string",
+      "range_receipts": [
+        {
+          "http_status": 206,
+          "content_range": "bytes 14763801-14763808/14763809",
+          "etag": "\"f70ad6997eb63217221f2c387f5a59f9a8c9e4144165e49c57bb8c4e3a5c9335\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/census-v3/legacy-cuda-census/census-01791d199b0ea58865b9e73aa1f6dc59ab6f2ed72c2c23ff7af7421d02f5e677.parquet"
+        },
+        {
+          "http_status": 206,
+          "content_range": "bytes 14745737-14763800/14763809",
+          "etag": "\"f70ad6997eb63217221f2c387f5a59f9a8c9e4144165e49c57bb8c4e3a5c9335\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/census-v3/legacy-cuda-census/census-01791d199b0ea58865b9e73aa1f6dc59ab6f2ed72c2c23ff7af7421d02f5e677.parquet"
+        }
+      ],
+      "footer_sha256": "40975ada8ae99b1ac50562764a6cdba0f0c1f1f310f93abaf787de72b8a63693",
+      "scope": "Original pinned file footer; this is not a full file hash verification."
+    },
+    {
+      "path": "autoformal/uscode/resume-checkpoint.parquet",
+      "file_bytes": 52701179,
+      "footer_bytes": 13936,
+      "num_rows": 443905,
+      "num_row_groups": 5,
+      "schema": "record_kind: string\ndataset_id: string\nagent_id: string\nrole: string\nheartbeat: string\ndocuments: int32\nsource_parquet: string\nsource_span_id: string\nlegal_id: string\nstatus: string\nsealed: bool\nclaim_worker: string\nclaim_token: string\nsource_sha256: string\nreason: string\ncode_identity: string\nterm_id: string\nterm_kind: string\nterm_value: string\ntask_id: string\nfailure_mode: string\nwork_kind: string\nowner_agent: string\nsealed_count: int32\ngap_count: int32\npending_count: int32\nadmitted: bool\nformalized: bool",
+      "range_receipts": [
+        {
+          "http_status": 206,
+          "content_range": "bytes 52701171-52701178/52701179",
+          "etag": "\"7ce258faea8e617731c64514bd547779f87f2bf7e8f23b3202d058e633bf4cf1\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/resume-checkpoint.parquet"
+        },
+        {
+          "http_status": 206,
+          "content_range": "bytes 52687235-52701170/52701179",
+          "etag": "\"7ce258faea8e617731c64514bd547779f87f2bf7e8f23b3202d058e633bf4cf1\"",
+          "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/resume-checkpoint.parquet"
+        }
+      ],
+      "footer_sha256": "6f6a01516903cb7404672c07a07bf62dee29a76ee1b867e33a32a8883d2b5995",
+      "scope": "Original pinned file footer; this is not a full file hash verification."
+    }
+  ],
+  "modal_first_row": {
+    "path": "autoformal/uscode/modal-ir/legal-modal-parser-v1/parts/part-w0-0000000.jsonl",
+    "range_receipt": {
+      "http_status": 206,
+      "content_range": "bytes 0-131071/14706563",
+      "etag": "\"3685616a85c2792b22fccfe487afc10a55bc04e8330a5bb15a3a879764acd34e\"",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/modal-ir/legal-modal-parser-v1/parts/part-w0-0000000.jsonl"
+    },
+    "first_row": {
+      "admitted": false,
+      "formalized": false,
+      "formula_count": 2,
+      "frame_candidates": [
+        {
+          "domain": "administrative",
+          "explanation": "Frame administrative_notice_hearing matched and with BM25 score 1.009.",
+          "frame_id": "administrative_notice_hearing",
+          "label": "Administrative notice and hearing",
+          "matched_terms": [
+            "and"
+          ],
+          "score": 1.009246
+        },
+        {
+          "domain": "criminal",
+          "explanation": "Frame criminal_penalty_enforcement had no lexical query matches; BM25 score 0.000.",
+          "frame_id": "criminal_penalty_enforcement",
+          "label": "Criminal penalty enforcement",
+          "matched_terms": [],
+          "score": 0.0
+        },
+        {
+          "domain": "housing",
+          "explanation": "Frame housing_voucher_benefits had no lexical query matches; BM25 score 0.000.",
+          "frame_id": "housing_voucher_benefits",
+          "label": "Housing voucher benefits",
+          "matched_terms": [],
+          "score": 0.0
+        }
+      ],
+      "legal_id": "usc:us:16:1244",
+      "logic_lines": [
+        "O(revise_the_feasibility_and_suitability_studies)",
+        "\u25c7(additions_to_the_trails)"
+      ],
+      "modal_ir": {
+        "document_id": "us-code-16-1244-f857211d43b48b76",
+        "formulas": [
+          {
+            "conditions": [],
+            "exceptions": [],
+            "formula_id": "us-code-16-1244-f857211d43b48b76:f0001",
+            "metadata": {
+              "cue": "shall",
+              "cue_end_char": 80,
+              "cue_start_char": 75
+            },
+            "operator": {
+              "family": "deontic",
+              "label": "obligation",
+              "symbol": "O",
+              "system": "D"
+            },
+            "predicate": {
+              "arguments": [],
+              "name": "revise_the_feasibility_and_suitability_studies",
+              "role": "clause"
+            },
+            "provenance": {
+              "citation": "16 U.S.C. 1244",
+              "end_char": 210,
+              "source_id": "us-code-16-1244-f857211d43b48b76",
+              "start_char": 0
+            }
+          },
+          {
+            "conditions": [],
+            "exceptions": [],
+            "formula_id": "us-code-16-1244-f857211d43b48b76:f0002",
+            "metadata": {
+              "cue": "possible",
+              "cue_end_char": 185,
+              "cue_start_char": 177
+            },
+            "operator": {
+              "family": "alethic",
+              "label": "possible",
+              "symbol": "\u25c7",
+              "system": "S5"
+            },
+            "predicate": {
+              "arguments": [],
+              "name": "additions_to_the_trails",
+              "role": "clause"
+            },
+            "provenance": {
+              "citation": "16 U.S.C. 1244",
+              "end_char": 210,
+              "source_id": "us-code-16-1244-f857211d43b48b76",
+              "start_char": 0
+            }
+          }
+        ],
+        "frame_candidates": [],
+        "frame_logic": {
+          "graph_id": null,
+          "metadata": {},
+          "neo4j_node_labels": [],
+          "neo4j_relationship_types": [],
+          "ontology_name": "modal_flogic_ir",
+          "selected_frame": null,
+          "triples": []
+        },
+        "metadata": {
+          "citation": "16 U.S.C. 1244",
+          "deterministic_parser": "legal_modal_parser_v1",
+          "segment_count": 1
+        },
+        "normalized_text": "(2) Requirements for revision (A) In general The Secretary of the Interior shall revise the feasibility and suitability studies for certain national trails for consideration of possible additions to the trails.",
+        "source": "us_code",
+        "version": "modal-ir-v1"
+      },
+      "parser": "legal_modal_parser_v1",
+      "qualified": false,
+      "reason": "",
+      "schema_version": "uscode-modal-ir/v1",
+      "section": "1244",
+      "selected_frame": "administrative_notice_hearing",
+      "source_sha256": "79fc38cb4b70874d2985e156bba822e557b78c6f01c26a0033ae95995e97cd62",
+      "source_span_id": "uscode-span-000081f053b841eb9308b8f898ae705032e547f909d5443360450514d7030d06",
+      "status": "sealed",
+      "text": "(2) Requirements for revision (A) In general The Secretary of the Interior shall revise the feasibility and suitability studies for certain national trails for consideration of possible additions to the trails.",
+      "title": "16"
+    },
+    "scope": "One row, not a corpus count or complete shard hash verification."
+  }
+}

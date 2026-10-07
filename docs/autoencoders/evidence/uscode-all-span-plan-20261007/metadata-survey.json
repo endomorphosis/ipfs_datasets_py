@@ -1,0 +1,307 @@
+{
+  "schema": "uscode-span-dataset-census-metadata-survey/v1",
+  "repository_id": "justicedao/uscode-autoformal-span-cache",
+  "revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "files": 6016,
+  "bytes": 4870101925,
+  "groups": {
+    ".gitattributes": {
+      "files": 1,
+      "bytes": 12274
+    },
+    "README.md": {
+      "files": 1,
+      "bytes": 13863
+    },
+    "autoformal/uscode/attempts/report-1cc965086dd79e7e17206de107282e559012cf606838b5984f8cc3ee7c186385.json": {
+      "files": 1,
+      "bytes": 112947
+    },
+    "autoformal/uscode/attempts/report-6e5a77006a8b1894c48c72d56ada781db5b962056059d1b16e314019bacecf00.json": {
+      "files": 1,
+      "bytes": 200871
+    },
+    "autoformal/uscode/attempts/report-7d45534ed8a0e63a412f2de8527a3a31c7e17e2bbcd62eeea6869ea3b426d972.json": {
+      "files": 1,
+      "bytes": 201524
+    },
+    "autoformal/uscode/autoencoders/anchors": {
+      "files": 14,
+      "bytes": 78582694
+    },
+    "autoformal/uscode/autoencoders/artifacts": {
+      "files": 22,
+      "bytes": 11061736
+    },
+    "autoformal/uscode/autoencoders/en": {
+      "files": 3,
+      "bytes": 48278
+    },
+    "autoformal/uscode/batches/retained-source-operative-clauses-3-20260927": {
+      "files": 2,
+      "bytes": 4185595
+    },
+    "autoformal/uscode/census-v3/legacy-cuda-census": {
+      "files": 37,
+      "bytes": 680451081
+    },
+    "autoformal/uscode/census/legacy-cuda-census": {
+      "files": 846,
+      "bytes": 92990770
+    },
+    "autoformal/uscode/census/node-a": {
+      "files": 2,
+      "bytes": 111378
+    },
+    "autoformal/uscode/census/node-b": {
+      "files": 1,
+      "bytes": 64987
+    },
+    "autoformal/uscode/census/retained-census-20260928": {
+      "files": 1,
+      "bytes": 517335
+    },
+    "autoformal/uscode/exchanges/legacy-cuda-census": {
+      "files": 883,
+      "bytes": 984723
+    },
+    "autoformal/uscode/exchanges/node-a": {
+      "files": 2,
+      "bytes": 2151
+    },
+    "autoformal/uscode/exchanges/node-b": {
+      "files": 1,
+      "bytes": 1075
+    },
+    "autoformal/uscode/exchanges/retained-census-20260928": {
+      "files": 1,
+      "bytes": 1131
+    },
+    "autoformal/uscode/feature-pretraining/artifacts": {
+      "files": 505,
+      "bytes": 686617286
+    },
+    "autoformal/uscode/feature-pretraining/generations": {
+      "files": 6,
+      "bytes": 1929
+    },
+    "autoformal/uscode/feature-pretraining/reports": {
+      "files": 107,
+      "bytes": 48784183
+    },
+    "autoformal/uscode/feature-pretraining/updates": {
+      "files": 98,
+      "bytes": 422415
+    },
+    "autoformal/uscode/formula-text/v1": {
+      "files": 4,
+      "bytes": 749849
+    },
+    "autoformal/uscode/goals/legacy-cuda-census": {
+      "files": 883,
+      "bytes": 48761341
+    },
+    "autoformal/uscode/goals/node-a": {
+      "files": 2,
+      "bytes": 21668
+    },
+    "autoformal/uscode/goals/node-b": {
+      "files": 1,
+      "bytes": 3502
+    },
+    "autoformal/uscode/goals/retained-census-20260928": {
+      "files": 1,
+      "bytes": 37412
+    },
+    "autoformal/uscode/modal-ir/legal-modal-parser-v1": {
+      "files": 133,
+      "bytes": 1218995078
+    },
+    "autoformal/uscode/outputs/retained-output-index": {
+      "files": 2,
+      "bytes": 60880
+    },
+    "autoformal/uscode/paired-v1/artifacts": {
+      "files": 611,
+      "bytes": 1896349436
+    },
+    "autoformal/uscode/paired-v1/goals": {
+      "files": 611,
+      "bytes": 7342668
+    },
+    "autoformal/uscode/paired-v1/manifests": {
+      "files": 611,
+      "bytes": 1294098
+    },
+    "autoformal/uscode/paired-v1/paired_spans": {
+      "files": 611,
+      "bytes": 26259160
+    },
+    "autoformal/uscode/reports/v1": {
+      "files": 8,
+      "bytes": 12115531
+    },
+    "autoformal/uscode/resume-checkpoint.parquet": {
+      "files": 1,
+      "bytes": 52701179
+    },
+    "autoformal/uscode/span-evidence.parquet": {
+      "files": 1,
+      "bytes": 39897
+    }
+  },
+  "bounded_fetches": [
+    {
+      "path": "README.md",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/README.md",
+      "bytes": 13863,
+      "sha256": "12baa9ccf9038e7799fdd0dd59991dbb202b80617f00a636f0f7963e6b2336a6",
+      "git_blob_sha1": "ce06ecb91419c806b8b109ab73ddaa9793508ce1",
+      "identity_verified": true,
+      "etag": "\"ce06ecb91419c806b8b109ab73ddaa9793508ce1\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/autoencoders/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.seed.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/autoencoders/anchors/1446cb1859ddf4ed40fb5576f6e320eece4cec268a008c5c07bffeaf959cd8dd.seed.json",
+      "bytes": 440,
+      "sha256": "f634094e0b24ebdaae41ac0271a4dd82b649f3eeb165addb50eb9af85ae00de2",
+      "git_blob_sha1": "9737d14e844776dcd04016b2e52451b6237f0cdd",
+      "identity_verified": true,
+      "etag": "\"9737d14e844776dcd04016b2e52451b6237f0cdd\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/autoencoders/anchors/4ab64387f755348aaa8fb7dd6871f84673068ada3af13b4c55d165dd66092bf7.seed.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/autoencoders/anchors/4ab64387f755348aaa8fb7dd6871f84673068ada3af13b4c55d165dd66092bf7.seed.json",
+      "bytes": 440,
+      "sha256": "62f2f3a39fd2bac9bc48759382b2fb77480dffc4bd5961521644d571772c7d59",
+      "git_blob_sha1": "71e7e9e1903607acd1e21f37f9923bcee581d314",
+      "identity_verified": true,
+      "etag": "\"71e7e9e1903607acd1e21f37f9923bcee581d314\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/autoencoders/anchors/9de027c863b891d1201337ce41683440af554dc5bf5006d6450efe76825356b1.seed.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/autoencoders/anchors/9de027c863b891d1201337ce41683440af554dc5bf5006d6450efe76825356b1.seed.json",
+      "bytes": 439,
+      "sha256": "5e2b72e3e1bc547ebc6f1d522cd5456da2c465e284577d1fc12d9b2656d5717d",
+      "git_blob_sha1": "8787b2239bd4076caa4ed8150650999ed234e5cb",
+      "identity_verified": true,
+      "etag": "\"8787b2239bd4076caa4ed8150650999ed234e5cb\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/feature-pretraining/artifacts/00528be2086a1b607a09a71b8c5dd3a35040b751642cc95c10205cd569c89fe7.checkpoint.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/feature-pretraining/artifacts/00528be2086a1b607a09a71b8c5dd3a35040b751642cc95c10205cd569c89fe7.checkpoint.json",
+      "bytes": 1132,
+      "sha256": "00528be2086a1b607a09a71b8c5dd3a35040b751642cc95c10205cd569c89fe7",
+      "git_blob_sha1": "7f25a1d972e5746e7f69a5e1f5517c8d9c9209f8",
+      "identity_verified": true,
+      "etag": "\"7f25a1d972e5746e7f69a5e1f5517c8d9c9209f8\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/feature-pretraining/artifacts/01044db2fa5d164ba5365d442daa89783ec0633dc2aeb35e4f1c75166f3100cd.checkpoint.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/feature-pretraining/artifacts/01044db2fa5d164ba5365d442daa89783ec0633dc2aeb35e4f1c75166f3100cd.checkpoint.json",
+      "bytes": 1132,
+      "sha256": "01044db2fa5d164ba5365d442daa89783ec0633dc2aeb35e4f1c75166f3100cd",
+      "git_blob_sha1": "ed52db3f29b97959202c61725c8b7fed21ef8322",
+      "identity_verified": true,
+      "etag": "\"ed52db3f29b97959202c61725c8b7fed21ef8322\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/feature-pretraining/artifacts/024ca47aacabee4e364a7c41429e6263391b2c0af1abee897eb649bed66a0666.checkpoint.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/feature-pretraining/artifacts/024ca47aacabee4e364a7c41429e6263391b2c0af1abee897eb649bed66a0666.checkpoint.json",
+      "bytes": 1132,
+      "sha256": "024ca47aacabee4e364a7c41429e6263391b2c0af1abee897eb649bed66a0666",
+      "git_blob_sha1": "1262e01f746199c3937242a1c9474d7c17a6d8ef",
+      "identity_verified": true,
+      "etag": "\"1262e01f746199c3937242a1c9474d7c17a6d8ef\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w0.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w0.json",
+      "bytes": 697,
+      "sha256": "172abd99ec2601e38b44868bcd261c4317377a919fbbdc8b13de7142e5e6f322",
+      "git_blob_sha1": "d9e1fedabba4f4917bca5966f75e8263d990143b",
+      "identity_verified": true,
+      "etag": "\"d9e1fedabba4f4917bca5966f75e8263d990143b\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w1.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w1.json",
+      "bytes": 697,
+      "sha256": "781a3adedf6b9449256bd17868253f8753f55b00a48c10abb6e703e6bc13a85a",
+      "git_blob_sha1": "670952af27fd58eb0e457759ef06898e148b8207",
+      "identity_verified": true,
+      "etag": "\"670952af27fd58eb0e457759ef06898e148b8207\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w10.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/modal-ir/legal-modal-parser-v1/manifest-w10.json",
+      "bytes": 708,
+      "sha256": "2672794a337a34b67d08b70d6c9c70f576957bd206599ce86418e8d18f4a0bf6",
+      "git_blob_sha1": "b32cfc9fe68a11dc0f5e2b4704e67dc7f444975b",
+      "identity_verified": true,
+      "etag": "\"b32cfc9fe68a11dc0f5e2b4704e67dc7f444975b\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/paired-v1/manifests/legacy-cuda-census/manifest-00319d67e72123f28457c42f94e4ed395b39c5476c6f3a8a33893486afcec92d.json",
+      "bytes": 2118,
+      "sha256": "c5427410ef41d3a6a40778a15b0c2e85b9f87d145840c5106e1d96b129ff9fc1",
+      "git_blob_sha1": "856a39cba17e5bfcdc1377f05980ec086aa32311",
+      "identity_verified": true,
+      "etag": "\"856a39cba17e5bfcdc1377f05980ec086aa32311\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json",
+      "bytes": 26688,
+      "sha256": "0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed",
+      "git_blob_sha1": "2b2863a353df9d0bed40a2a184026a7b0bdaa4d9",
+      "identity_verified": true,
+      "etag": "\"2b2863a353df9d0bed40a2a184026a7b0bdaa4d9\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/reports/v1/manifests/141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/reports/v1/manifests/141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea.json",
+      "bytes": 12123,
+      "sha256": "141c0182a532d30d0beb1886dcaa7071fd65aa5441a8ee9da92e85264630b0ea",
+      "git_blob_sha1": "fd6f1ce72d7dd5f3ad5418f1337e5062449aa19b",
+      "identity_verified": true,
+      "etag": "\"fd6f1ce72d7dd5f3ad5418f1337e5062449aa19b\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/reports/v1/manifests/376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/reports/v1/manifests/376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18.json",
+      "bytes": 11882,
+      "sha256": "376e7def7c18e0851908190de9dae6d5535eba0efd46e09d45b4fede75d36c18",
+      "git_blob_sha1": "8572b1a01765de09c71ef50e5c7ea24502a1ac3f",
+      "identity_verified": true,
+      "etag": "\"8572b1a01765de09c71ef50e5c7ea24502a1ac3f\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    },
+    {
+      "path": "autoformal/uscode/reports/v1/manifests/93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9.json",
+      "url": "https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/resolve/765176c6db79ba65c1697c21dead43666350b730/autoformal/uscode/reports/v1/manifests/93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9.json",
+      "bytes": 12120,
+      "sha256": "93d2f5a4779f6888bdf8938607e5a8990dbf019f00cf003faa704fc2d56d40f9",
+      "git_blob_sha1": "49c325e87122fda38c16bc31979665e06ad18add",
+      "identity_verified": true,
+      "etag": "\"49c325e87122fda38c16bc31979665e06ad18add\"",
+      "repo_commit": "765176c6db79ba65c1697c21dead43666350b730"
+    }
+  ],
+  "downloaded_bytes": 85611,
+  "scope": "Pinned main metadata only; row counts and identities not inferred from file counts."
+}

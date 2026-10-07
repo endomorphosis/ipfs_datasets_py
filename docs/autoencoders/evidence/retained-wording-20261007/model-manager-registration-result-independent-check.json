@@ -1,0 +1,171 @@
+{
+  "actual_local_snapshot_checks": {
+    "actual_added_count": 6,
+    "after_count": 684,
+    "all_six_cold_exact_ir_declarations_match_plan_and_both_catalogs_expose_same_source_record_ids": true,
+    "all_six_genuine_add_and_native_persisted_outcomes_complete": true,
+    "all_six_persisted_target_metadata_equal_genuine_defaults_of_exact_reviewed_plan": true,
+    "backup_actual_raw_bytes_SHA_equals_pre_registration_historical_store_pin": true,
+    "before_count": 678,
+    "closing_WAL_absent_observed": true,
+    "every_original_metadata_and_activity_row_byte_canonically_equal": true,
+    "no_unplanned_added_or_removed_ids": true
+  },
+  "after_records_pin": {
+    "bytes": 11652843,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/after-records.json",
+    "sha256": "f407269a635903ba67d7a8ecc8228dfe48806ddd9ef8ccab6a8392014ca04d40"
+  },
+  "approved": true,
+  "authority": {
+    "active_foreign_manager_refreshed": false,
+    "exact_legal_text_reconstruction_qualified": false,
+    "fresh_holdout_qualified": false,
+    "long_context_8192_qualified": false,
+    "proof_authority": false,
+    "quality_qualified": false,
+    "registration_metadata_verified": true,
+    "runtime_ready": false,
+    "teacher_qualified": false
+  },
+  "before_records_pin": {
+    "bytes": 11557911,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/before-records.json",
+    "sha256": "e432d800469036f8792a43ab84c392243375dc45b68a72670d0667ad2b8eb9bb"
+  },
+  "before_schema_pin": {
+    "bytes": 4773,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/before-schema.json",
+    "sha256": "f95b4b89b1e0b5641506fbab69de7fa7aad048dd52eaac54dfae8aa7ca5a9b8f"
+  },
+  "binding_snapshot_revision": "a7b719c6f71ec3fdad03f81fe3a2c1a85747f7a9d72113d058f324b14d51d75f",
+  "catalog_scope": "The exact IR and generic manager catalog projections independently expose the same six serialization record IDs. They use different canonical model IDs/catalog revisions; equality across those namespaces is not asserted.",
+  "coherent_backup_pin": {
+    "bytes": 2979540992,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/model-manager-before.duckdb",
+    "sha256": "81b4cd37f5677dfb02867747d19ded0b3f4ce4bf75542908f3dc46f65bb3888b"
+  },
+  "cooperative_endpoint_scope": true,
+  "database_or_network_opened_by_reviewer": false,
+  "exact_ir_catalog_revision": "bafkreiast6lfsqgdelb47fdfbal2yqp2ifgai6njq3lcdinrns7knuak6u",
+  "execution_refusal_count": 0,
+  "findings": [],
+  "fitted_bindings": [
+    {
+      "arm": "control-wording-ce",
+      "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "exact_ir_catalog_model_id": "model_97186855d9ca10a241ae37a5c9625ef5aacdaf8c8866b2d5c9464ae5cda96353",
+      "genuine_generic_catalog_model_id": "model_fdae821f703c30d982ddd3f8a0bc6eb78b3e60e0cd6064a174aeb30d0b1e4889",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:f758fb82fd2041d57af0b60a7dcf6d3cb27154315bd74a72c0c132645e5fabff",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "selected",
+      "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+    },
+    {
+      "arm": "control-wording-ce",
+      "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "exact_ir_catalog_model_id": "model_5a6509d115f2672c8f63f7bd8f711e334e62459909c13e1387942d510a6b32ca",
+      "genuine_generic_catalog_model_id": "model_e6e815108858562f22b7fa1ced67b72730c8481943475c0f6a6995ee7a518838",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:48c8077b2266bb1972652f7517643d664dc166429df63bf0b687df441b12e787",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "last-attempt",
+      "tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c"
+    },
+    {
+      "arm": "balanced-wording-ce",
+      "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "exact_ir_catalog_model_id": "model_88b65389fcd1cbec064b06ac42133b57fdcf22f30d0a4c953404d69ab24bf4bf",
+      "genuine_generic_catalog_model_id": "model_5df3e9ce3850e37e1719b49d01ffa8c99ad4f890c23b92365361be6d9e302392",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:8a90a70566137b0a0eccb89bb5c922bf323eadc9637b1a4a28f0c97117bab580",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "selected",
+      "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+    },
+    {
+      "arm": "balanced-wording-ce",
+      "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "exact_ir_catalog_model_id": "model_b028d307367eec0709cdc39aa40f3adc69d1357c79151525d9aa9ac36e899f05",
+      "genuine_generic_catalog_model_id": "model_17c1b5cf22f83dc56efc936c5986ed09dec960237125a1b2282311541b7de4e6",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:ba797ef100d2132650683b2cd80709a563bad78fa21b2563de9aaba16326efab",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "last-attempt",
+      "tensor_sha256": "c39a6acde9f5e836919dceb00db7bf7cf1b90465b7b0b7ca2d78f39ee3dc3cbb"
+    },
+    {
+      "arm": "dual-bank-retention-ce",
+      "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "exact_ir_catalog_model_id": "model_680277ed8bfa0edc58d4e1f2578ca285dbbbca70a32e21f4079194dee11b94d2",
+      "genuine_generic_catalog_model_id": "model_01fcbbc83c1184631ae7758a27c2a79fe64729a53e4465fa9e96415beaac2e90",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:6ad44e541dabf272b043ee6545551164aced8886fa14fe5b21d3cef28dd16c3c",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "selected",
+      "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+    },
+    {
+      "arm": "dual-bank-retention-ce",
+      "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "exact_ir_catalog_model_id": "model_5b5db5ee84bc702acb16a95fc4ae199f8c900d1d93d9383383ab2bb9b67dc343",
+      "genuine_generic_catalog_model_id": "model_b972246374970be79d6d590d953b14b1b732af0545948710071da611bb79702f",
+      "immutable_huggingface_revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747",
+      "model_id": "ir-model-asset-binding/v1:c743be38f98deb5e5c6c6348a9a573d84111f062c820f3689a50afde6e703b16",
+      "native_outcome": "registered_verified",
+      "persisted_metadata_matched": true,
+      "state_role": "last-attempt",
+      "tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5"
+    }
+  ],
+  "genuine_generic_catalog_revision": "bafkreia4ogoi4m5c4hya2m3ipdgeg5eozaa32tqzuthjj3juuqyhzq2k7a",
+  "optional_import_refusal_counts": {
+    "ipfs_accelerate_py.common.storage_wrapper": 2,
+    "ipfs_accelerate_py.datasets_integration": 1,
+    "ipfs_accelerate_py.ipfs_kit_integration": 1,
+    "ipfs_accelerate_py.model_manager_graphrag": 1,
+    "numpy": 721,
+    "sentence_transformers": 3
+  },
+  "original_native_plan_pin": {
+    "bytes": 102422,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-plan-r2/model-manager-import-plan.json",
+    "sha256": "a0a79d2bf1d1ae261ce303fd3d58ba1fdac6d99e011403a94317541dc6ee1478"
+  },
+  "original_store_historical_pin": {
+    "bytes": 2979540992,
+    "path": "/home/barberb/lift_coding/external/ipfs_accelerate/model_manager.duckdb",
+    "sha256": "81b4cd37f5677dfb02867747d19ded0b3f4ce4bf75542908f3dc46f65bb3888b"
+  },
+  "preflight_pin": {
+    "bytes": 17050,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/preflight.json",
+    "sha256": "6db49a243c1fb6876e06b5d45bc7ed2c21211a8c1ec529f86b0224c704a7a901"
+  },
+  "producer_observed_schema_and_cleanup_checks": {
+    "cold_genuine_reload_then_empty_close": true,
+    "genuine_close_save_population_always_empty": true,
+    "genuine_save_population_absent_targets_only": true,
+    "schema_and_indexes_unchanged": true
+  },
+  "registration_driver_review_pin": {
+    "bytes": 20790,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/review/model-manager-registration-driver-independent-review-r2.json",
+    "sha256": "d7906d3b1286f61f05ad06bf0c8b18a050b59ce9e4fbd1922e33525479ea2bf4"
+  },
+  "registration_result_pin": {
+    "bytes": 38006,
+    "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+    "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+  },
+  "reviewed_at_utc": "2026-10-07T13:39:26.417919+00:00",
+  "reviewer": "/root/retained_cache_review",
+  "schema": "retained-wording-model-manager-independent-result-check/v1",
+  "scope": "Independent stdlib local full before/after snapshot equality, six exact target metadata/native outcomes/cold catalog source-binding joins, and actual 2,979,540,992-byte raw backup SHA validation. No database connection, SQL, Manager construction, model/encoder/optimizer, network or resource mutation by this reviewer. Native snapshot reads, genuine Manager mutations, schema and cleanup observations are producer-executed through the exact reviewed boundary. Current live database is not compared with the historical pre-registration SHA."
+}
