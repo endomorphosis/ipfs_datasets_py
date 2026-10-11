@@ -107,3 +107,84 @@ and release. Stage execution and formula-head training remain unfinished.
 The [end-to-end formalization checks](security_autoencoder_e2e.md) execute the
 actual frozen model, preserve source coverage, compare model-off structural
 outputs, and fail the learned-formula capability gate when no decoder exists.
+
+## Experimental learned numerical CALL profile
+
+[`numerical_selection_384.py`](../ipfs_datasets_py/logic/formalization/autoencoder/numerical_selection_384.py)
+owns the separate, explicitly selected `numpy-unary-selection-384@1` profile.
+It reuses `structured_source_384` to fit a new ridge classification head over
+the exact frozen residual projection inherited from a trained LegalIR 384D
+checkpoint. The Legal parent and the existing scalar SecurityIR checkpoint are
+unchanged. This profile is not enabled by default in the supervisor.
+
+Its source grammar permits module imports and one plain function with one to
+four parameters, whose only statement returns imported `numpy.argmax` or
+`numpy.argmin` applied to one positional parameter. Nested calls, assignments,
+loops, keywords, rebinding and other function shapes are unsupported. In
+particular, it does not decode the complete `largest-eigenval` functions.
+
+Training targets are canonical `ProgramExpression` CALL fragments with callee
+and parameter-position slots. Inference preserves the learned candidate, then
+independently checks it against whole-file ProgramIR, import context and exact
+function byte spans. A mismatch continues as an unqualified candidate; an
+unsupported source raises `NumericalSelectionError`, which a broader supervisor
+adapter must handle as a coverage frontier. Source-aligned fragments reference
+the deterministic program, first-order and higher-order artifacts. Those
+references are not learned whole-function reconstructions or numerical proofs.
+
+Load this checkpoint through its explicit loader, supplying an independently
+verified file digest and a vector from the pinned GTE-small embedding producer:
+
+```python
+from ipfs_datasets_py.logic.formalization.autoencoder.numerical_selection_384 import (
+    load_selection_checkpoint,
+)
+
+runtime = load_selection_checkpoint(checkpoint_path, expected_sha256=checkpoint_sha256)
+result = runtime.infer([{
+    "source_text": original_module_text,
+    "path": "authored.py",
+    "unit_id": None,  # Select the required singleton function; or supply its exact ID.
+    "embedding": verified_gte_vector,  # 384 dimensions; original module text, without truncation.
+}])
+```
+
+`prepare_selection_corpus` requires explicitly authored train/validation/holdout
+rows and rejects source, normalized clone and group overlap between splits.
+`train_selection_384` accepts only train/validation embedding IDs and an exact
+Legal parent path/hash. `evaluate_selection_384` checks the full corpus manifest
+and accepts only held-out embedding IDs after checkpoint selection. The
+authorship field is a caller declaration requiring provenance review, not
+independent evidence of corpus origin.
+
+The 2026-10-11 development run used CUDA GTE-small embeddings and 24 rows in each
+split: two-parameter training, three-parameter validation and four-parameter
+holdout. Each split contains four operator/operand groups with six alias/name
+variants per group. This measures a small signature holdout with known output
+classes, not broad lexical or code generalization. No benchmark source was used
+for this training run.
+
+| Held-out condition | Exact, source-aligned CALL fragments |
+| --- | ---: |
+| Normal weights | 17/24 |
+| Zero head | 6/24 |
+| Zero inherited residual projection | 8/24 |
+| Cyclic embedding shuffle, declared before fitting | 17/24 |
+| Opposite-callee embedding swap, post hoc diagnostic | 1/24 |
+
+The unchanged cyclic-shuffle score limits what that control establishes about
+source dependence. The opposite-callee swap was a later diagnostic and was not
+used for checkpoint selection. Four source-bound Lean definition modules passed
+`lake build`; **zero source obligations were discharged**. Whole-function
+reconstruction and benchmark performance were not measured by this experiment.
+
+The resulting checkpoint SHA-256 is
+`26ccc7cf8420e0ed6cbbe22603e09be0e3572fb32a1e489e877fc5081f506e03`.
+It is published in the separate [development release](https://huggingface.co/Publicus/security-ir-autoencoder/tree/38666f43e998d55b5f4259e354286f5929027ba1/releases/20261011-numpy-unary-selection-384-development-v1)
+at Hub revision `38666f43e998d55b5f4259e354286f5929027ba1`.
+The release manifest SHA-256 is
+`65980daba116f496019a8004a5980cf365761510dd143879106bd66775be6574`.
+The prefix contains the authored corpus, saved embeddings, evaluations and an
+offline `replay.py` that verifies file hashes and reproduces the four predeclared
+holdout scores. This publication does not select or promote a default supervisor
+checkpoint. Use the exact Hub revision, explicit loader and checkpoint digest.
