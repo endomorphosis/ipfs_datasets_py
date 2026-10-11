@@ -1,0 +1,48 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": "all_conditions_at_evaluation_time",
+    "candidate_sha256": "3e378df365d2f9c7f4043faa354964a90ee805718c46aa00e1747468b395d8b2",
+    "canonical_ir_sha256": "9f65fad109f40bed49bd16bf136bcdc6636032df9f5b5de96a0648829593b21d",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": "any_exception_waives_at_evaluation_time",
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [],
+        "exceptions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "preservationNoticeEffective"
+              }
+            },
+            "literal": "the begonia preservation notice remains effective"
+          }
+        ],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "6ba094d954922feda51c0dd354262119d8fd7c128daf57fa0e47e5f0379ef34a"
+  },
+  "occurrence": {
+    "end_char": 160,
+    "modality_anchor": {
+      "canonical_value": "F",
+      "end_char": 56,
+      "source_text": "is forbidden to",
+      "start_char": 41
+    },
+    "occurrence_id": "development-native-tuning-begonia-t2-q2-f",
+    "source_text": "Under section 8101(d), Begonia Authority is forbidden to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+    "start_char": 0
+  },
+  "packet_sha256": "36ac579b763174b15bd23cd6b5230ee2b04a64189c0b50b3a0abb7d3410f2d14",
+  "schema": "saved-span-family-declaration/v1"
+}

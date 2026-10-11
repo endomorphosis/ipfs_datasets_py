@@ -1,0 +1,106 @@
+[
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "native_parser_alias_TDFOL",
+    "model_calls": 0,
+    "reason": "explicit native_parser_profile must be exactly tdfol or dcec; no family aliases",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "native_parser_alias_event_calculus",
+    "model_calls": 0,
+    "reason": "explicit native_parser_profile must be exactly tdfol or dcec; no family aliases",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "native_parser_alias_fol",
+    "model_calls": 0,
+    "reason": "explicit native_parser_profile must be exactly tdfol or dcec; no family aliases",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "native_parser_alias_deontic_fol",
+    "model_calls": 0,
+    "reason": "explicit native_parser_profile must be exactly tdfol or dcec; no family aliases",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "wrong_modality_literal",
+    "model_calls": 0,
+    "reason": "explicit modality interval/value differs",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "cue_overlaps_actor",
+    "model_calls": 0,
+    "reason": "modality anchor overlaps learned facet",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "nonnull_context",
+    "model_calls": 0,
+    "reason": "interpretation identity, profile or modal context differs",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "unsupported_sealed_family_tdfol",
+    "model_calls": 0,
+    "reason": "tdfol registered temporal_first_order profile is not qualified by ground-null-context",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "unsupported_sealed_family_dcec",
+    "model_calls": 0,
+    "reason": "DCEC composition/event/modal metadata gap; parser label is not family qualification",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "unfilled_qualifier_expression",
+    "model_calls": 0,
+    "reason": "bounded_typed_qualifier_expression_required",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "resealed_output_registry_qualification",
+    "model_calls": 0,
+    "reason": "native parser view authoritative replay differs",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "resealed_output_native_ast",
+    "model_calls": 0,
+    "reason": "native parser view authoritative replay differs",
+    "refused": true
+  },
+  {
+    "admitted": false,
+    "backend_calls": 0,
+    "case": "resealed_output_request",
+    "model_calls": 0,
+    "reason": "native parser view authoritative replay differs",
+    "refused": true
+  }
+]

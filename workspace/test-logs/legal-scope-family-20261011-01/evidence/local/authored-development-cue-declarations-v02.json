@@ -1,0 +1,318 @@
+{
+  "native_build_batch_cases": 9,
+  "predeclared_total_cases": 12,
+  "reviewer_authentication": false,
+  "role": "Caller-supplied interpretation hypotheses only; all predicates/modalities/outcomes explicit",
+  "rows": [
+    {
+      "end_char": 70,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t0-q0-o",
+      "modality_span": {
+        "canonical_value": "O",
+        "end_char": 23,
+        "source_text": "shall",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-o",
+      "position": 0,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 68,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t0-q0-p",
+      "modality_span": {
+        "canonical_value": "P",
+        "end_char": 21,
+        "source_text": "may",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-p",
+      "position": 1,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 74,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t0-q0-f",
+      "modality_span": {
+        "canonical_value": "F",
+        "end_char": 27,
+        "source_text": "shall not",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-f",
+      "position": 2,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 127,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t1-q1-o",
+      "modality_span": {
+        "canonical_value": "O",
+        "end_char": 22,
+        "source_text": "must",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t1-q1-o",
+      "position": 3,
+      "qualifier_interpretations": {
+        "conditions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "registrationAccepted"
+              }
+            },
+            "literal": "the begonia registration application has been accepted"
+          }
+        ],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 136,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t1-q1-p",
+      "modality_span": {
+        "canonical_value": "P",
+        "end_char": 31,
+        "source_text": "is allowed to",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t1-q1-p",
+      "position": 4,
+      "qualifier_interpretations": {
+        "conditions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "registrationAccepted"
+              }
+            },
+            "literal": "the begonia registration application has been accepted"
+          }
+        ],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 131,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t1-q1-f",
+      "modality_span": {
+        "canonical_value": "F",
+        "end_char": 26,
+        "source_text": "must not",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t1-q1-f",
+      "position": 5,
+      "qualifier_interpretations": {
+        "conditions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "registrationAccepted"
+              }
+            },
+            "literal": "the begonia registration application has been accepted"
+          }
+        ],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 158,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t2-q2-o",
+      "modality_span": {
+        "canonical_value": "O",
+        "end_char": 54,
+        "source_text": "has a duty to",
+        "start_char": 41
+      },
+      "occurrence_id": "development-native-tuning-begonia-t2-q2-o",
+      "position": 6,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "preservationNoticeEffective"
+              }
+            },
+            "literal": "the begonia preservation notice remains effective"
+          }
+        ]
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 162,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t2-q2-p",
+      "modality_span": {
+        "canonical_value": "P",
+        "end_char": 58,
+        "source_text": "has permission to",
+        "start_char": 41
+      },
+      "occurrence_id": "development-native-tuning-begonia-t2-q2-p",
+      "position": 7,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "preservationNoticeEffective"
+              }
+            },
+            "literal": "the begonia preservation notice remains effective"
+          }
+        ]
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 160,
+      "expected_bounded_profile_outcome": "native",
+      "id": "native-tuning-begonia-t2-q2-f",
+      "modality_span": {
+        "canonical_value": "F",
+        "end_char": 56,
+        "source_text": "is forbidden to",
+        "start_char": 41
+      },
+      "occurrence_id": "development-native-tuning-begonia-t2-q2-f",
+      "position": 8,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": [
+          {
+            "expression": {
+              "op": "atom",
+              "predicate": {
+                "arguments": [
+                  "Begonia Authority"
+                ],
+                "name": "preservationNoticeEffective"
+              }
+            },
+            "literal": "the begonia preservation notice remains effective"
+          }
+        ]
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 129,
+      "expected_bounded_profile_outcome": "temporal_refused",
+      "id": "native-tuning-begonia-t3-q3-o",
+      "modality_span": {
+        "canonical_value": "O",
+        "end_char": 65,
+        "source_text": "is required to",
+        "start_char": 51
+      },
+      "occurrence_id": "development-native-tuning-begonia-t3-q3-o",
+      "position": 9,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 130,
+      "expected_bounded_profile_outcome": "temporal_refused",
+      "id": "native-tuning-begonia-t3-q3-p",
+      "modality_span": {
+        "canonical_value": "P",
+        "end_char": 66,
+        "source_text": "is permitted to",
+        "start_char": 51
+      },
+      "occurrence_id": "development-native-tuning-begonia-t3-q3-p",
+      "position": 10,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    },
+    {
+      "end_char": 134,
+      "expected_bounded_profile_outcome": "temporal_refused",
+      "id": "native-tuning-begonia-t3-q3-f",
+      "modality_span": {
+        "canonical_value": "F",
+        "end_char": 70,
+        "source_text": "is not permitted to",
+        "start_char": 51
+      },
+      "occurrence_id": "development-native-tuning-begonia-t3-q3-f",
+      "position": 11,
+      "qualifier_interpretations": {
+        "conditions": [],
+        "exceptions": []
+      },
+      "scope": "Explicit DEVELOPMENT interpretation hypothesis; no statutory or reviewer authority",
+      "start_char": 0
+    }
+  ],
+  "schema": "explicit-development-cue-declarations/v2",
+  "source_semantics_verified": false,
+  "temporal_refusals": 3,
+  "training_or_evaluation_admission": false
+}

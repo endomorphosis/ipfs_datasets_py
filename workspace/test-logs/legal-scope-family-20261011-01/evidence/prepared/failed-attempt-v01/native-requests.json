@@ -1,0 +1,1058 @@
+[
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-o::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355",
+      "source_text": "Begonia Authority shall inspect the certified begonia public register."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "2a559b32886aa53d06fe2432784a323baa6b4ea28343ce88d339af42ef278e76",
+      "canonical_ir_sha256": "a9131446e8878b5c62aefdd37b8cde9aab7b094f6cd8f788d27970c84fe259de",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 70,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 31,
+            "source_text": "inspect",
+            "start_char": 24
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "O",
+            "end_char": 23,
+            "source_text": "shall",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 69,
+            "source_text": "the certified begonia public register",
+            "start_char": 32
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-o",
+        "rule_index": 0,
+        "source_text": "Begonia Authority shall inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-o::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355",
+      "source_text": "Begonia Authority shall inspect the certified begonia public register."
+    },
+    "family": "dcec",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "2a559b32886aa53d06fe2432784a323baa6b4ea28343ce88d339af42ef278e76",
+      "canonical_ir_sha256": "a9131446e8878b5c62aefdd37b8cde9aab7b094f6cd8f788d27970c84fe259de",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 70,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 31,
+            "source_text": "inspect",
+            "start_char": 24
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "O",
+            "end_char": 23,
+            "source_text": "shall",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 69,
+            "source_text": "the certified begonia public register",
+            "start_char": 32
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-o",
+        "rule_index": 0,
+        "source_text": "Begonia Authority shall inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7",
+      "source_text": "Begonia Authority may inspect the certified begonia public register."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "c1e6f5fa21cb7e4092694dfd5fba83929101618e37af75fe3a9af67494c0efc5",
+      "canonical_ir_sha256": "dc4158220bfe9e9dd77f0f082761672d4c040ba6932a5649dab9dd2f374c486c",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 68,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 29,
+            "source_text": "inspect",
+            "start_char": 22
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 21,
+            "source_text": "may",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 67,
+            "source_text": "the certified begonia public register",
+            "start_char": 30
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-p",
+        "rule_index": 0,
+        "source_text": "Begonia Authority may inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7",
+      "source_text": "Begonia Authority may inspect the certified begonia public register."
+    },
+    "family": "dcec",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "c1e6f5fa21cb7e4092694dfd5fba83929101618e37af75fe3a9af67494c0efc5",
+      "canonical_ir_sha256": "dc4158220bfe9e9dd77f0f082761672d4c040ba6932a5649dab9dd2f374c486c",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 68,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 29,
+            "source_text": "inspect",
+            "start_char": 22
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 21,
+            "source_text": "may",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 67,
+            "source_text": "the certified begonia public register",
+            "start_char": 30
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-p",
+        "rule_index": 0,
+        "source_text": "Begonia Authority may inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-f::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16",
+      "source_text": "Begonia Authority shall not inspect the certified begonia public register."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "00efc604ceb0b58b89c15248f3f626e3aaa144f47f3a0e15ee085658a150ff17",
+      "canonical_ir_sha256": "1b4641091c5e9c230c51ae51e926fc601a8685b5e1ab89a0e37f9e4de43103b2",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 74,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 35,
+            "source_text": "inspect",
+            "start_char": 28
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "F",
+            "end_char": 27,
+            "source_text": "shall not",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 73,
+            "source_text": "the certified begonia public register",
+            "start_char": 36
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-f",
+        "rule_index": 0,
+        "source_text": "Begonia Authority shall not inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t0-q0-f::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16",
+      "source_text": "Begonia Authority shall not inspect the certified begonia public register."
+    },
+    "family": "dcec",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "00efc604ceb0b58b89c15248f3f626e3aaa144f47f3a0e15ee085658a150ff17",
+      "canonical_ir_sha256": "1b4641091c5e9c230c51ae51e926fc601a8685b5e1ab89a0e37f9e4de43103b2",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 74,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 35,
+            "source_text": "inspect",
+            "start_char": 28
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "F",
+            "end_char": 27,
+            "source_text": "shall not",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 73,
+            "source_text": "the certified begonia public register",
+            "start_char": 36
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t0-q0-f",
+        "rule_index": 0,
+        "source_text": "Begonia Authority shall not inspect the certified begonia public register.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t1-q1-o::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [
+              "the begonia registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "9da87279919e2921bd635964fb4dd003b14fa280fd4f554d8cc5cffebb3c6631",
+      "source_text": "Begonia Authority must inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "89087dbf1100e4bec96fd2156fc9463de13fa56c93e1f290a00e607d16456766",
+      "canonical_ir_sha256": "c6cd32d5039c13721a05703ff46911f98ce1c3bec950dc770f121cba839de720",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "registrationAccepted"
+                }
+              },
+              "literal": "the begonia registration application has been accepted"
+            }
+          ],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "9da87279919e2921bd635964fb4dd003b14fa280fd4f554d8cc5cffebb3c6631"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 127,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 30,
+            "source_text": "inspect",
+            "start_char": 23
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [
+            {
+              "canonical_value": "the begonia registration application has been accepted",
+              "end_char": 126,
+              "source_text": "the begonia registration application has been accepted",
+              "start_char": 72
+            }
+          ],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "O",
+            "end_char": 22,
+            "source_text": "must",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 68,
+            "source_text": "the certified begonia public register",
+            "start_char": 31
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t1-q1-o",
+        "rule_index": 0,
+        "source_text": "Begonia Authority must inspect the certified begonia public register if the begonia registration application has been accepted.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t1-q1-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [
+              "the begonia registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "60e77bb47616fc4936d65c4ccdd42ae55e1c69aa78e469649643573355cc7d3c",
+      "source_text": "Begonia Authority is allowed to inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "65ee4b0e935f9d4dc297ac0f3b79222c22e682382e5dd4c94a5ca624b12baf6f",
+      "canonical_ir_sha256": "4f3d1134fdb3de48ed7c3ba499790447a4ae1c4f2c098dcd528eba3927cdfe2b",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "registrationAccepted"
+                }
+              },
+              "literal": "the begonia registration application has been accepted"
+            }
+          ],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "60e77bb47616fc4936d65c4ccdd42ae55e1c69aa78e469649643573355cc7d3c"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 136,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 39,
+            "source_text": "inspect",
+            "start_char": 32
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [
+            {
+              "canonical_value": "the begonia registration application has been accepted",
+              "end_char": 135,
+              "source_text": "the begonia registration application has been accepted",
+              "start_char": 81
+            }
+          ],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 31,
+            "source_text": "is allowed to",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 77,
+            "source_text": "the certified begonia public register",
+            "start_char": 40
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t1-q1-p",
+        "rule_index": 0,
+        "source_text": "Begonia Authority is allowed to inspect the certified begonia public register if the begonia registration application has been accepted.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t1-q1-f::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [
+              "the begonia registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "bb4485e993340fe343cab09109faa836e7f6d693c8a9db3d5a76044e6a1fbb33",
+      "source_text": "Begonia Authority must not inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "efe066b743773080861b2dc4cf1c939e8ddbe44c4d513ecb9a9d963ff267a4ec",
+      "canonical_ir_sha256": "a16fbe55edc95a0336b762ec16d80c2f6a171f12a37c0b12bc662b8e75957dc7",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "registrationAccepted"
+                }
+              },
+              "literal": "the begonia registration application has been accepted"
+            }
+          ],
+          "exceptions": [],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "bb4485e993340fe343cab09109faa836e7f6d693c8a9db3d5a76044e6a1fbb33"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 131,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 34,
+            "source_text": "inspect",
+            "start_char": 27
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 17,
+            "source_text": "Begonia Authority",
+            "start_char": 0
+          },
+          "conditions": [
+            {
+              "canonical_value": "the begonia registration application has been accepted",
+              "end_char": 130,
+              "source_text": "the begonia registration application has been accepted",
+              "start_char": 76
+            }
+          ],
+          "exceptions": [],
+          "modality": {
+            "canonical_value": "F",
+            "end_char": 26,
+            "source_text": "must not",
+            "start_char": 18
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 72,
+            "source_text": "the certified begonia public register",
+            "start_char": 35
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t1-q1-f",
+        "rule_index": 0,
+        "source_text": "Begonia Authority must not inspect the certified begonia public register if the begonia registration application has been accepted.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t2-q2-o::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [
+              "the begonia preservation notice remains effective"
+            ],
+            "modality": "O",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "0f8edb93f1b0846351fd7d83cb45fa76442283693cd66343a0475e639c1dcecc",
+      "source_text": "Under section 8101(d), Begonia Authority has a duty to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "c971fd2fccce6329960472fcaaa1b0a8d3be6dcb5be7ae6951aefa056c4df6c5",
+      "canonical_ir_sha256": "8d6f18eb168582faf54b17c39029c7e5ffe9c11cdf580f7a8b2cbf9a929df8bf",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "preservationNoticeEffective"
+                }
+              },
+              "literal": "the begonia preservation notice remains effective"
+            }
+          ],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "0f8edb93f1b0846351fd7d83cb45fa76442283693cd66343a0475e639c1dcecc"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 158,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 62,
+            "source_text": "inspect",
+            "start_char": 55
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 40,
+            "source_text": "Begonia Authority",
+            "start_char": 23
+          },
+          "conditions": [],
+          "exceptions": [
+            {
+              "canonical_value": "the begonia preservation notice remains effective",
+              "end_char": 157,
+              "source_text": "the begonia preservation notice remains effective",
+              "start_char": 108
+            }
+          ],
+          "modality": {
+            "canonical_value": "O",
+            "end_char": 54,
+            "source_text": "has a duty to",
+            "start_char": 41
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 100,
+            "source_text": "the certified begonia public register",
+            "start_char": 63
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-o",
+        "rule_index": 0,
+        "source_text": "Under section 8101(d), Begonia Authority has a duty to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t2-q2-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [
+              "the begonia preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7",
+      "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "6601a06607568d73339abb4d37555a51ceb4f4c6f63645a6a9e2c64db635a91f",
+      "canonical_ir_sha256": "cba300995b62146d83f76edb1ef46f60d45260a8891a7bb8cd6beda293f2a191",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "preservationNoticeEffective"
+                }
+              },
+              "literal": "the begonia preservation notice remains effective"
+            }
+          ],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 162,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 66,
+            "source_text": "inspect",
+            "start_char": 59
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 40,
+            "source_text": "Begonia Authority",
+            "start_char": 23
+          },
+          "conditions": [],
+          "exceptions": [
+            {
+              "canonical_value": "the begonia preservation notice remains effective",
+              "end_char": 161,
+              "source_text": "the begonia preservation notice remains effective",
+              "start_char": 112
+            }
+          ],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 58,
+            "source_text": "has permission to",
+            "start_char": 41
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 104,
+            "source_text": "the certified begonia public register",
+            "start_char": 67
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-p",
+        "rule_index": 0,
+        "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+        "start_char": 0
+      }
+    ]
+  },
+  {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t2-q2-f::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [
+              "the begonia preservation notice remains effective"
+            ],
+            "modality": "F",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "6ba094d954922feda51c0dd354262119d8fd7c128daf57fa0e47e5f0379ef34a",
+      "source_text": "Under section 8101(d), Begonia Authority is forbidden to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    "family": "tdfol",
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "3e378df365d2f9c7f4043faa354964a90ee805718c46aa00e1747468b395d8b2",
+      "canonical_ir_sha256": "9f65fad109f40bed49bd16bf136bcdc6636032df9f5b5de96a0648829593b21d",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "preservationNoticeEffective"
+                }
+              },
+              "literal": "the begonia preservation notice remains effective"
+            }
+          ],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "6ba094d954922feda51c0dd354262119d8fd7c128daf57fa0e47e5f0379ef34a"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 160,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 64,
+            "source_text": "inspect",
+            "start_char": 57
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 40,
+            "source_text": "Begonia Authority",
+            "start_char": 23
+          },
+          "conditions": [],
+          "exceptions": [
+            {
+              "canonical_value": "the begonia preservation notice remains effective",
+              "end_char": 159,
+              "source_text": "the begonia preservation notice remains effective",
+              "start_char": 110
+            }
+          ],
+          "modality": {
+            "canonical_value": "F",
+            "end_char": 56,
+            "source_text": "is forbidden to",
+            "start_char": 41
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 102,
+            "source_text": "the certified begonia public register",
+            "start_char": 65
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-f",
+        "rule_index": 0,
+        "source_text": "Under section 8101(d), Begonia Authority is forbidden to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+        "start_char": 0
+      }
+    ]
+  }
+]

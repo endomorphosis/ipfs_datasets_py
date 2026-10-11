@@ -1,0 +1,17 @@
+{
+  "canonical_indexes_changed": false,
+  "correction_command": [
+    "git",
+    "add",
+    "--sparse",
+    "--",
+    "docs/autoencoders/legal_scope_native_views_20261011.md"
+  ],
+  "correction_returncode": 0,
+  "final_closed_map": 5,
+  "initial_failure": "New guide outside sparse-checkout definition; four intended source/test additions staged; five-file map assertion stopped before receipt write",
+  "initial_staging_passed": false,
+  "schema": "scope-native-code-staging-correction/v1",
+  "source_code_stage_receipt_created_by_failed_attempt": false,
+  "source_or_test_bytes_changed": false
+}

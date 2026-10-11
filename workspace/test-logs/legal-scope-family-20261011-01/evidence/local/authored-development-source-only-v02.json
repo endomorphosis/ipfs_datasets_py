@@ -1,0 +1,113 @@
+{
+  "canonical_supervised_targets_exported": false,
+  "checkpoint_canonical_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+  "full_report_rows_preserved": 96,
+  "latent_vectors_exported": false,
+  "new_model_calls": 0,
+  "parent_authored_export": {
+    "bytes": 16289807,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json",
+    "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+  },
+  "parent_saved_inference_report": {
+    "bytes": 874913,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+    "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+  },
+  "predeclared_native_positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ],
+  "predeclared_temporal_refusal_positions": [
+    9,
+    10,
+    11
+  ],
+  "role": "Previously exposed synthetic engineering typecheck; not statute, independent holdout or semantic gold",
+  "rows": [
+    {
+      "id": "native-tuning-begonia-t0-q0-o",
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355",
+      "source_text": "Begonia Authority shall inspect the certified begonia public register."
+    },
+    {
+      "id": "native-tuning-begonia-t0-q0-p",
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7",
+      "source_text": "Begonia Authority may inspect the certified begonia public register."
+    },
+    {
+      "id": "native-tuning-begonia-t0-q0-f",
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16",
+      "source_text": "Begonia Authority shall not inspect the certified begonia public register."
+    },
+    {
+      "id": "native-tuning-begonia-t1-q1-o",
+      "source_sha256": "9da87279919e2921bd635964fb4dd003b14fa280fd4f554d8cc5cffebb3c6631",
+      "source_text": "Begonia Authority must inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    {
+      "id": "native-tuning-begonia-t1-q1-p",
+      "source_sha256": "60e77bb47616fc4936d65c4ccdd42ae55e1c69aa78e469649643573355cc7d3c",
+      "source_text": "Begonia Authority is allowed to inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    {
+      "id": "native-tuning-begonia-t1-q1-f",
+      "source_sha256": "bb4485e993340fe343cab09109faa836e7f6d693c8a9db3d5a76044e6a1fbb33",
+      "source_text": "Begonia Authority must not inspect the certified begonia public register if the begonia registration application has been accepted."
+    },
+    {
+      "id": "native-tuning-begonia-t2-q2-o",
+      "source_sha256": "0f8edb93f1b0846351fd7d83cb45fa76442283693cd66343a0475e639c1dcecc",
+      "source_text": "Under section 8101(d), Begonia Authority has a duty to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    {
+      "id": "native-tuning-begonia-t2-q2-p",
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7",
+      "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    {
+      "id": "native-tuning-begonia-t2-q2-f",
+      "source_sha256": "6ba094d954922feda51c0dd354262119d8fd7c128daf57fa0e47e5f0379ef34a",
+      "source_text": "Under section 8101(d), Begonia Authority is forbidden to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    {
+      "id": "native-tuning-begonia-t3-q3-o",
+      "source_sha256": "0048ae32f9cf794aba213ceac09b0c02b7b9ca3c416c8a1f4a30b56a380724bf",
+      "source_text": "For purposes of section 8101(d), Begonia Authority is required to inspect the certified begonia public register within 1201 days."
+    },
+    {
+      "id": "native-tuning-begonia-t3-q3-p",
+      "source_sha256": "14536fe598ce312f7550dc712f1eaf68fb960134e872cd4f4856bf352a25454f",
+      "source_text": "For purposes of section 8101(d), Begonia Authority is permitted to inspect the certified begonia public register within 1201 days."
+    },
+    {
+      "id": "native-tuning-begonia-t3-q3-f",
+      "source_sha256": "9a70b63b8cb6382ebdcf15ca6b0a91e28fcdd4916da487531ad9de6fc7848dc0",
+      "source_text": "For purposes of section 8101(d), Begonia Authority is not permitted to inspect the certified begonia public register within 1201 days."
+    }
+  ],
+  "schema": "authored-development-source-only/v2",
+  "selected_original_positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "semantic_gold": false,
+  "training_or_evaluation_admission": false
+}

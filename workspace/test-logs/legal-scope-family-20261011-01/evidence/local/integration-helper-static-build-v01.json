@@ -1,0 +1,53 @@
+{
+  "compiler_policy": "Unchanged native gate and exact three processes;12requests/14modules",
+  "findings": [],
+  "helpers": [
+    {
+      "bytes": 4681,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py",
+      "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+    },
+    {
+      "bytes": 4029,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/audit_git_integration.py",
+      "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+    },
+    {
+      "bytes": 2167,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py",
+      "sha256": "1a66851e232235da9c8a38c6f6414b1915480e7f5693427cb58cb074e4bfc18d"
+    },
+    {
+      "bytes": 2376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_github_checks.py",
+      "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+    }
+  ],
+  "helpers_executed": false,
+  "mutation_policy": "Only the owned isolated worktrees; no canonical index or head mutation",
+  "passed": true,
+  "schema": "scope-native-integration-helper-static-build/v1",
+  "source_helpers": [
+    {
+      "bytes": 4645,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_native_build.py",
+      "sha256": "3af389a06f11f18b347a94fd025b93b9e5b4e09c4d146691d3ccb851ece583b4"
+    },
+    {
+      "bytes": 4029,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/audit_git_integration.py",
+      "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+    },
+    {
+      "bytes": 2169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/copy_contribution.py",
+      "sha256": "bf1d758886f3ea4f27dd7dd228ef69c387804c4faa95cdd5dbef4326f534636f"
+    },
+    {
+      "bytes": 2376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_github_checks.py",
+      "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+    }
+  ],
+  "static_ast_checked": true
+}

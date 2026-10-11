@@ -1,0 +1,365 @@
+[
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 0,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "blank_native_refusals": [
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_tdfol",
+        "model_calls": 0,
+        "native_parser_profile": "tdfol",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      },
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_dcec",
+        "model_calls": 0,
+        "native_parser_profile": "dcec",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      }
+    ],
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+    "lane": "raw",
+    "original_saved_status": "decoded",
+    "outputs": [
+      {
+        "bytes": 298818,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/raw-01-pending.json",
+        "sha256": "94632a56d4d3c90ff5f43a37aebd895e50e0e0c3883fb5d4934c07d2ad956020"
+      },
+      {
+        "bytes": 1288,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/raw-01-blank-declaration.json",
+        "sha256": "b7afa935e79d55aba4f1321115a8fc84ca183001dde9f6e408029fb3b2d1e130"
+      }
+    ],
+    "position": 1,
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "pending_caller_declaration"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 2,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 3,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 4,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 5,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 6,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+    "lane": "raw",
+    "original_saved_status": "abstained",
+    "position": 7,
+    "reason": "saved raw proposal refused: copied_spans_overlap",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "blank_native_refusals": [
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_tdfol",
+        "model_calls": 0,
+        "native_parser_profile": "tdfol",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      },
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_dcec",
+        "model_calls": 0,
+        "native_parser_profile": "dcec",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      }
+    ],
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "outputs": [
+      {
+        "bytes": 408036,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-00-pending.json",
+        "sha256": "019cec63449dadc23004c312b1da3fdc5d65b758656751a39ee17edd5a91a607"
+      },
+      {
+        "bytes": 1392,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-00-blank-declaration.json",
+        "sha256": "5f7c6d79befd5a21a8468be9a96d226b87bae453ff2843e7091bddef23de340e"
+      }
+    ],
+    "position": 0,
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "pending_caller_declaration"
+  },
+  {
+    "admitted": false,
+    "blank_native_refusals": [
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_tdfol",
+        "model_calls": 0,
+        "native_parser_profile": "tdfol",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      },
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_dcec",
+        "model_calls": 0,
+        "native_parser_profile": "dcec",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      }
+    ],
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "outputs": [
+      {
+        "bytes": 407913,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-01-pending.json",
+        "sha256": "3a8af984e70ef22d93a456fc89ec433380f6aed77322b6aae26788cd5df5b345"
+      },
+      {
+        "bytes": 1288,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-01-blank-declaration.json",
+        "sha256": "0847c2770690909415130e3ffb4709a832e436c7443b4b82777a41fddaba31d2"
+      }
+    ],
+    "position": 1,
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "pending_caller_declaration"
+  },
+  {
+    "admitted": false,
+    "blank_native_refusals": [
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_tdfol",
+        "model_calls": 0,
+        "native_parser_profile": "tdfol",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      },
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_dcec",
+        "model_calls": 0,
+        "native_parser_profile": "dcec",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      }
+    ],
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "outputs": [
+      {
+        "bytes": 407835,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-02-pending.json",
+        "sha256": "b2df6ed4e111c58825edf1efb410ba2f4b92215637ea4fc57d6c061040319968"
+      },
+      {
+        "bytes": 1262,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-02-blank-declaration.json",
+        "sha256": "e0a77f1f4449f8bf189343738cdc6f259b57a8818b3cb15e38d64981873cab26"
+      }
+    ],
+    "position": 2,
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "pending_caller_declaration"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+    "lane": "joint",
+    "original_saved_status": "abstained",
+    "position": 3,
+    "reason": "saved joint proposal refused: no_compatible_assignment_in_retained_domain",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+    "lane": "joint",
+    "original_saved_status": "abstained",
+    "position": 4,
+    "reason": "saved joint proposal refused: no_compatible_assignment_in_retained_domain",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "blank_native_refusals": [
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_tdfol",
+        "model_calls": 0,
+        "native_parser_profile": "tdfol",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      },
+      {
+        "admitted": false,
+        "backend_calls": 0,
+        "case": "real_blank_declaration_dcec",
+        "model_calls": 0,
+        "native_parser_profile": "dcec",
+        "reason": "bounded nonblank caller occurrence ID required",
+        "refused": true
+      }
+    ],
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "outputs": [
+      {
+        "bytes": 408495,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-05-pending.json",
+        "sha256": "418578986e9370696bfdf54694e7cacab4b112872615ee9a813ad502f2e09f8d"
+      },
+      {
+        "bytes": 1440,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01/statutory/joint-05-blank-declaration.json",
+        "sha256": "0a0fe3c935c8cade32a3b1d11e5a5b32cbc7536ee090c4e77c1981c077aa73f3"
+      }
+    ],
+    "position": 5,
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "pending_caller_declaration"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "position": 6,
+    "reason": "unsupported temporal/calendar profile",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  },
+  {
+    "admitted": false,
+    "compiler_executed": false,
+    "declaration_filled": false,
+    "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+    "lane": "joint",
+    "original_saved_status": "selected",
+    "position": 7,
+    "reason": "unsupported temporal/calendar profile",
+    "registry_family_qualified": false,
+    "semantic_accuracy": null,
+    "status": "saved_proposal_or_profile_refused"
+  }
+]

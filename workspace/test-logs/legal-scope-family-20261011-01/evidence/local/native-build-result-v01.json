@@ -1,0 +1,183 @@
+{
+  "actual_statutory_semantic_labels": 0,
+  "command": [
+    "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+    "build",
+    "legal"
+  ],
+  "compiled_modules": 14,
+  "development_qualifier_refusals": 6,
+  "development_requests": 12,
+  "development_temporal_refusals": 6,
+  "driver_pin": {
+    "bytes": 4681,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py",
+    "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+  },
+  "encoder_calls": 0,
+  "expected_modules": 14,
+  "findings": [],
+  "independent_review_pin": {
+    "bytes": 78862,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/compiler-protocol-independent-review-v01.json",
+    "sha256": "cb57a4de64ffee6fab5aa5a5d118361494db17b8aedecbfdea89efffbb739ca3"
+  },
+  "kernel_network_namespace_claimed": false,
+  "model_calls": 0,
+  "observed_native_process_calls": [
+    {
+      "argv": [
+        "/usr/bin/prlimit",
+        "--core=0:0",
+        "--fsize=16777216:16777216",
+        "--",
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "--version"
+      ],
+      "cwd": "/tmp/logic-tool-q781fv8o",
+      "executable": "/usr/bin/prlimit"
+    },
+    {
+      "argv": [
+        "/usr/bin/prlimit",
+        "--core=0:0",
+        "--fsize=16777216:16777216",
+        "--",
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lean",
+        "--version"
+      ],
+      "cwd": "/tmp/logic-tool-_oj90rgb",
+      "executable": "/usr/bin/prlimit"
+    },
+    {
+      "argv": [
+        "/usr/bin/prlimit",
+        "--core=0:0",
+        "--fsize=134217728:134217728",
+        "--cpu=60:60",
+        "--",
+        "/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake",
+        "build",
+        "legal"
+      ],
+      "cwd": "/tmp/logic-tool-7z71zh28",
+      "executable": "/usr/bin/prlimit"
+    }
+  ],
+  "old_numerical_guardian_caps_unchanged": true,
+  "optimizer_updates": 0,
+  "output_pins": [
+    {
+      "bytes": 539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0000.lean",
+      "sha256": "5ea88c69f307e7832190e2d24ed3fb46d78944a12686a11ebd15dd4dc914aab6"
+    },
+    {
+      "bytes": 533,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0001.lean",
+      "sha256": "692ad74f34b39449e35b40d1af3ce28b095b82d96497da4e9324537895e546b2"
+    },
+    {
+      "bytes": 539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0002.lean",
+      "sha256": "791a4e2df33121388349b7188ac321315563fc6708bf905d3aef9b66b347a54a"
+    },
+    {
+      "bytes": 533,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0003.lean",
+      "sha256": "6f0ef981e76e54d63beec0912e7aa6640b56281484a489851ef321b70be35df7"
+    },
+    {
+      "bytes": 539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0004.lean",
+      "sha256": "6a4064cf9e54c9f9a5f777b5198e152cb1e35fa9df0197398dd3ca357893aaa5"
+    },
+    {
+      "bytes": 533,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0005.lean",
+      "sha256": "cf9be47d3d1bb5f1dfe2e04029e410f67cc80ee42905e6c1180250a0d0dfb799"
+    },
+    {
+      "bytes": 739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0006.lean",
+      "sha256": "725516e0a512b8d1584af0e8cbc34d682375c882b14799eac596cffdb3cf43dd"
+    },
+    {
+      "bytes": 739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0007.lean",
+      "sha256": "6727597bbbb89a7900e2c7c97a669bdf164349a2c0e1e84d2f40291f917fb529"
+    },
+    {
+      "bytes": 739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0008.lean",
+      "sha256": "316168372b3b93c410f75640074bb122126582d0b42e691b9de6f88210572805"
+    },
+    {
+      "bytes": 757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0009.lean",
+      "sha256": "568b7fa0a34a294d5f70a865eca2aba5e8bec64910f2ea6c66debae8ba775cb0"
+    },
+    {
+      "bytes": 757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0010.lean",
+      "sha256": "eeb690e43b1452115b80090ff7b344df8a79c46b99ced1c6907bb92d0f406f1d"
+    },
+    {
+      "bytes": 757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Candidate0011.lean",
+      "sha256": "c056dbc04010bc6a9007e6e5eb8e7e6a4c27a3ce9c4e8600a3e13dcb0d8d4cc8"
+    },
+    {
+      "bytes": 1270,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily/Prelude.lean",
+      "sha256": "e9272074805daf3e7329058cc1e10f59deece713e4f8ad04e9d123c37d3537ce"
+    },
+    {
+      "bytes": 468,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/LegalSourceFamily.lean",
+      "sha256": "e5da88c4fc54e8931ed244e2b461cf43800f47af316f043532072d161de6a0f0"
+    },
+    {
+      "bytes": 106,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/lakefile.toml",
+      "sha256": "357e3b2caacf63a7e9dafe4b0536b2ab68240327fdd7f20297ba2ae2fc6131c0"
+    },
+    {
+      "bytes": 25,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/lean-toolchain",
+      "sha256": "d5edba4e4b8faad9c1baeadb265716d20d03be4d1a2647dc5e35b0c0325bea7b"
+    },
+    {
+      "bytes": 25733,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/source-family-inputs.json",
+      "sha256": "f332ecd290990a57634998ae3faf73a8cc97ba230656472f46621855eb7fe848"
+    },
+    {
+      "bytes": 17970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/source-family-manifest.json",
+      "sha256": "8a66243d22a22bc3507da2c037593ec6d69b6558b4a1e304d1acb51dc1956bf8"
+    },
+    {
+      "bytes": 23462,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/source-family-receipt.json",
+      "sha256": "68a0c1171da215d31fac3dc03feef783a8d153a1cdccdbd9743d68267ebabe1e"
+    }
+  ],
+  "passed": true,
+  "protocol_pin": {
+    "bytes": 67234,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/compiler-execution-protocol-v01.json",
+    "sha256": "ae52be0bca9a6bb7457eee69ae5724bc64b330031dcf7b003a17ee60972aecdc"
+  },
+  "python_network_calls_allowed": false,
+  "receipt_pin": {
+    "bytes": 23462,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/source-family-receipt.json",
+    "sha256": "68a0c1171da215d31fac3dc03feef783a8d153a1cdccdbd9743d68267ebabe1e"
+  },
+  "returncode": 0,
+  "sampled_rss_guard_is_not_kernel_aggregate_quota": true,
+  "schema": "saved-span-native-compiler-pilot-result/v1",
+  "semantic_accuracy": null,
+  "training_or_eval_admission": false
+}

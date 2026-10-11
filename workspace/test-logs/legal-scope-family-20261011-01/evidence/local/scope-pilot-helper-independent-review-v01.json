@@ -1,0 +1,194 @@
+{
+  "authority": {
+    "admitted": false,
+    "cross_family_equivalence_verified": false,
+    "proof_authority": false,
+    "registry_family_qualified": false,
+    "reviewer_authenticated": false,
+    "semantic_gold_created": false,
+    "source_semantics_verified": false
+  },
+  "bootstrap_pin": {
+    "bytes": 1208,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/bootstrap_inert.py",
+    "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+  },
+  "draft_guide_pin": {
+    "bytes": 6749,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-guide_draft_v01.md",
+    "sha256": "4b136356ab634f71ea096695d1a4d2d2ee8779958e216ed0f52693771741f5ce"
+  },
+  "findings": [
+    {
+      "issue": "copy correctly and wrong role assignments can be read as reviewed role/semantic evidence, while diagnostics expressly keep reviewed_role null.",
+      "location": "source-guide_draft_v01.md temporal diagnostics paragraph",
+      "required_before_publication": "Use exact source-slice matches and unreviewed/suspected role failures; do not claim reviewer-validated temporal roles.",
+      "severity": "publication_wording"
+    },
+    {
+      "issue": "actual native-build coverage are recorded is premature for this new round until its separate build-result receipt exists.",
+      "location": "source-guide_draft_v01.md final evidence paragraph",
+      "required_before_publication": "Keep this round native execution planned until observed; distinguish the prior nine deontic actual builds and later update to exact new saved results.",
+      "severity": "publication_wording"
+    }
+  ],
+  "helper_execution_blockers": [],
+  "helper_pin": {
+    "bytes": 4683,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_actual_scope_pilot.py",
+    "sha256": "aa3aae66ca19eb09f45c19b45b98a380e7b03a7f77950f1abac5a11cd8067fa7"
+  },
+  "limitations": [
+    "This review does not execute scope helper or certify its future outputs; independent result audit remains necessary.",
+    "Helper captures recording/artifact-ledger/provenance/bootstrap/loaded source endpoints but does not hard-code all their expected file SHAs; source-owner replay and packet-bound resolver checks establish declared consistency, not independently authenticated custody.",
+    "Audit-hook process/network denial is Python-level, not a kernel namespace or continuous foreign process/source custody claim.",
+    "Parsed source and scope transport, consistent declarations, unit tests or future Lean builds never establish legal semantics, authenticated human review, eligible targets or admission."
+  ],
+  "observed_inert_test_chronology": {
+    "errors": 0,
+    "failures": 0,
+    "full_package_initializers_qualified": false,
+    "passed": 744,
+    "selected_suites": 11,
+    "skipped": 2,
+    "source": "Saved root observation and log/XML pins; reviewer did not rerun"
+  },
+  "original_input_pins": [
+    {
+      "bytes": 378311,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    {
+      "bytes": 21931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json",
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    },
+    {
+      "bytes": 2765,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-artifact-pins.json",
+      "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+    },
+    {
+      "bytes": 30901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    }
+  ],
+  "passed": true,
+  "passed_static_checks": [
+    "Actual helper invokes prepare_binding_slots, bind_scope_declarations and validate_binding with explicitly empty submissions and sidecars, same original packet/recording/resolver inputs.",
+    "Original packet has explicit external byte SHA and canonical packet digest assertions; resolver SHA/byte-checks every used original artifact against packet reference identities.",
+    "Frozen API setup replays supplied original recording and preflight before/after binding; no archived trigger is assigned a rule or modality by this helper.",
+    "All eight pending statuses, zero reviewed declarations, null unsubmitted scope/maps, zero admission masks and false authority flags explicitly asserted.",
+    "Static original packet context counts independently equal 2285,9706,7067,6265,71688,21347,28500,458; exactly three exceed16384.",
+    "Complete context text stays in original packet; three over-limit requests remain null with complete-context digests/physical identities and explicit profile-limit dispositions, no truncation or none_required substitution.",
+    "No numerical/model/compiler call path in helper; unchanged inert bootstrap plus socket/Popen/os.system audit denial retained.",
+    "Fresh output directory and exclusive writes preserve old evidence; loaded producer file endpoint pins kept separate from synthetic namespace file endpoints.",
+    "Draft correctly keeps sealed deontic family and registry qualification false, parser-specific AST inverses and different DCEC/TDFOL constant representations.",
+    "Draft correctly describes384D latent_enabled false, no8D/768D evaluation, full96 source report exposure and fictional DEVELOPMENT interpretation scope.",
+    "Draft training plan distinguishes admission owners, source roles/scope/cues/reference/time review, section splits/exposure and matched latent/source architecture comparisons from syntax acceptance."
+  ],
+  "physical_artifact_endpoint_pins": [
+    {
+      "bytes": 2312,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    {
+      "bytes": 7137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    {
+      "bytes": 21457,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    {
+      "bytes": 28742,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    {
+      "bytes": 6364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    {
+      "bytes": 9770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    {
+      "bytes": 72690,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    {
+      "bytes": 459,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    }
+  ],
+  "planned_actual_scope_outcome": {
+    "all_training_and_evaluation_masks": 0,
+    "items": 8,
+    "profile_limited_contexts": [
+      21347,
+      28500,
+      71688
+    ],
+    "semantic_labels": 0,
+    "sidecars": 0,
+    "submissions": 0
+  },
+  "publication_guide_passed_as_final_claims": false,
+  "schema": "scope-pilot-helper-independent-review/v1",
+  "scope": "Independent static helper/API and draft claim review; no helper/tests/models/compiler/network execution.",
+  "scope_build_pin": {
+    "bytes": 16448,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/statutory-scope-binding-build-v01.json",
+    "sha256": "2e50fd39aa7bb28d0d16ea0eeedf707b0b9924b8bbd5bf0bebb9ee62138f05aa"
+  },
+  "scope_source_pin": {
+    "bytes": 29041,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+    "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+  },
+  "scope_test_pin": {
+    "bytes": 46298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+    "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+  },
+  "selected_test_XML_pin": {
+    "bytes": 195427,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.xml",
+    "sha256": "f0b17d76366225efb369d367893959c6a4713a6aea3488cc8a137eff4b80bdc9"
+  },
+  "selected_test_log_pin": {
+    "bytes": 912,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.log",
+    "sha256": "33ff348f880295e995fc31fe9bb1cc24e2e73fe5d817d386f73a54beb3ef251b"
+  },
+  "selected_test_observation_pin": {
+    "bytes": 4975,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/selected-inert-tests-observation-v01.json",
+    "sha256": "fd501d6cc670ad5734bf6aad9aa389cc4d04ccfe6f3d658299705f40212dd9eb"
+  },
+  "temporal_diagnostics_pin": {
+    "bytes": 204528,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/actual-temporal-proposal-diagnostics-v01.json",
+    "sha256": "1df837289e963870cad9dae0cc970f5315a0b7b28e79255d37c4d8c9cbfed9fb"
+  },
+  "work_executed": {
+    "Git_mutations": false,
+    "compiler": false,
+    "helper_runtime": false,
+    "model_or_backend": false,
+    "network": false,
+    "resource_acquisition": false,
+    "stdlib_JSON_byte_AST_reads": true,
+    "tests": false
+  }
+}

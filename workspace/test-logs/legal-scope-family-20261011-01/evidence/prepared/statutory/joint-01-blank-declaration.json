@@ -1,0 +1,40 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": null,
+    "candidate_sha256": "e669452e3330747aefca5d2a3d6425327ce46b341ba8b1090d1441824cc5aa01",
+    "canonical_ir_sha256": "cb3ecb29bce27c83511f5ff19429d4021563a78736116c20365648d90acef1a6",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": null,
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [
+          {
+            "expression": null,
+            "literal": "the presiding officers of both Houses and"
+          }
+        ],
+        "exceptions": [],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+  },
+  "occurrence": {
+    "end_char": null,
+    "modality_anchor": {
+      "canonical_value": "O",
+      "end_char": null,
+      "source_text": null,
+      "start_char": null
+    },
+    "occurrence_id": null,
+    "source_text": null,
+    "start_char": null
+  },
+  "packet_sha256": "a242b1518d2fc7e39c4c0215faf3820229b7da0356a6f25f420d52bbb53a383d",
+  "schema": "saved-span-family-declaration/v1"
+}

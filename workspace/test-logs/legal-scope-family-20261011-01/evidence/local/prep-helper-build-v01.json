@@ -1,0 +1,267 @@
+{
+  "audit_policy": {
+    "NoModels_bootstrap_used": true,
+    "additional_numerical_import_roots_denied": [
+      "torch",
+      "numpy",
+      "transformers",
+      "sentence_transformers",
+      "tensorflow",
+      "jax"
+    ],
+    "kernel_network_namespace_claim": false,
+    "native_gate_limits_or_old_numerical_guardian_caps_changed": false,
+    "os_system_fork_spawn_exec_denied": true,
+    "socket_and_process_audit_denial": true
+  },
+  "authority": {
+    "admitted": false,
+    "cross_family_equivalence_verified": false,
+    "cross_parser_AST_equality_asserted": false,
+    "legal_accuracy": null,
+    "model_or_checkpoint_authenticated": false,
+    "proof_authority": false,
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_gold_created": false,
+    "source_semantics_verified": false,
+    "training_or_selection_performed": false
+  },
+  "bootstrap_pin": {
+    "bytes": 1208,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/bootstrap_inert.py",
+    "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+  },
+  "compiler_generator_compatibility_keys": {
+    "input_pins": "list of exact path/bytes/sha256 objects",
+    "loaded_producer_pins": "mapping of actual imported module names to endpoint pins, excludes synthetic namespace bodies",
+    "native_requests_predeclared": 12,
+    "output_pins": "all freshly saved files before summary itself; root separately pins summary",
+    "temporal_refused": "3 source rows; temporal_refusal_attempts separately records6"
+  },
+  "entrypoint": "main guarded by __name__ == __main__; this authoring step did not import or invoke the helper",
+  "exclusive_output_policy": "Fresh absent output directory; all JSON/generated project files opened xb, no old outputs overwritten.",
+  "functions": [
+    {
+      "arguments": "path",
+      "line": 48,
+      "name": "pin"
+    },
+    {
+      "arguments": "spec",
+      "line": 55,
+      "name": "expected_pin"
+    },
+    {
+      "arguments": "path",
+      "line": 60,
+      "name": "read_json"
+    },
+    {
+      "arguments": "name",
+      "line": 79,
+      "name": "output_path"
+    },
+    {
+      "arguments": "name, raw",
+      "line": 88,
+      "name": "write_bytes"
+    },
+    {
+      "arguments": "name, value",
+      "line": 98,
+      "name": "write_json"
+    },
+    {
+      "arguments": "event, values",
+      "line": 104,
+      "name": "audit"
+    },
+    {
+      "arguments": "case, call, needle=None",
+      "line": 113,
+      "name": "must_refuse"
+    },
+    {
+      "arguments": "prior_summary, old_ledger",
+      "line": 124,
+      "name": "source_endpoints"
+    },
+    {
+      "arguments": "",
+      "line": 140,
+      "name": "main"
+    }
+  ],
+  "helper_pin": {
+    "bytes": 29975,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_scope_native_pilot.py",
+    "sha256": "f07a2e4ddce24660eab76798fc81dc6502fb5d0f089bc809ac6b3e7e8e7145e4"
+  },
+  "limitations": [
+    "All counts are planned static invariants until root executes this separately reviewed helper.",
+    "Native parser-view coverage is distinct from qualification of registered temporal/event/cognitive families.",
+    "Preparation and later compilation cannot establish correct legal interpretation.",
+    "This helper omits the separately owned shared-scope pilot runtime."
+  ],
+  "new_native_view_build_receipt_pin": {
+    "bytes": 21081,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/saved-native-views-build-v01.json",
+    "sha256": "8f0f958ebe36a0b7c33e9f71eca8f4a41e3d8bdd97a753fd25d86360d2917b93"
+  },
+  "new_native_view_source_pin": {
+    "bytes": 13297,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+    "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+  },
+  "new_native_view_test_pin": {
+    "bytes": 29921,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+    "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+  },
+  "output_directory": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v01",
+  "planned_contract": [
+    "Bind source exports, caller declarations, full96 saved report, real raw/joint reports and checkpoint to explicit external file SHA/size identities before pure owners import.",
+    "Checkpoint SHA-checked as bytes only; no checkpoint JSON decode, canonical-state digest recomputation, restoration or tensor loading.",
+    "Dimension384 and latent_enabled false come from the exact pinned prior preparation metadata, distinct from the current file pin and report canonical checkpoint digest.",
+    "Use unchanged saved_span_family_adapter for fresh pending/declaration generation, then new prepare_native_view and validate_native_view; retain all twenty-four attempts in source-row/profile order.",
+    "Save exact fresh packets/declarations and twelve new parser-view outputs; preserve originals, refusals, source IDs, positions, report/checkpoint digests and explicit cues/qualifier expressions.",
+    "Generate unchanged gate preparation only: twelve mixed native parser requests, fourteen expected Lean modules; no compiler or native version probes.",
+    "A mixed batch with unsupported fol parser view must block all generated Lean files and retain only source-family-inputs.json.",
+    "Real law proposals receive no filled declarations or compiler requests; retain all sixteen original dispositions and both blank-view refusal checks for each of five pending packets.",
+    "Prior empty review evidence is pinned/read only; no new scope/preflight/review runtime, no fake submissions or admission masks.",
+    "No path-bearing old native receipt equality is asserted; only source byte identities and old law disposition projections are compared.",
+    "Synthetic namespace path endpoints are distinct from actual imported producer endpoint pins and never labeled executed module bodies.",
+    "Source producer endpoints and all frozen original input/helper bytes checked before/after; no continuous or authenticated execution custody claim."
+  ],
+  "planned_counts": {
+    "DCEC_qualified_attempts_refused": 6,
+    "actual_statutory_dispositions_retained": 16,
+    "actual_statutory_source_rows": 8,
+    "eligible_packets_and_declarations_generated_once_per_row": 9,
+    "expected_native_modules": 14,
+    "expected_project_files": 17,
+    "full_original_report_rows": 96,
+    "new_blank_native_per_profile_refusals": 10,
+    "new_human_submissions": 0,
+    "new_native_negative_controls": 13,
+    "new_semantic_labels": 0,
+    "ordered_native_parser_attempts": 24,
+    "prior_empty_review_items": 8,
+    "source_rows": 12,
+    "statutory_lanes": 2,
+    "statutory_pending_declaration_dispositions": 5,
+    "statutory_proposal_or_profile_refusals": 11,
+    "supported_DCEC_qualifier_free_requests": 3,
+    "supported_TDFOL_ground_parser_requests": 9,
+    "temporal_attempts_refused": 6,
+    "temporal_source_rows_refused": 3,
+    "total_supported_parser_requests": 12
+  },
+  "prior_preparation_helper_pin": {
+    "bytes": 12110,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_formal_output_pilot.py",
+    "sha256": "2f21d5f5b1a7e9c339b121fa1c00cc91b138ea4c31c284d1b9f42520160a3b32"
+  },
+  "schema": "scope-native-pilot-preparation-helper-build/v1",
+  "static_frozen_input_specifications": [
+    {
+      "bytes": 4968,
+      "path_expression": "F / \"authored-development-source-only-v02.json\"",
+      "role": "development_source",
+      "sha256": "34fe6b7255c89292c148e79070f657104ba8a7855f44d936168309246bd31e5d"
+    },
+    {
+      "bytes": 9753,
+      "path_expression": "F / \"authored-development-cue-declarations-v02.json\"",
+      "role": "development_declarations",
+      "sha256": "67b80ed4224b3d04f636d980dd66b323ca6c1786fc058407782b8f13a7170756"
+    },
+    {
+      "bytes": 4311,
+      "path_expression": "F / \"statutory-source-only-inputs.json\"",
+      "role": "statutory_source",
+      "sha256": "8e32b64579eb67b604d7ba7cd907d17da7c8934e354b0641cd344b6522049fc3"
+    },
+    {
+      "bytes": 1208,
+      "path_expression": "F / \"bootstrap_inert.py\"",
+      "role": "bootstrap",
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    {
+      "bytes": 874913,
+      "path_expression": "R / \"source_only-1729-ce0-tuning-greedy.json\"",
+      "role": "original_full_tuning_report",
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    },
+    {
+      "bytes": 4117352,
+      "path_expression": "R / \"source_only-1729-ce0-checkpoint.json\"",
+      "role": "original_checkpoint_file",
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    {
+      "bytes": 274731,
+      "path_expression": "R / \"source_only-1729-ce0-law-none.json\"",
+      "role": "original_statutory_raw_report",
+      "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+    },
+    {
+      "bytes": 103504,
+      "path_expression": "R / \"source_only-1729-ce0-law-none-joint.json\"",
+      "role": "original_statutory_joint_report",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    {
+      "bytes": 64357,
+      "path_expression": "PARENT / \"prepared-pilot-v01/preparation-summary.json\"",
+      "role": "prior_preparation_summary",
+      "sha256": "82fcae238ba6e87d6eb44f97ee0b0da91ead6c1ba35367b7a695b2d7d99f879b"
+    },
+    {
+      "bytes": 47619,
+      "path_expression": "PARENT / \"prepared-pilot-v01/actual-statutory-preflight.json\"",
+      "role": "prior_empty_review_preflight",
+      "sha256": "d7488d74d6418d61992e840bf26bc4ec9140ba704eb39e244e45761b8775a1fd"
+    },
+    {
+      "bytes": 1997,
+      "path_expression": "PARENT / \"prepared-pilot-v01/actual-statutory-preflight-replay.json\"",
+      "role": "prior_empty_review_replay",
+      "sha256": "018196a7576181f78a9891b122e299fc1059a1723d121156dcef259126775644"
+    },
+    {
+      "bytes": 19233,
+      "path_expression": "PARENT / \"retained-owner-pins.json\"",
+      "role": "old_source_owner_ledger",
+      "sha256": "331302c6dedeb21980062be387e92e2cac9c88bd7b8f78b4a8f7250e49af6305"
+    },
+    {
+      "bytes": 13297,
+      "path_expression": "ROOT / \"ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py\"",
+      "role": "new_native_view_source",
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+    },
+    {
+      "bytes": 29921,
+      "path_expression": "ROOT / \"tests/unit/logic/legal_ir/test_saved_span_native_views.py\"",
+      "role": "new_native_view_tests",
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+    }
+  ],
+  "static_validation": {
+    "AST_parse": true,
+    "Git_operations": false,
+    "compiler_execution": false,
+    "helper_executed": false,
+    "helper_imported": false,
+    "model_or_numeric_execution": false,
+    "network_execution": false,
+    "original_checkpoint_body_reopened_by_author": false,
+    "producer_imports": false,
+    "resource_acquisition": false,
+    "tests_executed": false
+  },
+  "status": "authored_frozen_static_syntax_checked_not_executed"
+}

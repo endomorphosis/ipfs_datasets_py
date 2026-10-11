@@ -1,0 +1,1447 @@
+{
+  "Boolean_scope_inferred": false,
+  "Lake_qualified": false,
+  "accepted": false,
+  "actual_training_or_evaluation_admission": false,
+  "admission_masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "admitted": false,
+  "binder_roles_inferred": false,
+  "binder_terms_typechecked": false,
+  "completed_scope_declarations_generated": 0,
+  "completed_submissions_generated": false,
+  "content_sha256": "1e013f29f16b439add412c305653383aee71b3bb2c40d85ff090b0d8112fe89a",
+  "cross_references_resolved": false,
+  "declared_consistency_is_legal_correctness": false,
+  "encoder_executed": false,
+  "evidence_contents_interpreted": false,
+  "family_bridge_admitted": false,
+  "file_bytes_verified_by_dictionary_api": false,
+  "formal_output_lowered": false,
+  "formalized": false,
+  "fresh_holdout_qualified": false,
+  "global_unseen_verified": false,
+  "human_review_authenticated": false,
+  "independent_adjudication_completed": false,
+  "independent_review_completed": false,
+  "instructions": {
+    "authority": "Structural transport, agreement and caller hashes do not authenticate human review or admit targets.",
+    "context": "Use the exact complete raw context; profile limits cannot be repaired by truncation or none_required.",
+    "leaf_order": "Qualifiers retain leaf order: local qualifier trees first, then shared attachments in inner-to-outer statement traversal. This is a transport convention, not a legal equivalence claim.",
+    "maps": "Supply ordered rule/modality maps, qualifier-index to exact leaf paths, and every original anchor/attachment map.",
+    "partial": "Null is unanswered. Explicit empty maps are assessed when a complete sidecar is supplied.",
+    "scope": "Supply your own cue, connective, shared qualifier and binder declarations. No legal interpretation is inferred.",
+    "trigger": "The archival trigger list has no rule association; it is preserved with linkage unassessed."
+  },
+  "item_count": 8,
+  "items": [
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 2285,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 2312,
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "b6f152fb54f99a7af3d5d77fa8350f27caa56ac6316d930c4894e51aa30554b5",
+      "item_id": "statutory-physical-review-0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "5b76287ed59c51530ba4ec01a85a1facb27327d87388298e74569a255e640efc",
+      "scope_request": {
+        "context": {
+          "bindings": {},
+          "role": "declared_context",
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5",
+          "text": "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition Title 10 - ARMED FORCES Subtitle A - General Military Law PART I - ORGANIZATION AND GENERAL MILITARY POWERS CHAPTER 15 - MILITARY SUPPORT FOR CIVILIAN LAW ENFORCEMENT AGENCIES Sec. 276 - Support not to affect adversely military preparedness From the U.S. Government Publishing Office, www.gpo.gov §276. Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States. The Secretary of Defense shall prescribe such regulations as may be necessary to ensure that the provision of any such support does not adversely affect the military preparedness of the United States. (Added Pub. L. 97–86, title, IX, §905(a)(1), Dec. 1, 1981, 95 Stat. 1116, §376; amended Pub. L. 100–456, div. A, title XI, §1104(a), Sept. 29, 1988, 102 Stat. 2045; renumbered §276, Pub. L. 114–328, div. A, title XII, §1241(a)(2), Dec. 23, 2016, 130 Stat. 2497.) Editorial Notes Prior Provisions A prior section 276, acts Aug. 10, 1956, ch. 1041, 70A Stat. 13; Apr. 21, 1987, Pub. L. 100–26, §7(k)(4), 101 Stat. 284, related to maintenance of mobilization forces, prior to repeal by Pub. L. 103–337, div. A, title XVI, §§1661(a)(2)(A), 1691, Oct. 5, 1994, 108 Stat. 2979, 3026, effective Dec. 1, 1994. See section 10207 of this title. Amendments 2016 —Pub. L. 114–328 renumbered section 376 of this title as this section. 1988 —Pub. L. 100–456 substituted \"Support\" for \"Assistance\" in section catchline and amended text generally. Prior to amendment, text read as follows: \"Assistance (including the provision of any equipment or facility or the assignment of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such assistance will adversely affect the military preparedness of the United States. The Secretary of Defense shall issue such regulations as may be necessary to insure that the provision of any such assistance does not adversely affect the military preparedness of the United States.\""
+        },
+        "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States."
+      },
+      "selected_context_char_offsets": [
+        377,
+        721
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 721,
+          "selected_char_start": 377
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "byte_end": 722,
+          "byte_start": 378,
+          "citation": "10 U.S.C. 276",
+          "document_id": "usc:us:10:276",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 2312,
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "b6f152fb54f99a7af3d5d77fa8350f27caa56ac6316d930c4894e51aa30554b5",
+        "item_id": "statutory-physical-review-0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "5b76287ed59c51530ba4ec01a85a1facb27327d87388298e74569a255e640efc",
+        "selected_context_char_offsets": [
+          377,
+          721
+        ],
+        "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 9706,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 9770,
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "a1a893f77bd8f70a81f0f0f2b288b5cacff5d6405020401d376caad75cacf23f",
+      "item_id": "statutory-physical-review-176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "6c984c7aaee525afdb28584ef5e311954cfa960776e87f033af40fa7b48c2b31",
+      "scope_request": {
+        "context": {
+          "bindings": {},
+          "role": "declared_context",
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973",
+          "text": "U.S.C. Title 1 - GENERAL PROVISIONS 1 U.S.C. United States Code, 2024 Edition Title 1 - GENERAL PROVISIONS CHAPTER 2 - ACTS AND RESOLUTIONS; FORMALITIES OF ENACTMENT; REPEALS; SEALING OF INSTRUMENTS Sec. 112 - Statutes at Large; contents; admissibility in evidence From the U.S. Government Publishing Office, www.gpo.gov §112. Statutes at Large; contents; admissibility in evidence The Archivist of the United States shall cause to be compiled, edited, indexed, and published, the United States Statutes at Large, which shall contain all the laws and concurrent resolutions enacted during each regular session of Congress; all proclamations by the President in the numbered series issued since the date of the adjournment of the regular session of Congress next preceding; and also any amendments to the Constitution of the United States proposed or ratified pursuant to article V thereof since that date, together with the certificate of the Archivist of the United States issued in compliance with the provision contained in section 106b of this title. In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session. The United States Statutes at Large shall be legal evidence of laws, concurrent resolutions, treaties, international agreements other than treaties, proclamations by the President, and proposed or ratified amendments to the Constitution of the United States therein contained, in all the courts of the United States, the several States, and the Territories and insular possessions of the United States. (July 30, 1947, ch. 388, 61 Stat. 636; Sept. 23, 1950, ch. 1001, §1, 64 Stat. 979; Oct. 31, 1951, ch. 655, §3, 65 Stat. 710; Pub. L. 98–497, title I, §107(d), Oct. 19, 1984, 98 Stat. 2291.) Editorial Notes Amendments 1984 —Pub. L. 98–497 substituted \"Archivist of the United States\" for \"Administrator of General Services\" in three places. 1951 —Act Oct. 31, 1951, substituted \"106b of this title\" for \"205 of the Revised Statutes\" in first sentence. 1950 —Act Sept. 23, 1950, amended section generally to implement 1950 Reorg. Plan No. 20, §1, eff. May 24, 1950, 15 F.R. 3178, 64 Stat. 1272, which transferred to the Administrator of General Services certain duties formerly performed by the Secretary of State. Statutory Notes and Related Subsidiaries Effective Date of 1984 Amendment Amendment by Pub. L. 98–497 effective Apr. 1, 1985, see section 301 of Pub. L. 98–497, set out as a note under section 2102 of Title 44, Public Printing and Documents. Publishing Pub. L. 115–141 in Statutes at Large Pub. L. 115–141, div. G, title I, §121(c), Mar. 23, 2018, 132 Stat. 662, provided that: \"In publishing this Act in slip form and in the United States Statutes at large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the sections of the bill and the bills referred to in subsections (a) [enacting into law from the 115th Congress sections 7130 and 7134 of S. 1460, as placed on the calendar of the Senate on June 29, 2017] and (b) [enacting into law from the 115th Congress H.R. 1281, as introduced on Mar. 1, 2017, and H.R. 4134, as introduced on Oct. 25, 2017], respectively.\" Publishing Pub. L. 115–31 in Statutes at Large Pub. L. 115–31, div. G, title IV, §431(b), May 5, 2017, 131 Stat. 502, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the bills referred to in subsection (a) [enacting into law from the 115th Congress H.R. 2104, as introduced on Apr. 20, 2017; S. 131, as ordered to be reported on Mar. 30, 2017, by the Committee on Energy and Natural Resources of the Senate; and S. 847, as introduced on Apr. 5, 2017].\" Publishing Pub. L. 107–206 in Statutes at Large Pub. L. 107–206, title III, §3002(h), Aug. 2, 2002, 116 Stat. 924, provided that: \"In publishing the Act in slip form and in the United States Statutes at Large pursuant to section 112, of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the bill referred to in subsection (a) [set out as a Short Title of 2002 Amendment note under section 101 of Title 39, Postal Service].\" Publication of Certain Laws of 106th Congress Pub. L. 106–554, §1(b), Dec. 21, 2000, 114 Stat. 2763, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end appendixes setting forth the texts of the bills referred to in subsection (a) of this section [enacting into law H.R. 5656, H.R. 5657, H.R. 5658, H.R. 5660, H.R. 5661, H.R. 5662, and H.R. 5663 of the 106th Congress, as introduced on Dec. 14, 2000, and H.R. 5666 and H.R. 5667 of the 106th Congress, as introduced on Dec. 15, 2000, except that the text of H.R. 5666, as so enacted, shall not include section 123] and the text of any other bill enacted into law by reference by reason of the enactment of this Act.\" Pub. L. 106–553, §1(b), Dec. 21, 2000, 114 Stat. 2762, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end appendixes setting forth the texts of the bills referred to in subsection (a) of this section [enacting into law H.R. 5547 and H.R. 5548 of the 106th Congress, as introduced on Oct. 25, 2000].\" Pub. L. 106–429, §101(a) [title V, §595(b)], Nov. 6, 2000, 114 Stat. 1900, 1900A–60, provided that: \"In publishing the Act in slip form and in the United States Statutes at Large pursuant to section 112, of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end appendixes setting forth the texts of the bill referred to in subsection (a) of this section [enacting into law S. 3140 of the 106th Congress, as introduced on Sept. 28, 2000].\" Pub. L. 106–429, §101(b), Nov. 6, 2000, 114 Stat. 1900, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the bill referred to in subsection (a) of this section [enacting into law H.R. 5526 of the 106th Congress, as introduced on Oct. 24, 2000].\" Pub. L. 106–398, §2, Oct. 30, 2000, 114 Stat. 1654, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval an appendix setting forth the text of the bill referred to in section 1 [enacting into law H.R. 5408 of the 106th Congress, as introduced on Oct. 6, 2000].\" Pub. L. 106–387, §1(b), Oct. 28, 2000, 114 Stat. 1549, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the bill referred to in subsection (a) of this section [enacting into law H.R. 5426 of the 106th Congress, as introduced on Oct. 6, 2000].\" Pub. L. 106–377, §1(b), Oct. 27, 2000, 114 Stat. 1441, provided that: \"In publishing this Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end appendixes setting forth the texts of the bills referred to in subsection (a) of this section [enacting into law H.R. 5482 and 5483 of the 106th Congress, as introduced on Oct. 18, 2000].\" Pub. L. 106–346, §101(b), Oct. 23, 2000, 114 Stat. 1356, provided that: \"In publishing the Act in slip form and in the United States Statutes at Large pursuant to section 112 of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end an appendix setting forth the text of the bill referred to in subsection (a) of this section [enacting into law H.R. 5394 of the 106th Congress, as introduced on Oct. 5, 2000].\" Pub. L. 106–113, div. B, §1000(b), Nov. 29, 1999, 113 Stat. 1536, provided that: \"In publishing the Act in slip form and in the United States Statutes at Large pursuant to section 112, of title 1, United States Code, the Archivist of the United States shall include after the date of approval at the end appendixes setting forth the texts of the bills referred to in subsection (a) of this section [enacting into law H.R. 3421, H.R. 3422, H.R. 3423, H.R. 3424, H.R. 3425, H.R. 3426, H.R. 3427 (as amended), H.R. 3428, and S. 1948 of the 106th Congress, as introduced on Nov. 17, 1999].\" Effect of Repeal of Section 73 of Act Jan. 12, 1895 This section and section 112a of this title as not affected by the repeal of section 73 of act Jan. 12, 1895, ch. 23, 28 Stat. 615, which related to the same subject matter, see section 56(i) of act Oct. 31, 1951, ch. 655, 65 Stat. 729."
+        },
+        "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session."
+      },
+      "selected_context_char_offsets": [
+        1055,
+        1329
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1329,
+          "selected_char_start": 1055
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "byte_end": 1330,
+          "byte_start": 1056,
+          "citation": "1 U.S.C. 112",
+          "document_id": "usc:us:1:112",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 9770,
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "a1a893f77bd8f70a81f0f0f2b288b5cacff5d6405020401d376caad75cacf23f",
+        "item_id": "statutory-physical-review-176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "6c984c7aaee525afdb28584ef5e311954cfa960776e87f033af40fa7b48c2b31",
+        "selected_context_char_offsets": [
+          1055,
+          1329
+        ],
+        "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 7067,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 7137,
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "83e8a6a29b17f10bbf74539bc02c26d09deddfc92771015e2e4b527e5e7dfc08",
+      "item_id": "statutory-physical-review-637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "68a0f264fd266cd26e47174b639e25c9d2ac9c1807eff2992de68604906741de",
+      "scope_request": {
+        "context": {
+          "bindings": {},
+          "role": "declared_context",
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3",
+          "text": "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition Title 10 - ARMED FORCES Subtitle A - General Military Law PART I - ORGANIZATION AND GENERAL MILITARY POWERS CHAPTER 15 - MILITARY SUPPORT FOR CIVILIAN LAW ENFORCEMENT AGENCIES Sec. 282 - Emergency situations involving weapons of mass destruction From the U.S. Government Publishing Office, www.gpo.gov §282. Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction. Department of Defense resources, including personnel of the Department of Defense, may be used to provide such assistance if— (1) the Secretary of Defense and the Attorney General jointly determine that an emergency situation exists; and (2) the Secretary of Defense determines that the provision of such assistance will not adversely affect the military preparedness of the United States. (b) Emergency Situations Covered .—In this section, the term \"emergency situation involving a weapon of mass destruction\" means a cir cumstance involving a weapon of mass destruction— (1) that poses a serious threat to the interests of the United States; and (2) in which— (A) civilian expertise and capabilities are not readily available to provide the required assistance to counter the threat immediately posed by the weapon involved; (B) special capabilities and expertise of the Department of Defense are necessary and critical to counter the threat posed by the weapon involved; and (C) enforcement of section 175, 229, or 2332a of title 18 would be seriously impaired if the Department of Defense assistance were not provided. (c) Forms of Assistance .—The assistance referred to in subsection (a) includes the operation of equipment (including equipment made available under section 372 1 of this title) to monitor, contain, disable, or dispose of the weapon involved or elements of the weapon. (d) Regulations .—(1) The Secretary of Defense and the Attorney General shall jointly prescribe regulations concerning the types of assistance that may be provided under this section. Such regulations shall also describe the actions that Department of Defense personnel may take in circumstances incident to the provision of assistance under this section. (2)(A) Except as provided in subparagraph (B), the regulations may not authorize the following actions: (i) Arrest. (ii) Any direct participation in conducting a search for or seizure of evidence related to a violation of section 175, 229, or 2332a of title 18. (iii) Any direct participation in the collection of intelligence for law enforcement purposes. (B) The regulations may authorize an action described in subparagraph (A) to be taken under the following conditions: (i) The action is considered necessary for the immediate protection of human life, and civilian law enforcement officials are not capable of taking the action. (ii) The action is otherwise authorized under subsection (c) or under otherwise applicable law. (e) Reimbursements .—The Secretary of Defense shall require reimbursement as a condition for providing assistance under this section to the extent required under section 377 1 of this title. (f) Delegations of Authority .—(1) Except to the extent otherwise provided by the Secretary of Defense, the Deputy Secretary of Defense may exercise the authority of the Secretary of Defense under this section. The Secretary of Defense may delegate the Secretary's authority under this section only to an Under Secretary of Defense or an Assistant Secretary of Defense and only if the Under Secretary or Assistant Secretary to whom delegated has been designated by the Secretary to act for, and to exercise the general powers of, the Secretary. (2) Except to the extent otherwise provided by the Attorney General, the Deputy Attorney General may exercise the authority of the Attorney General under this section. The Attorney General may delegate that authority only to the Associate Attorney General or an Assistant Attorney General and only if the Associate Attorney General or Assistant Attorney General to whom delegated has been designated by the Attorney General to act for, and to exercise the general powers of, the Attorney General. (g) Relationship to Other Authority .—Nothing in this section shall be construed to restrict any executive branch authority regarding use of members of the armed forces or equipment of the Department of Defense that was in effect before September 23, 1996. (Added Pub. L. 104–201, div. A, title XIV, §1416(a)(1), Sept. 23, 1996, 110 Stat. 2721, §382; amended Pub. L. 105–85, div. A, title X, §1073(a)(6), Nov. 18, 1997, 111 Stat. 1900; Pub. L. 111–383, div. A, title X, §1075(b)(10)(A), (B), Jan. 7, 2011, 124 Stat. 4369; Pub. L. 112–81, div. A, title X, §1089, Dec. 31, 2011, 125 Stat. 1603; renumbered §282, Pub. L. 114–328, div. A, title XII, §1241(a)(2), Dec. 23, 2016, 130 Stat. 2497.) Editorial Notes References in Text Section 372 of this title, referred to in subsec. (c), was renumbered section 272 of this title by Pub. L. 114–328, div. A, title XII, §1241(a)(2), Dec. 23, 2016, 130 Stat. 2497. Section 377 of this title, referred to in subsec. (e), was renumbered section 277 of this title by Pub. L. 114–328, div. A, title XII, §1241(a)(2), Dec. 23, 2016, 130 Stat. 2497. Amendments 2016 —Pub. L. 114–328 renumbered section 382 of this title as this section. 2011 —Pub. L. 111–383, §1075(b)(10)(B), struck out \"chemical or biological\" before \"weapons\" in section catchline. Subsec. (a). Pub. L. 112–81 struck out \"biological or chemical\" before \"weapon of mass destruction\" in introductory provisions. Pub. L. 111–383, §1075(b)(10)(A), substituted \"section 175, 229, or 2332a\" for \"section 175 or 2332c\". Subsec. (b). Pub. L. 112–81 struck out \"biological or chemical\" before \"weapon of mass destruction\" in two places in introductory provisions. Subsecs. (b)(2)(C), (d)(2)(A)(ii). Pub. L. 111–383, §1075(b)(10)(A), substituted \"section 175, 229, or 2332a\" for \"section 175 or 2332c\". 1997 —Subsec. (g). Pub. L. 105–85 substituted \"September 23, 1996\" for \"the date of the enactment of the National Defense Authorization Act for Fiscal Year 1997\". Statutory Notes and Related Subsidiaries Military Assistance to Civil Authorities To Respond to Act or Threat of Terrorism Pub. L. 106–65, div. A, title X, §1023, Oct. 5, 1999, 113 Stat. 747, authorized the Secretary of Defense, upon the request of the Attorney General, to provide assistance to civil authorities in responding to an act of terrorism or threat of an act of terrorism within the United States, if the Secretary determined that certain conditions were met, subject to reimbursement and limitations on funding and personnel, and provided that this authority applied between Oct. 1, 1999, and Sept. 30, 2004. 1 See References in Text note below."
+        },
+        "source_text": "Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction."
+      },
+      "selected_context_char_offsets": [
+        382,
+        735
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 735,
+          "selected_char_start": 382
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "byte_end": 738,
+          "byte_start": 383,
+          "citation": "10 U.S.C. 282",
+          "document_id": "usc:us:10:282",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 7137,
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "83e8a6a29b17f10bbf74539bc02c26d09deddfc92771015e2e4b527e5e7dfc08",
+        "item_id": "statutory-physical-review-637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "68a0f264fd266cd26e47174b639e25c9d2ac9c1807eff2992de68604906741de",
+        "selected_context_char_offsets": [
+          382,
+          735
+        ],
+        "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 6265,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 6364,
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "c66b66b21cbf39bf340320d74d2f2797c547487958048163567b19203ecb7569",
+      "item_id": "statutory-physical-review-65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "74aacd71c53ca69c2d5a15708d8abc2286d625f630371611872079f74ed5fc4d",
+      "scope_request": {
+        "context": {
+          "bindings": {},
+          "role": "declared_context",
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961",
+          "text": "U.S.C. Title 10 - ARMED FORCES 10 U.S.C. United States Code, 2024 Edition Title 10 - ARMED FORCES Subtitle A - General Military Law PART I - ORGANIZATION AND GENERAL MILITARY POWERS CHAPTER 14 - ARMING OF AMERICAN VESSELS Sec. 261 - During war or threat to national security From the U.S. Government Publishing Office, www.gpo.gov §261. During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States. (b) This section applies during a war and at any other time when the President determines that the security of the United States is threatened by the application, or the imminent danger of application, of physical force by any foreign government or agency against the United States, its citizens, the property of its citizens, or their commercial interests. (c) Section 16 of the Act of March 4, 1909 (22 U.S.C. 463) does not apply to vessels armed under this section. (Aug. 10, 1956, ch. 1041, 70A Stat. 16, §351; Pub. L. 96–513, title V, §511(12), Dec. 12, 1980, 94 Stat. 2921; renumbered §261, Pub. L. 114–328, div. A, title XII, §1241(a)(2), Dec. 23, 2016, 130 Stat. 2497.) Historical and Revision Notes Revised section Source (U.S. Code) Source (Statutes at Large) 351(a) 50:481 (1st sentence, less 1st 7 words). June 29, 1948, ch. 715, 62 Stat. 1095. 351(b) 50:481 (1st 7 words of 1st sentence and 2d sentence). 351(c) 50:481 (less 1st and 2d sentences). In subsection (a), the wording of the special definition of \"vessel\" and \"American vessel\", contained in section 16 of the Neutrality Act of 1939, 54 Stat. 12 (22 U.S.C. 456), is substituted for the words \"any American vessel as defined in the Neutrality Act of 1939\". In subsection (b), the words \"or national emergency\" are omitted, since the words of the source statute defining that term have been substituted for it. In subsection (c), the words \"(relating to bonds from armed vessels on clearing)\" are omitted as surplusage. Editorial Notes Prior Provisions A prior section 261 was renumbered section 241 of this title. Another prior section 261, act Aug. 10, 1956, ch. 1041, 70A Stat. 10, which named the reserve components of the armed forces, was repealed by Pub. L. 103–337, div. A, title XVI, §§1661(a)(2)(A), 1691, Oct. 5, 1994, 108 Stat. 2979, 3026, effective Dec. 1, 1994. See sections 10101 and 10213 of this title. Prior sections 262 to 265 were repealed by Pub. L. 103–337, div. A, title XVI, §§1661(a)(2)(A), 1691, Oct. 5, 1994, 108 Stat. 2979, 3026, effective Dec. 1, 1994. Section 262, acts Aug. 10, 1956, ch. 1041, 70A Stat. 10; Dec. 1, 1967, Pub. L. 90–168, §2(5), 81 Stat. 521, related to purpose of reserve components. See section 10102 of this title. Section 263, act Aug. 10, 1956, ch. 1041, 70A Stat. 11, related to basic policy for ordering Army National Guard of the United States and Air National Guard of the United States into Federal service. See section 10103 of this title. Section 264, acts Aug. 10, 1956, ch. 1041, 70A Stat. 11; Dec. 1, 1967, Pub. L. 90–168, §2(6), 81 Stat. 521; Nov. 19, 1969, Pub. L. 91–121, title III, §303, 83 Stat. 206; Oct. 20, 1978, Pub. L. 95–485, title IV, §406(a), 92 Stat. 1616; Oct. 19, 1984, Pub. L. 98–525, title XIV, §1405(7)(A), (B), 98 Stat. 2622, authorized Secretaries of each armed force to designate officers to be responsible for reserve affairs and assigned responsibility for providing personnel and logistic support for reserves. See sections 10203 and 18501 of this title. Section 265, act Aug. 10, 1956, ch. 1041, 70A Stat. 11, related to participation of reserve officers in preparation and administration of policies and regulations affecting reserve components. See section 10211 of this title. Prior section 266 was renumbered section 12643 of this title. Prior sections 267 to 270 were repealed by Pub. L. 103–337, div. A, title XVI, §§1661(a)(2)(A), 1691, Oct. 5, 1994, 108 Stat. 2979, 3026, effective Dec. 1, 1994. Section 267, act Aug. 10, 1956, ch. 1041, 70A Stat. 12, related to placement and status of members of Ready Reserve, Standby Reserve, and Retired Reserve. See section 10141(a), (b) of this title. Section 268, acts Aug. 10, 1956, ch. 1041, 70A Stat. 12; Sept. 2, 1958, Pub. L. 85–861, §1(3), 72 Stat. 1437; Dec. 1, 1967, Pub. L. 90–168, §2(8), 81 Stat. 522; Oct. 12, 1982, Pub. L. 97–295, §1(5), 96 Stat. 1289, related to composition, organization, and structure of Ready Reserve. See sections 10142 and 10143 of this title. Section 269, acts Aug. 10, 1956, ch. 1041, 70A Stat. 12; Sept. 2, 1958, Pub. L. 85–861, §1(4), 72 Stat. 1437; June 30, 1960, Pub. L. 86–559, §1(2)(A), 74 Stat. 264; Dec. 1, 1967, Pub. L. 90–168, §2(9), 81 Stat. 522; Oct. 20, 1978, Pub. L. 95–485, title IV, §405(a)(1), 92 Stat. 1615; Sept. 24, 1983, Pub. L. 98–94, title X, §1018, 97 Stat. 669; Sept. 29, 1988, Pub. L. 100–456, div. A, title XII, §1234(a)(1), 102 Stat. 2059, related to placement in and transfer from Ready Reserve. See sections 10145 and 10146 of this title. Section 270, added Pub. L. 85–861, §1(5)(A), Sept. 2, 1958, 72 Stat. 1438; amended Pub. L. 87–378, §2, Oct. 4, 1961, 75 Stat. 807; Pub. L. 88–110, §4, Sept. 3, 1963, 77 Stat. 136; Pub. L. 90–168, §2(10), Dec. 1, 1967, 81 Stat. 523; Pub. L. 92–156, title III, §303(a), Nov. 17, 1971, 85 Stat. 425; Pub. L. 96–513, title V, §511(7), Dec. 12, 1980, 94 Stat. 2920; Pub. L. 100–456, div. A, title XII, §1234(a)(2), Sept. 29, 1988, 102 Stat. 2059; Pub. L. 101–189, div. A, title V, §501(b), Nov. 29, 1989, 103 Stat. 1435, related to training requirements of Ready Reserve. See sections 10147 and 10148 of this title. Amendments 2016 —Pub. L. 114–328 renumbered section 351 of this title as this section. 1980 —Subsec. (c). Pub. L. 96–513 substituted \"Section 16 of the Act of March 4, 1909 (22 U.S.C. 463)\" for \"Section 463 of title 22\". Statutory Notes and Related Subsidiaries Effective Date of 1980 Amendment Amendment by Pub. L. 96–513 effective Dec. 12, 1980, see section 701(b)(3) of Pub. L. 96–513, set out as a note under section 101 of this title."
+        },
+        "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States."
+      },
+      "selected_context_char_offsets": [
+        337,
+        699
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 699,
+          "selected_char_start": 337
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "byte_end": 700,
+          "byte_start": 338,
+          "citation": "10 U.S.C. 261",
+          "document_id": "usc:us:10:261",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 6364,
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "c66b66b21cbf39bf340320d74d2f2797c547487958048163567b19203ecb7569",
+        "item_id": "statutory-physical-review-65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "74aacd71c53ca69c2d5a15708d8abc2286d625f630371611872079f74ed5fc4d",
+        "selected_context_char_offsets": [
+          337,
+          699
+        ],
+        "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 71688,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 72690,
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "5ffbcb76974254022bd36891fb31e8fab8b8b4f86e851108faeda3025316aa7a",
+      "item_id": "statutory-physical-review-8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [
+        "complete_raw_context_character_limit",
+        "request_byte_limit"
+      ],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "b73ae2f79ae011309b15ef1d7963063a1eaa0e40bd3999e196fcc343a9d066f1",
+      "scope_request": null,
+      "selected_context_char_offsets": [
+        7185,
+        7252
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 7252,
+          "selected_char_start": 7185
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "byte_end": 7276,
+          "byte_start": 7209,
+          "citation": "10 U.S.C. 101",
+          "document_id": "usc:us:10:101",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "(6) The term \"enlisted member\" means a person in an enlisted grade."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 72690,
+          "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "5ffbcb76974254022bd36891fb31e8fab8b8b4f86e851108faeda3025316aa7a",
+        "item_id": "statutory-physical-review-8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "b73ae2f79ae011309b15ef1d7963063a1eaa0e40bd3999e196fcc343a9d066f1",
+        "selected_context_char_offsets": [
+          7185,
+          7252
+        ],
+        "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 21347,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 21457,
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "3326c405aea523b411d61ee5222bdf628e464ab0a76da500bb2e3d8fd0d29f1a",
+      "item_id": "statutory-physical-review-925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [
+        "complete_raw_context_character_limit"
+      ],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "6846b976ca2de0d069b3b1662a478118cd932c9729cac84a11e4946749fff671",
+      "scope_request": null,
+      "selected_context_char_offsets": [
+        1655,
+        1880
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1880,
+          "selected_char_start": 1655
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "byte_end": 1881,
+          "byte_start": 1656,
+          "citation": "1 U.S.C. 112b",
+          "document_id": "usc:us:1:112b",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "All citations to the Constitution of the United States, a treaty, or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 21457,
+          "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "3326c405aea523b411d61ee5222bdf628e464ab0a76da500bb2e3d8fd0d29f1a",
+        "item_id": "statutory-physical-review-925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "6846b976ca2de0d069b3b1662a478118cd932c9729cac84a11e4946749fff671",
+        "selected_context_char_offsets": [
+          1655,
+          1880
+        ],
+        "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 28500,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 28742,
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "3022b742ea281124597b0fc753eb3dc077e523a1feedd00b14a73f0c7e9eccf8",
+      "item_id": "statutory-physical-review-9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [
+        "complete_raw_context_character_limit"
+      ],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "d987621886a089efc2f82c20f4aff6ae5f941d9d2754fbad38b858143bde3635",
+      "scope_request": null,
+      "selected_context_char_offsets": [
+        838,
+        1118
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1118,
+          "selected_char_start": 838
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "byte_end": 1119,
+          "byte_start": 839,
+          "citation": "1 U.S.C. 106",
+          "document_id": "usc:us:1:106",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "When such bill, or joint resolution shall have passed both Houses, it shall be printed and shall then be called the enrolled bill, or joint resolution, as the case may be, and shall be signed by the presiding officers of both Houses and sent to the President of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "3022b742ea281124597b0fc753eb3dc077e523a1feedd00b14a73f0c7e9eccf8",
+        "item_id": "statutory-physical-review-9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "d987621886a089efc2f82c20f4aff6ae5f941d9d2754fbad38b858143bde3635",
+        "selected_context_char_offsets": [
+          838,
+          1118
+        ],
+        "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "binder_roles_inferred": false,
+      "binder_terms_typechecked": false,
+      "complete_context_characters": 458,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 459,
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "cross_references_resolved": false,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "formalized": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "02f0a51fce8d3c9ca8a3f55050a6fb23d1c73e3c84a6b934a5aa7d54b2fb9e7b",
+      "item_id": "statutory-physical-review-fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "lowering_authorized": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "native_lowering_performed": false,
+      "normalization_approved": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "proof_authority": false,
+      "qualified": false,
+      "request_profile_limits": [],
+      "review_recording_status": "pending",
+      "review_status_promoted": false,
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_binding_authorizes_lowering": false,
+      "scope_declaration_truth_verified": false,
+      "scope_input_sha256": "f7e3255f44107762c803464b30b9b4f8eaeedf5e5a1100e761129a7c3dcd5081",
+      "scope_request": {
+        "context": {
+          "bindings": {},
+          "role": "declared_context",
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2",
+          "text": "U.S.C. Title 1 - GENERAL PROVISIONS 1 U.S.C. United States Code, 2024 Edition Title 1 - GENERAL PROVISIONS CHAPTER 1 - RULES OF CONSTRUCTION Sec. 2 - \"County\" as including \"parish\", and so forth From the U.S. Government Publishing Office, www.gpo.gov §2. \"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States. (July 30, 1947, ch. 388, 61 Stat. 633.)"
+        },
+        "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States."
+      },
+      "selected_context_char_offsets": [
+        255,
+        418
+      ],
+      "semantic_equivalence_assessed": false,
+      "semantic_gold": false,
+      "semantic_profile_validated": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_fidelity_established": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 418,
+          "selected_char_start": 255
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "byte_end": 419,
+          "byte_start": 256,
+          "citation": "1 U.S.C. 2",
+          "document_id": "usc:us:1:2",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+      "statement_scope_synthesized": false,
+      "submission_slots": [],
+      "symbolic_aliases_inferred": false,
+      "target_access": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "temporal_origin_resolved": false,
+      "training_executed": false,
+      "training_qualified": false,
+      "trigger_to_rule_linkage_assessed": false,
+      "unsubmitted_binding_slot": {
+        "anchor_bindings": null,
+        "attachment_bindings": null,
+        "binding_id": null,
+        "context_artifact": {
+          "bytes": 459,
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+        },
+        "declaration_sha256": null,
+        "input_sha256": "02f0a51fce8d3c9ca8a3f55050a6fb23d1c73e3c84a6b934a5aa7d54b2fb9e7b",
+        "item_id": "statutory-physical-review-fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+        "modality_bindings": null,
+        "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+        "physical_identity_sha256": "fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+        "qualifier_bindings": null,
+        "rule_bindings": null,
+        "schema": "statutory-submission-scope-sidecar/v1",
+        "scope_declaration": null,
+        "scope_input_sha256": "f7e3255f44107762c803464b30b9b4f8eaeedf5e5a1100e761129a7c3dcd5081",
+        "selected_context_char_offsets": [
+          255,
+          418
+        ],
+        "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "submission_id": null,
+        "submission_sha256": null
+      }
+    }
+  ],
+  "lowering_authorized": false,
+  "modality_cues_inferred": false,
+  "model_executed": false,
+  "native_lowering_performed": false,
+  "normalization_approved": false,
+  "official_current_law_authenticated": false,
+  "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+  "preflight_sha256": "544d2a330cd782647185ecc6f82977843f86cdebecf4ef6566d04e5be5255960",
+  "proof_authority": false,
+  "qualified": false,
+  "recording_sha256": "62f4df7193f04710c1bf89d624b04c477227c79cd79414a0938a106fee8430aa",
+  "review_status_promoted": false,
+  "reviewer_blindness_verified": false,
+  "reviewer_identity_authenticated": false,
+  "reviewer_independence_authenticated": false,
+  "schema": "statutory-submission-scope-binding-guide/v1",
+  "scope_binding_authorizes_lowering": false,
+  "scope_declaration_truth_verified": false,
+  "scope_profile": "normative-occurrence-scope/v1",
+  "semantic_equivalence_assessed": false,
+  "semantic_gold": false,
+  "semantic_profile_validated": false,
+  "signature_verification_executed": false,
+  "source_authority_authenticated": false,
+  "source_fidelity_established": false,
+  "source_semantics_verified": false,
+  "statement_scope_synthesized": false,
+  "submission_count": 0,
+  "symbolic_aliases_inferred": false,
+  "target_access": false,
+  "target_created": false,
+  "target_eligibility": false,
+  "temporal_origin_resolved": false,
+  "training_executed": false,
+  "training_qualified": false,
+  "trigger_to_rule_linkage_assessed": false
+}

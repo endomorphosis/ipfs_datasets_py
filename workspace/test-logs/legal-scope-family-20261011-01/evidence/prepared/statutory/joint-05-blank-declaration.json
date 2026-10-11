@@ -1,0 +1,45 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": null,
+    "candidate_sha256": "1855e243517d20a35472918e46468bb25839582ac74007e8af743ab95660c404",
+    "canonical_ir_sha256": "68b8fd380d7aeb17bae3526fcd3e53a4159b21770d592de76ce4db23ef050570",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": null,
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [
+          {
+            "expression": null,
+            "literal": "The President, through any agency of the Department of Defense designated"
+          }
+        ],
+        "exceptions": [
+          {
+            "expression": null,
+            "literal": "the laws of the United States"
+          }
+        ],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+  },
+  "occurrence": {
+    "end_char": null,
+    "modality_anchor": {
+      "canonical_value": "P",
+      "end_char": null,
+      "source_text": null,
+      "start_char": null
+    },
+    "occurrence_id": null,
+    "source_text": null,
+    "start_char": null
+  },
+  "packet_sha256": "c1296cb34e21ce69df1852871eb4055bafae13d8f91afa0f02507f85d01ce60e",
+  "schema": "saved-span-family-declaration/v1"
+}

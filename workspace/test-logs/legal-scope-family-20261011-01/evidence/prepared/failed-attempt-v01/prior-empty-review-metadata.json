@@ -1,0 +1,25 @@
+{
+  "actual_human_submissions": 0,
+  "actual_review_items": 8,
+  "actual_semantic_labels": 0,
+  "admission_masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "current_preflight_executed": false,
+  "current_scope_API_executed": false,
+  "prior_preflight_pin": {
+    "bytes": 47619,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepared-pilot-v01/actual-statutory-preflight.json",
+    "sha256": "d7488d74d6418d61992e840bf26bc4ec9140ba704eb39e244e45761b8775a1fd"
+  },
+  "prior_replay_pin": {
+    "bytes": 1997,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepared-pilot-v01/actual-statutory-preflight-replay.json",
+    "sha256": "018196a7576181f78a9891b122e299fc1059a1723d121156dcef259126775644"
+  },
+  "scope": "Pinned prior empty review evidence only; this helper does not replay or create reviews/preflight/scope declarations."
+}
