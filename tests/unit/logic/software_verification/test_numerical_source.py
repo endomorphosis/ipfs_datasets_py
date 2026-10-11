@@ -281,3 +281,15 @@ def test_resource_bounds_and_invalid_source_are_explicit():
     assert invalid.program is None
     assert invalid.diagnostics[0]["code"] == "python.syntax"
     assert adapt_numerical_source("import numpy\n").status == "unsupported"
+
+
+@pytest.mark.parametrize(("source", "diagnostic"), [
+    ("def f():\n    [] = []\n    return 0\n", "python.assignment.unsupported_target_or_value"),
+    ("def f():\n    return '\\ud800'\n", "python.literal.unsupported"),
+    ("def f(x, x):\n    return x\n", "python.function.duplicate_parameter"),
+])
+def test_edge_syntax_abstains_without_native_canonicalization_failure(source, diagnostic):
+    result = adapt_numerical_source(source)
+    assert result.status == "partial"
+    assert any(row["code"] == diagnostic for row in result.diagnostics)
+    assert result.to_dict()["source_translation_complete"] is False

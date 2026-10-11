@@ -184,7 +184,8 @@ class _Frontend:
         if isinstance(node, ast.Constant):
             value = node.value
             if type(value) not in (str, int, float, bool, type(None)) or (
-                    type(value) is float and not math.isfinite(value)):
+                    type(value) is float and not math.isfinite(value)) or (
+                    type(value) is str and any(0xD800 <= ord(char) <= 0xDFFF for char in value)):
                 self._diagnostic("python.literal.unsupported", node, function)
                 return None
             # The shared logic bridge accepts lossless integer/string atoms,
@@ -328,6 +329,8 @@ class _Frontend:
             args.append(node.args.vararg)
         if node.args.kwarg is not None:
             args.append(node.args.kwarg)
+        if len({arg.arg for arg in args}) != len(args):
+            self._diagnostic("python.function.duplicate_parameter", node, name)
         for arg in args:
             key = self._symbol(arg.arg, "parameter", self._span(arg), annotation=arg.annotation)
             local[arg.arg] = key
@@ -376,7 +379,8 @@ class _Frontend:
                 target_nodes = statement.targets if isinstance(statement, ast.Assign) else [statement.target]
                 patterns = [self._pattern(target, local) for target in target_nodes]
                 value = self._expr(statement.value, local, name) if statement.value is not None else None
-                if len(patterns) != 1 or patterns[0] is None or value is None:
+                if (len(patterns) != 1 or patterns[0] is None or value is None
+                        or not self._pattern_ids(patterns[0])):
                     self._diagnostic("python.assignment.unsupported_target_or_value", statement, name)
                     attributes["unsupported_construct"] = type(statement).__name__
                 else:
