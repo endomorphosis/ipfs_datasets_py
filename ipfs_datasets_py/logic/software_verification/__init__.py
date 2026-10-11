@@ -12,12 +12,19 @@ __all__ = [
     "SourceToVerificationResult", "UnsupportedConstructError", "attach_contract_specs",
     "lower_vc_obligation_to_smt", "run_source_to_verification_pipeline",
     "ProofOperationInterrupted", "ProofOperationTimeout", "ProofOperationCancelled",
+    "NumericalLogicError", "describe_numerical_logic_profile",
+    "formalize_numerical_source", "validate_numerical_logic_report",
 ]
 
 
 def __getattr__(name):
     if name not in __all__:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    if name in {"NumericalLogicError", "describe_numerical_logic_profile",
+                "formalize_numerical_source", "validate_numerical_logic_report"}:
+        value = getattr(import_module(".numerical_logic", __name__), name)
+        globals()[name] = value
+        return value
     module = import_module("..backends.smt.operation_budget", __name__) if name in {
         "ProofOperationInterrupted", "ProofOperationTimeout", "ProofOperationCancelled",
     } else import_module(
