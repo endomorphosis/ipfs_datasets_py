@@ -1,0 +1,19 @@
+# Current reconstruction evidence and the next training gate
+
+The newly merged [retained pointer/source-cache comparison](https://github.com/endomorphosis/lift_coding/blob/969c3f70b70966068ad3df3fc758b4029b4cd0bf/implementation_plan/docs/73-retained-pointer-source-cache-2026-10-11.md) complements the admission-pending US Code identity diagnosis. Its underlying datasets contribution is retained in main commit `4fc38a5222976652597ccdb82e36bb004b72261f`. Both histories are preserved in this publication; the completed source scan and all 378,935 unresolved archived IDs keep their original scope.
+
+The assay restores the original October 2 raw384 and source-only checkpoints, makes zero encoder calls and optimizer updates, and creates no new checkpoint. Each checkpoint/control lane accepts 1 of 8 exposed spans and refuses 7 because selected facets overlap. None, zero, disabled and rotate controls leave the final proposal/refusal decisions and facet anchors unchanged; raw384 scores change while source-only scores do not. This does not establish that raw context is ignored or that embeddings improve legal interpretation. Exact source intervals and canonical grammar are separate from correct legal roles, semantic accuracy and learned legal-text reconstruction. The eight exposed cases are development regressions, not independent confirmation.
+
+The readout currently represents one flat obligation/permission/prohibition rule with one copied span per facet. Definitions, multiple rules, paraphrases, multiple values in a qualifier facet and variable binding remain outside its representability. The associated real-law review packet leaves semantic targets unassigned and supervision/evaluation masks at zero. Its full-section context cannot be admitted through the older authored-only empty-context review interface. No statutory fit, held-out semantic evaluation or Lean build is established.
+
+The [retained checkpoint release](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/8279ea69452c0c72560211a1eda505ff1b1b5713/releases/20261011-retained-raw384-pointer-v1) preserves the selected original states and saved Adam state; the source contribution records byte verification of 41 new Hub files and preservation of 3,167 prior metadata identities. Downloaded numerical replay was not performed. This is reuse and publication evidence, not teacher qualification.
+
+The reconstruction continuation must therefore:
+
+1. Recover source/producer/context custody and fresh storage admission under the identity plan before an all-span hypothesis run.
+2. Add context-aware physical-source review of actor/action/attachment, modality, qualifiers and representability. Keep unsupported outputs and disagreement explicit; generated/compiler labels and copied text remain separate from reviewed gold.
+3. Compare independent pointer heads, joint compatible span selection, typed grammar constraints and their combination as separately identified ablations. Preserve raw failed outputs and score role fidelity, contradiction, qualifier retention and abstention alongside syntax/copying.
+4. Retain raw384, core384 and trained384 as distinct producer representations within the separate IR/schema/task/context inventories, even though they share a dimension. Preserve parallel 8D/384D/768D paths and compatible original assets. Warm interface fitting precedes qualified teacher-output distillation; do not pad vectors or promote these exposed pointer outputs into a teacher.
+5. Evaluate the intended `legal text -> LegalIR -> legal text` learned reconstruction separately from copied facet proposals and raw-byte restoration, then lower only supported logic families and run the pinned source-bound verification gate. Good training loss alone cannot qualify semantics or proofs.
+
+No new inference, fit, checkpoint, asset replacement or proof is performed by this reconciliation note.
