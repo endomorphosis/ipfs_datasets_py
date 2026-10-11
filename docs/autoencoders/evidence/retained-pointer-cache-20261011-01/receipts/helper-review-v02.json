@@ -1,0 +1,119 @@
+{
+  "README_claims_static": {
+    "authored_training_targets_not_real_law_gold_disclosed": true,
+    "byte259_transport_vs_trained_pointer_distinguished": true,
+    "eight_exposed_development_sources_disclosed": true,
+    "no_new_legal_accuracy_gain_or_independent_holdout_claim": true,
+    "one_flat_rule_and_one_span_per_facet_scope_disclosed": true,
+    "producer_hash_and_batch_difference_disclosed": true,
+    "raw_GTE384_vs_learned_projection_distinguished": true,
+    "semantic_proof_Lake_promotion_flags_false": true,
+    "warm_start_and_full_saved_Adam_lineage_truthful": true
+  },
+  "analysis_contract": {
+    "baseline": {
+      "bytes": 111344,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+      "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+    },
+    "baseline_required_fields_actual_observed": {
+      "actual_optimizer_updates": 0,
+      "source_count": 8
+    },
+    "closing_input_pins_recorded": true,
+    "new_fit_or_selection_executed": false,
+    "no_models_targets_or_new_encoder_executed_by_helper": true,
+    "outputs": "Literal source-copy facet presence counts, exact canonical proposal and facet intervals, abstention reasons; semantic_accuracy is null, legal roles and modality unverified."
+  },
+  "checks": {
+    "AST_only": true,
+    "Git_Hub_actions": false,
+    "helpers_executed": false,
+    "models_imported": false,
+    "numerical_forwards": false,
+    "resource_mutations": false,
+    "root_helpers_edited_by_reviewer": false,
+    "tests_run": false
+  },
+  "created_at_utc": "2026-10-11T04:42:52.594477+00:00",
+  "findings": [],
+  "limits": [
+    "Review validates frozen curated receipt processing, not an arbitrary hostile JSON protocol. Default JSON reader and assert checks require ordinary root-generated inputs and non-optimized Python.",
+    "README and manifest are generated new metadata; source manifest inventory covers copied source/evidence/weights. Actual uploader must bind every release file including README/manifest and check immutable upload parent/additive identities.",
+    "Publication helper pre-admission.json is parsed to compare actual pins; it is not copied or included in closing consumed file pins. Actual publication review must separately preserve and verify guardian/admission/resource receipts.",
+    "No actual numeric results, release package or sampled resource observations exist yet for this review. Later independent review must verify finalized outcomes/package/README before upload.",
+    "Cannot independently qualify reviewer-authored cache, comparison runner or raw384 equivalence.",
+    "This static verdict does not authorize or attest an HF transaction."
+  ],
+  "passed": true,
+  "preserved_draft_pins": {
+    "analyze_pointer_comparison-draft-01.py": {
+      "bytes": 3986,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison-draft-01.py",
+      "sha256": "69ed1f805b8fd124479933773dae2045dd334cba4b6dbae2f387a31a2c558d35"
+    },
+    "prepare_hub_release-draft-01.py": {
+      "bytes": 5671,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release-draft-01.py",
+      "sha256": "1d728f9230bd7b67c4d5fbd1c0f4487f6b60a81100f19b34f4b7d6a20925ac40"
+    }
+  },
+  "publication_contract": {
+    "actual_HF_upload_executed_by_helper": false,
+    "actual_model_load_requirement": "Requires model_lane_load_count2 and observed temporary restoration Adam construction; all-blocked valid runner outcome cannot be falsely described as actual model replay.",
+    "checkpoints": "Two unchanged October 2 checkpoint-400 files selected by historical run, not selected by the new assay.",
+    "dependency_and_portability_scope": "README explicitly declines standalone dependency closure and portable local-path replay, and requires external source documents/native receipts. No full third-party import graph attestation.",
+    "evidence": [
+      "Raw384 recipe equivalence",
+      "Exact immutable reviewed plan and protocol review",
+      "Actual summary",
+      "Derived pointer coverage diagnostics",
+      "All eight raw lane reports"
+    ],
+    "preserved_source": "Exact current plan fixed-owner files; no existing source owners are modified."
+  },
+  "resolved_findings": [
+    {
+      "id": "final-plan-not-explicit",
+      "verified": "Publication CLI requires --plan and --protocol-review; verified plan SHA equals passed clean review plan_sha256; actual pre-admission.json review/plan pins equal these exact inputs."
+    },
+    {
+      "id": "copy-equality-and-closing-fence",
+      "verified": "Each copy hashes the source against its pin, requires retained bytes/SHA equal the pin, closing-checks the source, and final-rehashes all consumed original files before publishing the manifest."
+    },
+    {
+      "id": "missing-raw-reports",
+      "verified": "All eight exact raw reports are copied under evidence/raw-reports and recorded with original and retained byte identities."
+    },
+    {
+      "id": "lane-checkpoint-collapse",
+      "verified": "Exact two-name by four-control coverage with eight lanes; every repeated lane checkpoint reference must agree with its name before deduplication."
+    },
+    {
+      "id": "analysis-unchecked-zero-claim",
+      "verified": "Analyzer validates frozen summary schema/completed status/zero optimizer and encoder counters/eight sources/64 requested rows/eight exact name-control lanes/exposure and no gold or holdout. It validates per-report schema/count/control/zero counters/false authority. Consumed summary, reports and previous diagnostics are all rehashed before output."
+    }
+  ],
+  "review_history_correction": "v01 findings describe first draft text, but root repaired both helpers concurrently before v01 source pins were captured. Those pins therefore named corrected final files. v01 is not valid admission evidence. This v02 directly rereads final helper contents at the exact pins recorded here and associates resolved issues with preserved draft bytes.",
+  "review_version": 2,
+  "reviewer": "retention_training_design_20261011",
+  "schema": "retained-pointer-root-helper-static-review/v1",
+  "scope": "Independent static review of root-authored pure analyzer and local publication preparation helpers; excludes reviewer-authored source-cache, runner and equivalence independent qualification",
+  "source_pins": {
+    "analyze_pointer_comparison.py": {
+      "bytes": 5370,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison.py",
+      "sha256": "67b405cdbb57211c3fa7fcf903aaf43e9d76999562e793465e25bbe9de07b8d2"
+    },
+    "prepare_hub_release.py": {
+      "bytes": 7626,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release.py",
+      "sha256": "78585c0bdf3783e665333bbf9e186156d8c1483e69178efb4c6bb92b0118cad1"
+    }
+  },
+  "supersedes": {
+    "bytes": 5851,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/root-helper-static-review-v01.json",
+    "sha256": "3c801b1d40a5ffbbbceb7edca65b57d1848b70dc04d42f4ce82a64172d8e1cf1"
+  }
+}

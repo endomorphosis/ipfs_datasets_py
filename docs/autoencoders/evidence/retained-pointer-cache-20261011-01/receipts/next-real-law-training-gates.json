@@ -1,0 +1,341 @@
+{
+  "artifact_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json": {
+      "bytes": 4060,
+      "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/pointer-comparison-diagnostics.json": {
+      "bytes": 42878,
+      "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json": {
+      "bytes": 10795,
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json": {
+      "bytes": 48597,
+      "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json": {
+      "bytes": 1752,
+      "sha256": "156c41a9dcb9c3e2e317dbf7543ca28258c14884666caa74078074d78232d734"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/results-resource-review.json": {
+      "bytes": 94615,
+      "sha256": "ae1481d063bb220e95066697bc1f0401e78ff0311984b0c60380473909f0c828"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-target-data-review.json": {
+      "bytes": 26803,
+      "sha256": "a512c048603177817f8c438f299ca8536566716ab612e88d61892fd986170eec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json": {
+      "bytes": 161737,
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json": {
+      "bytes": 161701,
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json": {
+      "bytes": 161719,
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json": {
+      "bytes": 161715,
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json": {
+      "bytes": 161783,
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json": {
+      "bytes": 161775,
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json": {
+      "bytes": 161777,
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json": {
+      "bytes": 161775,
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json": {
+      "bytes": 89951,
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    }
+  },
+  "created_at_utc": "2026-10-11T05:18:07.662692+00:00",
+  "observed_evidence": {
+    "actual03": {
+      "checkpoint_lanes": 2,
+      "controls_each": 4,
+      "dispositions": 64,
+      "encoder_calls": 0,
+      "gain_or_task_completion_claim": false,
+      "independent_semantic_holdout": false,
+      "optimizer_updates": 0,
+      "overlap_refusals": 56,
+      "previously_exposed_development": true,
+      "reviewed_real_law_targets_established": 0,
+      "semantic_accuracy": null,
+      "sources": 8,
+      "unaccepted_proposals": 8,
+      "unique_source_with_proposal": 1
+    },
+    "dataset_reference": {
+      "accessible_payload": "51-row state inventory only, no source/IR/reviewer targets",
+      "all_admitted_and_formalized_false": true,
+      "documents": 537665,
+      "observed_revision": "3bdc4d526ec7d83f870c9f481c9c80f43c20adf7",
+      "repository": "justicedao/open-us-law-span-cache",
+      "sealed_total": 0,
+      "spans_and_pending": 6524705,
+      "train_split_label_is_training_admission": false
+    },
+    "frozen_context_score_differences": {
+      "lanes": {
+        "raw384-1729": [
+          {
+            "1USC106minimum_decision_margin": 0.16314697265625,
+            "control": "none",
+            "max_abs_modality_logit_difference_vs_none": 0.0,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.1450634002685547,
+            "control": "zero",
+            "max_abs_modality_logit_difference_vs_none": 0.8954257965087891,
+            "max_abs_shared_presence_margin_difference_vs_none": 3.5227012634277344,
+            "max_abs_shared_span_margin_difference_vs_none": 0.3152732849121094,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.1337575912475586,
+            "control": "disabled",
+            "max_abs_modality_logit_difference_vs_none": 1.1803693771362305,
+            "max_abs_shared_presence_margin_difference_vs_none": 4.754519462585449,
+            "max_abs_shared_span_margin_difference_vs_none": 0.4311065673828125,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.1631450653076172,
+            "control": "rotate",
+            "max_abs_modality_logit_difference_vs_none": 0.005215644836425781,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.033931732177734375,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0029296875,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          }
+        ],
+        "source_only-1729": [
+          {
+            "1USC106minimum_decision_margin": 0.08160591125488281,
+            "control": "none",
+            "max_abs_modality_logit_difference_vs_none": 0.0,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.08160591125488281,
+            "control": "zero",
+            "max_abs_modality_logit_difference_vs_none": 0.0,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.08160591125488281,
+            "control": "disabled",
+            "max_abs_modality_logit_difference_vs_none": 0.0,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          },
+          {
+            "1USC106minimum_decision_margin": 0.08160591125488281,
+            "control": "rotate",
+            "max_abs_modality_logit_difference_vs_none": 0.0,
+            "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+            "max_abs_shared_span_margin_difference_vs_none": 0.0,
+            "shared_facet_anchor_or_presence_changes_vs_none": 0,
+            "status_refusal_or_canonical_decision_changes_vs_none": 0
+          }
+        ]
+      },
+      "recomputed_from_saved_reports_only": true,
+      "scope": "Maxima across8sources and3modality logits or shared emitted diagnostic facets. Diagnostic margins are model scores, not calibrated correctness probabilities. No controls alter these eight final proposals/refusals or shared facet anchors/presence. Source-only scores are identical across controls. Zero latent differs from disabling the learned adapter because bias response may remain."
+    },
+    "source_interval_role_examples": [
+      {
+        "checkpoint_lane": "raw384-1729",
+        "citation": "1 U.S.C. 106",
+        "coordinate_space": "Python Unicode character offsets in exact selected raw span, half-open; byte coordinates are separately bound by SourceSpan",
+        "example_scope": "Observed model proposal only. Do not copy these fragments into reviewer targets or infer legal actor/action/object/qualifier roles from literal grounding.",
+        "legal_semantics_verified": false,
+        "model_proposed_modality": "O",
+        "model_proposed_role_intervals": {
+          "action": {
+            "char_end": 111,
+            "char_start": 105,
+            "text": "called"
+          },
+          "actor": {
+            "char_end": 158,
+            "char_start": 152,
+            "text": "as the"
+          },
+          "conditions": {
+            "char_end": 236,
+            "char_start": 195,
+            "text": "the presiding officers of both Houses and"
+          },
+          "object": {
+            "char_end": 133,
+            "char_start": 112,
+            "text": "the enrolled bill, or"
+          }
+        },
+        "reviewed_modality_assignment": null,
+        "reviewed_role_assignment": null,
+        "source_SHA256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "source_artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "source_byte_end": 1119,
+        "source_byte_start": 839,
+        "source_occurrence_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874"
+      },
+      {
+        "checkpoint_lane": "source_only-1729",
+        "citation": "1 U.S.C. 106",
+        "coordinate_space": "Python Unicode character offsets in exact selected raw span, half-open; byte coordinates are separately bound by SourceSpan",
+        "example_scope": "Observed model proposal only. Do not copy these fragments into reviewer targets or infer legal actor/action/object/qualifier roles from literal grounding.",
+        "legal_semantics_verified": false,
+        "model_proposed_modality": "O",
+        "model_proposed_role_intervals": {
+          "action": {
+            "char_end": 111,
+            "char_start": 105,
+            "text": "called"
+          },
+          "actor": {
+            "char_end": 163,
+            "char_start": 152,
+            "text": "as the case"
+          },
+          "conditions": {
+            "char_end": 236,
+            "char_start": 195,
+            "text": "the presiding officers of both Houses and"
+          },
+          "object": {
+            "char_end": 133,
+            "char_start": 112,
+            "text": "the enrolled bill, or"
+          }
+        },
+        "reviewed_modality_assignment": null,
+        "reviewed_role_assignment": null,
+        "source_SHA256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "source_artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "source_byte_end": 1119,
+        "source_byte_start": 839,
+        "source_occurrence_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874"
+      }
+    ]
+  },
+  "proposed_phases": [
+    {
+      "phase": "P0_source_and_exposure_inventory",
+      "proposal": "Consider at most16new physical sections/up to32raw spans from the inspected reconciliation pool; retain<=32KiB selected UTF8 and<=1MiB complete context views, with no semantic truncation. Existing121short matched descriptors across44sections are candidate locators only; raw bytes/context/native token coverage still need verification.",
+      "required_gate": [
+        "Bind archived source export/revision, complete raw section SHA/physical ordinal, occurrence ID, SourceSpan identity, exact raw byte/character selectors and normalized-vs-raw distinction.",
+        "Close exact/normalized duplicates, overlapping spans, amendments/releases, shared definitions/cross-references, paraphrase/template families and every known prior training/teacher/compiler/selection/review/model exposure. Treat unresolved exposure as a documented limit.",
+        "Assign connected source-section/family groups before review/fitting. Example16independent groups could allocate8TRAIN/4tuning/4confirmation; use actual connected components/counts, never split linked occurrences merely to fill quotas.",
+        "Keep existing8exposed sources as development/review/regression only. No globally unseen/independent confirmation claim without a frozen exposure ledger and duplicate closure."
+      ],
+      "scope": "Data-only bounded extraction and source provenance before any numerical work.",
+      "training_authorized_by_this_receipt": false
+    },
+    {
+      "actual_independent_review_or_approval_performed_here": false,
+      "phase": "P1_context_aware_review_and_adjudication",
+      "proposal": "Create separately versioned physical-occurrence/context review, disagreement/adjudication and approval receipts; current authored symbol-binding-source-reviewer/v1 requires empty none_required context and authored IDs, so cannot ingest this packet honestly.",
+      "required_gate": [
+        "Present blank role/modality/qualifier/interpretation targets against raw source and complete needed section context; do not suggest actual03model fragments, teacher/compiler outputs or inferred gold.",
+        "Record operative/editorial boundaries, definitions/cross-references, context sufficiency, rule segmentation, actor/action/object roles, condition/exception/temporal attachment and normative trigger/interpretation. Null remains unanswered; explicitly reviewed absence differs from null.",
+        "Anchor each assigned role by exact token-aligned Unicode interval plus UTF8 byte selector and source/context hashes. Repeated phrases need reviewed physical disambiguation; record ambiguity, unsupported/non-normative/multiple-rule cases rather than force labels.",
+        "Retain actual independent review submissions, authenticated reviewer identity/independence, rationale, disagreement resolution and explicit adjudication/approval scope. Agreement, syntax, signed-declaration data or cache sealed status alone is insufficient.",
+        "Keep targets and all legal semantic/proof admissions unassigned/zero until the separately reviewed admission process actually authorizes them."
+      ],
+      "targets_created_here": 0
+    },
+    {
+      "formal_training_metrics_generated_here": false,
+      "phase": "P2_profile_representability_and_target_preflight",
+      "proposal": "Before fitting, audit reviewed targets against source-copy geometry and typed grammar without repair/omission.",
+      "required_gate": [
+        "Current retained owner supports one flatO/P/F rule; actor/action and optional object plus at mostone copied condition/exception/temporal span, all unique token-aligned/nonoverlapping; source<=16384chars/256structural tokens/2048casefoldUTF8bytes per token.",
+        "Separate role-compatible literal target from paraphrased atoms, multiple rules/qualifiers, bound entities, cross-reference context or unreviewed interpretation. Out-of-profile is not legally false; use explicit dispositions, not invented targets.",
+        "If source-role correctness needs overlapping/shared syntax or unresolved context, version the target/profile and model lineage first; do not relabel raw bytes or silently coerce the legal annotation.",
+        "Verify actual source-native producer token limit and exact decoder coverage separately. Full section context merely retained for review is not encoded context."
+      ]
+    },
+    {
+      "phase": "P3_joint_facets_and_grammar_diagnostic_ablation",
+      "proposal": "Compare current independent span heads with a separately versioned jointly compatible assignment/search over actor/action/object/qualifier candidates and canonical typed grammar. Proposed constrained selection must preserve raw scores/failed independent proposals and explicit abstentions.",
+      "rationale_from_actual03": "All56refusals have actual overlapping predicted spans; all8accepted literal proposals remain unreviewed, including actor fragments as the/as the case. Joint geometry may address refusal rate, but observed scores establish no semantic benefit.",
+      "required_gate": [
+        "Evaluate joint nonoverlap/type/presence constraints and canonical grammar separately with frozen ablations: independent heads; compatibility-only joint assignment; typed-grammar constraint; combined joint+grammar. Syntax/literal compatibility must not silently replace semantic-role supervision.",
+        "Use reviewed TRAIN/tuning role anchors only. Keep source/context/preflight logic frozen and record whether the chosen target is representable; no post-hoc fit of test rules.",
+        "First bound a pure engineering/profile diagnostic on fixed saved scores if available; any new numerical fit needs distinct plan/source/checkpoint/target pins, independent resource/protocol review and measured runtime feasibility."
+      ]
+    },
+    {
+      "fresh_training_or_confirmation_executed_here": false,
+      "phase": "P4_calibrated_abstention_and_frozen_confirmation",
+      "proposal": "Calibrate support/abstention using reviewed tuning data and explicit profile/ambiguity labels; the existing1e-7tie guard is numerical disambiguation, not calibrated legal confidence.",
+      "required_gate": [
+        "Predeclare coverage, refusal reasons, exact role/whole-rule correctness, qualifier/context failures and compatibility masks; report weak/generated-label results separately from adjudicated semantic labels.",
+        "Fit/calibrate only TRAIN/tuning; freeze thresholds/checkpoint and casewise retention floors before one sealed source-section/family grouped confirmation pass. Previously exposed8cases never become independent evaluation by renaming splits.",
+        "Preserve baseline exact positive IDs/emitted IDs, prohibit new negative emission IDs and retain explicit refusals; do not declare gain from aggregate swaps or from fewer syntax failures without adjudicated target correctness.",
+        "A proposed small firstfit could cap<=120updates/batch<=8/180s CPU1 after genuine frozen native input production, within existing2CPU/1536MiB/1child/200MB/300s guardian; feasibility is unmeasured and actual admission may reject. Never raise caps/delete/release foreign claims to force it."
+      ]
+    },
+    {
+      "Lean_compiler_or_numerical_replay_executed_here": false,
+      "phase": "P5_dimension_identity_and_supported_lowering",
+      "proposal": "Extend dimensions/families only under separate exact profile/checkpoint identities and compiler/lowering qualification.",
+      "required_gate": [
+        "Keep8D,raw384,core384,trained384,and768D model/producer/assets/token/context/projection/lineage identities separate. Same width is not equivalence; raw384 recipe review does not authorize transformed384 or768input substitution.",
+        "Authenticate source-family interpretation and declared dimension role, supported canonical lowering and native-width/target representation. Unsupported family lowering remains explicit; a family validator is not legal gold.",
+        "Where supported, compile/lower the exact admitted candidate through the pinned Lean pipeline and actual lake build legal gate with receipts. Typechecking/proof certificates establish the stated formal claim, not source interpretation or legal truth.",
+        "Human source/context semantics, model fidelity, syntax/lowering, native-format qualification and Lean proof authority are separate gates. No default promotion follows from any one gate."
+      ]
+    }
+  ],
+  "receipt_limits": "Proposal only, grounded in pinned saved evidence. No fabricated targets, reviewer authority, training metrics, model/downloaded numerical replay, resource mutation or task-completion claim.",
+  "remaining_gaps": [
+    "No reviewed statutory training labels or fresh grouped semantic holdout established.",
+    "Context-aware physical review/adjudication/approval workflow not yet implemented/authorized by this receipt.",
+    "Independent-head overlap and role assignment failures remain; frozen raw score sensitivity did not change current decisions.",
+    "Actual native768/8D and core/trained384 matching decoder custody/quality not established here.",
+    "General statute/family lowering, resolved document context, fidelity and Lean authority remain open."
+  ],
+  "schema": "next-real-law-training-gates/v1",
+  "status": "conditional_proposal_only"
+}

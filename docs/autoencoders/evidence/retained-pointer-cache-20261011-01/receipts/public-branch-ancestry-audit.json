@@ -1,0 +1,202 @@
+{
+  "repositories": {
+    "datasets": [
+      {
+        "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+        "head_in_observed_main": true,
+        "name": "agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+        "head_in_observed_main": true,
+        "name": "agent/contextual-legal-runtime-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+        "head_in_observed_main": true,
+        "name": "agent/normative-cache-input-datasets-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+        "head_in_observed_main": true,
+        "name": "agent/normative-decoder-runtime-datasets-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+        "head_in_observed_main": true,
+        "name": "codex/autoencoder-owner-integration-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+        "head_in_observed_main": true,
+        "name": "codex/legal-cross-agent-guards-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-followup-20261006-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-progress-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+        "head_in_observed_main": true,
+        "name": "codex/legal-grouped-integration-20261006-02",
+        "object_available_locally": true
+      },
+      {
+        "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "head_in_observed_main": true,
+        "name": "codex/legal-native-cache-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "head_in_observed_main": true,
+        "name": "codex/legal-original-text-roundtrip-retained-20261004",
+        "object_available_locally": true
+      },
+      {
+        "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+        "head_in_observed_main": true,
+        "name": "codex/legal-scope-span-training-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-action-model-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-gate-model-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+        "head_in_observed_main": true,
+        "name": "codex/legal-trigger-readout-model-20261007-01",
+        "object_available_locally": true
+      }
+    ],
+    "root": [
+      {
+        "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "head_in_observed_main": true,
+        "name": "agent/autoencoder-progress-reconciliation-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "094c566adc316b1391c58d3d38c4dd19698149ff",
+        "head_in_observed_main": true,
+        "name": "agent/normative-cache-input-root-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "dfc02e62186dc97223a620b074b278f0e1b97115",
+        "head_in_observed_main": true,
+        "name": "agent/normative-checkpoint-availability-root-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "b7e3550da23c94fe17b591654093c5c0f84ded0c",
+        "head_in_observed_main": true,
+        "name": "agent/normative-decoder-runtime-root-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "head_in_observed_main": true,
+        "name": "codex/autoencoder-reconciliation-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "1b20f745a1db2a485b97ffc7f0816119881f7f8d",
+        "head_in_observed_main": true,
+        "name": "codex/grouped-autoencoder-findings-20261006-02",
+        "object_available_locally": true
+      },
+      {
+        "head": "8cd17c705162a5d47c0eb31616d8d5637eea79d2",
+        "head_in_observed_main": true,
+        "name": "codex/legal-cross-agent-followthrough-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "0ed01fd56db31fe4345f8143a7647a437dcb1118",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-followup-results-20261006-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "head_in_observed_main": true,
+        "name": "codex/legal-native-cache-workspace-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "head_in_observed_main": true,
+        "name": "codex/legal-retention-objective-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "7e582ad8951d6fed6235c98526ee49c08dbce218",
+        "head_in_observed_main": true,
+        "name": "codex/legal-scope-span-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "43ec348cab85a9eae3aee56a6de79807e3ea57ee",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-action-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "b60d71fbd131c7d0a61f8f481348a1027769af92",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-gate-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "8e5da94bd0ac33b1378ae44e4801f3496e96a02c",
+        "head_in_observed_main": true,
+        "name": "codex/legal-trigger-readout-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "baeabe9911291c8a119dba6ab78cdc971e72635f",
+        "head_in_observed_main": true,
+        "name": "repair/doep-readonly-queue-native-parent-base-20260913",
+        "object_available_locally": true
+      },
+      {
+        "head": "e9afd83fb3a55173c628a479c5a45dd897a6c23b",
+        "head_in_observed_main": true,
+        "name": "repair/pctdd-after-task008-native-base-20260913",
+        "object_available_locally": true
+      },
+      {
+        "head": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd",
+        "head_in_observed_main": true,
+        "name": "repair/pctdd-native-entry-1789010527",
+        "object_available_locally": true
+      }
+    ]
+  },
+  "schema": "public-decoder-branch-ancestry/v1",
+  "unknown_commits_are_not_integration_evidence": true
+}

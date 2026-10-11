@@ -1,0 +1,36 @@
+{
+  "checks": {
+    "raw384": {
+      "local": {
+        "bytes": 3027735,
+        "git_blob_sha1": "04337bfc592b9502f87931f05402da460a3bd66e",
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      "matching_public_files": [],
+      "same_bytes_matched": false
+    },
+    "source_only": {
+      "local": {
+        "bytes": 2744449,
+        "git_blob_sha1": "8564c9636bd9c6e6910b558cb3c11c222fd92358",
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      },
+      "matching_public_files": [],
+      "same_bytes_matched": false
+    }
+  },
+  "downloaded_numerical_replay": false,
+  "file_count": 3167,
+  "metadata_only": true,
+  "observed_at_utc": "2026-10-11T04:30:44.203111+00:00",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "response_pin": {
+    "bytes": 830123,
+    "sha256": "52e22e2c84049d7d2ab17a43e35dcc59a89ba31e55cef3bf49959ef86b4d9bec"
+  },
+  "revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "schema": "retained-span-hub-identity-readback/v1",
+  "upload_performed": false
+}

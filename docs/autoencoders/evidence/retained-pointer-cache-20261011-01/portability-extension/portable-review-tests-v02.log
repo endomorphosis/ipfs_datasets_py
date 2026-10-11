@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 294 items
+
+datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py . [  0%]
+........................................................................ [ 24%]
+.....                                                                    [ 26%]
+datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py . [ 26%]
+..................................                                       [ 38%]
+datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py ...... [ 40%]
+........................................................................ [ 64%]
+............................F                                            [ 74%]
+datasets/tests/unit/logic/legal_ir/test_canonical_decoder_preflight.py . [ 75%]
+........................................................................ [ 99%]
+.                                                                        [100%]
+
+=================================== FAILURES ===================================
+________ test_import_and_source_preflight_do_not_load_a_numeric_backend ________
+datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py:492: in test_import_and_source_preflight_do_not_load_a_numeric_backend
+    assert completed.returncode == 0, completed.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 6, in <module>
+E     ModuleNotFoundError: No module named 'ipfs_datasets_py.logic.legal_ir.canonical_span_decoder'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/home/barberb/.local/bin/python', '-c', "\nimport hashlib\nimport json\nimport sys\nfrom types...ine 6, in <module>\nModuleNotFoundError: No module named \'ipfs_datasets_py.logic.legal_ir.canonical_span_decoder\'\n').returncode
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v02.xml -
+=========================== short test summary info ============================
+FAILED datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py::test_import_and_source_preflight_do_not_load_a_numeric_backend
+======================== 1 failed, 293 passed in 2.30s =========================

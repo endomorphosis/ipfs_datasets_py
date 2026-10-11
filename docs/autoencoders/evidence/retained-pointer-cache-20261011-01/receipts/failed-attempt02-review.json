@@ -1,0 +1,168 @@
+{
+  "actual_resource_disposition": {
+    "assigned_attempt_reservation_id": "d7a94221676542eca574af39e928fdc2",
+    "cached_lease": null,
+    "cached_record": null,
+    "independently_observed_post02_pre03_endpoint": {
+      "assigned_id_absent_ledger": true,
+      "ledger_bytes_equal_pre_admission": true,
+      "ledger_claim_count": 507,
+      "ledger_pin": {
+        "bytes": 6123925,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+        "sha256": "82a22ec408efc17c35c078eec3fc504373efde7d806f0abbbd288264e57aea76"
+      },
+      "observation_body_custody": "Primary pre-admission pins plus independent tool-observed plain-file bytes/hash/counts. Full post02 endpoint bodies not retained as a separate snapshot; no continuous preservation claim.",
+      "scheduler_lease_count": 0,
+      "scheduler_pin": {
+        "bytes": 1713,
+        "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+        "sha256": "af57853cce443a2a549e13f8adb883259a9bdab29aa7bf92c30b2fe05be5850c"
+      }
+    },
+    "own_release_required": false,
+    "prior_failed200MBclaim": {
+      "changed_or_released_by_reviewer": false,
+      "reservation_id": "9210033eb5874d61ad74a7707753d006",
+      "status_at_post02_pre03_endpoint": "retained",
+      "storage_bytes": 200000000
+    },
+    "reservation_record_acquired": false,
+    "scope": "Endpoint above was read after02 and before03launch. Attempt03 subsequently acquired resources; no unchanged-live-ledger assertion is made during03. No claim/reset/lease/deletion by reviewer."
+  },
+  "admitted_review_custody": {
+    "admitted_copy_mode": "0444",
+    "admitted_review_pin": {
+      "bytes": 51285,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json",
+      "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+    },
+    "all147_admitted_artifact_bindings_rehashed_unchanged": true,
+    "draft_and_SHA_named_copy_identical": true,
+    "exact_body_available": true,
+    "old_admitted879_review_unchanged": true,
+    "passed": true,
+    "plan_runner_guardian_exact": true
+  },
+  "artifact_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v02.json": {
+      "bytes": 51481,
+      "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/failed-attempt01-review.json": {
+      "bytes": 10557,
+      "sha256": "17c66698aab3c2170eff916dfea9c6c6774e45f33a1f4d895f35f16c329d2b7f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/guardian-attempt02.log": {
+      "bytes": 225,
+      "sha256": "e3b43d073365f309608d6caa5a4fac6d43cb16506a4f410c0fc01602f4e8d335"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-draft-02.json": {
+      "bytes": 51285,
+      "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json": {
+      "bytes": 51285,
+      "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-failed-attempt01-observation.json": {
+      "bytes": 3527,
+      "sha256": "f02860916c6718b66dfe8f209693cae4e60fb4299b2e659b33fae67d59d091ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison-v02.py": {
+      "bytes": 15496,
+      "sha256": "96b61765860ad43fe54f529ba70432e7daf9f8a0358e05dd1206cdb63fa86d8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/storage-admission-diagnostic-v01.json": {
+      "bytes": 1284,
+      "sha256": "ca8dc247882a49869b6117464748c061cab690cc943f242f5acf04d18e32d915"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/child-exit.json": {
+      "bytes": 76,
+      "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/failure-primary.json": {
+      "bytes": 1364,
+      "sha256": "14fd732e37986328005a856c4da6dd3d90e8b283f9206d24a0b5cb616d4ba352"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/guardian-exit.json": {
+      "bytes": 1761,
+      "sha256": "7c56ef8c82f71475bdec1f6608710ece62f7089bc2f9a79a8e7999fd08745c93"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/pre-admission.json": {
+      "bytes": 8044,
+      "sha256": "5bc67858c1a80deec5bb6d2f5649a41627003205bf32f549bfef1d9c3c23d29c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/resources-final-failure.json": {
+      "bytes": 718,
+      "sha256": "d80a99d5d089a53fdf01aad34600700bf9dd401ce14a771c00835f504b0750c1"
+    }
+  },
+  "attempt_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02",
+  "execution": {
+    "attempt03_scientific_outputs_read": false,
+    "models_imported_or_loaded": false,
+    "numeric_calls": 0,
+    "prior_review_files_edited": false,
+    "shared_resource_changes": false,
+    "source_Git_Hub_changes": false,
+    "tests_run": false
+  },
+  "findings": [],
+  "later_storage_diagnostic": {
+    "arithmetic_recomputed": true,
+    "census_elapsed_seconds": 14.30524099606555,
+    "charge_headroom_bytes": 1063570129,
+    "charged_bytes": 143936429871,
+    "free_capacity_needed_bytes": 48365000000,
+    "free_headroom_bytes": 5120547520,
+    "ledger_before_after_equal": true,
+    "limit_bytes": 145000000000,
+    "limitation": "Later unchanged-ledger census fits the unchanged200MBrequest. Named-root/filesystem accounting can move between censuses; no reconstruction of rejection-time values or admission guarantee. No cap raise/release/deletion/retry by this reviewer.",
+    "minimum_filesystem_free_bytes": 53485547520,
+    "observed_apparent_bytes": 95571429871,
+    "outstanding_full_reservations_bytes": 48165000000,
+    "owner_inventory_census_reexecuted_by_this_reviewer": false,
+    "primary_receipt": {
+      "bytes": 1284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/storage-admission-diagnostic-v01.json",
+      "sha256": "ca8dc247882a49869b6117464748c061cab690cc943f242f5acf04d18e32d915"
+    },
+    "read_only": true,
+    "requested_bytes": 200000000,
+    "would_fit_at_that_later_observation": true
+  },
+  "observed_at_utc": "2026-10-11T05:05:55.065858+00:00",
+  "outcome": {
+    "child_created": false,
+    "child_returncode": null,
+    "decoder_forward_calls": 0,
+    "exact_failure_time_charged_and_free_values_recorded": false,
+    "failure_boundary": "Owner.__enter__ -> _account line399 rejects charged named-root storage or minimum filesystem free capacity. No record insert/write or scheduler acquisition reached.",
+    "failure_time_cause_precision": "Saved exception omits values; exact traceback/source identify storage capacity predicate, but not which side of its disjunction failed.",
+    "guardian_returncode": 1,
+    "model_started": false,
+    "new_encoder_calls": 0,
+    "optimizer_updates": 0,
+    "scientific_output_count": 0,
+    "source_cache_or_model_work_executed": false,
+    "status": "rejected_before_reservation_lease_or_child"
+  },
+  "passed": true,
+  "primary_receipt_semantic_corrections": [
+    {
+      "fields": [
+        "resources-final-failure.failed_disk_claim_retained",
+        "guardian-exit.retained_reservation_requires_explicit_reconciliation"
+      ],
+      "interpretation": "Generic guardian default status != released is true even for null record. These flags do not establish a retained claim. Actual cached record/lease are null and assigned ID absent at post02 endpoint. Prior attempt01 retained claim is separate.",
+      "primary_values": true
+    }
+  ],
+  "schema": "retained-pointer-admission-rejection-independent-review/v1",
+  "scope": "Independent saved-receipt and earlier read-only endpoint verification of rejected storage admission and exact review custody. Audit pass is not a successful experiment or another retry guarantee."
+}

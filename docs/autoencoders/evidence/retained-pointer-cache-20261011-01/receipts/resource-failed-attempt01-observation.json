@@ -1,0 +1,88 @@
+{
+  "added_claim_ids": [
+    "9210033eb5874d61ad74a7707753d006"
+  ],
+  "changed_prior_claim_ids": [],
+  "current_claim_count": 507,
+  "current_lease_count": 0,
+  "foreign_lease_before_count": 0,
+  "initial_observation": {
+    "bytes": 9079647,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-before-admission.json",
+    "sha256": "9cc8df1544b41e1743c8b860bdfdfd35bc88664c78fcefd89ab5dcfdf2cea1f9"
+  },
+  "observed_at_utc": "2026-10-11T04:57:02.065059+00:00",
+  "observed_current_ledger_pin": {
+    "bytes": 6123925,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "82a22ec408efc17c35c078eec3fc504373efde7d806f0abbbd288264e57aea76"
+  },
+  "observed_current_prior_records_canonical_digest": "020151de21e2d3246b823c81c45972be9333336f8d5dee0c620c0737ae76e70f",
+  "observed_current_scheduler_pin": {
+    "bytes": 1713,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "af57853cce443a2a549e13f8adb883259a9bdab29aa7bf92c30b2fe05be5850c"
+  },
+  "own_lease_absent": true,
+  "own_record": {
+    "artifacts_durable_asserted": false,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 86285396,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01"
+    },
+    "child": {
+      "birth": "71241180",
+      "pid": 2874358
+    },
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "created_at": 1791694338.2348676,
+    "external_charges": {},
+    "last_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 17714,
+      "attempt_limit_bytes": 200000000,
+      "charged_bytes": 143579724519,
+      "checked_at": 1791694353.4645255,
+      "external_charged_bytes": 0,
+      "group_rss": {
+        "available": true,
+        "live_processes": 1,
+        "rss_bytes": 11804672
+      },
+      "inventory": {
+        "apparent_bytes": 95414724519,
+        "entry_count": 1359306,
+        "special_file_count": 5,
+        "symlink_count": 714
+      },
+      "limit_bytes": 145000000000,
+      "memory_limit_bytes": 1610612736,
+      "minimum_filesystem_free_bytes": 48305610752,
+      "observed_apparent_bytes": 95414724519,
+      "outstanding_full_reservations_bytes": 48165000000,
+      "process_slot_estimate_exceeded": false,
+      "reserved_child_process_slots": 1,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 17714
+    },
+    "memory_mb": 1536,
+    "owner_pid": 2870220,
+    "prior_children": [],
+    "reservation_id": "9210033eb5874d61ad74a7707753d006",
+    "retention_reason": "context_failed",
+    "scheduler_lane": "hammer_lean",
+    "status": "retained",
+    "storage_bytes": 200000000,
+    "workload": "canonical_trainer"
+  },
+  "prior_claim_count": 506,
+  "prior_record_canonical_digest": "020151de21e2d3246b823c81c45972be9333336f8d5dee0c620c0737ae76e70f",
+  "read_only": true,
+  "removed_claim_ids": [],
+  "scheduler_config_unchanged": true,
+  "schema": "retained-pointer-failed-attempt-resource-endpoint-observation/v1",
+  "scope": "Saved initial full record bodies compared with current plain-file read endpoints; no lock acquired, no continuous preservation or independent state cryptographic attestation. Original whole ledger bodies remain local; this compact endpoint record does not authorize release/reset.",
+  "shared_resource_mutation": false
+}

@@ -1,0 +1,59 @@
+{
+  "committed_review_fixture": {
+    "bytes": 10795,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/raw384-equivalence.json",
+    "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+  },
+  "counts": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests": 294
+  },
+  "cwd": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets",
+  "log": {
+    "bytes": 1478,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v03.log",
+    "sha256": "40c21af839e24b87c57d64d0ab4b29cf1837ce979a05bfc207fe360c4839fc99"
+  },
+  "model_encoder_optimizer_calls": 0,
+  "network_denied": true,
+  "numerical_imports_denied": true,
+  "passed": true,
+  "prior_test_attempts": [
+    {
+      "cause": "Invocation used nonexistent old test path; zero tests ran.",
+      "exit_code": 4,
+      "version": "v01"
+    },
+    {
+      "cause": "Invocation cwd F caused retained subprocess test repo-relative import to fail; new78tests passed.",
+      "counts": {
+        "errors": 0,
+        "failures": 1,
+        "skipped": 0,
+        "tests": 294
+      },
+      "exit_code": 1,
+      "version": "v02"
+    }
+  ],
+  "schema": "retained-pointer-portable-review-validation/v1",
+  "scope": "Post-run test-only portability correction. Current294inerttests pass from isolated repository root. No numerical replay or new fit.",
+  "test_file": {
+    "bytes": 29800,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py",
+    "sha256": "ad8fe94df233b9a112e5a525b3909efecaf7d8f55af3ec99e7df820f468410dc"
+  },
+  "test_harness": {
+    "bytes": 1525,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_inert_tests.py",
+    "sha256": "6893e3554ee0d6a8ef9ab1a1e23f94fb94a9041fab4a0fc94bc3d94d8f8ab50b"
+  },
+  "unchanged_runtime_owner_count": 24,
+  "xml": {
+    "bytes": 123337,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v03.xml",
+    "sha256": "74513c44bbc5665f24b65d12caa53d4187bf203caaeb6346e9de59e5cd664430"
+  }
+}

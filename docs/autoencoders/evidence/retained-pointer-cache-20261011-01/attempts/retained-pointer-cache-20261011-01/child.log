@@ -1,0 +1,38 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py", line 232, in <module>
+    main(parser.parse_args())
+  File "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py", line 139, in main
+    import torch
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/__init__.py", line 2189, in <module>
+    _C._initExtension(_manager_path())
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/cuda/__init__.py", line 30, in <module>
+    from ._utils import _get_device_index
+  File "/home/barberb/.local/lib/python3.12/site-packages/torch/cuda/_utils.py", line 9, in <module>
+    from cuda.bindings import (  # pyrefly: ignore[missing-import]
+  File "cuda/bindings/runtime.pyx", line 1, in init cuda.bindings.runtime
+  File "cuda/bindings/cyruntime.pyx", line 1029, in init cuda.bindings.cyruntime
+  File "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/__init__.py", line 22, in <module>
+    from cuda.pathfinder._dynamic_libs.load_nvidia_dynamic_lib import load_nvidia_dynamic_lib as load_nvidia_dynamic_lib
+  File "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_nvidia_dynamic_lib.py", line 20, in <module>
+    from cuda.pathfinder._dynamic_libs.platform_loader import LOADER
+  File "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/platform_loader.py", line 37, in <module>
+    from cuda.pathfinder._dynamic_libs import load_dl_linux as _impl
+  File "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py", line 32, in <module>
+    LIBDL = _load_libdl()
+            ^^^^^^^^^^^^^
+  File "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py", line 25, in _load_libdl
+    name = ctypes.util.find_library("dl") or "libdl.so.2"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ctypes/util.py", line 343, in find_library
+    return _findSoname_ldconfig(name) or \
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/ctypes/util.py", line 303, in _findSoname_ldconfig
+    with subprocess.Popen(['/sbin/ldconfig', '-p'],
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/lib/python3.12/subprocess.py", line 1823, in _execute_child
+    sys.audit("subprocess.Popen", executable, args, cwd, env)
+  File "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py", line 130, in audit
+    raise AssertionError("network/process execution prohibited in frozen span child")
+AssertionError: network/process execution prohibited in frozen span child

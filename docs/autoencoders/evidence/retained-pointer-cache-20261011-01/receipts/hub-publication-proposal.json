@@ -1,0 +1,218 @@
+{
+  "captured_verified_bytes": true,
+  "parent_commit": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "prefix": "releases/20261011-retained-raw384-pointer-v1",
+  "release_files": {
+    "README.md": {
+      "bytes": 2703,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/README.md",
+      "sha256": "f553eca9e27199f4cfc7e64fc2400b511b2c53e52a9ff3b4f0a73c3a5133c0ad"
+    },
+    "checkpoints/raw384-1729/checkpoint-400.json": {
+      "bytes": 3027735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/checkpoints/raw384-1729/checkpoint-400.json",
+      "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+    },
+    "checkpoints/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/checkpoints/source_only-1729/checkpoint-400.json",
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "evidence/experiment-plan-v02.json": {
+      "bytes": 51481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/experiment-plan-v02.json",
+      "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+    },
+    "evidence/pointer-comparison-diagnostics.json": {
+      "bytes": 42878,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/pointer-comparison-diagnostics.json",
+      "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+    },
+    "evidence/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json": {
+      "bytes": 51285,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json",
+      "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+    },
+    "evidence/raw-reports/raw384-1729-disabled.json": {
+      "bytes": 161737,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/raw384-1729-disabled.json",
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    "evidence/raw-reports/raw384-1729-none.json": {
+      "bytes": 161701,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/raw384-1729-none.json",
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    "evidence/raw-reports/raw384-1729-rotate.json": {
+      "bytes": 161719,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/raw384-1729-rotate.json",
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    "evidence/raw-reports/raw384-1729-zero.json": {
+      "bytes": 161715,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/raw384-1729-zero.json",
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    "evidence/raw-reports/source_only-1729-disabled.json": {
+      "bytes": 161783,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/source_only-1729-disabled.json",
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    "evidence/raw-reports/source_only-1729-none.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/source_only-1729-none.json",
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    "evidence/raw-reports/source_only-1729-rotate.json": {
+      "bytes": 161777,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/source_only-1729-rotate.json",
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    "evidence/raw-reports/source_only-1729-zero.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw-reports/source_only-1729-zero.json",
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    },
+    "evidence/raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "evidence/summary.json": {
+      "bytes": 89951,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/evidence/summary.json",
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    },
+    "manifest.json": {
+      "bytes": 28435,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/manifest.json",
+      "sha256": "b031bc55e60e0b9e61b1c1c4603df5f4fc3d0357d3aacf3e6147bb4480529f20"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-release/source/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "repository": "Publicus/legal-ir-autoencoder",
+  "review_pin": {
+    "bytes": 33235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-review.json",
+    "sha256": "a7108542d369f5ea772113a14b6112a2744bd0817486d646deab892314f14eba"
+  }
+}

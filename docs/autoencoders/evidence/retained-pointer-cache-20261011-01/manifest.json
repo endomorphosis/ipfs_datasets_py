@@ -1,0 +1,1688 @@
+{
+  "Lake_executed": false,
+  "closing_source_bytes_unchanged": true,
+  "copy_inputs": {
+    "bytes": 55264,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/contribution-copy-inputs.json",
+    "sha256": "cb1ce89fa2125814a60e775f4bea8f05e390c126a4dce1198c94a9f0be9bb4ee"
+  },
+  "encoder_calls": 0,
+  "files": {
+    "attempts/retained-pointer-cache-20261011-01/child-exit.json": {
+      "origin": {
+        "bytes": 72,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child-exit.json",
+        "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+      },
+      "retained": {
+        "bytes": 72,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/child-exit.json",
+        "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/child-identity.json": {
+      "origin": {
+        "bytes": 44,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child-identity.json",
+        "sha256": "75c578bf4e5caee8e728ab37c7d74b0c1fc4a62ac38d824544b201cf3b827522"
+      },
+      "retained": {
+        "bytes": 44,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/child-identity.json",
+        "sha256": "75c578bf4e5caee8e728ab37c7d74b0c1fc4a62ac38d824544b201cf3b827522"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/child.log": {
+      "origin": {
+        "bytes": 2901,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child.log",
+        "sha256": "f2731713a732f16bd3e9f6edc5eb8717d71aa7345d16da654b77b0c48ee09ecc"
+      },
+      "retained": {
+        "bytes": 2901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/child.log",
+        "sha256": "f2731713a732f16bd3e9f6edc5eb8717d71aa7345d16da654b77b0c48ee09ecc"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/command.json": {
+      "origin": {
+        "bytes": 1056,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/command.json",
+        "sha256": "5e4e0dd87b586281d604ade1c9e7829eebca4e0b70bbfa2bd1e216e389299c6a"
+      },
+      "retained": {
+        "bytes": 1056,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/command.json",
+        "sha256": "5e4e0dd87b586281d604ade1c9e7829eebca4e0b70bbfa2bd1e216e389299c6a"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/failure-primary.json": {
+      "origin": {
+        "bytes": 4850,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/failure-primary.json",
+        "sha256": "e1cfae9538218dbc3edf87865c3e1956f6579ef1e5d9b9453cd48624ca56f4ac"
+      },
+      "retained": {
+        "bytes": 4850,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/failure-primary.json",
+        "sha256": "e1cfae9538218dbc3edf87865c3e1956f6579ef1e5d9b9453cd48624ca56f4ac"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/group-rss-observations.jsonl": {
+      "origin": {
+        "bytes": 9017,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/group-rss-observations.jsonl",
+        "sha256": "ba66e9db4825774eb1e0dc53cdfa04e0b4f49efc785cd17e7d7e6a73c1eed157"
+      },
+      "retained": {
+        "bytes": 9017,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/group-rss-observations.jsonl",
+        "sha256": "ba66e9db4825774eb1e0dc53cdfa04e0b4f49efc785cd17e7d7e6a73c1eed157"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/group-rss-summary.json": {
+      "origin": {
+        "bytes": 1734,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/group-rss-summary.json",
+        "sha256": "2b12651e7897801f82930e6ab439a07c27b55a3d93fd65b44e156e038484be80"
+      },
+      "retained": {
+        "bytes": 1734,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/group-rss-summary.json",
+        "sha256": "2b12651e7897801f82930e6ab439a07c27b55a3d93fd65b44e156e038484be80"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/guardian-exit.json": {
+      "origin": {
+        "bytes": 4379,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/guardian-exit.json",
+        "sha256": "09f42820913b9659fe599cbfaab8a50f53c1dc91063cd11c6c576ceb9d2da2d3"
+      },
+      "retained": {
+        "bytes": 4379,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/guardian-exit.json",
+        "sha256": "09f42820913b9659fe599cbfaab8a50f53c1dc91063cd11c6c576ceb9d2da2d3"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/lease-binding.json": {
+      "origin": {
+        "bytes": 694,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/lease-binding.json",
+        "sha256": "3c6cd3b5e8a54ca84ce09eb17df80365836421b85406748d8694cff8c1c3d429"
+      },
+      "retained": {
+        "bytes": 694,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/lease-binding.json",
+        "sha256": "3c6cd3b5e8a54ca84ce09eb17df80365836421b85406748d8694cff8c1c3d429"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/lease-observations.jsonl": {
+      "origin": {
+        "bytes": 17867,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/lease-observations.jsonl",
+        "sha256": "c297b4c85d7bc8197f3d5c57a240c052f751e750f3d04eb9b373e738ac9538a1"
+      },
+      "retained": {
+        "bytes": 17867,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/lease-observations.jsonl",
+        "sha256": "c297b4c85d7bc8197f3d5c57a240c052f751e750f3d04eb9b373e738ac9538a1"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/pre-admission.json": {
+      "origin": {
+        "bytes": 8040,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/pre-admission.json",
+        "sha256": "196b1c32c51b1986aa6bf37d01e0553e6681a6df0da1d6198d55a2d8ce72d3f3"
+      },
+      "retained": {
+        "bytes": 8040,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/pre-admission.json",
+        "sha256": "196b1c32c51b1986aa6bf37d01e0553e6681a6df0da1d6198d55a2d8ce72d3f3"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/resources-final-failure.json": {
+      "origin": {
+        "bytes": 4601,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/resources-final-failure.json",
+        "sha256": "5ae9cc3bca66520017cf05605bd138fe4c755c9c7ec0da68302165688f9335e0"
+      },
+      "retained": {
+        "bytes": 4601,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/resources-final-failure.json",
+        "sha256": "5ae9cc3bca66520017cf05605bd138fe4c755c9c7ec0da68302165688f9335e0"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/resources-start.json": {
+      "origin": {
+        "bytes": 2540,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/resources-start.json",
+        "sha256": "9cbe77d64194d35a4cecc0cbb0c80d1f7ae09d49ca7e9984c8b8738148a970aa"
+      },
+      "retained": {
+        "bytes": 2540,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/resources-start.json",
+        "sha256": "9cbe77d64194d35a4cecc0cbb0c80d1f7ae09d49ca7e9984c8b8738148a970aa"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-01/scheduler-adoption.json": {
+      "origin": {
+        "bytes": 4645,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/scheduler-adoption.json",
+        "sha256": "c9cc8623b43f2daff72f19e664a7af5eb2b16840682d5a219c226bcfd4a3193d"
+      },
+      "retained": {
+        "bytes": 4645,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-01/scheduler-adoption.json",
+        "sha256": "c9cc8623b43f2daff72f19e664a7af5eb2b16840682d5a219c226bcfd4a3193d"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-02/child-exit.json": {
+      "origin": {
+        "bytes": 76,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/child-exit.json",
+        "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+      },
+      "retained": {
+        "bytes": 76,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-02/child-exit.json",
+        "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-02/failure-primary.json": {
+      "origin": {
+        "bytes": 1364,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/failure-primary.json",
+        "sha256": "14fd732e37986328005a856c4da6dd3d90e8b283f9206d24a0b5cb616d4ba352"
+      },
+      "retained": {
+        "bytes": 1364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-02/failure-primary.json",
+        "sha256": "14fd732e37986328005a856c4da6dd3d90e8b283f9206d24a0b5cb616d4ba352"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-02/guardian-exit.json": {
+      "origin": {
+        "bytes": 1761,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/guardian-exit.json",
+        "sha256": "7c56ef8c82f71475bdec1f6608710ece62f7089bc2f9a79a8e7999fd08745c93"
+      },
+      "retained": {
+        "bytes": 1761,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-02/guardian-exit.json",
+        "sha256": "7c56ef8c82f71475bdec1f6608710ece62f7089bc2f9a79a8e7999fd08745c93"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-02/pre-admission.json": {
+      "origin": {
+        "bytes": 8044,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/pre-admission.json",
+        "sha256": "5bc67858c1a80deec5bb6d2f5649a41627003205bf32f549bfef1d9c3c23d29c"
+      },
+      "retained": {
+        "bytes": 8044,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-02/pre-admission.json",
+        "sha256": "5bc67858c1a80deec5bb6d2f5649a41627003205bf32f549bfef1d9c3c23d29c"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-02/resources-final-failure.json": {
+      "origin": {
+        "bytes": 718,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-02/resources-final-failure.json",
+        "sha256": "d80a99d5d089a53fdf01aad34600700bf9dd401ce14a771c00835f504b0750c1"
+      },
+      "retained": {
+        "bytes": 718,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-02/resources-final-failure.json",
+        "sha256": "d80a99d5d089a53fdf01aad34600700bf9dd401ce14a771c00835f504b0750c1"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/child-exit.json": {
+      "origin": {
+        "bytes": 104,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/child-exit.json",
+        "sha256": "1254f4c21bef55380f176538a5543a9ddfdaa8ce32617a990ef3bf3c8ba4caba"
+      },
+      "retained": {
+        "bytes": 104,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/child-exit.json",
+        "sha256": "1254f4c21bef55380f176538a5543a9ddfdaa8ce32617a990ef3bf3c8ba4caba"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/child-identity.json": {
+      "origin": {
+        "bytes": 44,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/child-identity.json",
+        "sha256": "9ca1cfd5ea9c9a7e7be2cf696786060375dfda60f967cac2c9a4f70dd42ce351"
+      },
+      "retained": {
+        "bytes": 44,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/child-identity.json",
+        "sha256": "9ca1cfd5ea9c9a7e7be2cf696786060375dfda60f967cac2c9a4f70dd42ce351"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/child.log": {
+      "origin": {
+        "bytes": 112,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/child.log",
+        "sha256": "6ba7134cbf737b4afa1d90be0a6f1345de5f2019148e8f88bdbcc36b63f7810f"
+      },
+      "retained": {
+        "bytes": 112,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/child.log",
+        "sha256": "6ba7134cbf737b4afa1d90be0a6f1345de5f2019148e8f88bdbcc36b63f7810f"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/command.json": {
+      "origin": {
+        "bytes": 1060,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/command.json",
+        "sha256": "12dfe8aa5287c925974b4a6701fdade450c69252ea77affce96cadcdf172c19f"
+      },
+      "retained": {
+        "bytes": 1060,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/command.json",
+        "sha256": "12dfe8aa5287c925974b4a6701fdade450c69252ea77affce96cadcdf172c19f"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/group-rss-observations.jsonl": {
+      "origin": {
+        "bytes": 12515,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/group-rss-observations.jsonl",
+        "sha256": "675ed70a3dacd5d0f65ee96ba13c09654d87beeafce9cf9a6194e77e89970d08"
+      },
+      "retained": {
+        "bytes": 12515,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/group-rss-observations.jsonl",
+        "sha256": "675ed70a3dacd5d0f65ee96ba13c09654d87beeafce9cf9a6194e77e89970d08"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/group-rss-summary.json": {
+      "origin": {
+        "bytes": 1739,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/group-rss-summary.json",
+        "sha256": "b111e76515753bb009c1df8cba47f8115e3eca5364521ddc5939893274f252d7"
+      },
+      "retained": {
+        "bytes": 1739,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/group-rss-summary.json",
+        "sha256": "b111e76515753bb009c1df8cba47f8115e3eca5364521ddc5939893274f252d7"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/guardian-exit.json": {
+      "origin": {
+        "bytes": 518,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/guardian-exit.json",
+        "sha256": "461ed3f630a5ff5ece732054e13072aad8669a079659bff7adb0fdf56b19d9e3"
+      },
+      "retained": {
+        "bytes": 518,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/guardian-exit.json",
+        "sha256": "461ed3f630a5ff5ece732054e13072aad8669a079659bff7adb0fdf56b19d9e3"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/lease-binding.json": {
+      "origin": {
+        "bytes": 694,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/lease-binding.json",
+        "sha256": "39748777842f57b0a0851b39375ad5a64ac68d016c23f1dc88d0e56c1dc08766"
+      },
+      "retained": {
+        "bytes": 694,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/lease-binding.json",
+        "sha256": "39748777842f57b0a0851b39375ad5a64ac68d016c23f1dc88d0e56c1dc08766"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/lease-observations.jsonl": {
+      "origin": {
+        "bytes": 26661,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/lease-observations.jsonl",
+        "sha256": "d125befdab01edc9974a8282b41c50d7fbdca966a726c6793005523f1c4211e9"
+      },
+      "retained": {
+        "bytes": 26661,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/lease-observations.jsonl",
+        "sha256": "d125befdab01edc9974a8282b41c50d7fbdca966a726c6793005523f1c4211e9"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/owned-group-final.json": {
+      "origin": {
+        "bytes": 190,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/owned-group-final.json",
+        "sha256": "e17d83865596ee4db595f89606ccfe359ac4cb8e385951e92f14f08d7c592d5e"
+      },
+      "retained": {
+        "bytes": 190,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/owned-group-final.json",
+        "sha256": "e17d83865596ee4db595f89606ccfe359ac4cb8e385951e92f14f08d7c592d5e"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/pre-admission.json": {
+      "origin": {
+        "bytes": 8044,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/pre-admission.json",
+        "sha256": "5bc67858c1a80deec5bb6d2f5649a41627003205bf32f549bfef1d9c3c23d29c"
+      },
+      "retained": {
+        "bytes": 8044,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/pre-admission.json",
+        "sha256": "5bc67858c1a80deec5bb6d2f5649a41627003205bf32f549bfef1d9c3c23d29c"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/resource-observations.json": {
+      "origin": {
+        "bytes": 872,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/resource-observations.json",
+        "sha256": "c642c8f02efb1ad439007ebcb225c84153be6e8c843d2e0938421ec04c63dd14"
+      },
+      "retained": {
+        "bytes": 872,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/resource-observations.json",
+        "sha256": "c642c8f02efb1ad439007ebcb225c84153be6e8c843d2e0938421ec04c63dd14"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/resources-final.json": {
+      "origin": {
+        "bytes": 6257,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/resources-final.json",
+        "sha256": "d612e954e8e534b9b6bfe11a832a2ba9a15b60bd2784dd849ded4e05dfe9da8e"
+      },
+      "retained": {
+        "bytes": 6257,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/resources-final.json",
+        "sha256": "d612e954e8e534b9b6bfe11a832a2ba9a15b60bd2784dd849ded4e05dfe9da8e"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/resources-start.json": {
+      "origin": {
+        "bytes": 2541,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/resources-start.json",
+        "sha256": "b8e7b6d2c2090225cd6c970603e7d961e52c19f3990a4c83797422172f54d170"
+      },
+      "retained": {
+        "bytes": 2541,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/resources-start.json",
+        "sha256": "b8e7b6d2c2090225cd6c970603e7d961e52c19f3990a4c83797422172f54d170"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/all-control-plans-before-opening.json": {
+      "origin": {
+        "bytes": 385523,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/all-control-plans-before-opening.json",
+        "sha256": "9f40179457125760be88c58b06ff422572bfed3a2f73fe8d160addfdfe3166d7"
+      },
+      "retained": {
+        "bytes": 385523,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/all-control-plans-before-opening.json",
+        "sha256": "9f40179457125760be88c58b06ff422572bfed3a2f73fe8d160addfdfe3166d7"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json": {
+      "origin": {
+        "bytes": 161737,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+        "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+      },
+      "retained": {
+        "bytes": 161737,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+        "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/raw384-1729-none.json": {
+      "origin": {
+        "bytes": 161701,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+        "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+      },
+      "retained": {
+        "bytes": 161701,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+        "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json": {
+      "origin": {
+        "bytes": 161719,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+        "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+      },
+      "retained": {
+        "bytes": 161719,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+        "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json": {
+      "origin": {
+        "bytes": 161715,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+        "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+      },
+      "retained": {
+        "bytes": 161715,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+        "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source-cache-generation/source-cache.json": {
+      "origin": {
+        "bytes": 330781,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source-cache-generation/source-cache.json",
+        "sha256": "c9981cb5b6fe83f64556de8bf385891d5598d785c88fa657ed7f91d6bf8b7fe0"
+      },
+      "retained": {
+        "bytes": 330781,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source-cache-generation/source-cache.json",
+        "sha256": "c9981cb5b6fe83f64556de8bf385891d5598d785c88fa657ed7f91d6bf8b7fe0"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source-cache-generation/summary.json": {
+      "origin": {
+        "bytes": 8105,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source-cache-generation/summary.json",
+        "sha256": "c34acac7f5812134db84232b8f7fb723ca5282b3630795cb07e3f74df69e3dae"
+      },
+      "retained": {
+        "bytes": 8105,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source-cache-generation/summary.json",
+        "sha256": "c34acac7f5812134db84232b8f7fb723ca5282b3630795cb07e3f74df69e3dae"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json": {
+      "origin": {
+        "bytes": 161783,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+        "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+      },
+      "retained": {
+        "bytes": 161783,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+        "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source_only-1729-none.json": {
+      "origin": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+        "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+      },
+      "retained": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+        "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json": {
+      "origin": {
+        "bytes": 161777,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+        "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+      },
+      "retained": {
+        "bytes": 161777,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+        "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json": {
+      "origin": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+        "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+      },
+      "retained": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+        "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/results/summary.json": {
+      "origin": {
+        "bytes": 89951,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json",
+        "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+      },
+      "retained": {
+        "bytes": 89951,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/results/summary.json",
+        "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+      }
+    },
+    "attempts/retained-pointer-cache-20261011-03/scheduler-adoption.json": {
+      "origin": {
+        "bytes": 4646,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/scheduler-adoption.json",
+        "sha256": "49bbd97576859db8a8a5337dbdb7716cf06c9591e539ecc0a60516bc1f0020d7"
+      },
+      "retained": {
+        "bytes": 4646,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/attempts/retained-pointer-cache-20261011-03/scheduler-adoption.json",
+        "sha256": "49bbd97576859db8a8a5337dbdb7716cf06c9591e539ecc0a60516bc1f0020d7"
+      }
+    },
+    "previous-pilot/final-integration-review.json": {
+      "origin": {
+        "bytes": 20564,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/final-integration-review.json",
+        "sha256": "494d7d02413edf3cb91be2a0e68579e5f94427d17239aa427c96fb6b32310688"
+      },
+      "retained": {
+        "bytes": 20564,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/final-integration-review.json",
+        "sha256": "494d7d02413edf3cb91be2a0e68579e5f94427d17239aa427c96fb6b32310688"
+      }
+    },
+    "previous-pilot/native384-receipt-001.json": {
+      "origin": {
+        "bytes": 38209,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+        "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+      },
+      "retained": {
+        "bytes": 38209,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/native384-receipt-001.json",
+        "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+      }
+    },
+    "previous-pilot/post-generation-diagnostics.json": {
+      "origin": {
+        "bytes": 111344,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+        "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+      },
+      "retained": {
+        "bytes": 111344,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/post-generation-diagnostics.json",
+        "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+      }
+    },
+    "previous-pilot/protocol-review-admitted-reconstruction.json": {
+      "origin": {
+        "bytes": 56631,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-admitted-reconstruction.json",
+        "sha256": "f1a4cc72a0e6d99fda0c1e0aeb57d76abe6472586c67d773f0026870895ef945"
+      },
+      "retained": {
+        "bytes": 56631,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/protocol-review-admitted-reconstruction.json",
+        "sha256": "f1a4cc72a0e6d99fda0c1e0aeb57d76abe6472586c67d773f0026870895ef945"
+      }
+    },
+    "previous-pilot/source-artifact-pins.json": {
+      "origin": {
+        "bytes": 2765,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-artifact-pins.json",
+        "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+      },
+      "retained": {
+        "bytes": 2765,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/source-artifact-pins.json",
+        "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+      }
+    },
+    "previous-pilot/source-requests.json": {
+      "origin": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      },
+      "retained": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      }
+    },
+    "previous-pilot/source-view-provenance.json": {
+      "origin": {
+        "bytes": 30901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+        "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+      },
+      "retained": {
+        "bytes": 30901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/previous-pilot/source-view-provenance.json",
+        "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+      }
+    },
+    "raw-source-views/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "origin": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "retained": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      }
+    },
+    "raw-source-views/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "origin": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "retained": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      }
+    },
+    "raw-source-views/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "origin": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "retained": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      }
+    },
+    "raw-source-views/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "origin": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "retained": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      }
+    },
+    "raw-source-views/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "origin": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "retained": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      }
+    },
+    "raw-source-views/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "origin": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "retained": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      }
+    },
+    "raw-source-views/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "origin": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "retained": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      }
+    },
+    "raw-source-views/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "origin": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "retained": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/raw-source-views/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      }
+    },
+    "receipts/analyze_pointer_comparison-draft-01.py": {
+      "origin": {
+        "bytes": 3986,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison-draft-01.py",
+        "sha256": "69ed1f805b8fd124479933773dae2045dd334cba4b6dbae2f387a31a2c558d35"
+      },
+      "retained": {
+        "bytes": 3986,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/analyze_pointer_comparison-draft-01.py",
+        "sha256": "69ed1f805b8fd124479933773dae2045dd334cba4b6dbae2f387a31a2c558d35"
+      }
+    },
+    "receipts/analyze_pointer_comparison.py": {
+      "origin": {
+        "bytes": 5470,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison.py",
+        "sha256": "c1c54ca775c3653f61fb97aa1209d9908310f31ca71707b0a2ec7233ce664109"
+      },
+      "retained": {
+        "bytes": 5470,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/analyze_pointer_comparison.py",
+        "sha256": "c1c54ca775c3653f61fb97aa1209d9908310f31ca71707b0a2ec7233ce664109"
+      }
+    },
+    "receipts/branch-worktree-survey.json": {
+      "origin": {
+        "bytes": 20020,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/branch-worktree-survey.json",
+        "sha256": "17744df8e4b178df5c0346ae85ce21e54c3d9e50699de153bc72082e8304cddb"
+      },
+      "retained": {
+        "bytes": 20020,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/branch-worktree-survey.json",
+        "sha256": "17744df8e4b178df5c0346ae85ce21e54c3d9e50699de153bc72082e8304cddb"
+      }
+    },
+    "receipts/canonical-intake.json": {
+      "origin": {
+        "bytes": 768,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/canonical-intake.json",
+        "sha256": "1c010377519f29b77031210ec60bc24771b5e1b3931249f48c01cbee4f0d408a"
+      },
+      "retained": {
+        "bytes": 768,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/canonical-intake.json",
+        "sha256": "1c010377519f29b77031210ec60bc24771b5e1b3931249f48c01cbee4f0d408a"
+      }
+    },
+    "receipts/categorical-control-comparison.json": {
+      "origin": {
+        "bytes": 1089,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/categorical-control-comparison.json",
+        "sha256": "57a108bc280398149a32a7f07ebab3540c0898b7a296230d387cafa405a19a27"
+      },
+      "retained": {
+        "bytes": 1089,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/categorical-control-comparison.json",
+        "sha256": "57a108bc280398149a32a7f07ebab3540c0898b7a296230d387cafa405a19a27"
+      }
+    },
+    "receipts/comparison-helper-build.json": {
+      "origin": {
+        "bytes": 18675,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/comparison-helper-build.json",
+        "sha256": "2e7f710323dece8daf5313d5a24c2f20ffd7978f6d1ed259ccb4079e273edf9e"
+      },
+      "retained": {
+        "bytes": 18675,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/comparison-helper-build.json",
+        "sha256": "2e7f710323dece8daf5313d5a24c2f20ffd7978f6d1ed259ccb4079e273edf9e"
+      }
+    },
+    "receipts/contribution-copy-inputs.json": {
+      "origin": {
+        "bytes": 55264,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/contribution-copy-inputs.json",
+        "sha256": "cb1ce89fa2125814a60e775f4bea8f05e390c126a4dce1198c94a9f0be9bb4ee"
+      },
+      "retained": {
+        "bytes": 55264,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/contribution-copy-inputs.json",
+        "sha256": "cb1ce89fa2125814a60e775f4bea8f05e390c126a4dce1198c94a9f0be9bb4ee"
+      }
+    },
+    "receipts/experiment-plan-v01.json": {
+      "origin": {
+        "bytes": 49987,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v01.json",
+        "sha256": "4175edf968d92863381e99b03a8b1a6532f0a1c657555dc71966751764d796cf"
+      },
+      "retained": {
+        "bytes": 49987,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/experiment-plan-v01.json",
+        "sha256": "4175edf968d92863381e99b03a8b1a6532f0a1c657555dc71966751764d796cf"
+      }
+    },
+    "receipts/experiment-plan-v02.json": {
+      "origin": {
+        "bytes": 51481,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v02.json",
+        "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+      },
+      "retained": {
+        "bytes": 51481,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/experiment-plan-v02.json",
+        "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+      }
+    },
+    "receipts/failed-attempt01-review.json": {
+      "origin": {
+        "bytes": 10557,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/failed-attempt01-review.json",
+        "sha256": "17c66698aab3c2170eff916dfea9c6c6774e45f33a1f4d895f35f16c329d2b7f"
+      },
+      "retained": {
+        "bytes": 10557,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/failed-attempt01-review.json",
+        "sha256": "17c66698aab3c2170eff916dfea9c6c6774e45f33a1f4d895f35f16c329d2b7f"
+      }
+    },
+    "receipts/failed-attempt02-review.json": {
+      "origin": {
+        "bytes": 9115,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/failed-attempt02-review.json",
+        "sha256": "fff7cdaf176bdbb48a4305d6c4936265a517f61517bb9303e3fe3497b369ac29"
+      },
+      "retained": {
+        "bytes": 9115,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/failed-attempt02-review.json",
+        "sha256": "fff7cdaf176bdbb48a4305d6c4936265a517f61517bb9303e3fe3497b369ac29"
+      }
+    },
+    "receipts/final-boundary-tests.log": {
+      "origin": {
+        "bytes": 1473,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/final-boundary-tests.log",
+        "sha256": "2c0bffbf124354416683946e8b0dcd0c3a55e1d22024ade5f0f35f6d0d87faa1"
+      },
+      "retained": {
+        "bytes": 1473,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/final-boundary-tests.log",
+        "sha256": "2c0bffbf124354416683946e8b0dcd0c3a55e1d22024ade5f0f35f6d0d87faa1"
+      }
+    },
+    "receipts/final-boundary-tests.xml": {
+      "origin": {
+        "bytes": 123337,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/final-boundary-tests.xml",
+        "sha256": "88c24d29333afdfaad6d5b8587396f5e54da398ccc5532da344bf89bee3049f6"
+      },
+      "retained": {
+        "bytes": 123337,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/final-boundary-tests.xml",
+        "sha256": "88c24d29333afdfaad6d5b8587396f5e54da398ccc5532da344bf89bee3049f6"
+      }
+    },
+    "receipts/fresh-main-reconciliation.json": {
+      "origin": {
+        "bytes": 2021,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/fresh-main-reconciliation.json",
+        "sha256": "6d80346486775c76e1b451e2ec3eb6fd61d654809203fe6d2d2ebe343979f76c"
+      },
+      "retained": {
+        "bytes": 2021,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/fresh-main-reconciliation.json",
+        "sha256": "6d80346486775c76e1b451e2ec3eb6fd61d654809203fe6d2d2ebe343979f76c"
+      }
+    },
+    "receipts/guardian-attempt02.log": {
+      "origin": {
+        "bytes": 225,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/guardian-attempt02.log",
+        "sha256": "e3b43d073365f309608d6caa5a4fac6d43cb16506a4f410c0fc01602f4e8d335"
+      },
+      "retained": {
+        "bytes": 225,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/guardian-attempt02.log",
+        "sha256": "e3b43d073365f309608d6caa5a4fac6d43cb16506a4f410c0fc01602f4e8d335"
+      }
+    },
+    "receipts/guardian-attempt03.log": {
+      "origin": {
+        "bytes": 208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/guardian-attempt03.log",
+        "sha256": "ff381333807622218b570513dd6afa9294c80c6b98ff43bf2c83ddaf378c0eb0"
+      },
+      "retained": {
+        "bytes": 208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/guardian-attempt03.log",
+        "sha256": "ff381333807622218b570513dd6afa9294c80c6b98ff43bf2c83ddaf378c0eb0"
+      }
+    },
+    "receipts/guardian.log": {
+      "origin": {
+        "bytes": 216,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/guardian.log",
+        "sha256": "226b2706f500388aaf5e528b226b3fcc634756d5a4a1e780ddd27df1496cb3be"
+      },
+      "retained": {
+        "bytes": 216,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/guardian.log",
+        "sha256": "226b2706f500388aaf5e528b226b3fcc634756d5a4a1e780ddd27df1496cb3be"
+      }
+    },
+    "receipts/helper-review-v02.json": {
+      "origin": {
+        "bytes": 7237,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/helper-review-v02.json",
+        "sha256": "b06ac8e5a1179e06bf579761c605bd41112a2322abe06faae436fe248c67bc05"
+      },
+      "retained": {
+        "bytes": 7237,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/helper-review-v02.json",
+        "sha256": "b06ac8e5a1179e06bf579761c605bd41112a2322abe06faae436fe248c67bc05"
+      }
+    },
+    "receipts/helper-review-v03.json": {
+      "origin": {
+        "bytes": 5893,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/helper-review-v03.json",
+        "sha256": "cd6b18e2749160bffd9d2ae8e145b5b8ef0f99392586e15b6f05835b574a4cbb"
+      },
+      "retained": {
+        "bytes": 5893,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/helper-review-v03.json",
+        "sha256": "cd6b18e2749160bffd9d2ae8e145b5b8ef0f99392586e15b6f05835b574a4cbb"
+      }
+    },
+    "receipts/helper-review-v04.json": {
+      "origin": {
+        "bytes": 5925,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/helper-review-v04.json",
+        "sha256": "70afc3d2d9edc4182e718586cd6ff63f52402052ab8db62614b4c5631fe4c2ed"
+      },
+      "retained": {
+        "bytes": 5925,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/helper-review-v04.json",
+        "sha256": "70afc3d2d9edc4182e718586cd6ff63f52402052ab8db62614b4c5631fe4c2ed"
+      }
+    },
+    "receipts/historical-autoencoder-embedding-runtime.py": {
+      "origin": {
+        "bytes": 16725,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/historical-autoencoder-embedding-runtime.py",
+        "sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+      },
+      "retained": {
+        "bytes": 16725,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/historical-autoencoder-embedding-runtime.py",
+        "sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+      }
+    },
+    "receipts/hub-publication-proposal.json": {
+      "origin": {
+        "bytes": 14885,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-proposal.json",
+        "sha256": "f803a140e9d07cfc8f0cf73fae8545d4cb17f20ca9b5d2e74376ce8ebb7df573"
+      },
+      "retained": {
+        "bytes": 14885,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/hub-publication-proposal.json",
+        "sha256": "f803a140e9d07cfc8f0cf73fae8545d4cb17f20ca9b5d2e74376ce8ebb7df573"
+      }
+    },
+    "receipts/hub-publication-receipt.json": {
+      "origin": {
+        "bytes": 15144,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-receipt.json",
+        "sha256": "12b0c98f991efcde8ecdd9579e1a3f2652d11f7707f6ce08077dc4f80fd72f4d"
+      },
+      "retained": {
+        "bytes": 15144,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/hub-publication-receipt.json",
+        "sha256": "12b0c98f991efcde8ecdd9579e1a3f2652d11f7707f6ce08077dc4f80fd72f4d"
+      }
+    },
+    "receipts/hub-publication-review.json": {
+      "origin": {
+        "bytes": 33235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-review.json",
+        "sha256": "a7108542d369f5ea772113a14b6112a2744bd0817486d646deab892314f14eba"
+      },
+      "retained": {
+        "bytes": 33235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/hub-publication-review.json",
+        "sha256": "a7108542d369f5ea772113a14b6112a2744bd0817486d646deab892314f14eba"
+      }
+    },
+    "receipts/hub-receipt-review.json": {
+      "origin": {
+        "bytes": 6219,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-receipt-review.json",
+        "sha256": "8cef9eb12b4e719898d03f654b5e8e8a103c93742a1bdd856c9b73724adb673e"
+      },
+      "retained": {
+        "bytes": 6219,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/hub-receipt-review.json",
+        "sha256": "8cef9eb12b4e719898d03f654b5e8e8a103c93742a1bdd856c9b73724adb673e"
+      }
+    },
+    "receipts/integration-survey.json": {
+      "origin": {
+        "bytes": 47435,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/integration-survey.json",
+        "sha256": "9512efeb6e6d1e8a3632b8ad3b4985f13e619b0d748be541628dc2fa7af1250b"
+      },
+      "retained": {
+        "bytes": 47435,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/integration-survey.json",
+        "sha256": "9512efeb6e6d1e8a3632b8ad3b4985f13e619b0d748be541628dc2fa7af1250b"
+      }
+    },
+    "receipts/next-experiment-design-review.json": {
+      "origin": {
+        "bytes": 7979,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/next-experiment-design-review.json",
+        "sha256": "02fe60014be8d715ad3ebb127fae7d2e24130d44e22366aef1f4aac6ba3a14c4"
+      },
+      "retained": {
+        "bytes": 7979,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/next-experiment-design-review.json",
+        "sha256": "02fe60014be8d715ad3ebb127fae7d2e24130d44e22366aef1f4aac6ba3a14c4"
+      }
+    },
+    "receipts/next-real-law-training-gates-review.json": {
+      "origin": {
+        "bytes": 12858,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/next-real-law-training-gates-review.json",
+        "sha256": "eec3fbe61d26560d411c631f68dbafbc4c73be421e0323282611b18bceaacdbb"
+      },
+      "retained": {
+        "bytes": 12858,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/next-real-law-training-gates-review.json",
+        "sha256": "eec3fbe61d26560d411c631f68dbafbc4c73be421e0323282611b18bceaacdbb"
+      }
+    },
+    "receipts/next-real-law-training-gates.json": {
+      "origin": {
+        "bytes": 22374,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/next-real-law-training-gates.json",
+        "sha256": "c69d47694b986700221225faed8c371910c770e1b50531b8d2482a3eecac2ef7"
+      },
+      "retained": {
+        "bytes": 22374,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/next-real-law-training-gates.json",
+        "sha256": "c69d47694b986700221225faed8c371910c770e1b50531b8d2482a3eecac2ef7"
+      }
+    },
+    "receipts/nonancestor-branch-path-audit.json": {
+      "origin": {
+        "bytes": 388668,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/nonancestor-branch-path-audit.json",
+        "sha256": "6338ffabc7737aec0623326f284a9153e6459fa0acf38c3bd07fe6b0b293399b"
+      },
+      "retained": {
+        "bytes": 388668,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/nonancestor-branch-path-audit.json",
+        "sha256": "6338ffabc7737aec0623326f284a9153e6459fa0acf38c3bd07fe6b0b293399b"
+      }
+    },
+    "receipts/open-us-law-reference-manifest.parquet": {
+      "origin": {
+        "bytes": 3113,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-manifest.parquet",
+        "sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2"
+      },
+      "retained": {
+        "bytes": 3113,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/open-us-law-reference-manifest.parquet",
+        "sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2"
+      }
+    },
+    "receipts/open-us-law-reference-observation.json": {
+      "origin": {
+        "bytes": 4060,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json",
+        "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+      },
+      "retained": {
+        "bytes": 4060,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/open-us-law-reference-observation.json",
+        "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+      }
+    },
+    "receipts/open-us-law-reference-tree.json": {
+      "origin": {
+        "bytes": 431,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-tree.json",
+        "sha256": "8821db58263d08754ad81aefda8c6c7a1d5ccd4ad1a89440fef25beb244418ac"
+      },
+      "retained": {
+        "bytes": 431,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/open-us-law-reference-tree.json",
+        "sha256": "8821db58263d08754ad81aefda8c6c7a1d5ccd4ad1a89440fef25beb244418ac"
+      }
+    },
+    "receipts/open-us-law-reference-viewer-rows.json": {
+      "origin": {
+        "bytes": 8552,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-viewer-rows.json",
+        "sha256": "3fb15db0ca3b513fce2d3e96f148fa8a0b1fe0e7e5f23b3e85dc1f88d36ca2f6"
+      },
+      "retained": {
+        "bytes": 8552,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/open-us-law-reference-viewer-rows.json",
+        "sha256": "3fb15db0ca3b513fce2d3e96f148fa8a0b1fe0e7e5f23b3e85dc1f88d36ca2f6"
+      }
+    },
+    "receipts/pointer-comparison-diagnostics.json": {
+      "origin": {
+        "bytes": 42878,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/pointer-comparison-diagnostics.json",
+        "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+      },
+      "retained": {
+        "bytes": 42878,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/pointer-comparison-diagnostics.json",
+        "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+      }
+    },
+    "receipts/prepare_contribution-draft-01.py": {
+      "origin": {
+        "bytes": 7981,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution-draft-01.py",
+        "sha256": "6dd3c13214657ab8f48a6fffe8f45c74688a03ec85489f356b85e46aa65b606a"
+      },
+      "retained": {
+        "bytes": 7981,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_contribution-draft-01.py",
+        "sha256": "6dd3c13214657ab8f48a6fffe8f45c74688a03ec85489f356b85e46aa65b606a"
+      }
+    },
+    "receipts/prepare_contribution-draft-02.py": {
+      "origin": {
+        "bytes": 8903,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution-draft-02.py",
+        "sha256": "4c5d6770e4b2863724ee6663b8c8cddf0751168e27d283fb7dbf929e0ff53d70"
+      },
+      "retained": {
+        "bytes": 8903,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_contribution-draft-02.py",
+        "sha256": "4c5d6770e4b2863724ee6663b8c8cddf0751168e27d283fb7dbf929e0ff53d70"
+      }
+    },
+    "receipts/prepare_contribution.py": {
+      "origin": {
+        "bytes": 9588,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution.py",
+        "sha256": "d337c48123c16026cc3d9996f575caffb48258a61f5fb3d5b6cb588902086800"
+      },
+      "retained": {
+        "bytes": 9588,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_contribution.py",
+        "sha256": "d337c48123c16026cc3d9996f575caffb48258a61f5fb3d5b6cb588902086800"
+      }
+    },
+    "receipts/prepare_hub_release-draft-01.py": {
+      "origin": {
+        "bytes": 5671,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release-draft-01.py",
+        "sha256": "1d728f9230bd7b67c4d5fbd1c0f4487f6b60a81100f19b34f4b7d6a20925ac40"
+      },
+      "retained": {
+        "bytes": 5671,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_hub_release-draft-01.py",
+        "sha256": "1d728f9230bd7b67c4d5fbd1c0f4487f6b60a81100f19b34f4b7d6a20925ac40"
+      }
+    },
+    "receipts/prepare_hub_release.py": {
+      "origin": {
+        "bytes": 7647,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release.py",
+        "sha256": "8370f6e5ec976e8c93773bd7fc0e24287bdbd8eb16c90851fe5da909f8777f1e"
+      },
+      "retained": {
+        "bytes": 7647,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_hub_release.py",
+        "sha256": "8370f6e5ec976e8c93773bd7fc0e24287bdbd8eb16c90851fe5da909f8777f1e"
+      }
+    },
+    "receipts/prepare_open_vocabulary_plan-v02.py": {
+      "origin": {
+        "bytes": 10504,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_open_vocabulary_plan-v02.py",
+        "sha256": "a9f3a093ec79e51f02870d9e35802ba12aeb6ece278559ff98fcc208437dea38"
+      },
+      "retained": {
+        "bytes": 10504,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_open_vocabulary_plan-v02.py",
+        "sha256": "a9f3a093ec79e51f02870d9e35802ba12aeb6ece278559ff98fcc208437dea38"
+      }
+    },
+    "receipts/prepare_open_vocabulary_plan.py": {
+      "origin": {
+        "bytes": 9667,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_open_vocabulary_plan.py",
+        "sha256": "2070493786859f7003f516baca7d76bc4d83f080653a782d762d45f53ab7f94f"
+      },
+      "retained": {
+        "bytes": 9667,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/prepare_open_vocabulary_plan.py",
+        "sha256": "2070493786859f7003f516baca7d76bc4d83f080653a782d762d45f53ab7f94f"
+      }
+    },
+    "receipts/protocol-review-879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce.json": {
+      "origin": {
+        "bytes": 40318,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce.json",
+        "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+      },
+      "retained": {
+        "bytes": 40318,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/protocol-review-879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce.json",
+        "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+      }
+    },
+    "receipts/protocol-review-draft-01.json": {
+      "origin": {
+        "bytes": 40318,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-draft-01.json",
+        "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+      },
+      "retained": {
+        "bytes": 40318,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/protocol-review-draft-01.json",
+        "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+      }
+    },
+    "receipts/protocol-review-draft-02.json": {
+      "origin": {
+        "bytes": 51285,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-draft-02.json",
+        "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+      },
+      "retained": {
+        "bytes": 51285,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/protocol-review-draft-02.json",
+        "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+      }
+    },
+    "receipts/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json": {
+      "origin": {
+        "bytes": 51285,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json",
+        "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+      },
+      "retained": {
+        "bytes": 51285,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json",
+        "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+      }
+    },
+    "receipts/public-branch-ancestry-audit.json": {
+      "origin": {
+        "bytes": 7282,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/public-branch-ancestry-audit.json",
+        "sha256": "84dd8d1056a1c926f5ea9254a957c67f106a1ee07ec2333914a7006dc79b21b4"
+      },
+      "retained": {
+        "bytes": 7282,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/public-branch-ancestry-audit.json",
+        "sha256": "84dd8d1056a1c926f5ea9254a957c67f106a1ee07ec2333914a7006dc79b21b4"
+      }
+    },
+    "receipts/publication-source-review-v01.json": {
+      "origin": {
+        "bytes": 7146,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publication-source-review-v01.json",
+        "sha256": "8cc95a656d2641bdbc22169ee2f93d2078bc8ea8089cd6bad19a3862d78f3af5"
+      },
+      "retained": {
+        "bytes": 7146,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publication-source-review-v01.json",
+        "sha256": "8cc95a656d2641bdbc22169ee2f93d2078bc8ea8089cd6bad19a3862d78f3af5"
+      }
+    },
+    "receipts/publication-source-review-v02.json": {
+      "origin": {
+        "bytes": 2843,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publication-source-review-v02.json",
+        "sha256": "08585ace640dedd0507ec7d84961bb3f149e5839822d74658677c86a4edb0cb7"
+      },
+      "retained": {
+        "bytes": 2843,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publication-source-review-v02.json",
+        "sha256": "08585ace640dedd0507ec7d84961bb3f149e5839822d74658677c86a4edb0cb7"
+      }
+    },
+    "receipts/publication-source-review-v03.json": {
+      "origin": {
+        "bytes": 2078,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publication-source-review-v03.json",
+        "sha256": "e0096b22404c33414989d1aeee9f7ce3a9167fc4062b407373c4d3e15bc4802c"
+      },
+      "retained": {
+        "bytes": 2078,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publication-source-review-v03.json",
+        "sha256": "e0096b22404c33414989d1aeee9f7ce3a9167fc4062b407373c4d3e15bc4802c"
+      }
+    },
+    "receipts/publication-source-review.json": {
+      "origin": {
+        "bytes": 5625,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publication-source-review.json",
+        "sha256": "0415ee6bb943bf59b7cf6e176ea30755bb76c16869f6236c6e73bef86d95268b"
+      },
+      "retained": {
+        "bytes": 5625,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publication-source-review.json",
+        "sha256": "0415ee6bb943bf59b7cf6e176ea30755bb76c16869f6236c6e73bef86d95268b"
+      }
+    },
+    "receipts/publish_retained_weights-draft-01.py": {
+      "origin": {
+        "bytes": 4840,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights-draft-01.py",
+        "sha256": "df86bad6342d7e990306f1a30290deed56799bebb40647936244b3cf37aafbfb"
+      },
+      "retained": {
+        "bytes": 4840,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publish_retained_weights-draft-01.py",
+        "sha256": "df86bad6342d7e990306f1a30290deed56799bebb40647936244b3cf37aafbfb"
+      }
+    },
+    "receipts/publish_retained_weights.py": {
+      "origin": {
+        "bytes": 6691,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights.py",
+        "sha256": "23d62ff39f2b0dddf01bc09bdc371904c813b3fdf0fc82953e70c7cb5dbab422"
+      },
+      "retained": {
+        "bytes": 6691,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/publish_retained_weights.py",
+        "sha256": "23d62ff39f2b0dddf01bc09bdc371904c813b3fdf0fc82953e70c7cb5dbab422"
+      }
+    },
+    "receipts/raw384-equivalence.json": {
+      "origin": {
+        "bytes": 10795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json",
+        "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+      },
+      "retained": {
+        "bytes": 10795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/raw384-equivalence.json",
+        "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+      }
+    },
+    "receipts/real-law-review-packet.json": {
+      "origin": {
+        "bytes": 48597,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+        "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+      },
+      "retained": {
+        "bytes": 48597,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/real-law-review-packet.json",
+        "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+      }
+    },
+    "receipts/real-law-review-template.json": {
+      "origin": {
+        "bytes": 1752,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json",
+        "sha256": "156c41a9dcb9c3e2e317dbf7543ca28258c14884666caa74078074d78232d734"
+      },
+      "retained": {
+        "bytes": 1752,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/real-law-review-template.json",
+        "sha256": "156c41a9dcb9c3e2e317dbf7543ca28258c14884666caa74078074d78232d734"
+      }
+    },
+    "receipts/resource-compatibility.json": {
+      "origin": {
+        "bytes": 6800,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-compatibility.json",
+        "sha256": "25d151bbe55c8ec7ba0b558002f224ad7f9a1f1d8d3003be47a23eeeec0b6141"
+      },
+      "retained": {
+        "bytes": 6800,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/resource-compatibility.json",
+        "sha256": "25d151bbe55c8ec7ba0b558002f224ad7f9a1f1d8d3003be47a23eeeec0b6141"
+      }
+    },
+    "receipts/resource-failed-attempt01-observation.json": {
+      "origin": {
+        "bytes": 3527,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-failed-attempt01-observation.json",
+        "sha256": "f02860916c6718b66dfe8f209693cae4e60fb4299b2e659b33fae67d59d091ea"
+      },
+      "retained": {
+        "bytes": 3527,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/resource-failed-attempt01-observation.json",
+        "sha256": "f02860916c6718b66dfe8f209693cae4e60fb4299b2e659b33fae67d59d091ea"
+      }
+    },
+    "receipts/resource-successful-attempt03-observation.json": {
+      "origin": {
+        "bytes": 4752,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-successful-attempt03-observation.json",
+        "sha256": "091436c3ba0bec66bda66be425e050ed8e3fd26d33d46a00e7b3220b41fdf909"
+      },
+      "retained": {
+        "bytes": 4752,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/resource-successful-attempt03-observation.json",
+        "sha256": "091436c3ba0bec66bda66be425e050ed8e3fd26d33d46a00e7b3220b41fdf909"
+      }
+    },
+    "receipts/results-resource-review.json": {
+      "origin": {
+        "bytes": 94615,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/results-resource-review.json",
+        "sha256": "ae1481d063bb220e95066697bc1f0401e78ff0311984b0c60380473909f0c828"
+      },
+      "retained": {
+        "bytes": 94615,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/results-resource-review.json",
+        "sha256": "ae1481d063bb220e95066697bc1f0401e78ff0311984b0c60380473909f0c828"
+      }
+    },
+    "receipts/retained-boundary-tests.log": {
+      "origin": {
+        "bytes": 1226,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-boundary-tests.log",
+        "sha256": "fd85d1b2f5abbbe2b8030809257ed4938f0df85e734c32eb662ba6e8fe8e20aa"
+      },
+      "retained": {
+        "bytes": 1226,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/retained-boundary-tests.log",
+        "sha256": "fd85d1b2f5abbbe2b8030809257ed4938f0df85e734c32eb662ba6e8fe8e20aa"
+      }
+    },
+    "receipts/retained-boundary-tests.xml": {
+      "origin": {
+        "bytes": 108445,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-boundary-tests.xml",
+        "sha256": "920407d66ecb5f2e2f74ed3c74650d3da06c115ca6f6d58a4d5f18bd51b2de54"
+      },
+      "retained": {
+        "bytes": 108445,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/retained-boundary-tests.xml",
+        "sha256": "920407d66ecb5f2e2f74ed3c74650d3da06c115ca6f6d58a4d5f18bd51b2de54"
+      }
+    },
+    "receipts/retained-span-hub-identity-readback.json": {
+      "origin": {
+        "bytes": 1362,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-span-hub-identity-readback.json",
+        "sha256": "7f4f6b348c3fe03f409c9703847570189518a639e6ac8a8603b99e02facc748a"
+      },
+      "retained": {
+        "bytes": 1362,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/retained-span-hub-identity-readback.json",
+        "sha256": "7f4f6b348c3fe03f409c9703847570189518a639e6ac8a8603b99e02facc748a"
+      }
+    },
+    "receipts/retained-span-hub-matched-inventory.json": {
+      "origin": {
+        "bytes": 132,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-span-hub-matched-inventory.json",
+        "sha256": "9bf1d4ee807c2b5cb8600f098fe388cb581da5a8d94daa1d923cae054720d348"
+      },
+      "retained": {
+        "bytes": 132,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/retained-span-hub-matched-inventory.json",
+        "sha256": "9bf1d4ee807c2b5cb8600f098fe388cb581da5a8d94daa1d923cae054720d348"
+      }
+    },
+    "receipts/retained-span-hub-survey.json": {
+      "origin": {
+        "bytes": 571,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-span-hub-survey.json",
+        "sha256": "48ee2e597ccfc7ca3cf5be6be0bcb6877b7921e0e10be40f05d0fa231ad27928"
+      },
+      "retained": {
+        "bytes": 571,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/retained-span-hub-survey.json",
+        "sha256": "48ee2e597ccfc7ca3cf5be6be0bcb6877b7921e0e10be40f05d0fa231ad27928"
+      }
+    },
+    "receipts/root-helper-static-review-v01.json": {
+      "origin": {
+        "bytes": 5851,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/root-helper-static-review-v01.json",
+        "sha256": "3c801b1d40a5ffbbbceb7edca65b57d1848b70dc04d42f4ce82a64172d8e1cf1"
+      },
+      "retained": {
+        "bytes": 5851,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/root-helper-static-review-v01.json",
+        "sha256": "3c801b1d40a5ffbbbceb7edca65b57d1848b70dc04d42f4ce82a64172d8e1cf1"
+      }
+    },
+    "receipts/run_inert_tests.py": {
+      "origin": {
+        "bytes": 1525,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_inert_tests.py",
+        "sha256": "6893e3554ee0d6a8ef9ab1a1e23f94fb94a9041fab4a0fc94bc3d94d8f8ab50b"
+      },
+      "retained": {
+        "bytes": 1525,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/run_inert_tests.py",
+        "sha256": "6893e3554ee0d6a8ef9ab1a1e23f94fb94a9041fab4a0fc94bc3d94d8f8ab50b"
+      }
+    },
+    "receipts/run_open_vocabulary_comparison-v02.py": {
+      "origin": {
+        "bytes": 15496,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison-v02.py",
+        "sha256": "96b61765860ad43fe54f529ba70432e7daf9f8a0358e05dd1206cdb63fa86d8b"
+      },
+      "retained": {
+        "bytes": 15496,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/run_open_vocabulary_comparison-v02.py",
+        "sha256": "96b61765860ad43fe54f529ba70432e7daf9f8a0358e05dd1206cdb63fa86d8b"
+      }
+    },
+    "receipts/run_open_vocabulary_comparison.py": {
+      "origin": {
+        "bytes": 12894,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py",
+        "sha256": "e93e21b4f3f29103cf1aad5fbd4ba61cae8980561285e2b6b0185e581fba3ce5"
+      },
+      "retained": {
+        "bytes": 12894,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/run_open_vocabulary_comparison.py",
+        "sha256": "e93e21b4f3f29103cf1aad5fbd4ba61cae8980561285e2b6b0185e581fba3ce5"
+      }
+    },
+    "receipts/run_scope_guardian.py": {
+      "origin": {
+        "bytes": 38281,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py",
+        "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+      },
+      "retained": {
+        "bytes": 38281,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/run_scope_guardian.py",
+        "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+      }
+    },
+    "receipts/source-owner-pins.json": {
+      "origin": {
+        "bytes": 8501,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-owner-pins.json",
+        "sha256": "1a71f1df79661fffec14da0ed6f6dc99aeabf077bcbfb38094d8bd56959a41a6"
+      },
+      "retained": {
+        "bytes": 8501,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/source-owner-pins.json",
+        "sha256": "1a71f1df79661fffec14da0ed6f6dc99aeabf077bcbfb38094d8bd56959a41a6"
+      }
+    },
+    "receipts/source-target-data-review.json": {
+      "origin": {
+        "bytes": 26803,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-target-data-review.json",
+        "sha256": "a512c048603177817f8c438f299ca8536566716ab612e88d61892fd986170eec"
+      },
+      "retained": {
+        "bytes": 26803,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/source-target-data-review.json",
+        "sha256": "a512c048603177817f8c438f299ca8536566716ab612e88d61892fd986170eec"
+      }
+    },
+    "receipts/span-adapter-build.json": {
+      "origin": {
+        "bytes": 10781,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json",
+        "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+      },
+      "retained": {
+        "bytes": 10781,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/span-adapter-build.json",
+        "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+      }
+    },
+    "receipts/span-adapter-tests-failed-01-binding.json": {
+      "origin": {
+        "bytes": 796,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-tests-failed-01-binding.json",
+        "sha256": "078468eb9c57da3850d37657b501e31f6379927c26b4a89c4c6900a7a371f324"
+      },
+      "retained": {
+        "bytes": 796,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/span-adapter-tests-failed-01-binding.json",
+        "sha256": "078468eb9c57da3850d37657b501e31f6379927c26b4a89c4c6900a7a371f324"
+      }
+    },
+    "receipts/span-adapter-tests-failed-01.xml": {
+      "origin": {
+        "bytes": 23702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-tests-failed-01.xml",
+        "sha256": "ef4079210447fff4608c89a68c8cc271ec33cab877f8e29ec22f802a572c040c"
+      },
+      "retained": {
+        "bytes": 23702,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/span-adapter-tests-failed-01.xml",
+        "sha256": "ef4079210447fff4608c89a68c8cc271ec33cab877f8e29ec22f802a572c040c"
+      }
+    },
+    "receipts/span-adapter-tests.xml": {
+      "origin": {
+        "bytes": 15139,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-tests.xml",
+        "sha256": "12dcb8bd50f97ceaa9446210ad4192dddec3d70de53f0e581c2d774186b5ac9d"
+      },
+      "retained": {
+        "bytes": 15139,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/span-adapter-tests.xml",
+        "sha256": "12dcb8bd50f97ceaa9446210ad4192dddec3d70de53f0e581c2d774186b5ac9d"
+      }
+    },
+    "receipts/storage-admission-diagnostic-v01.json": {
+      "origin": {
+        "bytes": 1284,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/storage-admission-diagnostic-v01.json",
+        "sha256": "ca8dc247882a49869b6117464748c061cab690cc943f242f5acf04d18e32d915"
+      },
+      "retained": {
+        "bytes": 1284,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/storage-admission-diagnostic-v01.json",
+        "sha256": "ca8dc247882a49869b6117464748c061cab690cc943f242f5acf04d18e32d915"
+      }
+    },
+    "receipts/validation.json": {
+      "origin": {
+        "bytes": 9985,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/validation.json",
+        "sha256": "dd89f27239756b1ef77c71124ed4ddbd22814088b105eff3db59fe52961bbbe8"
+      },
+      "retained": {
+        "bytes": 9985,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/receipts/validation.json",
+        "sha256": "dd89f27239756b1ef77c71124ed4ddbd22814088b105eff3db59fe52961bbbe8"
+      }
+    }
+  },
+  "full_shared_ledgers_in_evidence": false,
+  "optimizer_updates": 0,
+  "qualification": false,
+  "schema": "retained-pointer-cache-evidence-manifest/v1",
+  "scope": "Frozen replay, source-copy diagnostics and exact artifact custody.",
+  "semantic_accuracy": null,
+  "source_count": 8,
+  "weights_in_source_evidence": false
+}

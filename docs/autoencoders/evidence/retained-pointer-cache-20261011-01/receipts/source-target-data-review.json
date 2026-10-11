@@ -1,0 +1,393 @@
+{
+  "artifacts": {
+    "/home/barberb/.cache/huggingface/hub/datasets--justicedao--uscode-autoformal-span-cache/blobs/23b093517b36ba43c8adcb9489d53aca1f12b99fa714e1df25daacdd201da06e": {
+      "bytes": 32802,
+      "sha256": "23b093517b36ba43c8adcb9489d53aca1f12b99fa714e1df25daacdd201da06e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/binding-review-packet-01/organizer_manifest_private.json": {
+      "bytes": 56355,
+      "sha256": "305538b22d4e037be3a65ac952263cef2720f724cf27cd738459297ce241618c"
+    },
+    "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/binding-review-packet-01/reviewer_items.json": {
+      "bytes": 57962,
+      "sha256": "8a8303ea83fe22899f798703e7931b1f48a8aa0afb01c7d6980a7d3e9301701e"
+    },
+    "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/binding-review-packet-01/reviewer_manifest.json": {
+      "bytes": 882,
+      "sha256": "230c1885ef438f67f852d452aab2fbcc2e37be954b46bcd6acf99711c1b08b57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/corpus-manifest.json": {
+      "bytes": 58282,
+      "sha256": "4d2a13686e77e65b858a45b091658407d52bfc305a67220f641f3b39911fcd35"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/corpus-protocol.json": {
+      "bytes": 22591,
+      "sha256": "9e7ae0ddac59d60aceab132583ca24252ec13bc064093986d44e68a7e278d880"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/final-inputs.json": {
+      "bytes": 63400,
+      "sha256": "be59c75607db202595a484c7bcd50360bb104a868025e7388e456d84007f716a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/final-references.json": {
+      "bytes": 142062,
+      "sha256": "9e07c209944a20305808d4791b56ff0898d12d4a899ee47d7af09fe81b92bd3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/selection-inputs.json": {
+      "bytes": 63828,
+      "sha256": "92b86f7a6d83a6542c5d87597fd128c7b1a645006b99d1e0cc48e7a61d5a1953"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/selection-references.json": {
+      "bytes": 142130,
+      "sha256": "7d6e2d02ad439289178d7d186d8770cce85b762a4ccc3cf660f56b4d0f47b3cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/train-inputs.json": {
+      "bytes": 508927,
+      "sha256": "61e189b6a4e623184a4132694a86316a61aa3e9da7294632a5534e857f5f5f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/train-references.json": {
+      "bytes": 1136345,
+      "sha256": "51a565a1edcaade3e4aa29f80e0e173a7a280f2384bf8f9efe2862f167f37634"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json": {
+      "bytes": 31436,
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/results-resource-review.json": {
+      "bytes": 84588,
+      "sha256": "5634d4d0fc1f307c312b041e0e243ced9eada53b43cca282d8d40217c7bb1f4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-family-intake-review.json": {
+      "bytes": 42303,
+      "sha256": "6921bd6ee7ceb7ea1184be8dc57772fc5e670ac7e909c0caa3c02d5fe9e9e48e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+      "bytes": 6328,
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/alignment_binding_review_recording.md": {
+      "bytes": 7264,
+      "sha256": "c3fd1d1e1a9096637176f35752aa06f56bb44587ebbd7abb6bca268c60ef084f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/reconstruction-gap-followup-20261006/qualifier-preflight-summary.json": {
+      "bytes": 3815,
+      "sha256": "c5099069ed6da68bd4cde54a56023353f06ee2a86cbbb4abcf87ee5b8c42b9d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/uscode-all-span-plan-20261007/original-schema-samples.json": {
+      "bytes": 49150,
+      "sha256": "895da05b6feaa09f57fd220829edf24ce54662c0889a36f4c8d8288c833b079a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/uscode-span-continuation-20261011/measured-run/results/manifest.json": {
+      "bytes": 3079,
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/uscode-span-continuation-20261011/measured-run/results/report.json": {
+      "bytes": 12024,
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/reviewed_384_pair_exports.md": {
+      "bytes": 6455,
+      "sha256": "5e7c291abd8b621019f672c0cf6b450a4d8527ad09d67cc14f9efc20c406759d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/uscode_span_continuation_20261011.md": {
+      "bytes": 13012,
+      "sha256": "11362f96a95f7bf147108ba99ec62787ce0b1775a05dc616d18502d8fddb7b22"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_binding_review.py": {
+      "bytes": 21097,
+      "sha256": "658bce8569101e36852702ceb53f1bc0ab61d6a00ed071e73d7044f39765d59d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_binding_review_workflow.py": {
+      "bytes": 10419,
+      "sha256": "af60454d3d1a573ea97960f69d1a9e6a68ef102608123e368dbd87ee97cb7420"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_label_evidence_intake.py": {
+      "bytes": 19777,
+      "sha256": "c78aae8affd9e897f8dbbe7283c91855666d9fc6651fec193753435d6356f58a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_label_evidence_intake_workflow.py": {
+      "bytes": 17036,
+      "sha256": "2c8fcb32eac1ba58f57a8cc2e6c5839527f4020a070fd1e1d38cf66a8bb6da9e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-manifest.parquet": {
+      "bytes": 3113,
+      "sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json": {
+      "bytes": 4060,
+      "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-tree.json": {
+      "bytes": 431,
+      "sha256": "8821db58263d08754ad81aefda8c6c7a1d5ccd4ad1a89440fef25beb244418ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-viewer-rows.json": {
+      "bytes": 8552,
+      "sha256": "3fb15db0ca3b513fce2d3e96f148fa8a0b1fe0e7e5f23b3e85dc1f88d36ca2f6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json": {
+      "bytes": 48597,
+      "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json": {
+      "bytes": 1752,
+      "sha256": "156c41a9dcb9c3e2e317dbf7543ca28258c14884666caa74078074d78232d734"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json": {
+      "bytes": 38209,
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json": {
+      "bytes": 330754,
+      "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb": {
+      "bytes": 3944448,
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f"
+    }
+  },
+  "available_strata": [
+    {
+      "all_legal_admission_masks0": true,
+      "complete_section_view_UTF8_bytes": 148931,
+      "eligibility": "source-only frozen diagnostics and review development; not new unexposed confirmation or semantic fitting",
+      "input_aliases": 16,
+      "labels": null,
+      "name": "eight raw US Code source views and actual native384 receipt",
+      "native_receipt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+      "native_token_count_range": [
+        19,
+        79
+      ],
+      "prior_exposure": "All eight already ran through both frozen normative32 decoders and were published. Additional archival compiler/teacher/pretraining exposure is not exhaustively closed.",
+      "raw_source_UTF8_bytes": 2070,
+      "reviewed_targets": 0,
+      "source_cache": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+      "source_context_encoded": "selected raw paragraph/single literal clause only; full section views remain context references, not encoded legal context",
+      "source_requests": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+      "source_view_provenance": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sources": 8
+    },
+    {
+      "distinct_legal_ids_and_physical_sections": 178,
+      "eligibility": "candidate source-only pool for later bounded raw Parquet extraction/physical-origin verification; not labels/native-ready/globalnovel",
+      "limitations": "The full scan remains incomplete(cursor199:64).24191 total observed occurrences include21385 aggregate-only outside-target rows, so only2806 matched descriptors have full identities here; no complete outside-source/exposure inventory exists.",
+      "name": "archive reconciliation candidate descriptors",
+      "new_seed_extension_sections_gte128": {
+        "descriptors": 641,
+        "physical_sections": 68
+      },
+      "normalized_UTF8_length80_to512_in_new_extension": {
+        "descriptors": 121,
+        "example_sections": [
+          {
+            "legal_id": "usc:us:10:117",
+            "physical_section": 129
+          },
+          {
+            "legal_id": "usc:us:10:118",
+            "physical_section": 130
+          },
+          {
+            "legal_id": "usc:us:10:118a",
+            "physical_section": 131
+          },
+          {
+            "legal_id": "usc:us:10:118b",
+            "physical_section": 132
+          },
+          {
+            "legal_id": "usc:us:10:118c",
+            "physical_section": 133
+          },
+          {
+            "legal_id": "usc:us:10:119",
+            "physical_section": 134
+          },
+          {
+            "legal_id": "usc:us:10:119a",
+            "physical_section": 135
+          },
+          {
+            "legal_id": "usc:us:10:120",
+            "physical_section": 136
+          }
+        ],
+        "sections": 44
+      },
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb",
+      "rows": 2806,
+      "source_join_disposition": "allmatched",
+      "stored_raw_source_text": false,
+      "token_counts": "all2806null"
+    },
+    {
+      "all_legal_admission_masks0": true,
+      "all_splits_already_exposed": true,
+      "directory": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus",
+      "eligibility": "exposed engineering/retention controls; may support explicitly declared diagnostic open-string targets with new source-kinddiagnostic/native receipts, no legal gold",
+      "final_rows": 128,
+      "groups": 640,
+      "name": "fresh-support-retention authored corpus",
+      "native384_embeddings_available_for_this1280_bank": false,
+      "rows": 1280,
+      "selection_rows": 128,
+      "semantic_source_review_or_legal_gold": false,
+      "targets": "Authored modality and exact role-span declarations, optional condition/object and action lemma/caller-attachment; definitions/corruptions etc are profile negatives, not legal falsehood labels. They were not semantic/LegalIR decoder-loss targets in the prior support-only experiment.",
+      "train_out_of_profile_negative": 512,
+      "train_rows": 1024,
+      "train_supported_positive": 512
+    },
+    {
+      "all_legal_admission_masks0": true,
+      "current64_plus_old34_authenticated_reviews": 0,
+      "current64_plus_old34_submissions": 0,
+      "eligibility": "authored qualifier/structure diagnosis or actual future review, not reviewed real-statute gold",
+      "name": "64 authored compositional blank reviewer cases",
+      "packet": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/binding-review-packet-01/reviewer_items.json",
+      "private_organizer": "/home/barberb/lift_coding/artifacts/autoformalization-alignment-20261003/binding-review-packet-01/organizer_manifest_private.json",
+      "targets": "Private organizer contains authored expectations; public packet has all blank annotations/empty none_required context. No actual review is supplied by these files."
+    },
+    {
+      "admitted_rows": 0,
+      "distinct_source_span_ids": 45,
+      "eligibility": "diagnostic/generated-proposal analysis only; never treat teacher/parser/compiler agreement,sealed status or storage split as independent semantic review",
+      "fallback_origin_rows": 328,
+      "formula_table": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--uscode-autoformal-span-cache/blobs/23b093517b36ba43c8adcb9489d53aca1f12b99fa714e1df25daacdd201da06e",
+      "independent_validation_rows": 0,
+      "learned_formula_generation_rows": 0,
+      "name": "cached formula-text/paired/modal observations",
+      "other_observations": "Pinned schema samples show deterministic legal_modal_parser_v1O/diamond proposals withadmitted/formalized/qualifiedfalse. Paired-v1/v2 transport supports provenance but legacy8 mock/guided/compiler observations are not actual native teacher labels.",
+      "repository_revision": "bf95253007ce123fb44a551806f4e29e9a30834b",
+      "rows": 372,
+      "source_bridge_target_rows": 372,
+      "training_qualified_rows": 0
+    }
+  ],
+  "bounded_corpus_recipe": {
+    "bounds": "At most64authoredsources,<=32KiBsource-text total initially,<=8KiB per source artifact; actual producer must measure full tokenizer coverage<=512. Preflight target UTF8/codec token lengths and complete clauses before any fit; do not truncate output to meet cap.",
+    "controls": "Keep original216 native assay and old authored controls as exposed retention; report support/refusal, whole output and exact field/role preservation separately. Real-law8cases remain target-unassigned development/review only.",
+    "engineering_open_vocabulary_recipe": "If a new fit is authorized separately, construct64fresh authored source-kinddiagnostic cases in32paired parent groups, for example24TRAINgroups/4selectiongroups/4sealed-confirmationgroups. Freeze disjoint content/facet lexicons and all prior-bank/retained/compositional exposures; common grammatical templates are already exposed, so claim only explicitly measured held-out surfaces.",
+    "immediate_diagnostic": "Use existing8 raw requests/native384 records as an exposed source-only frozen-pointer development probe, with no supplied targets. Report source-anchored intervals/transport/refusals and literal coverage without semantic accuracy or training gain.",
+    "native_inputs": "Produce new genuine source-bound native384 receipts for all authored inputs using SourceSpan.source_kind diagnostic and pinned GTE-small pipeline; do not copy law vectors/provenance or use mock8 vectors. Exact strings/clauses/tokens/vectors must join before fitting.",
+    "representation": "Use a separately declared open-string/pointer or canonical UTF8-byte target profile/checkpoint lineage. The old32-symbol normative head cannot express arbitrary actors/actions; a259-byte transport profile is separate and is not automatically compatible with its checkpoint.",
+    "semantic_masks": "All statutory semantic/proof/fidelity admissions stay0. Any diagnostic-engineering fit must explicitly name that separate unqualified supervision scope rather than enabling reviewed-law masks.",
+    "targets": "Construction-declared single-clause or bounded two-clauseO/P/F rules with arbitrary actor/action/object strings and explicit qualifier/role offsets; paired profile negatives get an explicit abstention target. These are engineering labels, not real-statute reviewed targets."
+  },
+  "dataset_reference": {
+    "README_card_present_at_pinned_revision": false,
+    "all_admitted_formalized_false": true,
+    "inventory_documents": 537665,
+    "inventory_spans": 6524705,
+    "manifest_rows": 51,
+    "metadata_manifest_bytes": 3113,
+    "metadata_manifest_sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2",
+    "observation": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json",
+    "pending": 6524705,
+    "primary_complete_successful_verification": "bounded51-row Viewer HTTPS/JSON plus opaque pinned metadata-file SHA256; no Arrow import in retained generation",
+    "repository": "justicedao/open-us-law-span-cache",
+    "revision": "3bdc4d526ec7d83f870c9f481c9c80f43c20adf7",
+    "role": "jurisdiction inventory reference, not training data or reviewed semantic gold",
+    "sealed": 0,
+    "source_text_targets_IR_embeddings_or_reviews": false
+  },
+  "execution": {
+    "Git_mutations": false,
+    "Hub_writes": false,
+    "metadata_only_network": true,
+    "model_imports": false,
+    "models_run": false,
+    "prior_artifact_or_canonical_source_edits": false,
+    "readonly_DuckDB_memory_limit": "64MB",
+    "readonly_DuckDB_threads": 1,
+    "source_whole_Parquet_materialization": false,
+    "tests_run": false,
+    "training_executed": false,
+    "writes_only": "New assignedF observation/packet/template/review files"
+  },
+  "findings": [],
+  "known_nonclaims": {
+    "all_corpus_or_exposure_inventory_complete": false,
+    "formal_family_or_Lake_qualification": false,
+    "genuine_reviewed_law_labels_created": false,
+    "human_reviews_invented": false,
+    "new_gold_or_semantic_targets_assigned": false,
+    "plan_or_runner_approved": false,
+    "statutory_fit_ready": false
+  },
+  "observed_at_utc": "2026-10-11T04:37:47.192751+00:00",
+  "passed": true,
+  "review_workflow_path": {
+    "actionable_next": [
+      "Define and review a new physical-source/context-bearing profile, preserving SourceSpan, full-view/reference pins, exact operative/editorial boundaries, citation/release/physical ordinal and context-needed dispositions.",
+      "Collect actual independent source/context reviews with blank seven-facet targets plus exact role intervals/coordinate space/trigger/attachment and rationale; do not supply model/teacher/compiler answers as reviewer expectations.",
+      "Retain original submissions and independent identity/independence/process/cohort/adjudication evidence. Reuse recorder/intake replay principles without implying currentv1 admits the new packet.",
+      "Only after explicit adjudication/representability/exposure qualification create a separate task/codec/checkpoint-specific label-admission generation; keep pending/disputed/context-missing cases explicit."
+    ],
+    "authority_limits": "Even agreeing complete declarations/intake file checks retain zero human/independent-authenticated counts, pending external adjudication and all five masks0. Declared IDs/times, directories, signatures-as-data, syntax and SHA joins do not authenticate people/independence or establish legal truth. A separately versioned actual review/semantic adjudication and admission process is still needed.",
+    "current_intake_API": "canonical_label_evidence_intake_workflow.run_label_evidence_intake(packet_path,packetSHA,recording_report_path,reportSHA,package_path,packageSHA,output_directory, organizer_binding=...,selected_process_binding=...,cohort_policy_binding=...,repository_root=...)",
+    "current_recording_API": "canonical_binding_review_workflow.run_binding_review_recording(packet_path,expected_packet_file_sha256,submission_bindings,output_directory,repository_root)",
+    "current_v1_restrictions": [
+      "Packet schema symbol-binding-source-reviewer/v1 requires exact empty context role none_required/text empty/bindings empty/emptySHA.",
+      "Item IDs derive from authored-binding-review-v1+source/context digest, with no typed SourceSpan physical occurrence provenance in the closed item envelope.",
+      "A real whole-section/cross-reference context packet cannot be passed unchanged to existing v1 recording/intake. Do not erase context or relabel real sources as authored to satisfy it."
+    ],
+    "new_blank_template": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json",
+    "new_packet": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+    "packet_current_v1_compatible": false,
+    "packet_targets_assigned": 0,
+    "reuse_patterns": [
+      "Exact original file-byteSHA and separate canonical-contentSHA, source/context envelope immutability, blank annotations and original submission preservation.",
+      "Seven-facet rule declarations plus interpretation_status, ambiguity, unsupported_meaning and freeform qualifier scope; explicit empty reviewed value differs from null unanswered.",
+      "Distinct reviewer declarations, exact agreement/dispute recording, explicit organizer/process/cohort metadata bindings and replay."
+    ]
+  },
+  "reviewed_real_statute_gold_established": {
+    "count": 0,
+    "scope": "None established in these audited local slices/public reference. This is not a global claim that authenticated legal reviews do not exist elsewhere."
+  },
+  "schema": "legal-open-vocabulary-source-target-data-review/v1",
+  "scope": "Read-only source/provenance/target eligibility and data-only review-packet preparation. No model, tests, fit, family/Lake or plan/runner execution/approval.",
+  "split_exposure_contract": [
+    "Eight prior real-law pilot sources are review/development exposures; existing authored train/selection/final banks are exposed retention data, not new confirmation.",
+    "Freeze physical-document/legalID/revision relationships, exact raw and historical normalized content aliases, overlapping spans and declared paraphrase/version/source-context families into connected components before split allocation.",
+    "Keep paired positives/negative variants and same underlying/source-role parent group in one split; disjoint occurrence IDs alone do not establish source independence.",
+    "Close known prior data/model-selection/compiler/guided/teacher exposures against selected components; distinguish experiment exposure closure from unknown foundation-model pretraining overlap.",
+    "Keep final references out of fitting and checkpoint selection; durable source-only generation must precede evaluation joins. Author construction sees its own targets and cannot be called reviewer-blind/human-gold."
+  ]
+}

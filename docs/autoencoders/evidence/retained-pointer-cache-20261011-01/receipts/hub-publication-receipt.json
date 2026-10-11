@@ -1,0 +1,274 @@
+{
+  "admitted": false,
+  "all_new_file_downloads_byte_verified": true,
+  "checks": {
+    "releases/20261011-retained-raw384-pointer-v1/README.md": {
+      "bytes": 2703,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "8ead53becb5028e6b4d760fd5f6a84a1d6ec9682",
+      "sha256": "f553eca9e27199f4cfc7e64fc2400b511b2c53e52a9ff3b4f0a73c3a5133c0ad"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/checkpoints/raw384-1729/checkpoint-400.json": {
+      "bytes": 3027735,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "04337bfc592b9502f87931f05402da460a3bd66e",
+      "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/checkpoints/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "8564c9636bd9c6e6910b558cb3c11c222fd92358",
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/experiment-plan-v02.json": {
+      "bytes": 51481,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "a9eed91a5b93b570d87017607735ed5fd58477d0",
+      "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/pointer-comparison-diagnostics.json": {
+      "bytes": 42878,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "9b1cf462c09ff55af625e47ed0aaefe8a6f882cc",
+      "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json": {
+      "bytes": 51285,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "d38809c7bc7da5bb38c0595ac5b938528966e170",
+      "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/raw384-1729-disabled.json": {
+      "bytes": 161737,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "6534b1ba531e8d30e0dd08509dbf2446357e92c3",
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/raw384-1729-none.json": {
+      "bytes": 161701,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "b8d40b243d4061aa384c055bd225ebc2531ea955",
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/raw384-1729-rotate.json": {
+      "bytes": 161719,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "f67c7bd0a1d9e3d4da6a44cc7f109708a9e9ea5e",
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/raw384-1729-zero.json": {
+      "bytes": 161715,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "f4a3bcf220dcd5498fa5fb218e260696c05bc2d8",
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/source_only-1729-disabled.json": {
+      "bytes": 161783,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "feeaf21e8e9fe02b207a7ec0d003814a818c62a3",
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/source_only-1729-none.json": {
+      "bytes": 161775,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "d78ea4cc075ac5e1eab9f8d91519aa0bba27fb2b",
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/source_only-1729-rotate.json": {
+      "bytes": 161777,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "0a429e550bb95ac65860876de65073b1e213fea2",
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw-reports/source_only-1729-zero.json": {
+      "bytes": 161775,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "df4a1aed79bce10e5139b6f06d851d8a7ea74fd6",
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/raw384-equivalence.json": {
+      "bytes": 10795,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "c73cbadd0e810f3fd3157fb86a9c489cec0b1c20",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/evidence/summary.json": {
+      "bytes": 89951,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "0fe9339ec9b1d23e4b77724055b336657ecec014",
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/manifest.json": {
+      "bytes": 28435,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "e079a217edadf38a2c3dbb57227d26b6f8494b09",
+      "sha256": "b031bc55e60e0b9e61b1c1c4603df5f4fc3d0357d3aacf3e6147bb4480529f20"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "82978c03d34ac25327538fd9714b7074b946bfb6",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "373c4207568b97be1932d778d71a32d07dc71e3d",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "fa542082edd89b213843c9d3f8d3c2312ef1d04a",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "f1c9efbae82ee2d639ec84cc5ba3578c00c9238a",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "6a326c6188bfa05383e143c2339603758576ca69",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "c74aed1afce161e349f512f36b6bcfd8db402d48",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "66fac7cce3155d0eaf515e63ff3ff46aba11ff5f",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "c67a8c7857ab3123038e849ce7a6ae7018037718",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "1bf4da481ff84ccb3554ae0dd1126dfc4cbffb6b",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "b863e55c257d6dcb24c721ba1981be8b69e3a284",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "af799a9fcf5699636e3e1dffce96dc1d3e2932ed",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "7ce3ed18ec40071f0c8b24457f74fdfb248ad93e",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "d4fda5e81f5393b3cd99266e03ea9a75612bb35f",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "3a56d4c2c31e60779ae4a41d6586934609cfc5f3",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "85eff000585407ffa7b689c574713df824c596a1",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "6eb9b3a5f5a5f56c3f2466aa7ae06b3ef24189ee",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "b00afcd281ba189b86e07de75854bb83f1a75e99",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "0e96d544c72999d1fe9bc4c03e2585addb4a331c",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "53d7123051e1a1b9737edeb8928dfe57a579286c",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "446ea6eb734d8586a060f64fc56bf198e312aabe",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "5c548f8f28085d2a86a9fdf3b4d6bf21ed94e8fe",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "f138ffb2285f7fc607fe3296f8abe5d6b7b9121a",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "9192b908d3afed67bf8fcec679b05613a1034e61",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "releases/20261011-retained-raw384-pointer-v1/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "downloaded_bytes_verified": true,
+      "git_blob_sha1": "36944fb73c85e541b0b9c47531ebfd7b79791534",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "current_file_count": 3208,
+  "default_promotion": false,
+  "downloaded_numerical_replay": false,
+  "local_frozen_replay_precedes_publication": true,
+  "new_file_count": 41,
+  "new_optimizer_updates": 0,
+  "prefix": "releases/20261011-retained-raw384-pointer-v1",
+  "preservation_scope": "All previous path/size/Gitblob/LFS metadata identities at immutable revisions.",
+  "previous_revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "prior_file_count": 3167,
+  "prior_file_identities_preserved": true,
+  "proof_authority": false,
+  "qualified": false,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "review_pin": {
+    "bytes": 33235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-review.json",
+    "sha256": "a7108542d369f5ea772113a14b6112a2744bd0817486d646deab892314f14eba"
+  },
+  "revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "schema": "retained-pointer-hub-publication-receipt/v1",
+  "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/8279ea69452c0c72560211a1eda505ff1b1b5713/releases/20261011-retained-raw384-pointer-v1"
+}

@@ -1,0 +1,48 @@
+{
+  "all_selected_source_pins_unchanged": true,
+  "canonical_checkout_checks": {
+    "datasets": {
+      "head_unchanged": true,
+      "index_bytes_unchanged": true
+    },
+    "root": {
+      "head_unchanged": true,
+      "index_bytes_unchanged": true
+    }
+  },
+  "earlier_nonancestor_path_audit": {
+    "bytes": 388668,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/nonancestor-branch-path-audit.json",
+    "sha256": "6338ffabc7737aec0623326f284a9153e6459fa0acf38c3bd07fe6b0b293399b"
+  },
+  "earlier_public_branch_ancestry_audit": {
+    "bytes": 7282,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/public-branch-ancestry-audit.json",
+    "sha256": "84dd8d1056a1c926f5ea9254a957c67f106a1ee07ec2333914a7006dc79b21b4"
+  },
+  "git_merges_of_new_contribution_pending": true,
+  "isolated_fast_forwards": {
+    "datasets": {
+      "fresh_main_and_isolated_head": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+      "incoming_changed_paths": [
+        "M\tipfs_datasets_py/logic/software_verification/numerical_logic.py",
+        "A\ttests/unit/logic/software_verification/test_numerical_value_contracts.py"
+      ],
+      "initial_main_ancestor": true,
+      "initial_reviewed_main": "e6a9a93b14b220a946ec53de559255716cf53f42"
+    },
+    "root": {
+      "fresh_main_and_isolated_head": "570128e0d6a568a9c05b3dd60f704c1ee5d184bf",
+      "incoming_changed_paths": [
+        "M\texternal/ipfs_accelerate",
+        "M\texternal/ipfs_datasets"
+      ],
+      "initial_main_ancestor": true,
+      "initial_reviewed_main": "89a900147732b0236cd87a066c66b2310595e44e"
+    }
+  },
+  "observed_at_utc": "2026-10-11T05:18:36.312932+00:00",
+  "schema": "retained-pointer-fresh-main-reconciliation/v1",
+  "scope": "Latest observed remote main integrated into isolated worktrees; historical public ancestry and changed-path audits retained. Uncommitted foreign work and all arbitrary branch patch equivalence are not established.",
+  "selected_source_owner_count": 24
+}

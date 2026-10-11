@@ -1,0 +1,1039 @@
+{
+  "Lake_executed": false,
+  "actual_optimizer_updates": 0,
+  "all_sources_exposed_development_cases": true,
+  "closing_input_bytes_unchanged": true,
+  "consumed_input_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json": {
+      "bytes": 111344,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+      "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json": {
+      "bytes": 161737,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json": {
+      "bytes": 161701,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json": {
+      "bytes": 161719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json": {
+      "bytes": 161715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json": {
+      "bytes": 161783,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json": {
+      "bytes": 161777,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json": {
+      "bytes": 89951,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json",
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    }
+  },
+  "current_summary": {
+    "bytes": 89951,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json",
+    "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+  },
+  "independent_holdout": false,
+  "lanes": [
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 3027735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      "control": "none",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "raw384-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161701,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+        "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "text": "as the"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 3027735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      "control": "zero",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "raw384-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161715,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+        "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "text": "as the"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 3027735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      "control": "disabled",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "raw384-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161737,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+        "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "text": "as the"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 3027735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+        "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+      },
+      "control": "rotate",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "raw384-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161719,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+        "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "text": "as the"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 2744449,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      },
+      "control": "none",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "source_only-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+        "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the case",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 163,
+              "char_start": 152,
+              "text": "as the case"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 2744449,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      },
+      "control": "zero",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "source_only-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+        "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the case",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 163,
+              "char_start": 152,
+              "text": "as the case"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 2744449,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      },
+      "control": "disabled",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "source_only-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161783,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+        "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the case",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 163,
+              "char_start": 152,
+              "text": "as the case"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    },
+    {
+      "abstention_reasons": {
+        "copied_spans_overlap": 7
+      },
+      "checkpoint": {
+        "bytes": 2744449,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+        "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+      },
+      "control": "rotate",
+      "decoded_proposals": 1,
+      "eligible_count": 8,
+      "legal_roles_verified": false,
+      "modality_semantics_verified": false,
+      "name": "source_only-1729",
+      "nonempty_source_copied_facets": {
+        "action": 1,
+        "actor": 1,
+        "conditions": 1,
+        "object": 1
+      },
+      "outcome_counts": {
+        "decoder_abstained": 7,
+        "decoder_proposal": 1
+      },
+      "report": {
+        "bytes": 161777,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+        "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+      },
+      "rows": [
+        {
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+        },
+        {
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the case",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "facet_intervals": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "text": "called"
+            },
+            "actor": {
+              "char_end": 163,
+              "char_start": 152,
+              "text": "as the case"
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "text": "the presiding officers of both Houses and"
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "text": "the enrolled bill, or"
+            }
+          },
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "modality": "O",
+          "outcome": "decoder_proposal",
+          "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+        },
+        {
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+        },
+        {
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+        },
+        {
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+        },
+        {
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+        },
+        {
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+        },
+        {
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "outcome": "decoder_abstained",
+          "reason": "copied_spans_overlap",
+          "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+        }
+      ],
+      "semantic_accuracy": null,
+      "source_count": 8
+    }
+  ],
+  "logic_family_admission": false,
+  "measurement_scope": "Literal nonempty copied facets and refusals; no legal gold or accuracy ranking.",
+  "previous_normative_diagnostics": {
+    "bytes": 111344,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+    "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+  },
+  "previous_schema": "arbitrary-native-pilot-post-generation-diagnostics/v1",
+  "proof_authority": false,
+  "reference_targets_accessed": false,
+  "schema": "retained-pointer-source-coverage-comparison/v1",
+  "source_copying_is_semantic_accuracy": false,
+  "source_semantics_verified": false
+}
