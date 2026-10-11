@@ -1,0 +1,23 @@
+{
+  "checkouts": {
+    "datasets": {
+      "head": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "main": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4"
+    },
+    "root": {
+      "head": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "main": "88a6aaf09388c912a267d735b335bd6cabd2f36b"
+    }
+  },
+  "created_at_utc": "2026-10-11T06:11:10.510371+00:00"
+}

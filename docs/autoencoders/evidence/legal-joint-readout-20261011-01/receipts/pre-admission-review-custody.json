@@ -1,0 +1,14 @@
+{
+  "all_selected_artifacts_match": true,
+  "binding_count": 135,
+  "bytes": 47646,
+  "findings": [],
+  "historical_native_review_gap_repaired": false,
+  "model_started": false,
+  "passed": true,
+  "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/protocol-review-f7cf97e9361a9b203a2dd90b2a65bfa5d7fdf37b214e450749cda4ae860e5000.json",
+  "reservation_acquired": false,
+  "review_mode": "0o444",
+  "schema": "joint-readout-review-byte-custody/v1",
+  "sha256": "f7cf97e9361a9b203a2dd90b2a65bfa5d7fdf37b214e450749cda4ae860e5000"
+}

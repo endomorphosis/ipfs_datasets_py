@@ -1,0 +1,52 @@
+{
+  "absolute_peak_measured": false,
+  "continuous_coverage_claimed": false,
+  "events": {
+    "bytes": 12980,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/group-rss-observations.jsonl",
+    "sha256": "f50514cd7ac18b2c46c98838a662e3c8b8fc5d7fc66c34ba4ac257e329f1dba4"
+  },
+  "failure": null,
+  "first_observation_monotonic_by_phase": {
+    "gated": 718694.719559437,
+    "model": 718709.9510317,
+    "post_model": 718718.476658896
+  },
+  "identity": {
+    "birth": "71869464",
+    "pid": 457850
+  },
+  "kernel_hard_cap": false,
+  "last_observation_monotonic_by_phase": {
+    "gated": 718709.54874634,
+    "model": 718717.793859098,
+    "post_model": 718718.543631366
+  },
+  "max_observation_gap_seconds_by_phase": {
+    "gated": 1.0781995450379327,
+    "model": 1.031154099968262,
+    "post_model": 0.6827997979708016
+  },
+  "memory_limit_bytes": 1610612736,
+  "model_gate_permitted_at_monotonic": 718709.951029188,
+  "model_leader_reaped_at_monotonic": 718718.476655184,
+  "model_phase_sample_count": 9,
+  "model_phase_wall_seconds": 8.525625995942391,
+  "poll_seconds": 1.0,
+  "sample_counts_by_phase": {
+    "gated": 15,
+    "model": 9,
+    "post_model": 2
+  },
+  "sampled_model_phase_peak_rss_bytes": 681361408,
+  "sampled_peak_only": true,
+  "sampled_peaks_by_phase": {
+    "gated": 11804672,
+    "model": 681361408,
+    "post_model": 0
+  },
+  "sampler_started_at_monotonic": 718694.719554621,
+  "scheduler_or_claim_mutation": false,
+  "schema": "guardian-owned-group-rss-summary/v1",
+  "timing_scope": "model gate permission through leader reap; includes model import and guardian polling, not isolated fit time"
+}

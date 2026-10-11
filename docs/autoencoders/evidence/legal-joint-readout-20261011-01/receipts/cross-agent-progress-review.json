@@ -1,0 +1,2249 @@
+{
+  "ancestry_checked_at_utc": "2026-10-11T06:39:49.269055+00:00",
+  "artifact_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/retained-owner-pins.json": {
+      "bytes": 8453,
+      "sha256": "6d085ce4358f0ecce89cc38ae41142bf73b9d4ac4c0497c7ff25ac97eb5aa7e0"
+    }
+  },
+  "canonical_custody": {
+    "HEAD_targets_and_index_and_default_origin_main_unchanged": true,
+    "after": {
+      "root": {
+        "HEAD_bytes": "ref: refs/heads/chore/fmt-check-main\n",
+        "canonical_resolved_HEAD": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+        "default_origin_main_bytes": "77569486a4982a534c7414bc6537d8608ecfa3bb\n",
+        "index": {
+          "bytes": 692628,
+          "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+        },
+        "own_worktree_HEAD_after": "88a6aaf09388c912a267d735b335bd6cabd2f36b"
+      },
+      "source": {
+        "HEAD_bytes": "ref: refs/heads/main\n",
+        "canonical_resolved_HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "default_origin_main_bytes": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234\n",
+        "index": {
+          "bytes": 3799757,
+          "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+        },
+        "own_worktree_HEAD_after": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4"
+      }
+    },
+    "before": {
+      "root": {
+        "HEAD_bytes": "ref: refs/heads/chore/fmt-check-main\n",
+        "canonical_resolved_HEAD": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+        "default_origin_main_bytes": "77569486a4982a534c7414bc6537d8608ecfa3bb\n",
+        "index": {
+          "bytes": 692628,
+          "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+        },
+        "kind": "root_common"
+      },
+      "source": {
+        "HEAD_bytes": "ref: refs/heads/main\n",
+        "canonical_resolved_HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "default_origin_main_bytes": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234\n",
+        "index": {
+          "bytes": 3799757,
+          "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+        },
+        "kind": "source_common"
+      }
+    },
+    "shared_git_metadata_note": "Fresh D and W are separate working trees sharing canonical source/root Git databases. Only Git object transfer and refs/remotes/legal-joint-audit-20261011-01/* updates were authorized and performed; canonical HEAD/index/default tracking refs were not updated."
+  },
+  "created_at_utc": "2026-10-11T06:42:51.185572+00:00",
+  "fetches": {
+    "root": {
+      "auto_maintenance": false,
+      "command": "git -c http.version=HTTP/1.1 fetch --no-tags --no-write-fetch-head --no-auto-maintenance --recurse-submodules=no origin '+9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5:refs/remotes/legal-joint-audit-20261011-01/agent/autoencoder-progress-reconciliation-20261006' '+30e61092341b47b4e49eb30df443fd607536333a:refs/remotes/legal-joint-audit-20261011-01/agent/dual-bank-wording-adapter-root-20261007' '+aab99b3792e4d13572830f4aa91c7915092b23fe:refs/remotes/legal-joint-audit-20261011-01/codex/autoencoder-reconciliation-20261007-01' '+d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9:refs/remotes/legal-joint-audit-20261011-01/codex/legal-native-cache-workspace-20261011-01' '+00130686f43e35105e2ee98e5a36428f3aff3538:refs/remotes/legal-joint-audit-20261011-01/codex/legal-open-vocabulary-workspace-20261011-01' '+fb8176ab49e063f6d2446b74bbde0cc34e47b9ad:refs/remotes/legal-joint-audit-20261011-01/codex/legal-retention-objective-20261011-01' '+3b0162bebe0b7a09727081cb8c5f5c15378caba1:refs/remotes/legal-joint-audit-20261011-01/codex/supervisor-context-token-economy-root-20261006' '+77569486a4982a534c7414bc6537d8608ecfa3bb:refs/remotes/legal-joint-audit-20261011-01/main'",
+      "exit_code": 0,
+      "recurse_submodules": false,
+      "selected_refs": [
+        {
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "ref": "refs/heads/main",
+          "sha": "77569486a4982a534c7414bc6537d8608ecfa3bb"
+        }
+      ],
+      "tags": false,
+      "write_fetch_head": false
+    },
+    "source": {
+      "auto_maintenance": false,
+      "command": "git -c http.version=HTTP/1.1 fetch --no-tags --no-write-fetch-head --no-auto-maintenance --recurse-submodules=no origin '+a3f16f2870a80a7e985b35bed3334512c47d9dc3:refs/remotes/legal-joint-audit-20261011-01/agent/autoencoder-progress-reconciliation-datasets-20261006' '+39f25777d557df1c51b8f98ed0dcd084c35d4d6d:refs/remotes/legal-joint-audit-20261011-01/agent/contextual-legal-runtime-20261006' '+aed87b0d980422c2ca9efaa26cf92df30c51d768:refs/remotes/legal-joint-audit-20261011-01/agent/dual-bank-wording-adapter-datasets-20261007' '+c4382ae53ab9497245fccdf85855f0e314711fbc:refs/remotes/legal-joint-audit-20261011-01/agent/normative-cache-input-datasets-20261007' '+6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff:refs/remotes/legal-joint-audit-20261011-01/agent/normative-decoder-runtime-datasets-20261007' '+53e87779a527349b65875cb20b59ca9eb48ed70c:refs/remotes/legal-joint-audit-20261011-01/codex/autoencoder-owner-integration-20261007-01' '+f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b:refs/remotes/legal-joint-audit-20261011-01/codex/ir-publication-main-integration-20261004' '+575a129f19068d58d66cc8119e85c3d23faa560a:refs/remotes/legal-joint-audit-20261011-01/codex/legal-cross-agent-guards-20261006' '+0f733b621335a3fb95e3f8855f2100cd95ba01b5:refs/remotes/legal-joint-audit-20261011-01/codex/legal-decoder-followup-20261006-01' '+b4002de1e73d295e222cd7258bd07e4784a6b928:refs/remotes/legal-joint-audit-20261011-01/codex/legal-decoder-progress-20261011-01' '+004887f6250b083e0b095d5ac7563bc5bb792491:refs/remotes/legal-joint-audit-20261011-01/codex/legal-grouped-integration-20261006-02' '+f3901341cdde9b4485315327d5ef06abd1485b11:refs/remotes/legal-joint-audit-20261011-01/codex/legal-native-cache-20261011-01' '+fe00dd1d64d0e26e0b396e40cadd094d544efd0c:refs/remotes/legal-joint-audit-20261011-01/codex/legal-open-vocabulary-20261011-01' '+2b87326cb73f4f09d12aff3ccb68e0a6142a686c:refs/remotes/legal-joint-audit-20261011-01/codex/legal-original-text-roundtrip-retained-20261004' '+1530efd07032bac88229c6c97ca5994d498e6216:refs/remotes/legal-joint-audit-20261011-01/codex/legal-scope-span-training-20261007-01' '+7b93b2d97a8985b3f2db29963bd0979749f66163:refs/remotes/legal-joint-audit-20261011-01/codex/legal-support-action-model-20261007-01' '+8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6:refs/remotes/legal-joint-audit-20261011-01/codex/legal-support-gate-model-20261007-01' '+e35aef47ef6d67f7d07793be487e2be04ec6c7d6:refs/remotes/legal-joint-audit-20261011-01/codex/legal-trigger-readout-model-20261007-01' '+d1643c2c621f45f0ca0080e017fe6717b093e478:refs/remotes/legal-joint-audit-20261011-01/codex/source-v2-warm-start-20261004' '+d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234:refs/remotes/legal-joint-audit-20261011-01/main'",
+      "exit_code": 0,
+      "recurse_submodules": false,
+      "selected_refs": [
+        {
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "ref": "refs/heads/main",
+          "sha": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234"
+        }
+      ],
+      "tags": false,
+      "write_fetch_head": false
+    }
+  },
+  "findings": [],
+  "integration_recommendations": [
+    "Start this contribution from observed source main d24e15ee and workspace main77569486 using only the owned working trees and normal review/merge workflow; both owned starting HEADs are ancestors.",
+    "Preserve all24 retained owner byte identities and all8 non-source gitlinks from current root main77569486. Accelerator164b57564d00874bcb979e0e0268ac9e6b0bb34f is newer than own initial88a base accelerator e6ff14f.",
+    "Current US Code/alignment/legal/warm-start/numerical branch HEADs examined are already in main history. Existing deleted branch names alone are not pending unpublished progress.",
+    "Keep the five old publication-recovery worktrees and their distinct histories intact. Ancestry divergence and large mixed path deltas do not establish new training progress or justify merging those archival branches wholesale.",
+    "After normal source contribution merge, update only the owned source gitlink to a source descendant that includes d24e15ee; do not restore root's older ed4341d source pointer or override other-agent progress."
+  ],
+  "limits": {
+    "checkout_merge_reset_stage_commit_push_or_Hub_mutations": false,
+    "collection_note": "A read-only ancestry collection was repeated after a non-JSON stdout prefix prevented parsing the first result. No source/index/ref changes accompanied that formatting retry.",
+    "foreign_uncommitted_or_untracked_progress_inventoried": false,
+    "foreign_working_tree_files_or_indices_examined": false,
+    "metadata_output_scope": "Path samples capped at12 in this receipt; path counts and ancestry came from committed object metadata only.",
+    "models_or_tests_or_encoders_or_forwards_or_resource_probes_run": false,
+    "moving_remote_heads_continuously_monitored": false,
+    "old_publication_branch_patch_equivalence_or_complete_payload_reconciliation_proven": false,
+    "only_writes": "Dedicated audit refs/object database fetch plus this new review JSON. No source, foreign worktree, canonical checkout, or previously frozen review file edits.",
+    "semantic_gold_or_review_authentication_inferred": false,
+    "training_quality_or_checkpoint_numeric_results_recomputed": false
+  },
+  "observed_heads_summary": {
+    "root": {
+      "distinct_old_publication_recovery_worktrees": [
+        {
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "head_only_commits": 5,
+          "merge_base": "cc5d5bf9fa40bd9a8834d8fb61a03a4724033297",
+          "path": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02",
+          "remote_branch_exists": false
+        },
+        {
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "head_only_commits": 4,
+          "merge_base": "1be6270220cba85d09a64556b30f47916efa2982",
+          "path": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03",
+          "remote_branch_exists": false
+        },
+        {
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "head_only_commits": 6,
+          "merge_base": "e8994ea6003fdd1f1fe061550bb190c70ba011dc",
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree",
+          "remote_branch_exists": false
+        }
+      ],
+      "local_already_in_main": 20,
+      "new_main_first_parent_commits_since_own_base": [
+        "77569486a4982a534c7414bc6537d8608ecfa3bb Record reconciled published datasets and supervisor branch histories",
+        "e933a86c208349e26d90babf78eb631fe0718243 Merge retained joint-conditioning history already represented on main"
+      ],
+      "observed_main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+      "own_initial_base": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+      "selected_local_worktrees": 23,
+      "selected_remote_already_in_main": 8,
+      "selected_remote_heads": 8
+    },
+    "source": {
+      "distinct_old_publication_recovery_worktrees": [
+        {
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "head_only_commits": 48,
+          "merge_base": "d2e43dd82d98903f539aed5f9b3b1b2b2480efa4",
+          "path": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets",
+          "remote_branch_exists": false
+        },
+        {
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "head_only_commits": 50,
+          "merge_base": "aa586a9b91b583a2ac5d867bd107ba0c5a4762d5",
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree",
+          "remote_branch_exists": false
+        }
+      ],
+      "local_already_in_main": 23,
+      "new_main_first_parent_commits_since_own_base": [
+        "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234 Link sampled source units to numerical logic artifacts by exact provenance",
+        "ed4341d94295270f0be97b6d757cdfa0466c2fea Reconcile already published branch agent/uscode-span-source-census-datasets-20261007",
+        "be74932c696a8f27124b3b95ea0f0409e268ecc0 Reconcile already published branch agent/uscode-span-paired-feed-datasets-20261007",
+        "a6516027bf125c13ab79d48cd1554c4072a78e5d Reconcile already published branch agent/uscode-span-lossless-datasets-20261007",
+        "d690521c6c479ad9192af3eed9b86c500f327ea8 Reconcile already published branch agent/uscode-identity-recovery-20261011",
+        "dcb495287dab1f6161aba8b183ddfc95d563642c Reconcile already published branch agent/uscode-archive-resume-datasets-20261011",
+        "2ec6c97b237c14df1c437837c62f376b75ac553d Reconcile already published branch agent/uscode-archive-reconciliation-datasets-20261011"
+      ],
+      "observed_main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+      "own_initial_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+      "selected_local_worktrees": 25,
+      "selected_remote_already_in_main": 20,
+      "selected_remote_heads": 20
+    }
+  },
+  "passed": true,
+  "repos": {
+    "root": {
+      "all_observed_remote_heads": [
+        {
+          "ref": "refs/heads/agent/agent-supervisor-direct-objective-and-event-driven-planning-v1",
+          "sha": "a6915c06bb8cc28d2bb3b167d8708561c69a108a"
+        },
+        {
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "ref": "refs/heads/agent/parallel-content-sealing-proof-carrying-tdd-v1-g9",
+          "sha": "b30b8b05e19c219249511db9e06ed3ab7ac4b1ad"
+        },
+        {
+          "ref": "refs/heads/agent/proof-carrying-context-engine-v0.1",
+          "sha": "ed97ee2dd11e0409afaeeb539b645d7b718869af"
+        },
+        {
+          "ref": "refs/heads/agent/vericodegen-2026-lean_refactor_arena",
+          "sha": "23bdc18f777f5ff673144b5eccbc58827b58d755"
+        },
+        {
+          "ref": "refs/heads/chore/fmt-check-main",
+          "sha": "c260f562fcecd49093442cbe9a59337b75dbd218"
+        },
+        {
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "ref": "refs/heads/codex/doep-monitor-recovery",
+          "sha": "0febcc082749dcf551ba49fe0ab320b1b078b5ab"
+        },
+        {
+          "ref": "refs/heads/codex/doep031-sealed-readmission",
+          "sha": "7a1938ba75156f5fc768609c340eb67ec22df5aa"
+        },
+        {
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "ref": "refs/heads/codex/pctdd-g9-descendant-source",
+          "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+        },
+        {
+          "ref": "refs/heads/codex/pctdd-validation-evidence-guard",
+          "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+        },
+        {
+          "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "ref": "refs/heads/codex/supervisor-lifecycle-root-20261005",
+          "sha": "6089e1f163d68dd09b006e4b13b14c165ecc136d"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-bench-readiness-root-20261005",
+          "sha": "c317deb66a95a90f1204f4354cd5fa37698ebe6b"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-codex-baseline-root-20261005",
+          "sha": "9da9a77393ba5829bfaa6ba988dfd2bd042c4aa0"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-context-dictionary-root-20261006",
+          "sha": "cdb8a5201e57d50aa4a5ba589eed1c07151689f1"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-context-pair-results-root-20261006",
+          "sha": "b16464347c479f7a3cbda4c8e29dbaef90dda4fb"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-eigenvalue-symbolic-diagnosis-root-20261005",
+          "sha": "ac5e4793df10f9c33a854b459a370f6f52a02924"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-eigenvalue-symbolic-trial-root-20261006",
+          "sha": "1500a7c548f4a981af1b0d8a490744f8450d4529"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-live-census-root-20261011",
+          "sha": "df96e9144d91788ae91fd518ad0fd0a1f529e061"
+        },
+        {
+          "ref": "refs/heads/codex/terminal-planning-schema-root-20261006",
+          "sha": "79f29121b12471d7e6226246f2cd2b74c918ab75"
+        },
+        {
+          "ref": "refs/heads/implementation/doep-030-b8d4ee0e8de3-attempt-1-1788101472",
+          "sha": "fadf091facbf259fec0ff55af3d2104ed16f66df"
+        },
+        {
+          "ref": "refs/heads/implementation/doep-100-e348c8e778da-attempt-1-1789273504",
+          "sha": "35e45b3e26acedc25b109667066460ec595775c4"
+        },
+        {
+          "ref": "refs/heads/implementation/ns-022-fd92ef2bddf6-attempt-1-1789307474",
+          "sha": "5ac3983204fe92572b097ee45d8c16e86c6ff55d"
+        },
+        {
+          "ref": "refs/heads/main",
+          "sha": "77569486a4982a534c7414bc6537d8608ecfa3bb"
+        },
+        {
+          "ref": "refs/heads/repair/doep-append-quarantine-parent-20260913",
+          "sha": "973d41304bd8161710906c1e934c63b249bdcc5a"
+        },
+        {
+          "ref": "refs/heads/repair/doep-completed-projection-parent-20260913",
+          "sha": "9cf8deb84204beb4e0b388194336f93718df33e2"
+        },
+        {
+          "ref": "refs/heads/repair/doep-empty-priority-parent-20260913",
+          "sha": "dede193885407ece66e5b5fb5e42da9ac8deb6d0"
+        },
+        {
+          "ref": "refs/heads/repair/doep-exhausted-post-merge-parent-20260913",
+          "sha": "355ce7a628ee013396f0e0f86333fe7fd2cc3383"
+        },
+        {
+          "ref": "refs/heads/repair/doep-readonly-queue-launch-parent-20260913",
+          "sha": "2bef289426fa5f038ae630313db097efe3a78adc"
+        },
+        {
+          "ref": "refs/heads/repair/doep-readonly-queue-native-parent-base-20260913",
+          "sha": "baeabe9911291c8a119dba6ab78cdc971e72635f"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-after-task008-native-base-20260913",
+          "sha": "e9afd83fb3a55173c628a479c5a45dd897a6c23b"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-current-quarantine-owner-read-parent-20260913",
+          "sha": "42578300ef9ccf87b6c21ff33dd4df467a1520d8"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-lifecycle-qualified-job24",
+          "sha": "d60b5ff1f2f265c703ed022359059627caea827b"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-maintenance-after-task008-parent-20260913",
+          "sha": "91453f7bbe024270831ac2e2d65f8f682fe554e8"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-native-entry-1789010527",
+          "sha": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-operator-restart",
+          "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-quarantine-read-parent-20260913",
+          "sha": "283004348c4920d8d74252640d98565dbc71169e"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-quarantined-maintenance-parent-20260913",
+          "sha": "ee3c1988d6115c5278566e4c4534b17f191af893"
+        },
+        {
+          "ref": "refs/heads/repair/pctdd-workspace-quarantine-parent-20260913",
+          "sha": "48f56974d9548e1c382d37e3888869b49d831083"
+        }
+      ],
+      "git_common_dir": "/home/barberb/lift_coding/.git",
+      "new_main_path_count": 2,
+      "new_main_paths": [
+        "external/ipfs_accelerate",
+        "external/ipfs_datasets"
+      ],
+      "new_main_paths_truncated": false,
+      "new_main_since_own_base_first_parent": [
+        "77569486a4982a534c7414bc6537d8608ecfa3bb Record reconciled published datasets and supervisor branch histories",
+        "e933a86c208349e26d90babf78eb631fe0718243 Merge retained joint-conditioning history already represented on main"
+      ],
+      "observed_main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+      "observed_main_gitlinks": [
+        "040000 tree ec09c082b1ab73f5f99a29b7c50706bf09fa0a30\texternal"
+      ],
+      "own_base_is_ancestor_of_main": true,
+      "own_initial_base": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+      "package_root": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace",
+      "remote_head_count": 44,
+      "repository_url": "https://github.com/endomorphosis/lift_coding.git",
+      "selected_local_worktrees": [
+        {
+          "HEAD": "a6915c06bb8cc28d2bb3b167d8708561c69a108a",
+          "branch": "refs/heads/agent/agent-supervisor-direct-objective-and-event-driven-planning-v1",
+          "classification": "already_in_main_history",
+          "head": "a6915c06bb8cc28d2bb3b167d8708561c69a108a",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15177,
+          "merge_base": "a6915c06bb8cc28d2bb3b167d8708561c69a108a",
+          "remote_branch_exists": true,
+          "remote_branch_head": "a6915c06bb8cc28d2bb3b167d8708561c69a108a",
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio"
+        },
+        {
+          "HEAD": "eeded153cac72007c5b8531cdfdc76915b2f487b",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "eeded153cac72007c5b8531cdfdc76915b2f487b",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15179,
+          "merge_base": "eeded153cac72007c5b8531cdfdc76915b2f487b",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_1cf5611fbb87_27f5933ddbe0"
+        },
+        {
+          "HEAD": "f13efefa9fdbc1e4e734d74efd45b819d78f7ccd",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "f13efefa9fdbc1e4e734d74efd45b819d78f7ccd",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15247,
+          "merge_base": "f13efefa9fdbc1e4e734d74efd45b819d78f7ccd",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_296543f524d3_18a4d9634159"
+        },
+        {
+          "HEAD": "9b5636729fe2d8bfe345200089ea7c40fce2a05c",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "9b5636729fe2d8bfe345200089ea7c40fce2a05c",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15238,
+          "merge_base": "9b5636729fe2d8bfe345200089ea7c40fce2a05c",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_5c6df40ea9d3_07def83bd414"
+        },
+        {
+          "HEAD": "fadf091facbf259fec0ff55af3d2104ed16f66df",
+          "branch": "refs/heads/implementation/doep-030-b8d4ee0e8de3-attempt-1-1788101472",
+          "classification": "already_in_main_history",
+          "head": "fadf091facbf259fec0ff55af3d2104ed16f66df",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15410,
+          "merge_base": "fadf091facbf259fec0ff55af3d2104ed16f66df",
+          "remote_branch_exists": true,
+          "remote_branch_head": "fadf091facbf259fec0ff55af3d2104ed16f66df",
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_6b4c063bd5e3_bdd9b20cc1e1"
+        },
+        {
+          "HEAD": "de3230e2471b60e7f0c19f10bdcf58559345b2bd",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "de3230e2471b60e7f0c19f10bdcf58559345b2bd",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15191,
+          "merge_base": "de3230e2471b60e7f0c19f10bdcf58559345b2bd",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_75ebbebc3af1_f5fe8f4bcba0"
+        },
+        {
+          "HEAD": "e046a592d70affb19ad31af3c03228be69eddd7f",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "e046a592d70affb19ad31af3c03228be69eddd7f",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15193,
+          "merge_base": "e046a592d70affb19ad31af3c03228be69eddd7f",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_8705e115b8b7_cd389b9e4703"
+        },
+        {
+          "HEAD": "35e45b3e26acedc25b109667066460ec595775c4",
+          "branch": "refs/heads/implementation/doep-100-e348c8e778da-attempt-1-1789273504",
+          "classification": "already_in_main_history",
+          "head": "35e45b3e26acedc25b109667066460ec595775c4",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Preserve embedded submodule Git repositories and runtime recovery history",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15232,
+          "merge_base": "35e45b3e26acedc25b109667066460ec595775c4",
+          "remote_branch_exists": true,
+          "remote_branch_head": "35e45b3e26acedc25b109667066460ec595775c4",
+          "worktree": "/home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_c93f1b172856_9a0f0fc2e387"
+        },
+        {
+          "HEAD": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "branch": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "classification": "already_in_main_history",
+          "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 62,
+          "merge_base": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "remote_branch_exists": true,
+          "remote_branch_head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "worktree": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-root-20261006"
+        },
+        {
+          "HEAD": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "branch": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "classification": "at_main",
+          "head": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": true,
+          "main_only_commits": 0,
+          "merge_base": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "remote_branch_exists": true,
+          "remote_branch_head": "30e61092341b47b4e49eb30df443fd607536333a",
+          "worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007"
+        },
+        {
+          "HEAD": "f55817cad023e657edb150201c01a750e6bef510",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "f55817cad023e657edb150201c01a750e6bef510",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Persistent recovery of interrupted proof-index integration",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 79,
+          "merge_base": "f55817cad023e657edb150201c01a750e6bef510",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/ir-release-lift-20261002"
+        },
+        {
+          "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "changed_path_count": 2945,
+          "changed_paths": [
+            ".git-sync-recovery-20260727-202941.md",
+            ".gitignore",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-114-pgir-030-retry-budget.md",
+            "artifacts/autoformalization-alignment-20261003/alignment-next-experiments-readiness-01/snapshot.json",
+            "artifacts/autoformalization-alignment-20261003/alignment-next-experiments-readiness-02/snapshot.json",
+            "artifacts/autoformalization-alignment-20261003/alignment-next-experiments-report.md",
+            "artifacts/autoformalization-alignment-20261003/alignment-next-experiments-validation-01/validation.json",
+            "artifacts/autoformalization-alignment-20261003/assay_lane_identity.py",
+            "artifacts/autoformalization-alignment-20261003/assay_masked_contrastive.py",
+            "artifacts/autoformalization-alignment-20261003/assay_masked_contrastive_native.py",
+            "artifacts/autoformalization-alignment-20261003/assay_relation_mask_handoff.py",
+            "artifacts/autoformalization-alignment-20261003/assay_relation_readiness.py"
+          ],
+          "classification": "distinct_diverged_history",
+          "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": false,
+          "head_only_commits": 5,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 126,
+          "merge_base": "cc5d5bf9fa40bd9a8834d8fb61a03a4724033297",
+          "paths_truncated": true,
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "unmerged_commit_samples": [
+            "ce3e21da27d23bfa4ac5490be9a5cb44798945f2 Integrate preserved source history with batched conflict resolution",
+            "f50b0c4981e51939a27b57d073d36dda8064af29 Integrate preserved source history with batched conflict resolution",
+            "567cdb783414c42c53b400db4eef3929f6ad7378 Integrate preserved source history with batched conflict resolution"
+          ],
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+        },
+        {
+          "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "changed_path_count": 2837,
+          "changed_paths": [
+            ".git-sync-recovery-20260727-202941.md",
+            ".gitignore",
+            ".gitmodules",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-112-reconciliation-f3f4420cab79.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-113-reconciliation-d68dc99c4973.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-114-pgir-030-retry-budget.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-115-reconciliation-e2940f4df614.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-116-reconciliation-33f7191f7690.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-117-reconciliation-41d8412c5bf9.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-118-reconciliation-e9e580d7cef5.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-119-reconciliation-fe270214fc72.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-120-reconciliation-cc926a3c3ee8.md"
+          ],
+          "classification": "distinct_diverged_history",
+          "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": false,
+          "head_only_commits": 4,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 124,
+          "merge_base": "1be6270220cba85d09a64556b30f47916efa2982",
+          "paths_truncated": true,
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "unmerged_commit_samples": [
+            "57fd19895ce42ad68f87b3d7126fbf19da285bdb Restore complete pinned canonical source tree after archival history integration",
+            "b420e317dd90a02e86cc4f60e0c9f563b4f51fd3 Integrate preserved source history with batched conflict resolution",
+            "63e8d8b14301f788dacf83c7d5a705d920b953f9 Integrate preserved source history with batched conflict resolution"
+          ],
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+        },
+        {
+          "HEAD": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "branch": "refs/heads/codex/supervisor-comparison-publication-20261011",
+          "classification": "at_main",
+          "head": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active supervisor source and qualification publication",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": true,
+          "main_only_commits": 0,
+          "merge_base": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/supervisor-comparison-publication-20261011"
+        },
+        {
+          "HEAD": "091624a773179d24178d12bc1f410864885c10bf",
+          "branch": "refs/heads/agent/vericodegen-2026-autoformalization",
+          "classification": "already_in_main_history",
+          "head": "091624a773179d24178d12bc1f410864885c10bf",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 16160,
+          "merge_base": "091624a773179d24178d12bc1f410864885c10bf",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/vericodegen-autoformalization-2026"
+        },
+        {
+          "HEAD": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "branch": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 52,
+          "merge_base": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "remote_branch_exists": true,
+          "remote_branch_head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/workspace"
+        },
+        {
+          "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "changed_path_count": 2801,
+          "changed_paths": [
+            ".gitignore",
+            ".gitmodules",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-112-reconciliation-f3f4420cab79.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-113-reconciliation-d68dc99c4973.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-114-pgir-030-retry-budget.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-115-reconciliation-e2940f4df614.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-17-pgir-116-reconciliation-33f7191f7690.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-117-reconciliation-41d8412c5bf9.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-118-reconciliation-e9e580d7cef5.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-119-reconciliation-fe270214fc72.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-120-reconciliation-cc926a3c3ee8.md",
+            ".pgir_campaign/runtime/parallel/discovery/2026-08-18-pgir-121-reconciliation-e2fea239d872.md"
+          ],
+          "classification": "distinct_diverged_history",
+          "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": false,
+          "head_only_commits": 6,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 122,
+          "merge_base": "e8994ea6003fdd1f1fe061550bb190c70ba011dc",
+          "paths_truncated": true,
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "unmerged_commit_samples": [
+            "9d1944b9a9fd95abbb6297b4c7d34a1312809f14 Restore complete selected canonical source after main refresh",
+            "6c4c5fe37671807df2ec2e263596d9a42de92add Merge current published main into retained source history",
+            "57fd19895ce42ad68f87b3d7126fbf19da285bdb Restore complete pinned canonical source tree after archival history integration"
+          ],
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        },
+        {
+          "HEAD": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "branch": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15,
+          "merge_base": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "remote_branch_exists": true,
+          "remote_branch_head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/workspace"
+        },
+        {
+          "HEAD": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+          "branch": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 3,
+          "merge_base": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace"
+        },
+        {
+          "HEAD": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "branch": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 12,
+          "merge_base": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "remote_branch_exists": true,
+          "remote_branch_head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/workspace"
+        },
+        {
+          "HEAD": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "branch": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 7,
+          "merge_base": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "remote_branch_exists": true,
+          "remote_branch_head": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/workspace"
+        },
+        {
+          "HEAD": "33a27b1a6196c6b50849a59e8939698803c515d8",
+          "branch": "refs/heads/codex/terminal-live-census-root-20261011",
+          "classification": "already_in_main_history",
+          "head": "33a27b1a6196c6b50849a59e8939698803c515d8",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 16,
+          "merge_base": "33a27b1a6196c6b50849a59e8939698803c515d8",
+          "remote_branch_exists": true,
+          "remote_branch_head": "df96e9144d91788ae91fd518ad0fd0a1f529e061",
+          "worktree": "/home/barberb/lift_coding_worktrees/terminal-live-census-root-20261011"
+        },
+        {
+          "HEAD": "275873929482a36a52891e9aa8ae83f242c92a21",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "275873929482a36a52891e9aa8ae83f242c92a21",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active repository proof-index release; preserve working tree",
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 14153,
+          "merge_base": "275873929482a36a52891e9aa8ae83f242c92a21",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/tmp/ir-release-lift-rpi-20261002"
+        }
+      ],
+      "selected_remote_heads": [
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/autoencoder-progress-reconciliation-20261006",
+          "classification": "already_in_main_history",
+          "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 62,
+          "merge_base": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/dual-bank-wording-adapter-root-20261007",
+          "classification": "already_in_main_history",
+          "head": "30e61092341b47b4e49eb30df443fd607536333a",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 35,
+          "merge_base": "30e61092341b47b4e49eb30df443fd607536333a",
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/autoencoder-reconciliation-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 52,
+          "merge_base": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-native-cache-workspace-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 12,
+          "merge_base": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-open-vocabulary-workspace-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 7,
+          "merge_base": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-retention-objective-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 15,
+          "merge_base": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/supervisor-context-token-economy-root-20261006",
+          "classification": "already_in_main_history",
+          "head": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 77,
+          "merge_base": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+          "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/main",
+          "classification": "at_main",
+          "head": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "main_is_ancestor_of_head": true,
+          "main_only_commits": 0,
+          "merge_base": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+          "ref": "refs/heads/main",
+          "sha": "77569486a4982a534c7414bc6537d8608ecfa3bb"
+        }
+      ],
+      "source_gitlink_at_main": "160000 commit ed4341d94295270f0be97b6d757cdfa0466c2fea\texternal/ipfs_datasets",
+      "total_local_worktree_count": 37
+    },
+    "source": {
+      "all_observed_remote_heads": [
+        {
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "ref": "refs/heads/main",
+          "sha": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234"
+        },
+        {
+          "ref": "refs/heads/recovery/eaaef-023-hidden-worktree",
+          "sha": "b8002a60177f3196d32fe7a7990d57899accad75"
+        },
+        {
+          "ref": "refs/heads/recovery/eaaef-094-child-merge-20260825",
+          "sha": "c30ccbec997868b061c4cadac38d30468c46ea2d"
+        },
+        {
+          "ref": "refs/heads/recovery/eaaef-datasets-run-v14-aggregate",
+          "sha": "f199a61aa431fcbca3aecff3f5749db6bfa76b54"
+        },
+        {
+          "ref": "refs/heads/recovery/plat2-060-session-20260728",
+          "sha": "cf056bd4a19402bad0eda5931d2924901d7eae5c"
+        }
+      ],
+      "git_common_dir": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets",
+      "new_main_path_count": 2,
+      "new_main_paths": [
+        "ipfs_datasets_py/logic/software_contracts/source_unit_numerical_links.py",
+        "tests/unit/logic/software_contracts/test_source_unit_numerical_links.py"
+      ],
+      "new_main_paths_truncated": false,
+      "new_main_since_own_base_first_parent": [
+        "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234 Link sampled source units to numerical logic artifacts by exact provenance",
+        "ed4341d94295270f0be97b6d757cdfa0466c2fea Reconcile already published branch agent/uscode-span-source-census-datasets-20261007",
+        "be74932c696a8f27124b3b95ea0f0409e268ecc0 Reconcile already published branch agent/uscode-span-paired-feed-datasets-20261007",
+        "a6516027bf125c13ab79d48cd1554c4072a78e5d Reconcile already published branch agent/uscode-span-lossless-datasets-20261007",
+        "d690521c6c479ad9192af3eed9b86c500f327ea8 Reconcile already published branch agent/uscode-identity-recovery-20261011",
+        "dcb495287dab1f6161aba8b183ddfc95d563642c Reconcile already published branch agent/uscode-archive-resume-datasets-20261011",
+        "2ec6c97b237c14df1c437837c62f376b75ac553d Reconcile already published branch agent/uscode-archive-reconciliation-datasets-20261011"
+      ],
+      "observed_main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+      "own_base_is_ancestor_of_main": true,
+      "own_initial_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+      "package_root": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets",
+      "remote_head_count": 24,
+      "repository_url": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "selected_local_worktrees": [
+        {
+          "HEAD": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "branch": "refs/heads/codex/alignment-decoder-768-20261003",
+          "classification": "already_in_main_history",
+          "head": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Persistent autoformalization decoder study source references",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 3742,
+          "merge_base": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003"
+        },
+        {
+          "HEAD": "7732a5808828083afb1cd19d126d987991136375",
+          "branch": "refs/heads/codex/codebase-numerical-replay-20261003",
+          "classification": "already_in_main_history",
+          "head": "7732a5808828083afb1cd19d126d987991136375",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 3766,
+          "merge_base": "7732a5808828083afb1cd19d126d987991136375",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/codebase-numerical-replay-20261003"
+        },
+        {
+          "HEAD": "3315224dfd184e24ea71bad2cb137509450deb88",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "3315224dfd184e24ea71bad2cb137509450deb88",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Persistent recovery of interrupted proof-index integration",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 3743,
+          "merge_base": "3315224dfd184e24ea71bad2cb137509450deb88",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002"
+        },
+        {
+          "HEAD": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "branch": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "classification": "already_in_main_history",
+          "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active retained Legal384 reconstruction scorer implementation and regression; preserve until explicit root completion",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 481,
+          "merge_base": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "remote_branch_exists": true,
+          "remote_branch_head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "worktree": "/home/barberb/lift_coding/.worktrees/legal-original-text-roundtrip-retained-20261004"
+        },
+        {
+          "HEAD": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+          "branch": "refs/heads/codex/numerical-assertion-contracts-20261011",
+          "classification": "already_in_main_history",
+          "head": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 26,
+          "merge_base": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-assertion-contracts-20261011"
+        },
+        {
+          "HEAD": "db432c5a93a207436f9a4279d888fddee931e390",
+          "branch": "refs/heads/codex/numerical-structural-ir-20261011",
+          "classification": "already_in_main_history",
+          "head": "db432c5a93a207436f9a4279d888fddee931e390",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 33,
+          "merge_base": "db432c5a93a207436f9a4279d888fddee931e390",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-structural-ir-20261011"
+        },
+        {
+          "HEAD": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+          "branch": "refs/heads/codex/numerical-value-contracts-20261011",
+          "classification": "already_in_main_history",
+          "head": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active supervisor qualification and retained source provenance",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 27,
+          "merge_base": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-value-contracts-20261011"
+        },
+        {
+          "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "changed_path_count": 4280,
+          "changed_paths": [
+            ".codex",
+            ".coveragerc",
+            ".github/COPILOT_PAT_SETUP.md",
+            ".github/GITHUB_ACTIONS_FIX_GUIDE.md",
+            ".github/RUNNER_PERMISSION_FIX.md",
+            ".github/WORKFLOW_FIXES.md",
+            ".github/actions/inject-credentials/action.yml",
+            ".github/actions/setup-codeql-cache/action.yml",
+            ".github/actions/setup-github-cache/action.yml",
+            ".github/agents/my-agent.md",
+            ".github/cache-config.yml",
+            ".github/config/workflow-auto-fix-config.yml"
+          ],
+          "classification": "distinct_diverged_history",
+          "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": false,
+          "head_only_commits": 48,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 151,
+          "merge_base": "d2e43dd82d98903f539aed5f9b3b1b2b2480efa4",
+          "paths_truncated": true,
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "unmerged_commit_samples": [
+            "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 Restore complete pinned canonical source tree after archival history integration",
+            "c028a2079a88720df8a50d2ccd2e479caa8bc379 Integrate preserved source history with batched conflict resolution",
+            "eb6a73c0a5c1c37b3e037ab38d279e0594239d58 Integrate preserved source history with batched conflict resolution"
+          ],
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+        },
+        {
+          "HEAD": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "branch": "refs/heads/agent/retained-wording-checkpoint-integration-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 17,
+          "merge_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007"
+        },
+        {
+          "HEAD": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "branch": "refs/heads/codex/source-unit-numerical-links-20261011",
+          "classification": "at_main",
+          "head": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active supervisor qualification and retained source provenance",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": true,
+          "main_only_commits": 0,
+          "merge_base": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/source-unit-numerical-links-20261011"
+        },
+        {
+          "HEAD": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "branch": "refs/heads/codex/source-v2-warm-start-20261004",
+          "classification": "already_in_main_history",
+          "head": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active saved-weight continuation implementation and review; preserve exact retained inputs",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 477,
+          "merge_base": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "remote_branch_exists": true,
+          "remote_branch_head": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "worktree": "/home/barberb/lift_coding/.worktrees/source-v2-warm-start-20261004"
+        },
+        {
+          "HEAD": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+          "branch": "refs/heads/codex/source384-unicode-comments-20261011",
+          "classification": "already_in_main_history",
+          "head": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 45,
+          "merge_base": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/source384-unicode-comments-20261011"
+        },
+        {
+          "HEAD": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+          "branch": "refs/heads/agent/uscode-archive-reconciliation-datasets-20261011",
+          "classification": "already_in_main_history",
+          "head": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 45,
+          "merge_base": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011"
+        },
+        {
+          "HEAD": "a75424d120e75e6494cda7466e52797bb8129ea4",
+          "branch": "refs/heads/agent/uscode-archive-resume-datasets-20261011",
+          "classification": "already_in_main_history",
+          "head": "a75424d120e75e6494cda7466e52797bb8129ea4",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 37,
+          "merge_base": "a75424d120e75e6494cda7466e52797bb8129ea4",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011"
+        },
+        {
+          "HEAD": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+          "branch": "refs/heads/agent/uscode-identity-recovery-20261011",
+          "classification": "already_in_main_history",
+          "head": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 26,
+          "merge_base": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011"
+        },
+        {
+          "HEAD": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "branch": "refs/heads/agent/uscode-span-lossless-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 55,
+          "merge_base": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+        },
+        {
+          "HEAD": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "branch": "refs/heads/agent/uscode-span-pages-datasets-20261011",
+          "classification": "already_in_main_history",
+          "head": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 46,
+          "merge_base": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011"
+        },
+        {
+          "HEAD": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "branch": "refs/heads/agent/uscode-span-paired-feed-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 57,
+          "merge_base": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007"
+        },
+        {
+          "HEAD": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "branch": "refs/heads/agent/uscode-span-source-census-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 57,
+          "merge_base": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007"
+        },
+        {
+          "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "changed_path_count": 446,
+          "changed_paths": [
+            ".gitignore",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-010.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-011.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-021.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-023.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-024.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-025.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-026.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-030.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-052.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-060.json",
+            "artifacts/agent_supervisor_direct_objective_event_driven_planning/outputs/DOEP-061.json"
+          ],
+          "classification": "distinct_diverged_history",
+          "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": false,
+          "head_only_commits": 50,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 150,
+          "merge_base": "aa586a9b91b583a2ac5d867bd107ba0c5a4762d5",
+          "paths_truncated": true,
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "unmerged_commit_samples": [
+            "23540627b1cf6515df0fd84c9417b4cbdb91234a Restore complete selected canonical source after main refresh",
+            "47413d75e8ab095ad7bd8c946ba231a91432b23b Merge commit 'aa586a9b91b583a2ac5d867bd107ba0c5a4762d5' into publication/main-refresh-20261004/datasets-01",
+            "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 Restore complete pinned canonical source tree after archival history integration"
+          ],
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        },
+        {
+          "HEAD": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "branch": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 39,
+          "merge_base": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "remote_branch_exists": true,
+          "remote_branch_head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets"
+        },
+        {
+          "HEAD": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "branch": "refs/heads/codex/legal-joint-readout-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 17,
+          "merge_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets"
+        },
+        {
+          "HEAD": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "branch": "refs/heads/codex/legal-native-cache-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 32,
+          "merge_base": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "remote_branch_exists": true,
+          "remote_branch_head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets"
+        },
+        {
+          "HEAD": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "branch": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "head_equals_remote_branch": true,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 25,
+          "merge_base": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "remote_branch_exists": true,
+          "remote_branch_head": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets"
+        },
+        {
+          "HEAD": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8",
+          "classification": "already_in_main_history",
+          "detached": true,
+          "head": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8",
+          "head_equals_remote_branch": false,
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "locked": "Active dirty-source staging implementation and qualification; preserve working tree",
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 3775,
+          "merge_base": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8",
+          "remote_branch_exists": false,
+          "remote_branch_head": null,
+          "worktree": "/tmp/ir-release-datasets-20261001"
+        }
+      ],
+      "selected_remote_heads": [
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "classification": "already_in_main_history",
+          "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 86,
+          "merge_base": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/contextual-legal-runtime-20261006",
+          "classification": "already_in_main_history",
+          "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 88,
+          "merge_base": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/dual-bank-wording-adapter-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 66,
+          "merge_base": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/normative-cache-input-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 70,
+          "merge_base": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+          "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/agent/normative-decoder-runtime-datasets-20261007",
+          "classification": "already_in_main_history",
+          "head": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 73,
+          "merge_base": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/autoencoder-owner-integration-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 76,
+          "merge_base": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/ir-publication-main-integration-20261004",
+          "classification": "already_in_main_history",
+          "head": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 486,
+          "merge_base": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+          "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-cross-agent-guards-20261006",
+          "classification": "already_in_main_history",
+          "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 82,
+          "merge_base": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-decoder-followup-20261006-01",
+          "classification": "already_in_main_history",
+          "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 79,
+          "merge_base": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-decoder-progress-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 39,
+          "merge_base": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-grouped-integration-20261006-02",
+          "classification": "already_in_main_history",
+          "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 86,
+          "merge_base": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-native-cache-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 32,
+          "merge_base": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-open-vocabulary-20261011-01",
+          "classification": "already_in_main_history",
+          "head": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 25,
+          "merge_base": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-original-text-roundtrip-retained-20261004",
+          "classification": "already_in_main_history",
+          "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 481,
+          "merge_base": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-scope-span-training-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 69,
+          "merge_base": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-support-action-model-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 61,
+          "merge_base": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-support-gate-model-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 57,
+          "merge_base": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/legal-trigger-readout-model-20261007-01",
+          "classification": "already_in_main_history",
+          "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 66,
+          "merge_base": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/codex/source-v2-warm-start-20261004",
+          "classification": "already_in_main_history",
+          "head": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": false,
+          "main_only_commits": 477,
+          "merge_base": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "audit_ref": "refs/remotes/legal-joint-audit-20261011-01/main",
+          "classification": "at_main",
+          "head": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "head_is_ancestor_of_main": true,
+          "head_only_commits": 0,
+          "main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "main_is_ancestor_of_head": true,
+          "main_only_commits": 0,
+          "merge_base": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "ref": "refs/heads/main",
+          "sha": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234"
+        }
+      ],
+      "total_local_worktree_count": 27
+    }
+  },
+  "retained_owner_preservation": {
+    "all_match": true,
+    "checked": 24,
+    "checks": [
+      {
+        "actual_main": {
+          "bytes": 29148,
+          "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+        },
+        "expected": {
+          "bytes": 29148,
+          "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 28040,
+          "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+        },
+        "expected": {
+          "bytes": 28040,
+          "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 37249,
+          "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+        },
+        "expected": {
+          "bytes": 37249,
+          "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_runtime",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 28444,
+          "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+        },
+        "expected": {
+          "bytes": 28444,
+          "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 15959,
+          "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+        },
+        "expected": {
+          "bytes": 15959,
+          "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.gte_multilingual_profile",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 24439,
+          "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+        },
+        "expected": {
+          "bytes": 24439,
+          "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_native_conditioning",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 13375,
+          "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+        },
+        "expected": {
+          "bytes": 13375,
+          "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 9556,
+          "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+        },
+        "expected": {
+          "bytes": 9556,
+          "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768_complete",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 109257,
+          "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+        },
+        "expected": {
+          "bytes": 109257,
+          "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.legal_ir.canonical_contracts",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 9794,
+          "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+        },
+        "expected": {
+          "bytes": 9794,
+          "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.legal_ir.canonical_decoder_preflight",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 6017,
+          "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+        },
+        "expected": {
+          "bytes": 6017,
+          "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.legal_ir.canonical_source_guards",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 21764,
+          "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+        },
+        "expected": {
+          "bytes": 21764,
+          "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.logic.legal_ir.canonical_span_decoder",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 27947,
+          "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+        },
+        "expected": {
+          "bytes": 27947,
+          "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 26219,
+          "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+        },
+        "expected": {
+          "bytes": 26219,
+          "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 19364,
+          "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+        },
+        "expected": {
+          "bytes": 19364,
+          "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 7896,
+          "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+        },
+        "expected": {
+          "bytes": 7896,
+          "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 100140,
+          "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+        },
+        "expected": {
+          "bytes": 100140,
+          "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 14622,
+          "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+        },
+        "expected": {
+          "bytes": 14622,
+          "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 42137,
+          "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+        },
+        "expected": {
+          "bytes": 42137,
+          "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 146870,
+          "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+        },
+        "expected": {
+          "bytes": 146870,
+          "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 14165,
+          "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+        },
+        "expected": {
+          "bytes": 14165,
+          "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 35294,
+          "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+        },
+        "expected": {
+          "bytes": 35294,
+          "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 21228,
+          "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+        },
+        "expected": {
+          "bytes": 21228,
+          "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer",
+        "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py"
+      },
+      {
+        "actual_main": {
+          "bytes": 4428,
+          "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+        },
+        "expected": {
+          "bytes": 4428,
+          "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+        },
+        "matches": true,
+        "module": "ipfs_datasets_py.utils.cid_utils",
+        "relative_path": "ipfs_datasets_py/utils/cid_utils.py"
+      }
+    ]
+  },
+  "root_gitlink_custody": {
+    "base": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+    "base_pointers": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "e6ff14f30befd52d5d1134d1632b1de89dfb2e9d",
+      "external/ipfs_datasets": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "changes_since_own_initial_base": [
+      {
+        "base": "e6ff14f30befd52d5d1134d1632b1de89dfb2e9d",
+        "main": "164b57564d00874bcb979e0e0268ac9e6b0bb34f",
+        "path": "external/ipfs_accelerate"
+      },
+      {
+        "base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+        "main": "ed4341d94295270f0be97b6d757cdfa0466c2fea",
+        "path": "external/ipfs_datasets"
+      }
+    ],
+    "latest_source_main": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+    "main": "77569486a4982a534c7414bc6537d8608ecfa3bb",
+    "main_non_source_gitlinks_to_preserve": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "164b57564d00874bcb979e0e0268ac9e6b0bb34f",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "main_pointers": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "164b57564d00874bcb979e0e0268ac9e6b0bb34f",
+      "external/ipfs_datasets": "ed4341d94295270f0be97b6d757cdfa0466c2fea",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "root_source_gitlink_lags_latest_source_main_by_one_first_parent_commit": true
+  },
+  "schema": "legal-joint-cross-agent-progress-review/v1",
+  "scope": "Committed GitHub head/ancestry/path metadata and 24 retained source-owner byte identities. No numerical results, models, tests, fit claims or foreign working-tree changes qualified.",
+  "version": 1
+}

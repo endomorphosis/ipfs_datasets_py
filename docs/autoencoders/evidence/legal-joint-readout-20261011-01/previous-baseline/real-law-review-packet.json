@@ -1,0 +1,1072 @@
+{
+  "complete_section_source_artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    }
+  },
+  "generated_at_utc": "2026-10-11T04:32:58.361421+00:00",
+  "instructions": {
+    "annotation": "Fill only after an actual source/context review. Null means unanswered, not absence. Leave modality, actor/action/object roles, qualifiers, facet intervals, trigger and interpretation unassigned unless the reviewer can justify them.",
+    "no_candidate_answers": "No model candidates, compiler proposals, reference rules or suggested normative assignments are included. Prior outputs exist externally; actual reviewer blindness is not established.",
+    "reviewer_identity": "Reviewer IDs/times are initially null. Declarations do not authenticate identity, independence, source authority or semantics.",
+    "scope": "This data-only real-source packet is not accepted by the existing symbol-binding-source-reviewer/v1 recorder, which requires exact empty none_required context and authored IDs. A separately reviewed context-aware physical-occurrence profile is required before recording it.",
+    "source_offsets": "SourceSpan selectors are absolute UTF8 offsets within the pinned plaintext section. Character offsets are separately provided. Any future facet interval must declare its selected-text versus complete-document coordinate space.",
+    "task": "Read exact raw source and complete raw section view; identify operative text, unresolved definitions/cross-references and interpretation limits before proposing any target. Every annotation begins unassigned.",
+    "training": "No target, legal gold, completed review, adjudication or fit/evaluation/proof admission is created by this packet."
+  },
+  "origin_pins": [
+    {
+      "bytes": 6328,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    {
+      "bytes": 30901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    {
+      "bytes": 31436,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json",
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5"
+    },
+    {
+      "bytes": 38209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    },
+    {
+      "bytes": 84588,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/results-resource-review.json",
+      "sha256": "5634d4d0fc1f307c312b041e0e243ced9eada53b43cca282d8d40217c7bb1f4a"
+    }
+  ],
+  "qualification": {
+    "actual_review_completed": false,
+    "existing_v1_recording_workflow_compatible": false,
+    "model_calls": 0,
+    "review_submissions_created": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_authenticated": false,
+    "semantic_gold": false,
+    "training_executed": false
+  },
+  "row_count": 8,
+  "rows": [
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "1 U.S.C. 2",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "historical_source_section_span_ordinal": 5,
+        "historical_span_ordinal": 341,
+        "legal_id": "usc:us:1:2",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 1,
+        "raw_section_sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2",
+        "raw_span_char_offsets": [
+          255,
+          418
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          256,
+          419
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 459,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          256,
+          419
+        ],
+        "selected_span_character_offsets": [
+          255,
+          418
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "historical_source_span_id": "uscode-span-1ba07a7e57d92faea908a206664487aaee25a9f89324517b070bb57b6ab6bf0e",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:cf339a6567e019019b09a9083644e901a015378862d2bd5390bb23249b9ef385",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 38,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "review_input_binding_sha256": "9a0b69fa4697c49723e65cef6b20920bfdd3a7fa38c418e364d5599fccdbd4ae",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 459,
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+        },
+        "byte_end": 419,
+        "byte_start": 256,
+        "citation": "1 U.S.C. 2",
+        "document_id": "usc:us:1:2",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States.",
+      "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "1 U.S.C. 106",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "historical_source_section_span_ordinal": 7,
+        "historical_span_ordinal": 504,
+        "legal_id": "usc:us:1:106",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 13,
+        "raw_section_sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160",
+        "raw_span_char_offsets": [
+          838,
+          1118
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          839,
+          1119
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 28742,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          839,
+          1119
+        ],
+        "selected_span_character_offsets": [
+          838,
+          1118
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "historical_source_span_id": "uscode-span-1131a4340c185695758dfec8ab5bce20f21ba9734970082f6f1532eceeccd83e",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:32872deb39cc3dec0884bfe4090795a8c421dc204c2ce2d0d772f18076f69eab",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 59,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "review_input_binding_sha256": "4c630feffd48a2396a886cea002bf8ad04fa91f6224ede64779197af921afb53",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "byte_end": 1119,
+        "byte_start": 839,
+        "citation": "1 U.S.C. 106",
+        "document_id": "usc:us:1:106",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "When such bill, or joint resolution shall have passed both Houses, it shall be printed and shall then be called the enrolled bill, or joint resolution, as the case may be, and shall be signed by the presiding officers of both Houses and sent to the President of the United States.",
+      "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "1 U.S.C. 112",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "historical_source_section_span_ordinal": 6,
+        "historical_span_ordinal": 908,
+        "legal_id": "usc:us:1:112",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 21,
+        "raw_section_sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973",
+        "raw_span_char_offsets": [
+          1055,
+          1329
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          1056,
+          1330
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 9770,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          1056,
+          1330
+        ],
+        "selected_span_character_offsets": [
+          1055,
+          1329
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "historical_source_span_id": "uscode-span-0fa66463528ab89463f6e19857221d4efb6b61bf63361bb685ab1a839136d429",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:d37f7f538b5ad4bff535ce2cb8a1a501b9a998c24f9443f843bef8f0d4ca1204",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 54,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "review_input_binding_sha256": "d26c0b3ae948e12a4143bf0366fdb0967abae5389a99a0a8b584aa7b193e2511",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 9770,
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+        },
+        "byte_end": 1330,
+        "byte_start": 1056,
+        "citation": "1 U.S.C. 112",
+        "document_id": "usc:us:1:112",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session.",
+      "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "1 U.S.C. 112b",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "historical_source_section_span_ordinal": 9,
+        "historical_span_ordinal": 1128,
+        "legal_id": "usc:us:1:112b",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 23,
+        "raw_section_sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523",
+        "raw_span_char_offsets": [
+          1655,
+          1880
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          1656,
+          1881
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 21457,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+          "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          1656,
+          1881
+        ],
+        "selected_span_character_offsets": [
+          1655,
+          1880
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "historical_source_span_id": "uscode-span-112649bbecf2163e736f46f0fa6066d7803756c367dbc843f7a26126cdb0f336",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:45db163523a1a06c82b36467417cfb5865866096b2f758a7eda4ba7856a9d280",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 44,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "review_input_binding_sha256": "235401d879c4741928e470f692078928d5c6833aadfd9cd081121a321c21d68f",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 21457,
+          "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+        },
+        "byte_end": 1881,
+        "byte_start": 1656,
+        "citation": "1 U.S.C. 112b",
+        "document_id": "usc:us:1:112b",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "All citations to the Constitution of the United States, a treaty, or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible.",
+      "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "10 U.S.C. 101",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "historical_source_section_span_ordinal": 40,
+        "historical_span_ordinal": 1765,
+        "legal_id": "usc:us:10:101",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 39,
+        "raw_section_sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330",
+        "raw_span_char_offsets": [
+          7185,
+          7252
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          7209,
+          7276
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 72690,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+          "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          7209,
+          7276
+        ],
+        "selected_span_character_offsets": [
+          7185,
+          7252
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "historical_source_span_id": "uscode-span-18a26f11907cf80ee9664680917c712e798bc3aa8521db18bcae4a904506ee0d",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:44bd42ea9764f8de4b564989cd796678bfb83c8c73c421a15753c5657214b490",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 19,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "review_input_binding_sha256": "7f8a9427c1fcf751e223e571820f619a5018488455f0231103b3ab89d02761bb",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 72690,
+          "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+        },
+        "byte_end": 7276,
+        "byte_start": 7209,
+        "citation": "10 U.S.C. 101",
+        "document_id": "usc:us:10:101",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "(6) The term \"enlisted member\" means a person in an enlisted grade.",
+      "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "10 U.S.C. 261",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "historical_source_section_span_ordinal": 5,
+        "historical_span_ordinal": 3754,
+        "legal_id": "usc:us:10:261",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 49,
+        "raw_section_sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961",
+        "raw_span_char_offsets": [
+          337,
+          699
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          338,
+          700
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 6364,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          338,
+          700
+        ],
+        "selected_span_character_offsets": [
+          337,
+          699
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "historical_source_span_id": "uscode-span-110a6aa049e4b38c9b2769cbf3c28852862799ccf61afbdf406f4dd74f8502f0",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:152f8be2948003c330f706cd4be805fa2cd2cf992299be8615b76a8ebacaa51f",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 79,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "review_input_binding_sha256": "df8dd39b796b16c95151155f3a2aba5ba9185017d6997719f3a736c2f0a702c1",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 6364,
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+        },
+        "byte_end": 700,
+        "byte_start": 338,
+        "citation": "10 U.S.C. 261",
+        "document_id": "usc:us:10:261",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States.",
+      "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "10 U.S.C. 276",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "historical_source_section_span_ordinal": 5,
+        "historical_span_ordinal": 4930,
+        "legal_id": "usc:us:10:276",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 55,
+        "raw_section_sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5",
+        "raw_span_char_offsets": [
+          377,
+          721
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          378,
+          722
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 2312,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          378,
+          722
+        ],
+        "selected_span_character_offsets": [
+          377,
+          721
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "historical_source_span_id": "uscode-span-0215cad90f27ad3b026cd5e0a32bf3940650d4dfcd687b7bfcea8e350fff3593",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:2d4b35e6aaed29514e59ad7887e3fdebc3a18662343334e3b134a3d0da861a0c",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 62,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "review_input_binding_sha256": "62e02a029dfc42a4da9575eeb34c6fab29ca3dd511aa6db09e900ced89737d64",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 2312,
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+        },
+        "byte_end": 722,
+        "byte_start": 378,
+        "citation": "10 U.S.C. 276",
+        "document_id": "usc:us:10:276",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States.",
+      "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    },
+    {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "annotation": {
+        "ambiguity": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "normative_rules": null,
+        "notes": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "unsupported_meaning": null
+      },
+      "archived_origin": {
+        "citation": "10 U.S.C. 282",
+        "frontend": "legacy_us_code",
+        "historical_document_batch_index": 0,
+        "historical_normalized_source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "historical_source_section_span_ordinal": 5,
+        "historical_span_ordinal": 5314,
+        "legal_id": "usc:us:10:282",
+        "parent_parquet": {
+          "bytes": 374277662,
+          "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+          "release_id": "ipfs-uscode-5016b86a",
+          "repository_id": "justicedao/ipfs_uscode",
+          "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+          "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+        },
+        "physical_source_section_offset": 61,
+        "raw_section_sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3",
+        "raw_span_char_offsets": [
+          382,
+          735
+        ],
+        "raw_span_sha256_equals_historical_normalized_source_sha256": true,
+        "raw_span_text_equals_historical_normalized_source_text": true,
+        "raw_span_utf8_byte_offsets": [
+          383,
+          738
+        ]
+      },
+      "context": {
+        "complete_raw_section": {
+          "bytes": 7137,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+        },
+        "complete_view_truncated": false,
+        "context_required_for_interpretation": null,
+        "encoder_has_encoded_full_context": false,
+        "governing_definitions_and_cross_references": null,
+        "inline_context_text": null,
+        "no_empty_none_required_context_assumption": true,
+        "operative_versus_editorial_boundaries": null,
+        "schema": "raw-us-code-section-review-context-ref/v1",
+        "selected_span_absolute_UTF8_byte_offsets": [
+          383,
+          738
+        ],
+        "selected_span_character_offsets": [
+          382,
+          735
+        ],
+        "source_context_semantics_review_status": "pending"
+      },
+      "historical_occurrence_id": "2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "historical_source_span_id": "uscode-span-18f557b6eb565ff7c92548a1a6f926bfb5a6e3edc1a5f17645ff4548a231486d",
+      "official_current_law_authenticated": false,
+      "prior_exposure": {
+        "additional_historical_parser_compiler_or_teacher_exposure_not_exhaustively_closed": true,
+        "native384_input_encoded": true,
+        "native384_input_id": "sha256:0f03a5138a34ee4835413a6a7f81beedd711edd2ac1f0065a9fece8966f7f60d",
+        "prior_candidate_content_in_packet": false,
+        "prior_exposure_not_new_unseen_confirmation": true,
+        "recorded_native384_token_count": 67,
+        "two_frozen_normative32_candidate_passes_seen_by_experiment_authors": true
+      },
+      "proof_authority": false,
+      "record_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "review_input_binding_sha256": "0bd5e6efc4410df33b9073fd73044272307f4cbc55e9f2a66daf6e35ad2490a2",
+      "reviewer_authentication": {
+        "adjudication_evidence": null,
+        "identity_evidence": null,
+        "independence_evidence": null
+      },
+      "semantic_gold": false,
+      "source": {
+        "artifact": {
+          "bytes": 7137,
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+        },
+        "byte_end": 738,
+        "byte_start": 383,
+        "citation": "10 U.S.C. 282",
+        "document_id": "usc:us:10:282",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_semantics_verified": false,
+      "source_text": "Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction.",
+      "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+      "split_role": "review_only_previously_exposed_development_source",
+      "target_binding": {
+        "assignment_status": "unassigned",
+        "decision": null,
+        "facet_intervals": null,
+        "interpretation_profile": null,
+        "proposed_target": null,
+        "reviewed_context_sha256": null,
+        "target_codec": null,
+        "target_sha256": null,
+        "trigger": null
+      },
+      "training_qualified": false
+    }
+  ],
+  "schema": "real-us-code-source-only-review-packet/v1",
+  "source_only": true
+}

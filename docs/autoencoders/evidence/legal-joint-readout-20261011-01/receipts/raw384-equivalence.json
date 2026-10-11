@@ -1,0 +1,187 @@
+{
+  "added_top_level_definitions": [
+    "_asset_file_identity"
+  ],
+  "changed_top_level_definitions": [
+    "_snapshot_assets"
+  ],
+  "created_at_utc": "2026-10-11T04:30:36.577399+00:00",
+  "cryptographic_execution_attestation": false,
+  "current_encoder_code_sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+  "current_receipt_batch_size": 4,
+  "current_source_ref": "e6a9a93b14b220a946ec53de559255716cf53f42",
+  "excluded_representations": [
+    "core384 source-parser sparse projection",
+    "trained384 frozen learned residual projection",
+    "historical engineered8",
+    "native768"
+  ],
+  "execution_common": {
+    "backend": "sentence-transformers",
+    "cpu_threads": 1,
+    "device": "cpu",
+    "dtype": "float32",
+    "eval_mode": true,
+    "gradient_mode": "inference_mode",
+    "kind": "native",
+    "max_tokens": 512,
+    "normalization": "l2",
+    "pooling": "mean",
+    "seed": 0,
+    "truncation": false
+  },
+  "findings": [],
+  "historical_batch_size": 16,
+  "historical_context_contract": {
+    "dimension": 384,
+    "producer_sha256": "0e8a4bff65241bd9f7cfa4fd6200cbf1216d836d4687418d25d1c79d9b3ca12d",
+    "representation_id": "actual_frozen_legal_ir/raw384/v1",
+    "training_index_sha256": "739964281f8eb516ca7849da422d44428d9ce09a3f2b64df2c34da2d26d6949f"
+  },
+  "historical_encoder_code_sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0",
+  "historical_parent_base_checkpoint_sha256": "b2e5087b8d77b002711d5f899f634346382cacfdf8df6830c93b63e7250cbce0",
+  "historical_producer_composite": {
+    "native": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f",
+    "package": "26cb6d77947b5b8e1e6c08e68ff8c6ce1c8f23002d56bfc1ebbd024c55a0c2da",
+    "stage": "raw384"
+  },
+  "historical_recipe_evidence": {
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/prepared/source-production-003.json": {
+      "bytes": 567644,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/prepared/source-production-003.json",
+      "sha256": "f0b77d7c959cec810516feeb0c09f70e611897152184593edae44c356aba9540"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/plan.json": {
+      "bytes": 4783,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/plan.json",
+      "sha256": "ae7a9b13fc3e9704ff852f64ac085ff534df0646f61a31a1c6014f41f4a4b023"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json": {
+      "bytes": 3027735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+      "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/selection.json": {
+      "bytes": 3485,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/selection.json",
+      "sha256": "c16288f9e3980c2cbb98ddbe64134e930f9f5fe89b99ff0598e138dea3abcaf7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/selection.json": {
+      "bytes": 3531,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/selection.json",
+      "sha256": "95e7f6bec9e898105bedd37c53b1c55a9c15e122e7b0e1835c5d0c9f46a3dcd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/scripts/ops/legal_ir/run_legal_native_conditioning_experiment.py": {
+      "bytes": 17711,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/scripts/ops/legal_ir/run_legal_native_conditioning_experiment.py",
+      "sha256": "98bb0dce251acbb5252308eebedd39c92610c9ad1644fef3a21f5db62557ddc8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/historical-autoencoder-embedding-runtime.py": {
+      "bytes": 16725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/historical-autoencoder-embedding-runtime.py",
+      "sha256": "27855f5ffd59ebc45444d5e37c18ff1569618084cd27b1503db112940051ffb0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json": {
+      "bytes": 38209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    }
+  },
+  "limits": [
+    "Historical context_contract remains immutable; fresh input/cache receipts are separate current evidence and never replace the old training-membership or producer-composite hash.",
+    "Both checkpoints are warm-start source-span lineages, not native-dimensional lineage. Do not relabel checkpoint schemas for the canonical native-dimensional wrapper.",
+    "Native encoder producer hashes differ honestly; only their operator functions/profile/assets are shown equivalent.",
+    "Eight current sources are exposed development cases with no admitted semantic labels; frozen comparison establishes candidate/abstention behavior only.",
+    "No models, native inference, training, tests, resources, Git/Hub mutation performed by this review."
+  ],
+  "model": {
+    "dimension": 384,
+    "model_id": "thenlper/gte-small",
+    "revision": "17e1f347d17fe144873b1201da91788898c639cd"
+  },
+  "model_assets_sha256": "def8d7e04c05560b1d0dd1fa9317be7a59a1ba8399ca725be0ac807a9a264edc",
+  "numerical_execution_performed": false,
+  "passed": true,
+  "raw384_checkpoint_pin": {
+    "bytes": 3027735,
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+    "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+  },
+  "raw384_model_config": {
+    "architecture": "utf8-byte-pool-bidirectional-gru-tied-film-span-heads/v1",
+    "batch_size": 12,
+    "byte_alphabet": "casefold_utf8_plus1_pad0/v1",
+    "device": "cpu",
+    "dtype": "float32",
+    "embedding_dim": 16,
+    "hidden_size": 32,
+    "initialization": "from_scratch",
+    "latent_dimension": 384,
+    "latent_enabled": true,
+    "learning_rate": 0.001,
+    "loss": "equal_facet_modality_presence_mean_start_end/v1",
+    "max_source_characters": 16384,
+    "max_source_tokens": 256,
+    "max_token_bytes": 2048,
+    "projection_width": 16,
+    "residual_scale": 0.25,
+    "seed": 1729,
+    "tokenizer": "unicode_word_or_punctuation_exact_offsets/v1",
+    "torch_version": "2.13.0+cu130"
+  },
+  "raw_stage_identity_evidence": "legal_native_conditioning.vectorize assigns raw384 vector from row.embedding unchanged, upstream=None, native_gte_source_embedding evidence. Historical composite includes package identity but raw384 applies no package transform.",
+  "record_consistency_only": true,
+  "representation_equivalence_scope": "Same pinned native GTE-small raw384 model assets, versions, float32CPU mean pooling/L2/no-truncation512 recipe; no core or learned residual projection applied. Source code operator AST parity excludes asset verification/page-advice changes. Exact output-bit equality for arbitrary new sources or different batch shapes is not asserted.",
+  "runtime_versions": {
+    "python": "3.12.3",
+    "sentence_transformers": "5.4.1",
+    "tokenizers": "0.21.4",
+    "torch": "2.13.0+cu130",
+    "transformers": "4.52.1"
+  },
+  "schema": "raw-gte384-retained-span-equivalence/v1",
+  "source_only_checkpoint_pin": {
+    "bytes": 2744449,
+    "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+    "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+  },
+  "source_only_config_difference": {
+    "latent_enabled": false
+  },
+  "source_ref": "1ff5e1e777e4a8bab36f4a7409dc3678e9bacece",
+  "source_semantics_verified": false,
+  "unchanged_top_level_operator_definitions": [
+    "EmbeddingRuntimeError",
+    "_captured_tokens",
+    "_offline_guard",
+    "_produce_results",
+    "_untruncated_tokens",
+    "_validate_model",
+    "produce_native_embedding_receipt"
+  ]
+}

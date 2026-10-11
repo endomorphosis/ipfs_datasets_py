@@ -1,0 +1,251 @@
+{
+  "actual_packet_checks": {
+    "admission_masks_all_exact_integer0": true,
+    "all8_SourceSpan_char_UTF8_and_request_text_joins_verified": true,
+    "authority_flags_allFalse": true,
+    "exact_and_normalized_duplicate_inventory_recomputed": true,
+    "geometry_proposals": 0,
+    "human_labels": 0,
+    "item_count": 8,
+    "lexical_tokens_independently_reconstructed": 397,
+    "local_source_and_provenance_byte_pins_checked": 9,
+    "packet_body_content_sha256": "2c52ca09ae2178f61e95b39c272da95cffaaa1e9f76cf9e917629f7b265b6b5e",
+    "packet_canonical_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+    "physical_identity_hashes_and_alias_refusal_profile_checked": true,
+    "review_submissions": 0,
+    "selected_source_bytes": 2070,
+    "template_packet_join_and_all_blank_answers_verified": true,
+    "unique_complete_context_bytes": 148931
+  },
+  "findings": [],
+  "limits": [
+    "This is a blank source/context engineering workflow; authenticated competent independent reviewers, review recording/adjudication, reviewed gold and training/evaluation admission are not implemented.",
+    "Geometry success is interval/lexical transport eligibility only; it does not perform full canonical-codec/family semantic or compiler qualification. Later canonical atom/grammar/family limits still require separate validation.",
+    "Physical section origin is inherited from pinned archived provenance and byte-authenticated local views; original export relationship and current official law are not independently established.",
+    "Source owner bytes must remain separately pinned by callers; recipe file hashes/readback do not attest a complete live/transitive import graph.",
+    "This exposed8case packet cannot serve as an independent semantic confirmation pool. Fresh grouped exposure/dependency closure and eligible reviewed targets remain required.",
+    "No numerical model/embedding/8D/768D/fullUSCode/family bridge/Lean/Lake/accuracy claim is established."
+  ],
+  "passed": true,
+  "per_item_data_evidence": [
+    {
+      "citation": "10 U.S.C. 276",
+      "context_bytes": 2312,
+      "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "item_id": "statutory-physical-review-0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "lexical_token_count": 56,
+      "physical_source_section_offset": 55,
+      "source_bytes": 344,
+      "source_selector_UTF8": [
+        378,
+        722
+      ],
+      "source_selector_char": [
+        377,
+        721
+      ],
+      "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+    },
+    {
+      "citation": "1 U.S.C. 112",
+      "context_bytes": 9770,
+      "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "item_id": "statutory-physical-review-176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "lexical_token_count": 51,
+      "physical_source_section_offset": 21,
+      "source_bytes": 274,
+      "source_selector_UTF8": [
+        1056,
+        1330
+      ],
+      "source_selector_char": [
+        1055,
+        1329
+      ],
+      "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+    },
+    {
+      "citation": "10 U.S.C. 282",
+      "context_bytes": 7137,
+      "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "item_id": "statutory-physical-review-637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "lexical_token_count": 63,
+      "physical_source_section_offset": 61,
+      "source_bytes": 355,
+      "source_selector_UTF8": [
+        383,
+        738
+      ],
+      "source_selector_char": [
+        382,
+        735
+      ],
+      "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+    },
+    {
+      "citation": "10 U.S.C. 261",
+      "context_bytes": 6364,
+      "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "item_id": "statutory-physical-review-65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "lexical_token_count": 76,
+      "physical_source_section_offset": 49,
+      "source_bytes": 362,
+      "source_selector_UTF8": [
+        338,
+        700
+      ],
+      "source_selector_char": [
+        337,
+        699
+      ],
+      "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+    },
+    {
+      "citation": "10 U.S.C. 101",
+      "context_bytes": 72690,
+      "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "item_id": "statutory-physical-review-8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "lexical_token_count": 17,
+      "physical_source_section_offset": 39,
+      "source_bytes": 67,
+      "source_selector_UTF8": [
+        7209,
+        7276
+      ],
+      "source_selector_char": [
+        7185,
+        7252
+      ],
+      "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+    },
+    {
+      "citation": "1 U.S.C. 112b",
+      "context_bytes": 21457,
+      "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "item_id": "statutory-physical-review-925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "lexical_token_count": 41,
+      "physical_source_section_offset": 23,
+      "source_bytes": 225,
+      "source_selector_UTF8": [
+        1656,
+        1881
+      ],
+      "source_selector_char": [
+        1655,
+        1880
+      ],
+      "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+    },
+    {
+      "citation": "1 U.S.C. 106",
+      "context_bytes": 28742,
+      "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "item_id": "statutory-physical-review-9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "lexical_token_count": 57,
+      "physical_source_section_offset": 13,
+      "source_bytes": 280,
+      "source_selector_UTF8": [
+        839,
+        1119
+      ],
+      "source_selector_char": [
+        838,
+        1118
+      ],
+      "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+    },
+    {
+      "citation": "1 U.S.C. 2",
+      "context_bytes": 459,
+      "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "item_id": "statutory-physical-review-fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "lexical_token_count": 36,
+      "physical_source_section_offset": 1,
+      "source_bytes": 163,
+      "source_selector_UTF8": [
+        256,
+        419
+      ],
+      "source_selector_char": [
+        255,
+        418
+      ],
+      "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+    }
+  ],
+  "reviewed_artifact_pins": [
+    {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    {
+      "bytes": 24853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_source_review.py",
+      "sha256": "fcc3dd3fd8afffb10470989531883ef8ed120fc3e87c510e76c90220b3c28cbb"
+    },
+    {
+      "bytes": 22094,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-review-build.json",
+      "sha256": "488b1333e631e835a8819def8a2f52bd750dbb5b8dbdc57d94c4cc2c25aac2e4"
+    },
+    {
+      "bytes": 6396,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/build_statutory_review_packet.py",
+      "sha256": "c5d882a85c9c918b41ad8aba88c5d5ba6e1398dfe354d55d105d3bec2d2d9081"
+    },
+    {
+      "bytes": 7764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet-build.json",
+      "sha256": "3cbdddd575502b49487e89f89f11856c9177f24c2920eb79345dfd827afddb53"
+    },
+    {
+      "bytes": 378311,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    {
+      "bytes": 23766,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-template.json",
+      "sha256": "e93b0e3219f569f0cc799b981204e64849aa6eff58f52aac5307f771c3782f2c"
+    },
+    {
+      "bytes": 1469,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-validation.json",
+      "sha256": "f6dd74e713fcf030081169615e84a010e14c6c00d6ad62427c9951a431ac647c"
+    },
+    {
+      "bytes": 173708,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-inert-tests.xml",
+      "sha256": "ca3add4b8865fa356faf91a96c3114a42a25d68a70b5fd4ffc98e4c7a645d2e3"
+    }
+  ],
+  "schema": "statutory-physical-review-independent-audit/v1",
+  "scope": "Independent read-only static source/test/builder audit and pure standard-library joins of already produced packet/template/validation/source bytes; no module import or contract helper execution. No test/model/encoder/training/resource/Git/network execution by reviewer.",
+  "source_assessment": {
+    "blank_policy": "Review/context interpretation/anchors/eligibility/definition/multiple-rule fields allnull; targets unassigned/allnull; representability unassessed; reviewer evidence null; all5masks0 and all20authorityflagsFalse. Null means unanswered, not negative or absent.",
+    "boundedness": "<=32rows, <=32KiB total selected source bytes, <=16 unique raw contexts/1MiB, <=16 provenance/evidence artifacts/1MiB, <=8MiB JSON/1Mnodes/depth24; no padding/truncation or partial admitted packet.",
+    "context": "Complete literal raw section deduplicated by bytes, separately indexed selected source char versus SourceSpan UTF8 selectors. Available raw context does not imply correct operative/editorial interpretation, resolved definitions/referents/currentness, semantic sufficiency or encoder context consumption.",
+    "custody": "Path-free sha/bytes identity; canonical ordinary singly linked files; per-read lstat/fstat before/after, bounded size/hash; closing re-read of all raw contexts/provenance metadata. Detached snapshots before resolver callbacks; fresh reconstruction with caller original packet canonical digest rejects re-sealed annotations/promoted masks.",
+    "duplicate_policy": "Physical identity includes original export artifact identity+inherited section offset+raw section SHA+char/UTF8 selectors. Cached case IDs cannot substitute; duplicate physical occurrence refused; equal text in different physical sections retained. Exact/NFKC-casefold-whitespace duplicates inventoried without merge or global/group/dependency/family split claim.",
+    "exposure": "Only caller-declared stages/case/source SHA/evidence content references. Module does not open evidence bodies, verify event inclusion/reviewer blindness or full prior exposure. Builder hashes receipt/summary bytes but does not parse them or transfer candidates into annotations. All8 remain exposed development cases.",
+    "geometry": "Separate explicit caller-declared review proposal only; source/context/evidence byte joins checked but reviewer declaration/content/person/time/independence/legal truth not authenticated. Exactly-one O/P/F rule, actor/action one each, optionalfacets at most1, source exact unique token-aligned nonoverlap intervals; multi-rule/cardinality/ambiguity/transport limits reported, no source/semantic repair. Non-normative/ambiguous/unsupported declarations leave geometryNone; no target/label/canonicalIR/mask admission created.",
+    "provenance": "Closed distinct archived raw-section record profile, exact case/source/view/legalID/citation/release/selectors joins. Physical locator inherited from pinned provenance; original Parquet body/location relationship, historical normalized text, official HTML coordinate mapping/current legal authority explicitly not reverified.",
+    "schema_compatibility": "Distinct raw physical statute profile; does not alias authored v1 empty-context recorder or official HTML visible-text context profile. Template explicitly has no submission-recording capability."
+  },
+  "test_evidence": {
+    "errors": 0,
+    "failures": 0,
+    "meaningful_coverage": "Unicode/source/provenance selectors and closing mutation, resolver aliases/bytes rejection, physical duplicates versus equal-text distinct sections, strict exposure/content/mask/reseal joins, detached callbacks, blank template/null policy, explicit declared geometry overlap/repetition/cardinality/token alignment/multiple-rule/transport issues and numerical import denial.",
+    "overall_inert_tests": 452,
+    "reviewer_ran_tests": false,
+    "root_saved_XML": {
+      "bytes": 173708,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-inert-tests.xml",
+      "sha256": "ca3add4b8865fa356faf91a96c3114a42a25d68a70b5fd4ffc98e4c7a645d2e3"
+    },
+    "skipped": 0,
+    "statutory_cases": 65
+  },
+  "version": 1
+}

@@ -1,0 +1,27 @@
+{
+  "all_opening_and_closing_pins_match": true,
+  "files_in_each_evidence_bundle": 124,
+  "findings": [],
+  "inventory_pin": {
+    "bytes": 48494,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/contribution-copy-inputs.json",
+    "sha256": "857af0fbc8bd3fe8fe68aba52a5ed1b312cfdc3718f59537a17a963683a045b4"
+  },
+  "manifest_pin": {
+    "bytes": 88859,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/docs/autoencoders/evidence/legal-joint-readout-20261011-01/manifest.json",
+    "sha256": "a782796dd6ba83d7ea820cc4da3d9e1a3cc02bbd720a545dca868e447c27e16e"
+  },
+  "passed": true,
+  "root_document_pin": {
+    "bytes": 11038,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace/implementation_plan/docs/74-legal-joint-readout-2026-10-11.md",
+    "sha256": "b9da309daf35a2d5bc6c993a56309eeb5e358c0be3b5f8af599eba4874d3f514"
+  },
+  "schema": "joint-readout-contribution-copy-receipt/v1",
+  "source_document_pin": {
+    "bytes": 11022,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/docs/autoencoders/legal_joint_readout_20261011.md",
+    "sha256": "1726eddf9f4df5c2bbe048e2325ad8d99fb7fba4c68e0f937736f545c4626672"
+  }
+}

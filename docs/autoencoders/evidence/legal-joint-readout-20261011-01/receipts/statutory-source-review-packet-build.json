@@ -1,0 +1,143 @@
+{
+  "blank_inputs_only": true,
+  "builder_pin": {
+    "bytes": 6396,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/build_statutory_review_packet.py",
+    "sha256": "c5d882a85c9c918b41ad8aba88c5d5ba6e1398dfe354d55d105d3bec2d2d9081"
+  },
+  "complete_context_bytes": 148931,
+  "exposure_evidence_bodies_parsed": false,
+  "exposure_evidence_content_refs": [
+    {
+      "bytes": 38209,
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    },
+    {
+      "bytes": 89951,
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    }
+  ],
+  "exposure_refs_authenticated": false,
+  "findings": [],
+  "human_labels": 0,
+  "input_packet_pin": {
+    "bytes": 48597,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+    "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+  },
+  "model_outputs_used_as_annotations": false,
+  "numerical_execution": false,
+  "official_current_law_authenticated": false,
+  "original_parent_export_reopened": false,
+  "packet_body_content_sha256": "2c52ca09ae2178f61e95b39c272da95cffaaa1e9f76cf9e917629f7b265b6b5e",
+  "packet_canonical_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+  "packet_file_pin": {
+    "bytes": 378311,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+    "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+  },
+  "passed": true,
+  "physical_items": 8,
+  "raw_source_and_provenance_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    }
+  },
+  "review_submissions": 0,
+  "schema": "statutory-blank-packet-local-build/v1",
+  "selected_source_bytes": 2070,
+  "source_owner_pin": {
+    "bytes": 42670,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+    "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+  },
+  "template_file_pin": {
+    "bytes": 23766,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-template.json",
+    "sha256": "e93b0e3219f569f0cc799b981204e64849aa6eff58f52aac5307f771c3782f2c"
+  },
+  "training_admissions": 0,
+  "validation": {
+    "Lake_qualified": false,
+    "accepted": false,
+    "actual_training_or_evaluation_admission": false,
+    "admission_masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "admitted": false,
+    "complete_context_bytes": 148931,
+    "encoder_executed": false,
+    "exposure_evidence_bodies_opened": false,
+    "family_bridge_admitted": false,
+    "fresh_holdout_qualified": false,
+    "global_unseen_verified": false,
+    "human_labels": 0,
+    "independent_review_completed": false,
+    "item_count": 8,
+    "local_source_bytes_and_selectors_verified": true,
+    "model_executed": false,
+    "official_current_law_authenticated": false,
+    "origin_provenance_records_replayed": true,
+    "original_export_bytes_reverified": false,
+    "packet_content_sha256": "2c52ca09ae2178f61e95b39c272da95cffaaa1e9f76cf9e917629f7b265b6b5e",
+    "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+    "proof_authority": false,
+    "qualified": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_authenticated": false,
+    "schema": "statutory-physical-source-context-review-validation/v1",
+    "selected_source_bytes": 2070,
+    "semantic_gold": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "status": "validated_blank_physical_source_context_only",
+    "training_executed": false,
+    "training_qualified": false
+  }
+}

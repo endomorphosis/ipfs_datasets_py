@@ -1,0 +1,15 @@
+{
+  "additional_record_ids": [
+    "220770050d8444b897483f8e0e7c5cfb"
+  ],
+  "all_prior_record_bodies_equal": true,
+  "closing_record_count": 510,
+  "continuous_history_claimed": false,
+  "findings": [],
+  "full_shared_ledger_published": false,
+  "ledger_bytes": 6129897,
+  "ledger_sha256": "626886fd1d607667a47b97f8d1dc4b5df80290e77d5e68150e4ad9eb07186ffe",
+  "passed": true,
+  "prior_record_count": 509,
+  "schema": "joint-readout-resource-endpoint-preservation/v1"
+}

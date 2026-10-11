@@ -1,0 +1,110 @@
+{
+  "Git_mutation_performed": false,
+  "Lake_executed": false,
+  "contract": {
+    "Unicode": "Exact Python character spans and separately computed UTF8 byte spans, no normalization or heuristic roles",
+    "ambiguity_guard": 1e-07,
+    "api": "select_joint_spans(source_text, scores, *, top_k=8, max_search_nodes=50000)",
+    "arbitrary_present_facet_dropping": false,
+    "candidate_truncation": "Full valid left<=right score ranking then per-present-facet topK; counts and cutoff ties explicit",
+    "canonical_validation": "Existing typed codec _rule, CanonicalRoundTripIR and retained single-rule deontic grammar; no semantic admission",
+    "closed_score_fields": [
+      "schema",
+      "tokens",
+      "modality_logits",
+      "presence_logits",
+      "start_logits",
+      "end_logits"
+    ],
+    "facets": [
+      "actor",
+      "action",
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "independent_greedy": "Reconstructed from same full saved heads, original sequential early-refusal order; actual_owner_report false, never substituted for immutable raw report",
+    "joint_objective": "math.fsum float64 of selected float32 span scores in canonical facet order; new readout objective",
+    "late_presence_provenance": "Fixed head decisions explicitly newly completed independently of raw early refusal",
+    "max_search_nodes": 50000,
+    "node_scope": "Every attempted facet assignment including conflicts/bound pruning; cutoff abstains even with diagnostic best candidate",
+    "optimality": "Completed retained candidate domain only; full-domain flag only if no candidates truncated; no optimality after budget cutoff",
+    "output_origin": "bounded_joint_source_span_selector",
+    "output_schema": "joint-copied-span-selection/v1",
+    "presence_and_modality_immutable_argmax": true,
+    "required_roles": [
+      "actor",
+      "action"
+    ],
+    "score_numeric_contract": "finite exact float32 input; IEEE float32 pair addition and argmax subtraction",
+    "score_schema": "joint-source-span-scores/v1",
+    "search": "Deterministic DFS with admissible per-remaining-facet maximum bound; retain best+runner-up; prune only below runner-up",
+    "source_tokenization": "actual retained legal_span_formula.tokenize_source; full exact token text/character joins",
+    "top_k_max": 16
+  },
+  "created_at_utc": "2026-10-11T06:21:10.934937+00:00",
+  "default_promoted": false,
+  "domain_coverage": [
+    "Overlap resolution preserving independent greedy refusal",
+    "No feasible assignment preserves each optional presence and required actor/action",
+    "All6 present and immutable modality",
+    "Global/near objective ties",
+    "Truncated-domain and tied candidate-boundary disclosures",
+    "Budget cutoff after finding diagnostic candidate emits no output",
+    "Float32 additions differing from float64 and finite/exact/type/overflow guards",
+    "Full source-token coverage, closed fields and forbidden target fields",
+    "Unicode/UTF8 offsets, duplicate physical occurrences and exact internal whitespace",
+    "Actual typed codec and explicit rejection double",
+    "No free actor or lexical role heuristic",
+    "Numerical-import/model-constructor denial probes",
+    "Small-domain exhaustive best+runner-up oracle"
+  ],
+  "files": {
+    "selector": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "tests": {
+      "bytes": 18662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    }
+  },
+  "full_source_import_graph_qualified": false,
+  "model_or_encoder_execution_performed": false,
+  "new_file_whitespace_clean": true,
+  "proof_verified": false,
+  "retained_owner_pin_receipt": {
+    "bytes": 8453,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/retained-owner-pins.json",
+    "sha256": "6d085ce4358f0ecce89cc38ae41142bf73b9d4ac4c0497c7ff25ac97eb5aa7e0"
+  },
+  "schema": "joint-copied-span-selector-build/v1",
+  "selected_retained_owner_files_rehashed": 24,
+  "semantic_accuracy": null,
+  "semantic_gain_established": false,
+  "source_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+  "static_import_roots": [
+    "__future__",
+    "hashlib",
+    "importlib",
+    "json",
+    "math",
+    "struct"
+  ],
+  "static_syntax_passed": true,
+  "test_cases_static_count": 61,
+  "test_command_from_repository_root": [
+    "python",
+    "-m",
+    "pytest",
+    "-q",
+    "tests/unit/logic/legal_ir/test_joint_span_selection.py"
+  ],
+  "test_command_requires_existing_inert_namespace_and_numerical_import_fence": true,
+  "test_functions": 27,
+  "tests_executed": false,
+  "training_executed": false
+}
