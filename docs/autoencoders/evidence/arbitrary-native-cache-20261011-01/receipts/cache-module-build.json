@@ -1,0 +1,104 @@
+{
+  "bounds": {
+    "actual_token_limit": 512,
+    "aggregate_artifact_or_receipt_bytes": 268435456,
+    "artifact_bytes": 67108864,
+    "clauses_per_row": 8,
+    "receipt_refs": 16,
+    "requested_occurrences": 64,
+    "source_request_bytes": 1048576
+  },
+  "cache_schema": "arbitrary-native-source-cache/v1",
+  "cache_top_keys": [
+    "schema",
+    "dimension",
+    "source_requests",
+    "source_requests_sha256",
+    "status",
+    "complete",
+    "rows",
+    "source_contexts",
+    "input_origins",
+    "dispositions",
+    "native_receipt_refs",
+    "producer_files",
+    "receipt_consistency_only",
+    "input_contract",
+    "counts",
+    "admitted",
+    "qualified",
+    "formalized",
+    "roundtrip_ok",
+    "proof_authority",
+    "source_semantics_verified",
+    "training_executed",
+    "target_access",
+    "teacher_qualified",
+    "checkpoint_promoted",
+    "runtime_qualified",
+    "encoder_executed_by_adapter",
+    "encoder_execution_attested",
+    "cache_sha256"
+  ],
+  "custody": "Receipt/cache refs single-link and no path aliases; declared historical bounded768 owner source evidence allows links1..128 only with current source SHA/size equality and no archived source execution. Source spans are reverified at closing and receipt/source-owner bytes are checked again. Endpoint checks are not continuous or atomic multi-file snapshots.",
+  "design_review": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/native-producer-review.json",
+    "sha256": "ad46422a6b56480ae2ebe439afc18ac7a1342b2c650157d980783a0123ab8967"
+  },
+  "files": {
+    "module": {
+      "AST_passed": true,
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594",
+      "test_functions": 0
+    },
+    "tests": {
+      "AST_passed": true,
+      "bytes": 22672,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py",
+      "sha256": "1810e73e5751b0406a0ac9dfb67a631e7312354186832fb79934f99447c8d632",
+      "test_functions": 19
+    }
+  },
+  "input_schema": "Rows exactly id/source_text/source; source serialized typed identity SourceSpan with complete artifact/release/document/language/citation/byte selector",
+  "native384": "Actual _native_index receipt/native producer/asset/source verification plus exact SourceSpan matching, full token digest joins and recorded refusal dispositions. Paragraph/clause physical selectors inherit artifact/document/release and absolute derived offsets. No text-only substitution.",
+  "native768": "Closed fresh-bounded block or standalone bounded production, complete source text/tokens/forwards/138 encoder+classifier loading, exact loading names versus authenticated safetensors header, published seven assets/current file hashes, current implementation and source-owner byte witness. Existing8192 profile remains distinct from actual512 limit. Bare incomplete reports refuse. Native768 original producer lacks SourceSpan; adapter independently resolver-verifies requested occurrence and says producer_source_span_present=false.",
+  "public_API": {
+    "plan_arbitrary_native_source_cache": "(rows, *, dimension, native384_receipt_refs=None, native768_report_refs=None, source_resolver) -> closed cache with ready/partial/refused status, ready rows only, explicit per-occurrence dispositions",
+    "producer_pins": "() -> nine current source-owner SHA values",
+    "validate_arbitrary_native_source_cache": "(cache dict|JSON bytes, *, source_requests, native384_receipt_refs=None, native768_report_refs=None, source_resolver) -> fresh rebuilt identical cache; resealed mutations refuse"
+  },
+  "ready_geometry": "rows{id,source_text,input}, source_contexts dict with source SHA and literal clause segments (text/SHA/vector/SHA/character+byte offsets), preserving duplicate physical occurrences as distinct IDs. Empty ready result valid for preparation; runtime must decide admission.",
+  "schema": "arbitrary-native-source-cache-module-build/v1",
+  "scientific_limits": [
+    "No new encoder/decoder execution or fitting occurred in this implementation task.",
+    "No8 features/projection/core/trained vectors can be relabeled native384/768.",
+    "Native cache availability grants no new checkpoint/task/teacher/default/legal/proof/Lake authority.",
+    "The inherited32-value output codec cannot emit arbitrary new law atoms or rich qualifiers; root source pilot must report representability separately.",
+    "No source segmentation beyond literal double newline or silent512-token truncation/chunking is performed."
+  ],
+  "static_checks": {
+    "AST_passed": true,
+    "Git_mutations": 0,
+    "HF_calls": 0,
+    "existing_producers_or_216_assay_edits": 0,
+    "model_imports": 0,
+    "module_or_tests_imported": false,
+    "numerical_forwards": 0,
+    "tests_executed": false
+  },
+  "status": "frozen_for_root_review_and_tests",
+  "test_scope": "Diagnostic native-verification doubles are explicit; real source bytes/spans, UTF8 offsets, original-request rebuild, float32/unit/type limits, sealed JSON and disposition logic remain exercised. The768 loading/forward tests use a fake safetensors header and explicit asset-admission doubles; they establish metadata guard behavior, not published tensor execution or attestation. Root will run focused tests independently.",
+  "test_topics": [
+    "Dynamic counts/Unicode offsets/source origins",
+    "Duplicate physical occurrences and same-text wrong-origin rejection",
+    "Partial/empty-ready preparation and missing clause/refusal dispositions",
+    "Strict finite exact float32/L2 and token masks",
+    "Original-request validation and resealed cache mutations",
+    "Unknown dimensions/no8; foreign refs, unknown fields and target rejection",
+    "Row/clause/byte/reference bounds, duplicate IDs, duplicate JSON/nonfinite values, symlink/drift",
+    "Actual384 adapter calls _native_index and binds full token evidence with diagnostic lower verification",
+    "Bare768 report refusal, full dynamic138 loading/forward data paths and tampered profile/tensor/source records with diagnostic doubles"
+  ]
+}

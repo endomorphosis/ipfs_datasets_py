@@ -1,0 +1,28 @@
+{
+  "boundaries": {
+    "compiler_teacher_reference_targets_invoked": false,
+    "family_bridge_invoked": false,
+    "proof_authority": false,
+    "pure_JSON_and_contract_only": true,
+    "qualified": false,
+    "torch_tensorflow_transformers_socket_denied": true,
+    "training": false
+  },
+  "caller": "Root must independently review frozen script before execution. CLI --plan --results --output; output must be a fresh canonical absolute file.",
+  "canonical_contract": "Actual CanonicalRoundTripIR.from_dict; original candidate remains intact, normalized comparison stored separately; rule-order and qualifier-array normalization checks separated.",
+  "helper_pin": {
+    "bytes": 22504,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+    "sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44"
+  },
+  "schema": "native-pilot-diagnostic-helper-build/v1",
+  "status": "authored-not-executed",
+  "transport_contract": "Pinned _greedy saves content only; controls never appended, zero stripping or repair permitted. EOS is separate metadata. Lexical reconstruction is exact token concatenation.",
+  "validation": {
+    "AST_parse_passed": true,
+    "helper_executed": false,
+    "models_executed": false,
+    "tests_executed": false,
+    "whitespace_clean": true
+  }
+}

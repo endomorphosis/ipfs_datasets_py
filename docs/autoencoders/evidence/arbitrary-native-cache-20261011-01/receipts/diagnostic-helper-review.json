@@ -1,0 +1,143 @@
+{
+  "actual_retry_results_verified": false,
+  "checks": [
+    {
+      "area": "pure operation boundary",
+      "result": "Only stdlib imports and explicit CanonicalRoundTripIR/CID utility package imports are present. Numeric/framework, network and subprocess imports and execution are denied in a fresh interpreter. Decoder/encoder source files are byte-read for transport-owner pins and are not imported or invoked."
+    },
+    {
+      "area": "content token transport",
+      "result": "Current helper matches pinned decoder_distillation_experiment._greedy: BOS is an input control token and selected controls terminate before append. Saved token sequences contain only content IDs3..31. Helper rejects controls and noninteger IDs, reconstructs by exact lexical concatenation, removes zero controls, and accounts separately for EOS/budget/status."
+    },
+    {
+      "area": "strict candidate parsing",
+      "result": "Duplicate JSON fields, NaN/infinity, overflowed numbers and isolated surrogates refuse strict parsing. Original token IDs, exact candidate text and original parsed IR remain separate from normalized comparison. No token repair, prefix graft, teacher target or source meaning construction occurs."
+    },
+    {
+      "area": "actual canonical contract",
+      "result": "Pinned CanonicalRoundTripIR.from_dict and CanonicalRule.from_dict are the existing canonical owner. Canonical contract acceptance is separated from canonical rule ordering, qualifier array normalization and exact parsed payload equality. Complete canonical candidate additionally requires a consistent explicit EOS receipt."
+    },
+    {
+      "area": "physical source/candidate joins",
+      "result": "Completed source-only pilot summary, cache self-digest, exact eight request IDs/texts/source slices, saved selected-state codec, ordered two lane checkpoint/report pins and raw weight/RNG/source-packet receipts are checked. Source cache native joins are not rerun or independently qualified by this helper."
+    },
+    {
+      "area": "postgeneration meaning limits",
+      "result": "Case-sensitive literal atom counts/offsets are labelled diagnostic only, with no semantic binding, role inference or predicted facet intervals. Family bridge is not invoked and explicitly refuses admission without decoder-predicted facets/trigger/interpretation. All semantic, proof, training, encoder/decoder, teacher, promotion and quality authority flags remain false."
+    },
+    {
+      "area": "input custody and output",
+      "result": "Every explicitly captured input has before/closing exact bytes/SHA. Two influential installed CID JSON resources are now pinned before canonical use. Selected imported pure CID module files are inventoried and full third-party graph qualification is false. Output creation is exclusive and fsynced; audit permits writes only to that output."
+    }
+  ],
+  "created_at_utc": "2026-10-11T02:41:00.745004+00:00",
+  "default_promotion": false,
+  "execution_by_reviewer": {
+    "file_hash_and_pin_checks": true,
+    "git_or_hub_mutation": false,
+    "helper_execution": false,
+    "models_or_forwards": false,
+    "project_or_contract_imports": false,
+    "resource_or_scheduler_mutation": false,
+    "stdlib_ast_parse": true,
+    "tests": false
+  },
+  "findings": [],
+  "helper_pin": {
+    "bytes": 23740,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+    "sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c"
+  },
+  "independent_cache_qualification": false,
+  "limits": [
+    "Static review only; no helper functions, CanonicalRoundTripIR calls, project/model imports, tests, encoders, decoders or resource mutations were executed by reviewer.",
+    "The helper requires actual completed results; this review does not assert retry success, actual source token coverage, candidate counts, legal accuracy or model quality.",
+    "Selected saved decoder checkpoint JSON is read to verify codec and tensor receipts; no encoder weight asset or donor file is opened, and no weight tensor is restored.",
+    "Canonical acceptance and literal source coincidences never establish correctness for the selected statute. Normative32 target representability, legal semantics, family bridge,8D/768D execution and Lake/proof goals remain open.",
+    "Only explicitly captured input and selected CID dependency files are closing-rehashed. Continuous filesystem currentness, an atomic cross-file snapshot and complete third-party import graph are not claimed."
+  ],
+  "passed": true,
+  "proof_authority": false,
+  "resolved_findings": [
+    {
+      "draft_helper_sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44",
+      "issue": "CID library data tables were omitted from selected dependency inventory although CanonicalRule.rule_cid sorting consumes them.",
+      "resolution": "Current helper fixed-pin reads installed multicodec and multibase tables before importing/using CanonicalRoundTripIR; closing Inputs.finish rehashes them. Added bases and typing_extensions imported module files and explicitly disclaims full third-party import graph qualification. Original helper/build and finding receipt are preserved."
+    }
+  ],
+  "reviewed_artifacts": {
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+      "bytes": 3908,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json",
+      "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+      "bytes": 90766,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json",
+      "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-01.py": {
+      "bytes": 22504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-01.py",
+      "sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py": {
+      "bytes": 23740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+      "sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-01.json": {
+      "bytes": 1350,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-01.json",
+      "sha256": "0b8be423f6cdec6951cc4fceac4bc6568fa8fa453977364bc18e99f22423ab89"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build.json": {
+      "bytes": 1924,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build.json",
+      "sha256": "706e350fad032294954ade423f4ccc8d545ed7416b7f144924e30aba85942628"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review-draft-01.json": {
+      "bytes": 1712,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review-draft-01.json",
+      "sha256": "136aff3453327efceedbded55c33005369042f8d42c69e95c85ff11163c4faf1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json": {
+      "bytes": 20901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+      "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-retry-review.json": {
+      "bytes": 24317,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-retry-review.json",
+      "sha256": "34d9b7b4317c06ef8865101eb85571ff187b50225378db29b55df8f3421c76c6"
+    }
+  },
+  "schema": "native-pilot-diagnostic-helper-static-review/v1",
+  "scope": "Independent source/AST/file-pin review of integration-authored post-generation diagnostic helper before any execution. This reviewer authored the source cache and provides no independent cache qualification.",
+  "semantic_accuracy_qualification": false
+}

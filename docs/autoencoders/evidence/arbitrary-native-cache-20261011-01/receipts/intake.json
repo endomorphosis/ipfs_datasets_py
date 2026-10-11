@@ -1,0 +1,17 @@
+{
+  "schema": "legal-native-cache-intake/v1",
+  "observed_at_utc": "2026-10-11T01:54:13.394870+00:00",
+  "canonical": {
+    "workspace": {
+      "head": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "index_path": "/home/barberb/lift_coding/.git/index",
+      "index_sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "datasets": {
+      "head": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "index_path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+      "index_sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "ancestor_AGENTS": {}
+}

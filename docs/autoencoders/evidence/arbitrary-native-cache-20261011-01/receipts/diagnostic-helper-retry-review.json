@@ -1,0 +1,138 @@
+{
+  "actual_numerical_results_qualification": false,
+  "correction_checks": [
+    "Only exact already-loaded names urllib and urllib.parse are excepted from initial denied-root inventory. Every other existing denied-root descendant still causes refusal.",
+    "Both allowed module origins must equal their installed stdlib paths beside os.__file__. Their source bytes are added to Inputs inventory before contract imports and rehashed by the same closing fence.",
+    "DENIED_IMPORT_ROOTS is byte-structure equivalent to the previously reviewed version. The meta finder and audit hook still deny every new denied-root module import, including urllib.request and socket; no root-wide urllib allowance is added.",
+    "Socket/network, process execution and writes outside the fresh output remain denied. Existing harmless URL parsing support grants no network call or import authority.",
+    "Result now reports exact preloaded_stdlib_scope. Existing selected-dependency inventory and full_third_party_import_graph_qualified=false are retained.",
+    "Content-only lexical token reconstruction, strict parsing, original parsed payload preservation, canonical comparisons and all-false semantics/bridge/proof authority remain unchanged.",
+    "Only pure helper code changes; encoder assets, numerical runner/cache/runtime source, checkpoints, caps and planned optimizer count are unchanged by this repair."
+  ],
+  "created_at_utc": "2026-10-11T02:43:20.800361+00:00",
+  "default_promotion": false,
+  "executed_by_reviewer": {
+    "file_pin_checks": true,
+    "git_or_hub_mutation": false,
+    "helper_or_contract_calls": false,
+    "models_or_forwards": false,
+    "project_imports": false,
+    "resources_or_scheduler_mutation": false,
+    "stdlib_ast_and_json": true,
+    "tests": false
+  },
+  "findings": [],
+  "helper_pin": {
+    "bytes": 24600,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+    "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+  },
+  "independent_cache_qualification": false,
+  "limits": [
+    "This receipt does not execute the helper or demonstrate the corrected helper succeeds. Root may rerun only the pure helper against already accepted numerical result JSON.",
+    "The failure receipt reports a fresh interpreter loaded urllib and urllib.parse through its Python3.12 stdlib import graph; those exact stdlib origins are checked, rather than allowing general URL or network clients.",
+    "No numerical pilot repetition is needed by the correction. Actual native production/generation outcomes are reported separately by root and their independent results reviewer.",
+    "Canonical syntax or exact payload ordering never establish legal accuracy, statutory meaning, vocabulary representability,8D/768D support,proof authority,Lake completion or default promotion."
+  ],
+  "observed_failure_receipt": {
+    "encoder_decoder_training_execution": false,
+    "error_type": "ValueError",
+    "failure_location": "fence before canonical or output analysis",
+    "helper_sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c",
+    "no_output_created": true,
+    "original_native_numerical_results_modified": false,
+    "returncode": 1,
+    "separate_stdlib_only_reproduction_preloaded_modules": [
+      "urllib",
+      "urllib.parse"
+    ]
+  },
+  "passed": true,
+  "preserved_failed_helper_sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c",
+  "proof_authority": false,
+  "reviewed_artifacts": {
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+      "bytes": 3908,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json",
+      "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+      "bytes": 90766,
+      "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json",
+      "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-02.py": {
+      "bytes": 23740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-02.py",
+      "sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py": {
+      "bytes": 24600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+      "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+      "bytes": 15840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 37989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+      "bytes": 17329,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+      "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-attempt-01-failure.json": {
+      "bytes": 1165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-attempt-01-failure.json",
+      "sha256": "9ba74667cd01fac2ba015419eb54c9cdf461a54a31d4663904a0d69c9ad30b48"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-02.json": {
+      "bytes": 1924,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-02.json",
+      "sha256": "706e350fad032294954ade423f4ccc8d545ed7416b7f144924e30aba85942628"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build.json": {
+      "bytes": 2630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build.json",
+      "sha256": "721122fc2481e3db76aecb3dd5d5d4ae4d1577af7bf44e568fc570bb5827e5d0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review.json": {
+      "bytes": 10678,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review.json",
+      "sha256": "5f6b94d3c68e66eac4cf6f61ae96dd2b9dd36f6efe1ccadf334df0dd50a9fe41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json": {
+      "bytes": 20901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+      "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+    },
+    "/usr/lib/python3.12/urllib/__init__.py": {
+      "bytes": 0,
+      "path": "/usr/lib/python3.12/urllib/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/usr/lib/python3.12/urllib/parse.py": {
+      "bytes": 45591,
+      "path": "/usr/lib/python3.12/urllib/parse.py",
+      "sha256": "a67b5694763137dbac085adbf0c22821d435ec8ca22d3bd3786d2c9f4ee748d5"
+    }
+  },
+  "schema": "native-pilot-diagnostic-fence-correction-static-review/v1",
+  "scope": "Independent read-only static review of integration-authored pure-helper correction. No helper, contract, project/model code or numerical execution performed by reviewer; no independent qualification of reviewer-authored cache.",
+  "semantic_accuracy_qualification": false
+}

@@ -1,0 +1,40 @@
+{
+  "boundaries": {
+    "compiler_teacher_reference_targets_invoked": false,
+    "family_bridge_invoked": false,
+    "proof_authority": false,
+    "pure_JSON_and_contract_only": true,
+    "qualified": false,
+    "torch_tensorflow_transformers_socket_denied": true,
+    "training": false
+  },
+  "caller": "Root must independently review frozen script before execution. CLI --plan --results --output; output must be a fresh canonical absolute file.",
+  "canonical_contract": "Actual CanonicalRoundTripIR.from_dict; original candidate remains intact, normalized comparison stored separately; rule-order and qualifier-array normalization checks separated.",
+  "helper_pin": {
+    "bytes": 24600,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+    "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+  },
+  "preloaded_stdlib_correction": "Root actual pure call stopped before analysis because Python 3.12 pathlib preloaded only urllib and urllib.parse. These exact two existing stdlib modules now pass the initial loaded-module check after origin/byte capture. Other existing urllib descendants and every new denied-root module import/network call remain refused. Exact admitted initial modules are reported in preloaded_stdlib_scope and closing-rehashed.",
+  "preserved_original": {
+    "bytes": 22504,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-01.py",
+    "sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44"
+  },
+  "preserved_second_version": {
+    "bytes": 23740,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-02.py",
+    "sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c"
+  },
+  "review_correction": "Independent static review found two consumed CID table resources omitted from the original inventory. Both are now fixed-pin read before canonical IR sorting and closing-rehashed; bases/typing_extensions imported pure files also inventoried. Full third-party import graph qualification remains false.",
+  "schema": "native-pilot-diagnostic-helper-build/v1",
+  "status": "authored-not-executed",
+  "transport_contract": "Pinned _greedy saves content only; controls never appended, zero stripping or repair permitted. EOS is separate metadata. Lexical reconstruction is exact token concatenation.",
+  "validation": {
+    "AST_parse_passed": true,
+    "helper_executed": false,
+    "models_executed": false,
+    "tests_executed": false,
+    "whitespace_clean": true
+  }
+}

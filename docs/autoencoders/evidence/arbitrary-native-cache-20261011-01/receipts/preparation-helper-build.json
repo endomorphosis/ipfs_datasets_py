@@ -1,0 +1,126 @@
+{
+  "aggregate_source_document_bytes_cap": 67108864,
+  "author_execution": {
+    "CLI_or_prepare_executed": false,
+    "Git_staging_or_source_files_outside_two_owned_paths": false,
+    "models_Torch_or_target_modules_imported": false,
+    "native_producer_calls": 0,
+    "optimizer_calls": 0,
+    "source_imports": false,
+    "tests_run": 0
+  },
+  "config_closed_fields": [
+    "schema",
+    "mode",
+    "dimension",
+    "source_requests_pin",
+    "source_artifact_pins",
+    "native384_receipt_refs",
+    "native768_report_refs",
+    "snapshot_path",
+    "batch_size"
+  ],
+  "config_schema": "prepare-arbitrary-native-legal-sources/v1",
+  "explicit_record_doubles": "Synthetic native-format records in tests exercise custody/call counting, not native execution or model quality. injected_fixture profiles explicitly refuse before cache assembly.",
+  "failure_accounting": "started vsreturned nativeproducer calls; interrupted call encoded countunknown rather than0; already-durable receipts retained",
+  "input_identity_policy": "full codec EmbeddingInput.input_id; same full source/span/text deduplicated while request aliases retained; distinct physical origins are never merged; contradictory provenance for same selector refused",
+  "native_record_limit_per_fixed_call": 256,
+  "observed_at_utc": "2026-10-11T02:21:26.585867+00:00",
+  "output_policy": "fresh exclusive outputdirectory; exact native receipt.to_bytes durable and pinned before assembly; source-cache.json,summary.json ortruthfulfailure-summary; no overwrites",
+  "owned_source_paths": {
+    "scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py": {
+      "AST_syntax_checked_without_execution": true,
+      "bytes": 16041,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py",
+      "sha256": "e2e87fe9e2d69a6d75c0ce61ec6141bc29f2d059d27b83139bd1df1817179378"
+    },
+    "tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py": {
+      "AST_syntax_checked_without_execution": true,
+      "bytes": 19509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py",
+      "sha256": "e9c5ed0728e065c90438d9b203915ca22791432a31564ca4aab8c616ede5d18c"
+    }
+  },
+  "per_source_document_bytes_cap": 8388608,
+  "production_lane": "produce384; exact fixed native runtime; canonical explicit snapshot; batch integer1..16; CPU1 enforced by fixed runtime; no factory/networkfallback",
+  "public_API": [
+    "prepare(config, *, output_directory)",
+    "expand_embedding_inputs(requests, source_artifact_pins)",
+    "source_resolver(source_artifact_pins)",
+    "read_config(config_pin)",
+    "main(argv=None)"
+  ],
+  "request_geometry": "cache._requests1..64 physical requests, literal blank-line clauses1..8 and existing1MiB selected text bound",
+  "resolved_author_error": {
+    "author_tests_executed": 0,
+    "cause": "The helper returned bytes where the corpus/native-production resolver contract requires an absolute local path.",
+    "failed_execution_names": [
+      "test_unicode_clause_spans_keep_absolute_bytes_and_complete_input_provenance",
+      "test_identical_full_origins_deduplicate_input_ids_but_preserve_caller_occurrences",
+      "test_equal_text_at_different_physical_spans_is_not_deduplicated",
+      "test_one_physical_selector_with_contradictory_provenance_is_refused",
+      "test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority[384]",
+      "test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority[768]",
+      "test_explicit_producer_record_double_keeps_exact_receipt_bytes_and_real_call_arguments",
+      "test_injected_fixture_receipt_cannot_be_qualified_as_native_production",
+      "test_fixed_owner_chunks_respect_256_inputs_without_losing_physical_occurrences",
+      "test_source_generation_change_after_production_retains_receipt_and_truthful_failure",
+      "test_unreturned_producer_call_does_not_claim_zero_encoder_work",
+      "test_existing_output_directory_is_preserved_and_no_producer_runs",
+      "test_bounded_document_reads_and_unused_artifact_pins_refuse"
+    ],
+    "failed_test_receipt_mutated": false,
+    "failures": 13,
+    "meaningful_regression": "The new regression calls the real corpus._read_verified and codec.validate_embedding_inputs with this resolver, without native encoder execution.",
+    "original_drafts": {
+      "preparation-cli-tests-draft-01.py": {
+        "bytes": 18593,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-cli-tests-draft-01.py",
+        "sha256": "7571651536d80d1f5ca6637f198439867053e26dbbccfc33d41025306b99ff63"
+      },
+      "preparation-helper-build-draft-01.json": {
+        "bytes": 4746,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-helper-build-draft-01.json",
+        "sha256": "e82ee3a07f43caefe2805e36a899f397adb9fbbc3422689aa332aa5225320c01"
+      },
+      "preparation-helper-draft-01.py": {
+        "bytes": 15670,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-helper-draft-01.py",
+        "sha256": "4b55665ee515ec2f8eef064cf8adf00aa175336584dfe8081a0fce75b42d5237"
+      }
+    },
+    "repair": "Return the pinned canonical path only after its exact byte/hash/single-link/generation verification. Preserve all prior custody fences and downstream actual source rereads.",
+    "root_actual_first_test_receipt": {
+      "bytes": 22387,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-cli-tests.xml",
+      "sha256": "822bc38905714b24ab48ac50b48e17c822c49112d32d6f0c101dc57f87161194"
+    },
+    "root_rerun_required": true,
+    "successes": 16
+  },
+  "reuse_lane": "384 or768 recorded receipts only; no helper producer call; downstream metadata imports not misrepresented as encoder execution",
+  "review_required_before_root_execution": true,
+  "root_should_run_focused_tests": true,
+  "schema": "bounded-native-source-preparation-helper-build/v1",
+  "summary_authority": "0optimizer/decoder calls; all five admission maskszero/formalnull; target/train/semantic/proof/qualification/defaultfalse; encoder evidence recordconsistency only",
+  "test_functions": [
+    "test_unicode_clause_spans_keep_absolute_bytes_and_complete_input_provenance",
+    "test_identical_full_origins_deduplicate_input_ids_but_preserve_caller_occurrences",
+    "test_equal_text_at_different_physical_spans_is_not_deduplicated",
+    "test_one_physical_selector_with_contradictory_provenance_is_refused",
+    "test_malformed_or_target_bearing_requests_refuse_before_any_encoder",
+    "test_resolver_is_defensive_and_refuses_generation_change_with_same_bytes",
+    "test_resolver_contract_is_accepted_by_actual_corpus_and_producer_validators",
+    "test_source_aliases_are_refused",
+    "test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority",
+    "test_explicit_producer_record_double_keeps_exact_receipt_bytes_and_real_call_arguments",
+    "test_injected_fixture_receipt_cannot_be_qualified_as_native_production",
+    "test_fixed_owner_chunks_respect_256_inputs_without_losing_physical_occurrences",
+    "test_source_generation_change_after_production_retains_receipt_and_truthful_failure",
+    "test_unreturned_producer_call_does_not_claim_zero_encoder_work",
+    "test_closed_production_config_has_no_width_padding_or_implicit_fallback",
+    "test_existing_output_directory_is_preserved_and_no_producer_runs",
+    "test_bounded_document_reads_and_unused_artifact_pins_refuse",
+    "test_config_reader_rejects_duplicate_json_keys_and_exact_pin_drift"
+  ]
+}

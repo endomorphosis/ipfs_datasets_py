@@ -1,0 +1,20 @@
+{
+  "schema": "arbitrary-native-incoming-integration/v1",
+  "old_source_base": "28a4790ab6952321da0dcf5066e1015f097695d8",
+  "source_base": "db432c5a93a207436f9a4279d888fddee931e390",
+  "incoming_paths": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+    "ipfs_datasets_py/logic/software_verification/__init__.py",
+    "ipfs_datasets_py/logic/software_verification/numerical_logic.py",
+    "ipfs_datasets_py/logic/software_verification/numerical_source.py",
+    "tests/unit/logic/software_contracts/test_source384_formalization_budget.py",
+    "tests/unit/logic/software_verification/test_numerical_logic.py",
+    "tests/unit/logic/software_verification/test_numerical_source.py"
+  ],
+  "all_52_reviewed_pins_unchanged": true,
+  "native_assay_and_selected_states_preserved": true,
+  "isolated_worktree_fast_forward": true,
+  "canonical_HEAD_index_mutated": false,
+  "workspace_fresh_base": "4df56dca204787b70d71fd0d3459f90a20e6ce38"
+}

@@ -1,0 +1,812 @@
+{
+  "artifacts": {
+    "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8": {
+      "bytes": 374277662,
+      "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/incoming-progress-review.json": {
+      "bytes": 27125,
+      "sha256": "c7e7f93563f4f95bbe7b03b2ae56083d323b0bd436d934eac559bb94567df5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/evidence/uscode-span-continuation-20261011/index.json": {
+      "bytes": 6823,
+      "sha256": "a52c8ab485e47f714a986f3f578dead2e7081d6f741037808716634f3a93d9e0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/evidence/uscode-span-continuation-20261011/measured-run/results/manifest.json": {
+      "bytes": 3079,
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/evidence/uscode-span-continuation-20261011/measured-run/results/report.json": {
+      "bytes": 12024,
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/source_family_coverage.md": {
+      "bytes": 10409,
+      "sha256": "58f75e79fd6c8633bd873a067dbf271d8f57c77f86f815e7fe7bca7f02a28a83"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/uscode_all_span_processing_plan_20261007.md": {
+      "bytes": 36516,
+      "sha256": "a20689e2bed8ab9a5c6c24412ad76b623c157866be187c2578036dfaeec9961a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/uscode_paired_feed_compatibility_20261007.md": {
+      "bytes": 4236,
+      "sha256": "9b72678265bdf7529dac16d6e680f1ec62975134d00be1181943a3373577d345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/uscode_source_census.md": {
+      "bytes": 4995,
+      "sha256": "1de75f373e5f5dbf5bb14e1a4711823038ca3effe8d4e8186b129dadd4eed2c1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/uscode_span_continuation_20261011.md": {
+      "bytes": 12822,
+      "sha256": "f98432f4b52e0e931b539d317d3cf7c529879f9df5d038cb1d5b99efa59d6f67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/constitution_inventory.py": {
+      "bytes": 11156,
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": {
+      "bytes": 37698,
+      "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/paired_span_census.py": {
+      "bytes": 59780,
+      "sha256": "b3652d9cd022ec489a86337f129493ca34071cb44baa52a86d7e457a8495ef9e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/span_cache_feed.py": {
+      "bytes": 40532,
+      "sha256": "97e6a59859fb9ca59b069a85ca9d569beddbe20eb1e10b62d1d128ad0162ec47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+      "bytes": 10156,
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/alignment_projection.py": {
+      "bytes": 23299,
+      "sha256": "d29853a4238350eabe2265b51c48913c9e77280af0ee131bbd04ef760199c18e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_routing.py": {
+      "bytes": 20422,
+      "sha256": "e5ad1d9ca5187abf39d66f18be7c4ec5a891a2da6d2e571ad4132edae8b7528a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_runtime.py": {
+      "bytes": 15209,
+      "sha256": "673702cc415b37d9597bbe5ccf259717d77f8335a0c2269265cddc4dff49ffdd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_format_runtime.py": {
+      "bytes": 22669,
+      "sha256": "e5521f573a5d592c2f452742c827104fe613d227591a04ab255ec46b2d34e33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py": {
+      "bytes": 20396,
+      "sha256": "bc8aab1ba3a53b91c0e39fc813983657e52e07118a14c0d65c3c4e2aa660face"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_original_corpus_runtime.py": {
+      "bytes": 14468,
+      "sha256": "03b9dd075227982f67543bdd7352f52186ba33f1dd98158342bab2aa37735b4f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py": {
+      "bytes": 28302,
+      "sha256": "017adb2cd955f84b049bb483100be5b8b3742bac1ddc0084a9d106c9a3d3da07"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py": {
+      "bytes": 9228,
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py": {
+      "bytes": 12983,
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": {
+      "bytes": 21099,
+      "sha256": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py": {
+      "bytes": 17973,
+      "sha256": "d696c3af565d09be1825a00bdbf979ff97c12bb1a6ab1054564a9946b824875a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py": {
+      "bytes": 23320,
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_eval_splits.py": {
+      "bytes": 57362,
+      "sha256": "2cb28ac6e4a05f443a2102be296a9a4a1aecf74a7ce4a4cd3d5db3be3de744b9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py": {
+      "bytes": 26696,
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py": {
+      "bytes": 8703,
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py": {
+      "bytes": 24447,
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json": {
+      "bytes": 31436,
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+      "bytes": 6328,
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb": {
+      "bytes": 3944448,
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f"
+    }
+  },
+  "baseline_source_main": "28a4790ab6952321da0dcf5066e1015f097695d8",
+  "baseline_source_pins": {
+    "docs/autoencoders/source_family_coverage.md": {
+      "bytes": 10409,
+      "sha256": "58f75e79fd6c8633bd873a067dbf271d8f57c77f86f815e7fe7bca7f02a28a83"
+    },
+    "docs/autoencoders/uscode_all_span_processing_plan_20261007.md": {
+      "bytes": 36516,
+      "sha256": "a20689e2bed8ab9a5c6c24412ad76b623c157866be187c2578036dfaeec9961a"
+    },
+    "docs/autoencoders/uscode_paired_feed_compatibility_20261007.md": {
+      "bytes": 4236,
+      "sha256": "9b72678265bdf7529dac16d6e680f1ec62975134d00be1181943a3373577d345"
+    },
+    "docs/autoencoders/uscode_source_census.md": {
+      "bytes": 4995,
+      "sha256": "1de75f373e5f5dbf5bb14e1a4711823038ca3effe8d4e8186b129dadd4eed2c1"
+    },
+    "docs/autoencoders/uscode_span_continuation_20261011.md": {
+      "bytes": 12822,
+      "sha256": "f98432f4b52e0e931b539d317d3cf7c529879f9df5d038cb1d5b99efa59d6f67"
+    },
+    "ipfs_datasets_py/logic/autoformal/constitution_inventory.py": {
+      "bytes": 11156,
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "ipfs_datasets_py/logic/autoformal/family_qualification.py": {
+      "bytes": 37698,
+      "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "ipfs_datasets_py/logic/autoformal/paired_span_census.py": {
+      "bytes": 59780,
+      "sha256": "b3652d9cd022ec489a86337f129493ca34071cb44baa52a86d7e457a8495ef9e"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_feed.py": {
+      "bytes": 40532,
+      "sha256": "97e6a59859fb9ca59b069a85ca9d569beddbe20eb1e10b62d1d128ad0162ec47"
+    },
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+      "bytes": 10156,
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/alignment_projection.py": {
+      "bytes": 23299,
+      "sha256": "d29853a4238350eabe2265b51c48913c9e77280af0ee131bbd04ef760199c18e"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_routing.py": {
+      "bytes": 20422,
+      "sha256": "e5ad1d9ca5187abf39d66f18be7c4ec5a891a2da6d2e571ad4132edae8b7528a"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_cell_runtime.py": {
+      "bytes": 15209,
+      "sha256": "673702cc415b37d9597bbe5ccf259717d77f8335a0c2269265cddc4dff49ffdd"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_format_runtime.py": {
+      "bytes": 22669,
+      "sha256": "e5521f573a5d592c2f452742c827104fe613d227591a04ab255ec46b2d34e33b"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_decoder_profile_inventory.py": {
+      "bytes": 20396,
+      "sha256": "bc8aab1ba3a53b91c0e39fc813983657e52e07118a14c0d65c3c4e2aa660face"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/ir_original_corpus_runtime.py": {
+      "bytes": 14468,
+      "sha256": "03b9dd075227982f67543bdd7352f52186ba33f1dd98158342bab2aa37735b4f"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py": {
+      "bytes": 28302,
+      "sha256": "017adb2cd955f84b049bb483100be5b8b3742bac1ddc0084a9d106c9a3d3da07"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py": {
+      "bytes": 9228,
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py": {
+      "bytes": 12983,
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_index.py": {
+      "bytes": 21099,
+      "sha256": "f4b71d03e6341602631387262d0efffb61c95bca40ad5307ecfcda3eb1d169b9"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_source_partitions.py": {
+      "bytes": 17973,
+      "sha256": "d696c3af565d09be1825a00bdbf979ff97c12bb1a6ab1054564a9946b824875a"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py": {
+      "bytes": 23320,
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_eval_splits.py": {
+      "bytes": 57362,
+      "sha256": "2cb28ac6e4a05f443a2102be296a9a4a1aecf74a7ce4a4cd3d5db3be3de744b9"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py": {
+      "bytes": 26696,
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py": {
+      "bytes": 8703,
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py": {
+      "bytes": 24447,
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    }
+  },
+  "existing_contracts": {
+    "Lake_boundary": {
+      "actual_required_command": [
+        "lake",
+        "build",
+        "legal"
+      ],
+      "build_observations_not_legal_truth": true,
+      "owner": "legal_source_family_lake",
+      "preparation_and_saved_receipts_do_not_execute": true,
+      "semantic_and_proof_authority_remain_false": true
+    },
+    "distinct_byte_codec": {
+      "default_output_cap": 4096,
+      "payload_max_bytes": 32768,
+      "profile": "utf8-byte259-canonical-anchored/v1",
+      "scope": "Single-flat-rule UTF8 transport and source anchors only; no32-token checkpoint compatibility, learned text head or semantic/proof qualification.",
+      "vocabulary_size": 259
+    },
+    "family_bridge": {
+      "activation": "all_conditions_at_evaluation_time",
+      "complete_exact_rule_facets_and_occurrence_slices_required": true,
+      "exceptions": "any_exception_waives_at_evaluation_time",
+      "interpretation": "caller_supplied_interpretation_not_source_translation",
+      "max_occurrences": 128,
+      "max_rules": 64,
+      "max_source_bytes": 1000000,
+      "no_equivalence_to_old_calendar_gate": true,
+      "profile": "ground-null-context/v1",
+      "schema": "legal-source-family-bridge/v1",
+      "supported": [
+        "deontic_fol",
+        "tdfol",
+        "dcec"
+      ],
+      "temporal_and_calendar_facets_refused": true
+    },
+    "normative_decoder": {
+      "arbitrary_actor_action_strings_supported": false,
+      "decoder_format": null,
+      "decoder_profile": null,
+      "max_literal_double_newline_source_segments": 8,
+      "native_schema": null,
+      "output_tokens": 512,
+      "reviewed_statute_targets_attached": false,
+      "task": "semantic_IR_reconstruction",
+      "vocabulary": [
+        "<pad>",
+        "<bos>",
+        "<eos>",
+        "\"F\"",
+        "\"O\"",
+        "\"P\"",
+        "\"action\"",
+        "\"actor\"",
+        "\"approve\"",
+        "\"archive\"",
+        "\"conditions\"",
+        "\"deliver\"",
+        "\"examine\"",
+        "\"exceptions\"",
+        "\"modality\"",
+        "\"notary\"",
+        "\"notice\"",
+        "\"object\"",
+        "\"preserve\"",
+        "\"publish\"",
+        "\"registrar\"",
+        "\"rules\"",
+        "\"secretary\"",
+        "\"temporal\"",
+        "\"treasurer\"",
+        "\"trustee\"",
+        ",",
+        ":",
+        "[",
+        "]",
+        "{",
+        "}"
+      ],
+      "vocabulary_size": 32
+    },
+    "paired_feed": {
+      "acknowledgement_means_durable_retention_only": true,
+      "compiler_and_guided_and_independent_learned_origins_retained_separately": true,
+      "diagnostic_vectors_never_inserted_as_embedding_input": true,
+      "schemas": [
+        "paired-v1",
+        "paired-v2"
+      ],
+      "source_authority_training_qualification_proof_authority_not_inherited": true,
+      "source_release_is_in_identity": true
+    },
+    "retained_native_cache": {
+      "decoder_contract": "normative-retained-source-cache-legal-ir/v1",
+      "fresh_holdout_qualified": false,
+      "literal_clauses": 180,
+      "original_api_arbitrary_new_inputs_supported": false,
+      "paragraphs": 48,
+      "receipt_count": 216,
+      "recorded_vector_consistency_not_encoder_execution_attestation": true,
+      "schema": "normative-retained-source-cache-runtime-plan/v1",
+      "unique_vectors": 216,
+      "widths": [
+        384,
+        768
+      ]
+    },
+    "source_only_packet": {
+      "clause_segment_fields": [
+        "source_text",
+        "source_sha256",
+        "embedding_sha256",
+        "vector",
+        "char_start",
+        "char_end",
+        "byte_start",
+        "byte_end"
+      ],
+      "complete_original_source_context_split_binding_required": true,
+      "context_closed_fields": [
+        "source_sha256",
+        "segments"
+      ],
+      "exact_unique_ID_and_normalized_text_membership": true,
+      "paragraph_and_segment_vectors_exact_width_and_L2_checked": true,
+      "source_rows_closed_fields": [
+        "id",
+        "source_text",
+        "input"
+      ]
+    }
+  },
+  "family_catalog_boundary": "The documented40-family applicability catalog and unchanged training capability floor are distinct from eight syntax fragments and12 IR/native-width declarations. Missing context/applicability/native lowering/Lake evidence remains unresolved; broad family names do not waive gates.",
+  "findings": [],
+  "ir_family_width_dispositions": [
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "legal_ir",
+      "native_input_width": 8,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "legal_ir",
+      "native_input_width": 384,
+      "observed_boundary": "retained_experimental_normative32_cached_replay",
+      "required_disposition": "Original saved split and48-paragraph/216-vector/180-clause assay only; arbitrary inputs require a distinct versioned adapter and complete source/cache producer joins.",
+      "target_representation": "typed-json-lexical/v1 with exact32-token vocabulary; semantic_IR_reconstruction; no qualified native schema/profile/format"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "legal_ir",
+      "native_input_width": 768,
+      "observed_boundary": "retained_experimental_normative32_cached_replay",
+      "required_disposition": "Original saved split and48-paragraph/216-vector/180-clause assay only; arbitrary inputs require a distinct versioned adapter and complete source/cache producer joins.",
+      "target_representation": "typed-json-lexical/v1 with exact32-token vocabulary; semantic_IR_reconstruction; no qualified native schema/profile/format"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "codebase_ir",
+      "native_input_width": 8,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "codebase_ir",
+      "native_input_width": 384,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "codebase_ir",
+      "native_input_width": 768,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "security_ir",
+      "native_input_width": 8,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "security_ir",
+      "native_input_width": 384,
+      "observed_boundary": "original_experimental_source384_fragment_replay",
+      "required_disposition": "Only original registered fragment format and exact original corpus/split; a statute occurrence cannot inherit Intent/Security targets or applicability.",
+      "target_representation": "program-ir/v1"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "security_ir",
+      "native_input_width": 768,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "intent_ir",
+      "native_input_width": 8,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "intent_ir",
+      "native_input_width": 384,
+      "observed_boundary": "original_experimental_source384_fragment_replay",
+      "required_disposition": "Only original registered fragment format and exact original corpus/split; a statute occurrence cannot inherit Intent/Security targets or applicability.",
+      "target_representation": "intent-rich-grammar/v1"
+    },
+    {
+      "arbitrary_statute_runtime_qualified": false,
+      "current_pilot_training_target_eligible": false,
+      "dimension_role": "input_embedding",
+      "ir_family": "intent_ir",
+      "native_input_width": 768,
+      "observed_boundary": "declared_inventory_lane_without_qualified_arbitrary_runtime",
+      "required_disposition": "Physical lane metadata or initialization/donor weights do not establish a compatible runnable decoder.",
+      "target_representation": "No arbitrary source/target/model contract authenticated by this audit"
+    }
+  ],
+  "logic_family_dispositions": [
+    {
+      "current_scope": "Eight-family syntax gate has source-bound atom projections; normative bridge rejects erasing O/P/F into FOL.",
+      "family": "fol",
+      "limit": "An export omitting deontic modality is not equivalent legal meaning.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Ground Boolean/deontic native bridge with caller-declared all-condition activation and any-exception waiver.",
+      "family": "deontic_fol",
+      "limit": "Exact spans, O/P/F parameters and AST inversion do not verify the interpretation.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Strict fragment syntax exists; source bridge rejects normative or calendar facets needing another profile.",
+      "family": "temporal_fol",
+      "limit": "Opaque temporal predicate names cannot establish temporal-operator semantics.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Bridge supports the ground non-temporal deontic subset only.",
+      "family": "deontic_temporal_fol/tdfol",
+      "limit": "A TDFOL parser accepting a ground obligation is not actual temporal family coverage.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Bridge supports ground qualifier-free O/P/F; strict gate cross-checks parser AST shape for declared fragments.",
+      "family": "deontic_cognitive_event_calculus/dcec",
+      "limit": "No arbitrary cognition, events, quantifiers or cross-family interpretation equivalence is supplied.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Existing strict frame parser/export projections.",
+      "family": "frame_logic",
+      "limit": "Record syntax and field preservation are not complete source semantics or norm truth.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Declared native fragments and source-atom projections, distinct from DCEC.",
+      "family": "cognitive_event_calculus/cec",
+      "limit": "Plain CEC projections that omit modality do not preserve an arbitrary legal norm.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    },
+    {
+      "current_scope": "Strict proposition syntax and atom abstraction.",
+      "family": "propositional",
+      "limit": "Term structure and deontic modality omissions require explicit limits; no equivalence promotion.",
+      "proof_authority": false,
+      "source_semantics_verified": false,
+      "training_gold": false
+    }
+  ],
+  "new_arbitrary_adapter_implementation_reviewed": false,
+  "observed_at_utc": "2026-10-11T02:05:48.268815+00:00",
+  "passed": true,
+  "pilot": {
+    "all8_raw_span_text_and_SHA_equal_to_historical_normalized_span": true,
+    "bytes": 31436,
+    "citations": [
+      "1 U.S.C. 2",
+      "1 U.S.C. 106",
+      "1 U.S.C. 112",
+      "1 U.S.C. 112b",
+      "10 U.S.C. 101",
+      "10 U.S.C. 261",
+      "10 U.S.C. 276",
+      "10 U.S.C. 282"
+    ],
+    "complete_raw_section_view_bytes": 148931,
+    "complete_raw_section_view_cap_bytes": 327680,
+    "fresh_holdout_qualified": false,
+    "literal_cues_not_interpreted_modalities": true,
+    "native32_target_representation_qualified": false,
+    "native_token_or_cache_eligibility_measured": false,
+    "normalized_and_raw_selected_span_bytes": 2070,
+    "packet_cap_bytes": 32768,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json",
+    "record_ids": [
+      "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f"
+    ],
+    "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5",
+    "source_requests": {
+      "bytes": 6328,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "source_semantics_verified": false,
+    "source_view_provenance": {
+      "bytes": 30901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "sources": 8,
+    "split": "unassigned_pilot_exposure_only",
+    "targets_attached": false,
+    "training_qualified": false,
+    "unique_physical_sections": 8
+  },
+  "qualification": {
+    "Lake_executed": false,
+    "all_logic_families_supported": false,
+    "arbitrary_native_runtime_qualified": false,
+    "default_promotion": false,
+    "human_reviewed_legal_gold": false,
+    "official_source_authority_authenticated": false,
+    "proof_authority": false,
+    "source_only": true,
+    "source_semantics_verified": false,
+    "teacher_qualified": false,
+    "training_admission": false
+  },
+  "recommendations": [
+    {
+      "acceptance": "Bind row ID, raw source SHA, complete SourceSpan artifact/extent, historical aliases, IR family, input-vs-latent role, native width, task, schema/codec, checkpoint/preprocessing and producer receipt. Preserve all ineligible rows with reasons; never silently convert a failure into ready.",
+      "priority": 1,
+      "work": "Add a distinct closed metadata-only arbitrary-native intake profile; preserve every original retained runtime/assay byte and API."
+    },
+    {
+      "acceptance": "Require immutable encoder/tokenizer revisions, producer/receipt/artifact/vector hashes, float32 width/pooling/normalization, input/template/context hash and complete real token counts with no truncation. Distinguish genuine native8, projected8 and mock/hash-derived8. Native768 historical8192 architecture does not widen the retained512-token experiment.",
+      "priority": 2,
+      "work": "Authenticate native vectors by exact encoded source/context and producer profile, not matching row names or widths."
+    },
+    {
+      "acceptance": "This existing checkpoint cannot express arbitrary statute actors/actions with its frozen vocabulary. Missing reviewed targets remain unknown, never synthesized by family parsing or filled with compiler output. Do not attach the separate byte259 codec to a32-token checkpoint or relabel lossless transport as learned reconstruction.",
+      "priority": 3,
+      "work": "Keep normative32 target scope explicit and source-only prediction separate from target/reference evaluation."
+    },
+    {
+      "acceptance": "Use raw views and half-open raw char/UTF8 offsets for identity-normalized requests; retain historical normalized IDs/hashes as explicit aliases. Literal double-newline segments are geometric input boundaries, not inferred legal clauses. If larger context is required, record context_needed; do not append context silently or treat a bounded snippet as the whole statute.",
+      "priority": 4,
+      "work": "Retain exact original source bytes and context ownership while separately tracking historical sentence normalization."
+    },
+    {
+      "acceptance": "Include excluded connector rows in grouping; distinguish leakage-equivalence edges from statutory crossreference/context graphs. Check all prior train/evaluation/teacher/compiler exposures. Eight pilot rows are now exposed diagnostics, with unassigned splits and incomplete global alias/exposure closure; no fresh confirmation claim.",
+      "priority": 5,
+      "work": "Freeze all occurrence/document/content/overlap/version and exposure groups before embedding exclusions or fits."
+    },
+    {
+      "acceptance": "Section bytes combine operative text, headings, amendments and editorial notes. Human-reviewed target/context evidence must bind exact raw source generation and rule/facet interpretation; open-us-law-span-cache reference provenance and generated/compiler/teacher observations are not automatically human gold. Family syntax, native lowering and an actual subsequent lake build legal remain separate gates.",
+      "priority": 6,
+      "work": "Require independent source-context and target representation review before legal training admission."
+    },
+    {
+      "acceptance": "Keep every disposition visible: unsupported family/width, source conflict/unresolved/nonstatutory fallback, missing cache/producer proof, context needed, source token/byte overflow, literal-segment overflow, representation unknown or unsupported. Do not run encoders, decoders, teachers, fits, tests or Lake from this audit.",
+      "priority": 7,
+      "work": "Use the eight-row packet first for eligibility/accounting and measured native input production under a separately reviewed resource admission."
+    }
+  ],
+  "recommended_adapter_profile_contract": {
+    "IR_family_namespace_distinct_from_logic_projection_family": true,
+    "all_authority_flags_false_until_separately_reviewed_gates": true,
+    "all_input_failed_dispositions_retained": true,
+    "dimension_role_must_be_explicit": true,
+    "no_compiler_or_family_helper_as_hidden_teacher": true,
+    "no_models_or_native_owners_called_by_metadata_intake": true,
+    "source_profile_must_be_distinct_from_retained216_assay": true,
+    "target_and_final_reference_access_in_prediction_forbidden": true
+  },
+  "review_execution": {
+    "DuckDB_opened_read_only": true,
+    "Git_mutations": false,
+    "data_transport_imports": [
+      "duckdb",
+      "pyarrow.parquet"
+    ],
+    "full_374MB_JSON_or_source_text_materialized": false,
+    "largest_projected_reader_window_rows": 64,
+    "models_Torch_target_modules_imported": false,
+    "pilot_final_exact_join_projected_rows": 62,
+    "resource_mutations": false,
+    "source_Parquet_streamed_sha256_chunk_bytes": 1048576,
+    "stdlib_static_source_read_and_AST_literals_only": true,
+    "tests_inference_optimizer_training_Lake_Hub_operations": 0,
+    "writes": [
+      "real-law-source-pilot.json",
+      "source-documents/<recordsha>.txt",
+      "source-requests.json",
+      "source-view-provenance.json",
+      "source-family-intake-review.json"
+    ]
+  },
+  "schema": "arbitrary-native-source-family-intake-review/v1",
+  "scope": "Read-only existing source/native/family contracts plus data-only archived US Code pilot and exact plaintext views; recommendations for a distinct versioned adapter, not approval of an implementation or numerical trial.",
+  "source_inventory": {
+    "archived_IDs_still_pending": 441098,
+    "archived_cache_repository": "justicedao/uscode-autoformal-span-cache",
+    "archived_cache_revision": "765176c6db79ba65c1697c21dead43666350b730",
+    "archived_span_records": 443904,
+    "complete_all_source_occurrence_inventory": false,
+    "complete_source_scan": false,
+    "current_matched_archived_targets": 2806,
+    "current_observed_occurrences": 24191,
+    "cursor": {
+      "section": 199,
+      "span": 64
+    },
+    "no_current_official_law_or_human_gold_attestation": true,
+    "normalized_sentence_and_complete_raw_section_hashes_are_distinct": true,
+    "old_full_occurrence_seed": 18342,
+    "old_seed_cursor": {
+      "section": 128,
+      "span": 0
+    },
+    "outside_target_aggregate_only": 21385,
+    "source_Parquet_bytes": 374277662,
+    "source_Parquet_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "source_repository": "justicedao/ipfs_uscode",
+    "source_revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "source_rows_metadata": 60077,
+    "token_count_scope": "unmeasured in this census and this intake pilot"
+  }
+}

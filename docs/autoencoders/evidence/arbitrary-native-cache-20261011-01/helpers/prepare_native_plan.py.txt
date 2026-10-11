@@ -1,0 +1,29 @@
+from pathlib import Path
+from hashlib import sha256
+import importlib.util,json,os,sys
+from types import ModuleType
+F=Path(__file__).resolve().parent; D=F/'datasets'; C=Path('/home/barberb/lift_coding')
+def pin(p):
+ p=Path(p).resolve(); raw=p.read_bytes(); return {'path':str(p),'bytes':len(raw),'sha256':sha256(raw).hexdigest()}
+def read(p): return json.loads(Path(p).read_bytes())
+def write(p,v):
+ with p.open('x') as f: json.dump(v,f,sort_keys=True,indent=2); f.write('\n'); f.flush(); os.fsync(f.fileno())
+sys.path.insert(0,str(D))
+for name in ('ipfs_datasets_py','ipfs_datasets_py.logic','ipfs_datasets_py.logic.formalization','ipfs_datasets_py.logic.formalization.autoencoder','ipfs_datasets_py.optimizers','ipfs_datasets_py.optimizers.logic_theorem_optimizer'):
+ m=ModuleType(name); m.__path__=[str(D.joinpath(*name.split('.')))]; m.__file__=str(D.joinpath(*name.split('.'),'__init__.py')); sys.modules[name]=m
+from ipfs_datasets_py.logic.formalization.autoencoder import arbitrary_native_legal_ir_runtime as runtime
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_embedding_runtime as encoder
+snapshot=Path('/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots')/encoder.PINNED_REVISION
+opts=C/'artifacts/normative-retained-cache-runtime-20261007/preflight'
+states=[]
+for recipe in ('normative-wording-zero','normative-wording-ce'):
+ o=read(opts/('384-'+recipe+'-options.json')); states.append({'recipe':recipe,**{k:o[k] for k in ('checkpoint_pin','preprocessing_pin','donor_checkpoint_pin')}})
+config={'schema':'prepare-arbitrary-native-legal-sources/v1','mode':'produce384','dimension':384,'source_requests_pin':pin(F/'source-requests.json'),'source_artifact_pins':read(F/'source-artifact-pins.json'),'native384_receipt_refs':[],'native768_report_refs':[],'snapshot_path':str(snapshot),'batch_size':4}
+files=set(runtime.source_owner_paths().values())|{str(F/'source-requests.json'),str(F/'source-artifact-pins.json'),str(F/'run_native_cache_pilot.py'),str(F/'run_scope_guardian.py'),str(D/'scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py')}
+files.update(p['path'] for p in config['source_artifact_pins'].values())
+files.update(str((snapshot/name).resolve()) for name in encoder._PINNED_ASSETS)
+files.update(p['path'] for s in states for k,p in s.items() if k.endswith('_pin'))
+artifacts={p:{k:v for k,v in pin(p).items() if k!='path'} for p in sorted(files)}
+plan={'schema':'arbitrary-native-law-input-pilot-plan/v1','package_root':str(D),'helper_path':str(D/'scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py'),'dimension':384,'source_count':8,'source_configuration':config,'decoder_states':states,'artifacts':artifacts,'forbidden_reference_paths':[str(C/'external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb'),'/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8'],'actual_optimizer_updates':0,'semantic_gold':False,'training_executed':False,'selection_executed':False,'Lake_executed':False,'target_representability_verified':False,'qualification_scope':'source-only native384 readiness and frozen normative32 candidate custody, no real-law fidelity claim','resource_contract':{'cpu_slots':2,'rss_mib':1536,'child_slots':1,'storage_bytes':200000000,'wall_seconds':300},'legacy_guardian_phase':'training','legacy_phase_is_actual_training':False,'source_views_provenance':pin(F/'source-view-provenance.json')}
+write(F/'experiment-plan.json',plan)
+print(json.dumps({'plan':pin(F/'experiment-plan.json'),'artifact_count':len(artifacts),'source_count':8,'decoder_lanes':2,'actual_optimizer_updates':0}))

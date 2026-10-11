@@ -1,0 +1,16 @@
+from pathlib import Path
+from hashlib import sha256
+import json,xml.etree.ElementTree as ET
+F=Path(__file__).resolve().parent;D=F/'datasets'
+def pin(p):
+ p=Path(p);b=p.read_bytes();return {'path':str(p),'bytes':len(b),'sha256':sha256(b).hexdigest()}
+receipts={}
+for name in ('adapter-tests-draft-01.xml','preparation-cli-tests.xml','corrected-adapter-tests.xml','runtime-final-tests.xml','runtime-frozen-tests.xml'):
+ suites=ET.parse(F/name).getroot();counts={k:sum(int(s.get(k,'0')) for s in suites.iter('testsuite')) for k in ('tests','failures','errors','skipped')};receipts[name]={'pin':pin(F/name),**counts}
+assert receipts['runtime-frozen-tests.xml']['tests']==32 and receipts['runtime-frozen-tests.xml']['failures']==0
+assert receipts['corrected-adapter-tests.xml']['tests']==61 and receipts['corrected-adapter-tests.xml']['failures']==0
+assert receipts['adapter-tests-draft-01.xml']['tests']==202 and receipts['adapter-tests-draft-01.xml']['failures']==0
+paths=['ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py','ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py','scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py','tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py','tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py','tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py']
+v={'schema':'arbitrary-native-cache-validation/v1','passed':True,'unique_current_cases_passed':233,'current_case_breakdown':{'source_cache':35,'arbitrary_runtime':32,'preparation_cli':30,'retained_cache_runtime':105,'normative_runtime':31},'current_sources':{p:pin(D/p) for p in paths},'receipts':receipts,'failed_initial_CLI_cases_preserved':13,'initial_failure_resolved':'resolver returned bytes instead of the existing verified path interface','numerical_models_or_training_executed_by_these_tests':False,'native_and_model_fixtures_explicit':True,'runtime_test_reexecution_reason':'resolver boundary, contract identity and pre-helper origin review corrections','native_768_numerical_execution':False,'legal_semantic_accuracy':None,'Lake_executed':False}
+with (F/'validation.json').open('x') as f:json.dump(v,f,sort_keys=True,indent=2);f.write('\n')
+print(json.dumps({'passed':True,'unique_current_cases':233,'initial_failures_preserved':13}))
