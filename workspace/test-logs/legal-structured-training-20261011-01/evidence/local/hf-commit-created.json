@@ -1,0 +1,9 @@
+{
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/a2c8aa64d8c363eb796438b385c14058e607a5ec",
+  "default_promotion": false,
+  "parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "release_prefix": "releases/20261011-structured-span-probability-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "requested_additions": 103,
+  "revision": "a2c8aa64d8c363eb796438b385c14058e607a5ec"
+}

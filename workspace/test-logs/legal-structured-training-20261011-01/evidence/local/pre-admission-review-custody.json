@@ -1,0 +1,10 @@
+{
+  "all131bindings_exact": true,
+  "bytes": 37552,
+  "guardian_sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed",
+  "mode": "0444",
+  "plan_sha256": "5c582929818a729821ee566fd2a0c2b844fa6553d9c22d03c4e5aad15eb0bd56",
+  "review_file": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+  "runner_sha256": "4fe77c839026ade55a9a1eaaaee1f7be1ca1e326396b2ebf3ec64e5d875f0f24",
+  "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+}

@@ -1,0 +1,4 @@
+/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_structured_span_pilot.py:71: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:822.)
+  require(abs(float(structured['validity'])-math.log(4/3))<1e-10 and
+{"status": "completed", "actual_new_updates": 128, "actual_encoder_calls": 0}

@@ -1,0 +1,17 @@
+{
+  "actual_model_forwards": 0,
+  "actual_optimizer_updates": 0,
+  "authority": "synthetic numerical oracle only",
+  "expected_overlap": 0.7777777777777778,
+  "expected_validity": 0.28768207245178085,
+  "findings": [],
+  "finite_all_head_gradients": true,
+  "overlap": 0.7777777777777777,
+  "passed": true,
+  "qualified": false,
+  "same_output_CE_bit_exact": true,
+  "same_output_CE_gradients_bit_exact": true,
+  "schema": "structured-span-numerical-probes/v1",
+  "structural_padding_invariance": true,
+  "validity": 0.2876820724517808
+}

@@ -1,0 +1,2775 @@
+{
+  "learned_presence_and_modality_fixed": true,
+  "max_search_nodes": 50000,
+  "qualified": false,
+  "raw_greedy_preserved": true,
+  "rows": [
+    {
+      "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.031373023986816406,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.12960243225097656,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 666
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.9293708801269531,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.6346054077148438,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 666
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.13519287109375,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.7198677062988281,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 666
+          },
+          "exceptions": {
+            "boundary_score_margin_float32": 0.11024665832519531,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.6606426239013672,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 666
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.2013835906982422,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.1750116348266602,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 666
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "subdivision",
+              "actor": "or any other",
+              "conditions": [
+                "The word \"county\" includes a parish"
+              ],
+              "exceptions": [
+                "the United States"
+              ],
+              "modality": "P",
+              "object": "County\" as including \"parish\", and so",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 20.14882469177246,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 0.405159592628479,
+              "present": true,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 11.333050727844238,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 2.2625863552093506,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "P",
+          "modality_logit_margin": 3.213629722595215
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"subdivision\",\"actor\":\"or any other\",\"conditions\":[\"The word \\\"county\\\" includes a parish\"],\"exceptions\":[\"the United States\"],\"modality\":\"P\",\"object\":\"County\\\" as including \\\"parish\\\", and so\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "subdivision",
+              "actor": "or any other",
+              "conditions": [
+                "The word \"county\" includes a parish"
+              ],
+              "exceptions": [
+                "the United States"
+              ],
+              "modality": "P",
+              "object": "County\" as including \"parish\", and so",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 117,
+                "char_start": 106,
+                "span_score_float32": 16.789106369018555,
+                "text": "subdivision",
+                "token_end_inclusive": 25,
+                "token_start": 25,
+                "utf8_byte_end": 117,
+                "utf8_byte_start": 106
+              },
+              "span_logit_margin": 0.12960243225097656
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 94,
+                "char_start": 82,
+                "span_score_float32": 11.039798736572266,
+                "text": "or any other",
+                "token_end_inclusive": 23,
+                "token_start": 21,
+                "utf8_byte_end": 94,
+                "utf8_byte_start": 82
+              },
+              "span_logit_margin": 0.6346054077148438
+            },
+            "conditions": {
+              "presence_logit_margin": 20.14882469177246,
+              "present": true,
+              "span": {
+                "char_end": 80,
+                "char_start": 45,
+                "span_score_float32": 30.39068603515625,
+                "text": "The word \"county\" includes a parish",
+                "token_end_inclusive": 19,
+                "token_start": 12,
+                "utf8_byte_end": 80,
+                "utf8_byte_start": 45
+              },
+              "span_logit_margin": 0.7198677062988281
+            },
+            "exceptions": {
+              "presence_logit_margin": 0.405159592628479,
+              "present": true,
+              "span": {
+                "char_end": 162,
+                "char_start": 145,
+                "span_score_float32": 17.620141983032227,
+                "text": "the United States",
+                "token_end_inclusive": 34,
+                "token_start": 32,
+                "utf8_byte_end": 162,
+                "utf8_byte_start": 145
+              },
+              "span_logit_margin": 0.6606426239013672
+            },
+            "object": {
+              "presence_logit_margin": 11.333050727844238,
+              "present": true,
+              "span": {
+                "char_end": 162,
+                "char_start": 145,
+                "span_score_float32": 16.299217224121094,
+                "text": "the United States",
+                "token_end_inclusive": 34,
+                "token_start": 32,
+                "utf8_byte_end": 162,
+                "utf8_byte_start": 145
+              },
+              "span_logit_margin": 1.1750116348266602
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 36,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "0b5f8b33e9bfde0432ef823c16e2e162c05572058b7e7a8bef0c30f9328b0882",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 117,
+              "char_start": 106,
+              "span_score_float32": 16.789106369018555,
+              "text": "subdivision",
+              "token_end_inclusive": 25,
+              "token_start": 25,
+              "utf8_byte_end": 117,
+              "utf8_byte_start": 106
+            },
+            "actor": {
+              "char_end": 94,
+              "char_start": 82,
+              "span_score_float32": 11.039798736572266,
+              "text": "or any other",
+              "token_end_inclusive": 23,
+              "token_start": 21,
+              "utf8_byte_end": 94,
+              "utf8_byte_start": 82
+            },
+            "conditions": {
+              "char_end": 80,
+              "char_start": 45,
+              "span_score_float32": 30.39068603515625,
+              "text": "The word \"county\" includes a parish",
+              "token_end_inclusive": 19,
+              "token_start": 12,
+              "utf8_byte_end": 80,
+              "utf8_byte_start": 45
+            },
+            "exceptions": {
+              "char_end": 162,
+              "char_start": 145,
+              "span_score_float32": 17.620141983032227,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32,
+              "utf8_byte_end": 162,
+              "utf8_byte_start": 145
+            },
+            "object": {
+              "char_end": 38,
+              "char_start": 1,
+              "span_score_float32": 14.685283660888672,
+              "text": "County\" as including \"parish\", and so",
+              "token_end_inclusive": 10,
+              "token_start": 1,
+              "utf8_byte_end": 38,
+              "utf8_byte_start": 1
+            }
+          },
+          "best_score": 90.52501678466797,
+          "bound_pruned_nodes": 74,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 137,
+          "feasible_assignments": 7,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.12960243225097656,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 90.39541435241699,
+          "unique_within_guard": true,
+          "visited_nodes": 248
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 117,
+              "char_start": 106,
+              "span_score_float32": 16.789106369018555,
+              "text": "subdivision",
+              "token_end_inclusive": 25,
+              "token_start": 25,
+              "utf8_byte_end": 117,
+              "utf8_byte_start": 106
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 94,
+              "char_start": 82,
+              "span_score_float32": 11.039798736572266,
+              "text": "or any other",
+              "token_end_inclusive": 23,
+              "token_start": 21,
+              "utf8_byte_end": 94,
+              "utf8_byte_start": 82
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 80,
+              "char_start": 45,
+              "span_score_float32": 30.39068603515625,
+              "text": "The word \"county\" includes a parish",
+              "token_end_inclusive": 19,
+              "token_start": 12,
+              "utf8_byte_end": 80,
+              "utf8_byte_start": 45
+            }
+          },
+          "exceptions": {
+            "present": true,
+            "span": {
+              "char_end": 162,
+              "char_start": 145,
+              "span_score_float32": 17.620141983032227,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32,
+              "utf8_byte_end": 162,
+              "utf8_byte_start": 145
+            }
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 38,
+              "char_start": 1,
+              "span_score_float32": 14.685283660888672,
+              "text": "County\" as including \"parish\", and so",
+              "token_end_inclusive": 10,
+              "token_start": 1,
+              "utf8_byte_end": 38,
+              "utf8_byte_start": 1
+            }
+          },
+          "temporal": {
+            "present": false,
+            "span": null
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.16515350341796875,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.36124420166015625,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1653
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.021024703979492188,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.11685848236083984,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1653
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.07934188842773438,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.9196891784667969,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1653
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.04632568359375,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.3380126953125,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1653
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 11.176647186279297,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 0.9704861640930176,
+              "present": false,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 10.158851623535156,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 7.017827033996582,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "O",
+          "modality_logit_margin": 4.979345798492432
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"called\",\"actor\":\"as the\",\"conditions\":[\"the presiding officers of both Houses and\"],\"exceptions\":[],\"modality\":\"O\",\"object\":\"the enrolled bill, or\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": {
+            "rules": [
+              {
+                "action": "called",
+                "actor": "as the",
+                "conditions": [
+                  "the presiding officers of both Houses and"
+                ],
+                "exceptions": [],
+                "modality": "O",
+                "object": "the enrolled bill, or",
+                "temporal": []
+              }
+            ]
+          },
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 111,
+                "char_start": 105,
+                "span_score_float32": 26.49449920654297,
+                "text": "called",
+                "token_end_inclusive": 21,
+                "token_start": 21,
+                "utf8_byte_end": 111,
+                "utf8_byte_start": 105
+              },
+              "span_logit_margin": 0.36124420166015625
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 158,
+                "char_start": 152,
+                "span_score_float32": 12.24543571472168,
+                "text": "as the",
+                "token_end_inclusive": 31,
+                "token_start": 30,
+                "utf8_byte_end": 158,
+                "utf8_byte_start": 152
+              },
+              "span_logit_margin": 0.11685848236083984
+            },
+            "conditions": {
+              "presence_logit_margin": 11.176647186279297,
+              "present": true,
+              "span": {
+                "char_end": 236,
+                "char_start": 195,
+                "span_score_float32": 23.83530044555664,
+                "text": "the presiding officers of both Houses and",
+                "token_end_inclusive": 47,
+                "token_start": 41,
+                "utf8_byte_end": 236,
+                "utf8_byte_start": 195
+              },
+              "span_logit_margin": 0.9196891784667969
+            },
+            "exceptions": {
+              "presence_logit_margin": 0.9704861640930176,
+              "present": false,
+              "span": null,
+              "span_logit_margin": null
+            },
+            "object": {
+              "presence_logit_margin": 10.158851623535156,
+              "present": true,
+              "span": {
+                "char_end": 133,
+                "char_start": 112,
+                "span_score_float32": 25.744041442871094,
+                "text": "the enrolled bill, or",
+                "token_end_inclusive": 26,
+                "token_start": 22,
+                "utf8_byte_end": 133,
+                "utf8_byte_start": 112
+              },
+              "span_logit_margin": 0.3380126953125
+            },
+            "temporal": {
+              "presence_logit_margin": 7.017827033996582,
+              "present": false,
+              "span": null,
+              "span_logit_margin": null
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": 0.11685848236083984,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": null,
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "decoded",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 57,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "864c49145fe9d98415e9a2e33dcc8536c1b0b7030259bd0f5604efca55e57e38",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "span_score_float32": 26.49449920654297,
+              "text": "called",
+              "token_end_inclusive": 21,
+              "token_start": 21,
+              "utf8_byte_end": 111,
+              "utf8_byte_start": 105
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "span_score_float32": 12.24543571472168,
+              "text": "as the",
+              "token_end_inclusive": 31,
+              "token_start": 30,
+              "utf8_byte_end": 158,
+              "utf8_byte_start": 152
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "span_score_float32": 23.83530044555664,
+              "text": "the presiding officers of both Houses and",
+              "token_end_inclusive": 47,
+              "token_start": 41,
+              "utf8_byte_end": 236,
+              "utf8_byte_start": 195
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "span_score_float32": 25.744041442871094,
+              "text": "the enrolled bill, or",
+              "token_end_inclusive": 26,
+              "token_start": 22,
+              "utf8_byte_end": 133,
+              "utf8_byte_start": 112
+            }
+          },
+          "best_score": 88.31927680969238,
+          "bound_pruned_nodes": 23,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 30,
+          "feasible_assignments": 4,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.11685848236083984,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 88.20241832733154,
+          "unique_within_guard": true,
+          "visited_nodes": 64
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 111,
+              "char_start": 105,
+              "span_score_float32": 26.49449920654297,
+              "text": "called",
+              "token_end_inclusive": 21,
+              "token_start": 21,
+              "utf8_byte_end": 111,
+              "utf8_byte_start": 105
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 158,
+              "char_start": 152,
+              "span_score_float32": 12.24543571472168,
+              "text": "as the",
+              "token_end_inclusive": 31,
+              "token_start": 30,
+              "utf8_byte_end": 158,
+              "utf8_byte_start": 152
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 236,
+              "char_start": 195,
+              "span_score_float32": 23.83530044555664,
+              "text": "the presiding officers of both Houses and",
+              "token_end_inclusive": 47,
+              "token_start": 41,
+              "utf8_byte_end": 236,
+              "utf8_byte_start": 195
+            }
+          },
+          "exceptions": {
+            "present": false,
+            "span": null
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 133,
+              "char_start": 112,
+              "span_score_float32": 25.744041442871094,
+              "text": "the enrolled bill, or",
+              "token_end_inclusive": 26,
+              "token_start": 22,
+              "utf8_byte_end": 133,
+              "utf8_byte_start": 112
+            }
+          },
+          "temporal": {
+            "present": false,
+            "span": null
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.18645477294921875,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.1031608581542969,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1326
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.20262718200683594,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.0853729248046875,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1326
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.14359664916992188,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.24158477783203125,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1326
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.4779796600341797,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.9639968872070312,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1326
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "all",
+              "actor": "the contents of the",
+              "conditions": [
+                "the event of an"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the next regular session",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 11.243229866027832,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 2.3542113304138184,
+              "present": false,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 14.424522399902344,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 9.589088439941406,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "P",
+          "modality_logit_margin": 1.0202362537384033
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"all\",\"actor\":\"the contents of the\",\"conditions\":[\"the event of an\"],\"exceptions\":[],\"modality\":\"P\",\"object\":\"the next regular session\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "all",
+              "actor": "the contents of the",
+              "conditions": [
+                "the event of an"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the next regular session",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 96,
+                "char_start": 93,
+                "span_score_float32": 26.39885139465332,
+                "text": "all",
+                "token_end_inclusive": 18,
+                "token_start": 18,
+                "utf8_byte_end": 96,
+                "utf8_byte_start": 93
+              },
+              "span_logit_margin": 1.1031608581542969
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 237,
+                "char_start": 46,
+                "span_score_float32": 14.148138046264648,
+                "text": "the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the",
+                "token_end_inclusive": 43,
+                "token_start": 10,
+                "utf8_byte_end": 237,
+                "utf8_byte_start": 46
+              },
+              "span_logit_margin": 0.0853729248046875
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 51,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "e6309558c5d7d2c1930a05a2797478c9906d539c868bd29a19f3efad3313f298",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 96,
+              "char_start": 93,
+              "span_score_float32": 26.39885139465332,
+              "text": "all",
+              "token_end_inclusive": 18,
+              "token_start": 18,
+              "utf8_byte_end": 96,
+              "utf8_byte_start": 93
+            },
+            "actor": {
+              "char_end": 237,
+              "char_start": 218,
+              "span_score_float32": 14.062765121459961,
+              "text": "the contents of the",
+              "token_end_inclusive": 43,
+              "token_start": 40,
+              "utf8_byte_end": 237,
+              "utf8_byte_start": 218
+            },
+            "conditions": {
+              "char_end": 18,
+              "char_start": 3,
+              "span_score_float32": 28.23943328857422,
+              "text": "the event of an",
+              "token_end_inclusive": 4,
+              "token_start": 1,
+              "utf8_byte_end": 18,
+              "utf8_byte_start": 3
+            },
+            "object": {
+              "char_end": 273,
+              "char_start": 249,
+              "span_score_float32": 33.17018127441406,
+              "text": "the next regular session",
+              "token_end_inclusive": 49,
+              "token_start": 46,
+              "utf8_byte_end": 273,
+              "utf8_byte_start": 249
+            }
+          },
+          "best_score": 101.87123107910156,
+          "bound_pruned_nodes": 15,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 31,
+          "feasible_assignments": 4,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.3475189208984375,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 101.52371215820312,
+          "unique_within_guard": true,
+          "visited_nodes": 56
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 96,
+              "char_start": 93,
+              "span_score_float32": 26.39885139465332,
+              "text": "all",
+              "token_end_inclusive": 18,
+              "token_start": 18,
+              "utf8_byte_end": 96,
+              "utf8_byte_start": 93
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 237,
+              "char_start": 218,
+              "span_score_float32": 14.062765121459961,
+              "text": "the contents of the",
+              "token_end_inclusive": 43,
+              "token_start": 40,
+              "utf8_byte_end": 237,
+              "utf8_byte_start": 218
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 18,
+              "char_start": 3,
+              "span_score_float32": 28.23943328857422,
+              "text": "the event of an",
+              "token_end_inclusive": 4,
+              "token_start": 1,
+              "utf8_byte_end": 18,
+              "utf8_byte_start": 3
+            }
+          },
+          "exceptions": {
+            "present": false,
+            "span": null
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 273,
+              "char_start": 249,
+              "span_score_float32": 33.17018127441406,
+              "text": "the next regular session",
+              "token_end_inclusive": 49,
+              "token_start": 46,
+              "utf8_byte_end": 273,
+              "utf8_byte_start": 249
+            }
+          },
+          "temporal": {
+            "present": false,
+            "span": null
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.0897674560546875,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.1432514190673828,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 861
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.156005859375,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.8486480712890625,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 861
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.10840797424316406,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.18849754333496094,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 861
+          },
+          "exceptions": {
+            "boundary_score_margin_float32": 0.000263214111328125,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.0305633544921875,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 861
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.5891761779785156,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.9679374694824219,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 861
+          }
+        },
+        "canonical_ir": null,
+        "canonical_rule_valid": false,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": false,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 13.889322280883789,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 5.666577339172363,
+              "present": true,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 9.47894287109375,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 3.898475170135498,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "O",
+          "modality_logit_margin": 3.5276901721954346
+        },
+        "formal_outputs": [],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 36,
+                "char_start": 34,
+                "span_score_float32": 18.393878936767578,
+                "text": "of",
+                "token_end_inclusive": 5,
+                "token_start": 5,
+                "utf8_byte_end": 36,
+                "utf8_byte_start": 34
+              },
+              "span_logit_margin": 1.1432514190673828
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 224,
+                "char_start": 66,
+                "span_score_float32": 14.427360534667969,
+                "text": "or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible",
+                "token_end_inclusive": 39,
+                "token_start": 13,
+                "utf8_byte_end": 224,
+                "utf8_byte_start": 66
+              },
+              "span_logit_margin": 0.8486480712890625
+            },
+            "object": {
+              "presence_logit_margin": 9.47894287109375,
+              "present": true,
+              "span": {
+                "char_end": 139,
+                "char_start": 37,
+                "span_score_float32": 22.21489715576172,
+                "text": "the United States, a treaty, or a statute shall include the specific article or section and subsection",
+                "token_end_inclusive": 24,
+                "token_start": 6,
+                "utf8_byte_end": 139,
+                "utf8_byte_start": 37
+              },
+              "span_logit_margin": 0.9679374694824219
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 41,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": "no_compatible_assignment_in_retained_domain",
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "3a45dd9e45f7b541bde3d6f845c56d613af063195b29fedbd7e573a7a5e5139d",
+        "search": {
+          "best_observed_spans": null,
+          "best_score": null,
+          "bound_pruned_nodes": 0,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 428,
+          "feasible_assignments": 0,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": null,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": false,
+          "runner_up_score": null,
+          "unique_within_guard": false,
+          "visited_nodes": 488
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "span_diagnostics": null,
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.04721498489379883,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.926065444946289,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 153
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.034323692321777344,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.2669191360473633,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 153
+          },
+          "exceptions": {
+            "boundary_score_margin_float32": 2.80303955078125,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.42369651794433594,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 153
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.15698814392089844,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 3.2928390502929688,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 153
+          }
+        },
+        "canonical_ir": null,
+        "canonical_rule_valid": false,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": false,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 6.004222393035889,
+              "present": false,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 8.685323715209961,
+              "present": true,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 13.991859436035156,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 1.4835107326507568,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "P",
+          "modality_logit_margin": 3.383180618286133
+        },
+        "formal_outputs": [],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 3,
+                "char_start": 2,
+                "span_score_float32": 13.068183898925781,
+                "text": ")",
+                "token_end_inclusive": 2,
+                "token_start": 2,
+                "utf8_byte_end": 3,
+                "utf8_byte_start": 2
+              },
+              "span_logit_margin": 1.926065444946289
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 7,
+                "char_start": 2,
+                "span_score_float32": 10.579322814941406,
+                "text": ") The",
+                "token_end_inclusive": 3,
+                "token_start": 2,
+                "utf8_byte_end": 7,
+                "utf8_byte_start": 2
+              },
+              "span_logit_margin": 0.2669191360473633
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 17,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": "no_compatible_assignment_in_retained_domain",
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "9134fd16287cfd54390d2d043ab0ca04b0520b2d851bb1d00c8d1b4f541fda9f",
+        "search": {
+          "best_observed_spans": null,
+          "best_score": null,
+          "bound_pruned_nodes": 0,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 295,
+          "feasible_assignments": 0,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": null,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": false,
+          "runner_up_score": null,
+          "unique_within_guard": false,
+          "visited_nodes": 336
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "span_diagnostics": null,
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.013080596923828125,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.912445068359375,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2926
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.061367034912109375,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.3001232147216797,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2926
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.1471710205078125,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.4537315368652344,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2926
+          },
+          "exceptions": {
+            "boundary_score_margin_float32": 0.2903938293457031,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.1444282531738281,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2926
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.005763053894042969,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.6666679382324219,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2926
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "be",
+              "actor": "or allow",
+              "conditions": [
+                "The President, through any agency of the Department of Defense designated"
+              ],
+              "exceptions": [
+                "the laws of the United States"
+              ],
+              "modality": "P",
+              "object": "threat to national security",
+              "temporal": []
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 12.159683227539062,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 5.416003227233887,
+              "present": true,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 7.744921684265137,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 1.5505603551864624,
+              "present": false,
+              "required": false
+            }
+          },
+          "modality": "P",
+          "modality_logit_margin": 1.5760133266448975
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"be\",\"actor\":\"or allow\",\"conditions\":[\"The President, through any agency of the Department of Defense designated\"],\"exceptions\":[\"the laws of the United States\"],\"modality\":\"P\",\"object\":\"threat to national security\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "be",
+              "actor": "or allow",
+              "conditions": [
+                "The President, through any agency of the Department of Defense designated"
+              ],
+              "exceptions": [
+                "the laws of the United States"
+              ],
+              "modality": "P",
+              "object": "threat to national security",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 163,
+                "char_start": 161,
+                "span_score_float32": 19.014854431152344,
+                "text": "be",
+                "token_end_inclusive": 34,
+                "token_start": 34,
+                "utf8_byte_end": 163,
+                "utf8_byte_start": 161
+              },
+              "span_logit_margin": 0.912445068359375
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 157,
+                "char_start": 149,
+                "span_score_float32": 15.253307342529297,
+                "text": "or allow",
+                "token_end_inclusive": 32,
+                "token_start": 31,
+                "utf8_byte_end": 157,
+                "utf8_byte_start": 149
+              },
+              "span_logit_margin": 1.3001232147216797
+            },
+            "object": {
+              "presence_logit_margin": 7.744921684265137,
+              "present": true,
+              "span": {
+                "char_end": 174,
+                "char_start": 83,
+                "span_score_float32": 18.92202377319336,
+                "text": "the Department of Defense designated by him, may arm, have armed, or allow to be armed, any",
+                "token_end_inclusive": 37,
+                "token_start": 17,
+                "utf8_byte_end": 174,
+                "utf8_byte_start": 83
+              },
+              "span_logit_margin": 0.6666679382324219
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 76,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "38cafaf9b500110d4bc932a4b832ce9f015319a98f99bafb3c8b711fd26770eb",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 163,
+              "char_start": 161,
+              "span_score_float32": 19.014854431152344,
+              "text": "be",
+              "token_end_inclusive": 34,
+              "token_start": 34,
+              "utf8_byte_end": 163,
+              "utf8_byte_start": 161
+            },
+            "actor": {
+              "char_end": 157,
+              "char_start": 149,
+              "span_score_float32": 15.253307342529297,
+              "text": "or allow",
+              "token_end_inclusive": 32,
+              "token_start": 31,
+              "utf8_byte_end": 157,
+              "utf8_byte_start": 149
+            },
+            "conditions": {
+              "char_end": 119,
+              "char_start": 46,
+              "span_score_float32": 28.27857208251953,
+              "text": "The President, through any agency of the Department of Defense designated",
+              "token_end_inclusive": 21,
+              "token_start": 10,
+              "utf8_byte_end": 119,
+              "utf8_byte_start": 46
+            },
+            "exceptions": {
+              "char_end": 361,
+              "char_start": 332,
+              "span_score_float32": 29.22806739807129,
+              "text": "the laws of the United States",
+              "token_end_inclusive": 74,
+              "token_start": 69,
+              "utf8_byte_end": 361,
+              "utf8_byte_start": 332
+            },
+            "object": {
+              "char_end": 41,
+              "char_start": 14,
+              "span_score_float32": 17.141389846801758,
+              "text": "threat to national security",
+              "token_end_inclusive": 6,
+              "token_start": 3,
+              "utf8_byte_end": 41,
+              "utf8_byte_start": 14
+            }
+          },
+          "best_score": 108.91619110107422,
+          "bound_pruned_nodes": 69,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 55,
+          "feasible_assignments": 3,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.13455772399902344,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 108.7816333770752,
+          "unique_within_guard": true,
+          "visited_nodes": 144
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 163,
+              "char_start": 161,
+              "span_score_float32": 19.014854431152344,
+              "text": "be",
+              "token_end_inclusive": 34,
+              "token_start": 34,
+              "utf8_byte_end": 163,
+              "utf8_byte_start": 161
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 157,
+              "char_start": 149,
+              "span_score_float32": 15.253307342529297,
+              "text": "or allow",
+              "token_end_inclusive": 32,
+              "token_start": 31,
+              "utf8_byte_end": 157,
+              "utf8_byte_start": 149
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 119,
+              "char_start": 46,
+              "span_score_float32": 28.27857208251953,
+              "text": "The President, through any agency of the Department of Defense designated",
+              "token_end_inclusive": 21,
+              "token_start": 10,
+              "utf8_byte_end": 119,
+              "utf8_byte_start": 46
+            }
+          },
+          "exceptions": {
+            "present": true,
+            "span": {
+              "char_end": 361,
+              "char_start": 332,
+              "span_score_float32": 29.22806739807129,
+              "text": "the laws of the United States",
+              "token_end_inclusive": 74,
+              "token_start": 69,
+              "utf8_byte_end": 361,
+              "utf8_byte_start": 332
+            }
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 41,
+              "char_start": 14,
+              "span_score_float32": 17.141389846801758,
+              "text": "threat to national security",
+              "token_end_inclusive": 6,
+              "token_start": 3,
+              "utf8_byte_end": 41,
+              "utf8_byte_start": 14
+            }
+          },
+          "temporal": {
+            "present": false,
+            "span": null
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.7435989379882812,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 2.649229049682617,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1596
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.15134239196777344,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.20798492431640625,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1596
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.023004531860351562,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.3837394714355469,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1596
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.30756568908691406,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.7623405456542969,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1596
+          },
+          "temporal": {
+            "boundary_score_margin_float32": 0.25744056701660156,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.7560844421386719,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 1596
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "affect",
+              "actor": "Support not to affect adversely military preparedness Support (including the provision of",
+              "conditions": [
+                "the provision of such support will adversely"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the military",
+              "temporal": [
+                "civilian law enforcement official under this"
+              ]
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 4.752205848693848,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 3.938394784927368,
+              "present": false,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 16.588132858276367,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 3.2396411895751953,
+              "present": true,
+              "required": false
+            }
+          },
+          "modality": "P",
+          "modality_logit_margin": 2.8884146213531494
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"affect\",\"actor\":\"Support not to affect adversely military preparedness Support (including the provision of\",\"conditions\":[\"the provision of such support will adversely\"],\"exceptions\":[],\"modality\":\"P\",\"object\":\"the military\",\"temporal\":[\"civilian law enforcement official under this\"]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "affect",
+              "actor": "Support not to affect adversely military preparedness Support (including the provision of",
+              "conditions": [
+                "the provision of such support will adversely"
+              ],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the military",
+              "temporal": [
+                "civilian law enforcement official under this"
+              ]
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 296,
+                "char_start": 290,
+                "span_score_float32": 25.872615814208984,
+                "text": "affect",
+                "token_end_inclusive": 47,
+                "token_start": 47,
+                "utf8_byte_end": 296,
+                "utf8_byte_start": 290
+              },
+              "span_logit_margin": 2.649229049682617
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 89,
+                "char_start": 0,
+                "span_score_float32": 12.893448829650879,
+                "text": "Support not to affect adversely military preparedness Support (including the provision of",
+                "token_end_inclusive": 12,
+                "token_start": 0,
+                "utf8_byte_end": 89,
+                "utf8_byte_start": 0
+              },
+              "span_logit_margin": 0.20798492431640625
+            },
+            "conditions": {
+              "presence_logit_margin": 4.752205848693848,
+              "present": true,
+              "span": {
+                "char_end": 289,
+                "char_start": 245,
+                "span_score_float32": 30.877609252929688,
+                "text": "the provision of such support will adversely",
+                "token_end_inclusive": 46,
+                "token_start": 40,
+                "utf8_byte_end": 289,
+                "utf8_byte_start": 245
+              },
+              "span_logit_margin": 0.3837394714355469
+            },
+            "exceptions": {
+              "presence_logit_margin": 3.938394784927368,
+              "present": false,
+              "span": null,
+              "span_logit_margin": null
+            },
+            "object": {
+              "presence_logit_margin": 16.588132858276367,
+              "present": true,
+              "span": {
+                "char_end": 213,
+                "char_start": 119,
+                "span_score_float32": 24.654220581054688,
+                "text": "the assignment or detail of any personnel) may not be provided to any civilian law enforcement",
+                "token_end_inclusive": 34,
+                "token_start": 18,
+                "utf8_byte_end": 213,
+                "utf8_byte_start": 119
+              },
+              "span_logit_margin": 0.7623405456542969
+            },
+            "temporal": {
+              "presence_logit_margin": 3.2396411895751953,
+              "present": true,
+              "span": {
+                "char_end": 233,
+                "char_start": 189,
+                "span_score_float32": 19.662307739257812,
+                "text": "civilian law enforcement official under this",
+                "token_end_inclusive": 37,
+                "token_start": 32,
+                "utf8_byte_end": 233,
+                "utf8_byte_start": 189
+              },
+              "span_logit_margin": 0.7560844421386719
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 56,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "45dd863832ef994873335121693ce35289aacebbe55cad2ea7fb83f31abcbc95",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 296,
+              "char_start": 290,
+              "span_score_float32": 25.872615814208984,
+              "text": "affect",
+              "token_end_inclusive": 47,
+              "token_start": 47,
+              "utf8_byte_end": 296,
+              "utf8_byte_start": 290
+            },
+            "actor": {
+              "char_end": 89,
+              "char_start": 0,
+              "span_score_float32": 12.893448829650879,
+              "text": "Support not to affect adversely military preparedness Support (including the provision of",
+              "token_end_inclusive": 12,
+              "token_start": 0,
+              "utf8_byte_end": 89,
+              "utf8_byte_start": 0
+            },
+            "conditions": {
+              "char_end": 289,
+              "char_start": 245,
+              "span_score_float32": 30.877609252929688,
+              "text": "the provision of such support will adversely",
+              "token_end_inclusive": 46,
+              "token_start": 40,
+              "utf8_byte_end": 289,
+              "utf8_byte_start": 245
+            },
+            "object": {
+              "char_end": 309,
+              "char_start": 297,
+              "span_score_float32": 23.89188003540039,
+              "text": "the military",
+              "token_end_inclusive": 49,
+              "token_start": 48,
+              "utf8_byte_end": 309,
+              "utf8_byte_start": 297
+            },
+            "temporal": {
+              "char_end": 233,
+              "char_start": 189,
+              "span_score_float32": 19.662307739257812,
+              "text": "civilian law enforcement official under this",
+              "token_end_inclusive": 37,
+              "token_start": 32,
+              "utf8_byte_end": 233,
+              "utf8_byte_start": 189
+            }
+          },
+          "best_score": 113.19786167144775,
+          "bound_pruned_nodes": 47,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 89,
+          "feasible_assignments": 5,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.20798492431640625,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 112.98987674713135,
+          "unique_within_guard": true,
+          "visited_nodes": 160
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 296,
+              "char_start": 290,
+              "span_score_float32": 25.872615814208984,
+              "text": "affect",
+              "token_end_inclusive": 47,
+              "token_start": 47,
+              "utf8_byte_end": 296,
+              "utf8_byte_start": 290
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 89,
+              "char_start": 0,
+              "span_score_float32": 12.893448829650879,
+              "text": "Support not to affect adversely military preparedness Support (including the provision of",
+              "token_end_inclusive": 12,
+              "token_start": 0,
+              "utf8_byte_end": 89,
+              "utf8_byte_start": 0
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 289,
+              "char_start": 245,
+              "span_score_float32": 30.877609252929688,
+              "text": "the provision of such support will adversely",
+              "token_end_inclusive": 46,
+              "token_start": 40,
+              "utf8_byte_end": 289,
+              "utf8_byte_start": 245
+            }
+          },
+          "exceptions": {
+            "present": false,
+            "span": null
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 309,
+              "char_start": 297,
+              "span_score_float32": 23.89188003540039,
+              "text": "the military",
+              "token_end_inclusive": 49,
+              "token_start": 48,
+              "utf8_byte_end": 309,
+              "utf8_byte_start": 297
+            }
+          },
+          "temporal": {
+            "present": true,
+            "span": {
+              "char_end": 233,
+              "char_start": 189,
+              "span_score_float32": 19.662307739257812,
+              "text": "civilian law enforcement official under this",
+              "token_end_inclusive": 37,
+              "token_start": 32,
+              "utf8_byte_end": 233,
+              "utf8_byte_start": 189
+            }
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    },
+    {
+      "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "result": {
+        "Lake_executed": false,
+        "admitted": false,
+        "ambiguity_guard": 1e-07,
+        "candidate_domain_truncated": true,
+        "candidate_summary": {
+          "action": {
+            "boundary_score_margin_float32": 0.04614067077636719,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.6639175415039062,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          },
+          "actor": {
+            "boundary_score_margin_float32": 0.19110631942749023,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.1541404724121094,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          },
+          "conditions": {
+            "boundary_score_margin_float32": 0.3239765167236328,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.0926074981689453,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          },
+          "exceptions": {
+            "boundary_score_margin_float32": 0.08592987060546875,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.14366531372070312,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          },
+          "object": {
+            "boundary_score_margin_float32": 0.1613292694091797,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 1.086954116821289,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          },
+          "temporal": {
+            "boundary_score_margin_float32": 0.04106903076171875,
+            "boundary_tied_within_guard": false,
+            "independent_best_span_margin_float32": 0.13965988159179688,
+            "retained_count": 8,
+            "truncated": true,
+            "valid_span_count": 2016
+          }
+        },
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "\u2014",
+              "actor": "229, or 2332a of title",
+              "conditions": [
+                "The Secretary of Defense"
+              ],
+              "exceptions": [
+                "the request of the Attorney General, may provide assistance"
+              ],
+              "modality": "O",
+              "object": "the enforcement of section",
+              "temporal": [
+                "weapon of mass destruction"
+              ]
+            }
+          ]
+        },
+        "canonical_rule_valid": true,
+        "default_promoted": false,
+        "encoder_execution_performed": false,
+        "family_syntax_checked": true,
+        "fixed_decisions": {
+          "facets": {
+            "action": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "actor": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": null,
+              "present": true,
+              "required": true
+            },
+            "conditions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 18.99260902404785,
+              "present": true,
+              "required": false
+            },
+            "exceptions": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 1.7973718643188477,
+              "present": true,
+              "required": false
+            },
+            "object": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 13.440553665161133,
+              "present": true,
+              "required": false
+            },
+            "temporal": {
+              "origin": "fixed_saved_head_argmax_completed_independently_of_raw_early_refusal",
+              "presence_logit_margin": 3.2237493991851807,
+              "present": true,
+              "required": false
+            }
+          },
+          "modality": "O",
+          "modality_logit_margin": 3.3511199951171875
+        },
+        "formal_outputs": [
+          {
+            "Lake_executed": false,
+            "admitted": false,
+            "default_promoted": false,
+            "encoder_execution_performed": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"\u2014\",\"actor\":\"229, or 2332a of title\",\"conditions\":[\"The Secretary of Defense\"],\"exceptions\":[\"the request of the Attorney General, may provide assistance\"],\"modality\":\"O\",\"object\":\"the enforcement of section\",\"temporal\":[\"weapon of mass destruction\"]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "model_execution_performed": false,
+            "origin": "bounded_joint_source_span_selector",
+            "payload": {
+              "action": "\u2014",
+              "actor": "229, or 2332a of title",
+              "conditions": [
+                "The Secretary of Defense"
+              ],
+              "exceptions": [
+                "the request of the Attorney General, may provide assistance"
+              ],
+              "modality": "O",
+              "object": "the enforcement of section",
+              "temporal": [
+                "weapon of mass destruction"
+              ]
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false,
+            "target_access": false,
+            "teacher_forcing": false,
+            "training_executed": false
+          }
+        ],
+        "formalized": false,
+        "independent_greedy": {
+          "Lake_executed": false,
+          "actual_owner_report": false,
+          "admitted": false,
+          "canonical_ir": null,
+          "default_promoted": false,
+          "encoder_execution_performed": false,
+          "facets": {
+            "action": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 76,
+                "char_start": 75,
+                "span_score_float32": 18.985448837280273,
+                "text": "\u2014",
+                "token_end_inclusive": 13,
+                "token_start": 13,
+                "utf8_byte_end": 78,
+                "utf8_byte_start": 75
+              },
+              "span_logit_margin": 1.6639175415039062
+            },
+            "actor": {
+              "presence_logit_margin": null,
+              "present": true,
+              "span": {
+                "char_end": 280,
+                "char_start": 258,
+                "span_score_float32": 7.577978134155273,
+                "text": "229, or 2332a of title",
+                "token_end_inclusive": 50,
+                "token_start": 45,
+                "utf8_byte_end": 282,
+                "utf8_byte_start": 260
+              },
+              "span_logit_margin": 1.1541404724121094
+            },
+            "conditions": {
+              "presence_logit_margin": 18.99260902404785,
+              "present": true,
+              "span": {
+                "char_end": 325,
+                "char_start": 76,
+                "span_score_float32": 27.760047912597656,
+                "text": "The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a",
+                "token_end_inclusive": 57,
+                "token_start": 14,
+                "utf8_byte_end": 327,
+                "utf8_byte_start": 78
+              },
+              "span_logit_margin": 1.0926074981689453
+            },
+            "object": {
+              "presence_logit_margin": 13.440553665161133,
+              "present": true,
+              "span": {
+                "char_end": 147,
+                "char_start": 76,
+                "span_score_float32": 25.193328857421875,
+                "text": "The Secretary of Defense, upon the request of the Attorney General, may",
+                "token_end_inclusive": 27,
+                "token_start": 14,
+                "utf8_byte_end": 149,
+                "utf8_byte_start": 78
+              },
+              "span_logit_margin": 1.086954116821289
+            }
+          },
+          "formalized": false,
+          "minimum_decision_logit_margin": null,
+          "model_execution_performed": false,
+          "origin": "reconstructed_independent_greedy_from_saved_scores",
+          "promotion_performed": false,
+          "proof_authority": false,
+          "publication_performed": false,
+          "qualified": false,
+          "reason": "copied_spans_overlap",
+          "roundtrip_ok": false,
+          "semantic_correctness_verified": false,
+          "status": "abstained",
+          "target_access": false,
+          "teacher_forcing": false,
+          "training_executed": false
+        },
+        "input_token_count": 63,
+        "max_search_nodes": 50000,
+        "model_execution_performed": false,
+        "objective": "math.fsum_float64_of_float32_start_plus_end_in_canonical_facet_order/v1",
+        "origin": "bounded_joint_source_span_selector",
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "raw_output_repaired": false,
+        "readout_policy_changed": true,
+        "reason": null,
+        "roundtrip_ok": false,
+        "schema": "joint-copied-span-selection/v1",
+        "scores_sha256": "7f0c5606fde5d92bc1f5bd4ea745858a5f12f47d152de3a9e276e393a9a9306f",
+        "search": {
+          "best_observed_spans": {
+            "action": {
+              "char_end": 76,
+              "char_start": 75,
+              "span_score_float32": 18.985448837280273,
+              "text": "\u2014",
+              "token_end_inclusive": 13,
+              "token_start": 13,
+              "utf8_byte_end": 78,
+              "utf8_byte_start": 75
+            },
+            "actor": {
+              "char_end": 280,
+              "char_start": 258,
+              "span_score_float32": 7.577978134155273,
+              "text": "229, or 2332a of title",
+              "token_end_inclusive": 50,
+              "token_start": 45,
+              "utf8_byte_end": 282,
+              "utf8_byte_start": 260
+            },
+            "conditions": {
+              "char_end": 100,
+              "char_start": 76,
+              "span_score_float32": 26.66744041442871,
+              "text": "The Secretary of Defense",
+              "token_end_inclusive": 17,
+              "token_start": 14,
+              "utf8_byte_end": 102,
+              "utf8_byte_start": 78
+            },
+            "exceptions": {
+              "char_end": 166,
+              "char_start": 107,
+              "span_score_float32": 30.44891357421875,
+              "text": "the request of the Attorney General, may provide assistance",
+              "token_end_inclusive": 29,
+              "token_start": 20,
+              "utf8_byte_end": 168,
+              "utf8_byte_start": 109
+            },
+            "object": {
+              "char_end": 252,
+              "char_start": 226,
+              "span_score_float32": 21.369190216064453,
+              "text": "the enforcement of section",
+              "token_end_inclusive": 42,
+              "token_start": 39,
+              "utf8_byte_end": 254,
+              "utf8_byte_start": 228
+            },
+            "temporal": {
+              "char_end": 352,
+              "char_start": 326,
+              "span_score_float32": 20.53908920288086,
+              "text": "weapon of mass destruction",
+              "token_end_inclusive": 61,
+              "token_start": 58,
+              "utf8_byte_end": 354,
+              "utf8_byte_start": 328
+            }
+          },
+          "best_score": 125.58806037902832,
+          "bound_pruned_nodes": 142,
+          "budget_exhausted": false,
+          "completed": true,
+          "conflict_nodes": 431,
+          "feasible_assignments": 2,
+          "full_domain_optimality_established": false,
+          "joint_score_margin": 0.13965988159179688,
+          "node_count_scope": "every attempted facet assignment, including conflicts and pruned nodes",
+          "retained_domain_optimality_established": true,
+          "runner_up_score": 125.44840049743652,
+          "unique_within_guard": true,
+          "visited_nodes": 656
+        },
+        "semantic_correctness_verified": false,
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "span_diagnostics": {
+          "action": {
+            "present": true,
+            "span": {
+              "char_end": 76,
+              "char_start": 75,
+              "span_score_float32": 18.985448837280273,
+              "text": "\u2014",
+              "token_end_inclusive": 13,
+              "token_start": 13,
+              "utf8_byte_end": 78,
+              "utf8_byte_start": 75
+            }
+          },
+          "actor": {
+            "present": true,
+            "span": {
+              "char_end": 280,
+              "char_start": 258,
+              "span_score_float32": 7.577978134155273,
+              "text": "229, or 2332a of title",
+              "token_end_inclusive": 50,
+              "token_start": 45,
+              "utf8_byte_end": 282,
+              "utf8_byte_start": 260
+            }
+          },
+          "conditions": {
+            "present": true,
+            "span": {
+              "char_end": 100,
+              "char_start": 76,
+              "span_score_float32": 26.66744041442871,
+              "text": "The Secretary of Defense",
+              "token_end_inclusive": 17,
+              "token_start": 14,
+              "utf8_byte_end": 102,
+              "utf8_byte_start": 78
+            }
+          },
+          "exceptions": {
+            "present": true,
+            "span": {
+              "char_end": 166,
+              "char_start": 107,
+              "span_score_float32": 30.44891357421875,
+              "text": "the request of the Attorney General, may provide assistance",
+              "token_end_inclusive": 29,
+              "token_start": 20,
+              "utf8_byte_end": 168,
+              "utf8_byte_start": 109
+            }
+          },
+          "object": {
+            "present": true,
+            "span": {
+              "char_end": 252,
+              "char_start": 226,
+              "span_score_float32": 21.369190216064453,
+              "text": "the enforcement of section",
+              "token_end_inclusive": 42,
+              "token_start": 39,
+              "utf8_byte_end": 254,
+              "utf8_byte_start": 228
+            }
+          },
+          "temporal": {
+            "present": true,
+            "span": {
+              "char_end": 352,
+              "char_start": 326,
+              "span_score_float32": 20.53908920288086,
+              "text": "weapon of mass destruction",
+              "token_end_inclusive": 61,
+              "token_start": 58,
+              "utf8_byte_end": 354,
+              "utf8_byte_start": 328
+            }
+          }
+        },
+        "status": "selected",
+        "target_access": false,
+        "teacher_forcing": false,
+        "top_k": 8,
+        "training_executed": false
+      }
+    }
+  ],
+  "schema": "structured-span-exposed-law-joint-diagnostic/v1",
+  "semantic_accuracy": null,
+  "top_k": 8,
+  "used_for_updates_or_selection": false
+}

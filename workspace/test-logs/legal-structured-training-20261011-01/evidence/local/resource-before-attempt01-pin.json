@@ -1,0 +1,7 @@
+{
+  "bytes": 6129897,
+  "local_copy": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/resource-before-attempt01.local.json",
+  "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "scope": "full local endpoint snapshot only; never publish foreign ledger bodies",
+  "sha256": "626886fd1d607667a47b97f8d1dc4b5df80290e77d5e68150e4ad9eb07186ffe"
+}

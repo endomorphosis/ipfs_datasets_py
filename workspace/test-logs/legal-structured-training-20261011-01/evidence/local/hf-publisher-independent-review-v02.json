@@ -1,0 +1,60 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-before-file-identities.local.json": {
+      "bytes": 996557,
+      "sha256": "58e84a87108597a21a288276a19fe16cb4b829a420f43103c04dee0e96b901d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-preparation-receipt-v01.json": {
+      "bytes": 93298,
+      "sha256": "19182d8fcb1310fa3efbeba07734f2ace7add6503ede95b60c726d669325208c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-publisher-independent-review-v01.json": {
+      "bytes": 2914,
+      "sha256": "0b0acb79fbdfefe0e583325ff1574153125510b178672b5c16b62615d23706bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/publish_structured_hf_release-draft-v01.py": {
+      "bytes": 5637,
+      "sha256": "e973fbe96d932a909dc1aab366a78c235abff716f7951d50c1497e3468693f00"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/publish_structured_hf_release.py": {
+      "bytes": 6344,
+      "sha256": "4385df7a4e85c5a5d029f1fb4ad2a3473db133a23693a77cd678de6934284618"
+    }
+  },
+  "created_at_utc": "2026-10-11T09:00:32.607190+00:00",
+  "findings": [],
+  "limitations": [
+    "Static qualification does not certify actual external upload; final readback/download receipts required",
+    "SDK/CLI import/dependency graph and credential behavior are not independently executed or exhaustively qualified",
+    "Ordinary-file hash fences detect mutations but do not impose kernel filesystem immutability",
+    "The strict old identity check includes.gitattributes; automatic Hub changes would fail verification rather than qualify preservation"
+  ],
+  "passed": true,
+  "resolved_draft_finding": {
+    "code": "unstructured-review-binding",
+    "previous_review": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-publisher-independent-review-v01.json",
+    "resolution": "Exact prepared-tree review schema, repo/prefix/parent/count required; all review artifact records must be closed bytes/SHA maps for ordinary absolute non-symlink files and rehash exact. Exact map membership required for preparation receipt,3208-identity baseline and all103 upload paths. Incidental hash strings no longer qualify."
+  },
+  "schema": "structured-span-hf-publisher-independent-review/v2",
+  "scope": "Static publisher source qualification only. No execution, network, models, tests, numerical or resource work. Actual payload prepared-tree qualification is a separate required gate, not conferred by this review.",
+  "statically_verified_controls": {
+    "authority": "Publishes custom experimental4checkpoint states and evidence only; no legal semantics/Lake/default promotion or numerical replay inferred.",
+    "baseline_file_count": 3208,
+    "expected_parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+    "failure": "Exclusive receipts, created commit receipt saved before readback/download; failures stop without automatic retry. Partial created commit must be reconciled before another explicit attempt.",
+    "mutation": "Sole create_commit with CommitOperationAdd under newprefix and exact parent_commit compare-and-swap. Live baseline Git/LFS identity map must match all3208 files; prefix absent. No delete/card/default operations.",
+    "new_prefix": "releases/20261011-structured-span-probability-v1",
+    "payload_bytes": 47834763,
+    "payload_file_count": 103,
+    "readback": "Immutable created revision; every old identity exact and precisely103 new paths. CLI hf download uses exact created revision/newprefix, then each103 downloaded byte/SHA and original local pin verified.",
+    "repo": "Publicus/legal-ir-autoencoder",
+    "review_gate": {
+      "additional_review_artifacts_rehashed": true,
+      "empty_findings_required": true,
+      "passed_required": true,
+      "required_closed_path_bindings": 105,
+      "schema": "structured-span-hf-prepared-publication-independent-review/v1"
+    },
+    "tree": "All ordinary files exactly equal receipt pathset; no symlinks; every relative path remains within fixed newprefix, no parent traversal; all local file pins exact"
+  }
+}

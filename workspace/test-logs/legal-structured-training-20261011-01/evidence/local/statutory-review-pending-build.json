@@ -1,0 +1,89 @@
+{
+  "actual_human_labels": 0,
+  "actual_submissions": 0,
+  "admission_masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "evaluation_admissions": 0,
+  "findings": [],
+  "inputs": [
+    {
+      "bytes": 378311,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    {
+      "bytes": 2312,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    {
+      "bytes": 7137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    {
+      "bytes": 21457,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    {
+      "bytes": 28742,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    {
+      "bytes": 6364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    {
+      "bytes": 9770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    {
+      "bytes": 72690,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    {
+      "bytes": 459,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    {
+      "bytes": 30901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    }
+  ],
+  "model_execution": false,
+  "original_packet_byte_exact": true,
+  "outputs": [
+    {
+      "bytes": 18178,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-submission-guide.json",
+      "sha256": "c1237b99c477a1e016df14141d2553f719c7228901f1bc604e637502c1f0c8af"
+    },
+    {
+      "bytes": 21931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json",
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    },
+    {
+      "bytes": 1727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-replay.json",
+      "sha256": "ec739ee803d721b63604166084b5e595d45473e1fc8ebc092374c0fc5111282a"
+    }
+  ],
+  "packet_canonical_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+  "passed": true,
+  "schema": "real8-statutory-pending-recorder-build/v1",
+  "source_semantics_verified": false,
+  "training_admissions": 0
+}

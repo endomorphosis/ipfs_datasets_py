@@ -1,0 +1,240 @@
+{
+  "findings": [],
+  "frozen_inventory": {
+    "all111_JSON_artifacts_parsed_without_duplicates_or_nonfinite_literals": true,
+    "all155_exact_pins_verified": true,
+    "all155_file_bodies_UTF8_decodable": true,
+    "all_relative_names_normalized_and_confined": true,
+    "all_source_stat_identity_checks_stable_during_reads": true,
+    "all_sources_in_two_declared_owned_roots": true,
+    "all_sources_ordinary_regular_nonsymlink_canonical": true,
+    "bytes_per_destination": 14442752,
+    "destination_evidence_directories_not_yet_present": true,
+    "entries": 155,
+    "existing_destination_ancestors_canonical_nonsymlink": true,
+    "expected_destinations": [
+      "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/workspace/test-logs/legal-structured-training-20261011-01/evidence",
+      "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/workspace/artifacts/legal-structured-training-20261011-01/evidence"
+    ],
+    "inventory_duplicate_key_rejecting_and_finite_JSON": true,
+    "jsonl_lines_parsed": 106,
+    "local_top_level_entries": 94,
+    "owned_run_entries": 61,
+    "two_destination_payload_bytes": 28885504
+  },
+  "limitations": [
+    "This pass authorizes only the exact pinned 155-entry inventory; collect() is broad and future or regenerated entries require another review. The present review receipt itself is not in this frozen inventory.",
+    "The selector uses Python assert guards and normal JSON parsing. The reviewed ordinary nonoptimized invocation and exact duplicate-free inventory bytes are required; this is not a hardened arbitrary-inventory ingestion service.",
+    "Destination parents are verified canonical and the evidence roots currently absent. Root must preserve that topology and exact source/selector/inventory pins until copy; concurrent changes are outside this snapshot.",
+    "No copy was performed, no staged index was inspected, and no numerical/legal conclusion or model checkpoint body was independently executed or validated during this review.",
+    "Saved public-Hub verification is accepted as evidence of the completed root publication; no live Hub check or fresh download was performed by this reviewer.",
+    "Byte/JSON selection review does not authenticate legal semantics, reviewer identity, source current-law authority, continuous foreign ledger coverage, or an unseen held-out accuracy gain."
+  ],
+  "own_source_additions": {
+    "all_current_source_bytes_match_stage_receipt": true,
+    "all_declarations_added_status_A": true,
+    "base": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+    "file_count": 7,
+    "files": {
+      "docs/autoencoders/legal_structured_training_20261011.md": {
+        "bytes": 21569,
+        "sha256": "9f24eecdc675c28d33e44c7c5657773ba3e03f3c17bb00a4089047fe3f37a4ce",
+        "status": "A"
+      },
+      "ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py": {
+        "bytes": 35564,
+        "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9",
+        "status": "A"
+      },
+      "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py": {
+        "bytes": 34663,
+        "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c",
+        "status": "A"
+      },
+      "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": {
+        "bytes": 17622,
+        "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84",
+        "status": "A"
+      },
+      "tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py": {
+        "bytes": 43889,
+        "sha256": "ffd2b8b89c27dd5e657f8bfa0df705c271d72e66dcb0c5c3c13c6999c4c6882f",
+        "status": "A"
+      },
+      "tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+        "bytes": 33517,
+        "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328",
+        "status": "A"
+      },
+      "tests/unit/logic/legal_ir/test_structured_span_objective.py": {
+        "bytes": 11648,
+        "sha256": "c4780f0d971fbc9af70e8e442ba6064ff711d5b76eee15e16c728dc03bb852e5",
+        "status": "A"
+      }
+    },
+    "git_index_not_independently_read_in_this_byte_JSON_only_review": true,
+    "source_code_stage_receipt": {
+      "bytes": 1609,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-code-stage-v01.json",
+      "sha256": "5828afafcb8bc67ad5ef0094ec4a32205385592746fa971dedc5d12296fe6b66"
+    }
+  },
+  "passed": true,
+  "payload_exclusion": {
+    "all_full_foreign_resource_ledger_bodies_excluded": true,
+    "all_full_local_HF_identity_maps_excluded": true,
+    "authored_16289807_byte_training_export_body_excluded": true,
+    "authored_export_receipt_is_metadata_only": true,
+    "eight_exposed_law_source_cached_vectors_and_saved_pointer_scores_are_diagnostics_not_trained_weights": true,
+    "excluded_local_payload_names": [
+      "authored-train-tune-only.json",
+      "hf-after-file-identities.local.json",
+      "hf-before-file-identities.local.json",
+      "hf-observed-model-info.json",
+      "resource-after-attempt01.local.json",
+      "resource-before-attempt01.local.json"
+    ],
+    "four_actual_new_checkpoint_weight_bodies_excluded": [
+      "results/raw384-1729-ce0-checkpoint.json",
+      "results/raw384-1729-probability01-checkpoint.json",
+      "results/source_only-1729-ce0-checkpoint.json",
+      "results/source_only-1729-probability01-checkpoint.json"
+    ],
+    "no_selected_JSON_or_JSONL_full_reservations_leases_waiters_collections": true,
+    "no_selected_JSON_or_JSONL_numeric_model_optimizer_state_keys": true,
+    "observed_HF_model_info_cache_excluded": true,
+    "owned_run_resource_record_and_aggregate_only_permitted": true,
+    "retained_parent_and_new_checkpoint_path_hash_metadata_is_not_a_weight_body": true
+  },
+  "public_HF_chronology": {
+    "added_release_files_byte_download_verified_by_saved_receipt": 103,
+    "attributes_changed_identity_explicitly_acknowledged": true,
+    "contribution_markdown_current_claims_match_saved_receipts": true,
+    "no_claim_all3208_file_identities_unchanged": true,
+    "no_default_or_original_model_card_change": true,
+    "no_second_HF_mutation_or_rollback_claimed": true,
+    "old_attributes_bytes_preserved_as_exact_prefix_verified_here": true,
+    "parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+    "physical_exact_prefix_plus_added_release_local_rule_bytes": 120,
+    "physical_new_attributes_bytes": 2230,
+    "physical_old_attributes_bytes": 2110,
+    "prior_payload_file_identities_preserved_by_saved_receipt": 3207,
+    "prior_total_including_attributes": 3208,
+    "published_revision": "a2c8aa64d8c363eb796438b385c14058e607a5ec",
+    "release_prefix": "releases/20261011-structured-span-probability-v1",
+    "repo": "Publicus/legal-ir-autoencoder",
+    "review_basis": "Saved published-Hub receipts and physical saved attributes readback; this reviewer did not query the Hub."
+  },
+  "review_scope": "Static stdlib byte/JSON/XML/AST inspection of the exact pre-copy inventory and selector; no selector execution, copying, model/numerical imports, tests, resource acquisition, Git changes or network.",
+  "reviewed_file_pins": [
+    {
+      "bytes": 49872,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/contribution-copy-inputs-v01.json",
+      "sha256": "256090e219318e4745cdd3ad07f208d4dfca1d2f12675ea25035348d89cc2508"
+    },
+    {
+      "bytes": 3616,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_contribution.py",
+      "sha256": "a9431b4edf3d8ecae63acb2538dd81ba36f76ede4c8ac1a7015be7446b1f8dbd"
+    },
+    {
+      "bytes": 3579,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/contribution.md",
+      "sha256": "12a8bb3abcde3e4eb6e28630ad4f3c24d77700ad84f5d468dcbfc08ae14d0993"
+    },
+    {
+      "bytes": 1609,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-code-stage-v01.json",
+      "sha256": "5828afafcb8bc67ad5ef0094ec4a32205385592746fa971dedc5d12296fe6b66"
+    },
+    {
+      "bytes": 421,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-commit-created.json",
+      "sha256": "11abefe09432c97ce10e5c5d9d789d8cefc931874b41e5cade98e3bbaac2bccb"
+    },
+    {
+      "bytes": 47741,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-publication-verification.json",
+      "sha256": "3ecb5c4f724e71d155e676b830f186c9711438d288f464706bdca78610d3cde2"
+    },
+    {
+      "bytes": 1205,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-attributes-append-only-verification.json",
+      "sha256": "86bef601f46046e8a0c1576497293ecaa46fb447ac1f4ecc3fda2eb009229eb3"
+    },
+    {
+      "bytes": 4019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/validation.json",
+      "sha256": "f9fca375174e752316c7064b80abe2992c7e38a313acdf30c80a2ad5b3ced3fc"
+    },
+    {
+      "bytes": 3495,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/resource-endpoint-preservation.json",
+      "sha256": "fc2f9ebd7016d1920504b1b7af235c329101f8e6fff36979b1c4cfae53d235f3"
+    },
+    {
+      "bytes": 21931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json",
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    }
+  ],
+  "reviewer": "/root/structured_training_design_20261011",
+  "saved_evidence_preservation": {
+    "actual_pending8_review_recording_submissions0_masks_all0": true,
+    "all16_raw_law_lane_reports_and16_separate_joint_lane_reports_present": true,
+    "all_raw_and_joint_law_denominators8": true,
+    "failed_and_corrected_independent_reviews_and_drafts_preserved": true,
+    "four_training_reports_32_updates_each_exact_common_batch_manifest": "8761fb0ed369c60605f6d7c9730fa9510bc7cc35d4ec807ff3d19be5f60d7f5d",
+    "full_suite687_cases_686passes_one_failure_retained": true,
+    "initial_HF_verifier_refusal_and_later_append_scope_completion_preserved": true,
+    "initial_failed_worker_88_case_fake_clock_evidence_retained": true,
+    "joint_used_for_updates_or_selection_false_all_lanes": true,
+    "legal_semantic_accuracy_null_qualified_false_all_lanes": true,
+    "no_clean_full687_pass_rerun_claimed": true,
+    "raw_target_access_false_Lake_false_all_lanes": true,
+    "required_historical_and_current_entries": [
+      "worker-inert-tests-v01.log",
+      "worker-inert-tests-v01.xml",
+      "final-inert-tests.log",
+      "final-inert-tests.xml",
+      "subprocess-import-recheck.log",
+      "subprocess-import-recheck.xml",
+      "statutory-recorder-independent-review-v01.json",
+      "statutory-recorder-independent-review-v02.json",
+      "structured-worker-independent-review-v01.json",
+      "structured-worker-independent-review-v02.json",
+      "hf-preparation-v01.log",
+      "hf-preparation-v02.log",
+      "hf-prepared-publication-independent-review-v01.json",
+      "hf-prepared-publication-independent-review-v02.json",
+      "hf-identity-difference-v01.json",
+      "hf-publication.log",
+      "hf-publication-verification.json",
+      "hf-publication-readback.log",
+      "hf-attributes-append-only-verification.json"
+    ],
+    "separate_one_case_successful_cwd_recheck_retained": true
+  },
+  "schema": "structured-contribution-inventory-independent-review/v1",
+  "selector_static_contract": {
+    "AST_parsed_only": true,
+    "current_collect_selection_excludes_weight_checkpoint_names_and_local_identity_ledger_export_bodies": true,
+    "destinations_fixed_to_two_roots": true,
+    "each_input_pin_checked_before_copy_and_all_after_copy": true,
+    "existing_target_allowed_only_when_byte_equal": true,
+    "fresh_target_exclusive_binary_write": true,
+    "frozen_inventory_consumed_without_recollecting": true,
+    "imports": [
+      "pathlib",
+      "argparse",
+      "hashlib",
+      "json",
+      "os"
+    ],
+    "no_original_source_overwrites": true,
+    "no_remote_mutations_or_model_execution": true,
+    "ordinary_source_guard": true,
+    "outputs_exclusive_create_and_fsync": true,
+    "relative_traversal_rejected": true
+  }
+}

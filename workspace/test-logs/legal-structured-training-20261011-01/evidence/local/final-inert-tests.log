@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 687 items
+
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_structured_span_objective.py . [  0%]
+.............................................................            [  9%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py . [  9%]
+........................................................................ [ 19%]
+............                                                             [ 21%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py . [ 21%]
+........................................................................ [ 32%]
+...............                                                          [ 34%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_decoder_preflight.py . [ 34%]
+........................................................................ [ 44%]
+.                                                                        [ 44%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py . [ 45%]
+........................................................................ [ 55%]
+.................................F                                       [ 60%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py . [ 60%]
+............................................................             [ 69%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_source_review.py . [ 69%]
+................................................................         [ 78%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py . [ 79%]
+..................................                                       [ 83%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py . [ 84%]
+........................................................................ [ 94%]
+.....                                                                    [ 95%]
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_retained_span_score_capture.py . [ 95%]
+...............................                                          [100%]
+
+=================================== FAILURES ===================================
+________ test_import_and_source_preflight_do_not_load_a_numeric_backend ________
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py:492: in test_import_and_source_preflight_do_not_load_a_numeric_backend
+    assert completed.returncode == 0, completed.stderr
+E   AssertionError: Traceback (most recent call last):
+E       File "<string>", line 6, in <module>
+E     ModuleNotFoundError: No module named 'ipfs_datasets_py.logic.legal_ir.canonical_span_decoder'
+E     
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['/home/barberb/.local/bin/python', '-c', "\nimport hashlib\nimport json\nimport sys\nfrom types...ine 6, in <module>\nModuleNotFoundError: No module named \'ipfs_datasets_py.logic.legal_ir.canonical_span_decoder\'\n').returncode
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/final-inert-tests.xml -
+=========================== short test summary info ============================
+FAILED artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_span_decoder.py::test_import_and_source_preflight_do_not_load_a_numeric_backend
+======================== 1 failed, 686 passed in 32.02s ========================

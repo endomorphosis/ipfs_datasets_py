@@ -1,0 +1,59 @@
+{
+  "artifacts": [
+    {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    {
+      "bytes": 11648,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_structured_span_objective.py",
+      "sha256": "c4780f0d971fbc9af70e8e442ba6064ff711d5b76eee15e16c728dc03bb852e5"
+    },
+    {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  ],
+  "authored_inert_cases_by_AST": 62,
+  "checked": {
+    "CE0_old_arithmetic": "Modality CE; per-field start/end unreduced ignored-absent CEs averaged by .5; optional presence CE added before mean; equal sum with modality divided by seven. Weight exactly zero returns that same ce object directly, skips float64 structure and preserves old scalar arithmetic.",
+    "backend_ownership": "The module imports math only. No model open, forward, optimizer, backward, network or internal fit admission is present. The caller supplies the backend and owns fit/admission lineage.",
+    "conditional_distribution_normalization": "Both scalar and backend versions normalize valid intervals before adding a large absolute shift back. Starts/ends are marginal sums of the normalized valid-pair distribution; normalization is checked with 1e-9 tolerance.",
+    "exact_normalized_pair_overlap": "For inclusive valid intervals, P(overlap)=1-P(E_left<S_right)-P(E_right<S_left). Prefix sums exclude ends equal to a start. Disjoint directional events are mutually exclusive under valid intervals, so the CDF identity is exact for independently drawn field intervals.",
+    "field_and_row_averaging": "Validity averages active reference fields per row; overlap averages all unordered active reference-field pairs per row; these averages are then averaged over rows and combined with equal one-half weighting.",
+    "finite_forward_and_bounds": "Closed CPU float32 output shape and finite values are required. Log mass, normalized marginals, pair probabilities and all loss scalars are checked; structure uses float64 and pair/validity values clamp only within a checked rounding allowance.",
+    "inert_test_quality": "Hand-derived uniform mass and 7/9 overlap; exhaustive independent interval-pair overlap enumeration; present/absent gating; stable underflow/extreme scalar cases; token/label/latent schema refusal; numerical-import denial and no-forward AST checks.",
+    "padded_logits": "Structured log_softmax crops each row to its actual token count before valid-pair construction. CE intentionally retains old finite-padding arithmetic over full padded width.",
+    "reference_presence_gating": "Actor/action are required true. Optional fields are selected from supplied reference Boolean labels, never predicted presence logits; absent heads cannot lower structured loss by predicting absence.",
+    "stable_valid_order_mass": "Actual-row float32 pointers are converted to float64; log_softmax precedes masked valid triangular log pairs. Max over valid entries is removed before logsumexp and normalization. Invalid entries stay -infinity, so tiny valid mass can underflow in diagnostics without taking log(0) in the loss."
+  },
+  "created_at_utc": "2026-10-11T08:22:51Z",
+  "findings": [],
+  "limitations": [
+    "No numerical objective, Torch gradient or exact CE-parity execution was performed by this reviewer.",
+    "Internal record geometry has no complete source bytes, source provenance, reviewer identity or semantic target authority; supplied label geometry is not independently authenticated.",
+    "The scalar oracle and static algebra support forward probability arithmetic only; finite gradient and optimizer behavior need the root-owned admitted probe."
+  ],
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "proof_authority": false,
+  "qualified": false,
+  "resource_admissions": 0,
+  "root_numerical_probe_requirements": [
+    "On identical saved outputs and labels, compare old-owner CE and structure_weight=0 ce/total by exact torch equality, then compare all parameter/input gradients and verify total aliases ce.",
+    "Compare Torch float64 structure diagnostics to the independent scalar oracle and brute-force interval-pair values for asymmetric nonuniform synthetic pointers.",
+    "Use mixed actual token lengths; change only cropped padding to large finite values and prove structured components/gradients stay unchanged while reporting any intentional full-width CE change separately.",
+    "Backpropagate an invalid-order synthetic row with extremely small valid mass and equal extreme valid-pair scores; verify finite loss/gradients, normalized pair probabilities and absent-head structured gradients zero.",
+    "Verify reference optional presence stays fixed when predicted presence logits change; structured values must remain unchanged.",
+    "Probe the supported numerical domain separately from CE overflow: finite float32 logits near +/-3e38 can still make legacy float32 CE overflow, which should be refused as nonfinite CE rather than claimed universally trainable."
+  ],
+  "schema": "structured-span-objective-independent-static-review/v1",
+  "scope": "source_and_inert_test_static_review_only_not_gradient_or_backend_execution",
+  "semantic_gold": false,
+  "source_edits": 0,
+  "source_module_imports_run": 0,
+  "tests_run": 0
+}

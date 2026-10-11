@@ -1,0 +1,18 @@
+{
+  "file_count": 103,
+  "independent_review": {
+    "bytes": 90505,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-prepared-publication-independent-review-v02.json",
+    "sha256": "cac0654da66263bd0b94a77ce508316219b3afc0feaf4fe668c283d3a48b4fd4"
+  },
+  "old_file_count": 3208,
+  "operations": "prefix-only additions; parent_commit compare-and-swap",
+  "parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "payload_bytes": 47834763,
+  "prepared_receipt": {
+    "bytes": 93298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-preparation-receipt-v01.json",
+    "sha256": "19182d8fcb1310fa3efbeba07734f2ace7add6503ede95b60c726d669325208c"
+  },
+  "repo": "Publicus/legal-ir-autoencoder"
+}

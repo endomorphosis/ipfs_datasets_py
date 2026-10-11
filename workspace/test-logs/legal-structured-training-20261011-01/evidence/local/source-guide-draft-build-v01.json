@@ -1,0 +1,69 @@
+{
+  "actual_labels_or_submissions_created": 0,
+  "created_at_utc": "2026-10-11T08:30:03Z",
+  "family_Lake_or_dimension_promotion_claimed": false,
+  "model_or_numerical_imports": 0,
+  "network_calls": 0,
+  "numerical_source_edits": 0,
+  "observed_root_main": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+  "observed_source_main": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+  "outputs": [
+    {
+      "bytes": 18549,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/docs/autoencoders/legal_structured_training_20261011.md",
+      "sha256": "b3522d8bf37534168b47edc0dec6d99b2d0671561c31b92eb890fbad83bd9bf5"
+    },
+    {
+      "bytes": 1951,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/contribution-draft-v01.md",
+      "sha256": "1520ace15a054a59c1eed66024e20c7bbc84e1b6ec2620dfe4de895090121ebc"
+    }
+  ],
+  "pending_actual_fit_results": true,
+  "pending_root_numerical_probe_results": true,
+  "pending_root_test_results": true,
+  "recipe_inputs": [
+    {
+      "bytes": 11110,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_span_pilot.py",
+      "sha256": "0d0fc4cb5fcde5b47af0ab5c35ac5880120ad9e571e337ba735b6ca3fbd06454"
+    },
+    {
+      "bytes": 15910,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_structured_span_pilot.py",
+      "sha256": "4fe77c839026ade55a9a1eaaaee1f7be1ca1e326396b2ebf3ec64e5d875f0f24"
+    },
+    {
+      "bytes": 85481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/main-progress-review.json",
+      "sha256": "7e3ddcf465a49e61f7fa341c1e1bc68ac9d6b3e1f2c9cc43c5c1605a678407ec"
+    },
+    {
+      "bytes": 4133,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-build.json",
+      "sha256": "77950a4a31d1910819b4b63104fac4eccd1bc37f1d0e9685724dfd76f3e3a593"
+    }
+  ],
+  "resource_admissions": 0,
+  "reviewed_API_owners": [
+    {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    }
+  ],
+  "schema": "structured-span-source-guide-draft-build/v1",
+  "semantic_gold_claimed": false,
+  "status": "draft_source_guide_actual_results_pending",
+  "tests_run": 0
+}

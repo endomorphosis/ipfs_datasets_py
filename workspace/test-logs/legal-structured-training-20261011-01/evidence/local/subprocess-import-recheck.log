@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests/unit/logic/legal_ir/test_canonical_span_decoder.py .               [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/subprocess-import-recheck.xml -
+============================== 1 passed in 0.13s ===============================

@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 539, in <module>
+    main()
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 535, in main
+    prepare(parser.parse_args())
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 328, in prepare
+    plan = bundle.file(args.plan, "evidence/experiment-plan.json")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 115, in file
+    raw = checked_ref(expected) if expected is not None else read_bytes(source)
+                                                             ^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 65, in read_bytes
+    require(path.is_absolute() and path.resolve(strict=True) == path, "canonical absolute input path required")
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py", line 38, in require
+    raise ValueError(message)
+ValueError: canonical absolute input path required

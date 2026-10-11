@@ -1,0 +1,156 @@
+{
+  "API": {
+    "StructuredSpanRuntime.infer": "(source_rows[{id,source_text,latent384}],*,control=none|zero|disabled|rotate,capture_scores=True)->newlineage targetfree report withunchangedgreedy rows+sameforward score dictionaries",
+    "evaluate": "(newouter,TUNE,*,max_seconds<=300)->complete/truncated exposedauthored loss report; explicitnumerical",
+    "load_checkpoint": "(path,*,expected_sha256)->newouter againstexactfilebytes; puremetadata only",
+    "next_batch_ids": "(newouter,TRAIN,*,steps=1)->exact paired schedule IDs; noTorch",
+    "open_checkpoint": "(newouter)->StructuredSpanRuntime; explicitnumerical restoration",
+    "prepare_checkpoint": "(parent,TRAIN,TUNE,*,structure_weight,expected_parent_sha256,expected_training_sha256,expected_tuning_sha256)->newouter",
+    "save_checkpoint": "(newouter,path)->exclusive newfile transport receipt",
+    "train_decoder": "(newouter,TRAIN,TUNE,*,max_steps<=32,max_seconds<=300)->checkpoint/report; explicitnumerical",
+    "validate_checkpoint": "(newouter)->detached validated inert metadata/state; noTorch"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py": {
+      "AST_parsed_without_execution": true,
+      "bytes": 35564,
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": {
+      "bytes": 17622,
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py": {
+      "AST_parsed_without_execution": true,
+      "bytes": 43569,
+      "sha256": "a08ea3b08050bbca883ef10fef9eb57e971cd10c8524a8648c40bda2c1fa156b"
+    }
+  },
+  "author_static_syntax_checked": true,
+  "authority": {
+    "admitted": false,
+    "default_promotion": false,
+    "formalized": false,
+    "proof_authority": false,
+    "qualified": false,
+    "semantic_gold": false
+  },
+  "checkpoint_contract": {
+    "absolute_after_requested32": 432,
+    "current_state": "model_state+optimizer_state only; no old checkpoint schema",
+    "embedded_historical_parent": "Exact original warmparent once, original nested historicalcheckpoints unchanged. Newstate stores no source/targetexamples.",
+    "expected_parent_sha256_scope": "Canonical checkpoint digest(parent), distinct from originalon-disk fileSHA suppliedbyrootplan. Manifesthashes likewisecanonical. load_checkpoint expectedSHA means exactfilebytes.",
+    "full_original_Adam_moments_transferred": true,
+    "inherited_counter": 400,
+    "initial_epoch": 4,
+    "initial_row_cursor": 192,
+    "lineage": "objective_resumed_source_span_v1",
+    "new_initial_counter": 0,
+    "new_optimizer_created_without_full_state": false,
+    "old_loader": "Closed oldspan/warm checkpoint guardsreject newouter; privateephemeral topologyview used onlywithvalidatednewstate for restore/greedy reuse.",
+    "oldconfig_loss_fromscratch": "historical topology descriptor only, never authoritative newobjective or initialization",
+    "schema": "objective-resumed-source-span-checkpoint/v1"
+  },
+  "created_at_utc": "2026-10-11T08:25:52.225804+00:00",
+  "fits_or_resource_operations": false,
+  "independent_qualification": false,
+  "inert_test_authoring": {
+    "backend": "Detachedworker import; synthetic1152/96rows+fake23tensor model/Adam/scalarTorch interfaces; no actual numerical package import.",
+    "coverage": "parent andproducer/source hashes, bothmanifest/source/target/latent/order drift, distinctclosed schema/objective, completeAdam400 andepoch/cursor, detachedhistory/state, equal32batch schedules, fake32updates anddeadlines, TUNEonly external evaluation, targetfree inputs/controls, sameforward capture and3failure cleanup paths, actuallegacy closedfieldASTguards.",
+    "declared_cases_from_literal_parametrizations": 77,
+    "test_function_names": [
+      "test_standalone_module_import_is_fenced_from_numerical_packages",
+      "test_wrong_parent_hash_is_rejected_before_any_restore",
+      "test_source_target_latent_and_order_manifest_drift_is_rejected",
+      "test_objective_weight_allows_only_the_paired_zero_and_point_one_arms",
+      "test_training_refuses_more_than_32_steps_and_noninteger_bounds",
+      "test_training_refuses_invalid_deadline_bounds_before_restore",
+      "test_preparation_is_numeric_import_free_and_preserves_complete_Adam400",
+      "test_prepared_nested_model_moments_history_and_progress_are_detached",
+      "test_checkpoint_schema_objective_counters_and_moments_are_closed",
+      "test_live_owner_source_hash_drift_is_rejected_without_restoration",
+      "test_reauthenticated_parent_still_requires_each_pinned_implementation",
+      "test_preexisting_warm_lineage_cannot_be_reinitialized_at_zero",
+      "test_paired_objectives_share_the_exact_next_32_deterministic_batches",
+      "test_pure_schedule_rejects_invalid_new_step_bounds",
+      "test_actual_legacy_loader_metadata_guards_reject_the_new_outer_without_importing_owners",
+      "test_32_fake_updates_report_new_and_absolute_counts_without_parent_mutation",
+      "test_deadline_before_first_batch_reports_zero_actual_updates_and_exact_state",
+      "test_deadline_between_fake_batches_preserves_the_committed_prefix",
+      "test_authored_tuning_evaluation_is_external_and_performs_no_fake_updates",
+      "test_tuning_deadline_reports_unmeasured_losses_without_fabricated_completion",
+      "test_target_free_inference_controls_and_scores_share_each_single_fake_forward",
+      "test_inference_without_score_capture_installs_no_hook_or_additional_forward",
+      "test_target_reference_and_uncontracted_fields_are_rejected_before_fake_forward",
+      "test_inference_input_geometry_and_controls_are_closed",
+      "test_temporary_capture_hooks_are_removed_on_every_inference_failure"
+    ],
+    "test_functions": 25,
+    "unknown_parametrizations": [
+      "test_objective_weight_allows_only_the_paired_zero_and_point_one_arms",
+      "test_training_refuses_invalid_deadline_bounds_before_restore"
+    ]
+  },
+  "inference_contract": {
+    "additional_forwards_for_capture": 0,
+    "admission_gold_default_family_Lake": false,
+    "legal_accuracy": null,
+    "native_encoder_execution": false,
+    "old_capture_finalize_alias": false,
+    "outer_schema": "objective-resumed-source-span-inference/v1",
+    "same_forward_hook": "temporary hook returnsNone; finally removes evenon failure",
+    "score_schema": "joint-source-span-scores/v1",
+    "target_access": false,
+    "weights_fullAdam_RNG_custody": "Assert exactrestoration atentry and unchangedafter inference; ambientCPURNG guarded/preserved."
+  },
+  "known_limits": [
+    "Authorstaticnotes andinertauthoredcontrols do notselfqualify numerical correctness; distinctreviewer mustreadworker/objective androot executes inertcontrols separately.",
+    "No production model/import/forward/backward/test/fit executed duringauthoring.",
+    "Canonical parent andsplit hashesauthenticate exactdata identity, not reviewedlegal roles. Originalfilecustody mustbe supplied separately inrootplan.",
+    "Geometry penalties discourage ordering/overlap; they do not establish actor/action/object fidelity, context interpretation, calibration or generalization.",
+    "Allretained authoredtrain/tuning alreadyexposed, eightreal sources remain sourceonly masks0."
+  ],
+  "models_imported_or_run": false,
+  "objective_contract": {
+    "actual_function": "logic.legal_ir.structured_span_objective.objective_from_output",
+    "old_loss_monkeypatched": false,
+    "one_forward_per_training_batch": true,
+    "reference_geometry_prepare_chunks": 12,
+    "schema": "source-span-order-overlap-probability/v1",
+    "structure_reference_presence": "TRAIN/TUNE authored labels only, never inference.",
+    "terms": [
+      "ce",
+      "validity",
+      "overlap",
+      "structure",
+      "weighted_structure",
+      "total"
+    ],
+    "weights": [
+      0.0,
+      0.1
+    ]
+  },
+  "schedule_contract": {
+    "batch_size": 12,
+    "deadline": "Checked before eachbatch; restore/forward/backward/packing noninterruptible. Complete/truncated actualupdates/rows/batches retained. No guarantee32steps fit admittedwall.",
+    "resumes_epoch4_seed": 1733,
+    "sameorderedbatches_per_pair": true,
+    "seed_plus_epoch": 1729,
+    "soft_new_update_limit": 32,
+    "train_count": 1152,
+    "tuning": "Neverupdates worker; evaluate explicitseparate complete/truncated loss only. Any external selectionscope is rootplanresponsibility.",
+    "tuning_count": 96
+  },
+  "schema": "structured-span-continuation-author-build/v1",
+  "source_scope": "Newworker+newinerttests only; original24retainedownerbytes unchanged per main-progress-review.",
+  "tests_executed": false
+}

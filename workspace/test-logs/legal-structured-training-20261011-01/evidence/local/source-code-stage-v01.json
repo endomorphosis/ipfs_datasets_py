@@ -1,0 +1,42 @@
+{
+  "base": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+  "code_test_doc_file_count": 7,
+  "files": {
+    "docs/autoencoders/legal_structured_training_20261011.md": {
+      "bytes": 21569,
+      "sha256": "9f24eecdc675c28d33e44c7c5657773ba3e03f3c17bb00a4089047fe3f37a4ce",
+      "status": "A"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py": {
+      "bytes": 35564,
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9",
+      "status": "A"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py": {
+      "bytes": 34663,
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c",
+      "status": "A"
+    },
+    "ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": {
+      "bytes": 17622,
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84",
+      "status": "A"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py": {
+      "bytes": 43889,
+      "sha256": "ffd2b8b89c27dd5e657f8bfa0df705c271d72e66dcb0c5c3c13c6999c4c6882f",
+      "status": "A"
+    },
+    "tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+      "bytes": 33517,
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328",
+      "status": "A"
+    },
+    "tests/unit/logic/legal_ir/test_structured_span_objective.py": {
+      "bytes": 11648,
+      "sha256": "c4780f0d971fbc9af70e8e442ba6064ff711d5b76eee15e16c728dc03bb852e5",
+      "status": "A"
+    }
+  },
+  "schema": "structured-source-code-stage/v1"
+}

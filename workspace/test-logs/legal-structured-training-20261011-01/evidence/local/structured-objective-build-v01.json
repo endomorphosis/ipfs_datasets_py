@@ -1,0 +1,279 @@
+{
+  "NumPy_imported": false,
+  "Torch_imported": false,
+  "accumulator": "float64 shifted log probabilities, shifted valid-pair logsumexp, normalized relative valid-pair probabilities, shifted end-CDFs; prevents losing relative normalization at extreme score magnitude",
+  "active_fields": "reference presence only; required actor/action; exact authored label intervals validated; no teacher span injected into candidates",
+  "api": "objective_from_output(torch, output, records, *, structure_weight=0.1)",
+  "backend": "explicit caller-owned Torch parameter; module imports only math and future annotations; no numerical backend import",
+  "ce_parity": "arithmetic copied from retained span._loss; guarded numerical same-output callback parity still required",
+  "fit_executed": false,
+  "model_forward_executed": false,
+  "model_opened": false,
+  "module": {
+    "bytes": 17622,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+    "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+  },
+  "network_accessed": false,
+  "new_checkpoint_or_training_claim": false,
+  "no_forward_or_model_open": true,
+  "objective": "CE + structure_weight * (mean_rows_mean_present_fields_negative_log_valid_order_mass + mean_rows_mean_present_pairs_exact_conditional_overlap_probability)/2",
+  "padding": "cropped to actual per-row token count for both structural terms; CE mirrors retained padded-head behavior",
+  "prior_readout_module_checks": [
+    {
+      "bytes": 16730,
+      "matches_prior": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "bytes": 42670,
+      "matches_prior": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    {
+      "bytes": 17966,
+      "matches_prior": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    }
+  ],
+  "probability_rounding_tolerance": 1e-09,
+  "proof_authority": false,
+  "pure_apis": [
+    "reference_geometry(records)",
+    "probability_reference(start_logits, end_logits, presence)"
+  ],
+  "qualified": false,
+  "reference_geometry": "strict closed internal record/token/labels schemas; six bool presence, nonoverlapping bounded present indices, explicit absent(-100,-100), finite0D/384D latent; no full source byte replay claim",
+  "resource_acquired": false,
+  "retained_owner_checks": [
+    {
+      "bytes": 29148,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    {
+      "bytes": 28040,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    {
+      "bytes": 37249,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_runtime",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    {
+      "bytes": 28444,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    {
+      "bytes": 15959,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.gte_multilingual_profile",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    {
+      "bytes": 24439,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_native_conditioning",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    {
+      "bytes": 13375,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    {
+      "bytes": 9556,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768_complete",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    {
+      "bytes": 109257,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_contracts",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 9794,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_decoder_preflight",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    {
+      "bytes": 6017,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_source_guards",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    {
+      "bytes": 21764,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_span_decoder",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    {
+      "bytes": 27947,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    {
+      "bytes": 26219,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    {
+      "bytes": 19364,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    {
+      "bytes": 7896,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    {
+      "bytes": 100140,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    {
+      "bytes": 14622,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    {
+      "bytes": 42137,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    {
+      "bytes": 146870,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    {
+      "bytes": 14165,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    {
+      "bytes": 35294,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    {
+      "bytes": 21228,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    {
+      "bytes": 4428,
+      "matches_prior": true,
+      "module": "ipfs_datasets_py.utils.cid_utils",
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  ],
+  "retained_owner_count": 24,
+  "return_metadata_fields": [
+    "schema",
+    "structure_weight",
+    "structure_computed",
+    "reference_geometry",
+    "row_diagnostics",
+    "qualified",
+    "semantic_gold",
+    "proof_authority"
+  ],
+  "return_tensor_fields": [
+    "ce",
+    "validity",
+    "overlap",
+    "structure",
+    "weighted_structure",
+    "total"
+  ],
+  "schema": "structured-span-objective-build/v1",
+  "semantic_gold": false,
+  "source_head": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+  "static_AST_parsed": true,
+  "structural_complexity": "O(B*6*N^2+B*15*N), B<=32,N<=256",
+  "structure_weight_zero": "structure_computed false; total is same ce tensor; structural placeholders are graph-connected zero",
+  "test_function_count": 24,
+  "test_functions": [
+    "test_geometry_is_closed_and_does_not_claim_source_replay_or_review",
+    "test_optional_reference_presence_controls_geometry",
+    "test_required_reference_roles_cannot_be_masked_away",
+    "test_reference_presence_requires_boolean_values",
+    "test_absent_reference_spans_must_be_explicit",
+    "test_present_reference_interval_bounds",
+    "test_overlapping_authored_reference_intervals_are_rejected",
+    "test_closed_internal_geometry_rejects_changes",
+    "test_batch_bounds",
+    "test_token_bounds_are_not_truncated",
+    "test_zero_latent_and_raw384_latent_are_explicitly_supported",
+    "test_uniform_two_token_order_and_overlap_hand_calculation",
+    "test_uniform_order_mass_matches_triangular_interval_count",
+    "test_one_token_oracle_has_overlap_one_without_admitting_invalid_reference_roles",
+    "test_overlap_cdf_matches_exhaustive_interval_pairs",
+    "test_absent_pointer_scores_do_not_affect_structure",
+    "test_separated_confident_point_spans_have_small_overlap",
+    "test_invalid_order_heads_have_positive_stable_log_mass_loss",
+    "test_extreme_finite_float32_scores_remain_finite_in_oracle",
+    "test_oracle_refuses_invalid_pointer_values",
+    "test_objective_refuses_bad_weight_before_numerical_backend_access",
+    "test_objective_refuses_bad_reference_before_numerical_backend_access",
+    "test_import_geometry_and_scalar_oracle_never_import_numerical_backends",
+    "test_objective_has_no_model_open_forward_or_optimizer_call"
+  ],
+  "tests": {
+    "bytes": 11648,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_structured_span_objective.py",
+    "sha256": "c4780f0d971fbc9af70e8e442ba6064ff711d5b76eee15e16c728dc03bb852e5"
+  },
+  "tests_executed": false
+}
