@@ -1,0 +1,32 @@
+{
+  "capacity_would_fit_at_observation": true,
+  "census_elapsed_seconds": 14.30524099606555,
+  "charged_bytes": 143936429871,
+  "continuous_or_atomic_accounting_claim": false,
+  "inventory": {
+    "apparent_bytes": 95571429871,
+    "entry_count": 1358945,
+    "special_file_count": 5,
+    "symlink_count": 799
+  },
+  "ledger_after": {
+    "bytes": 6123925,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "82a22ec408efc17c35c078eec3fc504373efde7d806f0abbbd288264e57aea76"
+  },
+  "ledger_before": {
+    "bytes": 6123925,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "82a22ec408efc17c35c078eec3fc504373efde7d806f0abbbd288264e57aea76"
+  },
+  "ledger_unchanged_between_reads": true,
+  "limit_bytes": 145000000000,
+  "minimum_filesystem_free_bytes": 53485547520,
+  "model_started": false,
+  "outstanding_full_reservations_bytes": 48165000000,
+  "read_only": true,
+  "requested_bytes": 200000000,
+  "reservation_acquired": false,
+  "scheduler_client_constructed": false,
+  "schema": "retained-pointer-storage-admission-diagnostic/v1"
+}

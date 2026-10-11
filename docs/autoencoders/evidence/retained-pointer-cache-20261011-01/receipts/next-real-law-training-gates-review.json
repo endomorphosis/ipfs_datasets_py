@@ -1,0 +1,196 @@
+{
+  "artifact_pin_checks": {
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json": {
+      "bytes": 4060,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json",
+      "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/pointer-comparison-diagnostics.json": {
+      "bytes": 42878,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/pointer-comparison-diagnostics.json",
+      "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json": {
+      "bytes": 48597,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+      "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json": {
+      "bytes": 1752,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-template.json",
+      "sha256": "156c41a9dcb9c3e2e317dbf7543ca28258c14884666caa74078074d78232d734"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/results-resource-review.json": {
+      "bytes": 94615,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/results-resource-review.json",
+      "sha256": "ae1481d063bb220e95066697bc1f0401e78ff0311984b0c60380473909f0c828"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-target-data-review.json": {
+      "bytes": 26803,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-target-data-review.json",
+      "sha256": "a512c048603177817f8c438f299ca8536566716ab612e88d61892fd986170eec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json": {
+      "bytes": 161737,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json": {
+      "bytes": 161701,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json": {
+      "bytes": 161719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json": {
+      "bytes": 161715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json": {
+      "bytes": 161783,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json": {
+      "bytes": 161777,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json": {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json": {
+      "bytes": 89951,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/summary.json",
+      "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+    }
+  },
+  "design_pin": {
+    "bytes": 22374,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/next-real-law-training-gates.json",
+    "sha256": "c69d47694b986700221225faed8c371910c770e1b50531b8d2482a3eecac2ef7"
+  },
+  "findings": [],
+  "fitting_ready": false,
+  "fresh_main_reconciliation_pin": {
+    "bytes": 2021,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/fresh-main-reconciliation.json",
+    "sha256": "6d80346486775c76e1b451e2ec3eb6fd61d654809203fe6d2d2ebe343979f76c"
+  },
+  "full_in_repo_import_graph_qualified": false,
+  "gain_established": false,
+  "models_or_training_executed": false,
+  "observed_at_utc": "2026-10-11T05:20:54.729428+00:00",
+  "observed_dataset_and_locator_counts_checked": "51 metadata-only jurisdictions;121short matched candidate descriptors across44sections from pinned source-target-data review; no actual extracted/native-ready/gold corpus claim.",
+  "observed_score_comparisons_recomputed": {
+    "raw384-1729": [
+      {
+        "1USC106minimum_decision_margin": 0.16314697265625,
+        "control": "none",
+        "max_abs_modality_logit_difference_vs_none": 0.0,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.1450634002685547,
+        "control": "zero",
+        "max_abs_modality_logit_difference_vs_none": 0.8954257965087891,
+        "max_abs_shared_presence_margin_difference_vs_none": 3.5227012634277344,
+        "max_abs_shared_span_margin_difference_vs_none": 0.3152732849121094,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.1337575912475586,
+        "control": "disabled",
+        "max_abs_modality_logit_difference_vs_none": 1.1803693771362305,
+        "max_abs_shared_presence_margin_difference_vs_none": 4.754519462585449,
+        "max_abs_shared_span_margin_difference_vs_none": 0.4311065673828125,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.1631450653076172,
+        "control": "rotate",
+        "max_abs_modality_logit_difference_vs_none": 0.005215644836425781,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.033931732177734375,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0029296875,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      }
+    ],
+    "source_only-1729": [
+      {
+        "1USC106minimum_decision_margin": 0.08160591125488281,
+        "control": "none",
+        "max_abs_modality_logit_difference_vs_none": 0.0,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.08160591125488281,
+        "control": "zero",
+        "max_abs_modality_logit_difference_vs_none": 0.0,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.08160591125488281,
+        "control": "disabled",
+        "max_abs_modality_logit_difference_vs_none": 0.0,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      },
+      {
+        "1USC106minimum_decision_margin": 0.08160591125488281,
+        "control": "rotate",
+        "max_abs_modality_logit_difference_vs_none": 0.0,
+        "max_abs_shared_presence_margin_difference_vs_none": 0.0,
+        "max_abs_shared_span_margin_difference_vs_none": 0.0,
+        "shared_facet_anchor_or_presence_changes_vs_none": 0,
+        "status_refusal_or_canonical_decision_changes_vs_none": 0
+      }
+    ]
+  },
+  "passed": true,
+  "proof_authority": false,
+  "proposal_boundaries_verified": [
+    "All training phases remain conditional proposals; targets/reviews/training/confirmation/Lean execution are not asserted performed.",
+    "Existing8sources remain exposed development cases; physical duplicate/context/exposure closure precedes grouped new confirmation.",
+    "Independent context review/adjudication and explicit representability gates precede any statutory fit.",
+    "Joint geometry/grammar is a proposed ablation, with raw independent failures retained and no semantic benefit inferred.",
+    "Calibration uses genuine training/tuning labels and sealed grouped confirmation; ties/margins are not correctness probabilities.",
+    "First-fit CPU/update/resource numbers are unmeasured proposed caps, retaining admission failure and foreign resource ownership.",
+    "Native8/raw384/core384/trained384/native768/family lowering and legal semantics/proof/default promotion remain separate identities/gates."
+  ],
+  "reviewed_statutory_targets_established": 0,
+  "reviewer": "integration_review_20261011",
+  "role_examples_exact_saved_intervals": true,
+  "schema": "next-real-law-training-gates-review/v1",
+  "scope": "Read-only saved JSON/source interval/byte pin and proposed-versus-observed readiness review. Pure arithmetic over existing JSON scores; no generation, tensor/model import, training, tests or Git mutation.",
+  "semantic_accuracy": null
+}

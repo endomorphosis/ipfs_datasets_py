@@ -1,0 +1,19 @@
+{
+  "schema": "inert-adapter-test-binding/v1",
+  "tests": 67,
+  "passed": 60,
+  "failed": 7,
+  "cause": "Quoted source correctly remains unassessed; test fixture incorrectly expected it to be blocked.",
+  "source_pins": {
+    "artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 27732,
+      "sha256": "11c9b36ade70b1a4501421153dd67e2ce466bb52f0a05b7ad723ad3a5bba0334"
+    },
+    "artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py": {
+      "bytes": 26997,
+      "sha256": "0a9bb3e172fc4783e2906578bee7f97cf28922b2079f4eb8c517884ee4b589b7"
+    }
+  },
+  "model_execution": false,
+  "encoder_execution": false
+}

@@ -1,0 +1,105 @@
+{
+  "actual_models_or_tests_executed_by_reviewer": false,
+  "actual_result_review_complete": false,
+  "findings": [
+    {
+      "detail": "retain copies source before hashing the origin, does not require destination hash/length equal the captured source and has no final consumed-input fence. Published exact-custody language is unsupported if source changes around copy.",
+      "id": "copy-byte-fence",
+      "required_change": "Capture exact origin pin before copy, verify destination byte/hash equality, recheck origin after copy and every consumed source before finalization.",
+      "severity": "blocking"
+    },
+    {
+      "detail": "F.iterdir and run.rglob automatically discover every matching future file. Fixed names/pins do not establish that no raw checkpoint, unrelated payload or full shared ledger body can enter the claimed bounded source evidence. Size cap can instead fail after partial mutations.",
+      "id": "bounded-evidence-selection",
+      "required_change": "Freeze a reviewed finalized explicit input inventory/allowlist, prevalidate closed paths/sizes/exclusions before creating destination, and reject unexpected files rather than copying them.",
+      "severity": "blocking"
+    },
+    {
+      "detail": "Generated guide asserts raw checkpoints retained on model Hub while latest inspected matched inventory records zero matches. Source helper has no successful final-publication/readback gate.",
+      "id": "hub-retention-gate",
+      "required_change": "Require actual final checkpoint upload/readback receipts before executing/finalizing public guide, or phrase retention as pending.",
+      "severity": "blocking-until-actual-receipt"
+    },
+    {
+      "detail": "Cannot express multiple qualifiers is overbroad: model supports one copied condition, one exception and one temporal facet.",
+      "id": "qualifier-wording",
+      "required_change": "Say multiple values within a qualifier facet.",
+      "severity": "minor"
+    },
+    {
+      "detail": "Proposal counts /8 retain the requested denominator; final report should also expose eligible/blocked/clarification/abstention dispositions.",
+      "id": "outcome-dispositions",
+      "required_change": "Bind the actual final diagnostics/outcome counts; never equate preflight filtering, copied intervals or canonical grammar with semantic success.",
+      "severity": "pending-actual-results"
+    }
+  ],
+  "inputs": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json": {
+      "bytes": 111344,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+      "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json": {
+      "bytes": 4060,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json",
+      "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution.py": {
+      "bytes": 7981,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution.py",
+      "sha256": "6dd3c13214657ab8f48a6fffe8f45c74688a03ec85489f356b85e46aa65b606a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json": {
+      "bytes": 48597,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+      "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-span-hub-matched-inventory.json": {
+      "bytes": 132,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/retained-span-hub-matched-inventory.json",
+      "sha256": "9bf1d4ee807c2b5cb8600f098fe388cb581da5a8d94daa1d923cae054720d348"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py": {
+      "bytes": 12894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py",
+      "sha256": "e93e21b4f3f29103cf1aad5fbd4ba61cae8980561285e2b6b0185e581fba3ce5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json": {
+      "bytes": 10781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json",
+      "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/validation.json": {
+      "bytes": 9985,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/validation.json",
+      "sha256": "dd89f27239756b1ef77c71124ed4ddbd22814088b105eff3db59fe52961bbbe8"
+    }
+  },
+  "observed_at_utc": "2026-10-11T04:50:46.501053+00:00",
+  "passed": false,
+  "proof_authority": false,
+  "review_version": "draft-01",
+  "reviewer": "integration_review_20261011",
+  "schema": "retained-pointer-contribution-helper-review/v1",
+  "scientific_qualification": false,
+  "scope": "Independent static review of root-owned source/workspace evidence helper, bounded copy policy and document claims; actual result review and staged bytes pending. No own adapter implementation qualification.",
+  "staged_byte_review_complete": false,
+  "verified_boundaries": [
+    "Source and root guide evidence links are correctly relative to their destinations.",
+    "Guide separates copied intervals/syntax from correct legal roles and independently reviewed statutory gold.",
+    "Guide declares raw384 representation compatibility, historical producer/batch differences, paragraph-only model input, no clause/full-document context input, zero new optimization and no Lake/proof/default promotion.",
+    "294 combined inert controls reported passed; explicit numerical/native execution false in validation receipt.",
+    "Open-US-law reference is metadata-only jurisdiction inventory; real-law packet leaves targets unassigned and masks zero.",
+    "Resource prose distinguishes cooperative sampled RSS from kernel quota/absolute peak and preserves historical native-pilot custody gap."
+  ]
+}

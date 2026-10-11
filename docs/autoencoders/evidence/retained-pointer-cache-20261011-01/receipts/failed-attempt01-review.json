@@ -1,0 +1,194 @@
+{
+  "admitted_review_custody": {
+    "actual_admitted_review": {
+      "bytes": 40318,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce.json",
+      "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+    },
+    "admitted_binding_count": 122,
+    "admitted_copy_mode": "0444",
+    "all_admitted_bindings_currently_exact": true,
+    "draft_and_SHA_named_copy_byte_identical": true,
+    "exact_original_body_available": true,
+    "passed": true,
+    "review_race_observed": false
+  },
+  "artifact_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v01.json": {
+      "bytes": 49987,
+      "sha256": "4175edf968d92863381e99b03a8b1a6532f0a1c657555dc71966751764d796cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/guardian.log": {
+      "bytes": 216,
+      "sha256": "226b2706f500388aaf5e528b226b3fcc634756d5a4a1e780ddd27df1496cb3be"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce.json": {
+      "bytes": 40318,
+      "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-draft-01.json": {
+      "bytes": 40318,
+      "sha256": "879aec6168674a16a2252cccfb72ac74c9c8b1c1a28d00b6446f8279e104ccce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-before-admission.json": {
+      "bytes": 9079647,
+      "sha256": "9cc8df1544b41e1743c8b860bdfdfd35bc88664c78fcefd89ab5dcfdf2cea1f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/resource-failed-attempt01-observation.json": {
+      "bytes": 3527,
+      "sha256": "f02860916c6718b66dfe8f209693cae4e60fb4299b2e659b33fae67d59d091ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py": {
+      "bytes": 12894,
+      "sha256": "e93e21b4f3f29103cf1aad5fbd4ba61cae8980561285e2b6b0185e581fba3ce5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child-exit.json": {
+      "bytes": 72,
+      "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "75c578bf4e5caee8e728ab37c7d74b0c1fc4a62ac38d824544b201cf3b827522"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/child.log": {
+      "bytes": 2901,
+      "sha256": "f2731713a732f16bd3e9f6edc5eb8717d71aa7345d16da654b77b0c48ee09ecc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/command.json": {
+      "bytes": 1056,
+      "sha256": "5e4e0dd87b586281d604ade1c9e7829eebca4e0b70bbfa2bd1e216e389299c6a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/failure-primary.json": {
+      "bytes": 4850,
+      "sha256": "e1cfae9538218dbc3edf87865c3e1956f6579ef1e5d9b9453cd48624ca56f4ac"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/group-rss-observations.jsonl": {
+      "bytes": 9017,
+      "sha256": "ba66e9db4825774eb1e0dc53cdfa04e0b4f49efc785cd17e7d7e6a73c1eed157"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/group-rss-summary.json": {
+      "bytes": 1734,
+      "sha256": "2b12651e7897801f82930e6ab439a07c27b55a3d93fd65b44e156e038484be80"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/guardian-exit.json": {
+      "bytes": 4379,
+      "sha256": "09f42820913b9659fe599cbfaab8a50f53c1dc91063cd11c6c576ceb9d2da2d3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "3c6cd3b5e8a54ca84ce09eb17df80365836421b85406748d8694cff8c1c3d429"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/lease-observations.jsonl": {
+      "bytes": 17867,
+      "sha256": "c297b4c85d7bc8197f3d5c57a240c052f751e750f3d04eb9b373e738ac9538a1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/pre-admission.json": {
+      "bytes": 8040,
+      "sha256": "196b1c32c51b1986aa6bf37d01e0553e6681a6df0da1d6198d55a2d8ce72d3f3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/resources-final-failure.json": {
+      "bytes": 4601,
+      "sha256": "5ae9cc3bca66520017cf05605bd138fe4c755c9c7ec0da68302165688f9335e0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/resources-start.json": {
+      "bytes": 2540,
+      "sha256": "9cbe77d64194d35a4cecc0cbb0c80d1f7ae09d49ca7e9984c8b8738148a970aa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01/scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "c9cc8623b43f2daff72f19e664a7af5eb2b16840682d5a219c226bcfd4a3193d"
+    }
+  },
+  "attempt_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01",
+  "cleanup": {
+    "captured_owned_group_reaped": true,
+    "failed_disk_claim": {
+      "reconciliation_required": true,
+      "release_performed_by_reviewer": false,
+      "reservation_id": "9210033eb5874d61ad74a7707753d006",
+      "status": "retained",
+      "storage_bytes": 200000000
+    },
+    "foreign_preservation": {
+      "added_claim_ids": [
+        "9210033eb5874d61ad74a7707753d006"
+      ],
+      "all_prior_claim_bodies_equal": true,
+      "changed_prior_claims": 0,
+      "current_lease_count": 0,
+      "initial_full_claim_count": 506,
+      "observed_current_claim_count": 507,
+      "removed_prior_claims": 0,
+      "scheduler_configuration_equal": true,
+      "scope": "Only initial saved/full snapshot to current read-only endpoint interval; no continuous or earlier hash-only interval claim."
+    },
+    "live_group_processes": 0,
+    "own_lease_cached_locally_released": true,
+    "own_lease_readonly_endpoint_absent": true,
+    "primary_guardian_saved_receipt": {
+      "child_created": true,
+      "identity": {
+        "birth": "71241180",
+        "pid": 2874358
+      },
+      "leader_reaped": true,
+      "leader_returncode": 1,
+      "live_group_processes": 0,
+      "signals": []
+    },
+    "replacement_lease_acquired": false,
+    "scheduler_reset": false
+  },
+  "findings": [],
+  "observed_at_utc": "2026-10-11T04:57:02.132294+00:00",
+  "outcome": {
+    "authority": false,
+    "cause": "Torch import \u2192 cuda.pathfinder libdl resolution \u2192 ctypes.util.find_library dl \u2192 ldconfig subprocess rejected by the intact child process guard.",
+    "child_returncode": 1,
+    "decoder_forward_calls_supported_by_traceback_and_static_position": 0,
+    "evidence_limit": "Traceback and frozen source control-flow, not a cryptographically attested numeric-call counter. Guardian model_started records gate permission through import; it does not mean a model opened.",
+    "guardian_returncode": 1,
+    "model_constructor_calls_supported_by_traceback_and_static_position": 0,
+    "new_encoder_calls_supported_by_traceback_and_static_position": 0,
+    "optimizer_updates_supported_by_traceback_and_static_position": 0,
+    "scientific_result_artifacts": 0,
+    "status": "failed_before_model_or_cache_preparation",
+    "target_access": false
+  },
+  "passed": true,
+  "retry_boundary": "No retry runner/protocol approved here. Versioned libdl finder repair must bind exact libdl bytes and preserve all network/process/target/no-update guards and caps, original failed receipts and admitted review.",
+  "sampled_resources": {
+    "RSS_counts_recomputed": {
+      "gated": 15,
+      "model": 1,
+      "post_model": 2
+    },
+    "RSS_peaks_recomputed": {
+      "gated": 11804672,
+      "model": 8302592,
+      "post_model": 0
+    },
+    "continuous_coverage": false,
+    "guardian_total_elapsed_seconds": 31.743024775059894,
+    "healthy_owned_lease_observations": 17,
+    "kernel_hard_cap": false,
+    "last_RSS_live_group_processes": 0,
+    "lease_max_observation_gap_seconds": 1.007518699974753,
+    "limits": "Only one model-phase RSS sample; import phase absolute peak not measured. CPU/RSS/disk guards remain unchanged cooperative reservations and sampled checks. Plain-file final own lease absence corroborates cached release; watchdog was stopped before failure cleanup, so no terminal absent watchdog observation exists.",
+    "max_RSS_gap_seconds_by_phase": {
+      "gated": 1.0654619169654325,
+      "model": 0.34858129103668034,
+      "post_model": 0.517096619005315
+    },
+    "model_phase_sample_count": 1,
+    "postfailure_absent_watchdog_event_present": false,
+    "sampled_gate_to_reap_peak_bytes": 8302592,
+    "startup_gate_to_leader_reap_seconds": 0.5170960910618305
+  },
+  "schema": "retained-pointer-failed-attempt-independent-review/v1",
+  "scope": "Independent saved-artifact/read-only failed-attempt custody and resource review; passed audit is not a successful scientific run or retry approval."
+}

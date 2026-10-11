@@ -1,0 +1,37 @@
+{
+  "child_identity": null,
+  "error": {
+    "code": null,
+    "error_type": "DaemonResourceError",
+    "message_omitted_to_avoid_capability_leak": true,
+    "traceback_frames": [
+      {
+        "file": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py",
+        "function": "execute",
+        "line": 450
+      },
+      {
+        "file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+        "function": "__enter__",
+        "line": 410
+      },
+      {
+        "file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+        "function": "_account",
+        "line": 399
+      }
+    ]
+  },
+  "model_started": false,
+  "resources": {
+    "cleanup_error": null,
+    "lease_cancellation_read": false,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": null,
+    "reservation_id": "d7a94221676542eca574af39e928fdc2",
+    "resource_lease": null,
+    "scheduler_state_read": false,
+    "schema": "guardian-cached-resource-snapshot/v1",
+    "snapshot_scope": "cached_owner_primitives_only"
+  }
+}

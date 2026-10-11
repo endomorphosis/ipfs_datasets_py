@@ -1,0 +1,42 @@
+{
+  "comparisons": {
+    "raw384-1729": {
+      "disabled": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      },
+      "rotate": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      },
+      "zero": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      }
+    },
+    "source_only-1729": {
+      "disabled": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      },
+      "rotate": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      },
+      "zero": {
+        "count": 8,
+        "same_partial_facet_decisions": 8,
+        "same_status_reason_canonical_ir": 8
+      }
+    }
+  },
+  "native_context_ignored_proven": false,
+  "schema": "retained-pointer-categorical-control-comparison/v1",
+  "semantic_accuracy": null,
+  "signature_excludes_scores_and_latent_identity": true
+}
