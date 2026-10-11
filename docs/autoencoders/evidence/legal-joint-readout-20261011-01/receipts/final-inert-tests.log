@@ -1,0 +1,26 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 452 items
+
+tests/unit/logic/legal_ir/test_joint_span_selection.py ................. [  3%]
+............................................                             [ 13%]
+tests/unit/logic/legal_ir/test_statutory_source_review.py .............. [ 16%]
+...................................................                      [ 27%]
+tests/unit/logic/formalization/autoencoder/test_retained_span_score_capture.py . [ 28%]
+...............................                                          [ 34%]
+tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py . [ 35%]
+........................................................................ [ 51%]
+.....                                                                    [ 52%]
+tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py . [ 52%]
+..................................                                       [ 59%]
+tests/unit/logic/legal_ir/test_canonical_span_decoder.py ............... [ 63%]
+........................................................................ [ 79%]
+....................                                                     [ 83%]
+tests/unit/logic/legal_ir/test_canonical_decoder_preflight.py .......... [ 85%]
+................................................................         [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-inert-tests.xml -
+============================= 452 passed in 2.59s ==============================

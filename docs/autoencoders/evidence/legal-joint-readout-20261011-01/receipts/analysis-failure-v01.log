@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py", line 140, in <module>
+    main()
+  File "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py", line 114, in main
+    assert all(pin(path) == reference for path, reference in inputs.items())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py", line 114, in <genexpr>
+    assert all(pin(path) == reference for path, reference in inputs.items())
+               ^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py", line 14, in pin
+    raw = path.read_bytes()
+          ^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'read_bytes'

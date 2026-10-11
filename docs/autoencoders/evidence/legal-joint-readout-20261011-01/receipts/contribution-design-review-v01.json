@@ -1,0 +1,207 @@
+{
+  "analyzer_pin": {
+    "bytes": 9410,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py",
+    "sha256": "1b6031447eca0bcd5436fb7adbd1d197c75251324cb80465adfba8ecec11efae"
+  },
+  "correction_status_at_receipt": "Root reports preserving these exact drafts and correcting current text/helper. Historical findings apply to draft bytes; current v02 review remains separate and pending concrete copy inventory.",
+  "execution_by_reviewer": {
+    "analyzer_executed": false,
+    "encoder_or_training": false,
+    "models": false,
+    "module_import": false,
+    "resources_or_Git_or_Hub": false,
+    "tests": false
+  },
+  "findings": [
+    {
+      "artifact": "contribution-draft-01.md",
+      "issue": "Original text says raw report is saved before capture validation, although hook tensor geometry/finite validation executes inside the original forward.",
+      "required_change": "Specify after original inference returns and before sidecar finalization/joint search; disclose in-forward hook validation.",
+      "severity": "wording"
+    },
+    {
+      "artifact": "prepare_contribution-draft-01.py",
+      "issue": "Root evidence copytree mirror is not byte-verified; retained input-inventory copy is not compared to original pinned bytes and input-inventory source lacks a final closing pin after that copy.",
+      "required_change": "Check exact root mirror relative-file set and every bytes/SHA, retained inventory bytes against its opening pin and final inventory source pin before emitting a passing copy receipt.",
+      "severity": "retention"
+    }
+  ],
+  "limitations": [
+    "Saved-file joins are not continuous independent native execution attestation.",
+    "Own capture source is excluded from independent self-qualification.",
+    "Source copying/typedsyntax/nonoverlap are not legal-role accuracy, semantic gold, genuine8D/768D success, fullUSCode/family/Lean/Lake completion."
+  ],
+  "observed_saved_data": {
+    "all64denominators_retain_refusals": true,
+    "baseline_whole_raw_report_files_byte_equal": 8,
+    "control_effects": [
+      {
+        "canonical_IRs_changed": 1,
+        "control": "zero",
+        "dispositions_changed": 0,
+        "name": "raw384-1729",
+        "score_packets_changed": 8
+      },
+      {
+        "canonical_IRs_changed": 2,
+        "control": "disabled",
+        "dispositions_changed": 0,
+        "name": "raw384-1729",
+        "score_packets_changed": 8
+      },
+      {
+        "canonical_IRs_changed": 0,
+        "control": "rotate",
+        "dispositions_changed": 0,
+        "name": "raw384-1729",
+        "score_packets_changed": 8
+      },
+      {
+        "canonical_IRs_changed": 0,
+        "control": "zero",
+        "dispositions_changed": 0,
+        "name": "source_only-1729",
+        "score_packets_changed": 0
+      },
+      {
+        "canonical_IRs_changed": 0,
+        "control": "disabled",
+        "dispositions_changed": 0,
+        "name": "source_only-1729",
+        "score_packets_changed": 0
+      },
+      {
+        "canonical_IRs_changed": 0,
+        "control": "rotate",
+        "dispositions_changed": 0,
+        "name": "source_only-1729",
+        "score_packets_changed": 0
+      }
+    ],
+    "counts": {
+      "budget_exhausted": 0,
+      "full_domain_optimal": 0,
+      "joint_selected": 48,
+      "raw_preserved": 64,
+      "raw_proposed": 8,
+      "selected_literal_facets": 232,
+      "truncated": 64
+    },
+    "independent_semantic_examples": 0,
+    "lane_counts": [
+      {
+        "control": "none",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "raw384-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "zero",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "raw384-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "disabled",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "raw384-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "rotate",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "raw384-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "none",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "source_only-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "zero",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "source_only-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "disabled",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "source_only-1729",
+        "original_proposals": 1
+      },
+      {
+        "control": "rotate",
+        "joint_counts": {
+          "no_compatible_assignment_in_retained_domain": 2,
+          "selected": 6
+        },
+        "name": "source_only-1729",
+        "original_proposals": 1
+      }
+    ],
+    "source_count": 8,
+    "summary_pin": {
+      "bytes": 95920,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/summary.json",
+      "sha256": "5dabdfced7f727a6f606a67f639cecc2433679022c37feee81d00563e8b71ab6"
+    }
+  },
+  "otherwise_accurate_claims": [
+    "compatible6/8versusraw1/8 in every state/control lane,48 repeated selections over8 exposed physical cases",
+    "all64 raw payloads unchanged and56 originaloverlap refusals retained",
+    "all64 candidate pools top8truncated/no full-domain optimum/no budgetexhaustion",
+    "raw384 control changes do not establish benefit; config-disabled source-only scores/candidates unchanged",
+    "bad copied roles, semantic_accuracy null, gold/review/admission0",
+    "same existing raw384/nativeGTE paragraph recipe, no contextinput/core384/trained384/8D/768D relabeling",
+    "blank physical source/context review APIs only; no authenticated completedreview/recording/admission implementation",
+    "structured-loss concept explicitly future reviewed-gold/newproducer/newlineage, no generated joint selflabels or heldoutgoldinjection",
+    "deontic output versus family evaluation views; actual typed lowering requires separate semantic qualification",
+    "pinned Lean/Lake compilation gate separate from source-semantic fidelity; no compiler/proof/family qualification claim",
+    "2CPU1536MiB1child200MB300s cooperative guardian; sampled681361408B/nine samples/57.75s andendpoint509old reservation bodies only, not continuous hardquota"
+  ],
+  "passed": false,
+  "pending": "Concrete contribution-copy-inputs.json not generated during original design review. No weights/full-ledgers/exact inventory and final copied bundles qualification until separately inspected.",
+  "reviewed_original_draft_pins": [
+    {
+      "bytes": 10930,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/contribution-draft-01.md",
+      "sha256": "1b26397e061ca8f0fb9b959ec1181fd698d1af0622b61f44e26ae31c7bed560d"
+    },
+    {
+      "bytes": 5135,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/prepare_contribution-draft-01.py",
+      "sha256": "46aaa7aaba920ae39ee9006034604149e33651ad5ba2baa6457a9c0b2e3bbea1"
+    }
+  ],
+  "saved_diagnostics_pin": {
+    "bytes": 324394,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/joint-comparison-diagnostics.json",
+    "sha256": "5e22b82f71d9b9f1feee6494045582936d4fa56df118689a6d27ec5c17fa39b5"
+  },
+  "schema": "joint-readout-contribution-design-independent-review/v1",
+  "version": 1
+}

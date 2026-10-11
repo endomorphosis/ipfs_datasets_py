@@ -1,0 +1,11 @@
+{
+  "child_created": true,
+  "identity": {
+    "birth": "71869464",
+    "pid": 457850
+  },
+  "leader_reaped": true,
+  "leader_returncode": 0,
+  "live_group_processes": 0,
+  "signals": []
+}

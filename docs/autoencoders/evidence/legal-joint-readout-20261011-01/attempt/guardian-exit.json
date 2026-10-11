@@ -1,0 +1,14 @@
+{
+  "artifacts_durable": true,
+  "child_returncode": 0,
+  "elapsed_seconds": 57.75043824699242,
+  "kernel_hard_memory_cap": false,
+  "model_authority": false,
+  "model_phase_RSS_sample_count": 9,
+  "model_phase_peak_is_sampled": true,
+  "resource_release_scope": "reserved attempt bytes checked before release; final accounting excludes later terminal receipts",
+  "resource_reservation_released": true,
+  "returncode": 0,
+  "sampled_model_phase_peak_rss_bytes": 681361408,
+  "schema": "scope-pilot-guardian-exit/v1"
+}
