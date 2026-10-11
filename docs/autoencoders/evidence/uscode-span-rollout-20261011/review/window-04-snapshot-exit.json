@@ -1,0 +1,8 @@
+{
+  "command_sha256": "93f600b18e50cd7d327375931da009eb76ffe44e2ad7185b52cf65fcfbedfd01",
+  "completed_at": "2026-10-11T03:18:23.668478+00:00",
+  "elapsed_seconds": 0.08773405000101775,
+  "log_sha256": "e7e9f491c5eb1f054299f0dfefb549549f1babca2cc714fb7de853be4ee35961",
+  "returncode": 0,
+  "schema": "uscode-stopped-window-snapshot-exit/v2"
+}

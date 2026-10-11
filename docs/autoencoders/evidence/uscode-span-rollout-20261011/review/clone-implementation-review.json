@@ -1,0 +1,277 @@
+{
+  "check_count": 16,
+  "execution_owner_pins": {
+    "archive_reconciliation": {
+      "bytes": 26696,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    "census": {
+      "bytes": 24447,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    "constitution_inventory": {
+      "bytes": 11156,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "intake": {
+      "bytes": 23320,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "span_pages": {
+      "bytes": 13440,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+    },
+    "uscode_dataset": {
+      "bytes": 8703,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "uscode_ingest": {
+      "bytes": 10156,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    }
+  },
+  "findings": [],
+  "frozen_parent_file_pins": {
+    "manifest.json": {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "reconciliation.duckdb": {
+      "bytes": 3944448,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb",
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f"
+    },
+    "report.json": {
+      "bytes": 12024,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/report.json",
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    }
+  },
+  "frozen_parent_prior_result_review": {
+    "bytes": 29412,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/results-review.json",
+    "sha256": "a51dff39b62eeb9f7d71568ea07e8a9fa9903efee7b812841a43fb880015c660"
+  },
+  "integrated_file_pins": {
+    "docs/autoencoders/uscode_archive_clone_resume.md": {
+      "bytes": 4523,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/uscode_archive_clone_resume.md",
+      "sha256": "4e5425413fc939a83f957b625c6c8ded3be7b8071c1f7574314f5afa38b96d2d"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py": {
+      "bytes": 24269,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba"
+    },
+    "scripts/ops/legal_ir/resume_uscode_archive.py": {
+      "bytes": 1523,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/scripts/ops/legal_ir/resume_uscode_archive.py",
+      "sha256": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py": {
+      "bytes": 14168,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py",
+      "sha256": "4a7e68652a8bc97d9e8585ddfe16b973826235c1988083a0ad22e48d855a36a9"
+    }
+  },
+  "integrated_worktree": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+  "integration_commit": "f0cf880ce5998b20f389874fea1eaddef64490df",
+  "integration_preserves_incoming_db432c5": true,
+  "limits": [
+    "Strong expected parent file pins must originate from an independently reviewed frozen result; the helper does not replace that review with a full source-prefix replay.",
+    "The clone cap bounds staged storage. An outer admitted owner must separately enforce process RSS, time, staging plus retained output charge and cleanup.",
+    "Accepted source custody and archived-target accounting do not measure legal semantic reconstruction, decoder accuracy, reviewed gold, teacher quality, or proof."
+  ],
+  "observed_at_utc": "2026-10-11T02:10:46.032973+00:00",
+  "owner_commit": "a75424d120e75e6494cda7466e52797bb8129ea4",
+  "owner_commit_changes": [
+    "A\tdocs/autoencoders/uscode_archive_clone_resume.md",
+    "A\tipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+    "A\tscripts/ops/legal_ir/resume_uscode_archive.py",
+    "A\ttests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py"
+  ],
+  "owner_file_pins": {
+    "docs/autoencoders/uscode_archive_clone_resume.md": {
+      "bytes": 4523,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/docs/autoencoders/uscode_archive_clone_resume.md",
+      "sha256": "4e5425413fc939a83f957b625c6c8ded3be7b8071c1f7574314f5afa38b96d2d"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py": {
+      "bytes": 24269,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba"
+    },
+    "scripts/ops/legal_ir/resume_uscode_archive.py": {
+      "bytes": 1523,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/scripts/ops/legal_ir/resume_uscode_archive.py",
+      "sha256": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py": {
+      "bytes": 14168,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py",
+      "sha256": "4a7e68652a8bc97d9e8585ddfe16b973826235c1988083a0ad22e48d855a36a9"
+    }
+  },
+  "owner_parent": "28a4790ab6952321da0dcf5066e1015f097695d8",
+  "owner_tree_clean": true,
+  "owner_worktree": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011",
+  "regression_evidence": {
+    "JUnit": {
+      "bytes": 20085,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.xml",
+      "sha256": "a9ed439943fb6583eedb2a70a15b48c6eb67a671bf5216e49d82963bba94358a"
+    },
+    "by_module": {
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legacy_span_intake": 18,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_legacy_span_pages": 21,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_uscode_archive_reconciliation": 19,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_uscode_archive_resume": 30,
+      "tests.unit.optimizers.logic_theorem_optimizer.test_uscode_source_census": 20
+    },
+    "cases": 108,
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py",
+      "-q",
+      "--disable-warnings",
+      "--junitxml=/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.xml"
+    ],
+    "duration_seconds": 13.393,
+    "environment": {
+      "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+      "MKL_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "errors": 0,
+    "failures": 0,
+    "performed_by": "census_contract_recovery; reviewer independently read stdout and parsed JUnit, did not repeat the passing suite",
+    "skips": 0,
+    "stdout": {
+      "bytes": 1840,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.log",
+      "sha256": "02a3c5155c86619530ff2a683bd560b7c65f40aacc1d1311ad0f0037d4da7183"
+    }
+  },
+  "resolved_review_items": [
+    "Prevent unbounded copyfileobj staging on unexpected parent growth; bounded pinned-length copy and three controls added.",
+    "Directly compare clone continuation with cold source accounting, ordered digests, ledger dispositions and target rows; strengthened control passes."
+  ],
+  "review_checks": [
+    {
+      "evidence": "Commit adds exactly module, CLI, controls and documentation; all seven old execution files equal the frozen generation manifest in owner and integration trees.",
+      "id": "additive_owner_and_unchanged_generation",
+      "passed": true
+    },
+    {
+      "evidence": "Three required SHA-256 values authenticate stopped DB, manifest and report bytes. Manifest file SHA remains separate from canonical generation digest. Current bytes equal the prior independently reviewed frozen pins.",
+      "id": "three_literal_parent_file_pins",
+      "passed": true
+    },
+    {
+      "evidence": "Shared nonblocking writer lock and WAL refusal precede read-only DuckDB inspection; one thread, explicit memory limit and zero temporary spill preserve the parent.",
+      "id": "stopped_parent_read_only",
+      "passed": true
+    },
+    {
+      "evidence": "Current seven execution hashes, immutable source/progress bytes and revisions, release, seed snapshot and all paging/profile values must exactly match copied manifest. Live witness/code drift is refused before publication.",
+      "id": "source_progress_seed_profile_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Closed state/table keys, cursor, completion, seed marker, all/target/outside counts, cohort sums, digest fields, persisted row count/dispositions, archive denominators and source extent agree before copying.",
+      "id": "durable_report_and_physical_accounting",
+      "passed": true
+    },
+    {
+      "evidence": "Archive-ID membership and dispositions remain inherited from the old generation. Outside-target occurrences retain aggregates/digests and bounded examples, without a claimed complete identity inventory.",
+      "id": "archive_scope_not_full_source_inventory",
+      "passed": true
+    },
+    {
+      "evidence": "DB and manifest copies are SHA-verified byte-identical; all original targets and ordered prefix digests survive without rewriting or recomputing the original source generation.",
+      "id": "byte_identical_preserved_prefix",
+      "passed": true
+    },
+    {
+      "evidence": "Each copy clamps writes to pinned length, checks one excess byte and fences source fd signatures; truncation, growth and exact-input controls keep output within authenticated byte length.",
+      "id": "bounded_copy_under_drift",
+      "passed": true
+    },
+    {
+      "evidence": "Hidden owned staging includes three copied files, empty lock and receipt; fixed-point receipt size is included in clone and controller caps, all copies/receipt are reverified and fsynced.",
+      "id": "complete_staging_and_custody_budget",
+      "passed": true
+    },
+    {
+      "evidence": "Linux renameat2(RENAME_NOREPLACE) publishes once into an absent destination. Competing empty destination inode survives refusal; no check-then-replacing rename fallback exists.",
+      "id": "atomic_no_replace_publication",
+      "passed": true
+    },
+    {
+      "evidence": "Interrupted/corrupt staging is removed only from the owned hidden stage; original parent, seed and foreign destination are not removed or evicted. Canonical paths and file witnesses are checked before publication.",
+      "id": "prepublication_cleanup_and_parent_preservation",
+      "passed": true
+    },
+    {
+      "evidence": "After legitimate publication, an unchanged-controller refusal leaves the valid clone and its committed cursor; retry does not overwrite that destination.",
+      "id": "postpublication_resume_refusal_retention",
+      "passed": true
+    },
+    {
+      "evidence": "Existing run_archive_reconciliation is invoked without source edits. Synthetic within-section clone continuation equals a cold run at the same final cursor for complete accounting including both digests, ledger dispositions and every retained target row.",
+      "id": "same_controller_and_restart_equality",
+      "passed": true
+    },
+    {
+      "evidence": "Report unsupported-authority flags must be false. Clone performs no tokenizer, embedding/model, training, reconstruction or proof work. Native family/dimension/schema/task/producer/checkpoint/output representability remain separate gates.",
+      "id": "authority_and_native_pilot_boundary",
+      "passed": true
+    },
+    {
+      "evidence": "Owner-provided stdout and independently parsed JUnit agree: 108 cases, zero failures/errors/skips; 30 clone, 19 reconciliation, 21 pager, 20 census, 18 intake.",
+      "id": "meaningful_regression_evidence",
+      "passed": true
+    },
+    {
+      "evidence": "Integration f0cf880 preserves incoming db432c5 history; all four new owner files equal committed reviewed bytes, and seven unchanged execution files still equal parent manifest.",
+      "id": "incoming_history_and_integration_byte_equivalence",
+      "passed": true
+    }
+  ],
+  "review_execution": {
+    "Git_or_foreign_resource_mutations": false,
+    "canonical_or_frozen_tree_mutations": false,
+    "genuine_source_jobs": false,
+    "models_imported_or_run": false,
+    "new_HF_or_registry_operations": false,
+    "tests_run_by_this_review": false,
+    "training": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/clone-implementation-review.json"
+    ]
+  },
+  "schema": "uscode-archive-clone-implementation-review/v1",
+  "scope": "Independent static source/doc/control review and authentication of committed byte pins plus synthetic-regression evidence; no genuine source continuation, resource admission or native/model qualification.",
+  "source_pins_receipt": {
+    "bytes": 1578,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/source-pins.json",
+    "sha256": "34329807e9087b01a895659971b64c3d15523598fc2ea2e4aed9c5382e6e83db"
+  },
+  "status": "accepted"
+}

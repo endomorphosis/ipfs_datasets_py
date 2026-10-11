@@ -1,0 +1,96 @@
+{
+  "accepted_review": {
+    "bytes": 36835,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+    "sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287"
+  },
+  "completion_notified": true,
+  "copied_metadata_bytes": 1425784,
+  "database_opened": false,
+  "destination": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04",
+  "excluded": [
+    "All database files and WALs",
+    "writer.lock"
+  ],
+  "maximum_snapshot_total_file_bytes": 33554432,
+  "models_executed": false,
+  "publication": "Atomic Linux renameat2(RENAME_NOREPLACE)",
+  "resources_acquired_or_mutated": false,
+  "review_bound_files": [
+    "child-exit.json",
+    "child-identity.json",
+    "lease-observations.jsonl",
+    "resources-final.json",
+    "results/clone-custody.json",
+    "results/manifest.json",
+    "results/report.json"
+  ],
+  "schema": "uscode-stopped-window-metadata-snapshot/v2",
+  "snapshot_helper_sha256": "5c24dc6d1f015ac42167670f96c9a5dede16518ff52fdc6d0a45c2e2052de969",
+  "snapshot_receipt_bytes": 4807,
+  "snapshot_total_file_bytes": 1430591,
+  "source_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04",
+  "source_file_pins": {
+    "child-exit.json": {
+      "bytes": 517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/child-exit.json",
+      "sha256": "517fdb43345e9bffecb2f90819991a49339b1aa758eac26a87be90f6102fda32"
+    },
+    "child-identity.json": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/child-identity.json",
+      "sha256": "42f1310517d636a9a56d19687fe7992127e3148a78815ed80fa82a7ede5a8816"
+    },
+    "child.log": {
+      "bytes": 10868,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/child.log",
+      "sha256": "10dea7cc71fa358677b9c15f63640a43130fb9cfbbed71bff7e154904726c534"
+    },
+    "command.json": {
+      "bytes": 7209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/command.json",
+      "sha256": "43682f2da917de426c46844a0f6ddf3269b5426bbd639707767769df941608f0"
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/lease-binding.json",
+      "sha256": "11975fc69b549b1e5e3a5b51b94011e14b62b9277805d93a0acb176b8e4a7bec"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 1314815,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/lease-observations.jsonl",
+      "sha256": "54ef31f27cd5bb6c4b7c0ee29c315e74c019f4b6ef10eec4705d0bd79920b5b7"
+    },
+    "resource-observations.json": {
+      "bytes": 69177,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/resource-observations.json",
+      "sha256": "8aa33350bb4c836cb4e6978394f8f561b0009b11de770a860da8a7f7c9a9f900"
+    },
+    "resources-final.json": {
+      "bytes": 4388,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/resources-final.json",
+      "sha256": "948347f1df4329122d5b02f3cc1065155c95ea4ddd48d6d684fff98fda3c9692"
+    },
+    "results/clone-custody.json": {
+      "bytes": 2855,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/clone-custody.json",
+      "sha256": "8e1e1beb3a35674c2c2a87ad0ac40173955284c8544e2232b62232467b76e0c5"
+    },
+    "results/manifest.json": {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "results/report.json": {
+      "bytes": 12140,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json",
+      "sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d"
+    }
+  },
+  "supplemental_stopped_metadata_files": [
+    "child.log",
+    "command.json",
+    "lease-binding.json",
+    "resource-observations.json"
+  ]
+}

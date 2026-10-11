@@ -1,0 +1,227 @@
+{
+  "check_count": 19,
+  "checks": [
+    {
+      "evidence": "Document is bound to the stopped phase02 4,096-page result, not an ongoing or later source window; final text SHA equals the owner-provided frozen pin.",
+      "id": "frozen_phase02_scope",
+      "passed": true
+    },
+    {
+      "evidence": "Cumulative209740/24110/185630 equals inherited24191/2806/21385 plus new185549/21304/164245; document prohibits summing cumulative snapshots.",
+      "id": "exact_counts_and_delta",
+      "passed": true
+    },
+    {
+      "evidence": "443904 distinct archived IDs plus one metadata row remain separate from physical source occurrences.419794 pending plus24110 matched accounts archive IDs.",
+      "id": "archive_and_source_denominators",
+      "passed": true
+    },
+    {
+      "evidence": "Cursor2308:0, both exact ordered digests and both false completion flags match stopped report and accepted replay. No full source or all-source identity completion claim appears.",
+      "id": "durable_cursor_digests_and_incompletion",
+      "passed": true
+    },
+    {
+      "evidence": "Accepted actual-result receipt has22 passing checks and zero findings. It reuses the reviewed parent prefix, compares2806 old targets and21304 new targets, and rebuilds185549 new occurrences with37-span pages, reproducing cumulative digests.",
+      "id": "independent_replay_scope",
+      "passed": true
+    },
+    {
+      "evidence": "Document preserves stopped parent, original source/progress/seed and all seven execution pins; additive clone does not rewrite targets or create new model weights/embeddings. Accepted custody receipts authenticate these claims.",
+      "id": "original_asset_and_generation_reuse",
+      "passed": true
+    },
+    {
+      "evidence": "Historical normalized sentence bytes, physical source references and raw UTF8 source remain separate. Citation fallback retains explicit nonstatutory provenance; transport or aliases do not establish learned legal meaning.",
+      "id": "normalized_text_and_raw_source_separation",
+      "passed": true
+    },
+    {
+      "evidence": "Outside-source custody remains aggregate/cohort/digest/examples only. A separately versioned immutable occurrence-shard layout is an explicit remaining deliverable.",
+      "id": "archive_scope_and_full_identity_gap",
+      "passed": true
+    },
+    {
+      "evidence": "Accepted16-check source review and108 synthetic controls are accurately attributed; final helper byte pins and unchanged generation remain separately authenticated. This review does not repeat tests.",
+      "id": "helper_and_control_evidence",
+      "passed": true
+    },
+    {
+      "evidence": "One CPU/child,1536MiB outer budget,768MB DuckDB,240MB controller output,256MB reservation,128MiB clone and1200s limits match run plan.737172KiB converts to754864128B process-lifetime self highwater, not group/isolated-phase peak.",
+      "id": "runtime_envelope_and_rss_scope",
+      "passed": true
+    },
+    {
+      "evidence": "DB11546624B minus parent3944448B equals7602176B; pre-report11564594B is distinct from guardian11706588B and stopped11711756B after4391+777 later bytes.129.275s is guardian observation with overhead, not pure scanner throughput.",
+      "id": "storage_and_elapsed_attribution",
+      "passed": true
+    },
+    {
+      "evidence": "Stopped owned process group, released own reservation/lease, zero cleanup error and no output overflow match accepted receipts; foreign claims are preserved and not treated as deletable.",
+      "id": "cleanup_and_foreign_custody",
+      "passed": true
+    },
+    {
+      "evidence": "13-check readiness sample covers1024 projected sections and maximum280479B, without claiming corpus maxima or token geometry.145GB global cap, historical860MB and final1697898009B headroom are snapshots; later admission requires fresh accounting.",
+      "id": "readiness_and_dynamic_cap_limits",
+      "passed": true
+    },
+    {
+      "evidence": "Four IR families by8/384/768 is explicitly a namespace/compatibility contract with planned paths. Qualified storage/checkpoint/runtime remain per-cell deliverables, rather than twelve available learned models.",
+      "id": "namespace_matrix_not_model_readiness",
+      "passed": true
+    },
+    {
+      "evidence": "Dimension role, schema/version, task, codec, context, checkpoint and exact producer determine eligibility.768 retained input512 differs from architecture8192; output512/eight-clause/32-value constraints remain explicit.",
+      "id": "producer_task_and_output_geometry_gates",
+      "passed": true
+    },
+    {
+      "evidence": "Existing26 learned copied tensors/27142parameters/zero-step initialized768 preparation is preserved. Learned donor qualification, exposure separation and fresh alignment/retention are still required; no random restart or qualified KD success is claimed.",
+      "id": "existing_warm_state_and_teacher_distillation",
+      "passed": true
+    },
+    {
+      "evidence": "New480-update casewise retention work is correctly described as rejecting trained endpoints and selecting cold parent, separate from semantic native teacher. Native-cache session retains adapter ownership; eight exposed source-only rows do not imply qualified native vectors/targets/pilots.",
+      "id": "parallel_retention_and_native_cache_reuse",
+      "passed": true
+    },
+    {
+      "evidence": "Learned semantic IR, learned text, exact raw transport/residuals and reviewed legal meaning are independent planned evaluations. No model/token/training/semantic/proof execution is inferred from source inventory, parser, compilation or conditional structural work.",
+      "id": "reconstruction_and_proof_measurement_separation",
+      "passed": true
+    },
+    {
+      "evidence": "Near-final remote survey authenticates newer root4df56dca/datasetsdb432c5/acceleratee576 histories for preservation. Ongoing phase03 and any future STATUS.md are outside this frozen phase02 document review.",
+      "id": "later_history_and_window_scope",
+      "passed": true
+    }
+  ],
+  "document": {
+    "bytes": 13443,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/PROGRESS.md",
+    "sha256": "80a18ec3d15374e6f22cc8b415ad9efb74b254a4cfd24d5a5a72d61b92cf0555"
+  },
+  "findings": [],
+  "limits": [
+    "Document review relies on the independently accepted22-check stopped-result replay; it does not repeat source replay or semantic validation.",
+    "Historical resource accounting is not current admission for another window.",
+    "Later phase03 source results and STATUS.md require their own accepted result and document reviews."
+  ],
+  "observed_at_utc": "2026-10-11T02:26:23.864448+00:00",
+  "phase02_accounting": {
+    "outside_target_occurrence_count": {
+      "parent": 21385,
+      "phase02_addition": 164245,
+      "phase02_cumulative": 185630
+    },
+    "source_occurrence_count": {
+      "parent": 24191,
+      "phase02_addition": 185549,
+      "phase02_cumulative": 209740
+    },
+    "target_occurrence_count": {
+      "parent": 2806,
+      "phase02_addition": 21304,
+      "phase02_cumulative": 24110
+    }
+  },
+  "reference_pins": [
+    {
+      "bytes": 13443,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/PROGRESS.md",
+      "sha256": "80a18ec3d15374e6f22cc8b415ad9efb74b254a4cfd24d5a5a72d61b92cf0555"
+    },
+    {
+      "bytes": 2238,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/run-plan.json",
+      "sha256": "8fcaf61204c99ffd378f9ccb0cb4f5883cc25762803d8e7f26bc28399f247b66"
+    },
+    {
+      "bytes": 26894,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/readiness.json",
+      "sha256": "e0a234ea886c7a1f389502b6ddfb0b3f9cd9d78ed2a1c581ed11e4bce4f32792"
+    },
+    {
+      "bytes": 15833,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/clone-implementation-review.json",
+      "sha256": "02f47d1913fe4a59382a45f7ae4021820aeaf70a1a9c6cc4bd80ddc0ff5023b2"
+    },
+    {
+      "bytes": 20085,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.xml",
+      "sha256": "a9ed439943fb6583eedb2a70a15b48c6eb67a671bf5216e49d82963bba94358a"
+    },
+    {
+      "bytes": 35926,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+      "sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f"
+    },
+    {
+      "bytes": 11091,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-native-gap-survey.json",
+      "sha256": "6705878a5c92814c6465c8046056f096b53d4f843fdfd8a9415e1676baf8f168"
+    },
+    {
+      "bytes": 4789,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/concurrent-survey-update.json",
+      "sha256": "1bd7831c4d33b343ee7d4be183205c184734568609a99131ea94e09397e0dd7b"
+    },
+    {
+      "bytes": 3453,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/publication-survey-update.json",
+      "sha256": "c51286bf5d5d9846222b40a5e235f7e366661ebc866476de34ac0902c6faa691"
+    },
+    {
+      "bytes": 12039,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/results/report.json",
+      "sha256": "e7354653c4a20ecf2a85146ec869d75e2a81b6a3273ce3aa30ea69c5579f022e"
+    },
+    {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    {
+      "bytes": 2867,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/results/clone-custody.json",
+      "sha256": "b740df2d3d84df713d1e6b682d889ded9c7b3abd81ac933f97eb245ed705466d"
+    },
+    {
+      "bytes": 4391,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/resources-final.json",
+      "sha256": "939c6380ed39d76dac244f88357a82703861e64bf8f4bb31294810321bf1d9bc"
+    },
+    {
+      "bytes": 517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/child-exit.json",
+      "sha256": "61f8176613c0898b09201de0d6afcfbb8c383b544f81787771b9d46611d49732"
+    },
+    {
+      "bytes": 29412,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/results-review.json",
+      "sha256": "a51dff39b62eeb9f7d71568ea07e8a9fa9903efee7b812841a43fb880015c660"
+    }
+  ],
+  "required_corrections_resolved": [
+    "Clarify planned twelve family/dimension namespaces do not establish twelve qualified trained/runnable cells.",
+    "Make complete all-source identity persistence an explicit remaining deliverable."
+  ],
+  "review_execution": {
+    "DB_opened": false,
+    "Git_or_claim_or_lease_mutations": false,
+    "HF_or_registry_operations": false,
+    "active_DB_inspected": false,
+    "canonical_or_frozen_tree_mutations": false,
+    "models_imported_or_run": false,
+    "new_source_replay_or_jobs": false,
+    "tests_repeated": false,
+    "training": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/progress-document-review.json"
+    ]
+  },
+  "schema": "uscode-span-rollout-progress-document-review/v1",
+  "scope": "Independent frozen phase02 progress-document review against accepted custody/replay/resource and prior research receipts. Does not review phase03 or later consolidated status.",
+  "status": "accepted"
+}

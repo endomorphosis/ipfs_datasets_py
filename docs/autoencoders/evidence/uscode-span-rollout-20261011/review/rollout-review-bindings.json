@@ -1,0 +1,33 @@
+{
+  "check_count": 22,
+  "claims_or_leases_mutated": false,
+  "created_at_unix": 1791684922.521941,
+  "findings": 0,
+  "models_executed": false,
+  "passed": true,
+  "pins": {
+    "review_rollout_results.py": {
+      "bytes": 24710,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_rollout_results.py",
+      "sha256": "0e304013b800dbc425df256ce1ab3078f2ffd0ae2fce4eacb1c0f8ea0950ba9d"
+    },
+    "rollout-results-review.json": {
+      "bytes": 35926,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+      "sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f"
+    },
+    "rollout-review-command.json": {
+      "bytes": 975,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-review-command.json",
+      "sha256": "d94000b53b244ca6b723b932be3de2b21515b73b563fbc3a0ae4c93b8817ea96"
+    },
+    "rollout-review.log": {
+      "bytes": 727,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-review.log",
+      "sha256": "1e4e012e935d84526e34f57752f0e456702d567076931789030c233fa82822c6"
+    }
+  },
+  "returncode": 0,
+  "review_elapsed_seconds": 31.756713183014654,
+  "schema": "uscode-span-rollout-independent-review-bindings/v1"
+}

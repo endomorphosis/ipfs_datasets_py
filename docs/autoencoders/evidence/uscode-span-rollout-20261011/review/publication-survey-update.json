@@ -1,0 +1,60 @@
+{
+  "accelerate_new_commits": [
+    "e57617a3db4cae1e66c8289d60e9fcb3efebc18f Record reserved-budget and numerical projection qualification",
+    "d5427c0227213e1bdd146a06f92c2d50493f5dba Reserve formalization and coding phases with explicit bounded runtime budgets",
+    "77f763493e58f30d61c2d4fb7e065d6c98342299 Bind numerical formalization selection through benchmark and Harbor",
+    "57d2328f9e0f01fca2299d8b0b86c6bcdd0e1bb1 Connect numerical structural obligations to indexed supervisor planning"
+  ],
+  "execution": {
+    "DB_opened": false,
+    "Git_mutations": false,
+    "HF_or_registry_operations": false,
+    "tests_or_models_or_training_run": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/publication-survey-update.json"
+    ]
+  },
+  "integration_requirement": "Preserve root4df56dca and latest acceleratee57617a3 gitlink plus datasetsdb432c5 history when publishing rollout. Existing source custody pins and native-cache owner remain separate.",
+  "observed_at_utc": "2026-10-11T02:19:19.747223+00:00",
+  "preserved_history": {
+    "accelerate_b401f87_is_ancestor": true,
+    "datasets_28a4790_is_ancestor": true,
+    "root_9563205_is_ancestor": true
+  },
+  "primary_remote_queries": {
+    "accelerate": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+    "datasets": "db432c5a93a207436f9a4279d888fddee931e390",
+    "method": "git ls-remote origin refs/heads/main, independent root/datasets/accelerate queries; no git fetch or ref mutation",
+    "root": "4df56dca204787b70d71fd0d3459f90a20e6ce38"
+  },
+  "published_qualification": {
+    "bytes": 8146,
+    "limitations": [
+      "Structural projections and conditional lemmas do not prove NumPy library/source semantics.",
+      "This profile does not improve learned Source384 coverage.",
+      "Numerical summaries reach initial planning and retained admitted context; direct coding-worker delivery is not established.",
+      "This qualification does not run a fresh long-duration Docker/provider benchmark. Existing benchmark results are unchanged."
+    ],
+    "new_benchmark_score": null,
+    "path": "docs/agent_supervisor/evidence/numerical-budget-20261011/qualification.json",
+    "profile": "python-numerical-structure@1",
+    "proof_authority": false,
+    "reported_structural_native_lake_scope": "Two source-bound numerical conditional lemma builds are reported; no NumPy/source semantic proof or discharged source obligations. This survey did not rerun or independently qualify those published jobs.",
+    "revision": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+    "sha256": "5133229850253f361e223cdfa97d33680923d162f722f4958d0aa885688f36da",
+    "source_heads": {
+      "datasets": "db432c5a93a207436f9a4279d888fddee931e390",
+      "supervisor": "d5427c0227213e1bdd146a06f92c2d50493f5dba"
+    },
+    "source_obligations_discharged": 0,
+    "source_semantics_verified": false,
+    "training_steps": 0
+  },
+  "root_gitlinks": [
+    "160000 commit e57617a3db4cae1e66c8289d60e9fcb3efebc18f\texternal/ipfs_accelerate",
+    "160000 commit db432c5a93a207436f9a4279d888fddee931e390\texternal/ipfs_datasets"
+  ],
+  "root_latest_commit_subject": "Pin reserved supervisor budgets and numerical source logic integration",
+  "schema": "uscode-near-publication-survey/v1",
+  "scope": "Read-only near-final published-head check and compact survey of incoming supervisor numerical qualification; no source/model job or benchmark rerun."
+}

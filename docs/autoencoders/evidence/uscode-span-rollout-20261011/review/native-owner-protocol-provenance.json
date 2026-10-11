@@ -1,0 +1,53 @@
+{
+  "byte_identical": true,
+  "destination": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/native-owner-protocol-review.json",
+    "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1",
+    "signature": {
+      "bytes": 40091,
+      "ctime_ns": 1791686093016804743,
+      "device": 66306,
+      "inode": 63751789,
+      "mtime_ns": 1791686093007819408
+    }
+  },
+  "expected_frozen_sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1",
+  "models_loaded": 0,
+  "observed_at_utc": "2026-10-11T02:34:53.017325+00:00",
+  "schema": "uscode-native-owner-protocol-copy-custody/v1",
+  "scope": "Exact previously reviewed pre-run protocol receipt only; no model/raw assets or qualification promotion",
+  "source": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json",
+    "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1",
+    "signature_after_copy": {
+      "bytes": 40091,
+      "ctime_ns": 1791685871679086264,
+      "device": 66306,
+      "inode": 63489841,
+      "mtime_ns": 1791685871679086264
+    },
+    "signature_after_read": {
+      "bytes": 40091,
+      "ctime_ns": 1791685871679086264,
+      "device": 66306,
+      "inode": 63489841,
+      "mtime_ns": 1791685871679086264
+    },
+    "signature_before": {
+      "bytes": 40091,
+      "ctime_ns": 1791685871679086264,
+      "device": 66306,
+      "inode": 63489841,
+      "mtime_ns": 1791685871679086264
+    },
+    "signature_final": {
+      "bytes": 40091,
+      "ctime_ns": 1791685871679086264,
+      "device": 66306,
+      "inode": 63489841,
+      "mtime_ns": 1791685871679086264
+    }
+  },
+  "source_jobs_launched": 0,
+  "source_mutated": false
+}

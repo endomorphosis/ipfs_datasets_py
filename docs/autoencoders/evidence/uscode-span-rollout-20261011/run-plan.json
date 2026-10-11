@@ -1,0 +1,50 @@
+{
+  "arguments_sha256": "db12a34fd82f1fb5698759dd277319c548ca3d0c40ef5d328a617498328a8372",
+  "fresh_admission_required": true,
+  "measurement_limits": [
+    "The initial 4,096-page limit is not a promise of full-corpus completion or worst-case storage fit.",
+    "Source counts do not measure semantic IR or legal-text reconstruction.",
+    "Kernel RSS is process-lifetime self high-water; guardian admission is cooperative."
+  ],
+  "models_executed": false,
+  "old_parent_mutated": false,
+  "parent_expected": {
+    "expected_parent_database_sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f",
+    "expected_parent_manifest_sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+    "expected_parent_report_sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+  },
+  "preserve_current_main": {
+    "accelerate_gitlink": "b401f87f3edda07495e70d8ad1b9d53ec0d457f1",
+    "datasets": "db432c5a93a207436f9a4279d888fddee931e390",
+    "datasets_before_structural_frontend": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "root": "956320563cbebdaf6fdaf1f27292cb63063f4038"
+  },
+  "proof_authority": false,
+  "purpose": "Advance archived source reconciliation using authenticated byte-identical clone of stopped generation",
+  "readiness_sha256": "e0a234ea886c7a1f389502b6ddfb0b3f9cd9d78ed2a1c581ed11e4bce4f32792",
+  "runtime": {
+    "child_process_slots": 1,
+    "controller_storage_bytes": 240000000,
+    "cpu_slots": 1,
+    "deadline_seconds": 1200,
+    "duckdb_memory_mb": 768,
+    "guardian_memory_mib": 1536,
+    "guardian_storage_bytes": 256000000,
+    "max_clone_bytes": 134217728,
+    "max_new_candidate_occurrences": 262144,
+    "max_page_bytes": 4194304,
+    "max_page_spans": 64,
+    "max_pages": 4096
+  },
+  "schema": "uscode-span-rollout-run-plan/v1",
+  "scope": "Persist archived-target physical occurrences; account all source candidates with ordered digests; outside-target identities remain aggregate-only",
+  "source_generation_changed": false,
+  "start": {
+    "next_section": 199,
+    "next_span": 64,
+    "outside_target_aggregate_occurrences": 21385,
+    "source_occurrences": 24191,
+    "target_occurrences": 2806
+  },
+  "training_executed": false
+}

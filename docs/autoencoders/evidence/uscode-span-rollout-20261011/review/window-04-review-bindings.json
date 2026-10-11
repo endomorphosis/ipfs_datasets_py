@@ -1,0 +1,77 @@
+{
+  "completed": true,
+  "created_at": "2026-10-11T03:18:57.462407+00:00",
+  "models_loaded": false,
+  "phase": "04",
+  "pins": {
+    "measured-run/phase-04/snapshot-receipt.json": {
+      "bytes": 4807,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/snapshot-receipt.json",
+      "sha256": "49d3f36bec9bdc7113537ac011387b75bb834d8da91971e7b20338c761c03066"
+    },
+    "snapshot_stopped_window_v2.py": {
+      "bytes": 10494,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window_v2.py",
+      "sha256": "5c24dc6d1f015ac42167670f96c9a5dede16518ff52fdc6d0a45c2e2052de969"
+    },
+    "window-04-readiness.json": {
+      "bytes": 22710,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-readiness.json",
+      "sha256": "37e62d1566ba38ba72ab14417d1e660fd4429c2a0153d4098ed8b4e512133ab6"
+    },
+    "window-04-results-review.json": {
+      "bytes": 36835,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+      "sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287"
+    },
+    "window-04-review-command.json": {
+      "bytes": 1940,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-review-command.json",
+      "sha256": "42c1a06f5e69fbae3627056b56d455a419d1fb1435d234561e5b1b72cf612071"
+    },
+    "window-04-review-exit.json": {
+      "bytes": 352,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-review-exit.json",
+      "sha256": "cb9dec80b2295edf68f1ce80f796667f2c7974fb1d823b1b1b581039dd2e96b1"
+    },
+    "window-04-review-preparation.json": {
+      "bytes": 1525,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-review-preparation.json",
+      "sha256": "43913914d6f6ef7af5eac84cfd0ec5db7cd8e439cb1beabe13ce756ae54f9917"
+    },
+    "window-04-review.log": {
+      "bytes": 729,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-review.log",
+      "sha256": "39440dc5d7874b9c74283d22b50090363d64f495214cba830806a13343376c49"
+    },
+    "window-04-snapshot-command.json": {
+      "bytes": 1225,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-snapshot-command.json",
+      "sha256": "93f600b18e50cd7d327375931da009eb76ffe44e2ad7185b52cf65fcfbedfd01"
+    },
+    "window-04-snapshot-exit.json": {
+      "bytes": 344,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-snapshot-exit.json",
+      "sha256": "944ef32e66e61ef82418b3be934e32279821632b507a9e81a70b60409a788228"
+    },
+    "window-04-snapshot.log": {
+      "bytes": 249,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-snapshot.log",
+      "sha256": "e7e9f491c5eb1f054299f0dfefb549549f1babca2cc714fb7de853be4ee35961"
+    }
+  },
+  "resources_acquired_or_mutated": false,
+  "review_passed": true,
+  "schema": "uscode-reviewed-window-and-snapshot-bindings/v2",
+  "snapshot_verification": {
+    "all_copied_hashes_verified": true,
+    "body_plus_receipt_cap_passed": true,
+    "copied_files": 11,
+    "database_opened": false,
+    "exact_manifest_coverage": true,
+    "metadata_bytes": 1425784,
+    "receipt_bytes": 4807,
+    "review_bound_files": 7,
+    "total_file_bytes": 1430591
+  }
+}

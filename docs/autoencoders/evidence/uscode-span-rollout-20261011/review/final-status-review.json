@@ -1,0 +1,843 @@
+{
+  "campaign_summary": {
+    "bytes": 15942,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+    "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac",
+    "signature_after": {
+      "bytes": 15942,
+      "ctime_ns": 1791688956764078357,
+      "device": 66306,
+      "inode": 63751833,
+      "mtime_ns": 1791688956764078357
+    },
+    "signature_before": {
+      "bytes": 15942,
+      "ctime_ns": 1791688956764078357,
+      "device": 66306,
+      "inode": 63751833,
+      "mtime_ns": 1791688956764078357
+    }
+  },
+  "check_count": 29,
+  "checks": [
+    {
+      "basis": "Corrected final STATUS and frozen summary hashes match the authorized pins; body captures are stable regular files.",
+      "id": "frozen-document-and-summary",
+      "passed": true
+    },
+    {
+      "basis": "Each of phases 02, 03 and 04 has 22 accepted independent source/custody/resource checks and zero findings; no review is a model evaluation.",
+      "id": "accepted-independent-source-windows",
+      "passed": true
+    },
+    {
+      "basis": "Cumulative counts and exact deltas agree with the accepted independently rebuilt accounting; inherited prefixes are never summed.",
+      "detail": {
+        "final": {
+          "outside_target_occurrence_count": 3776019,
+          "source_occurrence_count": 3840988,
+          "target_occurrence_count": 64969
+        },
+        "new_phase_04": {
+          "outside_target_occurrence_count": 2375148,
+          "source_occurrence_count": 2380092,
+          "target_occurrence_count": 4944
+        }
+      },
+      "id": "cumulative-and-new-window-accounting",
+      "passed": true
+    },
+    {
+      "basis": "Physical target occurrences, distinct matched IDs, distinct archived IDs and unresolved IDs remain separate measures. One metadata row is excluded; pending source-scan IDs are absent after exhaustion.",
+      "id": "physical-and-distinct-archive-measures",
+      "passed": true
+    },
+    {
+      "basis": "Phase 04 preserved 60,025 inherited target rows and checked all 4,944 new targets; 2,380,092 new occurrences and both digest extensions were independently rebuilt with 37-span pages, through the exhausted durable cursor.",
+      "id": "cursor-digests-and-different-page-replay",
+      "passed": true
+    },
+    {
+      "basis": "All 60,077 physical records are accounted for, including nine null-CID metadata rows and 60,068 valid-document ordinals. Outside-target rows remain aggregate-only; full-source identity shards are a separate deliverable.",
+      "id": "source-exhaustion-versus-full-identity-inventory",
+      "passed": true
+    },
+    {
+      "basis": "The bounded preserved-prefix comparison found no pairs or mismatched identity-binding evidence. It establishes no recipe cause, full-source absence, or aliases; original source bytes were not rescanned.",
+      "id": "zero-match-forensic-scope",
+      "passed": true
+    },
+    {
+      "basis": "The 1,654 historical difference is arithmetic only. Empty Arrow metadata and absent explicit recipe/schema/model/context fields do not identify a cause; opaque sealed-row code identities confer no embedding, semantic or proof authority.",
+      "id": "historical-count-and-archive-metadata",
+      "passed": true
+    },
+    {
+      "basis": "Database sizes/increments and controller output-before-report measures match stopped metadata. The controller measure excludes later final report and guardian bodies.",
+      "id": "database-growth-and-output-scope",
+      "passed": true
+    },
+    {
+      "basis": "RSS is process-lifetime self high-water, not a scanner-phase or process-group peak; DuckDB memory settings are separate from outer cooperative admission.",
+      "id": "rss-raw-units-and-scope",
+      "passed": true
+    },
+    {
+      "basis": "Guardian finalized attempt bytes and subsequent resource/receipt bytes are distinct and sum to the stopped current attempt totals.",
+      "detail": {
+        "2": [
+          11706588,
+          4391,
+          777,
+          11711756
+        ],
+        "3": [
+          28096752,
+          4387,
+          776,
+          28101915
+        ],
+        "4": [
+          31579468,
+          4388,
+          776,
+          31584632
+        ]
+      },
+      "id": "finalization-and-later-receipt-bytes",
+      "passed": true
+    },
+    {
+      "basis": "Guardian elapsed time includes overhead; independent review times are separately scoped. The 145 GB global cap and stopped headroom do not create a future reservation; own resources were released and process groups stopped.",
+      "id": "elapsed-headroom-and-cleanup",
+      "passed": true
+    },
+    {
+      "basis": "Per-attempt memory/storage/clone caps remain explicit; density/time projections are planning estimates. Frozen parents and originals remain charged; future source mapping/shards need bounded plans and fresh admission.",
+      "id": "bounded-plans-and-fresh-admission",
+      "passed": true
+    },
+    {
+      "basis": "All 11 metadata bodies were independently checked against their snapshot hashes during this review. Phase 04 uses hardened helper v2; snapshots 02/03 retain their original executed helper/version. No source, database, spill or model body is mirrored.",
+      "id": "stopped-metadata-package-scope",
+      "passed": true
+    },
+    {
+      "basis": "Frozen phase 02 milestone remains unchanged; later accepted windows extend its prefix and evidence.",
+      "id": "frozen-previous-progress",
+      "passed": true
+    },
+    {
+      "basis": "Preserved 9ce3b3 pre-run protocol copy qualifies only readiness/recorded consistency; its exact custody cannot replace the later retry admission body.",
+      "id": "native-pre-run-protocol-custody",
+      "passed": true
+    },
+    {
+      "basis": "Eight native384 inputs, 19\u201379 tokens and two frozen decoder passes are completed consistency/syntax diagnostics. Exact admitted-review bytes are missing; production promotion requires restored custody or a new bounded replay. No teacher, semantic fidelity, native768/learned8 or proof qualification is inferred.",
+      "id": "completed-native-diagnostics-and-custody-defect",
+      "passed": true
+    },
+    {
+      "basis": "The separately published casewise raw-source retention gate selected the frozen parent and rejected all fitted endpoints; this is not a native semantic teacher improvement.",
+      "id": "retention-trial-selection-scope",
+      "passed": true
+    },
+    {
+      "basis": "Existing initialized/unaligned 768D state, learned donor tensors and original transforms are reused; the source campaign generated no embeddings or decoder weights.",
+      "id": "preserved-warm-state-and-original-assets",
+      "passed": true
+    },
+    {
+      "basis": "Retained actual 768D input profile is 512 tokens despite base capacity 8192. Fixed codec vocabulary, clauses and output token geometry are separate representability gates; longer encoder input cannot expand them automatically.",
+      "id": "actual-native-context-and-output-representability",
+      "passed": true
+    },
+    {
+      "basis": "Corrected gate 9 distinctly qualifies supervised reference-target interface fitting and later learned-teacher-output transfer, preserving parent weights and per-case retention/fidelity.",
+      "id": "reference-fitting-versus-teacher-distillation",
+      "passed": true
+    },
+    {
+      "basis": "Four IR families and three widths remain parallel compatibility namespaces. Schema/version/task/profile/output heads, inventories, DuckDB/DuckLake catalogs and immutable HF/ModelManager identities are separate. Proposed roots are not twelve qualified available models or audited uploads/registrations.",
+      "id": "four-families-three-widths-and-per-task-cells",
+      "passed": true
+    },
+    {
+      "basis": "Genuine tokenizer profiles, token budgets, structural chunk context and all refusal dispositions are required. Progressive input capacities are proposals, with parent coverage/recombination and retention checks.",
+      "id": "token-chunk-context-and-refusal-accounting",
+      "passed": true
+    },
+    {
+      "basis": "Semantic IR, normalized or original legal text, source/residual-assisted byte restoration and latent-only learned reconstruction have distinct inputs, objectives and generated-output denominators. Training loss, transport and syntax cannot substitute for legal fidelity.",
+      "id": "semantic-ir-text-and-raw-byte-metrics",
+      "passed": true
+    },
+    {
+      "basis": "Independent reviewed targets and split/exposure metadata gate pilots; logic projection, compiler success and source-semantic proof require separate scope and bound checker evidence.",
+      "id": "independent-targets-and-proof-gates",
+      "passed": true
+    },
+    {
+      "basis": "Repository commit/tree/file/environment bindings gate independent CodebaseIR/SecurityIR/IntentIR inventories, adaptation checkpoints and supervisor planning; cache absence or stale proof status is not a verified fact.",
+      "id": "codebase-intent-supervisor-current-generation",
+      "passed": true
+    },
+    {
+      "basis": "Independent Git reads confirmed nine working and committed owner bodies match measured f0cf bytes; c524 preserves f0cf, native 928cb1e, retention 28a4790 and earlier dataset history. Incoming root 83c901 preserves c976b4f8a725f37207fc0f0119fbb60f0b552efd and 4df56dca; accelerate e57617a3 is retained.",
+      "detail": {
+        "accelerate": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+        "datasets": "c52453ba4ad3470efc73ecce33ce24363b113469",
+        "root": "83c9016146bda937bcee498475e556cbe32956c0"
+      },
+      "id": "incoming-main-and-executed-owners-preserved",
+      "passed": true
+    },
+    {
+      "basis": "All 20 local links resolve. Both repository trees retain the older continuation document needed by rewritten standalone links. Actual package/committed remote body verification remains a later separate publication step.",
+      "detail": [
+        {
+          "exists": true,
+          "label": "phase 02 milestone",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/PROGRESS.md",
+          "target": "PROGRESS.md"
+        },
+        {
+          "exists": true,
+          "label": "22-check result review",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+          "target": "review/rollout-results-review.json"
+        },
+        {
+          "exists": true,
+          "label": "phase 03 result review",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-results-review.json",
+          "target": "review/window-03-results-review.json"
+        },
+        {
+          "exists": true,
+          "label": "phase 04 result review",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+          "target": "review/window-04-results-review.json"
+        },
+        {
+          "exists": true,
+          "label": "stopped metadata snapshot",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/snapshot-receipt.json",
+          "target": "measured-run/phase-04/snapshot-receipt.json"
+        },
+        {
+          "exists": true,
+          "label": "campaign summary",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+          "target": "campaign-summary.json"
+        },
+        {
+          "exists": true,
+          "label": "first archived continuation",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/PROGRESS.md",
+          "target": "../uscode-span-continuation-20261011/PROGRESS.md"
+        },
+        {
+          "exists": true,
+          "label": "bounded identity forensics",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+          "target": "review/identity-recovery-forensics.json"
+        },
+        {
+          "exists": true,
+          "label": "run plan",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/run-plan-03.json",
+          "target": "run-plan-03.json"
+        },
+        {
+          "exists": true,
+          "label": "readiness",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-readiness.json",
+          "target": "review/window-03-readiness.json"
+        },
+        {
+          "exists": true,
+          "label": "review preparation",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-review-preparation.json",
+          "target": "review/window-03-review-preparation.json"
+        },
+        {
+          "exists": true,
+          "label": "phase 04 plan",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/run-plan-04.json",
+          "target": "run-plan-04.json"
+        },
+        {
+          "exists": true,
+          "label": "phase 04 readiness receipt",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-readiness.json",
+          "target": "review/window-04-readiness.json"
+        },
+        {
+          "exists": true,
+          "label": "independent phase 04 review",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-review-preparation.json",
+          "target": "review/window-04-review-preparation.json"
+        },
+        {
+          "exists": true,
+          "label": "post-run merge preservation receipt",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/merge-preservation.json",
+          "target": "review/merge-preservation.json"
+        },
+        {
+          "exists": true,
+          "label": "native-gap survey",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-native-gap-survey.json",
+          "target": "review/parallel-native-gap-survey.json"
+        },
+        {
+          "exists": true,
+          "label": "concurrent update",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/concurrent-survey-update.json",
+          "target": "review/concurrent-survey-update.json"
+        },
+        {
+          "exists": true,
+          "label": "native-owner protocol review",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/native-owner-protocol-review.json",
+          "target": "review/native-owner-protocol-review.json"
+        },
+        {
+          "exists": true,
+          "label": "copy custody record",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/native-owner-protocol-provenance.json",
+          "target": "review/native-owner-protocol-provenance.json"
+        },
+        {
+          "exists": true,
+          "label": "midrun parallel survey",
+          "resolved": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-survey-midrun.json",
+          "target": "review/parallel-survey-midrun.json"
+        }
+      ],
+      "id": "local-markdown-link-closure",
+      "passed": true
+    },
+    {
+      "basis": "Source acceptance establishes authenticated occurrence/cursor/target/digest custody, not model execution, training, reconstruction quality, semantic gold or proof authority.",
+      "id": "source-only-generation-has-no-model-or-proof-authority",
+      "passed": true
+    }
+  ],
+  "document": {
+    "bytes": 35825,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/STATUS.md",
+    "sha256": "bb4f9faf364b933e8eb63d0f840b1ec644caf49cf5a4ee4122af671dea9a9f0e",
+    "signature_after": {
+      "bytes": 35825,
+      "ctime_ns": 1791689177416676701,
+      "device": 66306,
+      "inode": 63751767,
+      "mtime_ns": 1791689177416676701
+    },
+    "signature_before": {
+      "bytes": 35825,
+      "ctime_ns": 1791689177416676701,
+      "device": 66306,
+      "inode": 63751767,
+      "mtime_ns": 1791689177416676701
+    }
+  },
+  "findings": [],
+  "mutation_scope": {
+    "STATUS_changed_by_reviewer": false,
+    "publication_performed": false,
+    "source_or_model_or_database_changed": false,
+    "written_file": "review/final-status-review.json"
+  },
+  "observed_at_utc": "2026-10-11T03:29:00.891978+00:00",
+  "publication_boundary": "Review accepts these local frozen bytes and planning claims. Complete evidence-index coverage, deterministic standalone link rewriting, committed body hashes and current main ancestry must still pass the separate publication verifier.",
+  "resolved_findings": [
+    {
+      "correction": "Document owner changed only gate 9 to separate reference-supervised native-interface fitting from later qualified teacher-output distillation while preserving the existing warm state. The corrected captured document is accepted.",
+      "id": "reference-fitting-distillation-distinction",
+      "original_document_sha256": "434c6103025071b8163a97034351dfc7742daad0cdf4dc8fce4617dbaa33e9f6"
+    }
+  ],
+  "schema": "uscode-span-rollout-final-status-independent-review/v1",
+  "scope": "Independent static final-document/evidence reconciliation. Accepted source-result replay receipts are reused; no source rescan, database opening, numerical models, tests, training, registration or publication were performed by this document review.",
+  "source_pins": {
+    "PROGRESS.md": {
+      "bytes": 13443,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/PROGRESS.md",
+      "sha256": "80a18ec3d15374e6f22cc8b415ad9efb74b254a4cfd24d5a5a72d61b92cf0555",
+      "signature_after": {
+        "bytes": 13443,
+        "ctime_ns": 1791685434909422598,
+        "device": 66306,
+        "inode": 63751672,
+        "mtime_ns": 1791685434909422598
+      },
+      "signature_before": {
+        "bytes": 13443,
+        "ctime_ns": 1791685434909422598,
+        "device": 66306,
+        "inode": 63751672,
+        "mtime_ns": 1791685434909422598
+      }
+    },
+    "campaign-summary.json": {
+      "bytes": 15942,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+      "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac",
+      "signature_after": {
+        "bytes": 15942,
+        "ctime_ns": 1791688956764078357,
+        "device": 66306,
+        "inode": 63751833,
+        "mtime_ns": 1791688956764078357
+      },
+      "signature_before": {
+        "bytes": 15942,
+        "ctime_ns": 1791688956764078357,
+        "device": 66306,
+        "inode": 63751833,
+        "mtime_ns": 1791688956764078357
+      }
+    },
+    "measured-run/phase-02/child-exit.json": {
+      "bytes": 517,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-02/child-exit.json",
+      "sha256": "61f8176613c0898b09201de0d6afcfbb8c383b544f81787771b9d46611d49732",
+      "signature_after": {
+        "bytes": 517,
+        "ctime_ns": 1791686023077475832,
+        "device": 66306,
+        "inode": 64669408,
+        "mtime_ns": 1791686023077475832
+      },
+      "signature_before": {
+        "bytes": 517,
+        "ctime_ns": 1791686023077475832,
+        "device": 66306,
+        "inode": 64669408,
+        "mtime_ns": 1791686023077475832
+      }
+    },
+    "measured-run/phase-02/resources-final.json": {
+      "bytes": 4391,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-02/resources-final.json",
+      "sha256": "939c6380ed39d76dac244f88357a82703861e64bf8f4bb31294810321bf1d9bc",
+      "signature_after": {
+        "bytes": 4391,
+        "ctime_ns": 1791686023110173899,
+        "device": 66306,
+        "inode": 64669412,
+        "mtime_ns": 1791686023110173899
+      },
+      "signature_before": {
+        "bytes": 4391,
+        "ctime_ns": 1791686023110173899,
+        "device": 66306,
+        "inode": 64669412,
+        "mtime_ns": 1791686023110173899
+      }
+    },
+    "measured-run/phase-02/results/report.json": {
+      "bytes": 12039,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-02/results/report.json",
+      "sha256": "e7354653c4a20ecf2a85146ec869d75e2a81b6a3273ce3aa30ea69c5579f022e",
+      "signature_after": {
+        "bytes": 12039,
+        "ctime_ns": 1791686023137667934,
+        "device": 66306,
+        "inode": 64800504,
+        "mtime_ns": 1791686023137667934
+      },
+      "signature_before": {
+        "bytes": 12039,
+        "ctime_ns": 1791686023137667934,
+        "device": 66306,
+        "inode": 64800504,
+        "mtime_ns": 1791686023137667934
+      }
+    },
+    "measured-run/phase-02/snapshot-receipt.json": {
+      "bytes": 4679,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-02/snapshot-receipt.json",
+      "sha256": "bc2e43de039c6b570526165ebf725830ecf0d36ad64ed4ad2dc4c2f238a91851",
+      "signature_after": {
+        "bytes": 4679,
+        "ctime_ns": 1791686023156463738,
+        "device": 66306,
+        "inode": 64669414,
+        "mtime_ns": 1791686023156463738
+      },
+      "signature_before": {
+        "bytes": 4679,
+        "ctime_ns": 1791686023156463738,
+        "device": 66306,
+        "inode": 64669414,
+        "mtime_ns": 1791686023156463738
+      }
+    },
+    "measured-run/phase-03/child-exit.json": {
+      "bytes": 516,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/child-exit.json",
+      "sha256": "02044379d053ff5542460d69df3c97ba3c358d0ec55c81ef0d19a96d23c50b1e",
+      "signature_after": {
+        "bytes": 516,
+        "ctime_ns": 1791686581537458214,
+        "device": 66306,
+        "inode": 65193686,
+        "mtime_ns": 1791686581537458214
+      },
+      "signature_before": {
+        "bytes": 516,
+        "ctime_ns": 1791686581537458214,
+        "device": 66306,
+        "inode": 65193686,
+        "mtime_ns": 1791686581537458214
+      }
+    },
+    "measured-run/phase-03/resources-final.json": {
+      "bytes": 4387,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/resources-final.json",
+      "sha256": "9b4fd89fca24d1690d492c0f8a93b7a5d6c5d16c110cc2806bc1ee958d96f657",
+      "signature_after": {
+        "bytes": 4387,
+        "ctime_ns": 1791686581558890044,
+        "device": 66306,
+        "inode": 65193690,
+        "mtime_ns": 1791686581558890044
+      },
+      "signature_before": {
+        "bytes": 4387,
+        "ctime_ns": 1791686581558890044,
+        "device": 66306,
+        "inode": 65193690,
+        "mtime_ns": 1791686581558890044
+      }
+    },
+    "measured-run/phase-03/results/report.json": {
+      "bytes": 12097,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/results/report.json",
+      "sha256": "1d04ad434fd0c7f6268564ab44da1d422a232b70fc5f4b917c609baac4ce04d3",
+      "signature_after": {
+        "bytes": 12097,
+        "ctime_ns": 1791686581576289467,
+        "device": 66306,
+        "inode": 65324809,
+        "mtime_ns": 1791686581576289467
+      },
+      "signature_before": {
+        "bytes": 12097,
+        "ctime_ns": 1791686581576289467,
+        "device": 66306,
+        "inode": 65324809,
+        "mtime_ns": 1791686581576289467
+      }
+    },
+    "measured-run/phase-03/snapshot-receipt.json": {
+      "bytes": 4682,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/snapshot-receipt.json",
+      "sha256": "f60e93c7296270f3a28cab1938b2fb7552ce8c3e6f20e0d9fe7c2e1c27899edb",
+      "signature_after": {
+        "bytes": 4682,
+        "ctime_ns": 1791686581587367436,
+        "device": 66306,
+        "inode": 65193692,
+        "mtime_ns": 1791686581587367436
+      },
+      "signature_before": {
+        "bytes": 4682,
+        "ctime_ns": 1791686581587367436,
+        "device": 66306,
+        "inode": 65193692,
+        "mtime_ns": 1791686581587367436
+      }
+    },
+    "measured-run/phase-04/child-exit.json": {
+      "bytes": 517,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/child-exit.json",
+      "sha256": "517fdb43345e9bffecb2f90819991a49339b1aa758eac26a87be90f6102fda32",
+      "signature_after": {
+        "bytes": 517,
+        "ctime_ns": 1791688703624217735,
+        "device": 66306,
+        "inode": 66766321,
+        "mtime_ns": 1791688703624217735
+      },
+      "signature_before": {
+        "bytes": 517,
+        "ctime_ns": 1791688703624217735,
+        "device": 66306,
+        "inode": 66766321,
+        "mtime_ns": 1791688703624217735
+      }
+    },
+    "measured-run/phase-04/resources-final.json": {
+      "bytes": 4388,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/resources-final.json",
+      "sha256": "948347f1df4329122d5b02f3cc1065155c95ea4ddd48d6d684fff98fda3c9692",
+      "signature_after": {
+        "bytes": 4388,
+        "ctime_ns": 1791688703636565461,
+        "device": 66306,
+        "inode": 66766325,
+        "mtime_ns": 1791688703636565461
+      },
+      "signature_before": {
+        "bytes": 4388,
+        "ctime_ns": 1791688703636565461,
+        "device": 66306,
+        "inode": 66766325,
+        "mtime_ns": 1791688703636565461
+      }
+    },
+    "measured-run/phase-04/results/report.json": {
+      "bytes": 12140,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/results/report.json",
+      "sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+      "signature_after": {
+        "bytes": 12140,
+        "ctime_ns": 1791688703646762414,
+        "device": 66306,
+        "inode": 67421937,
+        "mtime_ns": 1791688703646762414
+      },
+      "signature_before": {
+        "bytes": 12140,
+        "ctime_ns": 1791688703646762414,
+        "device": 66306,
+        "inode": 67421937,
+        "mtime_ns": 1791688703646762414
+      }
+    },
+    "measured-run/phase-04/snapshot-receipt.json": {
+      "bytes": 4807,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04/snapshot-receipt.json",
+      "sha256": "49d3f36bec9bdc7113537ac011387b75bb834d8da91971e7b20338c761c03066",
+      "signature_after": {
+        "bytes": 4807,
+        "ctime_ns": 1791688703653393868,
+        "device": 66306,
+        "inode": 66766327,
+        "mtime_ns": 1791688703653393868
+      },
+      "signature_before": {
+        "bytes": 4807,
+        "ctime_ns": 1791688703653393868,
+        "device": 66306,
+        "inode": 66766327,
+        "mtime_ns": 1791688703653393868
+      }
+    },
+    "review/identity-recovery-forensics.json": {
+      "bytes": 15513,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+      "sha256": "a7b82bc7a2efa6340bf6bc229b0d73c14a13bf2b2450a1c180902493fc62571d",
+      "signature_after": {
+        "bytes": 15513,
+        "ctime_ns": 1791688669035446714,
+        "device": 66306,
+        "inode": 63751824,
+        "mtime_ns": 1791688669035446714
+      },
+      "signature_before": {
+        "bytes": 15513,
+        "ctime_ns": 1791688669035446714,
+        "device": 66306,
+        "inode": 63751824,
+        "mtime_ns": 1791688669035446714
+      }
+    },
+    "review/merge-preservation.json": {
+      "bytes": 3204,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/merge-preservation.json",
+      "sha256": "38b1eb7d050de058c8d14960ea52d6d15aa3eea1694d9a3f015b0698845308ee",
+      "signature_after": {
+        "bytes": 3204,
+        "ctime_ns": 1791688827097216490,
+        "device": 66306,
+        "inode": 63751832,
+        "mtime_ns": 1791688827097216490
+      },
+      "signature_before": {
+        "bytes": 3204,
+        "ctime_ns": 1791688827097216490,
+        "device": 66306,
+        "inode": 63751832,
+        "mtime_ns": 1791688827097216490
+      }
+    },
+    "review/native-owner-protocol-provenance.json": {
+      "bytes": 1767,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/native-owner-protocol-provenance.json",
+      "sha256": "04e89aef3f149442b11de00136cf51a2bc9e373f706080e77a19032ca0b91c5e",
+      "signature_after": {
+        "bytes": 1767,
+        "ctime_ns": 1791686093017517344,
+        "device": 66306,
+        "inode": 63751790,
+        "mtime_ns": 1791686093017517344
+      },
+      "signature_before": {
+        "bytes": 1767,
+        "ctime_ns": 1791686093017517344,
+        "device": 66306,
+        "inode": 63751790,
+        "mtime_ns": 1791686093017517344
+      }
+    },
+    "review/native-owner-protocol-review.json": {
+      "bytes": 40091,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/native-owner-protocol-review.json",
+      "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1",
+      "signature_after": {
+        "bytes": 40091,
+        "ctime_ns": 1791686093016804743,
+        "device": 66306,
+        "inode": 63751789,
+        "mtime_ns": 1791686093007819408
+      },
+      "signature_before": {
+        "bytes": 40091,
+        "ctime_ns": 1791686093016804743,
+        "device": 66306,
+        "inode": 63751789,
+        "mtime_ns": 1791686093007819408
+      }
+    },
+    "review/parallel-native-gap-survey.json": {
+      "bytes": 11091,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-native-gap-survey.json",
+      "sha256": "6705878a5c92814c6465c8046056f096b53d4f843fdfd8a9415e1676baf8f168",
+      "signature_after": {
+        "bytes": 11091,
+        "ctime_ns": 1791683974725528339,
+        "device": 66306,
+        "inode": 63751636,
+        "mtime_ns": 1791683974725528339
+      },
+      "signature_before": {
+        "bytes": 11091,
+        "ctime_ns": 1791683974725528339,
+        "device": 66306,
+        "inode": 63751636,
+        "mtime_ns": 1791683974725528339
+      }
+    },
+    "review/parallel-survey-midrun.json": {
+      "bytes": 10032,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-survey-midrun.json",
+      "sha256": "3903ec39c1212e7236d0fdf8484384a72518d84f863edc049572b6512df9a9a3",
+      "signature_after": {
+        "bytes": 10032,
+        "ctime_ns": 1791687491440325696,
+        "device": 66306,
+        "inode": 63751810,
+        "mtime_ns": 1791687491440325696
+      },
+      "signature_before": {
+        "bytes": 10032,
+        "ctime_ns": 1791687491440325696,
+        "device": 66306,
+        "inode": 63751810,
+        "mtime_ns": 1791687491440325696
+      }
+    },
+    "review/rollout-results-review.json": {
+      "bytes": 35926,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+      "sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f",
+      "signature_after": {
+        "bytes": 35926,
+        "ctime_ns": 1791684890468900412,
+        "device": 66306,
+        "inode": 63751674,
+        "mtime_ns": 1791684890468900412
+      },
+      "signature_before": {
+        "bytes": 35926,
+        "ctime_ns": 1791684890468900412,
+        "device": 66306,
+        "inode": 63751674,
+        "mtime_ns": 1791684890468900412
+      }
+    },
+    "review/window-03-results-review.json": {
+      "bytes": 37068,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-results-review.json",
+      "sha256": "836b2896bd6c6c847841eb33f42d1ce630ca7085c411664eaca79e53d8aa29fe",
+      "signature_after": {
+        "bytes": 37068,
+        "ctime_ns": 1791686498294684662,
+        "device": 66306,
+        "inode": 63751797,
+        "mtime_ns": 1791686498294684662
+      },
+      "signature_before": {
+        "bytes": 37068,
+        "ctime_ns": 1791686498294684662,
+        "device": 66306,
+        "inode": 63751797,
+        "mtime_ns": 1791686498294684662
+      }
+    },
+    "review/window-04-results-review.json": {
+      "bytes": 36835,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+      "sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+      "signature_after": {
+        "bytes": 36835,
+        "ctime_ns": 1791688627029119598,
+        "device": 66306,
+        "inode": 63751826,
+        "mtime_ns": 1791688627029119598
+      },
+      "signature_before": {
+        "bytes": 36835,
+        "ctime_ns": 1791688627029119598,
+        "device": 66306,
+        "inode": 63751826,
+        "mtime_ns": 1791688627029119598
+      }
+    },
+    "run-plan-03.json": {
+      "bytes": 1475,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/run-plan-03.json",
+      "sha256": "a6cc6cdf60229e9ea5cd73f0d0856b916f892bd725f065659907ac1ebb55a4b3",
+      "signature_after": {
+        "bytes": 1475,
+        "ctime_ns": 1791685393098050726,
+        "device": 66306,
+        "inode": 63751751,
+        "mtime_ns": 1791685393098050726
+      },
+      "signature_before": {
+        "bytes": 1475,
+        "ctime_ns": 1791685393098050726,
+        "device": 66306,
+        "inode": 63751751,
+        "mtime_ns": 1791685393098050726
+      }
+    },
+    "run-plan-04.json": {
+      "bytes": 1572,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/run-plan-04.json",
+      "sha256": "bea7e9a465be3a4135c2c2067828c8814aae32fae1f8439475ba6d4f88f45445",
+      "signature_after": {
+        "bytes": 1572,
+        "ctime_ns": 1791686659900570663,
+        "device": 66306,
+        "inode": 63751805,
+        "mtime_ns": 1791686659900570663
+      },
+      "signature_before": {
+        "bytes": 1572,
+        "ctime_ns": 1791686659900570663,
+        "device": 66306,
+        "inode": 63751805,
+        "mtime_ns": 1791686659900570663
+      }
+    }
+  },
+  "status": "accepted"
+}

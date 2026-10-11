@@ -1,0 +1,246 @@
+{
+  "check_count": 19,
+  "checks": [
+    {
+      "evidence": "Only two never-executed operator helper files were hardened. Seven runtime owners, active result directories, STATUS and old executed snapshot helper/receipts were not changed.",
+      "id": "isolated_method_scope",
+      "passed": true
+    },
+    {
+      "evidence": "Index contains byte counts/SHA-256 for every eligible captured metadata/code/log/document body; only index itself, root publication-prefixed files, pycache, symlink and unsupported suffixes are excluded.",
+      "id": "selected_body_index_completeness",
+      "passed": true
+    },
+    {
+      "evidence": "Each selected body is a bounded canonical regular file with before/open/after fd/path witnesses; complete selection membership and all witnesses are fenced before/after copying.",
+      "id": "source_body_stability",
+      "passed": true
+    },
+    {
+      "evidence": "Captured final-status review must be accepted with nonempty all-passed checks, integer matching check_count and no findings. Exact STATUS path, UTF-8 byte length and SHA bind accepted text; summary explicitly requires every completed window reviewed.",
+      "id": "final_document_review_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Every file and encoded index are bounded to2MiB;16MiB cap includes all captured bodies plus encoded index, and package plus standalone document per repository. Exceeded bounds refuse before copying.",
+      "id": "package_file_and_aggregate_caps",
+      "passed": true
+    },
+    {
+      "evidence": "Captured bytes are fsynced and read back against source bodies. Unexpected retained destination files/symlinks refuse. No database/Parquet/rawtxt/model binary suffix is selected.",
+      "id": "destination_metadata_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Root standalone prefix../../artifacts/uscode-span-rollout-20261011/ and datasets prefixevidence/uscode-span-rollout-20261011/ are correct for their destinations. Current links use supported simple inline syntax; external/absolute/anchor targets remain unchanged. Old sibling progress targets exist in both trees.",
+      "id": "root_and_dataset_link_rewrite",
+      "passed": true
+    },
+    {
+      "evidence": "Verifier restricts two expected file repositories, canonical traversal-free paths,40-hex commits,64-hexSHA pins and exact nonnegative integer lengths; one committed package/document generation per repository is required.",
+      "id": "immutable_repository_file_validation",
+      "passed": true
+    },
+    {
+      "evidence": "Per-entry HTTP reads stop at declared size plus one;2MiB per body and16MiB per repository include indexes, standalones and declared extras. Local manifest uses canonical regular bounded reads plus fd/path witness and final fence.",
+      "id": "publication_byte_bounds",
+      "passed": true
+    },
+    {
+      "evidence": "Both fetched indexes must be byte-identical and contain required final bodies. Every indexed body must appear at the same repository commit with matching fetched bytes/hash; unexpected or missing entries refuse.",
+      "id": "complete_remote_index_closure",
+      "passed": true
+    },
+    {
+      "evidence": "Caller explicitly declares extra source/helper/older-document paths. Only expected.py/.md roots qualify; extras are individually SHA/byte verified at the repository commit and remain outside index membership, with deduplicated entries.",
+      "id": "expected_extra_file_closure",
+      "passed": true
+    },
+    {
+      "evidence": "Fetched accepted review is independently rechecked against fetched STATUS bytes; summary matches index, and both standalone documents equal deterministic rewrites of the fetched indexed STATUS.",
+      "id": "remote_review_and_standalone_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Exactly root datasets and accelerate gitlinks are verified at the published root commit. Datasets target equals verified dataset package commit; accelerate target equals its required main check.",
+      "id": "published_gitlink_identity",
+      "passed": true
+    },
+    {
+      "evidence": "Root/datasets/accelerate checks require published commit ancestor of observed remote main and supplied preserved baseline ancestor of published commit. Local graph reads or bounded GitHub comparisons are used; no fetch or worktree mutation exists.",
+      "id": "latest_main_ancestry_without_mutation",
+      "passed": true
+    },
+    {
+      "evidence": "Peer-authored v2 mandates seven accepted stopped metadata pins with correct hash/length shapes before runtime reads; named source paths are checked when present. Completion, reaping, owned identity and released reservation/lease receipts gate snapshot publication.",
+      "id": "snapshot_v2_mandatory_custody",
+      "passed": true
+    },
+    {
+      "evidence": "V2 bounded regular metadata reads and receipt fixed-point accounting include custody receipt within8MiB file/32MiB total caps. Accepted-review/source witnesses precede fsync and Linux renameat2 no-replace; owned staging is cleaned on refusal.",
+      "id": "snapshot_v2_bounds_and_publication",
+      "passed": true
+    },
+    {
+      "evidence": "Original v1 helper and existing02/03 receipts are preserved; all eleven copied metadata bodies per window match receipt hashes and accepted22-check reviews. Actual totals including receipt169811B/831333B fit new bounds; no historical helper rerun is claimed.",
+      "id": "legacy_snapshot02_03_actual_closure",
+      "passed": true
+    },
+    {
+      "evidence": "Resource owner independently accepted12 checks/zero remaining findings after two verifier closures. Reviewer-authored hardening is not represented as independently executed or numerically tested.",
+      "id": "independent_static_spot_check",
+      "passed": true
+    },
+    {
+      "evidence": "All four helper sources parse as Python AST. No publication helper, snapshotv2, source job, network verification or mirror fixture was run for this review.",
+      "id": "syntax_only_validation",
+      "passed": true
+    }
+  ],
+  "existing_metadata_snapshots": [
+    {
+      "accepted_review": {
+        "bytes": 35926,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+        "sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f"
+      },
+      "accepted_review_checks": 22,
+      "all_copied_hashes_verified": true,
+      "closed_file_count": 11,
+      "copied_metadata_bytes": 165132,
+      "mandatory_review_bound_files": [
+        "child-exit.json",
+        "child-identity.json",
+        "lease-observations.jsonl",
+        "resources-final.json",
+        "results/clone-custody.json",
+        "results/manifest.json",
+        "results/report.json"
+      ],
+      "phase": "phase-02",
+      "snapshot_receipt": {
+        "bytes": 4679,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-02/snapshot-receipt.json",
+        "sha256": "bc2e43de039c6b570526165ebf725830ecf0d36ad64ed4ad2dc4c2f238a91851"
+      },
+      "supplemental_files": [
+        "child.log",
+        "command.json",
+        "lease-binding.json",
+        "resource-observations.json"
+      ],
+      "total_bytes_including_original_receipt": 169811
+    },
+    {
+      "accepted_review": {
+        "bytes": 37068,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-results-review.json",
+        "sha256": "836b2896bd6c6c847841eb33f42d1ce630ca7085c411664eaca79e53d8aa29fe"
+      },
+      "accepted_review_checks": 22,
+      "all_copied_hashes_verified": true,
+      "closed_file_count": 11,
+      "copied_metadata_bytes": 826651,
+      "mandatory_review_bound_files": [
+        "child-exit.json",
+        "child-identity.json",
+        "lease-observations.jsonl",
+        "resources-final.json",
+        "results/clone-custody.json",
+        "results/manifest.json",
+        "results/report.json"
+      ],
+      "phase": "phase-03",
+      "snapshot_receipt": {
+        "bytes": 4682,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/snapshot-receipt.json",
+        "sha256": "f60e93c7296270f3a28cab1938b2fb7552ce8c3e6f20e0d9fe7c2e1c27899edb"
+      },
+      "supplemental_files": [
+        "child.log",
+        "command.json",
+        "lease-binding.json",
+        "resource-observations.json"
+      ],
+      "total_bytes_including_original_receipt": 831333
+    }
+  ],
+  "final_status_review_contract": {
+    "check_count": "Exact integer length of checks",
+    "checks": "Nonempty list; each passed is true",
+    "document": {
+      "bytes": "Exact captured UTF-8 byte length",
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/STATUS.md",
+      "sha256": "Exact captured byte SHA-256"
+    },
+    "findings": [],
+    "status": "accepted"
+  },
+  "findings": [],
+  "initial_findings_resolved": [
+    "Package cap excluded encoded index; cap now includes index plus generated standalone per repository.",
+    "Final STATUS could drift away from accepted review; captured byte/hash/check bindings and source-set/file witnesses are required.",
+    "Verifier could accept mutable commit names or omit indexed bodies; strict immutable commits, complete index closure and bounded declared extras now required.",
+    "Verifier could fetch into a provided worktree; no mutation remains, with bounded primary GitHub comparison fallback.",
+    "Local verifier manifest lacked witness fences and remote accepted document was not rechecked; both closures implemented.",
+    "Original snapshot helper allowed missing mandatory review pins and excluded custody receipt from cap; new v2 is separately pinned, without replacing original execution history."
+  ],
+  "limits": [
+    "Static source acceptance does not prove actual publication bytes; verifier must execute after admitted stopped-window final document acceptance and committed publication.",
+    "Caller supplies fresh preserved-main baselines. The verifier proves those exact ancestry bindings, not an unspecified prior history.",
+    "Inline Markdown rewrite is scoped to the simple targets currently used; arbitrary nested-parenthesis links/titles are not generalized.",
+    "Evidence destination writes are bounded and verified but not an atomic whole-package Git publication; only committed verified file generations may be reported published.",
+    "This review does not accept in-progress STATUS or phase04 results, and it measures no semantic reconstruction/model/proof gain."
+  ],
+  "observed_at_utc": "2026-10-11T03:01:40.031659+00:00",
+  "publication_manifest_contract": {
+    "extra_files": "Explicit deduplicated [{repository,path}] source/helper/older.py/.md paths in expected roots",
+    "files": "Both complete evidence packages/indexes and standalone docs, plus declared extra paths; one immutable40-hex commit per repository; each exact byte/SHA-256 pin",
+    "gitlinks": "Exactly datasets and accelerate at verified root commit; datasets points to verified package commit",
+    "main_checks": "Exactly root/datasets/accelerate, each published_commit and freshly selected preserved_main_commit; accelerate published_commit is existing preserved gitlink, not a new acceleration publication"
+  },
+  "review_execution": {
+    "DB_opened": false,
+    "STATUS_or_runtime_source_edits": false,
+    "active_DB_or_result_directory_inspected": false,
+    "mock_or_mirror_tests_run": false,
+    "models_or_training": false,
+    "network_or_Git_mutations": false,
+    "publication_or_snapshot_helpers_executed": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/package_evidence.py",
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/verify_publication.py",
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/publication-method-review.json"
+    ]
+  },
+  "schema": "uscode-publication-method-review/v1",
+  "scope": "Narrow static method review, authorized hardening of two unexecuted publication helpers, independent peer source check, and closed hash audit of existing02/03 metadata snapshots. Not final STATUS acceptance or actual publication verification.",
+  "source_pins": [
+    {
+      "bytes": 8025,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/package_evidence.py",
+      "sha256": "f9ddcc59929a3347048fc88bd475d42113a9cb85c33f796392298707c3699d1c"
+    },
+    {
+      "bytes": 18562,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/verify_publication.py",
+      "sha256": "8769ac3705b16d5ae4b4de361dccc0bdff3b3b262c7e868d40a4f94e476922ae"
+    },
+    {
+      "bytes": 8288,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window.py",
+      "sha256": "200ff83273e42af615c6daafa058e0fd868d4a6f010eea4de9f7e1654f866083"
+    },
+    {
+      "bytes": 10494,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window_v2.py",
+      "sha256": "5c24dc6d1f015ac42167670f96c9a5dede16518ff52fdc6d0a45c2e2052de969"
+    },
+    {
+      "bytes": 5272,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/publication-method-independent-check.json",
+      "sha256": "c370bb3c82a8d4420170c07e761558bfaef6533399ba2e2e7b933dd4017a3a6c"
+    }
+  ],
+  "status": "accepted"
+}

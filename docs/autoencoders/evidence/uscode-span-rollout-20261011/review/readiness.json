@@ -1,0 +1,725 @@
+{
+  "bounded_section_sample": {
+    "above_8MiB_complete_section_bound": 0,
+    "blank_text_rows": 0,
+    "elapsed_seconds": 0.09660731407348067,
+    "exclusive_last_section": 1223,
+    "first_section": 199,
+    "largest_measured_sections": [
+      {
+        "source_cid_present": true,
+        "source_section_offset": 924,
+        "unicode_characters": 278844,
+        "utf8_bytes": 280479
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 588,
+        "unicode_characters": 158164,
+        "utf8_bytes": 159202
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 933,
+        "unicode_characters": 113148,
+        "utf8_bytes": 114042
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 926,
+        "unicode_characters": 108030,
+        "utf8_bytes": 108902
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 1171,
+        "unicode_characters": 101556,
+        "utf8_bytes": 102534
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 963,
+        "unicode_characters": 84828,
+        "utf8_bytes": 85800
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 346,
+        "unicode_characters": 78656,
+        "utf8_bytes": 79295
+      },
+      {
+        "source_cid_present": true,
+        "source_section_offset": 1048,
+        "unicode_characters": 69494,
+        "utf8_bytes": 69952
+      }
+    ],
+    "max_raw_text_unicode_characters": 278844,
+    "max_raw_text_utf8_bytes": 280479,
+    "measured_string_sections": 1024,
+    "missing_cid_rows": 0,
+    "nonstring_text_rows": 0,
+    "projected_columns": [
+      "ipfs_cid",
+      "text"
+    ],
+    "raw_text_utf8_percentiles": {
+      "p50": 3357,
+      "p90": 16041,
+      "p99": 63405
+    },
+    "requested_rows": 1024,
+    "scope": "Contiguous physical rows 199..1222, text/ipfs_cid projection only, 64-row Arrow batches; reader stops before row1223, no complete corpus hydration",
+    "total_raw_text_utf8_bytes": 7321206,
+    "whole_corpus_maximum_established": false
+  },
+  "checks": [
+    {
+      "id": "frozen-results-review",
+      "passed": true
+    },
+    {
+      "id": "parent-no-wal",
+      "passed": true
+    },
+    {
+      "id": "all-stopped-parent-receipts-unchanged",
+      "passed": true
+    },
+    {
+      "id": "parent-cursor-and-accounting",
+      "passed": true
+    },
+    {
+      "id": "original-source-queue-seed-byte-custody",
+      "passed": true
+    },
+    {
+      "id": "parent-producer-source-closure",
+      "passed": true
+    },
+    {
+      "detail": {
+        "above_8MiB_complete_section_bound": 0,
+        "blank_text_rows": 0,
+        "elapsed_seconds": 0.09660731407348067,
+        "exclusive_last_section": 1223,
+        "first_section": 199,
+        "largest_measured_sections": [
+          {
+            "source_cid_present": true,
+            "source_section_offset": 924,
+            "unicode_characters": 278844,
+            "utf8_bytes": 280479
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 588,
+            "unicode_characters": 158164,
+            "utf8_bytes": 159202
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 933,
+            "unicode_characters": 113148,
+            "utf8_bytes": 114042
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 926,
+            "unicode_characters": 108030,
+            "utf8_bytes": 108902
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 1171,
+            "unicode_characters": 101556,
+            "utf8_bytes": 102534
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 963,
+            "unicode_characters": 84828,
+            "utf8_bytes": 85800
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 346,
+            "unicode_characters": 78656,
+            "utf8_bytes": 79295
+          },
+          {
+            "source_cid_present": true,
+            "source_section_offset": 1048,
+            "unicode_characters": 69494,
+            "utf8_bytes": 69952
+          }
+        ],
+        "max_raw_text_unicode_characters": 278844,
+        "max_raw_text_utf8_bytes": 280479,
+        "measured_string_sections": 1024,
+        "missing_cid_rows": 0,
+        "nonstring_text_rows": 0,
+        "projected_columns": [
+          "ipfs_cid",
+          "text"
+        ],
+        "raw_text_utf8_percentiles": {
+          "p50": 3357,
+          "p90": 16041,
+          "p99": 63405
+        },
+        "requested_rows": 1024,
+        "scope": "Contiguous physical rows 199..1222, text/ipfs_cid projection only, 64-row Arrow batches; reader stops before row1223, no complete corpus hydration",
+        "total_raw_text_utf8_bytes": 7321206,
+        "whole_corpus_maximum_established": false
+      },
+      "id": "bounded-projected-sample-under-existing-section-bound",
+      "passed": true
+    },
+    {
+      "id": "source-queue-unchanged-after-readiness-sample",
+      "passed": true
+    },
+    {
+      "id": "preexisting-foreign-ledger-byte-equivalent",
+      "passed": true
+    },
+    {
+      "id": "current-cap-and-retained-custody",
+      "passed": true
+    },
+    {
+      "id": "named-root-identities",
+      "passed": true
+    },
+    {
+      "detail": {
+        "fresh_guardian_admission_still_required": true,
+        "last_fresh_census_owner_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01",
+        "last_fresh_census_released_at": 1791678854.5371017,
+        "last_fresh_charged_bytes": 144139810645,
+        "last_fresh_headroom_bytes": 860189355
+      },
+      "id": "last-fresh-census-can-fit-request",
+      "passed": true
+    },
+    {
+      "id": "scheduler-config-lease-custody",
+      "passed": true
+    }
+  ],
+  "created_at_unix": 1791683892.7730079,
+  "disk": {
+    "current_filesystem_free_bytes": 87180398592,
+    "current_full_named_root_census_rerun": false,
+    "fresh_admission_is_required": true,
+    "last_fresh_headroom_bytes": 860189355,
+    "latest_guardian_accounting_released_at": 1791678854.5371017,
+    "latest_guardian_fresh_accounting": {
+      "additional_requested_bytes": 0,
+      "charged_bytes": 144139810645,
+      "inventory": {
+        "apparent_bytes": 96374810645,
+        "entry_count": 1362595,
+        "special_file_count": 17,
+        "symlink_count": 727
+      },
+      "limit_bytes": 145000000000,
+      "minimum_filesystem_free_bytes": 106733912064,
+      "observed_apparent_bytes": 96374810645,
+      "outstanding_full_reservations_bytes": 47765000000,
+      "scope": "named_roots_only_apparent_bytes"
+    },
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "ledger_sha256": "7df1f3f13a5b530cb7d23b11c524e31bdd018efd5d37beff2592c6c385f48378",
+    "named_roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 533856,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "newer_released_claims": {
+      "0fad712f43b34bb5be0994725bf38051": {
+        "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01",
+        "status": "released",
+        "storage_bytes": 256000000
+      },
+      "67dc3d43dc754ed0a433abd098b7900f": {
+        "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/support-retention-20261011-01",
+        "status": "released",
+        "storage_bytes": 200000000
+      }
+    },
+    "outstanding_full_reservations_bytes": 47765000000,
+    "preexisting_canonical_ledger_sha256": "3e9c79dea6d13eb36099678cfb0eba39cbc32c74630dbdb9786ace369d9de6bb",
+    "retained_foreign_claim_count": 98,
+    "storage_limit_bytes": 145000000000
+  },
+  "findings": [],
+  "footprint_observations": {
+    "parent_all_occurrences": 24191,
+    "parent_current_attempt_bytes": 4014922,
+    "parent_database_bytes": 3944448,
+    "parent_target_density": 0.11599355132073912,
+    "parent_target_rows": 2806,
+    "reported_parent_process_lifetime_highwater_bytes": 864636928,
+    "whole_database_bytes_divided_by_target_rows": 1405.719173200285,
+    "window_estimates": [
+      {
+        "all_target_density_estimate_bytes": 368500846.9394155,
+        "estimated_additional_targets_at_historical_density": 30407.013517423835,
+        "estimated_target_db_bytes_at_historical_density": 42743721.901202925,
+        "estimation_limit": "Local density and whole-DB/target-row ratio are observations, not per-row cost or future-density guarantees; per-section pages often contain fewer than64 candidates.",
+        "historical_target_density": 0.11599355132073912,
+        "max_pages": 4096,
+        "maximum_new_candidates_at_64_spans_per_page": 262144
+      },
+      {
+        "all_target_density_estimate_bytes": 737001693.878831,
+        "estimated_additional_targets_at_historical_density": 60814.02703484767,
+        "estimated_target_db_bytes_at_historical_density": 85487443.80240585,
+        "estimation_limit": "Local density and whole-DB/target-row ratio are observations, not per-row cost or future-density guarantees; per-section pages often contain fewer than64 candidates.",
+        "historical_target_density": 0.11599355132073912,
+        "max_pages": 8192,
+        "maximum_new_candidates_at_64_spans_per_page": 524288
+      }
+    ]
+  },
+  "host": {
+    "load_average": [
+      9.70166015625,
+      8.73193359375,
+      8.10107421875
+    ],
+    "logical_cpu_count": 20,
+    "memory_bytes": {
+      "MemAvailable": 113790222336,
+      "MemTotal": 130663821312,
+      "SwapFree": 12808413184
+    },
+    "pressure": {
+      "cpu": "some avg10=26.41 avg60=30.20 avg300=34.37 total=269328563764\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "io": "some avg10=0.18 avg60=0.34 avg300=0.63 total=8447346363\nfull avg10=0.18 avg60=0.33 avg300=0.60 total=7629533825",
+      "memory": "some avg10=0.04 avg60=0.04 avg300=0.00 total=3470506764\nfull avg10=0.04 avg60=0.04 avg300=0.00 total=3112260279"
+    }
+  },
+  "input_pins": [
+    {
+      "bytes": 374277662,
+      "expected_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "matches": true,
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "role": "source",
+      "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        12190549,
+        374277662,
+        1790444227598474211,
+        1790444227839614223
+      ]
+    },
+    {
+      "bytes": 52701179,
+      "expected_sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "role": "progress",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023679,
+        52701179,
+        1791385411069107548,
+        1791385411069107548
+      ]
+    }
+  ],
+  "limits": [
+    "Fresh admission census can refuse despite this readiness snapshot if other processes grow named-root storage.",
+    "No whole-corpus output-size guarantee; a denser archive-target window or spill/log growth can reach the cooperative output bound before 4,096 pages.",
+    "The next 1,024-section sample is contiguous and cannot establish the maximum text size or token/context geometry across all 60,077 sections.",
+    "Token/context geometry and embedding dimensions are not measured by this source-only readiness review.",
+    "Process-lifetime RSS and file footprint are observations from an earlier bounded run, not an isolated-stage or whole-run guarantee.",
+    "Full all-source occurrence inventory is not persisted by the target-only controller; outside-target custody remains counts/cohorts/ordered digests/examples."
+  ],
+  "mutations": {
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "foreign_resources_modified": false,
+    "leases_acquired": 0,
+    "leases_released": 0,
+    "models_loaded": 0,
+    "source_jobs_launched": 0
+  },
+  "parent_receipt_pins": {
+    "child-exit.json": {
+      "bytes": 515,
+      "expected_sha256": "805ff6a48c540efc2789e5b7f5cff5b872d642548a1d80b6343533d887068f1f",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/child-exit.json",
+      "sha256": "805ff6a48c540efc2789e5b7f5cff5b872d642548a1d80b6343533d887068f1f",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023841,
+        515,
+        1791678030428059691,
+        1791678030428059691
+      ]
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "expected_sha256": "96a641b7a0742b3f0bd2ff86b1f522f41a6fc3be05a09890ccfc7815452ea2f3",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/child-identity.json",
+      "sha256": "96a641b7a0742b3f0bd2ff86b1f522f41a6fc3be05a09890ccfc7815452ea2f3",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023836,
+        44,
+        1791678013627478484,
+        1791678013627478484
+      ]
+    },
+    "lease-observations.jsonl": {
+      "bytes": 20576,
+      "expected_sha256": "a8013e730d26a88527997b7d396675b54795194f77fc3da8c8c75c013e9df4d7",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/lease-observations.jsonl",
+      "sha256": "a8013e730d26a88527997b7d396675b54795194f77fc3da8c8c75c013e9df4d7",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023833,
+        20576,
+        1791678045295240954,
+        1791678045295240954
+      ]
+    },
+    "resources-final.json": {
+      "bytes": 4388,
+      "expected_sha256": "695fe3a12767b54252dfd71850a675a9b54d65b8f6db36b6538f87f30034f4a1",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/resources-final.json",
+      "sha256": "695fe3a12767b54252dfd71850a675a9b54d65b8f6db36b6538f87f30034f4a1",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023844,
+        4388,
+        1791678045300115225,
+        1791678045300115225
+      ]
+    },
+    "results/manifest.json": {
+      "bytes": 3079,
+      "expected_sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023839,
+        3079,
+        1791678014329654215,
+        1791678014333841853
+      ]
+    },
+    "results/reconciliation.duckdb": {
+      "bytes": 3944448,
+      "expected_sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb",
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023840,
+        3944448,
+        1791678028924030000,
+        1791678028924030000
+      ]
+    },
+    "results/report.json": {
+      "bytes": 12024,
+      "expected_sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/report.json",
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75023843,
+        12024,
+        1791678029276573328,
+        1791678029280034589
+      ]
+    }
+  },
+  "parent_review": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/results-review.json",
+    "published_results_review_unchanged": true,
+    "sha256": "a51dff39b62eeb9f7d71568ea07e8a9fa9903efee7b812841a43fb880015c660"
+  },
+  "producer_pins": {
+    "archive_reconciliation": {
+      "bytes": 26696,
+      "expected_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83674584,
+        26696,
+        1791677858726825762,
+        1791677858726825762
+      ]
+    },
+    "census": {
+      "bytes": 24447,
+      "expected_sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83674489,
+        24447,
+        1791386097813539385,
+        1791386097813539385
+      ]
+    },
+    "constitution_inventory": {
+      "bytes": 11156,
+      "expected_sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83668685,
+        11156,
+        1791379469749960699,
+        1791379469749960699
+      ]
+    },
+    "intake": {
+      "bytes": 23320,
+      "expected_sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83671820,
+        23320,
+        1791386097812539375,
+        1791386097812539375
+      ]
+    },
+    "span_pages": {
+      "bytes": 13440,
+      "expected_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83674581,
+        13440,
+        1791677624437747327,
+        1791677624437747327
+      ]
+    },
+    "uscode_dataset": {
+      "bytes": 8703,
+      "expected_sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83672039,
+        8703,
+        1791379469960150908,
+        1791379469960150908
+      ]
+    },
+    "uscode_ingest": {
+      "bytes": 10156,
+      "expected_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        83668778,
+        10156,
+        1791379469754148085,
+        1791379469754148085
+      ]
+    }
+  },
+  "proposed_initial_window": {
+    "child_process_slots": 1,
+    "controller_storage_max_bytes": 240000000,
+    "cpu_slots": 1,
+    "deadline_seconds": 1200,
+    "duckdb_memory_mb": 768,
+    "max_page_bytes": 4194304,
+    "max_page_spans": 64,
+    "max_pages": 4096,
+    "outer_memory_mib": 1536,
+    "preserve_parent_bound_profile": true,
+    "reason": "Choose 4,096 pages first under the measured remaining storage headroom and unknown future source density, retaining the exact parent paging profile and original producer/source/seed bindings.",
+    "requires_gpu": false,
+    "retain_existing_complete_section_bound_bytes": 8388608,
+    "storage_reservation_bytes": 256000000
+  },
+  "ready_for_guarded_bounded_source_only_attempt": true,
+  "scheduler": {
+    "config": {
+      "lane_reservations": {
+        "validation": {
+          "cpu_slots": 1,
+          "memory_mb": 0
+        }
+      },
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "max_waiting_requests": 256,
+      "proof_backoff_seconds": 2.0,
+      "proof_cpu_stall_percent": 50.0,
+      "proof_io_stall_percent": 10.0,
+      "proof_memory_headroom_mb": 2458,
+      "proof_memory_stall_percent": 2.0,
+      "proof_safety_enabled": true,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 4,
+      "total_cpu_slots": 4,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 9830,
+      "total_unified_memory_mb": null
+    },
+    "config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+    "leases": 0,
+    "state_mutated_by_readiness": false,
+    "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "state_sha256": "49960a13b14a648b5362da554e5834810194eb6a4c0b63c24d5679e40a4113f3",
+    "waiters": 0
+  },
+  "schema": "uscode-span-rollout-input-resource-readiness/v1",
+  "seed_pins": [
+    {
+      "bytes": 8663040,
+      "expected_sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census.duckdb",
+      "role": "seed-census.duckdb",
+      "sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75416924,
+        8663040,
+        1791386776862932786,
+        1791386776862932786
+      ]
+    },
+    {
+      "bytes": 1711,
+      "expected_sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+      "role": "seed-manifest.json",
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75416923,
+        1711,
+        1791386774129975807,
+        1791386774129975807
+      ]
+    },
+    {
+      "bytes": 6427,
+      "expected_sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70",
+      "matches": true,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/report.json",
+      "role": "seed-report.json",
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70",
+      "stable_stat_witness": true,
+      "stat_signature": [
+        66306,
+        75416927,
+        6427,
+        1791386777602938701,
+        1791386777617938821
+      ]
+    }
+  ],
+  "source_parquet_footer": {
+    "all_column_rowgroup_decoded_bytes": [
+      1170039502
+    ],
+    "complete_section_bound_bytes": 8388608,
+    "retained_rowgroup_bound": 2147483648,
+    "row_groups": 1,
+    "rows": 60077,
+    "text_column_compressed_bytes": 121582828,
+    "text_column_decoded_bytes": 326130695
+  },
+  "stopped_parent": {
+    "cursor": [
+      199,
+      64
+    ],
+    "database_bytes": 3944448,
+    "database_sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f",
+    "manifest_sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+    "no_wal": true,
+    "outside_target_aggregate_occurrences": 21385,
+    "partial_source_scan": true,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results",
+    "persisted_target_occurrences": 2806,
+    "report_sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05",
+    "shared_stopped_writer_lock_obtained": true,
+    "source_occurrences": 24191,
+    "source_text_copied": false
+  }
+}

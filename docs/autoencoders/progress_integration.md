@@ -329,3 +329,9 @@ owned attempts are preserved. Incoming numerical-source main is incorporated
 without changing any of52 reviewed pilot files. The original selected weights
 remain byte-exact on the public Hub. The report explicitly retains a historical
 review-byte custody gap caused by a postlaunch resource-pin supplement.
+
+## October 11 completed US Code source reconciliation
+
+The [accepted all-span continuation and remaining plan](uscode_archive_rollout_20261011.md) scans all 60,077 physical source records under the pinned generation. Independent review verifies **3,840,988 source occurrences**, **64,969 exact archived ID joins** and **378,935 unresolved archived IDs**. Source exhaustion is complete; complete outside-target identities, learned semantic/text reconstruction and source-bound proofs remain separate gaps.
+
+The contribution reuses frozen source/progress assets and the existing donor/checkpoint lineages, preserves the published arbitrary-native cache adapter, and adds no model inference, training or replacement weights. Archive-ID recovery and full-source identity shards precede qualified cache routing and reconstruction pilots.

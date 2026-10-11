@@ -1,0 +1,26 @@
+{
+  "accepted_review_sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window_v2.py",
+    "--attempt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04",
+    "--review",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+    "--review-sha256",
+    "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+    "--destination",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-04",
+    "--completion-notified"
+  ],
+  "completion_notification_received": true,
+  "created_at": "2026-10-11T03:18:23.580597+00:00",
+  "databases_opened": false,
+  "models_started": false,
+  "schema": "uscode-stopped-window-snapshot-command/v2",
+  "source": {
+    "bytes": 10494,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window_v2.py",
+    "sha256": "5c24dc6d1f015ac42167670f96c9a5dede16518ff52fdc6d0a45c2e2052de969"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_rollout_results.py",
+    "--output",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json"
+  ],
+  "env": {
+    "IPFS_DATASETS_PY_LAZY_INSTALL_ERGOAI": "0",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log_path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-review.log",
+  "model_execution": false,
+  "resource_mutation": false,
+  "schema": "uscode-span-rollout-independent-review-command/v1",
+  "source": {
+    "bytes": 24710,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_rollout_results.py",
+    "sha256": "0e304013b800dbc425df256ce1ab3078f2ffd0ae2fce4eacb1c0f8ea0950ba9d"
+  },
+  "source_jobs_launched": false
+}

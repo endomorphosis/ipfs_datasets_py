@@ -1,0 +1,114 @@
+{
+  "check_count": 12,
+  "checks": [
+    {
+      "evidence": "Package bounds check selected bodies plus encoded index, then plus each standalone document, before repository writes.",
+      "name": "package_cap_includes_index_and_standalone_document",
+      "passed": true
+    },
+    {
+      "evidence": "Packager checks accepted final-status-review, nonempty all-passed checks, exact check count, empty findings, and STATUS path/bytes/SHA.",
+      "name": "accepted_status_byte_binding",
+      "passed": true
+    },
+    {
+      "evidence": "Packager regular-file reads fence fd and path witnesses before, during and after read, and selected set/source witnesses before and after packaging.",
+      "name": "source_regular_file_witnesses",
+      "passed": true
+    },
+    {
+      "evidence": "Revised verifier reads a bounded canonical regular manifest with before/open/after fd/path witnesses and fences the manifest before final receipt.",
+      "name": "verifier_manifest_regular_file_witnesses",
+      "passed": true
+    },
+    {
+      "evidence": "Every package generation, gitlink and ancestry endpoint requires a full lowercase 40-hex commit.",
+      "name": "immutable_full_commit_identifiers",
+      "passed": true
+    },
+    {
+      "evidence": "Verifier requires identical indexes for root and datasets; every indexed body is in the immutable-byte manifest, every length/SHA is checked, and no unindexed package body is admitted.",
+      "name": "both_indexes_and_all_indexed_body_bytes",
+      "passed": true
+    },
+    {
+      "evidence": "Revised verifier checks published review accepted/all-passed/count/empty-findings and exact STATUS bytes/hash/path; campaign summary must match the index.",
+      "name": "accepted_status_rechecked_at_publication",
+      "passed": true
+    },
+    {
+      "evidence": "Both repository documents must equal the defined relative-link rewrite of their indexed STATUS body.",
+      "name": "both_standalone_documents",
+      "passed": true
+    },
+    {
+      "evidence": "Expected source/helper/older-doc extras are explicitly declared, restricted by repository/path/suffix, checked at the same package commit, and included in the 16MiB repository total.",
+      "name": "explicit_extra_files_and_aggregate_caps",
+      "passed": true
+    },
+    {
+      "evidence": "Root publication commit must contain exactly the expected datasets and accelerate gitlinks; datasets target must equal its verified package commit.",
+      "name": "exact_two_root_gitlinks",
+      "passed": true
+    },
+    {
+      "evidence": "Root, datasets and accelerate checks bind published commits to package/gitlink commits and preserve previous main ancestry while observing exact remote main.",
+      "name": "three_main_ancestry_preservation_checks",
+      "passed": true
+    },
+    {
+      "evidence": "Verifier uses remote get-url, ls-tree, ls-remote, cat-file and merge-base; fallback is bounded read-only GitHub compare API, with no fetch or git mutation.",
+      "name": "git_checks_are_read_only_without_fetch",
+      "passed": true
+    }
+  ],
+  "created_at": "2026-10-11T03:00:20.150890+00:00",
+  "findings": [],
+  "git_mutations": false,
+  "helper_execution": false,
+  "limits": [
+    "Static inspection and AST parsing only; neither helper has been executed by this reviewer.",
+    "No active runtime result, source corpus, frozen active source tree, database, model or resource ledger was read.",
+    "Actual publication file bytes, remote commit ancestry, final campaign status and receipts still require the subsequently executed pinned verifier.",
+    "Declared manifest and GitHub endpoints are the publication trust inputs; this review does not establish semantic reconstruction or proof correctness."
+  ],
+  "models_executed": false,
+  "network_access": false,
+  "passed": true,
+  "replaced_verifier_sha256": "40dbd8dfbbb19d05422e4e05bfe73797b40f8892244cc590325c328080cb10d2",
+  "resolved_observations": [
+    "Local publication manifest lacked regular-file before/after witnesses in the initial verifier. Revised pinned verifier adds them.",
+    "Initial verifier relied on packager accepted-review validation. Revised pinned verifier independently validates fetched review acceptance and exact STATUS binding."
+  ],
+  "runtime_reads": false,
+  "schema": "uscode-publication-method-independent-static-review/v1",
+  "source_pins": {
+    "package_evidence.py": {
+      "bytes": 8025,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/package_evidence.py",
+      "sha256": "f9ddcc59929a3347048fc88bd475d42113a9cb85c33f796392298707c3699d1c",
+      "stat_signature": [
+        66306,
+        63751769,
+        8025,
+        1791687320149090599,
+        1791687320149090599
+      ],
+      "syntax_valid": true
+    },
+    "verify_publication.py": {
+      "bytes": 18562,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/verify_publication.py",
+      "sha256": "8769ac3705b16d5ae4b4de361dccc0bdff3b3b262c7e868d40a4f94e476922ae",
+      "stat_signature": [
+        66306,
+        63751799,
+        18562,
+        1791687564449333244,
+        1791687564449333244
+      ],
+      "syntax_valid": true
+    }
+  },
+  "status": "accepted_static_method"
+}

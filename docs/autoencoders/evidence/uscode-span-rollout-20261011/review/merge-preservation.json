@@ -1,0 +1,68 @@
+{
+  "accelerate_gitlink_preserved": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+  "canonical_dirty_trees_changed": false,
+  "created_at_unix": 1791688827.0919003,
+  "datasets_integration_head": "c52453ba4ad3470efc73ecce33ce24363b113469",
+  "datasets_remote_main_preserved": "928cb1e73e43f8e2e2e42fea16926d4b393b77fa",
+  "datasets_runtime_head": "f0cf880ce5998b20f389874fea1eaddef64490df",
+  "execution_owners": {
+    "archive_reconciliation": {
+      "bytes": 26696,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "census": {
+      "bytes": 24447,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "constitution_inventory": {
+      "bytes": 11156,
+      "path": "ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "intake": {
+      "bytes": 23320,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "resume_cli": {
+      "bytes": 1523,
+      "path": "scripts/ops/legal_ir/resume_uscode_archive.py",
+      "sha256": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "resume_owner": {
+      "bytes": 24269,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "span_pages": {
+      "bytes": 13440,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "uscode_dataset": {
+      "bytes": 8703,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "working_and_committed_bytes_match_execution": true
+    },
+    "uscode_ingest": {
+      "bytes": 10156,
+      "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "working_and_committed_bytes_match_execution": true
+    }
+  },
+  "merged_after_source_child_and_independent_review_stopped": true,
+  "original_historical_tree_head": "271ad796288e17039f036af6a0d003a4628da6ed",
+  "root_main_preserved": "83c9016146bda937bcee498475e556cbe32956c0",
+  "schema": "uscode-rollout-main-integration-preservation/v1"
+}

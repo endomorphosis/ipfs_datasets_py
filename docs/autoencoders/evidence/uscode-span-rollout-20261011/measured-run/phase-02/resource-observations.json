@@ -1,0 +1,198 @@
+[
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 10696,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143546406786,
+    "checked_at": 1791684700.3648336,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 24764416
+    },
+    "inventory": {
+      "apparent_bytes": 95525406786,
+      "entry_count": 1358613,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73223024640,
+    "observed_apparent_bytes": 95525406786,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 10696
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 9474865,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143556410823,
+    "checked_at": 1791684716.8867164,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 701956096
+    },
+    "inventory": {
+      "apparent_bytes": 95535410823,
+      "entry_count": 1358620,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73204334592,
+    "observed_apparent_bytes": 95535410823,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 9474865
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 10931354,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143557915932,
+    "checked_at": 1791684733.161256,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 717320192
+    },
+    "inventory": {
+      "apparent_bytes": 95536915932,
+      "entry_count": 1358621,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73182109696,
+    "observed_apparent_bytes": 95536915932,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 10931354
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 11576976,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143558581456,
+    "checked_at": 1791684749.4820457,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 730058752
+    },
+    "inventory": {
+      "apparent_bytes": 95537581456,
+      "entry_count": 1358621,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73177251840,
+    "observed_apparent_bytes": 95537581456,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 11576976
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 12682953,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143559713141,
+    "checked_at": 1791684765.6986742,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 737955840
+    },
+    "inventory": {
+      "apparent_bytes": 95538713141,
+      "entry_count": 1358621,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73171480576,
+    "observed_apparent_bytes": 95538713141,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 12682953
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 15743830,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143562730971,
+    "checked_at": 1791684782.0209699,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 747397120
+    },
+    "inventory": {
+      "apparent_bytes": 95541730971,
+      "entry_count": 1358621,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73167654912,
+    "observed_apparent_bytes": 95541730971,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 15743830
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 16348731,
+    "attempt_limit_bytes": 256000000,
+    "charged_bytes": 143563379013,
+    "checked_at": 1791684798.4217744,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 747724800
+    },
+    "inventory": {
+      "apparent_bytes": 95542379013,
+      "entry_count": 1358621,
+      "special_file_count": 5,
+      "symlink_count": 820
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 73169813504,
+    "observed_apparent_bytes": 95542379013,
+    "outstanding_full_reservations_bytes": 48021000000,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 16348731
+  }
+]

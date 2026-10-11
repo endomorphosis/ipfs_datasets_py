@@ -1,0 +1,84 @@
+{
+  "dataset_origin_main": "db432c5a93a207436f9a4279d888fddee931e390",
+  "execution": {
+    "git_mutations": false,
+    "models_imported_or_run": false,
+    "network_or_HF_operations": false,
+    "resource_claims_modified": false,
+    "tests_run": false,
+    "training": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/concurrent-survey-update.json"
+    ]
+  },
+  "incoming_commits": [
+    "db432c5a93a207436f9a4279d888fddee931e390 Merge remote-tracking branch 'origin/main' into codex/numerical-structural-ir-20261011",
+    "000e8c8b1dfb7b162003ce50ffa48ef05830c53c Reserve explicit long Source384 inference budgets without changing defaults",
+    "672f3659477aa32cd8c5943aa3cefe97f8162a1d Diagnose unsupported numerical syntax edge cases explicitly",
+    "a3be17cae1fb6176c6339be21ddd4776cc3893d1 Project numerical source structure into pending logic obligations",
+    "07adbf875c881eb282f444d714ba3fe3c9d84453 Add opt-in source-bound numerical structural frontend"
+  ],
+  "incoming_files": [
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+    "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+    "ipfs_datasets_py/logic/software_verification/__init__.py",
+    "ipfs_datasets_py/logic/software_verification/numerical_logic.py",
+    "ipfs_datasets_py/logic/software_verification/numerical_source.py",
+    "tests/unit/logic/software_contracts/test_source384_formalization_budget.py",
+    "tests/unit/logic/software_verification/test_numerical_logic.py",
+    "tests/unit/logic/software_verification/test_numerical_source.py"
+  ],
+  "observed_at_utc": "2026-10-11T02:07:19.221913+00:00",
+  "parallel_native_session": {
+    "conclusion": "This separate session is implementing the source/cache/runtime eligibility adapter; coordinate and reuse its contribution rather than duplicating or overwriting it. No trained result, native cache admission or proof qualification is inferred from its files.",
+    "dataset_HEAD": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "directory": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01",
+    "new_arbitrary_adapter_implementation_reviewed": false,
+    "qualification": {
+      "Lake_executed": false,
+      "all_logic_families_supported": false,
+      "arbitrary_native_runtime_qualified": false,
+      "default_promotion": false,
+      "human_reviewed_legal_gold": false,
+      "official_source_authority_authenticated": false,
+      "proof_authority": false,
+      "source_only": true,
+      "source_semantics_verified": false,
+      "teacher_qualified": false,
+      "training_admission": false
+    },
+    "reviewed_scope": "Read-only existing source/native/family contracts plus data-only archived US Code pilot and exact plaintext views; recommendations for a distinct versioned adapter, not approval of an implementation or numerical trial.",
+    "source_family_intake_review": {
+      "bytes": 42303,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-family-intake-review.json",
+      "sha256": "6921bd6ee7ceb7ea1184be8dc57772fc5e670ac7e909c0caa3c02d5fe9e9e48e"
+    },
+    "source_only_pilot": {
+      "fresh_holdout_qualified": false,
+      "native32_target_representation_qualified": false,
+      "native_token_or_cache_eligibility_measured": false,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json",
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5",
+      "sources": 8,
+      "targets_attached": false,
+      "training_qualified": false,
+      "unique_physical_sections": 8
+    },
+    "worktree_status": [
+      "?? ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "?? ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "?? tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py"
+    ]
+  },
+  "preservation_requirement": "Preserve incoming numerical-source/structural-logic source history and current root gitlinks during integration. No changed census or clone generation is implied.",
+  "previous_survey": {
+    "bytes": 11091,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-native-gap-survey.json",
+    "sha256": "6705878a5c92814c6465c8046056f096b53d4f843fdfd8a9415e1676baf8f168"
+  },
+  "prior_dataset_main": "28a4790ab6952321da0dcf5066e1015f097695d8",
+  "prior_dataset_main_is_ancestor": true,
+  "root_origin_main": "956320563cbebdaf6fdaf1f27292cb63063f4038",
+  "schema": "uscode-concurrent-survey-update/v1",
+  "scope": "Read-only bounded supplement to parallel-native-gap-survey.json; no numerical or model audit."
+}

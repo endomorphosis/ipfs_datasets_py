@@ -1,0 +1,10 @@
+{
+  "models_executed": false,
+  "new_sha256": "405d4f9d670f448bb4c11b06964c87bd6319e00380bb3aefe16de3dab628be92",
+  "parent_path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/run_guarded_reconciliation.py",
+  "parent_sha256": "58b9d37b2a76c31ff303cbd6ec0a39a3c544153364687fe38c0927072e2aae03",
+  "schema": "uscode-span-rollout-guard-reuse/v1",
+  "semantic_delta": "Fresh owned runtime campaign path only; same authenticated145GB owner, scheduler adoption, owned lease watchdog and cleanup",
+  "storage_cap_changed": false,
+  "training_executed": false
+}

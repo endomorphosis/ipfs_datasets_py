@@ -1,0 +1,11 @@
+{
+  "arguments_sha256": "db12a34fd82f1fb5698759dd277319c548ca3d0c40ef5d328a617498328a8372",
+  "command_sha256": "da20bd9a3d36ee672799d3b04faa1ebe0995d08bc1a04c671210c592340d12f9",
+  "files": {
+    "operator-source/run_guarded_reconciliation.py": {
+      "bytes": 7194,
+      "sha256": "405d4f9d670f448bb4c11b06964c87bd6319e00380bb3aefe16de3dab628be92"
+    }
+  },
+  "schema": "uscode-span-rollout-operator-source-pins/v1"
+}

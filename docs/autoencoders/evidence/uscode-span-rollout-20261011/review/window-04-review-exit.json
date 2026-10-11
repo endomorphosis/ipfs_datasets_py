@@ -1,0 +1,8 @@
+{
+  "command_sha256": "42c1a06f5e69fbae3627056b56d455a419d1fb1435d234561e5b1b72cf612071",
+  "completed_at": "2026-10-11T03:17:07.173606+00:00",
+  "log_sha256": "39440dc5d7874b9c74283d22b50090363d64f495214cba830806a13343376c49",
+  "returncode": 0,
+  "schema": "uscode-independent-window-review-exit/v1",
+  "wrapper_elapsed_seconds": 495.9286456379341
+}

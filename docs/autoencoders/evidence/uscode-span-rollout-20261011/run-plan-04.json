@@ -1,0 +1,43 @@
+{
+  "arguments_sha256": "5e5c7c10f9998679ee6ee8607ecb62773215cb2b3369870e02afbb5dbb2acb95",
+  "controller_storage_bytes": 240000000,
+  "deadline_seconds": 1800,
+  "duckdb_memory_mb": 768,
+  "fresh_admission_required": true,
+  "limits": [
+    "Observed page/time/target-density estimates do not guarantee full-corpus, window or storage fit.",
+    "Duplicate physical target occurrences are not bounded by distinct archived IDs.",
+    "The guardian must independently admit against current global and per-attempt bounds.",
+    "Source exhaustion is possible but unpromised; all-source identity inventory remains separate."
+  ],
+  "max_clone_bytes": 134217728,
+  "max_new_candidate_occurrences": 4194304,
+  "max_pages": 65536,
+  "measured_parent_db_growth_bytes": 15728640,
+  "memory_mib": 1536,
+  "models_executed": false,
+  "observed_density_db_growth_bytes_range": [
+    31460000,
+    52730000
+  ],
+  "page_count_extrapolated_seconds": 1514.23,
+  "parent_result_review_sha256": "836b2896bd6c6c847841eb33f42d1ce630ca7085c411664eaca79e53d8aa29fe",
+  "prior_guard_elapsed_seconds": 757.115,
+  "proof_authority": false,
+  "remaining_physical_source_rows": 35402,
+  "schema": "uscode-span-rollout-next-window-plan/v1",
+  "snapshot_headroom_bytes": 1682086821,
+  "source_commit_frozen_while_active": "f0cf880ce5998b20f389874fea1eaddef64490df",
+  "source_generation_changed": false,
+  "start_counts": {
+    "outside": 1400871,
+    "source": 1460896,
+    "targets": 60025
+  },
+  "start_cursor": [
+    24675,
+    0
+  ],
+  "storage_bytes": 256000000,
+  "training_executed": false
+}

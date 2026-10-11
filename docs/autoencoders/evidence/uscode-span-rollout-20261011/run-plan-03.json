@@ -1,0 +1,42 @@
+{
+  "all_target_density_growth_estimate_bytes": 748350000,
+  "arguments_sha256": "b326970b4c463fab3590c787547dd72fd3cdbf4afdc28610435410c498e4dc2f",
+  "controller_storage_bytes": 240000000,
+  "deadline_seconds": 1500,
+  "duckdb_memory_mb": 768,
+  "fresh_admission_required": true,
+  "limits": [
+    "Observed-density extrapolations do not guarantee time, storage or full-corpus fit.",
+    "Duplicate physical target occurrences are not bounded by distinct archived IDs.",
+    "Future parents above128MiB require explicit reviewed clone-cap admission before another copy."
+  ],
+  "max_clone_bytes": 134217728,
+  "max_new_candidate_occurrences": 2097152,
+  "max_pages": 32768,
+  "measured_parent_db_growth_bytes": 7602176,
+  "memory_mib": 1536,
+  "models_executed": false,
+  "observed_density_db_growth_bytes_range": [
+    60820000,
+    85920000
+  ],
+  "page_count_extrapolated_seconds": 1034.2,
+  "parent_result_review_sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f",
+  "prior_guard_elapsed_seconds": 129.275,
+  "proof_authority": false,
+  "schema": "uscode-span-rollout-next-window-plan/v1",
+  "snapshot_headroom_bytes": 1697898009,
+  "source_commit_frozen_while_active": "f0cf880ce5998b20f389874fea1eaddef64490df",
+  "source_generation_changed": false,
+  "start_counts": {
+    "outside": 185630,
+    "source": 209740,
+    "targets": 24110
+  },
+  "start_cursor": [
+    2308,
+    0
+  ],
+  "storage_bytes": 256000000,
+  "training_executed": false
+}

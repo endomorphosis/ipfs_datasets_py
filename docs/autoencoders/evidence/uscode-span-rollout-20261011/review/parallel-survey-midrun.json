@@ -1,0 +1,233 @@
+{
+  "STATUS_measurements_changed": false,
+  "accepted_result_review": {
+    "candidate_summary": {
+      "family_bridge_invoked": false,
+      "formal_admission": false,
+      "legal_semantic_accuracy_measured": false,
+      "normative_output_scope": "Original frozen normative32 actor/action vocabulary; no arbitrary statutory actor/action expansion, byte-codec transplantation or model retraining.",
+      "proof_authority": false,
+      "source_literal_metric_scope": "Case-sensitive substring presence counts, not predicted source-facet bindings, legal correctness or semantic accuracy. Each lane has actor0/8, object0/8 and action1/8 source-literal matches.",
+      "total_EOS": 16,
+      "total_exact_canonical_payload_equal": 16,
+      "total_strict_JSON": 16
+    },
+    "conclusion": "Eight authentic native384 cache inputs and sixteen frozen raw candidate diagnostics are observed. Canonical transport/syntax does not establish legal reconstruction fidelity or a qualified teacher. Zero optimizer updates/new weights; no native768/learned8 or proof qualification. Exact admitted-review raw-byte custody remains separately unqualified.",
+    "custody_limitation": [
+      {
+        "code": "exact_admitted_review_bytes_not_retained",
+        "detail": "Guardian pre-admission saved this exact launch-gate pin. Reviewer then replaced the local protocol-review.json with the 113-binding resource supplement after admission, without retaining the original111-binding body/timestamp. The original raw5aaf body is unavailable. The substantive reconstruction is explicitly not byte-identical and does not substitute for the admitted raw bytes.",
+        "expected_bytes": 52865,
+        "expected_sha256": "5aaf410334fd1ca9be2ac061fd9807d266eff4f28247f6f3a677a66af060ca68"
+      }
+    ],
+    "findings": [],
+    "full_evidence_custody_clean": false,
+    "native_cache_counts": {
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "missing_inputs": 0,
+      "native_execution_cryptographically_attested": false,
+      "native_execution_record_consistency_checked": true,
+      "official_current_law_verified": false,
+      "ready_cache_rows": 8,
+      "recorded_token_count_max": 79,
+      "recorded_token_count_min": 19,
+      "refused_cache_rows": 0,
+      "semantic_gold": false,
+      "source_authority_authenticated": false,
+      "split_status": "unassigned exposed source-only pilot; no held-out generalization qualification",
+      "token_limit_exceeded": 0
+    },
+    "native_profile": {
+      "backend": "sentence-transformers",
+      "batch_size": 4,
+      "cpu_threads": 1,
+      "device": "cpu",
+      "dimension": 384,
+      "dtype": "float32",
+      "gradient_mode": "inference_mode",
+      "max_tokens": 512,
+      "model_id": "thenlper/gte-small",
+      "normalization": "l2",
+      "pooling": "mean",
+      "revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "truncation": false
+    },
+    "outcome": {
+      "EOS_candidates": 16,
+      "Lake_executed": false,
+      "actual_native768_executed": false,
+      "actual_optimizer_updates": 0,
+      "attempt01": "Failed during sentence_transformers import, before pinned producer model construction/forward path.",
+      "attempt02": "Guardian and child completed with returncode0; fresh native384 source inputs and two frozen normative32 candidate passes completed.",
+      "attempt02_native384_producer_calls_started": 1,
+      "candidate_rows": 16,
+      "default_promotion": false,
+      "frozen_candidate_passes": 2,
+      "frozen_checkpoint_selection_executed": false,
+      "learned8_executed": false,
+      "legal_family_bridge_invoked": false,
+      "legal_fidelity_qualified": false,
+      "literal_clause_occurrences": 8,
+      "native384_producer_calls_returned": 1,
+      "native384_producer_calls_started": 1,
+      "native384_verified_embedded_records": 8,
+      "new_weights_created": false,
+      "paragraph_clause_aliases": 16,
+      "physical_source_occurrences": 8,
+      "proof_authority": false,
+      "semantic_gold": false,
+      "source_semantics_verified": false,
+      "total_producer_calls_returned_across_both_attempts": 1,
+      "total_producer_calls_started_across_both_attempts": 2,
+      "training_executed": false
+    },
+    "passed": true,
+    "pin": {
+      "bytes": 84588,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/results-resource-review.json",
+      "sha256": "5634d4d0fc1f307c312b041e0e243ced9eada53b43cca282d8d40217c7bb1f4a",
+      "stat_signature": [
+        66306,
+        63489871,
+        84588,
+        1791686857262958758,
+        1791686857262958758
+      ]
+    },
+    "qualification_scope": "Completed saved-artifact source/native/candidate consistency and cooperative resource cleanup; exact admitted-review raw-byte custody is separately unqualified.",
+    "scientific_resource_checks_passed": true
+  },
+  "active_execution_preservation": {
+    "mutated": false,
+    "pinned_datasets_commit": "f0cf880ce5998b20f389874fea1eaddef64490df",
+    "recommendation": "Keep active source tree frozen. After source job stops, preserve native PR1280 history and current accelerate gitlink during reviewed integration/publication."
+  },
+  "existing_saved_weight_metadata": {
+    "body_downloads_by_this_survey": 0,
+    "metadata_scope": "Existing saved review pins reused; no fresh Hub model body download.",
+    "repo": "Publicus/legal-ir-autoencoder",
+    "revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8"
+  },
+  "first_remote_observation_utc": "2026-10-11T02:57:00Z",
+  "mutations": {
+    "active_databases_read": 0,
+    "checkouts": 0,
+    "checkpoints_read": 0,
+    "external_messages": 0,
+    "fetches": 0,
+    "merges": 0,
+    "models_loaded": 0,
+    "raw_vectors_read": 0,
+    "source_jobs_launched": 0,
+    "uploads": 0
+  },
+  "native_owner_local": {
+    "HEAD": "f3901341cdde9b4485315327d5ef06abd1485b11",
+    "directory": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+    "git_status_short": "",
+    "merged_pr": {
+      "headRefOid": "f3901341cdde9b4485315327d5ef06abd1485b11",
+      "mergeCommit": {
+        "oid": "928cb1e73e43f8e2e2e42fea16926d4b393b77fa"
+      },
+      "mergedAt": "2026-10-11T02:53:02Z",
+      "number": 1280,
+      "state": "MERGED",
+      "title": "Add source-bound native cache for new legal decoder inputs",
+      "url": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1280"
+    },
+    "merged_preservation": {
+      "all_contributions_byte_exact_on_merge_and_live_main": true,
+      "findings": [],
+      "live_main": "928cb1e73e43f8e2e2e42fea16926d4b393b77fa",
+      "merge_ancestor_of_live_main": true,
+      "merge_first_parent": "db432c5a93a207436f9a4279d888fddee931e390",
+      "only_owned_paths_changed_from_actual_first_parent": true,
+      "passed": true,
+      "unrelated_first_parent_tree_entries_preserved": true
+    }
+  },
+  "observed_at_utc": "2026-10-11T02:58:11.440082+00:00",
+  "previous_surveys_changed": false,
+  "read_query_correction": "The initial accelerate local path external/ipfs_accelerate_py did not exist. .gitmodules identified external/ipfs_accelerate; that read-only ls-remote succeeded. No repository state changed.",
+  "receipt_pins": {
+    "datasets_merged_preservation": {
+      "bytes": 25647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets-merged-preservation.json",
+      "sha256": "3bae44de0d66bcb2607f5126734460c3b26d3fefbc89f5cc077bbb51cc1eabcf",
+      "stat_signature": [
+        66306,
+        63489888,
+        25647,
+        1791687232568741457,
+        1791687232568741457
+      ]
+    },
+    "datasets_pr_merged": {
+      "bytes": 325,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets-pr-merged.json",
+      "sha256": "9169568c4751c672a1d886115f643ffec8f1c479402dc2bc787f300149d35fc8",
+      "stat_signature": [
+        66306,
+        63489883,
+        325,
+        1791687226491423769,
+        1791687226491423769
+      ]
+    },
+    "post_generation_diagnostics": {
+      "bytes": 111344,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+      "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33",
+      "stat_signature": [
+        66306,
+        63489869,
+        111344,
+        1791686622279093157,
+        1791686622279093157
+      ]
+    },
+    "results_resource_review": {
+      "bytes": 84588,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/results-resource-review.json",
+      "sha256": "5634d4d0fc1f307c312b041e0e243ced9eada53b43cca282d8d40217c7bb1f4a",
+      "stat_signature": [
+        66306,
+        63489871,
+        84588,
+        1791686857262958758,
+        1791686857262958758
+      ]
+    },
+    "source_contribution_binding": {
+      "bytes": 25818,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-contribution-binding.json",
+      "sha256": "8ee3e78ef579d4ec333b10e7083c5b8bcd2aa1b7d0ae9e53e2b736a44f00037a",
+      "stat_signature": [
+        66306,
+        63489878,
+        25818,
+        1791686964429476242,
+        1791686964429476242
+      ]
+    }
+  },
+  "remote_main": {
+    "accelerate": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+    "datasets": "928cb1e73e43f8e2e2e42fea16926d4b393b77fa",
+    "root": "4df56dca204787b70d71fd0d3459f90a20e6ce38"
+  },
+  "root_main_gitlinks": {
+    "accelerate": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+    "datasets": "db432c5a93a207436f9a4279d888fddee931e390"
+  },
+  "schema": "uscode-span-midrun-parallel-survey/v1",
+  "scope": "Read-only fresh git ls-remote heads, already-local root gitlink tree and native-owner Git status/accepted review metadata. No active databases, vectors or model bodies read; no import, job, fetch, checkout, merge or external message."
+}

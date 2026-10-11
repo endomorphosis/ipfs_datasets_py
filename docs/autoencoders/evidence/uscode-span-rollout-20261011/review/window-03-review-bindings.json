@@ -1,0 +1,53 @@
+{
+  "check_count": 22,
+  "created_at_unix": 1791686581.6656108,
+  "findings": 0,
+  "models_executed": false,
+  "passed": true,
+  "pins": {
+    "phase-03-snapshot-receipt": {
+      "bytes": 4682,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/measured-run/phase-03/snapshot-receipt.json",
+      "sha256": "f60e93c7296270f3a28cab1938b2fb7552ce8c3e6f20e0d9fe7c2e1c27899edb"
+    },
+    "review_continuation_window.py": {
+      "bytes": 25849,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_continuation_window.py",
+      "sha256": "053b6d5a604e2c974638beac8e7a2970a78d3844a22bcd7b5f33e3aa4c12225d"
+    },
+    "snapshot_stopped_window.py": {
+      "bytes": 8288,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/snapshot_stopped_window.py",
+      "sha256": "200ff83273e42af615c6daafa058e0fd868d4a6f010eea4de9f7e1654f866083"
+    },
+    "window-03-results-review.json": {
+      "bytes": 37068,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-results-review.json",
+      "sha256": "836b2896bd6c6c847841eb33f42d1ce630ca7085c411664eaca79e53d8aa29fe"
+    },
+    "window-03-review-command.json": {
+      "bytes": 1509,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-review-command.json",
+      "sha256": "670f1d3f81e4e8669b3aba3fc773b629363f0a9159988d2c766c608a1397c839"
+    },
+    "window-03-review-exit.json": {
+      "bytes": 63,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-review-exit.json",
+      "sha256": "26714d22cc79251fea163fb3690180adb6a8e2d7af3baa0812b6fbda8ebbbb47"
+    },
+    "window-03-review-preparation.json": {
+      "bytes": 1523,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-review-preparation.json",
+      "sha256": "5662a3b7c6e1b73f9b9a2c98f55278c8c5df491a2a934fb9f9cb9d91d0f2b079"
+    },
+    "window-03-review.log": {
+      "bytes": 729,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-review.log",
+      "sha256": "1474cf25ed9ce7438a113e1c026c75831b310eef4542081725a053ee43b85ebb"
+    }
+  },
+  "resources_mutated": false,
+  "returncode": 0,
+  "review_elapsed_seconds": 256.5418713670224,
+  "schema": "uscode-window-independent-review-bindings/v1"
+}

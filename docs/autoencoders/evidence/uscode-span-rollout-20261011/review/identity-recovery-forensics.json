@@ -1,0 +1,426 @@
+{
+  "archived_metadata_rows": [
+    {
+      "admitted": false,
+      "agent_id": "",
+      "claim_token": "",
+      "claim_worker": "",
+      "code_identity": "",
+      "dataset_id": "justicedao/ipfs_uscode",
+      "documents": 60068,
+      "failure_mode": "",
+      "formalized": false,
+      "gap_count": 421525,
+      "heartbeat": "",
+      "legal_id": "",
+      "owner_agent": "",
+      "pending_count": 3820263,
+      "reason": "",
+      "record_kind": "meta",
+      "role": "",
+      "sealed": false,
+      "sealed_count": 22379,
+      "source_parquet": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "source_sha256": "",
+      "source_span_id": "",
+      "status": "progress",
+      "task_id": "",
+      "term_id": "",
+      "term_kind": "",
+      "term_value": "",
+      "work_kind": ""
+    }
+  ],
+  "candidate_pair_cohorts": [],
+  "execution": {
+    "HF_or_registry_or_Git_operations": false,
+    "duckdb_in_memory": true,
+    "elapsed_seconds": 0.6526332279900089,
+    "kernel_maxrss_KiB_process_lifetime_self": 351212,
+    "models_embeddings_or_tokenizers_run": false,
+    "persistent_databases_attached_read_only": true,
+    "source_original_parquet_body_read": false,
+    "spill_disabled": true,
+    "training_or_target_mutation_or_alias_creation": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json"
+    ]
+  },
+  "explicit_recipe_schema_encoder_fields_present": [],
+  "findings": [],
+  "historical_count_comparison": {
+    "cause_identified": false,
+    "current_generated_source_occurrences": 3840988,
+    "historical_minus_current": 1654,
+    "historical_sealed_plus_pending": 3842642
+  },
+  "identity_only_examples": [],
+  "input_pins": {
+    "final_database": {
+      "bytes": 30158848,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/reconciliation.duckdb",
+      "sha256": "f78813a0f1b072d02d5ca2d9b52f4b37527887d1ade02bacf505591a2271e635",
+      "stat_signature": [
+        66306,
+        85721463,
+        30158848,
+        1791688027450199619,
+        1791688027450199619
+      ]
+    },
+    "final_manifest": {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+      "stat_signature": [
+        66306,
+        85721464,
+        3079,
+        1791686734692837095,
+        1791686734692837095
+      ]
+    },
+    "final_report": {
+      "bytes": 12140,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json",
+      "sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+      "stat_signature": [
+        66306,
+        85721526,
+        12140,
+        1791688027866621480,
+        1791688027871202779
+      ]
+    },
+    "progress": {
+      "bytes": 52701179,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "stat_signature": [
+        66306,
+        75023679,
+        52701179,
+        1791385411069107548,
+        1791385411069107548
+      ]
+    },
+    "seed_database": {
+      "bytes": 8663040,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census.duckdb",
+      "sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f",
+      "stat_signature": [
+        66306,
+        75416924,
+        8663040,
+        1791386776862932786,
+        1791386776862932786
+      ]
+    },
+    "seed_manifest": {
+      "bytes": 1711,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2",
+      "stat_signature": [
+        66306,
+        75416923,
+        1711,
+        1791386774129975807,
+        1791386774129975807
+      ]
+    },
+    "seed_report": {
+      "bytes": 6427,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/report.json",
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70",
+      "stat_signature": [
+        66306,
+        75416927,
+        6427,
+        1791386777602938701,
+        1791386777617938821
+      ]
+    }
+  },
+  "interpretation": "No unresolved archived rows matched the preserved 18,342-row seed prefix on recorded source_sha256 plus legal_id. This bounded comparison found no matched pairs or evidence of mismatched identity bindings in that small prefix. It does not establish an ID-recipe mismatch or explain the remaining unresolved rows or the historical count difference. Original recipe/context/order, archived text custody, physical uniqueness and embedding applicability remain unqualified; no aliases were created.",
+  "limits": {
+    "all_source_occurrence_inventory_available": false,
+    "maximum_examples": 256,
+    "maximum_output_bytes": 2097152,
+    "memory_setting_mb": 256,
+    "old_seed_scope_only": true,
+    "original_source_rescanned": false,
+    "temp_spill_bytes": 0,
+    "threads": 1
+  },
+  "observed_at_utc": "2026-10-11T03:15:25.628053+00:00",
+  "preserved_seed_extent": [
+    {
+      "first_section": 0,
+      "last_section": 127,
+      "rows": 18342
+    }
+  ],
+  "progress_footer": {
+    "arrow_metadata": {},
+    "row_groups": 5,
+    "rows": 443905,
+    "schema": [
+      {
+        "name": "record_kind",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "dataset_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "agent_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "role",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "heartbeat",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "documents",
+        "nullable": true,
+        "type": "int32"
+      },
+      {
+        "name": "source_parquet",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "source_span_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "legal_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "status",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "sealed",
+        "nullable": true,
+        "type": "bool"
+      },
+      {
+        "name": "claim_worker",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "claim_token",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "source_sha256",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "reason",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "code_identity",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "term_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "term_kind",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "term_value",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "task_id",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "failure_mode",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "work_kind",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "owner_agent",
+        "nullable": true,
+        "type": "string"
+      },
+      {
+        "name": "sealed_count",
+        "nullable": true,
+        "type": "int32"
+      },
+      {
+        "name": "gap_count",
+        "nullable": true,
+        "type": "int32"
+      },
+      {
+        "name": "pending_count",
+        "nullable": true,
+        "type": "int32"
+      },
+      {
+        "name": "admitted",
+        "nullable": true,
+        "type": "bool"
+      },
+      {
+        "name": "formalized",
+        "nullable": true,
+        "type": "bool"
+      }
+    ]
+  },
+  "query_snapshot": {
+    "archive_metadata": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "SELECT * FROM read_parquet(?) WHERE record_kind='meta' LIMIT 8"
+    },
+    "bounded_identity_only_examples": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "WITH unresolved AS (SELECT a.source_span_id,a.source_sha256,a.legal_id,a.status,a.code_identity FROM read_parquet(?) a WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM final.target_occurrences f WHERE f.source_span_id=a.source_span_id)) SELECT u.source_span_id AS archived_id,u.source_sha256,u.legal_id,u.status AS archived_status,u.code_identity AS recorded_archived_code_identity,s.seed_occurrences,s.seed_distinct_ids,s.example_seed_id,s.example_section,s.example_document_batch,s.example_historical_ordinal FROM unresolved u JOIN seed_pairs s USING(legal_id,source_sha256) ORDER BY u.source_span_id LIMIT 256"
+    },
+    "bounded_seed_pair_summary": {
+      "parameters": [],
+      "sql": "CREATE TEMP TABLE seed_pairs AS SELECT legal_id,source_sha256,count(*) AS seed_occurrences,count(DISTINCT source_span_id) AS seed_distinct_ids,arg_min(source_span_id,occurrence_id) AS example_seed_id,arg_min(source_section_offset,occurrence_id) AS example_section,arg_min(historical_document_batch_index,occurrence_id) AS example_document_batch,arg_min(historical_span_ordinal,occurrence_id) AS example_historical_ordinal FROM seed.source_occurrences GROUP BY 1,2"
+    },
+    "candidate_pair_cohorts": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "WITH unresolved AS (SELECT a.source_span_id,a.source_sha256,a.legal_id,a.status,a.code_identity FROM read_parquet(?) a WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM final.target_occurrences f WHERE f.source_span_id=a.source_span_id)) SELECT u.status,s.seed_occurrences,count(*) AS archive_rows FROM unresolved u JOIN seed_pairs s USING(legal_id,source_sha256) GROUP BY 1,2 ORDER BY archive_rows DESC LIMIT 32"
+    },
+    "seed_extent": {
+      "parameters": [],
+      "sql": "SELECT count(*) AS rows,min(source_section_offset) AS first_section,max(source_section_offset) AS last_section FROM seed.source_occurrences"
+    },
+    "stored_code_identity": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "SELECT code_identity,status,count(*) AS records FROM read_parquet(?) GROUP BY 1,2 ORDER BY records DESC LIMIT 8"
+    },
+    "stored_status": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "SELECT status,sealed,admitted,formalized,count(*) AS records FROM read_parquet(?) WHERE record_kind='span' GROUP BY 1,2,3,4 ORDER BY records DESC LIMIT 16"
+    },
+    "unresolved_seed_pair_counts": {
+      "parameters": [
+        "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet"
+      ],
+      "sql": "WITH unresolved AS (SELECT a.source_span_id,a.source_sha256,a.legal_id,a.status,a.code_identity FROM read_parquet(?) a WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM final.target_occurrences f WHERE f.source_span_id=a.source_span_id)) SELECT count(*) AS unresolved_archive_rows,count(*) FILTER (WHERE s.legal_id IS NOT NULL) AS same_recorded_hash_and_legal_id_rows,count(*) FILTER (WHERE s.seed_occurrences=1) AS one_seed_occurrence_rows,count(*) FILTER (WHERE s.seed_occurrences>1) AS ambiguous_seed_occurrence_rows,count(*) FILTER (WHERE s.seed_distinct_ids>1) AS multiple_seed_id_rows,count(*) FILTER (WHERE s.example_seed_id=u.source_span_id) AS same_example_generated_id_rows FROM unresolved u LEFT JOIN seed_pairs s USING(legal_id,source_sha256)"
+    }
+  },
+  "schema": "uscode-identity-recovery-bounded-forensics/v1",
+  "scope": "Archive footer/metadata and bounded exact recorded SHA256-plus-legal_id diagnostics against the preserved18342-row seed. Phase04 stopped report is observational while independent full-window acceptance runs. No aliases, formal targets or ready records are created.",
+  "stopped_input_locks": {
+    "final": {
+      "mode": "shared_nonblocking_read_only",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/writer.lock",
+      "stat_signature": [
+        66306,
+        85721466,
+        0,
+        1791686734700710458,
+        1791686734700710458
+      ]
+    },
+    "seed": {
+      "mode": "shared_nonblocking_read_only",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/writer.lock",
+      "stat_signature": [
+        66306,
+        75416925,
+        0,
+        1791386774666915246,
+        1791386774666915246
+      ]
+    }
+  },
+  "stored_code_identity_counts": [
+    {
+      "code_identity": "",
+      "records": 421525,
+      "status": "gap"
+    },
+    {
+      "code_identity": "sha256:05ded12711ebac48224f6f86035701022b35745c0b18242c3903deca6b8ad0c1",
+      "records": 22379,
+      "status": "sealed"
+    },
+    {
+      "code_identity": "",
+      "records": 1,
+      "status": "progress"
+    }
+  ],
+  "stored_identity_interpretation": "code_identity is an opaque digest on 22,379 sealed records; 421,525 gap records have no code identity. Metadata names a source blob path, not a versioned span extraction recipe, schema/task/model/encoder/tokenizer/embedding context.",
+  "stored_status_counts": [
+    {
+      "admitted": false,
+      "formalized": false,
+      "records": 421525,
+      "sealed": false,
+      "status": "gap"
+    },
+    {
+      "admitted": false,
+      "formalized": false,
+      "records": 22379,
+      "sealed": true,
+      "status": "sealed"
+    }
+  ],
+  "unresolved_seed_pair_diagnostics": [
+    {
+      "ambiguous_seed_occurrence_rows": 0,
+      "multiple_seed_id_rows": 0,
+      "one_seed_occurrence_rows": 0,
+      "same_example_generated_id_rows": 0,
+      "same_recorded_hash_and_legal_id_rows": 0,
+      "unresolved_archive_rows": 378935
+    }
+  ]
+}

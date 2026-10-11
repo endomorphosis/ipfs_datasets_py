@@ -1,5 +1,7 @@
 # US Code span processing: reused census and bounded archive reconciliation
 
+Latest measured continuation: [completed October 11 source reconciliation and remaining plan](uscode_archive_rollout_20261011.md). The historical results below retain their original scope.
+
 The new archived-target path reuses the original source, queue and all **18,342**
 saved census occurrences, then resumes within a source section in a fresh CLI
 execution. The bounded result accounts for **24,191 observed occurrences**, with

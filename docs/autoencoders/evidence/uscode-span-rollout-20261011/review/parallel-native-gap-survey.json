@@ -1,0 +1,197 @@
+{
+  "clone_helper_review_expectations": [
+    "Additive helper leaves all seven execution owner files unchanged and derives original source/progress/seed/paging bindings from authenticated manifest.",
+    "Require explicit expected DB/manifest/report literal SHA256 values and read-only stopped shared-lock custody with WAL absent.",
+    "Verify parent state/report/cursor/count/digest/target dispositions before cloning, not mere file copies.",
+    "Stage all cloned bytes plus custody evidence inside charged owned storage; max_clone_bytes includes every staged file.",
+    "Atomically publish to an absent destination with no-replace semantics; reject a concurrently created empty foreign destination.",
+    "Fsync/verify cloned bytes and parent witnesses before publication; preserve old target rows and original prefix exactly.",
+    "Prepublication failures clean only staging; postpublication resume refusal preserves legitimate clone; parent bytes stay unchanged.",
+    "Existing run_archive_reconciliation controls continue atomic source accounting and same-generation digest/cursor resume."
+  ],
+  "completed": true,
+  "concurrent_native_cache_work": {
+    "claim": "A separate native-cache session has begun on latest published datasets main; only intake and checkout were visible in the bounded root-level survey. Do not infer a completed adapter or numerical result. Preserve its worktree.",
+    "directory": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+    "head": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "no_filesystem_wide_absence_claim": true,
+    "observed_intake_pin": {
+      "bytes": 646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/intake.json",
+      "sha256": "b38b600f59af2ad012f7e2d1d1bb4d5f3a644435e567432d822f13a15c4d4075"
+    },
+    "status_observed": ""
+  },
+  "current_native_replay_contract": {
+    "actual_decoder_output_cap": 512,
+    "actual_decoder_vocab_values": 32,
+    "actual_max_clause_slots": 8,
+    "arbitrary_new_source_inputs_supported": false,
+    "contract_id": "normative-retained-source-cache-legal-ir/v1",
+    "fixed_source_scope": {
+      "clauses": 180,
+      "native_vectors": 216,
+      "paragraphs": 48,
+      "recorded_producer_batch": 4
+    },
+    "historical_model_profile_capacity": 8192,
+    "native768_executed_token_ceiling": 512,
+    "owner_pin": {
+      "bytes": 28302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py",
+      "sha256": "017adb2cd955f84b049bb483100be5b8b3742bac1ddc0084a9d106c9a3d3da07"
+    },
+    "runtime_teacher_semantic_and_proof_qualification": false,
+    "schema": "normative-retained-source-cache-runtime-plan/v1",
+    "source_reassembly": "Exact original plan/native production reassembly and width-specific saved transforms; complete source/context/token/vector consistency verified as recorded metadata."
+  },
+  "foreign_trees_mutated": false,
+  "latest_root_gitlinks": [
+    "160000 commit b401f87f3edda07495e70d8ad1b9d53ec0d457f1\texternal/ipfs_accelerate",
+    "160000 commit 28a4790ab6952321da0dcf5066e1015f097695d8\texternal/ipfs_datasets"
+  ],
+  "live_remote_main": {
+    "datasets": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "workspace": "956320563cbebdaf6fdaf1f27292cb63063f4038"
+  },
+  "models_loaded_or_trained": false,
+  "new_model_hash_audit": false,
+  "new_scientific_contribution": {
+    "actual_optimizer_updates": 480,
+    "admission_masks": "all five zero",
+    "all_trained_endpoints_rejected": true,
+    "datasets_merge_commit": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "datasets_source_commit": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+    "default_promotion": false,
+    "encoded_source_presentations": 7680,
+    "formal_output": null,
+    "fresh_final_exact_positives_of_64": 36,
+    "fresh_final_unsupported_emissions_of_64": 8,
+    "hosted_CI": {
+      "datasets": {
+        "availability": "unavailable_account_billing_lock",
+        "claim_passed": false
+      },
+      "workspace": {
+        "availability": "unavailable_account_billing_lock",
+        "claim_passed": false
+      }
+    },
+    "legal_gold": false,
+    "local_and_downloaded_selected_saved_outputs_exact_each": 1280,
+    "native_runtime_qualified": false,
+    "new_registration_not_reviewed": true,
+    "older_support_gate_final_is_a_different_cohort": true,
+    "primary_report": {
+      "bytes": 11802,
+      "relative_path": "docs/implementation/legal_scope_retention_gate_pilot_20261011.md",
+      "repository": "endomorphosis/ipfs_datasets_py",
+      "revision": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+      "sha256": "013affa149aac3cdf4e3d6359ad26e9c1c8638f277bfb887c01dd0886312326a"
+    },
+    "public_HF_revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+    "reason": "Every fitted endpoint introduced negative case IDs; BCE120 preserved aggregate13-negative count but removed two old and introduced two different emissions. New casewise selector catches the substitution.",
+    "root_contribution_commit": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+    "root_merge_commit": "956320563cbebdaf6fdaf1f27292cb63063f4038",
+    "selected_fitted_gain": false,
+    "selected_updates": {
+      "bce": 0,
+      "positive_margin": 0
+    },
+    "selection_frozen_parent_exact_positive_count": 38,
+    "selection_frozen_parent_positive_emissions": 52,
+    "source_only_feature_role": "Frozen contextual64 + ordered-byte33 features with3169-parameter support residual; no native8/384/768 latent conditioning",
+    "test_cases_from_completed_receipt": 179
+  },
+  "next_smallest_gap_after_census": {
+    "deliverable": "A separately versioned bounded source/cache/checkpoint eligibility and routing contract, coordinated with the active native-cache session. Start with a source-only metadata preflight and explicit refusal table before any numerical pilot.",
+    "dimension_scope": "Start with the existing genuine384D receipt-set owner; keep native768 producer/profile receipts and authentic8D teacher/feature lineage in separate adapters. Do not widen a supported-dimension tuple or relabel384 receipt metadata as768.",
+    "duplicate_work_avoidance": "Survey and preserve active legal-native-cache session before implementing its adapter. Current continuation will finish authenticated source clone/resume; do not repeat the completed raw-source support objectives or model hash audit.",
+    "explicit_dispositions": [
+      "eligible_cached_source",
+      "missing_native_cache",
+      "producer_or_context_incompatible",
+      "unsupported_decoder_task_or_schema",
+      "unrepresentable_lexical_or_qualifier_output",
+      "token_or_clause_overflow",
+      "citation_fallback_not_statutory_source",
+      "needs_context"
+    ],
+    "known_warm_start_preserved": {
+      "copied_decoder_tensors": 26,
+      "copied_parameters": 27142,
+      "optimizer_steps_in_preparation": 0,
+      "reference_interface_training_separate_from_teacher_output_distillation": true,
+      "status": "initialized_unaligned dual-donor768 generation exists",
+      "teacher_output_KD_not_qualified": true
+    },
+    "minimum_bindings": [
+      "Exact normalized/raw source and context/span identities with fallback provenance",
+      "IR family, dimension role, schema/version, decoder task and format/profile; unknown old fields stay unknown",
+      "Encoder/model/code/tokenizer/asset revision plus pooling/dtype/normalization and actual untruncated tokens",
+      "Vector digest and original trained transformation/preprocessing and checkpoint bytes",
+      "Representable output codec, complete source-derived clause geometry, output token/EOS budget and allowed target scope",
+      "Exposure and heldout grouping; compiler/target-conditioned observations cannot become source-only teacher evidence"
+    ],
+    "reuse_owners": [
+      "autoencoder_embedding_receipt_set bounded verified GTE-small384 leaf membership and selected source-record closure only; it pins modelthenlper/gte-small revision17e1f347 and384D and is not a generic8/768 receipt reader",
+      "Existing normative/contextual cached decoder body and saved preprocessing without changing its fixed48/216 fixture",
+      "Current all-source pager identities and archived-target inventory/source pointers",
+      "Existing genuine native768 caches and authenticated dual-donor768 preparation generation"
+    ],
+    "tests_needed_before_numeric_pilot": [
+      "Retained48-paragraph outputs and all original source/checkpoint bytes unchanged",
+      "Bounded newly declared genuine source pairs admitted only under exact native profiles;384 values never padded/relabelled768",
+      "Mock8D vectors and unknown native schema/task bindings refused",
+      "Source/context/token/vector/cache/checkpoint changes and attached target labels refused",
+      "Whole target/output representability and clause association checked separately from input width",
+      "Missing/no-cache rows remain accounted without encoder downloads or proof-authority escalation"
+    ]
+  },
+  "observed_at_utc": "2026-10-11T01:59:07.252385+00:00",
+  "proof_authority": false,
+  "publication_performed": false,
+  "published_history_retained": [
+    {
+      "observed_main": "28a4790ab6952321da0dcf5066e1015f097695d8",
+      "old_history_is_ancestor": true,
+      "previous_published_commit": "9e5df0d19b62268cdda356077754fad43bdf65fa",
+      "repository": "/home/barberb/lift_coding/external/ipfs_datasets"
+    },
+    {
+      "observed_main": "956320563cbebdaf6fdaf1f27292cb63063f4038",
+      "old_history_is_ancestor": true,
+      "previous_published_commit": "c976b4f8a725f37207fc0f0119fbb60f0b552efd",
+      "repository": "/home/barberb/lift_coding"
+    }
+  ],
+  "receipt_pins": [
+    {
+      "bytes": 8887,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/completion.json",
+      "sha256": "418c160f56c9ad9d21f5bd13143205126115acc911165ec6910e1780920ad67b"
+    },
+    {
+      "bytes": 35643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/validation.json",
+      "sha256": "9c72ba0b1b6a77ab8abc07c88a3bf65d74d5f12db5984da0005a13daa3b2b43b"
+    },
+    {
+      "bytes": 27125,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/incoming-progress-review.json",
+      "sha256": "c7e7f93563f4f95bbe7b03b2ae56083d323b0bd436d934eac559bb94567df5ab"
+    },
+    {
+      "bytes": 32235,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/parallel-research-survey.json",
+      "sha256": "e317961cb0aa484e0951eda72fb5963937b0eec18750a2cd86921f89480c216b"
+    },
+    {
+      "bytes": 29412,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/results-review.json",
+      "sha256": "a51dff39b62eeb9f7d71568ea07e8a9fa9903efee7b812841a43fb880015c660"
+    }
+  ],
+  "schema": "uscode-span-rollout-parallel-native-gap-survey/v1",
+  "source_jobs_tests_or_resources_run": false
+}

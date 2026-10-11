@@ -1,0 +1,51 @@
+{
+  "clone_operator_sha256": {
+    "resume_cli": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e",
+    "resume_owner": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba"
+  },
+  "copied_report_scope": "Inherited authenticated parent state, not a new run or resource measurement",
+  "database_copy": "Byte-identical stopped parent database; no target row rewriting",
+  "destination_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/results",
+  "generation_manifest_sha256": "0cd9e41f2211f0d7b40e024058c37d78606c127e88eec87b8105686d5af7418f",
+  "max_clone_bytes": 134217728,
+  "models_executed": false,
+  "parent_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results",
+  "parent_files": {
+    "manifest.json": {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "reconciliation.duckdb": {
+      "bytes": 3944448,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/reconciliation.duckdb",
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f"
+    },
+    "report.json": {
+      "bytes": 12024,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-continuation-20261011/archived-reconciliation-01/results/report.json",
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    }
+  },
+  "parent_state": {
+    "accounting_sha256": "96b102b3703be6ca7596bc018a21afc010d3d1865459418f493474150272e314",
+    "all_occurrence_digest": "6698f1075e0325788724a9d13a423c6f88333ac661da2ef05316d07eeff1616f",
+    "done": false,
+    "next_section": 199,
+    "next_span": 64,
+    "outside_target_digest": "13539588c4693fa9efa4af9001a73ef5616eb1a33be7ef88f62aa52f295e9b7f",
+    "outside_target_occurrence_count": 21385,
+    "seed_applied": true,
+    "source_occurrence_count": 24191,
+    "target_occurrence_count": 2806
+  },
+  "postpublication_resume_failure": "Legitimate clone retained with its committed cursor; frozen parent remains unchanged",
+  "prepublication_failure": "Owned staging removed; no runnable destination",
+  "proof_authority": false,
+  "publication": "Linux renameat2(RENAME_NOREPLACE) after authenticated copy and fsync",
+  "schema": "uscode-archive-generation-clone/v1",
+  "source_text_copied": false,
+  "status": "authenticated_clone_ready",
+  "total_staged_file_bytes": 3962418,
+  "training_executed": false
+}

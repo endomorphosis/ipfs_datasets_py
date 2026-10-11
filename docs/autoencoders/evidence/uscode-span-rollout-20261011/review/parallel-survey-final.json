@@ -1,0 +1,177 @@
+{
+  "active_source_runtime": {
+    "HEAD": "f0cf880ce5998b20f389874fea1eaddef64490df",
+    "directory": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+    "instruction": "Do not merge, fetch into or edit the active source tree before its phase03 child stops. Incoming independent adapter work remains separate from this generation.",
+    "new_or_touched_manifest_owner_count": 0,
+    "seven_manifest_owner_checks": {
+      "archive_reconciliation": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+        "published_main_matches": true,
+        "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+      },
+      "census": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+        "published_main_matches": true,
+        "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+      },
+      "constitution_inventory": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "published_main_matches": true,
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      },
+      "intake": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+        "published_main_matches": true,
+        "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+      },
+      "span_pages": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+        "published_main_matches": true,
+        "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+      },
+      "uscode_dataset": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+        "published_main_matches": true,
+        "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+      },
+      "uscode_ingest": {
+        "active_frozen_matches": true,
+        "native_session_matches": true,
+        "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "published_main_matches": true,
+        "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+      }
+    },
+    "working_tree_status": []
+  },
+  "branch_search_limit": "Only refs/heads patterns containing native then cache were queried. No absence claim for all possible branch names or pull requests.",
+  "exact_root_gitlinks": [
+    "160000 commit e57617a3db4cae1e66c8289d60e9fcb3efebc18f\texternal/ipfs_accelerate",
+    "160000 commit db432c5a93a207436f9a4279d888fddee931e390\texternal/ipfs_datasets"
+  ],
+  "history_preserved": {
+    "accelerate_b401_ancestor": true,
+    "datasets_28a4790_ancestor": true,
+    "datasets_9e5df0_ancestor": true,
+    "root_9563205_ancestor": true,
+    "root_c976_ancestor": true
+  },
+  "next_acceptance_gap": "After authenticated native source/cache/token production, record which real-law actors/actions/qualifiers exceed normative32/eight-clause/512-output representation. Diagnostic predictions cannot choose a teacher. Qualified reconstruction needs reviewed source/context targets and a separately attributed expanded head/task/schema initialized from preserved donors, with exposure and fidelity/retention gates.",
+  "observed_at_utc": "2026-10-11T02:34:38.572255+00:00",
+  "parallel_native_cache_session": {
+    "accepted_completed_native_result_review_found_in_survey": false,
+    "controls_are_numerical_execution": false,
+    "directory": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01",
+    "guardian_console": {
+      "bytes": 216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/guardian-console.jsonl",
+      "sha256": "efa04faecce7815d5c15828f887b3427b628c74c77fc4a6e1c180177fb10b43b"
+    },
+    "guardian_console_records": [
+      {
+        "error_type": "ValueError",
+        "physical_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01",
+        "status": "failed"
+      }
+    ],
+    "interpretation": "Six additive untracked adapter/preparation/control files; pre-run reviews and explicit-double controls are not published or qualified native reconstruction results. Local guardian console reports failure; partial native artifacts, if any, are not qualified by this survey.",
+    "local_dataset_HEAD": "db432c5a93a207436f9a4279d888fddee931e390",
+    "local_worktree_status": [
+      "?? ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "?? ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "?? scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py",
+      "?? tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py",
+      "?? tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py",
+      "?? tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py"
+    ],
+    "native_and_model_fixtures_explicit": true,
+    "protocol": {
+      "bytes": 40091,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json",
+      "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1"
+    },
+    "protocol_observed_at_utc": "2026-10-11T02:31:11.633931+00:00",
+    "protocol_qualification": {
+      "Lake_executed": false,
+      "checkpoint_selection_executed": false,
+      "default_promotion": false,
+      "learned8_execution_approved": false,
+      "legal_fidelity_qualified": false,
+      "native768_execution_approved_by_this_plan": false,
+      "native_lane_executed_if_started": 384,
+      "proof_authority": false,
+      "runtime_contract_id": "arbitrary-native-source-cache-legal-ir/v1",
+      "scope": "source-only native384 readiness and frozen normative32 candidate custody, no real-law fidelity claim",
+      "semantic_gold": false,
+      "source_semantics_verified": false,
+      "target_representability_verified": false
+    },
+    "reported_unique_control_count": 233,
+    "source_owner_names": [
+      "arbitrary_native_source_cache.py",
+      "arbitrary_native_legal_ir_runtime.py",
+      "prepare_arbitrary_native_legal_sources.py"
+    ],
+    "validation": {
+      "bytes": 4849,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/validation.json",
+      "sha256": "60790a02d6ef3724eccb34e582e397ef1a407428c0fee9d60a09a97ed7e28b88"
+    }
+  },
+  "published_findings": {
+    "newly_published_learned_reconstruction_gain_found": false,
+    "numerical_supervisor": {
+      "interpretation": "Source-bound numerical structural obligations, conditional lemma builds and explicit budget/benchmark wiring. The published limitations explicitly deny improved learned Source384 coverage or NumPy/source semantics.",
+      "new_benchmark_score": null,
+      "proof_authority": false,
+      "published_revision": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+      "qualification_path": "docs/agent_supervisor/evidence/numerical-budget-20261011/qualification.json",
+      "qualification_sha256": "5133229850253f361e223cdfa97d33680923d162f722f4958d0aa885688f36da",
+      "source_obligations_discharged": 0,
+      "source_semantics_verified": false,
+      "training_steps": 0
+    },
+    "retention_trial": {
+      "datasets_source": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+      "scope": "Separate contextual64/ordered-byte support task; original native8/384/768 checkpoints preserved.",
+      "status": "Published support-retention trial performed480 optimizer updates; every trained endpoint failed casewise negative-ID retention, selected cold parent with zero selected updates. No accepted learned semantic reconstruction gain or qualified native teacher."
+    }
+  },
+  "published_heads": {
+    "accelerate": "e57617a3db4cae1e66c8289d60e9fcb3efebc18f",
+    "datasets": "db432c5a93a207436f9a4279d888fddee931e390",
+    "root": "4df56dca204787b70d71fd0d3459f90a20e6ce38"
+  },
+  "remote_native_cache_branch_observations": {
+    "accelerate": {},
+    "datasets": {},
+    "root": {}
+  },
+  "review_execution": {
+    "DB_opened": false,
+    "HF_or_registry_operations": false,
+    "claims_or_leases_modified": false,
+    "fetch_or_Git_mutations": false,
+    "git_ls_remote_network_read_only": true,
+    "models_imported_or_run": false,
+    "tests_or_source_jobs_or_training_run": false,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/parallel-survey-final.json"
+    ]
+  },
+  "schema": "uscode-final-parallel-survey/v1",
+  "scope": "Read-only remote-main/branch and existing-session survey while phase03 source runtime is frozen. Distinguishes published numerical findings, source/control/cache readiness and actual result qualification."
+}

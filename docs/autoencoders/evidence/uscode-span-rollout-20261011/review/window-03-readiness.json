@@ -1,0 +1,265 @@
+{
+  "bounded_window": {
+    "child_process_slots": 1,
+    "controller_output_max_bytes": 240000000,
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 768,
+    "max_clone_bytes": 134217728,
+    "max_page_spans": 64,
+    "max_pages": 32768,
+    "outer_memory_mib": 1536,
+    "seconds": 1500,
+    "storage_admission_bytes": 256000000
+  },
+  "created_at_unix": 1791685332.912995,
+  "disk": {
+    "census_rerun": false,
+    "fresh_admission_required": true,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "ledger_sha256": "8ffba028502ae83650a7aa68124c2d7ebd5e75cc35034e51a608db52a023afc3",
+    "limit_bytes": 145000000000,
+    "outstanding_full_reservations_bytes": 47765000000
+  },
+  "limits": [
+    "Measured density, per-target DB growth and throughput are observations from a single completed window, not future guarantees.",
+    "Duplicate physical target occurrences mean remaining distinct archived IDs are not a hard persisted-row bound.",
+    "A successful output exceeding the 128 MiB clone cap cannot be cloned into another window under that unchanged cap.",
+    "Guarded output/deadline failures must retain their committed resumable cursor and frozen parent."
+  ],
+  "measured_assessment": {
+    "all_target_density_growth_estimate_bytes": 748353295.2850169,
+    "growth_estimate_at_candidate_ceiling_and_observed_density_bytes": 85922956.21508065,
+    "growth_estimate_at_observed_page_fill_bytes": 60817408.0,
+    "last_guardian_headroom_bytes": 1697898009,
+    "maximum_new_occurrence_ceiling": 2097152,
+    "previous_child_elapsed_seconds": 129.275,
+    "previous_db_growth_bytes": 7602176,
+    "previous_new_occurrences": 185549,
+    "previous_new_outsiders": 164245,
+    "previous_new_targets": 21304,
+    "previous_pages": 4096,
+    "runtime_eight_times_previous_seconds": 1034.2
+  },
+  "mutations": {
+    "claims_acquired": 0,
+    "leases_acquired": 0,
+    "models_loaded": 0,
+    "new_scans_launched": 0,
+    "sources_changed": false
+  },
+  "parent_accounting": {
+    "all_occurrence_digest": "552b68c530029b755630b81d0ab607c4d2e56bf9b6ebff1a8c30fa81b4722f89",
+    "empty_section_count": 0,
+    "max_source_unicode_characters": 3931,
+    "max_source_utf8_bytes": 3939,
+    "outside_target_byte_cohorts": {
+      "le_4096": 3605,
+      "le_512": 182025
+    },
+    "outside_target_digest": "bda5bc085682c994ba60aa3a439f22cd69a00670965b5719ca75e2c0b8c62b38",
+    "outside_target_examples": [
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "f7e4974f40c5195f3dccbab0b2d3a56845c22843b5fb810672664dc1406f2e3b",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 0,
+        "source_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958",
+        "source_span_id": "uscode-span-e6a9b94d19f36965fb052be8d2633c3f289d3d641fcf035cb3e3ad1dda33c2af",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 6,
+        "utf8_bytes": 6
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "13decd76b20287c7274fbf617671bd38611e0d1cf0b9c7b7be17e0c9c99593f9",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 1,
+        "source_sha256": "b532af870b2e9b1a59ea89be9ae9ee29f28e3a132bf2dbc20139cc3137256258",
+        "source_span_id": "uscode-span-cad8e69c87afbb3d0cb2d1da8d9faf22a543c438e9345710a9efa17ec4248096",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 37,
+        "utf8_bytes": 37
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "2d96b559af4a94639d35ea47d0e63e97b11aa5509534a02be4f5fcce76802691",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 2,
+        "source_sha256": "536de206d749145fc7944f4b3b408e964fdcc3571ac291dd4d71b8c1aa398023",
+        "source_span_id": "uscode-span-ab1a5071e25330c45d2e60456417caa4d018c2de0d0facefb8b61b63d30984d6",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 100,
+        "utf8_bytes": 100
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "a63a9ced37c879705b1f19e02085dce5b41bec22905414bd7c10e527cca81510",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 3,
+        "source_sha256": "370f333dd3bb5a9effedae6e65a104bae02113719f357c9d42e5a7e8b4c8100e",
+        "source_span_id": "uscode-span-6ed2637b580e6536a57b2eb716274a5967946c8d43d644f442dc4bc04e4efeb4",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 61,
+        "utf8_bytes": 61
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "7bd0a2b087ce49971868fa3862dcdfd97692d393d150cb0f6a5d281745052ca5",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 4,
+        "source_sha256": "3ae853538f72391e3e03c46d0e134dfd52ffcc98d086d56eb02e1901e969da77",
+        "source_span_id": "uscode-span-bbe5f5cee07f694f6b67be92d45129faed7939dba471de82ae348bfc0e9b1ff9",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 45,
+        "utf8_bytes": 46
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "dd4baba28b8916b9fdd480dc43b37278bfd6565ca178bcf3fe73533d00aefcf8",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 7,
+        "source_sha256": "4a21b1ff080f7359dfdfe41c0788c70d0f715b2a34e3726fb86c44f34d4c52cf",
+        "source_span_id": "uscode-span-650833c08b4e7f273ef5139aa90d6925d4240872610fe0d48d582860432384e9",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 13,
+        "utf8_bytes": 13
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "a55cafca6a0bcf6232227e5b988331989fefc7f95acbb8df00d177ce3c02f8d6",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 8,
+        "source_sha256": "a6ce69c2f6c0ba36cee7673c90e3930171b139ab73bccf33ed4cf5af5acdc237",
+        "source_span_id": "uscode-span-1f32b4e806d7ed8d801c33f7537ceacc34bf4b73545b4cbb50be659160bf7161",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 23,
+        "utf8_bytes": 23
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "521b2a7612f452f017bbcd952d55168dd573a29d9606013fe5aac33fe15b0723",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 9,
+        "source_sha256": "9a051a23e76e5e17576fcda8f4c90d74192ddc5956fdfe336f0790d7f30ba9fb",
+        "source_span_id": "uscode-span-f1184fbf7579c1b944473a0015b96b548c9060ad6fbf2cfc6bc5d0e683c34b53",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 17,
+        "utf8_bytes": 18
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "48ccde4cab857c3d48ba8a5fc9040ef5b3be2407daffdf93459302ac3e7aede5",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 10,
+        "source_sha256": "b18f4973de6d5c9aa29ee1d4084b3297c5004523ecb12723028dd227675446a9",
+        "source_span_id": "uscode-span-7d1cd63965654f3c4c4428797ea95ebef036a3cea830f845a71067a7b06e3c0c",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 9,
+        "utf8_bytes": 9
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "8a832fb6432a265b673feff7f822fa7b4f711b385d4eaae2c0ff216ddce3f2eb",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 11,
+        "source_sha256": "0a3a32f896be06a76e7fde8a4966aaaec5fc412c076e19b99fe531763213bfc8",
+        "source_span_id": "uscode-span-89641f1ddb83ad232c0b10549938f6b66759c0d5545eab2159e2a7cccf79ae84",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 13,
+        "utf8_bytes": 13
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "e114036e14f7a06efae1f5f023b9b2c80929f453c08b6e84e51930b99d22a2e8",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 12,
+        "source_sha256": "63f8478b7fb3291be314da60614484220bcb627794a44da8ccea023cdf184fbc",
+        "source_span_id": "uscode-span-79c54af83dd5ec5bd1ddfeca5e8b2bfa087af6eedec120527dd2903b4f025af7",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 17,
+        "utf8_bytes": 18
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "ca6957b66470a69e4e2f175c4372b08e771d1983825f7ed8d3abd71a9d00cac4",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 14,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_span_id": "uscode-span-879e427a2caaf56124a138bebaf1d7f2995201920a9b2b425f053e2c7c11226c",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 2,
+        "utf8_bytes": 2
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "8eebbee8c6efc974b1cfc82eb39196d1478af64c880643799b7fd33be2b0c4c3",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 16,
+        "source_sha256": "9c8b8a8e7b5bd66c048dfa95141e6470329dc2667199fa361dc33175aeaad6ab",
+        "source_span_id": "uscode-span-91e499af21de45a0e504975089989803e63c603d0bca1a7858481ab0a47c1ff7",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 19,
+        "utf8_bytes": 19
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "edd33ade850d80f2b02f0bbb19dd9c09d68529a6ddf06ed11cad702c5d184493",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 17,
+        "source_sha256": "ae2f90b90795def5c5c7892f95c172a24085328c44a0c93c2dd8d514807081ce",
+        "source_span_id": "uscode-span-8596635d8f71997d3eecff3633907e8f4c5b7a25034e0e0cacb5fa1ecd3bae66",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 44,
+        "utf8_bytes": 46
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "e69f427c0868c9c09d0283d6be1d62cc6aecb18ed9cbb83ecc8e91f35108c929",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 18,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_span_id": "uscode-span-34ff27a0c9c778b23dcf32ff6e84bd08c871ba6629079dce7b5a5ad245d343ab",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 2,
+        "utf8_bytes": 2
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "occurrence_id": "7126bd9551c9e8656561312a1eab9c1e3fe664a10d32210ef88bb417de7d453a",
+        "source_section_offset": 0,
+        "source_section_span_ordinal": 20,
+        "source_sha256": "033af693a0bd92c8326871739f691bbab6fa0b5a220ddb1d30fce0d9521efc6e",
+        "source_span_id": "uscode-span-41e68c6440afd986c8c2576b1cad23b219547679413754e1219330ecb310345f",
+        "source_text_origin": "normalized_source_text",
+        "unicode_characters": 14,
+        "utf8_bytes": 16
+      }
+    ],
+    "outside_target_occurrence_count": 185630,
+    "source_byte_cohorts": {
+      "le_4096": 4051,
+      "le_512": 205689
+    },
+    "source_occurrence_count": 209740,
+    "source_text_origins": {
+      "normalized_source_text": 209740
+    },
+    "source_unicode_characters": 15248823,
+    "source_utf8_bytes": 15396148,
+    "target_dispositions": {
+      "matched": 24110
+    },
+    "target_occurrence_count": 24110
+  },
+  "parent_cursor": [
+    2308,
+    0
+  ],
+  "parent_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-02/results",
+  "parent_review": {
+    "passed": true,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/rollout-results-review.json",
+    "sha256": "675c77d523dceebbbdfcbda85dca66bca3b5d3a7de03e55da840ee833016967f"
+  },
+  "schema": "uscode-bounded-window-readiness/v1"
+}

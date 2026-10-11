@@ -1,0 +1,30 @@
+{
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_continuation_window.py",
+    "--attempt",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04",
+    "--parent-directory",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-03/results",
+    "--parent-review",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-03-results-review.json",
+    "--parent-review-sha256",
+    "836b2896bd6c6c847841eb33f42d1ce630ca7085c411664eaca79e53d8aa29fe",
+    "--readiness",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-readiness.json",
+    "--readiness-sha256",
+    "37e62d1566ba38ba72ab14417d1e660fd4429c2a0153d4098ed8b4e512133ab6",
+    "--output",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json"
+  ],
+  "executed": false,
+  "models_or_new_source_jobs_started": false,
+  "requires_successful_stopped_guardian_receipts": true,
+  "schema": "uscode-bounded-window-independent-review-preparation/v2",
+  "source": {
+    "bytes": 25849,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/review_continuation_window.py",
+    "sha256": "053b6d5a604e2c974638beac8e7a2970a78d3844a22bcd7b5f33e3aa4c12225d"
+  },
+  "syntax_validated": true
+}

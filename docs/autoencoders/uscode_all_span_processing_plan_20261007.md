@@ -1,6 +1,6 @@
 # US Code span processing plan
 
-Latest measured continuation: [October 11 reconciliation progress](uscode_span_continuation_20261011.md). The historical results below retain their original scope.
+Latest measured continuation: [completed October 11 source reconciliation and remaining plan](uscode_archive_rollout_20261011.md). The historical results below retain their original scope.
 
 Process every source occurrence in the pinned US Code span cache through an explicit inventory, source resolution and task disposition. Reuse existing source bytes, embeddings, checkpoints, compiler observations and research controls. Add learned reconstruction and formal checking as independently measured stages. Every span must be accounted for; successful capture, generated IR, reviewed legal meaning and checked proofs have separate completion criteria.
 
