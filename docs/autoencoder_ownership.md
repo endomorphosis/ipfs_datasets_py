@@ -188,3 +188,9 @@ The prefix contains the authored corpus, saved embeddings, evaluations and an
 offline `replay.py` that verifies file hashes and reproduces the four predeclared
 holdout scores. This publication does not select or promote a default supervisor
 checkpoint. Use the exact Hub revision, explicit loader and checkpoint digest.
+
+The [captured-source inference API](software_contracts/numerical_selection_384.md)
+adds an explicit native owner and isolated CPU worker for this release. It keeps
+the original module context, accounts for unsupported and over-512-token inputs,
+and authenticates retained inference through the source index and model
+registry. The shared decoder and default scalar selection remain unchanged.
