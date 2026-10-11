@@ -1,0 +1,124 @@
+{
+  "API": {
+    "declaration_skeleton": "(packet)->blank caller declaration",
+    "digest": "Canonical finite UTF8 sorted compact JSON content; ensure_ascii=False; not file SHA. Checkpoint SHA follows original checkpoint owner convention and remains externally authenticated.",
+    "parse_json_bytes": "Strict duplicate/nonfinite rejecting32MiB transport; report APIs separately enforce16MiB.",
+    "prepare_family": "(packet,declaration,*,expected_packet_sha256,family=\"deontic\")->native output/request",
+    "prepare_pending": "(source,raw_report,*,expected_report_sha256,expected_checkpoint_sha256,row_id,joint_report=None,expected_joint_report_sha256=None)->packet",
+    "validate_family": "(result,packet,declaration,*,expected_packet_sha256,family=\"deontic\")->True",
+    "validate_pending": "(packet,*,expected_packet_sha256)->True"
+  },
+  "bounds": {
+    "each_report_canonical_bytes": 16777216,
+    "joint_search": "Existing selector limits16topK/50000nodes; exact selected-row replay only.",
+    "pending_packet_canonical_bytes": 33554432,
+    "report_rows": 128,
+    "retained_source_tokenizer": "256tokens/16384characters, no truncation",
+    "source_utf8_bytes": 32768
+  },
+  "created_at_utc": "2026-10-11T18:14:08.464467+00:00",
+  "execution": {
+    "Git_mutation": false,
+    "checkpoint_tensors_read": false,
+    "model_or_forward_run": false,
+    "module_imported_by_author": false,
+    "network": false,
+    "resource_calls": false,
+    "tests_run_by_author": false
+  },
+  "inert_test_coverage": [
+    "O/P/F real native spine without authority",
+    "ScoresNone raw versus capturedraw/joint exact pure score replay",
+    "Full96report custody, distinctIDs, no truncated fake report",
+    "Unicode chars/UTF8, repeated surfaces and declared physical lengths",
+    "Blankcue/occurrence/qualifier skeleton and absentobject",
+    "Malformed coverage/count/boolean/counter/authority/display/source/score/control joins",
+    "Cross-attached declarations, intervaloverlap and partialoccurrence",
+    "Temporal/family aliases/composition refusal",
+    "Authoritative packet/nativeAST/Lean replay rejects substitution",
+    "Strict duplicate/nonfinite/fileSHA transport distinction and packet/report budget",
+    "Fresh subprocess numericalimports denied during pendingtransport"
+  ],
+  "limitations": [
+    "Artifact consistency is not model/source/legal/reviewer authentication; caller binds exact original filebytes and checkpoint independently.",
+    "Joint envelope has no checkpoint/control fields. Deterministically equal scores/results cannot prove historical fileorigin; external artifact pairing required.",
+    "No context interpretation, trigger meaning, goldtarget/trainingmask, fullfamily semantics, Lakebuild or defaultpromotion inferred.",
+    "Complete original reports retained; rawrefusals never rewritten. Separate replay-selected jointproposal is a distinct lane.",
+    "Declared sourcecontext artifactSHA/physicalcoordinates do not revalidate original export or fullcontext bytes."
+  ],
+  "owned_files": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    }
+  },
+  "reuse_owner_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py": {
+      "bytes": 66185,
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  },
+  "schema": "saved-span-family-adapter-build/v1",
+  "source_contract": {
+    "fields": [
+      "id",
+      "source_text",
+      "source_sha256"
+    ],
+    "optional_physical_occurrence": {
+      "context_identity_fields": [
+        "document_id",
+        "artifact_sha256",
+        "selected_char_start",
+        "selected_char_end",
+        "selected_utf8_byte_start",
+        "selected_utf8_byte_end"
+      ],
+      "custody": "Absent explicitly or caller-declared metadata. Interval lengths checked, fullcontext/sourceartifact not read/authenticated.",
+      "fields": [
+        "occurrence_id",
+        "context_identity"
+      ]
+    }
+  },
+  "static_checks": {
+    "actual_saved96_TUNE_raw_envelope_matches_closedfields": true,
+    "actual_saved_joint_result_envelope_matches_closedfields": true,
+    "declared_parameter_cases": 79,
+    "source_and_test_AST_parse": true,
+    "test_functions": 19,
+    "top_level_imports": [
+      "hashlib",
+      "importlib",
+      "json",
+      "math",
+      "re"
+    ]
+  },
+  "status": "authored_and_statically_inspected_not_executed",
+  "supported_scope": "Only sealed deontic\u2192existing native deontic_fol ground-null-context/v1; one unchanged rule and one explicit caller occurrence. Qualifiers need complete existing typed Boolean declarations. Temporal/calendar reject; TDFOL registered-profile and DCEC composition gaps remain explicit."
+}

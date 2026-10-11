@@ -1,0 +1,117 @@
+{
+  "API": {
+    "digest": "digest(value): full sorted compact UTF8 JSON SHA256, not a file-byte digest",
+    "parse_json_bytes": "parse_json_bytes(raw): strict bounded ordinary UTF8 JSON, duplicate keys and floating/nonfinite scores refused",
+    "preflight_declarations": "preflight_declarations(packet, reviewed_submissions, *, expected_packet_sha256, artifact_resolver, recording=None)",
+    "validate_preflight": "validate_preflight(receipt, packet, reviewed_submissions, *, expected_packet_sha256, artifact_resolver, recording=None)"
+  },
+  "Git_mutations": 0,
+  "authored_parametrized_case_count": 69,
+  "authored_test_functions": 28,
+  "base": "4af461728329cdad4bfb910ab878d016ce279e54",
+  "bounds": {
+    "MAX_DIAGNOSTICS": 4096,
+    "MAX_DIAGNOSTICS_PER_DECLARATION": 1024,
+    "MAX_JSON_BYTES": 8388608,
+    "MAX_JSON_DEPTH": 24,
+    "MAX_JSON_NODES": 1000000,
+    "limits_behavior": "refuse overflow, never truncate or silently omit declarations"
+  },
+  "created_at_utc": "2026-10-11T18:04:04.151766+00:00",
+  "meaningful_test_categories": [
+    "empty and physically distinct equal-text items",
+    "partial null versus explicit absence and retained contradictions",
+    "eligibility/definition/rule contradictions without recorder edits",
+    "complete uncertainty and source-role coverage remains unresolved",
+    "context-required with supplied sufficient context, surrounding definitions, cross-reference strings and symbolic aliases are non-errors",
+    "disputed declarations and exact agreement without selection or authentication",
+    "multiple rules, repeated qualifiers, shared literal anchors and attachments preserved without normalization",
+    "Unicode selected-source versus complete-context half-open coordinates",
+    "editorial/undetermined and overlapping contrary declared intervals stay diagnostics",
+    "cached/supplied recording replay refuses artifact and body tampering",
+    "closed preflight replay refuses status/order/pin/mask/eligibility tampering",
+    "parser duplicate/nonfinite/score/UTF8/trailing refusal and bounded diagnostic refusal",
+    "detached outputs and missing process evidence never authenticate a reviewer"
+  ],
+  "models_imported_or_executed": false,
+  "network_calls": 0,
+  "old_owner_bytes_equal_base": {
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": {
+      "bytes": 29993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": {
+      "bytes": 4214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py": {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_source_review.py": {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    "tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+      "bytes": 33517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    }
+  },
+  "real8_submissions_or_labels_created": 0,
+  "receipt_schema": "statutory-declaration-consistency-preflight/v1",
+  "remaining_validation": "Root must run inert tests and obtain a separate static implementation review before qualification.",
+  "replay_contract": {
+    "all_admission_masks_zero": true,
+    "closing_recording_source_context_provenance_artifacts_replayed": true,
+    "complete_source_input_per_physical_item_retained": true,
+    "every_authority_flag_false": true,
+    "every_partial_complete_disputed_declaration_retained": true,
+    "no_consensus_or_adjudication_truth_selected": true,
+    "no_targets_or_labels_created": true,
+    "original_rule_qualifier_anchor_attachment_order_preserved": true,
+    "supplied_recording_rebuilt_before_any_field_use": true,
+    "target_eligibility_always_false": true
+  },
+  "resource_operations": 0,
+  "schema": "statutory-declaration-preflight-build/v1",
+  "source": {
+    "bytes": 15802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+    "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c"
+  },
+  "statement_scope_integration": {
+    "bridge_owner": "ipfs_datasets_py.logic.legal_ir.canonical_statement_scope_bridge",
+    "existing_owner": "ipfs_datasets_py.logic.legal_ir.canonical_statement_scope",
+    "implemented": false,
+    "reason": "Requires explicit caller expression/rule/occurrence joins and profile-compatible exact full context; freeform scope strings and modality trigger lists are not that AST. No Boolean scope, modality cue or binder is inferred."
+  },
+  "static_AST_parse_passed": true,
+  "status_scope": {
+    "consistent_declared_normative": "mechanical internal declaration consistency only; not meaning, completeness, identity or eligibility",
+    "declared_interval_diagnostics": "only exact source-selector joins to caller-declared operative/editorial/undetermined intervals; no general semantic prohibition",
+    "inconsistent": "explicit declaration contradictions only",
+    "non_normative": "explicit non-normative interpretation without promoted authority",
+    "partial": "null answers and original missing-field paths retained",
+    "unresolved": "explicit uncertainty or missing source-role coverage, without symbolic aliases inferred"
+  },
+  "synthetic_example": "receipt = preflight_declarations(synthetic_packet, [], expected_packet_sha256=digest(synthetic_packet), artifact_resolver=synthetic_resolver)\n# Pending only: no synthetic review, legal target or training eligibility is generated.\nvalidate_preflight(receipt, synthetic_packet, [], expected_packet_sha256=digest(synthetic_packet), artifact_resolver=synthetic_resolver)",
+  "synthetic_fixture_provenance": "Existing statutory recorder test fixture definitions copied as source text using AST spans; no modules or fixtures executed. Added tests are synthetic engineering checks, not real statutory labels.",
+  "test_cases_executed": 0,
+  "tests": {
+    "bytes": 31211,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+    "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+  },
+  "tests_run": false,
+  "validation_schema": "statutory-declaration-consistency-preflight-validation/v1"
+}

@@ -1,0 +1,108 @@
+........................................................................ [ 17%]
+......F................................................................. [ 34%]
+................................................................F....... [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+.........................................................ss              [100%]
+=================================== FAILURES ===================================
+___________ test_import_and_pure_transport_have_no_numerical_imports ___________
+
+    def test_import_and_pure_transport_have_no_numerical_imports():
+        root = Path(__file__).resolve().parents[4]
+        source, report, _ = case()
+        script = '''
+    import builtins, sys, json
+    original = builtins.__import__
+    def denied(name, *args, **kwargs):
+        if name.split('.')[0] in {'torch', 'numpy', 'tensorflow', 'jax', 'transformers'}:
+            raise AssertionError('numerical import: ' + name)
+        return original(name, *args, **kwargs)
+    builtins.__import__ = denied
+    from ipfs_datasets_py.logic.legal_ir import saved_span_family_adapter as a
+    assert a.parse_json_bytes(b'{"source_only":true}') == {'source_only': True}
+    '''
+        script += "source = json.loads(" + repr(json.dumps(source)) + ")\n"
+        script += "report = json.loads(" + repr(json.dumps(report)) + ")\n"
+        script += '''
+    packet = a.prepare_pending(source, report, expected_report_sha256=a.digest(report),
+        expected_checkpoint_sha256='a'*64, row_id=source['id'])
+    assert packet['model_executed'] is False
+    assert not ({'torch', 'numpy', 'tensorflow', 'jax', 'transformers'} & set(sys.modules))
+    '''
+>       result = subprocess.run([sys.executable, "-c", script], cwd=root, text=True, capture_output=True)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/logic/legal_ir/test_saved_span_family_adapter.py:420: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+/usr/lib/python3.12/subprocess.py:1823: in _execute_child
+    sys.audit("subprocess.Popen", executable, args, cwd, env)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+event = 'subprocess.Popen'
+values = ('/home/barberb/.local/bin/python', ['/home/barberb/.local/bin/python', '-c', "\nimport builtins, sys, json\noriginal ...set(sys.modules))\n"], PosixPath('/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets'), None)
+
+    def audit(event, values):
+        if event in {"socket.connect", "socket.getaddrinfo", "subprocess.Popen", "os.system"}:
+>           raise AssertionError("network/process prohibited in inert boundary tests")
+E           AssertionError: network/process prohibited in inert boundary tests
+
+../run_inert_tests.py:24: AssertionError
+_______ test_module_import_and_selection_do_not_import_tensor_libraries ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xf9933456af30>
+
+    def test_module_import_and_selection_do_not_import_tensor_libraries(monkeypatch):
+        original = builtins.__import__
+        denied = {"torch", "tensorflow", "transformers", "sentence_transformers", "numpy"}
+        def guarded(name, *args, **kwargs):
+            if name.split(".")[0] in denied:
+                raise AssertionError("numerical import attempted: " + name)
+            return original(name, *args, **kwargs)
+        monkeypatch.setattr(builtins, "__import__", guarded)
+        assert subject.select_joint_spans("alpha beta gamma", packet(), top_k=16)["status"] == "selected"
+        path = Path(subject.__file__).resolve()
+        program = """
+    import builtins, importlib.util, sys
+    original = builtins.__import__
+    def guarded(name, *args, **kwargs):
+        if name.split('.')[0] in {'torch','tensorflow','transformers','sentence_transformers','numpy'}:
+            raise AssertionError('numerical import attempted: ' + name)
+        return original(name, *args, **kwargs)
+    builtins.__import__ = guarded
+    spec = importlib.util.spec_from_file_location('pure_joint_selector', sys.argv[1])
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert not any(root in sys.modules for root in ['torch','tensorflow','transformers','sentence_transformers','numpy'])
+    """
+>       completed = subprocess.run([sys.executable, "-c", program, str(path)], capture_output=True, text=True)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/unit/logic/legal_ir/test_joint_span_selection.py:376: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/subprocess.py:548: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/subprocess.py:1026: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+/usr/lib/python3.12/subprocess.py:1823: in _execute_child
+    sys.audit("subprocess.Popen", executable, args, cwd, env)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+event = 'subprocess.Popen'
+values = ('/home/barberb/.local/bin/python', ['/home/barberb/.local/bin/python', '-c', "\nimport builtins, importlib.util, sys\...tifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py'], None, None)
+
+    def audit(event, values):
+        if event in {"socket.connect", "socket.getaddrinfo", "subprocess.Popen", "os.system"}:
+>           raise AssertionError("network/process prohibited in inert boundary tests")
+E           AssertionError: network/process prohibited in inert boundary tests
+
+../run_inert_tests.py:24: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/logic/legal_ir/test_saved_span_family_adapter.py::test_import_and_pure_transport_have_no_numerical_imports
+FAILED tests/unit/logic/legal_ir/test_joint_span_selection.py::test_module_import_and_selection_do_not_import_tensor_libraries
+2 failed, 415 passed, 2 skipped in 4.73s

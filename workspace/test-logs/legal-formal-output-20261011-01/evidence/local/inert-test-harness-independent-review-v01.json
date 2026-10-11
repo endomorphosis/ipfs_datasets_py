@@ -1,0 +1,615 @@
+{
+  "AST_test_functions": 135,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py": {
+      "bytes": 52609,
+      "sha256": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/deontic/__init__.py": {
+      "bytes": 2644,
+      "sha256": "1eeb1a57e388c37415facf3989a26d3b960b176b4bf1e65eef66e106c1aadb4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/CHANGELOG.md": {
+      "bytes": 5602,
+      "sha256": "483b1a8a8a1374c3b8aca1855e50a5269097b9e0d9b02c0092331ab73a3fcc88"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/README.md": {
+      "bytes": 3308,
+      "sha256": "1b1dac803bbc6e2c7244a62a578f4050ba7ea0fbd004b8a876e392c3a389541f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/TODO.md": {
+      "bytes": 12516,
+      "sha256": "be469921750aed94b7c1b11fb7fcdb7e9acc62be6c95929ed4cf0acfe0f6d42a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/__init__.py": {
+      "bytes": 175,
+      "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/anyio_compat.py": {
+      "bytes": 12149,
+      "sha256": "75fe36e8ffb3f8cec2240aa3fd91385493555fba6d573dff1d3c1d6270b58530"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/README.md": {
+      "bytes": 4549,
+      "sha256": "dc0cce1c8012001b14d639bfae975e5e046993de7cc20a3cc0dac53a2bfef61c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/__init__.py": {
+      "bytes": 1591,
+      "sha256": "b3645c05e931192434f64bb35ed79026e5c6175a774a3e92e6b5369309955087"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/base.py": {
+      "bytes": 6318,
+      "sha256": "b7873d1ddd4e7f2631aaf47185b1cc30631f1b8e61ac506a136e9f9a4befa05f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/config_loader.py": {
+      "bytes": 7661,
+      "sha256": "095edc0954500cdee01653dd4286d6a6089406d0e79e68c7430085bd08182e86"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/github_cache.py": {
+      "bytes": 7643,
+      "sha256": "2ea9ca70fe04c32000a6f560bbcf93eb14863b57eee75031915e46f0e54025e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/local.py": {
+      "bytes": 7148,
+      "sha256": "61233021f2647cf26d2da98daed5230bb8269a5014d4ec88e167ac6271698fc1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cache/p2p.py": {
+      "bytes": 5696,
+      "sha256": "99d172775d1438157d8b682c40f007c26435ae51ddd1c8963ad35787ff7921f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/chunk_optimizer.py": {
+      "bytes": 82463,
+      "sha256": "7710f750572375cfaf771ae941f63e7659f8f0b08d93533b52d7febe3343cd38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/chunk_optimizer_stubs.md": {
+      "bytes": 54453,
+      "sha256": "5ff9d28fda6095040a47c5ab0b517881711fb32eacd3f89821bed8afba262925"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/claude_cli.py": {
+      "bytes": 2986,
+      "sha256": "4622489c348fda1a67839dadb3bad1f73a1c9b8c921d07263a94bf2225e92906"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cli_tools/README.md": {
+      "bytes": 4627,
+      "sha256": "b16d16f549bfa94dc6a90a13a0f362c02d1264eb8fff6f2d4279ae280a2740f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cli_tools/__init__.py": {
+      "bytes": 1763,
+      "sha256": "d8fb0975916e1a5349685ac9c82ab457baf82aae10977dedf3cf12e15a0b7355"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cli_tools/base.py": {
+      "bytes": 5971,
+      "sha256": "f5e2307483490252f2f7844b175de4c0981bcc81822fb3dd50374a8b09c0078a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cli_tools/copilot.py": {
+      "bytes": 15303,
+      "sha256": "aa0c2e7aa9ed0e3d1cd24680dafb2d1231c74659a66e204da2615f603c0154a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/copilot_cli.py": {
+      "bytes": 509,
+      "sha256": "8ca6c5575c38ef2799d5cff0ea8d6a51dd8100960c3645f7583b1dbe82d4face"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/credential_manager.py": {
+      "bytes": 19731,
+      "sha256": "f285d306e973ce3cf1afc7e1875c7e1173489d62000afc228c61f874b118ec80"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/data_format_converter.py": {
+      "bytes": 24545,
+      "sha256": "e28e55299721f6048c7550b42f331ef5ee5fa0c96146a39bad26b9df93bdf4f4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/discord_chat_exporter.py": {
+      "bytes": 15289,
+      "sha256": "e007e6bc08bf7167b81d4308976f005d2637f9f5f8e35e38167f069dc769563f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/docker_error_wrapper.py": {
+      "bytes": 1819,
+      "sha256": "339f7ae7c7139bb5ca8c7033caf17fd5d0103ffe7ba18aa45d8f071b6c104aec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/embedding_adapter.py": {
+      "bytes": 8964,
+      "sha256": "caf1b37aa489aebec73e3827547b41df541766883a623abbba8fe1712960997a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/engine_env.py": {
+      "bytes": 11480,
+      "sha256": "27ee720abe73431714d80705f4e20cc0b9f13b5573c0c00ccdae03d32d1f04f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/file_detector.py": {
+      "bytes": 19503,
+      "sha256": "67c44711b10f12ae915f6033d8521cd3807a67c63750ccf464c973e88e1c613e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/gemini_cli.py": {
+      "bytes": 3118,
+      "sha256": "4fd057900d8121d6d3d19204fd8317043f427b85f4b7aaf77921f1c39da0e8b1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github/README.md": {
+      "bytes": 5730,
+      "sha256": "1e800bfcda19fc32b679505b25bbfbcf06dc99cf3df6e8f63744e01e8b2dde77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github/__init__.py": {
+      "bytes": 1233,
+      "sha256": "b53eb577f336887a66cc2bd477d33e774e641cdd38802617c154daaf7a105d79"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github/cli_wrapper.py": {
+      "bytes": 11619,
+      "sha256": "a4b7abb0a370827b4d2908dfd729aad309990d0ba47d446fbf1d8b55fd4434e7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github/counter.py": {
+      "bytes": 10997,
+      "sha256": "e05292c7cbd92e79a8867d57853d1f1dbddee8e6fabd4bac8a6859286dc326a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github/rate_limiter.py": {
+      "bytes": 6109,
+      "sha256": "9b56e61340702345db3da362ceefb6500acd44f43ac20d1d6159863ab787fb3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github_cli.py": {
+      "bytes": 574,
+      "sha256": "0a1491cda3dcc8756792232943382e122d583ab7a6fda8c44f57c557066b35b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/github_wrapper.py": {
+      "bytes": 676,
+      "sha256": "2f6b6e7cd90a3b878877cde0d0404cd51e48ee85e75bbcbc0b77fbfd0ef7c238"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/init_database.py": {
+      "bytes": 3387,
+      "sha256": "608d2c4ba262b4a23ddef860e8f7841f0756219ad8af8d9653560681d03e6be1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/jsonnet_utils.py": {
+      "bytes": 18626,
+      "sha256": "c7cc9ab09ef22befef17f58aff18b6f02e7d6751ebd479bcbecf5c9623b356fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/model_manager.py": {
+      "bytes": 21780,
+      "sha256": "6da357336d8b68416600f622f07c0e1e398526c741965064626d19d50a6a59c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/nltk_data.py": {
+      "bytes": 2825,
+      "sha256": "80c71e7ad6291f3d47e4d5d5fee28ccc256a71b462964874762263d3928b8e3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/query_cache.py": {
+      "bytes": 3751,
+      "sha256": "845037c1d2d22a45383a97d22675bb55915e9197f332cdee01115ffd3f82a69f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/resilient_operations.py": {
+      "bytes": 170574,
+      "sha256": "900554117550bfa627d083646ba74e65e49e24b56f3efa2e03cec89c8ad8af8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/s3_kit.py": {
+      "bytes": 55673,
+      "sha256": "e8aaf2597620a0fcf1f57fce6fb97903e3f47f75421487fd70905780d0dbd37e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/secrets.py": {
+      "bytes": 7934,
+      "sha256": "76d8e189dc920e935c57010f26aa73640ba3e0d02de9e28321285e4e4abdecd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/symai_codex_engine.py": {
+      "bytes": 8767,
+      "sha256": "afa491a5ce372fc9d19dae4992181372f7a3dc1d8a40f737281fe67fc000722a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/symai_config.py": {
+      "bytes": 10378,
+      "sha256": "f904da58b1fa4016b123736ead77d921a941196529335ae4d9b21ee32c795b52"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/symai_ipfs_engine.py": {
+      "bytes": 31333,
+      "sha256": "3d028f60aac855921a43406f0469e2a25776506bdab2e46bd636b8b7cc4538bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/text_processing.py": {
+      "bytes": 22476,
+      "sha256": "31e32b76cc97169b3654a7db75be667e49368c07e3b1d361ba08e10263e66745"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/text_processing_stubs.md": {
+      "bytes": 9958,
+      "sha256": "dcc4d523d10815fa8d79f731817e144ade73f76bd880d24505dcde9b214ff92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/vscode_cli.py": {
+      "bytes": 3271,
+      "sha256": "9cdf9df6547fcd933ecb617ca3f5fae3601a59e23be615036f3811ab15e58f79"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/workflows/README.md": {
+      "bytes": 896,
+      "sha256": "ae2c6bd93d190bbb4f48b97d214e450f58da4796630779cf3f0137ee49291ac0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/workflows/__init__.py": {
+      "bytes": 1261,
+      "sha256": "824ac66f5ea062cc3fafa81239a67eb23b53fd87b18354796488819373142cb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/workflows/analyzer.py": {
+      "bytes": 8435,
+      "sha256": "081c3bbad1924cf1eb3dcb39fc17bd4842dd89b1160c36d81b364cc5eb56cd78"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/workflows/dashboard.py": {
+      "bytes": 15085,
+      "sha256": "48d7d7e4c89311b4c3c973c3a7ce168b6846cb55fde81ef440293445264fac76"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/workflows/fixer.py": {
+      "bytes": 15580,
+      "sha256": "b5cf91aa0fcadd9183490156c5692704331a8db260ce25b4223b15666c98fa85"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py": {
+      "bytes": 11848,
+      "sha256": "d7c940a67f471d0e7f84e88048b3bc29100f0f232abdbb3b4382bcc672dd81ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py": {
+      "bytes": 15723,
+      "sha256": "d0bac1b69ea4462170eff0c3cd6a7763f9273b849a726342809683db007053f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py": {
+      "bytes": 11239,
+      "sha256": "caa676d1918e87b11198437097182f8782c7eb5e949273d8c0cdf988694369f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py": {
+      "bytes": 18662,
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py": {
+      "bytes": 31211,
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+      "bytes": 33517,
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v01.log": {
+      "bytes": 6283,
+      "sha256": "4711f69d46772a30f724fbce555ec96189851eec3500ed8e3e7616a1e98a8706"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v01.xml": {
+      "bytes": 6413,
+      "sha256": "3ec62de32c8adc75acce502185b306dbb3fb98f14ef75e3d2801aa80a6fbf29d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v02.log": {
+      "bytes": 1198,
+      "sha256": "56f6596f6a09290a6e48840f6ace13e42c7e6585d3209f6084503f2f4bed5125"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v02.xml": {
+      "bytes": 1181,
+      "sha256": "53e7780a5fce9c052a0d340511e44d7cec7515ac4ebdb0a50dc48d090092734e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v03.log": {
+      "bytes": 6517,
+      "sha256": "ebfdce696d651bf9ffa6243ca06f7e0887b11184bbbad6522aa78dcd785e5d6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v03.xml": {
+      "bytes": 126477,
+      "sha256": "e2f42d0e5273e91290a75e6f199934fc83f65c8e2053c9207bd26edb290fd202"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v04.log": {
+      "bytes": 7617,
+      "sha256": "ca324b06686ffa60380cc55f22ae78183efcb890f594b141f447bf28485ec10f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v04.xml": {
+      "bytes": 133443,
+      "sha256": "95b60420bd19b52a13acac320f96aaded75660f02909a061aa795127a18e905b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v05.log": {
+      "bytes": 511,
+      "sha256": "a2ef441d3b7ee52fe4f2fe09c2ff3a7565feef6efc80380a38d742f26950b076"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/inert-tests-v05.xml": {
+      "bytes": 120833,
+      "sha256": "7166f6b26ebea090abbbea8916ae28ee2134e8e68a99580f4f2aff3dee67bec9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_inert_tests_draft_v01.py": {
+      "bytes": 1748,
+      "sha256": "fc9bcd6b70e2f368093f5f98a7fdf640fb258ad70fb810b6d4cb5c3f3b211293"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_inert_tests_draft_v02.py": {
+      "bytes": 1959,
+      "sha256": "d96a074da3efe2d5288deffb5cb335b6d9ae185af762b5da1df265446f8ff18a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/selected-inert-tests-observation-v01.json": {
+      "bytes": 8647,
+      "sha256": "624aeb1d111e62bce848cb3f048eccc80d1d5fc1a347fb6a74fa75945fc59d7e"
+    }
+  },
+  "bootstrap": {
+    "AST_parsed": true,
+    "numerical_import_roots": [
+      "numpy",
+      "sentence_transformers",
+      "torch",
+      "transformers"
+    ],
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/bootstrap_inert.py",
+    "pin": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "scope": "Explicit package namespace stubs and named numerical-import denial only; installs no process/network audit hooks and executes no model/compiler calls itself. Full package initializer behavior is not qualified."
+  },
+  "controlled_subprocesses": [
+    {
+      "fragments": [
+        {
+          "bytes": 625,
+          "sha256": "f41a984c1dbe8737780b2c5a85542f31472b56c4ed2e688021ac73998f42286e"
+        }
+      ],
+      "function": "test_module_import_and_selection_do_not_import_tensor_libraries",
+      "permitted_shape": "exact625-byte program plus exact joint selector file argument",
+      "test_path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "variable": "program"
+    },
+    {
+      "fragments": [
+        {
+          "bytes": 461,
+          "sha256": "b342c5830815ae7713793f342d7215e230b74d3ba72888d613129f77477c9590"
+        },
+        {
+          "bytes": 274,
+          "sha256": "8965a12334567dc48c00b72bcc52a1b697fabb87eeb1f14c1c07c83ba8ec95db"
+        }
+      ],
+      "function": "test_import_and_pure_transport_have_no_numerical_imports",
+      "permitted_shape": "exact461-byte prefix and274-byte suffix; middle only source=json.loads(string literal) and report=json.loads(string literal); entire program<=65536 bytes",
+      "test_path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "variable": "script"
+    }
+  ],
+  "created_at": "2026-10-11T18:27:42.216794+00:00",
+  "draft_history": {
+    "all_five_saved_logs_and_XML_bound": true,
+    "blanket_subprocess_rejection_preserved": true,
+    "first_two_collection_failures_preserved": true,
+    "fresh_child_sparse_import_failure_preserved": true,
+    "preserved_harness_drafts": [
+      "run_inert_tests_draft_v01.py",
+      "run_inert_tests_draft_v02.py"
+    ],
+    "production_adapter_frozen_pin_unchanged": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+  },
+  "findings": [],
+  "harness": {
+    "AST_parsed": true,
+    "closed_saved_scope_evidence": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/selected-inert-tests-observation-v01.json",
+    "denied_audit_events": [
+      "os.system",
+      "socket.connect",
+      "socket.getaddrinfo",
+      "subprocess.Popen"
+    ],
+    "does_not_independently_close_test_path_scope": true,
+    "forwards_selected_argv_to_pytest": true,
+    "lazy_ErgoAI_install_disabled": true,
+    "namespace_initialization_bypassed": true,
+    "native_Lake_opt_in_environment_removed": true,
+    "numerical_import_roots": [
+      "numpy",
+      "sentence_transformers",
+      "torch",
+      "transformers"
+    ],
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_inert_tests.py",
+    "pin": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "pytest_plugin_autoload_disabled": true,
+    "subprocess_allowance": "Two bounded inert code templates derived from pinned current selected test AST; exact sys.executable/-c, list argv, inherited environment only, cwd absent or resolved to D. No arbitrary scripts or added statements admitted by these templates."
+  },
+  "import_scope_distinctions": {
+    "adapter_child_roots": [
+      "jax",
+      "numpy",
+      "tensorflow",
+      "torch",
+      "transformers"
+    ],
+    "fresh_child_inherits_parent_audit_hooks": false,
+    "fresh_child_startup_environment_isolated": false,
+    "joint_child_roots": [
+      "numpy",
+      "sentence_transformers",
+      "tensorflow",
+      "torch",
+      "transformers"
+    ],
+    "limitations": "Finite Python guards for trusted pinned test programs; not a general process/network sandbox, kernel restriction, exhaustive numerical library prohibition, or guarantee against preloaded libraries/direct low-level operations.",
+    "parent_and_bootstrap_roots": [
+      "numpy",
+      "sentence_transformers",
+      "torch",
+      "transformers"
+    ],
+    "uniform_or_exhaustive_numerical_import_denial": false
+  },
+  "independent_parallel_static_check": {
+    "agent": "/root/real_code_data_20261011/hub_saved_identity_audit",
+    "executions": 0,
+    "result": "No blocking issue for trusted selected-test scope. All seven pins,135 AST functions,419 saved cases and two bounded AST-derived subprocess templates independently confirmed."
+  },
+  "package_root": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets",
+  "passed": true,
+  "qualification": {
+    "authority_granted": false,
+    "full_package_initialization_verified": false,
+    "gold_or_training_admission_granted": false,
+    "inert_selected_suite_scope_verified": true,
+    "legal_semantics_verified": false,
+    "model_math_or_model_execution_verified": false,
+    "native_compiler_execution_verified": false
+  },
+  "review_scope": "Static harness/bootstrap/code-template and seven-test-file verification, read-only Git-byte comparison, independent parsing of saved root XML/log receipts. No harness/test/project import or execution by this reviewer.",
+  "saved_attempts": [
+    {
+      "attempt": 1,
+      "cases": 4,
+      "errors": 4,
+      "failures": 0,
+      "passed": 0,
+      "saved_failure_reason": "Missing unchanged utils/cid_utils.py in sparse checkout; collection failed",
+      "skipped": 0
+    },
+    {
+      "attempt": 2,
+      "cases": 1,
+      "errors": 1,
+      "failures": 0,
+      "passed": 0,
+      "saved_failure_reason": "Installed tests-package collision; namespace bootstrap corrected",
+      "skipped": 0
+    },
+    {
+      "attempt": 3,
+      "cases": 419,
+      "errors": 0,
+      "failures": 2,
+      "passed": 415,
+      "saved_failure_reason": "Two exact fresh-Python numerical import controls blocked by blanket harness subprocess denial",
+      "skipped": 2
+    },
+    {
+      "attempt": 4,
+      "cases": 419,
+      "errors": 0,
+      "failures": 1,
+      "passed": 416,
+      "saved_failure_reason": "Missing unchanged utils/anyio_compat.py in controlled fresh child sparse import",
+      "skipped": 2
+    },
+    {
+      "attempt": 5,
+      "cases": 419,
+      "errors": 0,
+      "failures": 0,
+      "passed": 417,
+      "saved_failure_reason": "All selected cases passed with two native opt-in skips",
+      "skipped": 2
+    }
+  ],
+  "saved_final_result": {
+    "argv_custody": "Root transcription after completion; this is not an original exec transport record. XML original case identities and retained logs independently match the seven-file selection.",
+    "cases": 419,
+    "compiler_execution_qualification_from_this_suite": false,
+    "errors": 0,
+    "execution_evidence_owner": "root saved XML/logs; reviewer independently recomputed counts and matched file pins",
+    "failures": 0,
+    "native_compiler_opt_in_tests_skipped": true,
+    "passed": 417,
+    "skipped": 2
+  },
+  "schema": "inert-test-harness-independent-review/v1",
+  "selected_tests": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "pin": {
+        "bytes": 25441,
+        "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+      },
+      "saved_case_counts": {
+        "passed": 79
+      },
+      "test_functions": 19
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "pin": {
+        "bytes": 31211,
+        "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+      },
+      "saved_case_counts": {
+        "passed": 69
+      },
+      "test_functions": 28
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "pin": {
+        "bytes": 18662,
+        "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+      },
+      "saved_case_counts": {
+        "passed": 61
+      },
+      "test_functions": 27
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "pin": {
+        "bytes": 33517,
+        "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+      },
+      "saved_case_counts": {
+        "passed": 85
+      },
+      "test_functions": 26
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py",
+      "pin": {
+        "bytes": 11848,
+        "sha256": "d7c940a67f471d0e7f84e88048b3bc29100f0f232abdbb3b4382bcc672dd81ca"
+      },
+      "saved_case_counts": {
+        "passed": 46
+      },
+      "test_functions": 15
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py",
+      "pin": {
+        "bytes": 15723,
+        "sha256": "d0bac1b69ea4462170eff0c3cd6a7763f9273b849a726342809683db007053f2"
+      },
+      "saved_case_counts": {
+        "passed": 48
+      },
+      "test_functions": 10
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py",
+      "pin": {
+        "bytes": 11239,
+        "sha256": "caa676d1918e87b11198437097182f8782c7eb5e949273d8c0cdf988694369f0"
+      },
+      "saved_case_counts": {
+        "passed": 29,
+        "skipped": 2
+      },
+      "test_functions": 10
+    }
+  ],
+  "source_base_commit": "4af461728329cdad4bfb910ab878d016ce279e54",
+  "sparse_dependency_repair": {
+    "all_equal_original_HEAD_blobs": true,
+    "materialized_inventory_sha256": "c6b8cb3cae71466ca03d9b9fd4daf5326236361253f333ae24085cbfe128208c",
+    "missing_or_mismatched_files": [],
+    "original_missing_files": [
+      "ipfs_datasets_py/utils/cid_utils.py",
+      "ipfs_datasets_py/utils/anyio_compat.py"
+    ],
+    "production_code_edit_required": false,
+    "tracked_utils_bytes": 800236,
+    "tracked_utils_files_materialized": 55,
+    "unchanged_prior_dependency_and_test_owner_paths_checked": [
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/deontic/__init__.py"
+    ]
+  }
+}

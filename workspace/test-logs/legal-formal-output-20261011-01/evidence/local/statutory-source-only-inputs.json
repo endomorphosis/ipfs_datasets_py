@@ -1,0 +1,56 @@
+{
+  "context_not_redeclared_by_this_export": true,
+  "count": 8,
+  "latent_vectors_exported": false,
+  "parent_input_file": {
+    "bytes": 99164,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/exposed-law-source-only.json",
+    "sha256": "04e485c0657c6a478ec0e40f29250cbc11dc5eba4494aee9055946092839b7c0"
+  },
+  "previously_exposed": true,
+  "rows": [
+    {
+      "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+      "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States."
+    },
+    {
+      "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+      "source_text": "When such bill, or joint resolution shall have passed both Houses, it shall be printed and shall then be called the enrolled bill, or joint resolution, as the case may be, and shall be signed by the presiding officers of both Houses and sent to the President of the United States."
+    },
+    {
+      "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+      "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session."
+    },
+    {
+      "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+      "source_text": "All citations to the Constitution of the United States, a treaty, or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible."
+    },
+    {
+      "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+      "source_text": "(6) The term \"enlisted member\" means a person in an enlisted grade."
+    },
+    {
+      "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+      "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States."
+    },
+    {
+      "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+      "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States."
+    },
+    {
+      "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+      "source_text": "Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction."
+    }
+  ],
+  "schema": "exposed-statutory-source-only-inputs/v1",
+  "semantic_gold": false,
+  "target_labels_exported": false
+}

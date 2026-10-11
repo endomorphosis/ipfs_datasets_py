@@ -1,0 +1,85 @@
+
+==================================== ERRORS ====================================
+_ ERROR collecting artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py _
+ImportError while importing test module '/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/logic/legal_ir/test_joint_span_selection.py:14: in <module>
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legal_span_formula as owner
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py:23: in <module>
+    from . import legal_formula_codec as codec_module
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py:15: in <module>
+    from ...logic.legal_ir.canonical_contracts import CanonicalRoundTripIR, CanonicalContractError
+ipfs_datasets_py/logic/legal_ir/canonical_contracts.py:30: in <module>
+    from ipfs_datasets_py.utils.cid_utils import (
+E   ModuleNotFoundError: No module named 'ipfs_datasets_py.utils.cid_utils'
+_ ERROR collecting artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py _
+ImportError while importing test module '/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/logic/autoformal/test_legal_source_family_bridge.py:7: in <module>
+    from ipfs_datasets_py.logic.autoformal import legal_source_family_bridge as bridge
+ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py:20: in <module>
+    from . import legal_family_routes as routes
+ipfs_datasets_py/logic/autoformal/legal_family_routes.py:15: in <module>
+    from . import legal_canonical_calendar as calendar
+ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py:16: in <module>
+    from . import legal_canonical_qualified as previous
+ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py:23: in <module>
+    from ..legal_ir import canonical_contracts as contracts
+ipfs_datasets_py/logic/legal_ir/canonical_contracts.py:30: in <module>
+    from ipfs_datasets_py.utils.cid_utils import (
+E   ModuleNotFoundError: No module named 'ipfs_datasets_py.utils.cid_utils'
+_ ERROR collecting artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py _
+ImportError while importing test module '/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py:13: in <module>
+    from ipfs_datasets_py.logic.autoformal import legal_source_family_bridge as bridge
+ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py:20: in <module>
+    from . import legal_family_routes as routes
+ipfs_datasets_py/logic/autoformal/legal_family_routes.py:15: in <module>
+    from . import legal_canonical_calendar as calendar
+ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py:16: in <module>
+    from . import legal_canonical_qualified as previous
+ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py:23: in <module>
+    from ..legal_ir import canonical_contracts as contracts
+ipfs_datasets_py/logic/legal_ir/canonical_contracts.py:30: in <module>
+    from ipfs_datasets_py.utils.cid_utils import (
+E   ModuleNotFoundError: No module named 'ipfs_datasets_py.utils.cid_utils'
+_ ERROR collecting artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py _
+ImportError while importing test module '/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/logic/autoformal/test_legal_source_family_lake.py:11: in <module>
+    from ipfs_datasets_py.logic.autoformal import legal_source_family_bridge as bridge
+ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py:20: in <module>
+    from . import legal_family_routes as routes
+ipfs_datasets_py/logic/autoformal/legal_family_routes.py:15: in <module>
+    from . import legal_canonical_calendar as calendar
+ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py:16: in <module>
+    from . import legal_canonical_qualified as previous
+ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py:23: in <module>
+    from ..legal_ir import canonical_contracts as contracts
+ipfs_datasets_py/logic/legal_ir/canonical_contracts.py:30: in <module>
+    from ipfs_datasets_py.utils.cid_utils import (
+E   ModuleNotFoundError: No module named 'ipfs_datasets_py.utils.cid_utils'
+=========================== short test summary info ============================
+ERROR tests/unit/logic/legal_ir/test_joint_span_selection.py
+ERROR tests/unit/logic/autoformal/test_legal_source_family_bridge.py
+ERROR tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py
+ERROR tests/unit/logic/autoformal/test_legal_source_family_lake.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+4 errors in 0.46s

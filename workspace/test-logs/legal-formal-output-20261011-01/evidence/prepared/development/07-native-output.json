@@ -1,0 +1,554 @@
+{
+  "Lake_executed": false,
+  "admitted": false,
+  "all_logic_families_supported": false,
+  "backend_build_required": "lake build legal",
+  "binding": {
+    "checkpoint_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+    "control": "none",
+    "joint_report_content_sha256": null,
+    "lane": "raw",
+    "lineage_id": "objective_resumed_source_span_v1",
+    "position": 7,
+    "raw_report_content_sha256": "3ef63e3d494b1bc8e52e1842a523283955a96a1eaa1cd440a037164bf15f1ad4",
+    "raw_row_content_sha256": "2ff9ec842dd20ab65cfe53ee9086894d89fa542401fed9cfd2ba10c6e3242878",
+    "row_id": "native-tuning-begonia-t2-q2-p",
+    "selected_content_sha256": "f89a91d1a77effaaef1a62d5630d80e08f8b1bd28234e9441bacafb84a542655"
+  },
+  "canonical_ir": {
+    "rules": [
+      {
+        "action": "inspect",
+        "actor": "Begonia Authority",
+        "conditions": [],
+        "exceptions": [
+          "the begonia preservation notice remains effective"
+        ],
+        "modality": "P",
+        "object": "the certified begonia public register",
+        "temporal": []
+      }
+    ]
+  },
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "declaration_sha256": "7321b8df28d6041d608a9e163d6aec6faacf1d894dd864d32775dab1b55ea7f8",
+  "encoder_executed": false,
+  "family_qualified": false,
+  "formalized": false,
+  "lean_source_prepared": true,
+  "modality_anchor_utf8_bytes": [
+    41,
+    58
+  ],
+  "model_executed": false,
+  "native_bridge": {
+    "admitted": false,
+    "all_logic_families_supported": false,
+    "backend_executed": false,
+    "candidate_id": "native-tuning-begonia-t2-q2-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+    "candidate_sha256": "6601a06607568d73339abb4d37555a51ceb4f4c6f63645a6a9e2c64db635a91f",
+    "canonical_inversion_scope": "native modal/action/argument spine plus complete ordered qualifier literal ledger; exact full native AST checked",
+    "canonical_ir_sha256": "cba300995b62146d83f76edb1ef46f60d45260a8891a7bb8cd6beda293f2a191",
+    "canonical_roundtrip": {
+      "rules": [
+        {
+          "action": "inspect",
+          "actor": "Begonia Authority",
+          "conditions": [],
+          "exceptions": [
+            "the begonia preservation notice remains effective"
+          ],
+          "modality": "P",
+          "object": "the certified begonia public register",
+          "temporal": []
+        }
+      ]
+    },
+    "canonical_roundtrip_exact": true,
+    "cross_family_equivalence_verified": false,
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "direct_facet_spans_validated": true,
+    "family": "deontic_fol",
+    "formalized": false,
+    "formulas": [
+      {
+        "canonical_rule_sha256": "fbe198c2e43560d7a2da186334e5af4d159ee8555a5daf7dba6e17a438914bfa",
+        "formula": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+        "interpretation_sha256": "e214cc8b45e20120fd25d2508b0e8a88c60b6e06a5036ad3d03c487c7c13d18f",
+        "native_ast": {
+          "left": {
+            "formula": {
+              "arguments": [
+                {
+                  "name": "entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75",
+                  "node_type": "Constant",
+                  "sort": null
+                }
+              ],
+              "name": "S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6",
+              "node_type": "Predicate"
+            },
+            "node_type": "UnaryFormula",
+            "operator": {
+              "enum": "LogicOperator",
+              "value": "¬"
+            }
+          },
+          "node_type": "BinaryFormula",
+          "operator": {
+            "enum": "LogicOperator",
+            "value": "→"
+          },
+          "right": {
+            "agent": null,
+            "context": null,
+            "formula": {
+              "arguments": [
+                {
+                  "name": "entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75",
+                  "node_type": "Constant",
+                  "sort": null
+                },
+                {
+                  "name": "entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6",
+                  "node_type": "Constant",
+                  "sort": null
+                }
+              ],
+              "name": "Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9",
+              "node_type": "Predicate"
+            },
+            "node_type": "DeonticFormula",
+            "operator": {
+              "enum": "DeonticOperator",
+              "value": "P"
+            }
+          }
+        },
+        "native_ast_sha256": "a801998213956b41a9432d44dec318f37a1f7931302faa8902d574e03e1a1f26",
+        "native_receipt": {
+          "admitted": false,
+          "all_logic_families_supported": false,
+          "backend_executed": false,
+          "cross_family_equivalence_verified": false,
+          "exact_native_ast_roundtrip": true,
+          "family": "deontic_fol",
+          "formula": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+          "formula_sha256": "9c21a26b84769dbe347456697c814e2fa2a3f53e5505b063a81928a9e2e1649d",
+          "lean_body": "def formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ((fun t => ¬ ((fun t => i.atom \"S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6\" [(i.constant \"entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75\")] t) t)) t) → ((i.modal \"deontic:P\" [] none (fun t => i.atom \"Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9\" [(i.constant \"entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75\"), (i.constant \"entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6\")] t)) t))",
+          "lowering_details": {
+            "assumptions": [
+              "Object carrier and atomic predicates are arbitrary interpretation parameters.",
+              "Deontic/cognitive operators are distinct interpretation parameters; no modal axioms or source truth are asserted.",
+              "Supported temporal operators use discrete unbounded Nat traces."
+            ],
+            "operators": [
+              "BinaryFormula",
+              "→",
+              "UnaryFormula",
+              "¬",
+              "Predicate",
+              "DeonticFormula",
+              "P",
+              "Predicate"
+            ],
+            "validator": "strict_native_reparse_and_exact_AST"
+          },
+          "native_ast": {
+            "left": {
+              "formula": {
+                "arguments": [
+                  {
+                    "name": "entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75",
+                    "node_type": "Constant",
+                    "sort": null
+                  }
+                ],
+                "name": "S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6",
+                "node_type": "Predicate"
+              },
+              "node_type": "UnaryFormula",
+              "operator": {
+                "enum": "LogicOperator",
+                "value": "¬"
+              }
+            },
+            "node_type": "BinaryFormula",
+            "operator": {
+              "enum": "LogicOperator",
+              "value": "→"
+            },
+            "right": {
+              "agent": null,
+              "context": null,
+              "formula": {
+                "arguments": [
+                  {
+                    "name": "entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75",
+                    "node_type": "Constant",
+                    "sort": null
+                  },
+                  {
+                    "name": "entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6",
+                    "node_type": "Constant",
+                    "sort": null
+                  }
+                ],
+                "name": "Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9",
+                "node_type": "Predicate"
+              },
+              "node_type": "DeonticFormula",
+              "operator": {
+                "enum": "DeonticOperator",
+                "value": "P"
+              }
+            }
+          },
+          "native_ast_sha256": "a801998213956b41a9432d44dec318f37a1f7931302faa8902d574e03e1a1f26",
+          "parse_receipt": {
+            "admitted": false,
+            "ast_classes": [
+              "BinaryFormula",
+              "DeonticFormula",
+              "Predicate",
+              "UnaryFormula"
+            ],
+            "consumed_all_input": true,
+            "diagnostics": [],
+            "family": "deontic_fol",
+            "formalized": false,
+            "formula": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+            "formula_sha256": "9c21a26b84769dbe347456697c814e2fa2a3f53e5505b063a81928a9e2e1649d",
+            "parser": "ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser",
+            "parser_source_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+            "passed": true,
+            "predicates": [
+              "S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6",
+              "Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9"
+            ],
+            "printed": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+            "semantic_equivalence_checked": false,
+            "source_bound": false,
+            "syntax_valid": true
+          },
+          "printed": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+          "printed_parse_receipt": {
+            "admitted": false,
+            "ast_classes": [
+              "BinaryFormula",
+              "DeonticFormula",
+              "Predicate",
+              "UnaryFormula"
+            ],
+            "consumed_all_input": true,
+            "diagnostics": [],
+            "family": "deontic_fol",
+            "formalized": false,
+            "formula": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+            "formula_sha256": "9c21a26b84769dbe347456697c814e2fa2a3f53e5505b063a81928a9e2e1649d",
+            "parser": "ipfs_datasets_py.logic.TDFOL.tdfol_parser.TDFOLParser",
+            "parser_source_sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+            "passed": true,
+            "predicates": [
+              "S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6",
+              "Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9"
+            ],
+            "printed": "(→ ¬S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75) P(Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9(entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75, entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6)))",
+            "semantic_equivalence_checked": false,
+            "source_bound": false,
+            "syntax_valid": true
+          },
+          "producer_pins": {
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+            "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+          },
+          "schema": "legal-native-family-route/v1",
+          "source_bound": false,
+          "source_semantics_verified": false
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-p",
+        "occurrence_sha256": "53d2834ff1b7e5faabc9810db4222c9a45dd617ea6e8d17947a16476d52c6d90",
+        "rule_index": 0
+      }
+    ],
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "6601a06607568d73339abb4d37555a51ceb4f4c6f63645a6a9e2c64db635a91f",
+      "canonical_ir_sha256": "cba300995b62146d83f76edb1ef46f60d45260a8891a7bb8cd6beda293f2a191",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "preservationNoticeEffective"
+                }
+              },
+              "literal": "the begonia preservation notice remains effective"
+            }
+          ],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7"
+    },
+    "interpretation_sha256": "5ace8859156331b316a745d6c67b84431e796b0b55355de771b7209e77adeb6e",
+    "lean_body": "namespace Occurrence0000\ndef formula_0 {Entity Agent : Type} (i : Interpretation Entity Agent) : Nat → Prop := (fun t => ((fun t => ¬ ((fun t => i.atom \"S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6\" [(i.constant \"entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75\")] t) t)) t) → ((i.modal \"deontic:P\" [] none (fun t => i.atom \"Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9\" [(i.constant \"entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75\"), (i.constant \"entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6\")] t)) t))\nend Occurrence0000\n",
+    "limitations": [
+      "Source identity and facet spans do not establish correct legal interpretation.",
+      "Modality cues and qualifier meanings are caller declarations, not verified natural-language semantics.",
+      "O/P/F are independent interpretation parameters; no modal axioms or normative truth are asserted.",
+      "TDFOL support here is its non-temporal ground deontic subset.",
+      "DCEC constants are native zero-arity Object functions; no cross-family interpretation equivalence is asserted.",
+      "No equivalence to the existing explicit-clock or calendar gate is asserted.",
+      "Compilation requires an actual subsequent lake build legal; this preparation never executes a backend."
+    ],
+    "logic_family": "deontic",
+    "modal_context": null,
+    "native_parser_profile": "deontic_fol",
+    "native_profile_scope": "ground Boolean/deontic fragment; no temporal operators or quantifiers",
+    "occurrence_bindings": [
+      {
+        "end_char": 162,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 66,
+            "source_text": "inspect",
+            "start_char": 59
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 40,
+            "source_text": "Begonia Authority",
+            "start_char": 23
+          },
+          "conditions": [],
+          "exceptions": [
+            {
+              "canonical_value": "the begonia preservation notice remains effective",
+              "end_char": 161,
+              "source_text": "the begonia preservation notice remains effective",
+              "start_char": 112
+            }
+          ],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 58,
+            "source_text": "has permission to",
+            "start_char": 41
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 104,
+            "source_text": "the certified begonia public register",
+            "start_char": 67
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-p",
+        "rule_index": 0,
+        "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+        "start_char": 0
+      }
+    ],
+    "occurrence_bindings_sha256": "2922ea22fb6efa0b12663233a13fd711be2905688138a91b9426cd99848490ed",
+    "old_calendar_gate_equivalence_verified": false,
+    "producer_pins": {
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe",
+      "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "profile": "ground-null-context/v1",
+    "proof_authority": false,
+    "qualifier_structure_scope": "explicit caller expressions; all conditions outside modal, any exception waives",
+    "report_sha256": "c6e6ec3843ad0869b0aa295b1078cb6867a1e02614987f91edc8e9626e770dec",
+    "schema": "legal-source-family-bridge/v1",
+    "source_bound": true,
+    "source_semantics_verified": false,
+    "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7",
+    "symbol_table": [
+      {
+        "arity": 1,
+        "kind": "predicate",
+        "symbol": "S374496af4cd60613ea01e9c56938a6c0cbe9a68e2c9d589d2166da5c165a89b6",
+        "value": "preservationNoticeEffective"
+      },
+      {
+        "arity": 2,
+        "kind": "predicate",
+        "symbol": "Sd110642ddc34d61e570a50ed44b7d2453ee2f0d3c58aff98dde00d1f1f1a28d9",
+        "value": "inspect"
+      },
+      {
+        "kind": "constant",
+        "symbol": "entity:84f7a1e7fd53379abf51fbd0bfabc05caceb8ff54d53ce809460416f05a5ff75",
+        "value": "Begonia Authority"
+      },
+      {
+        "kind": "constant",
+        "symbol": "entity:d9d158d54eee95c6b18bf33fe5cc0b67e0234b5dee0fea4087c86546898594a6",
+        "value": "the certified begonia public register"
+      }
+    ]
+  },
+  "native_parser_profile": "deontic_fol",
+  "native_syntax_checked": true,
+  "packet_sha256": "bd2e95542463e99f7b9652e4d72a6c8d97619f5d06f18429813d94877097e4f3",
+  "physical_context_status": "absent",
+  "profile": "ground-null-context/v1",
+  "proof_authority": false,
+  "qualified": false,
+  "raw_output_repaired": false,
+  "request": {
+    "candidate": {
+      "candidate_id": "native-tuning-begonia-t2-q2-p::89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630::none::raw",
+      "canonical_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "Begonia Authority",
+            "conditions": [],
+            "exceptions": [
+              "the begonia preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified begonia public register",
+            "temporal": []
+          }
+        ]
+      },
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7",
+      "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective."
+    },
+    "interpretation": {
+      "activation_scope": "all_conditions_at_evaluation_time",
+      "candidate_sha256": "6601a06607568d73339abb4d37555a51ceb4f4c6f63645a6a9e2c64db635a91f",
+      "canonical_ir_sha256": "cba300995b62146d83f76edb1ef46f60d45260a8891a7bb8cd6beda293f2a191",
+      "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+      "exception_scope": "any_exception_waives_at_evaluation_time",
+      "modal_context": null,
+      "profile": "ground-null-context/v1",
+      "rules": [
+        {
+          "conditions": [],
+          "exceptions": [
+            {
+              "expression": {
+                "op": "atom",
+                "predicate": {
+                  "arguments": [
+                    "Begonia Authority"
+                  ],
+                  "name": "preservationNoticeEffective"
+                }
+              },
+              "literal": "the begonia preservation notice remains effective"
+            }
+          ],
+          "rule_index": 0
+        }
+      ],
+      "schema": "legal-source-family-interpretation/v1",
+      "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7"
+    },
+    "occurrence_bindings": [
+      {
+        "end_char": 162,
+        "facets": {
+          "action": {
+            "canonical_value": "inspect",
+            "end_char": 66,
+            "source_text": "inspect",
+            "start_char": 59
+          },
+          "actor": {
+            "canonical_value": "Begonia Authority",
+            "end_char": 40,
+            "source_text": "Begonia Authority",
+            "start_char": 23
+          },
+          "conditions": [],
+          "exceptions": [
+            {
+              "canonical_value": "the begonia preservation notice remains effective",
+              "end_char": 161,
+              "source_text": "the begonia preservation notice remains effective",
+              "start_char": 112
+            }
+          ],
+          "modality": {
+            "canonical_value": "P",
+            "end_char": 58,
+            "source_text": "has permission to",
+            "start_char": 41
+          },
+          "object": {
+            "canonical_value": "the certified begonia public register",
+            "end_char": 104,
+            "source_text": "the certified begonia public register",
+            "start_char": 67
+          },
+          "temporal": []
+        },
+        "occurrence_id": "development-native-tuning-begonia-t2-q2-p",
+        "rule_index": 0,
+        "source_text": "Under section 8101(d), Begonia Authority has permission to inspect the certified begonia public register unless the begonia preservation notice remains effective.",
+        "start_char": 0
+      }
+    ]
+  },
+  "reviewer_authenticated": false,
+  "schema": "saved-span-native-family-output/v1",
+  "sealed_route": {
+    "family_id": "deontic",
+    "profile_id": "",
+    "route_id": "legal-route/deontic/v1"
+  },
+  "semantic_gold": false,
+  "source_context_custody_verified": false,
+  "source_semantics_verified": false,
+  "target_access": false,
+  "training_executed": false,
+  "training_masks_emitted": false
+}

@@ -1,0 +1,1158 @@
+{
+  "Boolean_scope_inferred": false,
+  "Lake_qualified": false,
+  "accepted": false,
+  "actual_training_or_evaluation_admission": false,
+  "admission_masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "admitted": false,
+  "completed_submissions_generated": false,
+  "consistent_status_meaning": "mechanical_declaration_consistency_not_meaning_completeness_or_eligibility",
+  "content_sha256": "d7cd69cdc5b6734e3268fb5cc7960d34c8e66a358ade9727a8596d7bc760aa80",
+  "cross_references_resolved": false,
+  "declaration_count": 0,
+  "declared_consistency_is_legal_correctness": false,
+  "declared_disputed_item_count": 0,
+  "diagnostic_count": 0,
+  "digest_recipe": "sha256_sorted_compact_utf8_json_no_nan_no_newline",
+  "encoder_calls": 0,
+  "encoder_executed": false,
+  "evidence_contents_interpreted": false,
+  "family_bridge_admitted": false,
+  "file_bytes_verified_by_dictionary_api": false,
+  "formal_output_lowered": false,
+  "formal_targets_created": 0,
+  "fresh_holdout_qualified": false,
+  "global_unseen_verified": false,
+  "gold_labels_created": 0,
+  "human_review_authenticated": false,
+  "human_reviews_authenticated": 0,
+  "independent_adjudication_completed": false,
+  "independent_review_completed": false,
+  "independent_reviews_authenticated": 0,
+  "item_count": 8,
+  "items": [
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 2312,
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "b6f152fb54f99a7af3d5d77fa8350f27caa56ac6316d930c4894e51aa30554b5",
+      "item_id": "statutory-physical-review-0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        377,
+        721
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 721,
+          "selected_char_start": 377
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "byte_end": 722,
+          "byte_start": 378,
+          "citation": "10 U.S.C. 276",
+          "document_id": "usc:us:10:276",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 9770,
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "a1a893f77bd8f70a81f0f0f2b288b5cacff5d6405020401d376caad75cacf23f",
+      "item_id": "statutory-physical-review-176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        1055,
+        1329
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1329,
+          "selected_char_start": 1055
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "byte_end": 1330,
+          "byte_start": 1056,
+          "citation": "1 U.S.C. 112",
+          "document_id": "usc:us:1:112",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 7137,
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "83e8a6a29b17f10bbf74539bc02c26d09deddfc92771015e2e4b527e5e7dfc08",
+      "item_id": "statutory-physical-review-637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        382,
+        735
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 735,
+          "selected_char_start": 382
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "byte_end": 738,
+          "byte_start": 383,
+          "citation": "10 U.S.C. 282",
+          "document_id": "usc:us:10:282",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "Emergency situations involving weapons of mass destruction (a) In General .—The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 6364,
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "c66b66b21cbf39bf340320d74d2f2797c547487958048163567b19203ecb7569",
+      "item_id": "statutory-physical-review-65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        337,
+        699
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 699,
+          "selected_char_start": 337
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "byte_end": 700,
+          "byte_start": 338,
+          "citation": "10 U.S.C. 261",
+          "document_id": "usc:us:10:261",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 72690,
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "5ffbcb76974254022bd36891fb31e8fab8b8b4f86e851108faeda3025316aa7a",
+      "item_id": "statutory-physical-review-8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        7185,
+        7252
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 7252,
+          "selected_char_start": 7185
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "byte_end": 7276,
+          "byte_start": 7209,
+          "citation": "10 U.S.C. 101",
+          "document_id": "usc:us:10:101",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "(6) The term \"enlisted member\" means a person in an enlisted grade."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 21457,
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "3326c405aea523b411d61ee5222bdf628e464ab0a76da500bb2e3d8fd0d29f1a",
+      "item_id": "statutory-physical-review-925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        1655,
+        1880
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1880,
+          "selected_char_start": 1655
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "byte_end": 1881,
+          "byte_start": 1656,
+          "citation": "1 U.S.C. 112b",
+          "document_id": "usc:us:1:112b",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "All citations to the Constitution of the United States, a treaty, or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 28742,
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "3022b742ea281124597b0fc753eb3dc077e523a1feedd00b14a73f0c7e9eccf8",
+      "item_id": "statutory-physical-review-9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        838,
+        1118
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 1118,
+          "selected_char_start": 838
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "byte_end": 1119,
+          "byte_start": 839,
+          "citation": "1 U.S.C. 106",
+          "document_id": "usc:us:1:106",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "When such bill, or joint resolution shall have passed both Houses, it shall be printed and shall then be called the enrolled bill, or joint resolution, as the case may be, and shall be signed by the presiding officers of both Houses and sent to the President of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    },
+    {
+      "Boolean_scope_inferred": false,
+      "Lake_qualified": false,
+      "accepted": false,
+      "actual_training_or_evaluation_admission": false,
+      "admission_masks": {
+        "contrastive_supervision": 0,
+        "fidelity_evaluation": 0,
+        "proof_supervision": 0,
+        "strong_semantic_fit": 0,
+        "weak_decoder_fit": 0
+      },
+      "admitted": false,
+      "completed_submissions_generated": false,
+      "context_artifact": {
+        "bytes": 459,
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "cross_references_resolved": false,
+      "declaration_count": 0,
+      "declared_consistency_is_legal_correctness": false,
+      "declared_dispute_present": false,
+      "encoder_executed": false,
+      "evidence_contents_interpreted": false,
+      "family_bridge_admitted": false,
+      "file_bytes_verified_by_dictionary_api": false,
+      "formal_output_lowered": false,
+      "fresh_holdout_qualified": false,
+      "global_unseen_verified": false,
+      "human_review_authenticated": false,
+      "independent_adjudication_completed": false,
+      "independent_review_completed": false,
+      "input_sha256": "02f0a51fce8d3c9ca8a3f55050a6fb23d1c73e3c84a6b934a5aa7d54b2fb9e7b",
+      "item_id": "statutory-physical-review-fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "legacy_copied_span_geometry_assessed": false,
+      "modality_cues_inferred": false,
+      "model_executed": false,
+      "official_current_law_authenticated": false,
+      "physical_identity_sha256": "fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "proof_authority": false,
+      "qualified": false,
+      "received_declarations": [],
+      "recording_status": "pending",
+      "reviewer_blindness_verified": false,
+      "reviewer_identity_authenticated": false,
+      "reviewer_independence_authenticated": false,
+      "scope_transport_assessed": false,
+      "selected_context_char_offsets": [
+        255,
+        418
+      ],
+      "semantic_gold": false,
+      "signature_verification_executed": false,
+      "source_authority_authenticated": false,
+      "source_input": {
+        "context": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "complete_raw_section": true,
+          "normalization": "identity",
+          "selected_char_end": 418,
+          "selected_char_start": 255
+        },
+        "exposure": {
+          "events": [
+            {
+              "case_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+              "evidence_artifact": {
+                "bytes": 38209,
+                "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+              },
+              "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+              "stage": "arbitrary-native384-input"
+            },
+            {
+              "case_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+              "evidence_artifact": {
+                "bytes": 89951,
+                "sha256": "5379f878988a8e70fcdbef182b3b713920c62d2d550fc2061fe25ac69635db13"
+              },
+              "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+              "stage": "frozen-retained-pointer-comparison"
+            }
+          ],
+          "prior_exposure_complete": false,
+          "status": "previously_exposed_development"
+        },
+        "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "physical_origin": {
+          "provenance_artifact": {
+            "bytes": 30901,
+            "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+          },
+          "provenance_record_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb"
+        },
+        "source": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "byte_end": 419,
+          "byte_start": 256,
+          "citation": "1 U.S.C. 2",
+          "document_id": "usc:us:1:2",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States."
+      },
+      "source_semantics_verified": false,
+      "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+      "statement_scope_synthesized": false,
+      "status_counts": {
+        "consistent_declared_normative": 0,
+        "inconsistent": 0,
+        "non_normative": 0,
+        "partial": 0,
+        "unresolved": 0
+      },
+      "symbolic_aliases_inferred": false,
+      "target_created": false,
+      "target_eligibility": false,
+      "training_executed": false,
+      "training_qualified": false
+    }
+  ],
+  "legacy_copied_span_geometry_assessed": false,
+  "modality_cues_inferred": false,
+  "model_calls": 0,
+  "model_executed": false,
+  "official_current_law_authenticated": false,
+  "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+  "proof_authority": false,
+  "prover_calls": 0,
+  "provider_calls": 0,
+  "qualified": false,
+  "qualified_training_pairs": 0,
+  "recording_sha256": "62f4df7193f04710c1bf89d624b04c477227c79cd79414a0938a106fee8430aa",
+  "recording_validation": {
+    "Lake_qualified": false,
+    "accepted": false,
+    "actual_training_or_evaluation_admission": false,
+    "admission_masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "admitted": false,
+    "completed_submissions_generated": false,
+    "content_sha256": "ab4d4ad9c305e76cf426f2ee8f11a1be8e60edda46d419b7e3f9c6cadc792c9d",
+    "encoder_executed": false,
+    "evidence_contents_interpreted": false,
+    "family_bridge_admitted": false,
+    "file_bytes_verified_by_dictionary_api": false,
+    "fresh_holdout_qualified": false,
+    "global_unseen_verified": false,
+    "human_review_authenticated": false,
+    "independent_adjudication_completed": false,
+    "independent_review_completed": false,
+    "item_count": 8,
+    "model_executed": false,
+    "official_current_law_authenticated": false,
+    "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+    "proof_authority": false,
+    "qualified": false,
+    "recording_body_sha256": "7ac3accf03efb8d92924b2d4688cfdc894d05620b1e38584e9dcc9d6f4374da7",
+    "recording_sha256": "62f4df7193f04710c1bf89d624b04c477227c79cd79414a0938a106fee8430aa",
+    "reviewer_blindness_verified": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_authenticated": false,
+    "schema": "statutory-source-context-review-recording-validation/v1",
+    "semantic_gold": false,
+    "signature_verification_executed": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "status": "validated_caller_declaration_recording_only",
+    "submission_count": 0,
+    "target_created": false,
+    "training_executed": false,
+    "training_qualified": false
+  },
+  "reviewer_blindness_verified": false,
+  "reviewer_identity_authenticated": false,
+  "reviewer_independence_authenticated": false,
+  "schema": "statutory-declaration-consistency-preflight/v1",
+  "scope": "caller_declared_consistency_and_interval_geometry_only",
+  "scope_transport_assessed": false,
+  "semantic_gold": false,
+  "signature_verification_executed": false,
+  "source_authority_authenticated": false,
+  "source_semantics_verified": false,
+  "statement_scope_integration": "deferred_requires_explicit_caller_declaration_and_exact_profile_joins",
+  "statement_scope_owner": "ipfs_datasets_py.logic.legal_ir.canonical_statement_scope",
+  "statement_scope_synthesized": false,
+  "status": "pending",
+  "status_counts": {
+    "consistent_declared_normative": 0,
+    "inconsistent": 0,
+    "non_normative": 0,
+    "partial": 0,
+    "unresolved": 0
+  },
+  "submission_count": 0,
+  "submissions_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "symbolic_aliases_inferred": false,
+  "target_created": false,
+  "target_eligibility": false,
+  "training_executed": false,
+  "training_qualified": false
+}
