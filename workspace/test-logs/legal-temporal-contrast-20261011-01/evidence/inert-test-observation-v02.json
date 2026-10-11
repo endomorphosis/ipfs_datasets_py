@@ -1,0 +1,58 @@
+{
+  "final_corpus_cases": 61,
+  "final_unique_cases": 258,
+  "findings": [],
+  "first_corpus_digit_shortcut_corrected_before_fit": true,
+  "model_calls": 0,
+  "numerical_imports_denied": true,
+  "old_unchanged_suites_not_rerun": true,
+  "passed": true,
+  "recipe_cases": 57,
+  "runs": [
+    {
+      "log": {
+        "bytes": 260,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-tests-v01.log",
+        "sha256": "73c7ddf188c28228dba92fd7b3ab44343a513df8ac2487a5dee325e67789986a"
+      },
+      "passed_cases": 197,
+      "xml": {
+        "bytes": 67805,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-tests-v01.xml",
+        "sha256": "008b94e75e51d006d71bd4c660525317b1987a3d3c090571ae991f6772e28236"
+      }
+    },
+    {
+      "log": {
+        "bytes": 99,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-corpus-tests-v02.log",
+        "sha256": "138ccb73b20385d00228f882f28042933aea8c5e4deb5e66b070c4e1f0fdfbc5"
+      },
+      "passed_cases": 61,
+      "xml": {
+        "bytes": 14680,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-corpus-tests-v02.xml",
+        "sha256": "9223a7b4830a192bf4c30a62916192417ff09a29df4d47880e9e85a0a866ff07"
+      }
+    },
+    {
+      "log": {
+        "bytes": 99,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-recipe-tests-v01.log",
+        "sha256": "a1774e81f8df96725bc0376e7c1d1e257d01fe39e1cae834328957f83f00d5f1"
+      },
+      "passed_cases": 57,
+      "xml": {
+        "bytes": 12260,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-recipe-tests-v01.xml",
+        "sha256": "3352d4cbd492589d365ab276c2714b4d9ede8bb92e33bde27ba60234d936599f"
+      }
+    }
+  ],
+  "schema": "temporal-contrast-final-inert-validation/v1",
+  "semantic_gold": false,
+  "superseded_first_corpus_cases": 57,
+  "top_level_package_initialization_qualified": false,
+  "unchanged_adapter_cases": 79,
+  "unchanged_joint_cases": 61
+}

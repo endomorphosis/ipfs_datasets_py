@@ -1,0 +1,32 @@
+{
+  "charged_bytes": 146186818736,
+  "claims_modified": false,
+  "continuous_custody_claimed": false,
+  "failed_attempt_child_created": false,
+  "failed_reservation_id": "2046d534d6604ede954ffa10945d806d",
+  "failed_reservation_present": false,
+  "findings": [],
+  "inventory": {
+    "apparent_bytes": 97805041520,
+    "entry_count": 1370391,
+    "special_file_count": 7,
+    "symlink_count": 733
+  },
+  "ledger": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1"
+  },
+  "ledger_bytes_unchanged_during_inventory": true,
+  "limit_bytes": 145000000000,
+  "limits_modified": false,
+  "minimum_filesystem_free_bytes": 223017897984,
+  "model_calls": 0,
+  "optimizer_updates": 0,
+  "outstanding_full_reservations_bytes": 48181777216,
+  "over_limit_bytes": 1186818736,
+  "passed": true,
+  "record_count": 511,
+  "requested_bytes": 200000000,
+  "schema": "temporal-contrast-storage-admission-diagnosis/v1"
+}

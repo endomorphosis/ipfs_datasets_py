@@ -1,0 +1,17 @@
+{
+  "canonical_endpoints_recorded_separately": true,
+  "findings": [],
+  "no_recovery_cherry_pick": true,
+  "passed": true,
+  "previous_independent_receipt": {
+    "bytes": 392852,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/final-integration-independent-review-v01.json",
+    "sha256": "fcd6589e08d6cb0a8d5235467f913326cf7fd1141470a427a2bdb58ec37a0670"
+  },
+  "previous_round_all_checks_accepted_with_limits": true,
+  "remote_main_observed_unchanged_at_intake": true,
+  "root_main": "0a9329b4498acd8c1f5f7e163e87eb6809f25678",
+  "schema": "previous-main-integration-reuse/v1",
+  "semantic_gold": false,
+  "source_main": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+}
