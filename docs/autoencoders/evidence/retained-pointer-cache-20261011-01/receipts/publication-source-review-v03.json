@@ -1,0 +1,43 @@
+{
+  "findings": [
+    {
+      "detail": "retain overwrites consumed[str(source)] with the copy-time pin before declared read-report pins are compared. This removes the original read-time identity instead of binding it.",
+      "id": "read-pin-overwrite",
+      "required_change": "Refuse any before pin unequal to an already captured consumed[path] before copying, or retain a separate immutable initial read_pins map.",
+      "severity": "blocking"
+    }
+  ],
+  "helper_executed": false,
+  "helper_pin": {
+    "bytes": 9501,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution.py",
+    "sha256": "39b86544bc688a21e4960b1abfb406e20790e910129eac3bffb4502484ea35dd"
+  },
+  "model_tests_Git_mutations": false,
+  "observed_at_utc": "2026-10-11T05:06:07.991691+00:00",
+  "passed": false,
+  "preserved_drafts": {
+    "prepare_contribution-draft-01.py": {
+      "bytes": 7981,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution-draft-01.py",
+      "sha256": "6dd3c13214657ab8f48a6fffe8f45c74688a03ec85489f356b85e46aa65b606a"
+    },
+    "prepare_contribution-draft-02.py": {
+      "bytes": 8903,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution-draft-02.py",
+      "sha256": "4c5d6770e4b2863724ee6663b8c8cddf0751168e27d283fb7dbf929e0ff53d70"
+    }
+  },
+  "proof_authority": false,
+  "resolved": [
+    "All four read inputs captured and endpoint rehashed.",
+    "Explicit input inventory retained and all consumed paths closing rehashed.",
+    "Per-copy destination byte equality and post-copy origin checks.",
+    "Bounded explicit copy selection and actual Hub readback gate.",
+    "Eligibility and qualifier wording corrections."
+  ],
+  "review_version": "draft-03",
+  "schema": "retained-pointer-contribution-helper-review/v1",
+  "scientific_qualification": false,
+  "scope": "Independent static copy/helper review only. Actual finalized inventory, successful retry results, Hub publication and stage still pending."
+}

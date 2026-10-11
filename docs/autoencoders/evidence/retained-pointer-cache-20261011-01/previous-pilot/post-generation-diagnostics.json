@@ -1,0 +1,2769 @@
+{
+  "actual_optimizer_updates": 0,
+  "authority": {
+    "Lake_executed": false,
+    "admitted": false,
+    "checkpoint_selection_executed": false,
+    "decoder_executed": false,
+    "decoder_predicted_facet_intervals_supplied": false,
+    "decoder_predicted_interpretation_supplied": false,
+    "decoder_predicted_trigger_supplied": false,
+    "default_promotion": false,
+    "encoder_executed": false,
+    "family_bridge_admitted": false,
+    "formalized": false,
+    "legal_fidelity_qualified": false,
+    "proof_authority": false,
+    "qualified": false,
+    "semantic_accuracy_measured": false,
+    "source_semantics_verified": false,
+    "teacher_or_reference_targets_accessed": false,
+    "training_executed": false
+  },
+  "canonical_contract_interface": "CanonicalRoundTripIR@1",
+  "canonical_normalization_overwrites_candidate": false,
+  "cid_resource_directory": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config",
+  "diagnostic_source": "existing raw candidate JSON; no regenerated outputs",
+  "family_bridge_invoked": false,
+  "family_bridge_refusal_reason": "Absent decoder-predicted facet intervals, trigger and interpretation; literal matches confer no admission.",
+  "independent_semantic_gold": false,
+  "input_byte_inventory": {
+    "after": {
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py": {
+        "bytes": 1489,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py",
+        "sha256": "49fc715b733e1579d77c2ec1734b40e6bd21ebafe427c8eb142a40a1e3819361"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py": {
+        "bytes": 8914,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py",
+        "sha256": "cdcf2cbdf3ce3bf4793d93c46cf03c94713c6d64bbc7e0f2d4de9dc9f155cd8f"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py": {
+        "bytes": 6706,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py",
+        "sha256": "255f29d6c0a8ec24f3556c22a19ea4d92e57a6ab12a7340f91e0f48bcfdbab30"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py": {
+        "bytes": 6247,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py",
+        "sha256": "561042b2f28c1e0026b1ba790f50c9c0237cdb1042d7c35d608632b59376aaea"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py": {
+        "bytes": 4942,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py",
+        "sha256": "10aa0a8c492892ed9eceb80a4d23da5bfa7ec045dd4af456ea722ecfdd176c26"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py": {
+        "bytes": 13562,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py",
+        "sha256": "60f749c3f42e9b4f9daba64df096c391dbdc97815acb8a41c5540b14e49c2f58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py": {
+        "bytes": 13150,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py",
+        "sha256": "cbb72db470a9bfc9fffbdd47bfebfdc82f3dfd94753b60923f3de9cfea0218ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py": {
+        "bytes": 18082,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py",
+        "sha256": "a0e078006705592f8467ac4b9862dcf10f515f7059a3f6e1425ab48c577e9035"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py": {
+        "bytes": 2843,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py",
+        "sha256": "626ee10c0579db8d3e0535194f7b33e7bda0f09e8ed893fee19e026d78b46f9a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py": {
+        "bytes": 19138,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py",
+        "sha256": "15455b45b02672a5dc1f4017ba725ad5f70abbbd15325f79c5f013f174cdaacb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py": {
+        "bytes": 3337,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py",
+        "sha256": "93ea9be368c0bb6522a23c9f3db5f1b871a76b202cc95295078457d95bf5b20c"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py": {
+        "bytes": 9036,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py",
+        "sha256": "a270e3e39822f66cf700b814b41aec0d69ba0097e81e54be179460574301f3be"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py": {
+        "bytes": 822,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py",
+        "sha256": "6402f73dfa7845c9e3a48ea4491e853c5b6a25bb9ce50ed75c5bc49f55134dad"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py": {
+        "bytes": 29778,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py",
+        "sha256": "23b40fbe51b6081334ab5722244aa312100b4dbfedf2bb1fd829e3612067df85"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py": {
+        "bytes": 26301,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py",
+        "sha256": "92b7a63a4f9a6707b7701124b8920eb0518bf5f4478ada5953af6a3612b18294"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py": {
+        "bytes": 436,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py",
+        "sha256": "385c23a4c77749cf48f7d9a57ab013449376c0da20d8d4192dadddb16ae631ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py": {
+        "bytes": 9358,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py",
+        "sha256": "21b6009bbb3afbeae2b830157fbeeaa650676dbd9fe08a846c8362f1c8bafdca"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py": {
+        "bytes": 21446,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py",
+        "sha256": "0fcb709e920758265991af0669b00f21653ee97e689a1c7fb35c7d3336fdc5a2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py",
+        "sha256": "c396db3f67e604a65da6a6ff5af16641d705c349fa532580d21946ccccf6dee0"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py": {
+        "bytes": 15668,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py",
+        "sha256": "a64f0bf2b418f7e0fa04ff9779029edd4ca64a706df2613738f16e39ae64c6af"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py": {
+        "bytes": 24349,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py",
+        "sha256": "3cae3cdf6e2ce429f1958fad9440016e96ddf389a03fb9512f661ab257be9fff"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py": {
+        "bytes": 439,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py",
+        "sha256": "6757260650e4dd255c57429d0aa0a09d02403ae02f24c37f53eeab974ce489b1"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py": {
+        "bytes": 23825,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py",
+        "sha256": "23a208621643522801d95cf646984bf63b8c39f832957c700e134d61eba9bd58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py": {
+        "bytes": 229,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py",
+        "sha256": "28fa79bb8693275567aaee3bf02f3e59eb6eb930e480a061c8018ebf1cf4e649"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py": {
+        "bytes": 3663,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py",
+        "sha256": "98e90bebc56474a24dba841c234c09d3d9821aac5ba4035acd02cebe23d58d14"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py": {
+        "bytes": 2670,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py",
+        "sha256": "9a3ae21e0a4ea0a2be3b3a5248827b066de6f9dfc1ce51bd86b76d99c636bb2a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py",
+        "sha256": "9442f5b15e71ba3c37c27a72b2b08307fe5ef9a23c5441c44aa5dbdd11076217"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py": {
+        "bytes": 12717,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py",
+        "sha256": "0581b2c4d3c0d312414b74b0d7017556f6701575af15c033988a718bcd5dc373"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py": {
+        "bytes": 7948,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py",
+        "sha256": "7e75efb57a9828dba4dede49aa27f3e82328ed0554d9e248985953d445df7fd8"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py": {
+        "bytes": 1126,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py",
+        "sha256": "bcadd2cd17932b89132677be34418c5b20ac6d63b48aa0ba4a86a1c5a3878920"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py": {
+        "bytes": 3968,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py",
+        "sha256": "7d09d2595e1c7af28492a37db369a553e0815010690531a509dc0f9ce8bfccb2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+        "bytes": 3908,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json",
+        "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py": {
+        "bytes": 4079,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py",
+        "sha256": "ed9928753d7eaf4ce4140300435a19c6b0eec619d167ce76a1e339e72a368c44"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+        "bytes": 90766,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json",
+        "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py": {
+        "bytes": 5863,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py",
+        "sha256": "55b1e767dd2ba7f4066a52d3a5a834d7ab2eafe9a746e70b3f8bb710b3e876cd"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py": {
+        "bytes": 165012,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py",
+        "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py": {
+        "bytes": 709,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py",
+        "sha256": "fc80729c42f23c8078dc386ab936cf8cee115838209cd64fe095c64d55e268cb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py": {
+        "bytes": 19383,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py",
+        "sha256": "dbfbf54300c7469eab444316d04f117701e298e649f242ef0aad4a6ca43f3e00"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py": {
+        "bytes": 37609,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py",
+        "sha256": "38f1bbabfde71f591f0be0cb365967778e0578f3aa45f48edfc58a0abc5b70da"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py": {
+        "bytes": 18324,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py",
+        "sha256": "89d76e2620ee6c5ad26f35c1cf112362d6047c48a233303090fd25b2e6f263a1"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py": {
+        "bytes": 24600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+        "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+        "bytes": 15840,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+        "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+        "bytes": 37989,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+        "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+        "bytes": 17329,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+        "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+        "bytes": 109257,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+        "bytes": 4428,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json": {
+        "bytes": 20901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+        "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json": {
+        "bytes": 32794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json",
+        "sha256": "44c1636c020ba7d64afe71c101877fc7dc9b10fc95678076e400677f0f519b0d"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json": {
+        "bytes": 32801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json",
+        "sha256": "d0dc2b5f078f1f9a6257fc883002a812203a183e154c8f1ccd90fb57bb1a3c51"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json": {
+        "bytes": 330754,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+        "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/summary.json": {
+        "bytes": 25649,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/summary.json",
+        "sha256": "14e8c67beb96c883125264de0c9bf8526e6ee4f1dfa7e9b00cda539e1c33382d"
+      },
+      "/usr/lib/python3.12/urllib/__init__.py": {
+        "bytes": 0,
+        "path": "/usr/lib/python3.12/urllib/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "/usr/lib/python3.12/urllib/parse.py": {
+        "bytes": 45591,
+        "path": "/usr/lib/python3.12/urllib/parse.py",
+        "sha256": "a67b5694763137dbac085adbf0c22821d435ec8ca22d3bd3786d2c9f4ee748d5"
+      }
+    },
+    "all_plan_artifacts_rechecked": false,
+    "before": {
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py": {
+        "bytes": 1489,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py",
+        "sha256": "49fc715b733e1579d77c2ec1734b40e6bd21ebafe427c8eb142a40a1e3819361"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py": {
+        "bytes": 8914,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py",
+        "sha256": "cdcf2cbdf3ce3bf4793d93c46cf03c94713c6d64bbc7e0f2d4de9dc9f155cd8f"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py": {
+        "bytes": 6706,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py",
+        "sha256": "255f29d6c0a8ec24f3556c22a19ea4d92e57a6ab12a7340f91e0f48bcfdbab30"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py": {
+        "bytes": 6247,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py",
+        "sha256": "561042b2f28c1e0026b1ba790f50c9c0237cdb1042d7c35d608632b59376aaea"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py": {
+        "bytes": 4942,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py",
+        "sha256": "10aa0a8c492892ed9eceb80a4d23da5bfa7ec045dd4af456ea722ecfdd176c26"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py": {
+        "bytes": 13562,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py",
+        "sha256": "60f749c3f42e9b4f9daba64df096c391dbdc97815acb8a41c5540b14e49c2f58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py": {
+        "bytes": 13150,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py",
+        "sha256": "cbb72db470a9bfc9fffbdd47bfebfdc82f3dfd94753b60923f3de9cfea0218ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py": {
+        "bytes": 18082,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py",
+        "sha256": "a0e078006705592f8467ac4b9862dcf10f515f7059a3f6e1425ab48c577e9035"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py": {
+        "bytes": 2843,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py",
+        "sha256": "626ee10c0579db8d3e0535194f7b33e7bda0f09e8ed893fee19e026d78b46f9a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py": {
+        "bytes": 19138,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py",
+        "sha256": "15455b45b02672a5dc1f4017ba725ad5f70abbbd15325f79c5f013f174cdaacb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py": {
+        "bytes": 3337,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py",
+        "sha256": "93ea9be368c0bb6522a23c9f3db5f1b871a76b202cc95295078457d95bf5b20c"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py": {
+        "bytes": 9036,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py",
+        "sha256": "a270e3e39822f66cf700b814b41aec0d69ba0097e81e54be179460574301f3be"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py": {
+        "bytes": 822,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py",
+        "sha256": "6402f73dfa7845c9e3a48ea4491e853c5b6a25bb9ce50ed75c5bc49f55134dad"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py": {
+        "bytes": 29778,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py",
+        "sha256": "23b40fbe51b6081334ab5722244aa312100b4dbfedf2bb1fd829e3612067df85"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py": {
+        "bytes": 26301,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py",
+        "sha256": "92b7a63a4f9a6707b7701124b8920eb0518bf5f4478ada5953af6a3612b18294"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py": {
+        "bytes": 436,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py",
+        "sha256": "385c23a4c77749cf48f7d9a57ab013449376c0da20d8d4192dadddb16ae631ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py": {
+        "bytes": 9358,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py",
+        "sha256": "21b6009bbb3afbeae2b830157fbeeaa650676dbd9fe08a846c8362f1c8bafdca"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py": {
+        "bytes": 21446,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py",
+        "sha256": "0fcb709e920758265991af0669b00f21653ee97e689a1c7fb35c7d3336fdc5a2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py",
+        "sha256": "c396db3f67e604a65da6a6ff5af16641d705c349fa532580d21946ccccf6dee0"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py": {
+        "bytes": 15668,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py",
+        "sha256": "a64f0bf2b418f7e0fa04ff9779029edd4ca64a706df2613738f16e39ae64c6af"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py": {
+        "bytes": 24349,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py",
+        "sha256": "3cae3cdf6e2ce429f1958fad9440016e96ddf389a03fb9512f661ab257be9fff"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py": {
+        "bytes": 439,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py",
+        "sha256": "6757260650e4dd255c57429d0aa0a09d02403ae02f24c37f53eeab974ce489b1"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py": {
+        "bytes": 23825,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py",
+        "sha256": "23a208621643522801d95cf646984bf63b8c39f832957c700e134d61eba9bd58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py": {
+        "bytes": 229,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py",
+        "sha256": "28fa79bb8693275567aaee3bf02f3e59eb6eb930e480a061c8018ebf1cf4e649"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py": {
+        "bytes": 3663,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py",
+        "sha256": "98e90bebc56474a24dba841c234c09d3d9821aac5ba4035acd02cebe23d58d14"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py": {
+        "bytes": 2670,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py",
+        "sha256": "9a3ae21e0a4ea0a2be3b3a5248827b066de6f9dfc1ce51bd86b76d99c636bb2a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py",
+        "sha256": "9442f5b15e71ba3c37c27a72b2b08307fe5ef9a23c5441c44aa5dbdd11076217"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py": {
+        "bytes": 12717,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py",
+        "sha256": "0581b2c4d3c0d312414b74b0d7017556f6701575af15c033988a718bcd5dc373"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py": {
+        "bytes": 7948,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py",
+        "sha256": "7e75efb57a9828dba4dede49aa27f3e82328ed0554d9e248985953d445df7fd8"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py": {
+        "bytes": 1126,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py",
+        "sha256": "bcadd2cd17932b89132677be34418c5b20ac6d63b48aa0ba4a86a1c5a3878920"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py": {
+        "bytes": 3968,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py",
+        "sha256": "7d09d2595e1c7af28492a37db369a553e0815010690531a509dc0f9ce8bfccb2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+        "bytes": 3908,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json",
+        "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py": {
+        "bytes": 4079,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py",
+        "sha256": "ed9928753d7eaf4ce4140300435a19c6b0eec619d167ce76a1e339e72a368c44"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+        "bytes": 90766,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json",
+        "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py": {
+        "bytes": 5863,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py",
+        "sha256": "55b1e767dd2ba7f4066a52d3a5a834d7ab2eafe9a746e70b3f8bb710b3e876cd"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py": {
+        "bytes": 165012,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py",
+        "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py": {
+        "bytes": 709,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py",
+        "sha256": "fc80729c42f23c8078dc386ab936cf8cee115838209cd64fe095c64d55e268cb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py": {
+        "bytes": 19383,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py",
+        "sha256": "dbfbf54300c7469eab444316d04f117701e298e649f242ef0aad4a6ca43f3e00"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py": {
+        "bytes": 37609,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py",
+        "sha256": "38f1bbabfde71f591f0be0cb365967778e0578f3aa45f48edfc58a0abc5b70da"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py": {
+        "bytes": 18324,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py",
+        "sha256": "89d76e2620ee6c5ad26f35c1cf112362d6047c48a233303090fd25b2e6f263a1"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py": {
+        "bytes": 24600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+        "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+        "bytes": 15840,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+        "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+        "bytes": 37989,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+        "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+        "bytes": 17329,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py",
+        "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+        "bytes": 109257,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+        "bytes": 4428,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json": {
+        "bytes": 20901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+        "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json": {
+        "bytes": 32794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json",
+        "sha256": "44c1636c020ba7d64afe71c101877fc7dc9b10fc95678076e400677f0f519b0d"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json": {
+        "bytes": 32801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json",
+        "sha256": "d0dc2b5f078f1f9a6257fc883002a812203a183e154c8f1ccd90fb57bb1a3c51"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json": {
+        "bytes": 330754,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+        "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+      },
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/summary.json": {
+        "bytes": 25649,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/summary.json",
+        "sha256": "14e8c67beb96c883125264de0c9bf8526e6ee4f1dfa7e9b00cda539e1c33382d"
+      },
+      "/usr/lib/python3.12/urllib/__init__.py": {
+        "bytes": 0,
+        "path": "/usr/lib/python3.12/urllib/__init__.py",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "/usr/lib/python3.12/urllib/parse.py": {
+        "bytes": 45591,
+        "path": "/usr/lib/python3.12/urllib/parse.py",
+        "sha256": "a67b5694763137dbac085adbf0c22821d435ec8ca22d3bd3786d2c9f4ee748d5"
+      }
+    },
+    "consumed_inputs_byte_exact": true,
+    "full_third_party_import_graph_qualified": false,
+    "note": "Inventory covers consumed JSON, pinned CID tables, pure source owners and selected imported CID dependency files; encoder weights, donor and targets were not opened."
+  },
+  "input_dimension": 384,
+  "lanes": [
+    {
+      "checkpoint_pin": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "codec": {
+        "schema": "typed-json-lexical/v1",
+        "target_vocabulary": [
+          "<pad>",
+          "<bos>",
+          "<eos>",
+          "\"F\"",
+          "\"O\"",
+          "\"P\"",
+          "\"action\"",
+          "\"actor\"",
+          "\"approve\"",
+          "\"archive\"",
+          "\"conditions\"",
+          "\"deliver\"",
+          "\"examine\"",
+          "\"exceptions\"",
+          "\"modality\"",
+          "\"notary\"",
+          "\"notice\"",
+          "\"object\"",
+          "\"preserve\"",
+          "\"publish\"",
+          "\"registrar\"",
+          "\"rules\"",
+          "\"secretary\"",
+          "\"temporal\"",
+          "\"treasurer\"",
+          "\"trustee\"",
+          ",",
+          ":",
+          "[",
+          "]",
+          "{",
+          "}"
+        ]
+      },
+      "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "counts": {
+        "canonical_contract_valid": 8,
+        "canonical_qualifier_arrays_valid": 8,
+        "canonical_rule_order_valid": 8,
+        "complete_canonical_candidate": 8,
+        "eos_metadata_consistent": 8,
+        "eos_reached": 8,
+        "exact_canonical_payload_equal": 8,
+        "strict_json_valid": 8,
+        "token_ids_valid": 8
+      },
+      "family_bridge_admitted": false,
+      "original_report_pin": {
+        "bytes": 32801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json",
+        "sha256": "d0dc2b5f078f1f9a6257fc883002a812203a183e154c8f1ccd90fb57bb1a3c51"
+      },
+      "qualified": false,
+      "recipe": "normative-wording-zero",
+      "row_count": 8,
+      "rows": [
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"preserve\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "preserve",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"approve\",\"actor\":\"treasurer\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "treasurer",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "approve",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"publish\",\"actor\":\"treasurer\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"archive\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "treasurer",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "publish",
+              "exact_case_sensitive_literal_count": 1,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [
+                196
+              ],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "archive",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"publish\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "publish",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        }
+      ]
+    },
+    {
+      "checkpoint_pin": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "codec": {
+        "schema": "typed-json-lexical/v1",
+        "target_vocabulary": [
+          "<pad>",
+          "<bos>",
+          "<eos>",
+          "\"F\"",
+          "\"O\"",
+          "\"P\"",
+          "\"action\"",
+          "\"actor\"",
+          "\"approve\"",
+          "\"archive\"",
+          "\"conditions\"",
+          "\"deliver\"",
+          "\"examine\"",
+          "\"exceptions\"",
+          "\"modality\"",
+          "\"notary\"",
+          "\"notice\"",
+          "\"object\"",
+          "\"preserve\"",
+          "\"publish\"",
+          "\"registrar\"",
+          "\"rules\"",
+          "\"secretary\"",
+          "\"temporal\"",
+          "\"treasurer\"",
+          "\"trustee\"",
+          ",",
+          ":",
+          "[",
+          "]",
+          "{",
+          "}"
+        ]
+      },
+      "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+      "counts": {
+        "canonical_contract_valid": 8,
+        "canonical_qualifier_arrays_valid": 8,
+        "canonical_rule_order_valid": 8,
+        "complete_canonical_candidate": 8,
+        "eos_metadata_consistent": 8,
+        "eos_reached": 8,
+        "exact_canonical_payload_equal": 8,
+        "strict_json_valid": 8,
+        "token_ids_valid": 8
+      },
+      "family_bridge_admitted": false,
+      "original_report_pin": {
+        "bytes": 32794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json",
+        "sha256": "44c1636c020ba7d64afe71c101877fc7dc9b10fc95678076e400677f0f519b0d"
+      },
+      "qualified": false,
+      "recipe": "normative-wording-ce",
+      "row_count": 8,
+      "rows": [
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"preserve\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "preserve",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "preserve",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            18,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"approve\",\"actor\":\"treasurer\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "treasurer",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "approve",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "approve",
+                "actor": "treasurer",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            8,
+            26,
+            7,
+            27,
+            24,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"publish\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"archive\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "publish",
+              "exact_case_sensitive_literal_count": 1,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [
+                196
+              ],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "archive",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "archive",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            9,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"publish\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "publish",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "publish",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            19,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"notary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"P\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "notary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "P",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            15,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            5,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        },
+        {
+          "candidate_text": "{\"rules\":[{\"action\":\"deliver\",\"actor\":\"secretary\",\"conditions\":[],\"exceptions\":[],\"modality\":\"O\",\"object\":\"notice\",\"temporal\":[]}]}",
+          "canonical_contract_valid": true,
+          "canonical_qualifier_arrays_valid": true,
+          "canonical_rule_order_valid": true,
+          "complete_canonical_candidate": true,
+          "control_tokens_removed": 0,
+          "diagnostic_only": true,
+          "eos_metadata_consistent": true,
+          "eos_reached": true,
+          "errors": [],
+          "exact_canonical_payload_equal": true,
+          "family_bridge_admitted": false,
+          "family_bridge_refusal_reason": "No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "lexical_source_diagnostics": [
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "secretary",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "actor",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "deliver",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "action",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            },
+            {
+              "blank_atom": false,
+              "diagnostic_only": true,
+              "emitted_atom": "notice",
+              "exact_case_sensitive_literal_count": 0,
+              "facet": "object",
+              "rule_index": 0,
+              "selected_source_character_start_offsets": [],
+              "semantic_binding_inferred": false
+            }
+          ],
+          "normalized_ir_for_comparison_only": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_generation_status": "eos",
+          "original_parsed_ir": {
+            "rules": [
+              {
+                "action": "deliver",
+                "actor": "secretary",
+                "conditions": [],
+                "exceptions": [],
+                "modality": "O",
+                "object": "notice",
+                "temporal": []
+              }
+            ]
+          },
+          "original_token_ids": [
+            30,
+            21,
+            27,
+            28,
+            30,
+            6,
+            27,
+            11,
+            26,
+            7,
+            27,
+            22,
+            26,
+            10,
+            27,
+            28,
+            29,
+            26,
+            13,
+            27,
+            28,
+            29,
+            26,
+            14,
+            27,
+            4,
+            26,
+            17,
+            27,
+            16,
+            26,
+            23,
+            27,
+            28,
+            29,
+            31,
+            29,
+            31
+          ],
+          "qualified": false,
+          "semantic_binding_inferred": false,
+          "strict_json_valid": true,
+          "token_ids_valid": true,
+          "token_transport": "content_only_greedy_v1"
+        }
+      ]
+    }
+  ],
+  "lexical_scope": "case-sensitive literal substring occurrences only; no word-boundary or legal-role inference",
+  "official_current_law_verified": false,
+  "preloaded_stdlib_scope": [
+    {
+      "module": "urllib",
+      "path": "/usr/lib/python3.12/urllib/__init__.py",
+      "reason": "Harmless stdlib module already loaded by pathlib; no network module or call admitted."
+    },
+    {
+      "module": "urllib.parse",
+      "path": "/usr/lib/python3.12/urllib/parse.py",
+      "reason": "Harmless stdlib module already loaded by pathlib; no network module or call admitted."
+    }
+  ],
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "arbitrary-native-pilot-post-generation-diagnostics/v1",
+  "source_authority": false,
+  "source_count": 8,
+  "source_join_scope": "exact pinned selected physical source bytes and recorded cache text",
+  "status": "completed",
+  "token_transport_contract": {
+    "bos_in_saved_sequence": false,
+    "eos_in_saved_sequence": false,
+    "explanation": "Pinned _greedy uses BOS only as input and stops before appending every control token.",
+    "schema": "content_only_greedy_v1",
+    "terminal_eos_removal_applied": false
+  }
+}

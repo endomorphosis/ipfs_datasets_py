@@ -1,0 +1,80 @@
+{
+  "analysis_and_preparation_static_verdict": {
+    "README_scope_correction": "At most one copied span per facet; multiple values within a qualifier facet explicitly outside current owner, allowing separate condition/exception/temporal facets.",
+    "actual_results_required_before_release": true,
+    "analysis_eligible_and_outcome_counts": "Copied from authenticated lane report without reclassifying denied sources as candidates.",
+    "passed": true,
+    "prior_review_v02_resolutions_preserved": true,
+    "source_copying_counts": "Literal facet presence and abstentions, semantic_accuracy null."
+  },
+  "checks": {
+    "AST_only_when_source_pins_current": true,
+    "helper_execution": false,
+    "numeric_imports": false,
+    "publisher_execution": false,
+    "root_source_edits_by_reviewer": false
+  },
+  "created_at_utc": "2026-10-11T04:59:39.894909+00:00",
+  "findings": [
+    {
+      "detail": "Before snapshot is saved, but commit and readback stages have no exception receipt. Commit success followed by failed HTTP readback or TLS failure cannot be reconstructed from a durable original failure receipt; no stage or observed revision is retained on exception. This is material given actual TLS EOF in the previous study.",
+      "id": "durable-uncertain-publication-failure",
+      "owner": "publish_retained_weights.py",
+      "recommended_fix": "Write immutable intended local inventory/review/parent/prefix proposal before create_commit. Wrap mutation and post-readback stages to preserve sanitized stage/error type/message, known parent and returned revision if present, and explicitly uncertain outcome/no blind retry. Reraise after preserving evidence. Successful receipt should bind proposal and observed commit. Do not remove failed receipts.",
+      "severity": "blocking_before_upload"
+    },
+    {
+      "detail": "SDK operations use mutable local file paths. Their bytes are checked against reviewed inventory before API parent fetch/SDK import and only again after remote mutation. A source change during this interval can upload unreviewed bytes and only be detected after publication.",
+      "id": "mutable-upload-file-custody",
+      "owner": "publish_retained_weights.py",
+      "recommended_fix": "Capture ordinary reviewed file bytes into bounded stable in-memory buffers/BytesIO or immutable fenced handles and construct SDK operations from those captured identities. Verify every captured bytes/SHA against review and perform a final original-file fence before committing; closing-fence consumed files/review on success. Keep additive parent guard.",
+      "severity": "material_before_upload"
+    }
+  ],
+  "next_review": "Review revised publisher exact bytes in immutable v04, then actual finalized results and package inventory before upload.",
+  "passed": false,
+  "publisher_verified_structure": [
+    "Public fixed existing repository and separate additive prefix; prefix must be absent in current snapshot.",
+    "Current main parent is captured and explicitly supplied to HfApi.create_commit parent_commit; no merge, overwrite, deletion or automatic retry loop.",
+    "Upload candidates equal independently passed review release_files exactly, including metadata files.",
+    "Only CommitOperationAdd records under the new prefix.",
+    "Resulting immutable revision inventory must preserve all previous path/size/Git blob/LFS metadata and have exact old+new file count.",
+    "Every new file is downloaded at returned immutable revision, byte count and SHA checked, Git blob SHA computed, and local originals rehashed.",
+    "Public receipt correctly declares downloaded_numerical_replay false while local frozen replay precedes publication; no new training/default promotion claims."
+  ],
+  "qualification_limits": [
+    "No actual HF inventory observed in this review; code handles all prior files rather than hardcoding3167, which preserves concurrent additions when using the captured current parent.",
+    "Prior identity preservation covers remote metadata identities, not fresh download of every prior object.",
+    "SDK transaction/dependency internals and network behavior are not independently executed or attested.",
+    "Default json.loads/assert usage assumes frozen curated root-generated inputs and ordinary non-optimized Python.",
+    "Final actual results, guardian/resource receipts, package/README and passed byte-inventory review remain required before invoking publisher.",
+    "No model, helper, test, lease, Git or HF execution performed by reviewer."
+  ],
+  "review_version": 3,
+  "reviewer": "retention_training_design_20261011",
+  "schema": "retained-pointer-root-helper-static-review/v1",
+  "scope": "Independent static review root-authored analyzer/publication preparation/publisher. No execution and no independent qualification of reviewer-authored cache/runner/equivalence.",
+  "source_pins": {
+    "analyze_pointer_comparison.py": {
+      "bytes": 5470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison.py",
+      "sha256": "c1c54ca775c3653f61fb97aa1209d9908310f31ca71707b0a2ec7233ce664109"
+    },
+    "prepare_hub_release.py": {
+      "bytes": 7647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release.py",
+      "sha256": "8370f6e5ec976e8c93773bd7fc0e24287bdbd8eb16c90851fe5da909f8777f1e"
+    },
+    "publish_retained_weights.py": {
+      "bytes": 4840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights.py",
+      "sha256": "df86bad6342d7e990306f1a30290deed56799bebb40647936244b3cf37aafbfb"
+    }
+  },
+  "source_pins_still_current_at_review_close": {
+    "analyze_pointer_comparison.py": true,
+    "prepare_hub_release.py": true,
+    "publish_retained_weights.py": true
+  },
+  "supersedes_review_version_for_analyzer_and_preparer": 2
+}

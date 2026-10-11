@@ -1,0 +1,117 @@
+{
+  "checks": {
+    "all_local_release_files_still_byte_exact": true,
+    "current_file_count": 3208,
+    "every_new_metadata_Git_blob_or_LFS_identity_matches_reviewed_raw_bytes": true,
+    "every_saved_publisher_download_count_SHA_and_Git_digest_matches_frozen_release": true,
+    "exact_additive_new_file_count": 41,
+    "failure_receipt_absent": true,
+    "fresh_immutable_metadata_API_revision_exact": true,
+    "maximum_capture_bytes": 33554432,
+    "prior_file_metadata_identities_preserved": 3167,
+    "prior_revision_exact_parent_bound": true,
+    "proposal_and_before_equal_reviewed41file_inventory": true,
+    "published_review_pin_is_exact": true,
+    "release_bytes": 8137046,
+    "source_checkpoint_files_unchanged": 2
+  },
+  "evidence_pins": {
+    "experiment-plan-v02.json": {
+      "bytes": 51481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/experiment-plan-v02.json",
+      "sha256": "18ddae5f5422d5a2681312045b864bd6b28c988a38d58fc029f8fe2aa1cb1e4c"
+    },
+    "helper-review-v04.json": {
+      "bytes": 5925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/helper-review-v04.json",
+      "sha256": "70afc3d2d9edc4182e718586cd6ff63f52402052ab8db62614b4c5631fe4c2ed"
+    },
+    "hub-before-publication.json": {
+      "bytes": 997097,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-before-publication.json",
+      "sha256": "1ee12794a6be02234e030851f39e1add0ad8f9cd0e7601473673866e9df547ae"
+    },
+    "hub-immutable-inventory-readback.json": {
+      "bytes": 837990,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-immutable-inventory-readback.json",
+      "sha256": "9d1645ca8b519c225123dd9e2bdeaf78b7763b95abf178289ee0fb7f9f4d10c2"
+    },
+    "hub-publication-proposal.json": {
+      "bytes": 14885,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-proposal.json",
+      "sha256": "f803a140e9d07cfc8f0cf73fae8545d4cb17f20ca9b5d2e74376ce8ebb7df573"
+    },
+    "hub-publication-receipt.json": {
+      "bytes": 15144,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-receipt.json",
+      "sha256": "12b0c98f991efcde8ecdd9579e1a3f2652d11f7707f6ce08077dc4f80fd72f4d"
+    },
+    "hub-publication-review.json": {
+      "bytes": 33235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/hub-publication-review.json",
+      "sha256": "a7108542d369f5ea772113a14b6112a2744bd0817486d646deab892314f14eba"
+    },
+    "publish_retained_weights.py": {
+      "bytes": 6691,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights.py",
+      "sha256": "23d62ff39f2b0dddf01bc09bdc371904c813b3fdf0fc82953e70c7cb5dbab422"
+    },
+    "span-adapter-build.json": {
+      "bytes": 10781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json",
+      "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+    }
+  },
+  "findings": [],
+  "fresh_source_preservation": {
+    "all_owner_pins_match_plan_and_original_freeze": true,
+    "canonical_worktrees_touched_by_reviewer": false,
+    "full_in_repo_import_graph_qualified": false,
+    "implementation_and_test_bytes_still_match_freeze": true,
+    "implementation_pin": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "isolated_datasets_HEAD_observed": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+    "numerical_logic_change_outside_selected_source_inventory": true,
+    "selected_source_owner_count": 24,
+    "test_pin": {
+      "bytes": 29742,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py",
+      "sha256": "2c61e0473e8e7e46627655e41e7150694040e019ed50f352a056fac5ba460f2f"
+    }
+  },
+  "immutable_release_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/8279ea69452c0c72560211a1eda505ff1b1b5713/releases/20261011-retained-raw384-pointer-v1",
+  "limits": [
+    "Immutable API independently verifies all prior path/size/blob/LFS identities and exact new identity set; prior object contents were not all redownloaded.",
+    "Publisher downloaded every new object; this reviewer checks saved download hashes and fresh immutable Git/LFS metadata, without repeating all downloads.",
+    "Endpoint file pins and selected owners are not a complete dependency graph or cryptographic runtime execution attestation.",
+    "No new numerical experiment or fit follows from publication. Reviewed admissible target/context and excluded law-pool gates remain required."
+  ],
+  "numerical_and_semantic_scope": {
+    "Lake_executed": false,
+    "all41downloads_repeated_by_reviewer": false,
+    "default_promotion": false,
+    "downloaded_numerical_replay": false,
+    "each_lane_overlap_abstentions": 7,
+    "each_lane_proposals": 1,
+    "independent_semantic_holdout": false,
+    "legal_gain_established": false,
+    "local_frozen_dispositions": 64,
+    "new_encoder_calls": 0,
+    "new_optimizer_updates": 0,
+    "proof_authority": false,
+    "publisher_all41downloaded_bytes_verified": true,
+    "semantic_accuracy": null
+  },
+  "observed_at_utc": "2026-10-11T05:20:33.556162+00:00",
+  "passed": true,
+  "prefix": "releases/20261011-retained-raw384-pointer-v1",
+  "previous_revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "reviewer": "retention_training_design_20261011",
+  "revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "schema": "retained-pointer-hub-receipt-independent-review/v1",
+  "scope": "Independent saved-receipt/local frozen-file checks plus one read-only immutable HF metadata API query. No repeated41downloads, downloaded model replay, resource mutation, Git mutation or upload."
+}

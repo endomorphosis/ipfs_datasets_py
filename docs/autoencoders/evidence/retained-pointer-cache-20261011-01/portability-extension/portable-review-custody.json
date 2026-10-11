@@ -1,0 +1,33 @@
+{
+  "admitted_artifact_count": 147,
+  "changed_binding_count": 1,
+  "current_test": {
+    "bytes": 29800,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py",
+    "sha256": "ad8fe94df233b9a112e5a525b3909efecaf7d8f55af3ec99e7df820f468410dc"
+  },
+  "current_unchanged_admitted_binding_count": 146,
+  "intentional_post_run_test_change": true,
+  "numerical_plan_test_path_in_artifacts": false,
+  "numerical_replay_repeated": false,
+  "old_admitted_bytes_retained_without_relabel": true,
+  "old_protocol_validation_and_reviews_unchanged": true,
+  "original_admitted_review": {
+    "bytes": 51285,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/protocol-review-e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8.json",
+    "sha256": "e37523f2f6f1377cb41fb85e8a50985f125c7850d6764b79445158b86b54acf8"
+  },
+  "original_admitted_test": {
+    "bytes": 29742,
+    "sha256": "2c61e0473e8e7e46627655e41e7150694040e019ed50f352a056fac5ba460f2f"
+  },
+  "original_test_path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py",
+  "reason": "Replace optional external experiment review lookup with mandatory committed review lookup. Oldtestreceipt remains bound only to original2c61body. Historicalclosingchecks describe their pre-change endpoint.",
+  "retained_original": {
+    "bytes": 29742,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/test_arbitrary_native_span_runtime-before-portable-review.py",
+    "sha256": "2c61e0473e8e7e46627655e41e7150694040e019ed50f352a056fac5ba460f2f"
+  },
+  "runtime_source_owner_count_unchanged": 24,
+  "schema": "retained-pointer-post-run-test-custody/v1"
+}

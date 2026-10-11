@@ -1,0 +1,46 @@
+{
+  "annotation_fields": {
+    "ambiguity": null,
+    "freeform_qualifier_scope": null,
+    "interpretation_status": null,
+    "normative_rules": null,
+    "notes": null,
+    "reviewed_at_utc": null,
+    "reviewer_id": null,
+    "unsupported_meaning": null
+  },
+  "context_review_fields": {
+    "context_required_for_interpretation": null,
+    "governing_definitions_and_cross_references": null,
+    "operative_versus_editorial_boundaries": null,
+    "source_authority_or_currentness_evidence": null
+  },
+  "existing_v1_recorder_compatible": false,
+  "next_interface_requirement": "New context-aware physical-source review profile; retain actual source/context/target digests, distinct occurrence IDs, exact source-role offsets, frozen original submissions and independently supplied reviewer/process/cohort/adjudication evidence. Never set gold or masks by syntax/recording agreement.",
+  "normative_rules": null,
+  "packet": {
+    "bytes": 48597,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json",
+    "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+  },
+  "reviewer_authentication": {
+    "adjudication_evidence": null,
+    "identity_evidence": null,
+    "independence_evidence": null
+  },
+  "rules_not_suggested": true,
+  "schema": "real-us-code-review-target-template/v1",
+  "target_binding_fields": {
+    "assignment_status": "unassigned",
+    "decision": null,
+    "facet_intervals": null,
+    "interpretation_profile": null,
+    "proposed_target": null,
+    "reviewed_context_sha256": null,
+    "target_codec": null,
+    "target_sha256": null,
+    "trigger": null
+  },
+  "target_fields_status": "all_unassigned",
+  "training_admission_enabled": false
+}

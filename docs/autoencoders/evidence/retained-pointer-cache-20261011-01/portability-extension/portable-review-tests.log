@@ -1,0 +1,11 @@
+ERROR: file or directory not found: datasets/tests/unit/optimizers/logic_theorem_optimizer/test_canonical_span_decoder.py
+
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 0 items
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests.xml -
+============================ no tests ran in 0.00s =============================

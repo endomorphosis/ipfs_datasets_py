@@ -1,0 +1,887 @@
+{
+  "branch_inventory": {
+    "datasets": [
+      {
+        "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+        "head_in_observed_main": true,
+        "name": "agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+        "head_in_observed_main": true,
+        "name": "agent/contextual-legal-runtime-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+        "head_in_observed_main": true,
+        "name": "agent/normative-cache-input-datasets-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+        "head_in_observed_main": true,
+        "name": "agent/normative-decoder-runtime-datasets-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+        "head_in_observed_main": true,
+        "name": "codex/autoencoder-owner-integration-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+        "head_in_observed_main": true,
+        "name": "codex/legal-cross-agent-guards-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-followup-20261006-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-progress-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+        "head_in_observed_main": true,
+        "name": "codex/legal-grouped-integration-20261006-02",
+        "object_available_locally": true
+      },
+      {
+        "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "head_in_observed_main": true,
+        "name": "codex/legal-native-cache-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "head_in_observed_main": true,
+        "name": "codex/legal-original-text-roundtrip-retained-20261004",
+        "object_available_locally": true
+      },
+      {
+        "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+        "head_in_observed_main": true,
+        "name": "codex/legal-scope-span-training-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-action-model-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-gate-model-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+        "head_in_observed_main": true,
+        "name": "codex/legal-trigger-readout-model-20261007-01",
+        "object_available_locally": true
+      }
+    ],
+    "root": [
+      {
+        "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "head_in_observed_main": true,
+        "name": "agent/autoencoder-progress-reconciliation-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "094c566adc316b1391c58d3d38c4dd19698149ff",
+        "head_in_observed_main": true,
+        "name": "agent/normative-cache-input-root-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "dfc02e62186dc97223a620b074b278f0e1b97115",
+        "head_in_observed_main": true,
+        "name": "agent/normative-checkpoint-availability-root-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "b7e3550da23c94fe17b591654093c5c0f84ded0c",
+        "head_in_observed_main": true,
+        "name": "agent/normative-decoder-runtime-root-20261007",
+        "object_available_locally": true
+      },
+      {
+        "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "head_in_observed_main": true,
+        "name": "codex/autoencoder-reconciliation-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "1b20f745a1db2a485b97ffc7f0816119881f7f8d",
+        "head_in_observed_main": true,
+        "name": "codex/grouped-autoencoder-findings-20261006-02",
+        "object_available_locally": true
+      },
+      {
+        "head": "8cd17c705162a5d47c0eb31616d8d5637eea79d2",
+        "head_in_observed_main": true,
+        "name": "codex/legal-cross-agent-followthrough-20261006",
+        "object_available_locally": true
+      },
+      {
+        "head": "0ed01fd56db31fe4345f8143a7647a437dcb1118",
+        "head_in_observed_main": true,
+        "name": "codex/legal-decoder-followup-results-20261006-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "head_in_observed_main": true,
+        "name": "codex/legal-native-cache-workspace-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "head_in_observed_main": true,
+        "name": "codex/legal-retention-objective-20261011-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "7e582ad8951d6fed6235c98526ee49c08dbce218",
+        "head_in_observed_main": true,
+        "name": "codex/legal-scope-span-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "43ec348cab85a9eae3aee56a6de79807e3ea57ee",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-action-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "b60d71fbd131c7d0a61f8f481348a1027769af92",
+        "head_in_observed_main": true,
+        "name": "codex/legal-support-gate-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "8e5da94bd0ac33b1378ae44e4801f3496e96a02c",
+        "head_in_observed_main": true,
+        "name": "codex/legal-trigger-readout-results-20261007-01",
+        "object_available_locally": true
+      },
+      {
+        "head": "baeabe9911291c8a119dba6ab78cdc971e72635f",
+        "head_in_observed_main": true,
+        "name": "repair/doep-readonly-queue-native-parent-base-20260913",
+        "object_available_locally": true
+      },
+      {
+        "head": "e9afd83fb3a55173c628a479c5a45dd897a6c23b",
+        "head_in_observed_main": true,
+        "name": "repair/pctdd-after-task008-native-base-20260913",
+        "object_available_locally": true
+      },
+      {
+        "head": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd",
+        "head_in_observed_main": true,
+        "name": "repair/pctdd-native-entry-1789010527",
+        "object_available_locally": true
+      }
+    ]
+  },
+  "canonical_checkouts_mutated": false,
+  "full_in_repo_import_graph_qualified": false,
+  "incoming_merged_reconciliation": {
+    "changed_path_count": 106,
+    "commits_after_prior_source_merge": [
+      "e6a9a93b14b220a946ec53de559255716cf53f42 Complete verified US Code source reconciliation and rollout plan",
+      "c52453ba4ad3470efc73ecce33ce24363b113469 Merge remote-tracking branch 'origin/main' into agent/retained-wording-checkpoint-integration-datasets-20261007",
+      "f0cf880ce5998b20f389874fea1eaddef64490df Authenticate stopped archive clones before bounded source continuation"
+    ],
+    "relevant_changed_paths": [
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/PROGRESS.md",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/STATUS.md",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-03-arguments.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-03-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-04-arguments.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-04-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-arguments.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/archive-resume-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/campaign-summary.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/guard-reuse.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/index.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/child-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/child-identity.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/child.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/lease-binding.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/lease-observations.jsonl",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/resource-observations.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/resources-final.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/results/clone-custody.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/results/manifest.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/results/report.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-02/snapshot-receipt.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/child-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/child-identity.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/child.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/lease-binding.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/lease-observations.jsonl",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/resource-observations.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/resources-final.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/results/clone-custody.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/results/manifest.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/results/report.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-03/snapshot-receipt.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/child-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/child-identity.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/child.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/lease-binding.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/lease-observations.jsonl",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/resource-observations.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/resources-final.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/results/clone-custody.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/results/manifest.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/results/report.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/measured-run/phase-04/snapshot-receipt.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/operator-source-pins.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/operator-source/package_evidence.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/operator-source/run_guarded_reconciliation.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/operator-source/verify_publication.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/archive-clone-integrated-controls.xml",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/clone-implementation-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/concurrent-survey-update.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/final-status-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/merge-preservation.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/native-owner-protocol-provenance.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/native-owner-protocol-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/parallel-native-gap-survey.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/parallel-survey-final.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/parallel-survey-midrun.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/progress-document-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/publication-method-independent-check.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/publication-method-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/publication-survey-update.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/readiness.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/review_continuation_window.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/review_rollout_results.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/rollout-results-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/rollout-review-bindings.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/rollout-review-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/rollout-review.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/snapshot_stopped_window.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/snapshot_stopped_window_v2.py",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-readiness.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-results-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-review-bindings.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-review-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-review-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-review-preparation.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-03-review.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-readiness.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-results-review.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-review-bindings.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-review-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-review-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-review-preparation.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-review.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-snapshot-command.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-snapshot-exit.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/review/window-04-snapshot.log",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/run-plan-03.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/run-plan-04.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/run-plan.json",
+      "docs/autoencoders/evidence/uscode-span-rollout-20261011/source-pins.json",
+      "docs/autoencoders/progress_integration.md",
+      "docs/autoencoders/uscode_all_span_processing_plan_20261007.md",
+      "docs/autoencoders/uscode_archive_clone_resume.md",
+      "docs/autoencoders/uscode_archive_rollout_20261011.md",
+      "docs/autoencoders/uscode_span_continuation_20261011.md",
+      "docs/autoencoders/uscode_span_intake_progress_20261007.md",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "scripts/ops/legal_ir/resume_uscode_archive.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py"
+    ],
+    "scope": "US Code source reconciliation/rollout evidence and archive resume; reusable byte/span/cache owners marked below remain byte-identical."
+  },
+  "inputs": {
+    "branch-worktree-survey.json": {
+      "bytes": 20020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/branch-worktree-survey.json",
+      "sha256": "17744df8e4b178df5c0346ae85ce21e54c3d9e50699de153bc72082e8304cddb"
+    },
+    "nonancestor-branch-path-audit.json": {
+      "bytes": 388668,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/nonancestor-branch-path-audit.json",
+      "sha256": "6338ffabc7737aec0623326f284a9153e6459fa0acf38c3bd07fe6b0b293399b"
+    },
+    "public-branch-ancestry-audit.json": {
+      "bytes": 7282,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/public-branch-ancestry-audit.json",
+      "sha256": "84dd8d1056a1c926f5ea9254a957c67f106a1ee07ec2333914a7006dc79b21b4"
+    },
+    "raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "span-adapter-build.json": {
+      "bytes": 10781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json",
+      "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+    }
+  },
+  "integration_observations": {
+    "absent_changed_paths_in_inspected_nonancestor_worktrees": 0,
+    "all_inspected_public_heads_are_main_ancestors": true,
+    "all_other_branches_compatibility_qualified": false,
+    "ancestry_is_patch_equivalence": false,
+    "divergent_paths_may_be_later_fixes": true,
+    "nonancestor_local_datasets_heads": 5,
+    "nonancestor_local_root_heads": 2,
+    "public_datasets_relevant_heads": 15,
+    "public_root_relevant_heads": 17,
+    "uncommitted_foreign_work_audited": false
+  },
+  "new_isolated_compatible_contribution": {
+    "base": "e6a9a93b14b220a946ec53de559255716cf53f42",
+    "branch": "codex/legal-open-vocabulary-20261011-01",
+    "build_pin": {
+      "bytes": 10781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/span-adapter-build.json",
+      "sha256": "4fbaaeeee4d22ebedd9cb82c3d406f97c344bd32a49e5af934cb8edb19302c1f"
+    },
+    "owner": "integration_review_20261011",
+    "paths": [
+      "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py"
+    ],
+    "scope": "Exact arbitrary-source native384 occurrence cache to unchanged retained raw384 warm-start and disabled source-only checkpoints; preparation inert, controls explicit, all authority false.",
+    "state": "owned uncommitted isolated source; not yet published or merged"
+  },
+  "nonancestor_local_worktrees": {
+    "datasets": [
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/agent/uscode-span-lossless-datasets-20261007",
+        "branch_delta_file_count": 5,
+        "byte_equal_path_count": 5,
+        "divergent_path_count": 0,
+        "head": "569e256d8c653a243b65922603f1d7d1344e7204",
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+      },
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/agent/uscode-span-pages-datasets-20261011",
+        "branch_delta_file_count": 2,
+        "byte_equal_path_count": 2,
+        "divergent_path_count": 0,
+        "head": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011"
+      },
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/agent/uscode-span-paired-feed-datasets-20261007",
+        "branch_delta_file_count": 3,
+        "byte_equal_path_count": 1,
+        "divergent_path_count": 2,
+        "head": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007"
+      },
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/agent/uscode-span-source-census-datasets-20261007",
+        "branch_delta_file_count": 5,
+        "byte_equal_path_count": 4,
+        "divergent_path_count": 1,
+        "head": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007"
+      },
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+        "branch_delta_file_count": 446,
+        "byte_equal_path_count": 431,
+        "divergent_path_count": 15,
+        "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+      }
+    ],
+    "root": [
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/codex/joint-conditioning-20261005-01",
+        "branch_delta_file_count": 27,
+        "byte_equal_path_count": 25,
+        "divergent_path_count": 2,
+        "head": "8c02d655e2d086bd644a9011ea67325060ef87bc",
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-conditioning-01/publication-worktree"
+      },
+      {
+        "absent_path_count": 0,
+        "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+        "branch_delta_file_count": 2801,
+        "byte_equal_path_count": 2792,
+        "divergent_path_count": 9,
+        "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+      }
+    ]
+  },
+  "numerical_execution_performed": false,
+  "observed_at_utc": "2026-10-11T04:48:18.718461+00:00",
+  "observed_main": {
+    "datasets": "e6a9a93b14b220a946ec53de559255716cf53f42",
+    "root": "89a900147732b0236cd87a066c66b2310595e44e"
+  },
+  "prior_contribution": {
+    "root_PR": 546,
+    "root_merge": "83c9016146bda937bcee498475e556cbe32956c0",
+    "source_PR": 1280,
+    "source_merge": "928cb1e73e43f8e2e2e42fea16926d4b393b77fa"
+  },
+  "proof_authority": false,
+  "qualified": false,
+  "read_only_git_review": true,
+  "remaining_gaps": [
+    "Bounded retained raw384/source-only pilot with all four controls and original physical US Code occurrences.",
+    "Literal span/canonical syntax diagnostics must remain separate from semantic fidelity.",
+    "Independent reviewed statutory facets/scope/trigger gold before accuracy or fresh-holdout claims.",
+    "Explicit training of byte259 generation; codec support supplies no trained byte-output decoder.",
+    "Retained pointers copy at most one qualifier per facet; linked variables, richer scope and logic-family bridges need separate owners.",
+    "Native8/native768 require exact representations/checkpoints/token evidence and separate actual pilots; this adapter is raw384 only.",
+    "lake build legal and logic-family admission remain independent validation stages."
+  ],
+  "retained_lane_inventory": {
+    "bit_identical_vectors_or_cryptographic_execution_attestation": false,
+    "raw384_checkpoint_pin": {
+      "bytes": 3027735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/raw384-1729/checkpoint-400.json",
+      "sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0"
+    },
+    "raw_context_contract": {
+      "dimension": 384,
+      "producer_sha256": "0e8a4bff65241bd9f7cfa4fd6200cbf1216d836d4687418d25d1c79d9b3ca12d",
+      "representation_id": "actual_frozen_legal_ir/raw384/v1",
+      "training_index_sha256": "739964281f8eb516ca7849da422d44428d9ce09a3f2b64df2c34da2d26d6949f"
+    },
+    "raw_vs_trained384": "RawGTE unchanged vectors versus trained384 package projection; adapter refuses trained384 and unsupported widths.",
+    "recipe_compatibility": "Exact recorded model/revision/assets/mean-pooling/L2/token512/float32/CPU/versions profile; encoder source hashes differ and historical batch16/current receipt batch4 are disclosed.",
+    "source_only_checkpoint_pin": {
+      "bytes": 2744449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json",
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    }
+  },
+  "reusable_components": [
+    {
+      "bytes": 12983,
+      "git_blob": "79c24d5c16700081fb2f0bde1b1eda2dcba2d261",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py",
+      "reuse_and_limit": "Byte259 codec: PAD0/BOS1/EOS2/UTF8+3. Strict anchored one-rule JSON proposals with exact intervals; not trained byte generation weights.",
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 21764,
+      "git_blob": "7ce3ed18ec40071f0c8b24457f74fdfb248ad93e",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "reuse_and_limit": "Preflight wrapper for native_dimensional_source_span_v1 only; not numerical model. Reuse row validator and prefilter controls without relabelling warm-start lineage.",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 9794,
+      "git_blob": "b863e55c257d6dcb24c721ba1981be8b69e3a284",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "reuse_and_limit": "Flat-source warning/context-clarification owner. Unmatched syntax remains unassessed; warnings do not establish meaning.",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 14908,
+      "git_blob": "eea80a9cb2726fccc17c6f6719649d5d56d682e1",
+      "last_source_commit": "497362d8aa117a210769423ec6a14d8010d4588c",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_qualifier_training_preflight.py",
+      "reuse_and_limit": "Seven-facet representation/training gate before fitting. Explicit512-byte training cap can reject multi-qualifier cases encodable by wider byte codec.",
+      "sha256": "58ebc41a4ea1f93d3497108ebd54ea3611bc652b5d74284214b13bb74a535489",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 35294,
+      "git_blob": "f138ffb2285f7fc607fe3296f8abe5d6b7b9121a",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "reuse_and_limit": "Numerical byte-pooled BiGRU modality/presence/start-end model: copies open source strings but at most one qualifier span per facet, with no semantic authority.",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 14165,
+      "git_blob": "5c548f8f28085d2a86a9fdf3b4d6bf21ed94e8fe",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "reuse_and_limit": "Retained raw384/source-only warm-start restore with source parent and saved base/moments. Constructor validates saved Adam state; no updates authorized.",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 22521,
+      "git_blob": "05ec4a6e88ea7b84f3a977794cfd97bee52f726d",
+      "last_source_commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
+      "reuse_and_limit": "Distinct native dimensional lineage. Historical trained384 context is package representation, not arbitrary native rawGTE384; width alone is insufficient.",
+      "sha256": "5ba50db7475c23d7376c0918a02a3740783dc86996e396f532c365f544372b7d",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 29148,
+      "git_blob": "82978c03d34ac25327538fd9714b7074b946bfb6",
+      "last_source_commit": "f3901341cdde9b4485315327d5ef06abd1485b11",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "reuse_and_limit": "Exact paragraph/clause physical SourceSpan and native receipt token join. No padded/projected mocknative8 fallback.",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 24439,
+      "git_blob": "c74aed1afce161e349f512f36b6bcfd8db402d48",
+      "last_source_commit": "a46b7fa2ae4fb9e9b3dc160e486e3a8c126fd2cf",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "reuse_and_limit": "Historical raw384 unchanged GTE vector versus trained384 package output. Composite context producer and encoder source hash differ.",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f",
+      "unchanged_since_native_cache_merge": true,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 24269,
+      "git_blob": "2096b62d0a33160bc8c54b0c338df9345ab52327",
+      "last_source_commit": "f0cf880ce5998b20f389874fea1eaddef64490df",
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "reuse_and_limit": "Incoming authenticated source/archive resume owner after previous native-cache merge. Source completeness supplies no reviewed logical gold.",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba",
+      "unchanged_since_native_cache_merge": false,
+      "working_file_equals_main_blob": true
+    },
+    {
+      "bytes": 27988,
+      "git_blob": "e1d93f5f7ace5106f06100ca0e1be1c25d859279",
+      "path": "scripts/ops/legal_ir/run_legal_open_vocabulary_experiment.py",
+      "reuse_and_limit": "Historical matched three-seed source-only/trained384/native768 authored-regression orchestration; needs representation/cohort/resource redesign before fitting.",
+      "sha256": "2fb9df93811cd868cca5b710bf01504aa25349ecf269cfd356fbb8f24a5b9c07"
+    }
+  ],
+  "schema": "legal-open-vocabulary-integration-survey/v1",
+  "semantic_fidelity_established": false,
+  "worktree_inventory": {
+    "datasets": [
+      {
+        "branch": null,
+        "head": "28c6bdb833a9e1309db4b01018e588aa427a05f4",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets"
+      },
+      {
+        "branch": "refs/heads/codex/alignment-decoder-768-20261003",
+        "head": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003"
+      },
+      {
+        "branch": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006"
+      },
+      {
+        "branch": "refs/heads/agent/contextual-legal-runtime-20261006",
+        "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006"
+      },
+      {
+        "branch": "refs/heads/agent/decoder-profile-recovery-20261006",
+        "head": "3b3b994407b2fcfef955ce5153afc2eea01e4eff",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006"
+      },
+      {
+        "branch": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+        "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/legal-original-text-roundtrip-retained-20261004"
+      },
+      {
+        "branch": "refs/heads/agent/normative-cache-input-datasets-20261007",
+        "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-cache-input-datasets-20261007"
+      },
+      {
+        "branch": "refs/heads/agent/normative-checkpoint-availability-datasets-20261006",
+        "head": "61c5db04538596ea00091cd4f013500854368397",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-checkpoint-availability-datasets-20261006"
+      },
+      {
+        "branch": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+        "head": "47d492c697f3e766d107ae9c02d8b8dcd18660b2",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-decoder-runtime-datasets-20261007"
+      },
+      {
+        "branch": "refs/heads/agent/uscode-span-lossless-datasets-20261007",
+        "head": "569e256d8c653a243b65922603f1d7d1344e7204",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+      },
+      {
+        "branch": "refs/heads/agent/uscode-span-pages-datasets-20261011",
+        "head": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011"
+      },
+      {
+        "branch": "refs/heads/agent/uscode-span-paired-feed-datasets-20261007",
+        "head": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007"
+      },
+      {
+        "branch": "refs/heads/agent/uscode-span-source-census-datasets-20261007",
+        "head": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007"
+      },
+      {
+        "branch": "refs/heads/codex/legal-cross-agent-guards-20261006",
+        "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-followthrough"
+      },
+      {
+        "branch": "refs/heads/codex/legal-grouped-integration-20261006-02",
+        "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-integration"
+      },
+      {
+        "branch": null,
+        "head": "0f36163a585a9bf514c41d8eabe202936c000705",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-merged-main"
+      },
+      {
+        "branch": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+        "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/datasets"
+      },
+      {
+        "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+        "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+      },
+      {
+        "branch": "refs/heads/codex/legal-decoder-followup-20261006-01",
+        "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-followup-20261006-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-decoder-progress-20261011-01",
+        "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-native-cache-20261011-01",
+        "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-scope-span-training-20261007-01",
+        "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-next-training-20261007-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+        "head": "e6a9a93b14b220a946ec53de559255716cf53f42",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-support-action-model-20261007-01",
+        "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-support-gate-model-20261007-01",
+        "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/datasets"
+      },
+      {
+        "branch": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+        "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/datasets"
+      }
+    ],
+    "root": [
+      {
+        "branch": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+        "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-root-20261006"
+      },
+      {
+        "branch": "refs/heads/agent/normative-cache-input-root-20261007",
+        "head": "094c566adc316b1391c58d3d38c4dd19698149ff",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-cache-input-root-20261007"
+      },
+      {
+        "branch": "refs/heads/agent/normative-checkpoint-availability-root-20261006",
+        "head": "dfc02e62186dc97223a620b074b278f0e1b97115",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-checkpoint-availability-root-20261006"
+      },
+      {
+        "branch": "refs/heads/agent/normative-decoder-runtime-root-20261007",
+        "head": "b7e3550da23c94fe17b591654093c5c0f84ded0c",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/normative-decoder-runtime-root-20261007"
+      },
+      {
+        "branch": "refs/heads/repair/pctdd-native-entry-1789010527",
+        "head": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/pctdd-native-entry-1789010527"
+      },
+      {
+        "branch": "refs/heads/agent/vericodegen-2026-autoformalization",
+        "head": "091624a773179d24178d12bc1f410864885c10bf",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/.worktrees/vericodegen-autoformalization-2026"
+      },
+      {
+        "branch": "refs/heads/codex/legal-cross-agent-followthrough-20261006",
+        "head": "8cd17c705162a5d47c0eb31616d8d5637eea79d2",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/workspace-followthrough"
+      },
+      {
+        "branch": "refs/heads/codex/grouped-autoencoder-findings-20261006-02",
+        "head": "1b20f745a1db2a485b97ffc7f0816119881f7f8d",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/workspace-integration"
+      },
+      {
+        "branch": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+        "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/joint-conditioning-20261005-01",
+        "head": "8c02d655e2d086bd644a9011ea67325060ef87bc",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-conditioning-01/publication-worktree"
+      },
+      {
+        "branch": "refs/heads/codex/joint-conditioning-20261005-02",
+        "head": "3b39519d9bc9021a5e6a0bb183f6c57cb780bc5a",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-conditioning-02/publication-worktree"
+      },
+      {
+        "branch": "refs/heads/codex/joint-span-policy-20261005-01",
+        "head": "ec4302acd75f0dbb0d744586db35fef9d23980ac",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-span-01/publication-worktree"
+      },
+      {
+        "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+        "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+        "head_in_observed_main": false,
+        "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+      },
+      {
+        "branch": "refs/heads/codex/legal-decoder-followup-results-20261006-01",
+        "head": "0ed01fd56db31fe4345f8143a7647a437dcb1118",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-followup-20261006-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-retention-objective-20261011-01",
+        "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+        "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-scope-span-results-20261007-01",
+        "head": "7e582ad8951d6fed6235c98526ee49c08dbce218",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-next-training-20261007-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+        "head": "89a900147732b0236cd87a066c66b2310595e44e",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-support-action-results-20261007-01",
+        "head": "43ec348cab85a9eae3aee56a6de79807e3ea57ee",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-support-gate-results-20261007-01",
+        "head": "b60d71fbd131c7d0a61f8f481348a1027769af92",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/workspace"
+      },
+      {
+        "branch": "refs/heads/codex/legal-trigger-readout-results-20261007-01",
+        "head": "8e5da94bd0ac33b1378ae44e4801f3496e96a02c",
+        "head_in_observed_main": true,
+        "path": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/workspace"
+      }
+    ]
+  }
+}

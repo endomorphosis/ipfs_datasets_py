@@ -1,0 +1,360 @@
+{
+  "created_at_utc": "2026-10-11T04:39:23.148140+00:00",
+  "expected_output": {
+    "all_control_plans_before_any_model_open": true,
+    "checkpoint_states": [
+      "raw384-1729",
+      "source_only-1729"
+    ],
+    "controls_per_state": 4,
+    "custody_claim_on_no_load": "model_custody_observed false; tensor/mode/flag invariance null; CPU RNG still observed",
+    "raw_reports": 8,
+    "raw_row_fields": [
+      "id",
+      "outcome",
+      "source_sha256",
+      "decoder_row"
+    ],
+    "requested_rows_total": 64,
+    "source_count": 8,
+    "success_permits_all_rows_blocked_and_no_model_loaded": true,
+    "summary_lane_fields": [
+      "name",
+      "control",
+      "checkpoint",
+      "report"
+    ]
+  },
+  "import_and_source_scope": {
+    "actual_network_process_operations_denied": true,
+    "both_multiformats_config_JSON_tables_required": true,
+    "current_owner_paths_bound_explicitly": true,
+    "full_third_party_import_graph_qualified": false,
+    "historical_recipe_evidence_kept_separate_from_current_source_owners": true,
+    "inert_socket_construction_and_gethostname_permitted": true,
+    "selected_installed_canonical_dependency_pins": {
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py": {
+        "bytes": 1489,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py",
+        "sha256": "49fc715b733e1579d77c2ec1734b40e6bd21ebafe427c8eb142a40a1e3819361"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py": {
+        "bytes": 8914,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py",
+        "sha256": "cdcf2cbdf3ce3bf4793d93c46cf03c94713c6d64bbc7e0f2d4de9dc9f155cd8f"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py": {
+        "bytes": 6706,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py",
+        "sha256": "255f29d6c0a8ec24f3556c22a19ea4d92e57a6ab12a7340f91e0f48bcfdbab30"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py": {
+        "bytes": 6247,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py",
+        "sha256": "561042b2f28c1e0026b1ba790f50c9c0237cdb1042d7c35d608632b59376aaea"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py": {
+        "bytes": 4942,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py",
+        "sha256": "10aa0a8c492892ed9eceb80a4d23da5bfa7ec045dd4af456ea722ecfdd176c26"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py": {
+        "bytes": 13562,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py",
+        "sha256": "60f749c3f42e9b4f9daba64df096c391dbdc97815acb8a41c5540b14e49c2f58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py": {
+        "bytes": 13150,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py",
+        "sha256": "cbb72db470a9bfc9fffbdd47bfebfdc82f3dfd94753b60923f3de9cfea0218ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py": {
+        "bytes": 18082,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py",
+        "sha256": "a0e078006705592f8467ac4b9862dcf10f515f7059a3f6e1425ab48c577e9035"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py": {
+        "bytes": 2843,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py",
+        "sha256": "626ee10c0579db8d3e0535194f7b33e7bda0f09e8ed893fee19e026d78b46f9a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py": {
+        "bytes": 19138,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py",
+        "sha256": "15455b45b02672a5dc1f4017ba725ad5f70abbbd15325f79c5f013f174cdaacb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py": {
+        "bytes": 3337,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py",
+        "sha256": "93ea9be368c0bb6522a23c9f3db5f1b871a76b202cc95295078457d95bf5b20c"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py": {
+        "bytes": 9036,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py",
+        "sha256": "a270e3e39822f66cf700b814b41aec0d69ba0097e81e54be179460574301f3be"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py": {
+        "bytes": 822,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py",
+        "sha256": "6402f73dfa7845c9e3a48ea4491e853c5b6a25bb9ce50ed75c5bc49f55134dad"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py": {
+        "bytes": 29778,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py",
+        "sha256": "23b40fbe51b6081334ab5722244aa312100b4dbfedf2bb1fd829e3612067df85"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py": {
+        "bytes": 26301,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py",
+        "sha256": "92b7a63a4f9a6707b7701124b8920eb0518bf5f4478ada5953af6a3612b18294"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py": {
+        "bytes": 436,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py",
+        "sha256": "385c23a4c77749cf48f7d9a57ab013449376c0da20d8d4192dadddb16ae631ab"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py": {
+        "bytes": 9358,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py",
+        "sha256": "21b6009bbb3afbeae2b830157fbeeaa650676dbd9fe08a846c8362f1c8bafdca"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py": {
+        "bytes": 21446,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py",
+        "sha256": "0fcb709e920758265991af0669b00f21653ee97e689a1c7fb35c7d3336fdc5a2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py",
+        "sha256": "c396db3f67e604a65da6a6ff5af16641d705c349fa532580d21946ccccf6dee0"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py": {
+        "bytes": 15668,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py",
+        "sha256": "a64f0bf2b418f7e0fa04ff9779029edd4ca64a706df2613738f16e39ae64c6af"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py": {
+        "bytes": 24349,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py",
+        "sha256": "3cae3cdf6e2ce429f1958fad9440016e96ddf389a03fb9512f661ab257be9fff"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py": {
+        "bytes": 439,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py",
+        "sha256": "6757260650e4dd255c57429d0aa0a09d02403ae02f24c37f53eeab974ce489b1"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py": {
+        "bytes": 23825,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py",
+        "sha256": "23a208621643522801d95cf646984bf63b8c39f832957c700e134d61eba9bd58"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py": {
+        "bytes": 229,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py",
+        "sha256": "28fa79bb8693275567aaee3bf02f3e59eb6eb930e480a061c8018ebf1cf4e649"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py": {
+        "bytes": 3663,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py",
+        "sha256": "98e90bebc56474a24dba841c234c09d3d9821aac5ba4035acd02cebe23d58d14"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py": {
+        "bytes": 2670,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py",
+        "sha256": "9a3ae21e0a4ea0a2be3b3a5248827b066de6f9dfc1ce51bd86b76d99c636bb2a"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py": {
+        "bytes": 430,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py",
+        "sha256": "9442f5b15e71ba3c37c27a72b2b08307fe5ef9a23c5441c44aa5dbdd11076217"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py": {
+        "bytes": 12717,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py",
+        "sha256": "0581b2c4d3c0d312414b74b0d7017556f6701575af15c033988a718bcd5dc373"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py": {
+        "bytes": 7948,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py",
+        "sha256": "7e75efb57a9828dba4dede49aa27f3e82328ed0554d9e248985953d445df7fd8"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py": {
+        "bytes": 1126,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py",
+        "sha256": "bcadd2cd17932b89132677be34418c5b20ac6d63b48aa0ba4a86a1c5a3878920"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py": {
+        "bytes": 3968,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py",
+        "sha256": "7d09d2595e1c7af28492a37db369a553e0815010690531a509dc0f9ce8bfccb2"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+        "bytes": 3908,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json",
+        "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py": {
+        "bytes": 4079,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py",
+        "sha256": "ed9928753d7eaf4ce4140300435a19c6b0eec619d167ce76a1e339e72a368c44"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+        "bytes": 90766,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json",
+        "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py": {
+        "bytes": 5863,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py",
+        "sha256": "55b1e767dd2ba7f4066a52d3a5a834d7ab2eafe9a746e70b3f8bb710b3e876cd"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py": {
+        "bytes": 165012,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py",
+        "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py": {
+        "bytes": 709,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py",
+        "sha256": "fc80729c42f23c8078dc386ab936cf8cee115838209cd64fe095c64d55e268cb"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py": {
+        "bytes": 19383,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py",
+        "sha256": "dbfbf54300c7469eab444316d04f117701e298e649f242ef0aad4a6ca43f3e00"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py": {
+        "bytes": 37609,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py",
+        "sha256": "38f1bbabfde71f591f0be0cb365967778e0578f3aa45f48edfc58a0abc5b70da"
+      },
+      "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py": {
+        "bytes": 18324,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py",
+        "sha256": "89d76e2620ee6c5ad26f35c1cf112362d6047c48a233303090fd25b2e6f263a1"
+      }
+    }
+  },
+  "limits": [
+    "Eight sources are exposed development occurrences, not new excluded holdout",
+    "No semantic targets may be opened or attached",
+    "Copied lexical facets and preflight syntax are not reviewed legal roles, modalities, scope or semantic fidelity",
+    "No trained384/core384/8/768 substitution",
+    "No family bridge, proof authority, Lake execution or default promotion",
+    "No claim numerical execution or bit equality between historical/new encoder outputs; producer hashes and batch sizes differ",
+    "No observed throughput/peak memory for this comparison until root execution"
+  ],
+  "owned_artifacts": {
+    "prepare_open_vocabulary_plan.py": {
+      "bytes": 9667,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_open_vocabulary_plan.py",
+      "sha256": "2070493786859f7003f516baca7d76bc4d83f080653a782d762d45f53ab7f94f"
+    },
+    "run_open_vocabulary_comparison.py": {
+      "bytes": 12894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_open_vocabulary_comparison.py",
+      "sha256": "e93e21b4f3f29103cf1aad5fbd4ba61cae8980561285e2b6b0185e581fba3ce5"
+    }
+  },
+  "pending_root_checks": [
+    "Final new adapter owner/test freeze and actual source-owner manifest",
+    "Independent immutable final plan/runner/adapter protocol review",
+    "Root-only inert and approved numeric execution under unchanged guardian"
+  ],
+  "plan_author_API": {
+    "arguments": [
+      "--package-root",
+      "--source-owners",
+      "--equivalence",
+      "--output"
+    ],
+    "output": "Fresh immutable absolute plan file; no overwriting previous plan",
+    "pure_lineage_hash_scope": "Historical corpus file hashed, never parsed; separate historical_corpus_pin forbidden to numerical child and excluded artifacts",
+    "source_owners_format": "namespace-qualified fixed current module name -> closed {path,bytes,sha256}; explicit final adapter closure required"
+  },
+  "representation_equivalence": {
+    "bytes": 10795,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/raw384-equivalence.json",
+    "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+  },
+  "resource_envelope": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "guardian_owner": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "legacy_guardian_phase_training_is_not_actual_training": true,
+    "no_resource_lease_created_by_author": true,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000,
+    "wall_seconds": 300
+  },
+  "retained_custody_scope": {
+    "actual_encoder_calls": 0,
+    "actual_optimizer_updates": 0,
+    "denied_APIs": [
+      "Optimizer.step",
+      "Adam.step",
+      "AdamW.step",
+      "Tensor.backward",
+      "autograd.backward",
+      "autograd.grad",
+      "native encoder producer"
+    ],
+    "every_training_API_denial_has_distinct_function_identity": true,
+    "live_optimizer_moments_retained_by_decoder": false,
+    "new_selection_executed": false,
+    "observed_loaded_model": "State tensor bytes, dtype/shape/name; module modes, parameter requires_grad flags, absent gradients; inference and ambient opening CPU RNG preservation",
+    "saved_checkpoint_and_full_optimizer_JSON_bytes": "Initial and closing exact digests; retained restore checks checkpoint numeric geometry/saved moments only if model opens",
+    "temporary_Adam_construction_allowed": true
+  },
+  "runner_API": {
+    "adapter_calls": [
+      "source_owner_paths",
+      "prepare_arbitrary_native_span_runtime",
+      "open_arbitrary_native_span_decoder",
+      "handle.model",
+      "handle.infer_cached(control=...)"
+    ],
+    "adapter_module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+    "arguments": [
+      "--plan",
+      "--output"
+    ],
+    "controls": [
+      "none",
+      "zero",
+      "disabled",
+      "rotate"
+    ],
+    "fresh_cache_generation": "reuse prior exact native384 receipt with current isolated producer file paths; zero encoder calls",
+    "kwargs": [
+      "checkpoint_pin",
+      "source_cache_pin",
+      "source_requests_pin",
+      "native384_receipt_refs",
+      "source_artifact_pins",
+      "source_owner_pins",
+      "row_ids",
+      "raw384_equivalence_pin",
+      "control"
+    ],
+    "output": "Fresh absolute results directory"
+  },
+  "schema": "arbitrary-native-open-vocabulary-comparison-helper-build/v1",
+  "source_ref": "e6a9a93b14b220a946ec53de559255716cf53f42",
+  "static_checks": {
+    "Git_or_Hub_mutations_performed": false,
+    "both_helpers_AST_parsed": true,
+    "helper_executions_performed": false,
+    "model_forwards_performed": false,
+    "numerical_imports_performed": false,
+    "resource_mutations_performed": false,
+    "selected_canonical_supporting_file_count": 40,
+    "selected_canonical_supporting_files_currently_byte_exact": true,
+    "tests_run": false,
+    "training_performed": false
+  }
+}

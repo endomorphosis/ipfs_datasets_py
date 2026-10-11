@@ -1,0 +1,122 @@
+{
+  "conclusion": "Reuse the retained raw GTE384 warm-start source-span continuation model and matched configuration-disabled checkpoint for the frozen eight-source diagnostic first. Do not retrain completed historical recipes or substitute raw GTE vectors into trained384. Actual native-conditioned training needs admissible reviewed labels and a newly excluded evaluation pool.",
+  "conditional_next_training": {
+    "admitted_now": false,
+    "budget_hypothesis": {
+      "batch_size_candidate": 8,
+      "child_slots": 1,
+      "cpu_slots": 2,
+      "max_training_seconds_candidate": 180,
+      "max_updates_candidate": 120,
+      "rss_mib": 1536,
+      "speed_or_capacity_feasibility_measured": false,
+      "storage_bytes": 200000000,
+      "wall_seconds": 300
+    },
+    "comparison": "Same parent and initial tensor state; matched admitted raw-native versus disabled source-only branch if objective is native input benefit",
+    "must_have_before_any_fit": [
+      "Verified reviewed TRAIN labels compatible with source-copy geometry",
+      "Sealed document/group-disjoint excluded legal evaluation law pool; close every previous source exposure and near duplicate",
+      "Explicit target access/split and current source/checkpoint/recipe byte custody",
+      "Independent protocol/resource admission and measured timing on actual bounded execution"
+    ],
+    "native_embedding_scope": "Precompute admitted exact raw384 source receipt outside decoder fit and freeze it; no embedding model simultaneously resident during training",
+    "recommended_owner": "Versioned wrapper around existing retained source-span continuation; preserve historical owners, parent tensor lineage and saved resume custody",
+    "selection": "Use TRAIN/tuning only; one frozen excluded replay after selection; report weak-target and reviewed-semantic metrics separately"
+  },
+  "created_at_utc": "2026-10-11T04:39:23.148647+00:00",
+  "evaluation_limits": [
+    "Same eight sources cannot provide independent held-out confirmation",
+    "Unaccepted lexical copies are proposals, not semantic-role gold or proof certificates",
+    "8D, raw768, transformed768, entire US Code semantic coverage, family bridging and Lake remain open",
+    "No numerical/model/test imports, forwards or fits performed for this review"
+  ],
+  "frozen_controls_scope": {
+    "matched_source_only": "Model was trained with latent_enabled false; controls should not affect its candidate lexical predictions",
+    "new_encoder_calls": 0,
+    "optimizer_updates": 0,
+    "outputs": 64,
+    "prior_comparison_repeated": false,
+    "raw_none_vs_disabled": "Latent-use diagnostic within same trained weights",
+    "raw_rotate": "Donor assigned from original requested occurrence order before filtering; do not infer legal correctness from differences",
+    "raw_zero": "Learned latent adapter bias response may remain; zero input does not equal disabled branch"
+  },
+  "label_eligibility": {
+    "current_eight_sources_have_semantic_gold": false,
+    "engineering_authored_fit": "Allowed to characterize synthetic reconstruction/retention, never legal semantic accuracy; historical completed 400/800 native-conditioning and open-vocabulary comparisons are already exposed/completed",
+    "existing_compiler_paired_guided_targets": "Generated/unreviewed weak observations only",
+    "legal_review_needed": [
+      "Physical source occurrence and released UTF8 artifact identity verified",
+      "Rule segmentation, actor/action/object/modality and qualifiers explicitly reviewed against needed document context",
+      "Canonical one-rule output representable by current owner; exact unique token-aligned nonoverlapping anchors",
+      "Unsupported ambiguity/multiple rules/repeated phrase/nonliteral paraphrase recorded as refusal; no silently invented labels"
+    ]
+  },
+  "read_only_audit": true,
+  "reuse_choices": [
+    {
+      "limits": "One flat rule, at most one source span each actor/action/object/condition/exception/temporal facet; token256; source16384chars; token-byte2048; targets must be exact unique nonoverlapping token-aligned lexical spans.",
+      "owner": "legal_span_formula/legal_span_continuation",
+      "role": "Existing open-vocabulary source-copy token start/end heads, modality and optional facet heads; exact warm-start and full saved Adam lineage; already trained raw384 checkpoint"
+    },
+    {
+      "limits": "Byte259 transport is not an existing trained neural byte decoder; does not remove semantic-target or unique-source-anchor eligibility requirements.",
+      "owner": "canonical_byte_codec",
+      "role": "Reusable anchored canonical wire transport"
+    },
+    {
+      "limits": "No native384 input or object head in this owner; do not change lineage or treat it as a drop-in source-span checkpoint.",
+      "owner": "legal_grouped_span_decoder_v2",
+      "role": "Ordered byte convolution and learned group support/count components if a later new version truly requires grouped obligations"
+    }
+  ],
+  "schema": "legal-native-open-vocabulary-next-experiment-design/v1",
+  "source_pins": {
+    "autoencoder_paired_text": {
+      "bytes": 26736,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_paired_text.py",
+      "sha256": "0097b0128e21bcf386380490ae39023c9a15a44111088fb913f9fab5c366c9a3"
+    },
+    "canonical_byte_codec": {
+      "bytes": 12983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_byte_codec.py",
+      "sha256": "e2e1859fb2c71c2c2b758516dc35149e7a742d39f6950be76b0962e226d7cafb"
+    },
+    "canonical_span_decoder": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "legal_grouped_span_decoder_v2": {
+      "bytes": 33948,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_grouped_span_decoder_v2.py",
+      "sha256": "defe782605c99e9954e8ce0c0439af00cced49342c7594379840ea7cf1fc9ce8"
+    },
+    "legal_scope_span_decoder": {
+      "bytes": 29545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_scope_span_decoder.py",
+      "sha256": "594dfb776f0ff440101ffe7a7bf99ffc742d2a9c7e826647786938925cb37d15"
+    },
+    "legal_span_continuation": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "legal_span_dimensions": {
+      "bytes": 22521,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_dimensions.py",
+      "sha256": "5ba50db7475c23d7376c0918a02a3740783dc86996e396f532c365f544372b7d"
+    },
+    "legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "native_formal_decoder": {
+      "bytes": 31986,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/native_formal_decoder.py",
+      "sha256": "2668c089615e0e26cdd9391517cdf94769b17189b661dc9b6db9cc3e4c22a10c"
+    }
+  },
+  "source_ref": "e6a9a93b14b220a946ec53de559255716cf53f42"
+}

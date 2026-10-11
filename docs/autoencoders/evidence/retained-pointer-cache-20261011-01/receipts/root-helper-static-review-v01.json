@@ -1,0 +1,85 @@
+{
+  "checks": {
+    "AST_only": true,
+    "HF_actions": false,
+    "helpers_executed": false,
+    "models_imported": false,
+    "numerical_forwards": false,
+    "root_helpers_edited_by_reviewer": false,
+    "tests_run": false
+  },
+  "created_at_utc": "2026-10-11T04:41:26.089391+00:00",
+  "findings": [
+    {
+      "detail": "Reads fixed F/experiment-plan.json, while plan author supports immutable versioned final paths. Does not bind the copied protocol-review-immutable.json to that plan or actual result inputs. Wrong/stale owner inventory can be retained without rejecting result provenance.",
+      "id": "final-plan-not-explicit",
+      "owner": "prepare_hub_release.py",
+      "recommended_fix": "Require explicit --plan and protocol review pin; verify summary/result plan binding and plan owner pins against the final reviewed bytes.",
+      "severity": "blocking"
+    },
+    {
+      "detail": "Checks original checkpoint before copy; observed retained_bytes are recorded but never required equal original bytes/SHA. Source files have the same gap. No consumed source closing fence; source_checkpoint_bytes_unchanged=True is unconditional.",
+      "id": "copy-equality-and-closing-fence",
+      "owner": "prepare_hub_release.py",
+      "recommended_fix": "Copy each pinned source into a fresh ordinary target, require byte and digest equality, then rehash every consumed original before admitting manifest. Derive unchanged claim only after these checks.",
+      "severity": "blocking"
+    },
+    {
+      "detail": "Summary lists eight local raw lane reports but publication copies only derived diagnostics, summary, equivalence and protocol review. Exact source proposal/abstention evidence remains absent from the publication.",
+      "id": "missing-raw-reports",
+      "owner": "prepare_hub_release.py",
+      "recommended_fix": "Retain all eight exact raw reports bound by summary. Keep explicit external source/cache/native input and portability limitations unless those original inputs are also included.",
+      "severity": "blocking"
+    },
+    {
+      "detail": "Dictionary comprehension overwrites four checkpoint records per name; does not require eight lanes, exact four controls, both names, or same checkpoint per lane name.",
+      "id": "lane-checkpoint-collapse",
+      "owner": "prepare_hub_release.py",
+      "recommended_fix": "Verify exact 2x4 lane/control coverage and shared reviewed checkpoint pin for each name before deduplicating.",
+      "severity": "material"
+    },
+    {
+      "detail": "Produces actual_optimizer_updates=0 and exposure/holdout claims without validating the consumed summary schema, zero counters, source count or complete lane coverage; report pins checked only on opening.",
+      "id": "analysis-unchecked-zero-claim",
+      "owner": "analyze_pointer_comparison.py",
+      "recommended_fix": "Validate exact completed frozen summary contract and 8 ordered source occurrences x8 lanes; bind plan scope or actual reviewed summary claims. Closing-rehash summary, reports and previous diagnostics.",
+      "severity": "material"
+    },
+    {
+      "detail": "json.loads uses default duplicate/nonfinite behavior; analyzer read permits arbitrary small JSON shape. Current writer emits strict ordinary JSON but helper own input boundary does not establish that.",
+      "id": "closed-json-input-contract",
+      "owner": "both",
+      "recommended_fix": "Reuse stdlib strict duplicate/nonfinite/surrogate JSON reader and explicit bounded input shape checks if helpers are intended beyond this frozen curated receipt set.",
+      "severity": "minor"
+    }
+  ],
+  "next_review": "Read actual finalized raw results, resource receipts and exact final release inventory/README before upload; write a new immutable review version for revised root helper bytes.",
+  "passed": false,
+  "qualification_limits": [
+    "Cannot approve future actual result counts or publication package/README final outcomes before files exist.",
+    "Cannot independently qualify reviewer-authored runner/cache/equivalence.",
+    "Does not constitute upload authorization or guarantee publication transaction preservation."
+  ],
+  "review_version": 1,
+  "reviewer": "retention_training_design_20261011",
+  "schema": "retained-pointer-root-helper-static-review/v1",
+  "scope": "Independent static review of root-authored pure analysis and local publication preparation helpers; excludes reviewer-authored cache/runner/equivalence qualification",
+  "source_pins": {
+    "analyze_pointer_comparison.py": {
+      "bytes": 5370,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison.py",
+      "sha256": "67b405cdbb57211c3fa7fcf903aaf43e9d76999562e793465e25bbe9de07b8d2"
+    },
+    "prepare_hub_release.py": {
+      "bytes": 7626,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release.py",
+      "sha256": "78585c0bdf3783e665333bbf9e186156d8c1483e69178efb4c6bb92b0118cad1"
+    }
+  },
+  "supported_findings": [
+    "Both helpers are stdlib-only and import no numerical models or network clients. Neither executes training/encoding/HF upload.",
+    "Analyzer uses authoritative retained decoder_row canonical IR/span diagnostics and explicit refusal counts; it states semantic_accuracy null and distinguishes literal copying from reviewed legal roles/modality.",
+    "Publication README accurately distinguishes warm-start continuation lineage from native-dimensional checkpoints, normative32 and byte259 transport; raw GTE recipe versus transformed384 is not relabelled.",
+    "README declares previous authored training targets, eight exposed development sources, no new accuracy or independent holdout, no new model selection, no Lake/default promotion and missing standalone dependency/portable replay closure."
+  ]
+}

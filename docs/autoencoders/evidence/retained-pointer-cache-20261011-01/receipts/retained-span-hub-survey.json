@@ -1,0 +1,15 @@
+{
+  "downloaded_weights": false,
+  "endpoint": "https://huggingface.co/api/models/Publicus/legal-ir-autoencoder?blobs=true",
+  "file_count": 3167,
+  "matches": [],
+  "metadata_only": true,
+  "numerical_replay": false,
+  "observed_at_utc": "2026-10-11T04:30:17.528417+00:00",
+  "public": true,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "response_sha256": "52e22e2c84049d7d2ab17a43e35dcc59a89ba31e55cef3bf49959ef86b4d9bec",
+  "revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "schema": "retained-span-hub-metadata-survey/v1",
+  "upload_performed": false
+}

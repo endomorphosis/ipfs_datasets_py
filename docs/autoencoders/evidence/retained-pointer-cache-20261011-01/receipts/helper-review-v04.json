@@ -1,0 +1,86 @@
+{
+  "checks": {
+    "AST_only": true,
+    "SDK_imported_by_reviewer": false,
+    "models_imported": false,
+    "network_accessed": false,
+    "numerical_runs": false,
+    "publisher_executed": false,
+    "source_files_edited_by_reviewer": false,
+    "tests_or_resource_mutations": false
+  },
+  "created_at_utc": "2026-10-11T05:06:41.198359+00:00",
+  "durable_evidence_scope": {
+    "before": "Original immutable remote file metadata inventory and exact reviewed local file identities.",
+    "failure": "Commit-stage versus confirmed returned OID and verification stage are retained; any failure requires explicit reconciliation before future action.",
+    "first_failure_receipt_preservation": "Exclusive create mode; no receipt deletion or overwriting. CLI stderr remains available separately for the original trace.",
+    "proposal": "Intended parent/prefix/review pin/release identities and captured_verified_bytes indicator.",
+    "success": "Exact final revision, all downloaded bytes checks, prior metadata preservation and false training/semantic/proof/promotion flags."
+  },
+  "findings": [],
+  "guards_preserved": [
+    "Release files equal passed review exact inventory, and every source leaf/directory is checked against symlink use.",
+    "Additive separate prefix must be absent at captured current main parent.",
+    "All SDK operations are CommitOperationAdd under prefix; create_commit carries exact captured parent_commit with one upload thread.",
+    "Returned immutable revision inventory must preserve every prior path/size/blob/LFS identity and have exact prior+new count.",
+    "Every new file is downloaded at the returned immutable revision and checked against local reviewed byte count/SHA.",
+    "Review file is closing-rehashed before final successful receipt.",
+    "No automatic helper retry path or recipe/model/default selection.",
+    "Final receipt declares downloaded_numerical_replay false, rather than claiming a model forward on downloaded weights."
+  ],
+  "limits": [
+    "Final actual release review must establish reviewed ordinary immutable files, exact scientific result scope and byte inventory before execution.",
+    "Review file is assumed the immutable finalized passed independent review; its final closing hash can detect a later change, but arbitrary concurrent mutation is not an authorized publication workflow.",
+    "32MiB captured-content cap is checked after reading files; actual package review must verify total pinned input size before publisher invocation.",
+    "All prior object preservation is verified by immutable metadata identities, not fresh downloading every prior file.",
+    "SDK transaction implementation and third-party dependency/import graph are outside this static qualification.",
+    "Root must preserve local numeric attempt failure/storage/admission history and actual resource cleanup receipts separately; this publisher does not evaluate them.",
+    "No actual publication, downloaded numerical replay, model inference or semantic accuracy is attested by this review.",
+    "Reviewer-authored cache, runner and equivalence are excluded from independent qualification here."
+  ],
+  "next_review": "Verify actual successful local frozen comparison results, guardian/resource receipts, and complete final release inventory/README in a new immutable actual-release review before uploading.",
+  "passed": true,
+  "preserved_draft_pins": {
+    "publish_retained_weights-draft-01.py": {
+      "bytes": 4840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights-draft-01.py",
+      "sha256": "df86bad6342d7e990306f1a30290deed56799bebb40647936244b3cf37aafbfb"
+    }
+  },
+  "publisher_pin": {
+    "bytes": 6691,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publish_retained_weights.py",
+    "sha256": "23d62ff39f2b0dddf01bc09bdc371904c813b3fdf0fc82953e70c7cb5dbab422"
+  },
+  "resolved_findings": [
+    {
+      "id": "durable-uncertain-publication-failure",
+      "verified": "Exclusive fsynced before-inventory and intended proposal are written before SDK create_commit. Whole CLI action has exception handler preserving stage, parent, confirmed commit OID when known, mutation-attempted state, exception type, remote commit uncertainty and mandatory reconciliation/no automatic retry; original receipts are not deleted."
+    },
+    {
+      "id": "mutable-upload-file-custody",
+      "verified": "Each release file is captured as bytes and checked against independently reviewed reference byte length/SHA. Operations use BytesIO of those captured byte strings, never the mutable source file path. Total captured content must be <=32MiB. Original sources are rehashed after capture and during immutable byte readback."
+    }
+  ],
+  "review_version": 4,
+  "reviewer": "retention_training_design_20261011",
+  "schema": "retained-pointer-root-helper-static-review/v1",
+  "scope": "Independent static rereview of corrected root-authored publisher; carries analyzer/preparation v03 verdict only if unchanged recorded pins. Actual release review remains separate.",
+  "supersedes_publisher_review": {
+    "bytes": 5893,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/helper-review-v03.json",
+    "sha256": "cd6b18e2749160bffd9d2ae8e145b5b8ef0f99392586e15b6f05835b574a4cbb"
+  },
+  "unchanged_helpers": {
+    "analyze_pointer_comparison.py": {
+      "bytes": 5470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/analyze_pointer_comparison.py",
+      "sha256": "c1c54ca775c3653f61fb97aa1209d9908310f31ca71707b0a2ec7233ce664109"
+    },
+    "prepare_hub_release.py": {
+      "bytes": 7647,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_hub_release.py",
+      "sha256": "8370f6e5ec976e8c93773bd7fc0e24287bdbd8eb16c90851fe5da909f8777f1e"
+    }
+  }
+}

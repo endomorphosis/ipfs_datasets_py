@@ -1,0 +1,93 @@
+{
+  "README_at_revision": "404 observed separately",
+  "Viewer_split_train_is_storage_label_not_training_admission": true,
+  "aggregates": {
+    "admitted_rows": 0,
+    "documents": 537665,
+    "formalized_rows": 0,
+    "pending": 6524705,
+    "sealed": 0,
+    "spans": 6524705
+  },
+  "all_pending_equals_spans": true,
+  "boundaries": {
+    "Viewer_endpoint_not_immutable_revision_parameterized": true,
+    "Viewer_response_fresh_before_after_Hub_head_same": true,
+    "pinned_metadata_Parquet_SHA256_matches_previous_observation": true,
+    "raw_metadata_only": true,
+    "review_or_semantic_authority_inferred_from_counts": false
+  },
+  "columns": [
+    "admitted",
+    "documents",
+    "formalized",
+    "jurisdiction",
+    "pending",
+    "sealed",
+    "spans"
+  ],
+  "earlier_probe_note": "An earlier in-memory Arrow metadata probe emitted these same values but aborted during interpreter shutdown; exit134. No core file found and corelimit0. It is not treated as a clean completed primary verification.",
+  "immutable_revision": "3bdc4d526ec7d83f870c9f481c9c80f43c20adf7",
+  "local_evidence": [
+    {
+      "bytes": 8552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-viewer-rows.json",
+      "sha256": "3fb15db0ca3b513fce2d3e96f148fa8a0b1fe0e7e5f23b3e85dc1f88d36ca2f6"
+    },
+    {
+      "bytes": 3113,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-manifest.parquet",
+      "sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2"
+    },
+    {
+      "bytes": 431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-tree.json",
+      "sha256": "8821db58263d08754ad81aefda8c6c7a1d5ccd4ad1a89440fef25beb244418ac"
+    }
+  ],
+  "metadata_manifest_rows": 51,
+  "model_calls": 0,
+  "network_receipts": {
+    "head_after": {
+      "bytes": 124,
+      "sha256": "5b93f2762039b6223e508d8a070a4da7cee9b8395d0b42abf67b78394c8c9399",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/open-us-law-span-cache?expand%5B%5D=sha"
+    },
+    "head_before": {
+      "bytes": 124,
+      "sha256": "5b93f2762039b6223e508d8a070a4da7cee9b8395d0b42abf67b78394c8c9399",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/open-us-law-span-cache?expand%5B%5D=sha"
+    },
+    "pinned_autoformal_tree": {
+      "bytes": 431,
+      "sha256": "8821db58263d08754ad81aefda8c6c7a1d5ccd4ad1a89440fef25beb244418ac",
+      "status": 200,
+      "url": "https://huggingface.co/api/datasets/justicedao/open-us-law-span-cache/tree/3bdc4d526ec7d83f870c9f481c9c80f43c20adf7/autoformal?recursive=true&limit=100"
+    },
+    "pinned_manifest": {
+      "bytes": 3113,
+      "sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2",
+      "status": 200,
+      "url": "https://huggingface.co/datasets/justicedao/open-us-law-span-cache/resolve/3bdc4d526ec7d83f870c9f481c9c80f43c20adf7/autoformal/statutes/state-span-manifest.parquet"
+    },
+    "viewer_rows": {
+      "bytes": 8552,
+      "sha256": "3fb15db0ca3b513fce2d3e96f148fa8a0b1fe0e7e5f23b3e85dc1f88d36ca2f6",
+      "status": 200,
+      "url": "https://datasets-server.huggingface.co/rows?dataset=justicedao%2Fopen-us-law-span-cache&config=default&split=train&offset=0&length=51"
+    }
+  },
+  "no_human_semantic_gold_established": true,
+  "not_a_source_or_target_corpus": true,
+  "observed_at_utc": "2026-10-11T04:32:58.360432+00:00",
+  "primary_successful_verification": "stdlib HTTPS/JSON full51-row Viewer metadata; opaque3113-byte pinned metadata Parquet SHA256, no Arrow import in this retained generation",
+  "read_only_network": true,
+  "repository": "justicedao/open-us-law-span-cache",
+  "role": "jurisdiction inventory reference only",
+  "schema": "open-us-law-reference-inventory-observation/v1",
+  "small_metadata_parquet_download_bytes": 3113,
+  "source_dataset_downloads": 0,
+  "source_text_IR_embeddings_or_reviews_available_in_this_snapshot": false
+}

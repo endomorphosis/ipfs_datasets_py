@@ -1,0 +1,45 @@
+{
+  "actual_result_review_complete": false,
+  "findings": [
+    {
+      "detail": "summary.json, pointer-comparison-diagnostics.json, hub-publication-receipt.json and input_inventory are initially read outside consumed. Only copied entries are fence-tracked and inventory is pinned after its use. Guide can consume old JSON while newer bytes are retained/pinned.",
+      "id": "consumed-document-input-fence",
+      "required_change": "Capture exact pins for all four before each read, verify immediately after reading, include closing consumed rehash and require retained report entries match those captured report pins.",
+      "severity": "blocking"
+    }
+  ],
+  "helper_executed_by_reviewer": false,
+  "helper_pin": {
+    "bytes": 8903,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/prepare_contribution.py",
+    "sha256": "4c5d6770e4b2863724ee6663b8c8cddf0751168e27d283fb7dbf929e0ff53d70"
+  },
+  "models_tests_Git_mutations_by_reviewer": false,
+  "observed_at_utc": "2026-10-11T04:58:54.924322+00:00",
+  "passed": false,
+  "prior_review_pin": {
+    "bytes": 7146,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/publication-source-review-v01.json",
+    "sha256": "8cc95a656d2641bdbc22169ee2f93d2078bc8ea8089cd6bad19a3862d78f3af5"
+  },
+  "proof_authority": false,
+  "required_later_inventory_checks": [
+    "Actual finalized inventory contains unique non-reserved relative destinations, exact ordinary owned files with expected sizes/hashes, and required final report/review/resource/source views.",
+    "No raw checkpoints, unrelated payloads, full shared ledgers, parent source Parquet, directories/symlinks/aliases or foreign snapshot bodies.",
+    "Summary zero optimizer/encoder counts, source_count8 and requested_output_count64, eight real lane/control pairs and dispositions bound to actual unmodified raw reports.",
+    "Successful final Hub upload/readback proves both retained unchanged checkpoints and prior published identities."
+  ],
+  "resolved_findings": [
+    "Per-copy captured origin pin, destination equality and origin rehash now required.",
+    "Explicit bounded pinned input entries replace directory discovery.",
+    "Successful Hub byte readback/prior-file preservation gate precedes publication directory creation.",
+    "Guide exposes eligibility alongside proposal /8 counts.",
+    "Qualifier wording now correctly limits values within a facet."
+  ],
+  "review_version": "draft-02",
+  "reviewer": "integration_review_20261011",
+  "schema": "retained-pointer-contribution-helper-review/v1",
+  "scientific_qualification": false,
+  "scope": "Static review only of corrected root-owned helper; actual finalized input inventory, successful retry results, Hub receipts and staged bytes remain pending.",
+  "staged_byte_review_complete": false
+}

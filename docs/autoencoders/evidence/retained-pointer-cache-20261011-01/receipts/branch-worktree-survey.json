@@ -1,0 +1,437 @@
+{
+  "all_public_branch_commits_fetched": false,
+  "canonical_HEAD_index_mutated": false,
+  "initial_cli_attempt": "Installed gh lacks --slurp; paginated JSON stream parsed without source mutation.",
+  "observed_at_utc": "2026-10-11T04:43:35.069062+00:00",
+  "read_only": true,
+  "repositories": {
+    "datasets": {
+      "observed_main": "e6a9a93b14b220a946ec53de559255716cf53f42",
+      "public_relevant_branches": [
+        {
+          "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "name": "agent/autoencoder-progress-reconciliation-datasets-20261006"
+        },
+        {
+          "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "name": "agent/contextual-legal-runtime-20261006"
+        },
+        {
+          "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+          "name": "agent/normative-cache-input-datasets-20261007"
+        },
+        {
+          "head": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+          "name": "agent/normative-decoder-runtime-datasets-20261007"
+        },
+        {
+          "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "name": "codex/autoencoder-owner-integration-20261007-01"
+        },
+        {
+          "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "name": "codex/legal-cross-agent-guards-20261006"
+        },
+        {
+          "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "name": "codex/legal-decoder-followup-20261006-01"
+        },
+        {
+          "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "name": "codex/legal-decoder-progress-20261011-01"
+        },
+        {
+          "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "name": "codex/legal-grouped-integration-20261006-02"
+        },
+        {
+          "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "name": "codex/legal-native-cache-20261011-01"
+        },
+        {
+          "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "name": "codex/legal-original-text-roundtrip-retained-20261004"
+        },
+        {
+          "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "name": "codex/legal-scope-span-training-20261007-01"
+        },
+        {
+          "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "name": "codex/legal-support-action-model-20261007-01"
+        },
+        {
+          "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "name": "codex/legal-support-gate-model-20261007-01"
+        },
+        {
+          "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "name": "codex/legal-trigger-readout-model-20261007-01"
+        }
+      ],
+      "relevant_worktrees": [
+        {
+          "branch": null,
+          "head": "28c6bdb833a9e1309db4b01018e588aa427a05f4",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets"
+        },
+        {
+          "branch": "refs/heads/codex/alignment-decoder-768-20261003",
+          "head": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003"
+        },
+        {
+          "branch": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "head": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-datasets-20261006"
+        },
+        {
+          "branch": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "head": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/contextual-legal-runtime-datasets-20261006"
+        },
+        {
+          "branch": "refs/heads/agent/decoder-profile-recovery-20261006",
+          "head": "3b3b994407b2fcfef955ce5153afc2eea01e4eff",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/decoder-profile-recovery-datasets-20261006"
+        },
+        {
+          "branch": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "head": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/legal-original-text-roundtrip-retained-20261004"
+        },
+        {
+          "branch": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "head": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-cache-input-datasets-20261007"
+        },
+        {
+          "branch": "refs/heads/agent/normative-checkpoint-availability-datasets-20261006",
+          "head": "61c5db04538596ea00091cd4f013500854368397",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-checkpoint-availability-datasets-20261006"
+        },
+        {
+          "branch": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "head": "47d492c697f3e766d107ae9c02d8b8dcd18660b2",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-decoder-runtime-datasets-20261007"
+        },
+        {
+          "branch": "refs/heads/agent/uscode-span-lossless-datasets-20261007",
+          "head": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+        },
+        {
+          "branch": "refs/heads/agent/uscode-span-pages-datasets-20261011",
+          "head": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011"
+        },
+        {
+          "branch": "refs/heads/agent/uscode-span-paired-feed-datasets-20261007",
+          "head": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007"
+        },
+        {
+          "branch": "refs/heads/agent/uscode-span-source-census-datasets-20261007",
+          "head": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007"
+        },
+        {
+          "branch": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "head": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-followthrough"
+        },
+        {
+          "branch": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "head": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-integration"
+        },
+        {
+          "branch": null,
+          "head": "0f36163a585a9bf514c41d8eabe202936c000705",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/datasets-merged-main"
+        },
+        {
+          "branch": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "head": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/datasets"
+        },
+        {
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        },
+        {
+          "branch": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "head": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-decoder-followup-20261006-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "head": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-native-cache-20261011-01",
+          "head": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "head": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-next-training-20261007-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "head": "e6a9a93b14b220a946ec53de559255716cf53f42",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "head": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "head": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/datasets"
+        },
+        {
+          "branch": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "head": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/datasets"
+        }
+      ],
+      "total_public_branches": 23
+    },
+    "root": {
+      "observed_main": "89a900147732b0236cd87a066c66b2310595e44e",
+      "public_relevant_branches": [
+        {
+          "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "name": "agent/autoencoder-progress-reconciliation-20261006"
+        },
+        {
+          "head": "094c566adc316b1391c58d3d38c4dd19698149ff",
+          "name": "agent/normative-cache-input-root-20261007"
+        },
+        {
+          "head": "dfc02e62186dc97223a620b074b278f0e1b97115",
+          "name": "agent/normative-checkpoint-availability-root-20261006"
+        },
+        {
+          "head": "b7e3550da23c94fe17b591654093c5c0f84ded0c",
+          "name": "agent/normative-decoder-runtime-root-20261007"
+        },
+        {
+          "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "name": "codex/autoencoder-reconciliation-20261007-01"
+        },
+        {
+          "head": "1b20f745a1db2a485b97ffc7f0816119881f7f8d",
+          "name": "codex/grouped-autoencoder-findings-20261006-02"
+        },
+        {
+          "head": "8cd17c705162a5d47c0eb31616d8d5637eea79d2",
+          "name": "codex/legal-cross-agent-followthrough-20261006"
+        },
+        {
+          "head": "0ed01fd56db31fe4345f8143a7647a437dcb1118",
+          "name": "codex/legal-decoder-followup-results-20261006-01"
+        },
+        {
+          "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "name": "codex/legal-native-cache-workspace-20261011-01"
+        },
+        {
+          "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "name": "codex/legal-retention-objective-20261011-01"
+        },
+        {
+          "head": "7e582ad8951d6fed6235c98526ee49c08dbce218",
+          "name": "codex/legal-scope-span-results-20261007-01"
+        },
+        {
+          "head": "43ec348cab85a9eae3aee56a6de79807e3ea57ee",
+          "name": "codex/legal-support-action-results-20261007-01"
+        },
+        {
+          "head": "b60d71fbd131c7d0a61f8f481348a1027769af92",
+          "name": "codex/legal-support-gate-results-20261007-01"
+        },
+        {
+          "head": "8e5da94bd0ac33b1378ae44e4801f3496e96a02c",
+          "name": "codex/legal-trigger-readout-results-20261007-01"
+        },
+        {
+          "head": "baeabe9911291c8a119dba6ab78cdc971e72635f",
+          "name": "repair/doep-readonly-queue-native-parent-base-20260913"
+        },
+        {
+          "head": "e9afd83fb3a55173c628a479c5a45dd897a6c23b",
+          "name": "repair/pctdd-after-task008-native-base-20260913"
+        },
+        {
+          "head": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd",
+          "name": "repair/pctdd-native-entry-1789010527"
+        }
+      ],
+      "relevant_worktrees": [
+        {
+          "branch": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "head": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-root-20261006"
+        },
+        {
+          "branch": "refs/heads/agent/normative-cache-input-root-20261007",
+          "head": "094c566adc316b1391c58d3d38c4dd19698149ff",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-cache-input-root-20261007"
+        },
+        {
+          "branch": "refs/heads/agent/normative-checkpoint-availability-root-20261006",
+          "head": "dfc02e62186dc97223a620b074b278f0e1b97115",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-checkpoint-availability-root-20261006"
+        },
+        {
+          "branch": "refs/heads/agent/normative-decoder-runtime-root-20261007",
+          "head": "b7e3550da23c94fe17b591654093c5c0f84ded0c",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/normative-decoder-runtime-root-20261007"
+        },
+        {
+          "branch": "refs/heads/repair/pctdd-native-entry-1789010527",
+          "head": "738cdc6afa62ddc0636a9fef93dfd31bfabfdacd",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/pctdd-native-entry-1789010527"
+        },
+        {
+          "branch": "refs/heads/agent/vericodegen-2026-autoformalization",
+          "head": "091624a773179d24178d12bc1f410864885c10bf",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/.worktrees/vericodegen-autoformalization-2026"
+        },
+        {
+          "branch": "refs/heads/codex/legal-cross-agent-followthrough-20261006",
+          "head": "8cd17c705162a5d47c0eb31616d8d5637eea79d2",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/workspace-followthrough"
+        },
+        {
+          "branch": "refs/heads/codex/grouped-autoencoder-findings-20261006-02",
+          "head": "1b20f745a1db2a485b97ffc7f0816119881f7f8d",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-consolidation-20261006-02/workspace-integration"
+        },
+        {
+          "branch": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "head": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/joint-conditioning-20261005-01",
+          "head": "8c02d655e2d086bd644a9011ea67325060ef87bc",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-conditioning-01/publication-worktree"
+        },
+        {
+          "branch": "refs/heads/codex/joint-conditioning-20261005-02",
+          "head": "3b39519d9bc9021a5e6a0bb183f6c57cb780bc5a",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-conditioning-02/publication-worktree"
+        },
+        {
+          "branch": "refs/heads/codex/joint-span-policy-20261005-01",
+          "head": "ec4302acd75f0dbb0d744586db35fef9d23980ac",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/current-main-joint-span-01/publication-worktree"
+        },
+        {
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "head_in_observed_main": false,
+          "path": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        },
+        {
+          "branch": "refs/heads/codex/legal-decoder-followup-results-20261006-01",
+          "head": "0ed01fd56db31fe4345f8143a7647a437dcb1118",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-decoder-followup-20261006-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "head": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "head": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-scope-span-results-20261007-01",
+          "head": "7e582ad8951d6fed6235c98526ee49c08dbce218",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-next-training-20261007-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "head": "89a900147732b0236cd87a066c66b2310595e44e",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-support-action-results-20261007-01",
+          "head": "43ec348cab85a9eae3aee56a6de79807e3ea57ee",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-support-action-20261007-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-support-gate-results-20261007-01",
+          "head": "b60d71fbd131c7d0a61f8f481348a1027769af92",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/workspace"
+        },
+        {
+          "branch": "refs/heads/codex/legal-trigger-readout-results-20261007-01",
+          "head": "8e5da94bd0ac33b1378ae44e4801f3496e96a02c",
+          "head_in_observed_main": true,
+          "path": "/home/barberb/lift_coding/artifacts/legal-trigger-readout-20261007-01/workspace"
+        }
+      ],
+      "total_public_branches": 58
+    }
+  },
+  "schema": "retained-decoder-branch-worktree-survey/v1",
+  "uncommitted_work_reviewed": false
+}
