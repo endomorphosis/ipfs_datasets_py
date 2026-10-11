@@ -1,0 +1,40 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": null,
+    "candidate_sha256": "6d11547795e84fa183f0f19296a3829c57dea4e123c0bfdb3b3127aa36d37712",
+    "canonical_ir_sha256": "0631cc4054bad59328c37402459cf43875612e485a2b47862bd6ec36e31ffd74",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": null,
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [
+          {
+            "expression": null,
+            "literal": "the event of an"
+          }
+        ],
+        "exceptions": [],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+  },
+  "occurrence": {
+    "end_char": null,
+    "modality_anchor": {
+      "canonical_value": "P",
+      "end_char": null,
+      "source_text": null,
+      "start_char": null
+    },
+    "occurrence_id": null,
+    "source_text": null,
+    "start_char": null
+  },
+  "packet_sha256": "aa0083f4c0910a9c293107eb843696c68fabd87ea9a3e2e9004a921cb0f1cc8a",
+  "schema": "saved-span-family-declaration/v1"
+}

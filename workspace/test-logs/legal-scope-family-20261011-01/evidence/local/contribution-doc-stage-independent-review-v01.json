@@ -1,0 +1,268 @@
+{
+  "actual_scope_summary_pin": {
+    "bytes": 15133,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/actual-scope-pilot-v01/scope-pilot-summary.json",
+    "sha256": "08686e60166db483f939a31a9140dcb88e443c625e84677cb7ae049629079e50"
+  },
+  "all_five_index_worktree_and_frozen_source_bytes_exact": true,
+  "authority": {
+    "admitted": false,
+    "cross_family_equivalence_verified": false,
+    "proof_authority": false,
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_gold_created": false,
+    "source_semantics_verified": false,
+    "statutory_semantic_accuracy": null
+  },
+  "code_doc_whitespace_check_passed": true,
+  "compiler_protocol_pin": {
+    "bytes": 67234,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/compiler-execution-protocol-v01.json",
+    "sha256": "ae52be0bca9a6bb7457eee69ae5724bc64b330031dcf7b003a17ee60972aecdc"
+  },
+  "contribution_pin": {
+    "bytes": 4550,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/contribution.md",
+    "sha256": "c8d03603c412a84ce7aab77f9cfb4f61d6407ba86c7ad66017aa528fb7e6a246"
+  },
+  "earlier_draft_review_pin": {
+    "bytes": 10779,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/scope-pilot-helper-independent-review-v01.json",
+    "sha256": "170d451667a4537f982b79ed303e192830e5ea2e0e5b0908cc81f5fe6b6eba21"
+  },
+  "final_guide_copy_pin": {
+    "bytes": 7323,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-guide-final-v01.md",
+    "sha256": "756dcbf6b710d4ec7431799bc1ef145d72d223f1ebfbe55b72b55f842ae9fb16"
+  },
+  "findings": [],
+  "guide_pin": {
+    "bytes": 7323,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/docs/autoencoders/legal_scope_native_views_20261011.md",
+    "sha256": "756dcbf6b710d4ec7431799bc1ef145d72d223f1ebfbe55b72b55f842ae9fb16"
+  },
+  "limitations": [
+    "Saved native gate reports and source/manifest seals checked; temporary olean artifact bodies were gate-checked and cleaned, so reviewer does not reopen them.",
+    "A successful typecheck/module build is not legal interpretation, theorem validity, authenticated human review or target admission.",
+    "This review covers current five staged additions, not future copied evidence inventory, commits, hosted CI, published Git merges or remote HEAD freshness.",
+    "Native Lean thread/CPU limits are per-process settings; sampled tree RSS/workspace checks are not kernel aggregate quotas and Python audit does not inspect internal native child networking.",
+    "No current Hub verification, foreign working-file body inspection or continuous foreign custody claim."
+  ],
+  "main_effort_retention_review_pin": {
+    "bytes": 294791,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/main-effort-retention-review-v01.json",
+    "sha256": "2dbc94826c192708e7db3e67bcef228140818b8e3a39d222147b3b269b1b22e0"
+  },
+  "native_log_pin": {
+    "bytes": 155,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-execution-v01.log",
+    "sha256": "0b43b97573333effca3074594f5b30a01e3c7682eb490222f628d6fd66ecb811"
+  },
+  "native_receipt_pin": {
+    "bytes": 23462,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-v01/source-family-receipt.json",
+    "sha256": "68a0c1171da215d31fac3dc03feef783a8d153a1cdccdbd9743d68267ebabe1e"
+  },
+  "native_result_pin": {
+    "bytes": 7544,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-build-result-v01.json",
+    "sha256": "9f3cbff3b5dfcf77428ab375cef40fefedf278b2cee4c805ea6b7bde8de2c76b"
+  },
+  "new_root_main_observation": {
+    "accelerator_gitlink": "160000 commit b90b3755b51b1ff1b1a461faa96c671344be8762\texternal/ipfs_accelerate",
+    "actual_future_merge_preservation_not_yet_audited": true,
+    "baseline_is_ancestor": true,
+    "commit": "8e8cdfea8d1c9a0969d06e6967d2796017c471bf",
+    "committed_change_paths": [
+      "A\tartifacts/supervisor-formalization-audit-20261011/publication.json",
+      "M\texternal/ipfs_accelerate"
+    ],
+    "observation_scope": "Local immutable Git objects only; no new fetch or network observation.",
+    "prior_root_baseline": "d6fcc62c171c80a67b9b00a1cf5c594030b28eab"
+  },
+  "passed": true,
+  "preparation_summary_pin": {
+    "bytes": 252475,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/preparation-summary.json",
+    "sha256": "5e319aae78c5f6feb4f1470d7da343c40a6ae5e63b595422969625c86e0fad2b"
+  },
+  "preserved_draft_guide_pin": {
+    "bytes": 6749,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-guide_draft_v01.md",
+    "sha256": "4b136356ab634f71ea096695d1a4d2d2ee8779958e216ed0f52693771741f5ce"
+  },
+  "publication_scope": {
+    "actual_evidence_copy_or_final_merge_inventory_audit_not_yet_done": true,
+    "checkpoint_bodies_foreign_ledgers_training_archive_copy_exclusion_is_policy": true,
+    "existing_Hub_link_retained_prior_observation_only": true,
+    "new_Hub_network_verification": false,
+    "new_weights_or_default_promotion": false
+  },
+  "resolved_prior_draft_findings": [
+    {
+      "finding": "copy correctly/wrong roles could imply reviewed statutory evidence",
+      "resolved": "Final guide describes exact source-slice matching and explicitly unreviewed/suspected role misclassifications; neither establishes fidelity."
+    },
+    {
+      "finding": "new-round actual build wording was premature before saved result",
+      "resolved": "Final guide now binds observed RC0 twelve-request/fourteen-module result, separates the earlier nine-deontic build, and preserves false semantic/admission flags."
+    }
+  ],
+  "review_execution": {
+    "Git_mutations": false,
+    "compiler_rerun": false,
+    "helpers_or_producer_imports": false,
+    "models_or_numeric_execution": false,
+    "network": false,
+    "read_only_Git_index_object_metadata": true,
+    "resource_acquisition": false,
+    "stdlib_byte_JSON_AST_reads": true,
+    "tests_rerun": false
+  },
+  "schema": "scope-native-contribution-doc-stage-independent-review/v1",
+  "scope": "Final guide/contribution claims and current five-file source index byte closure; saved actual result evidence only, no runtime or publication execution.",
+  "selected_test_observation_pin": {
+    "bytes": 4975,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/selected-inert-tests-observation-v01.json",
+    "sha256": "fd501d6cc670ad5734bf6aad9aa389cc4d04ccfe6f3d658299705f40212dd9eb"
+  },
+  "source_base": "7fc3f57a94108030be3cceca7368920754754a94",
+  "source_branch": "refs/heads/codex/legal-scope-family-20261011-01",
+  "source_index_count": 5,
+  "source_index_file_checks": [
+    {
+      "Git_index_blob": "c404ddd6f54fb4d69d10f907dcf5ba67d86828db",
+      "Git_index_mode": "100644",
+      "Python_AST_parsed_without_import": false,
+      "index_worktree_frozen_receipt_bytes_exact": true,
+      "relative_path": "docs/autoencoders/legal_scope_native_views_20261011.md",
+      "status": "A",
+      "worktree_pin": {
+        "bytes": 7323,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/docs/autoencoders/legal_scope_native_views_20261011.md",
+        "sha256": "756dcbf6b710d4ec7431799bc1ef145d72d223f1ebfbe55b72b55f842ae9fb16"
+      }
+    },
+    {
+      "Git_index_blob": "c1b1369dd6137ea2a96a4e4f6e51f1606409c5d1",
+      "Git_index_mode": "100644",
+      "Python_AST_parsed_without_import": true,
+      "index_worktree_frozen_receipt_bytes_exact": true,
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+      "status": "A",
+      "worktree_pin": {
+        "bytes": 13297,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+        "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+      }
+    },
+    {
+      "Git_index_blob": "674c85357c4d6ee7362780da3df722179077ae87",
+      "Git_index_mode": "100644",
+      "Python_AST_parsed_without_import": true,
+      "index_worktree_frozen_receipt_bytes_exact": true,
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+      "status": "A",
+      "worktree_pin": {
+        "bytes": 29041,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+        "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+      }
+    },
+    {
+      "Git_index_blob": "f6d616b5e297657d4fb0120f6c437da38b978884",
+      "Git_index_mode": "100644",
+      "Python_AST_parsed_without_import": true,
+      "index_worktree_frozen_receipt_bytes_exact": true,
+      "relative_path": "tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+      "status": "A",
+      "worktree_pin": {
+        "bytes": 29921,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+        "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+      }
+    },
+    {
+      "Git_index_blob": "b53acd92fbb7c0af98053d3c60ede7343bcf99d5",
+      "Git_index_mode": "100644",
+      "Python_AST_parsed_without_import": true,
+      "index_worktree_frozen_receipt_bytes_exact": true,
+      "relative_path": "tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+      "status": "A",
+      "worktree_pin": {
+        "bytes": 46298,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+        "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+      }
+    }
+  ],
+  "source_stage_receipt_pin": {
+    "bytes": 2613,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-code-stage-v01.json",
+    "sha256": "3731ceac12d3ba2e11d27ac24c1e60071358eb9b0bc84c7980cca945872374e4"
+  },
+  "source_staging_correction_pin": {
+    "bytes": 598,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-staging-correction-v01.json",
+    "sha256": "59da0cb7bcafac4ba4426f4729b1e19b3faa39adf06c1f000a118372e85453d6"
+  },
+  "sparse_staging_chronology": {
+    "explicit_add_sparse_correction_saved": true,
+    "final_five_file_map_verified": true,
+    "guide_outside_sparse_definition_refusal_preserved": true,
+    "initial_four_file_attempt_passed": false,
+    "source_or_test_bytes_changed_to_accommodate_failure": false
+  },
+  "training_plan_review": {
+    "abstention_unsupported_denominators_and_counterfactuals": true,
+    "event_deadline_owner_reconciliation": true,
+    "full_context_strategy_requires_versioned_contract": true,
+    "future_training_or_promotion_claimed_completed": false,
+    "legal_section_splits_and_prior_exposure": true,
+    "matched_8D_384D_768D_and_source_latent_controls": true,
+    "reviewed_annotations_and_source_custody": true,
+    "semantic_syntax_build_metrics_separated": true,
+    "weight_promotion_conditioned_on_independent_fidelity": true
+  },
+  "verified_claims": {
+    "DCEC_qualifier_free_views": 3,
+    "DCEC_qualifier_refusals": 6,
+    "TDFOL_ground_views": 9,
+    "actual_human_submissions": 0,
+    "actual_review_items": 8,
+    "actual_semantic_labels": 0,
+    "actual_sidecars": 0,
+    "all_training_evaluation_masks": 0,
+    "binary_pins_passed": true,
+    "development_rows": 12,
+    "distinct_divergent_recovery_histories_retained": 5,
+    "eight_or_768D_decoder_evaluation_performed": false,
+    "formal_targets": 0,
+    "full_saved_report_rows": 96,
+    "inert_errors": 0,
+    "inert_failures": 0,
+    "inert_passed": 744,
+    "latent_dimension": 384,
+    "latent_enabled": false,
+    "native_build_returncode": 0,
+    "native_modules": 14,
+    "native_opt_in_skipped": 2,
+    "native_requests": 12,
+    "parser_attempts": 24,
+    "prior_committed_owner_test_doc_files": 69,
+    "prior_root_histories_retained": 10,
+    "prior_source_histories_retained": 22,
+    "profile_limited_complete_context_characters": [
+      21347,
+      28500,
+      71688
+    ],
+    "selected_suites": 11,
+    "statutory_lane_dispositions": 16,
+    "statutory_pending_declarations": 5,
+    "statutory_proposal_or_profile_refusals": 11,
+    "temporal_refusals": 6,
+    "temporary_workspace_cleaned": true
+  }
+}

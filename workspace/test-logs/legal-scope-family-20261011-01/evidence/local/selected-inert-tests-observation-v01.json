@@ -1,0 +1,113 @@
+{
+  "attempts": [
+    {
+      "attempt": 1,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 2,
+        "tests": 746
+      },
+      "log_pin": {
+        "bytes": 912,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.log",
+        "sha256": "33ff348f880295e995fc31fe9bb1cc24e2e73fe5d817d386f73a54beb3ef251b"
+      },
+      "scope_note": "One selected11-suite run; no changed owners or repeated passed cases",
+      "xml_pin": {
+        "bytes": 195427,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.xml",
+        "sha256": "f0b17d76366225efb369d367893959c6a4713a6aea3488cc8a137eff4b80bdc9"
+      }
+    }
+  ],
+  "compiler_calls": 0,
+  "encoder_calls": 0,
+  "existing_two_exact_inert_import_control_subprocesses_allowed": true,
+  "final_errors": 0,
+  "final_failures": 0,
+  "final_passed": 744,
+  "final_skipped": 2,
+  "findings": [],
+  "fresh_children_have_finite_import_denial_not_parent_audit_inheritance": true,
+  "full_package_initializers_qualified": false,
+  "general_subprocess_network_permissions_added": false,
+  "harness_pin": {
+    "bytes": 4569,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_inert_tests.py",
+    "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+  },
+  "harness_review_pin": {
+    "bytes": 55257,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-test-harness-independent-review-v01.json",
+    "sha256": "243bf48280154a7fe6c822cccaf6a1b0b15c726002db44d2e58810da5b497111"
+  },
+  "model_calls": 0,
+  "numerical_imports_denied": [
+    "torch",
+    "transformers",
+    "sentence_transformers",
+    "numpy"
+  ],
+  "optimizer_updates": 0,
+  "passed": true,
+  "schema": "scope-native-selected-inert-tests/v1",
+  "selected_tests": [
+    {
+      "bytes": 25441,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    {
+      "bytes": 31211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    },
+    {
+      "bytes": 18662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    },
+    {
+      "bytes": 33517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    },
+    {
+      "bytes": 11848,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py",
+      "sha256": "d7c940a67f471d0e7f84e88048b3bc29100f0f232abdbb3b4382bcc672dd81ca"
+    },
+    {
+      "bytes": 15723,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py",
+      "sha256": "d0bac1b69ea4462170eff0c3cd6a7763f9273b849a726342809683db007053f2"
+    },
+    {
+      "bytes": 11239,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py",
+      "sha256": "caa676d1918e87b11198437097182f8782c7eb5e949273d8c0cdf988694369f0"
+    },
+    {
+      "bytes": 29921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+    },
+    {
+      "bytes": 46298,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+      "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+    },
+    {
+      "bytes": 33666,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18"
+    },
+    {
+      "bytes": 16503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea"
+    }
+  ],
+  "synthetic_tests_are_not_statutory_semantic_accuracy": true
+}

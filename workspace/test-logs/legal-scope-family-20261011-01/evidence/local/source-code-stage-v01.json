@@ -1,0 +1,53 @@
+{
+  "base": "7fc3f57a94108030be3cceca7368920754754a94",
+  "branch": "refs/heads/codex/legal-scope-family-20261011-01",
+  "count": 5,
+  "diff_check_passed": true,
+  "files": {
+    "docs/autoencoders/legal_scope_native_views_20261011.md": {
+      "bytes": 7323,
+      "git_object": "c404ddd6f54fb4d69d10f907dcf5ba67d86828db",
+      "mode": "100644",
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/docs/autoencoders/legal_scope_native_views_20261011.md",
+      "sha256": "756dcbf6b710d4ec7431799bc1ef145d72d223f1ebfbe55b72b55f842ae9fb16",
+      "status": "A"
+    },
+    "ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py": {
+      "bytes": 13297,
+      "git_object": "c1b1369dd6137ea2a96a4e4f6e51f1606409c5d1",
+      "mode": "100644",
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d",
+      "status": "A"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py": {
+      "bytes": 29041,
+      "git_object": "674c85357c4d6ee7362780da3df722179077ae87",
+      "mode": "100644",
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+      "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07",
+      "status": "A"
+    },
+    "tests/unit/logic/legal_ir/test_saved_span_native_views.py": {
+      "bytes": 29921,
+      "git_object": "f6d616b5e297657d4fb0120f6c437da38b978884",
+      "mode": "100644",
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90",
+      "status": "A"
+    },
+    "tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py": {
+      "bytes": 46298,
+      "git_object": "b53acd92fbb7c0af98053d3c60ede7343bcf99d5",
+      "mode": "100644",
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+      "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb",
+      "status": "A"
+    }
+  },
+  "findings": [],
+  "new_guide_added_with_explicit_sparse_flag": true,
+  "only_owned_new_source_test_doc_files_staged": true,
+  "passed": true,
+  "schema": "scope-native-source-code-stage/v1"
+}

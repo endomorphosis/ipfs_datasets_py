@@ -1,0 +1,656 @@
+[
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-o",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 0,
+    "outputs": [
+      {
+        "bytes": 934260,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-pending.json",
+        "sha256": "273ffdefae7a56bb4dd18b37780e57274efc04818970746d8dea31a95e6c84c2"
+      },
+      {
+        "bytes": 1325,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-declaration.json",
+        "sha256": "72d7485018c8d34c227041eedf7ac110d7d83c630ca5decd200744326937b4b2"
+      },
+      {
+        "bytes": 58465,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-tdfol-native-view.json",
+        "sha256": "230b352215bb8c3854fce6c6d0cfe9fb047f9c62ca381dd0994539011cbc318b"
+      }
+    ],
+    "packet_sha256": "e1111de943e52ce6531d41175a3410e4e2f6646e492206440c8b4a94a7dda7de",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-o",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 0,
+    "outputs": [
+      {
+        "bytes": 934260,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-pending.json",
+        "sha256": "273ffdefae7a56bb4dd18b37780e57274efc04818970746d8dea31a95e6c84c2"
+      },
+      {
+        "bytes": 1325,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-declaration.json",
+        "sha256": "72d7485018c8d34c227041eedf7ac110d7d83c630ca5decd200744326937b4b2"
+      },
+      {
+        "bytes": 66222,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/00-dcec-native-view.json",
+        "sha256": "b3a2667d5392bf94288a8407f4025a2e2896216772768622043d3d1f70efe230"
+      }
+    ],
+    "packet_sha256": "e1111de943e52ce6531d41175a3410e4e2f6646e492206440c8b4a94a7dda7de",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-p",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 1,
+    "outputs": [
+      {
+        "bytes": 934256,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-pending.json",
+        "sha256": "5557517bc22f86a8513cf4b58431bc09d5d77a922dc53e47b71c603db51abbbf"
+      },
+      {
+        "bytes": 1321,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-declaration.json",
+        "sha256": "3fad4be103f9925f35f07f0074467d26b82eece0571042583d78a0837839561e"
+      },
+      {
+        "bytes": 58445,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-tdfol-native-view.json",
+        "sha256": "ee0f36a06735c2cabdc5cb23256833e020eef16c8b3f5c84c28875fce64d9389"
+      }
+    ],
+    "packet_sha256": "4927bf2a02186cc9c713c8ec245dd479132df4e5fb4c40e133ca0736ffdf9d22",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-p",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 1,
+    "outputs": [
+      {
+        "bytes": 934256,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-pending.json",
+        "sha256": "5557517bc22f86a8513cf4b58431bc09d5d77a922dc53e47b71c603db51abbbf"
+      },
+      {
+        "bytes": 1321,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-declaration.json",
+        "sha256": "3fad4be103f9925f35f07f0074467d26b82eece0571042583d78a0837839561e"
+      },
+      {
+        "bytes": 66202,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/01-dcec-native-view.json",
+        "sha256": "72fbe9878d2b566b7c3994a9f3a8645793f4ae934c4c8980dc3049f53fb0c536"
+      }
+    ],
+    "packet_sha256": "4927bf2a02186cc9c713c8ec245dd479132df4e5fb4c40e133ca0736ffdf9d22",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-f",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 2,
+    "outputs": [
+      {
+        "bytes": 934268,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-pending.json",
+        "sha256": "f43ee8efe0119d296fc21ecdc0635ce4d0da89b83505504694363daa84121d6b"
+      },
+      {
+        "bytes": 1333,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-declaration.json",
+        "sha256": "c5d227326e7c245c080f1bd9bc750a765eb0f66f20fa9c3a7c21dd30cec6f836"
+      },
+      {
+        "bytes": 58505,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-tdfol-native-view.json",
+        "sha256": "cea13e812a36885ace36f2813d2b6ace319fc7f8bf6512ee8723356ce60b81c3"
+      }
+    ],
+    "packet_sha256": "1a18cc4d49228777b222ab0a7eb8fc14abd24509c51325175e2cb070c97d6170",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t0-q0-f",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 2,
+    "outputs": [
+      {
+        "bytes": 934268,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-pending.json",
+        "sha256": "f43ee8efe0119d296fc21ecdc0635ce4d0da89b83505504694363daa84121d6b"
+      },
+      {
+        "bytes": 1333,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-declaration.json",
+        "sha256": "c5d227326e7c245c080f1bd9bc750a765eb0f66f20fa9c3a7c21dd30cec6f836"
+      },
+      {
+        "bytes": 66392,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/02-dcec-native-view.json",
+        "sha256": "505fa9cd1e16d73d7146cbb204e977abf499177e762a035add1e0d728c20ee8f"
+      }
+    ],
+    "packet_sha256": "1a18cc4d49228777b222ab0a7eb8fc14abd24509c51325175e2cb070c97d6170",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-o",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 3,
+    "outputs": [
+      {
+        "bytes": 934780,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/03-pending.json",
+        "sha256": "c4b381a9e719dcc1a490f0ab81141aa99f2f8f17e7e47d5d6d09cca19b9590da"
+      },
+      {
+        "bytes": 1746,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/03-declaration.json",
+        "sha256": "4e66f8a5c113950b4dfe7e4f4787d9eb3a7a53e274d7c21fb616ca3919451bc2"
+      },
+      {
+        "bytes": 68559,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/03-tdfol-native-view.json",
+        "sha256": "38e6893ea2f38abe06e59030a94d70aa8d9886b219ed4cb1c7770ba1fdccdec1"
+      }
+    ],
+    "packet_sha256": "4cc9f368e1c4fa6b51b3c371aa31067d4cedca9af6537bbdb9c99d4678e3d409",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-o",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 3,
+    "outputs": [
+      {
+        "bytes": 934780,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/03-pending.json",
+        "sha256": "c4b381a9e719dcc1a490f0ab81141aa99f2f8f17e7e47d5d6d09cca19b9590da"
+      },
+      {
+        "bytes": 1746,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/03-declaration.json",
+        "sha256": "4e66f8a5c113950b4dfe7e4f4787d9eb3a7a53e274d7c21fb616ca3919451bc2"
+      }
+    ],
+    "packet_sha256": "4cc9f368e1c4fa6b51b3c371aa31067d4cedca9af6537bbdb9c99d4678e3d409",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-p",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 4,
+    "outputs": [
+      {
+        "bytes": 934799,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/04-pending.json",
+        "sha256": "bc6badd5071910f298b6159a52c22b120313a850749f1e85f5e61c5c27d60c10"
+      },
+      {
+        "bytes": 1764,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/04-declaration.json",
+        "sha256": "683033d9e501d5fb2f2bab9592427bcd4151f58ead7a739662571ae22f61734f"
+      },
+      {
+        "bytes": 68649,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/04-tdfol-native-view.json",
+        "sha256": "8fa708f7fe51587ebf08cc825507b60cfcbeeba3b3999f4164b1465287a38005"
+      }
+    ],
+    "packet_sha256": "f0016a424aadb4ac541bdfe103c5aa927d64da8f35d250f256599525ff50b363",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-p",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 4,
+    "outputs": [
+      {
+        "bytes": 934799,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/04-pending.json",
+        "sha256": "bc6badd5071910f298b6159a52c22b120313a850749f1e85f5e61c5c27d60c10"
+      },
+      {
+        "bytes": 1764,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/04-declaration.json",
+        "sha256": "683033d9e501d5fb2f2bab9592427bcd4151f58ead7a739662571ae22f61734f"
+      }
+    ],
+    "packet_sha256": "f0016a424aadb4ac541bdfe103c5aa927d64da8f35d250f256599525ff50b363",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-f",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 5,
+    "outputs": [
+      {
+        "bytes": 934788,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/05-pending.json",
+        "sha256": "cf33a17b35d9457751383dd7312e9ec7ad3e548ae3d4569951fe839c6f002002"
+      },
+      {
+        "bytes": 1754,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/05-declaration.json",
+        "sha256": "593b03fbee841370dd383b9ea0f37bf4a120ce6296b71c8c4eae0c4a50b768ed"
+      },
+      {
+        "bytes": 68599,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/05-tdfol-native-view.json",
+        "sha256": "e2fdd4cd773e0d5a450241c83d4ff62b47cb459d0996c66cd3035f6bd04f67b7"
+      }
+    ],
+    "packet_sha256": "576a7ee70ad8989986378c01ebf237b1dd1f2bc00dc88d305ecc1a891e6fdfa6",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t1-q1-f",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 5,
+    "outputs": [
+      {
+        "bytes": 934788,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/05-pending.json",
+        "sha256": "cf33a17b35d9457751383dd7312e9ec7ad3e548ae3d4569951fe839c6f002002"
+      },
+      {
+        "bytes": 1754,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/05-declaration.json",
+        "sha256": "593b03fbee841370dd383b9ea0f37bf4a120ce6296b71c8c4eae0c4a50b768ed"
+      }
+    ],
+    "packet_sha256": "576a7ee70ad8989986378c01ebf237b1dd1f2bc00dc88d305ecc1a891e6fdfa6",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-o",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 6,
+    "outputs": [
+      {
+        "bytes": 934837,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/06-pending.json",
+        "sha256": "807363fd072fcb117133764eedda5bbeeeca4bc73229ec0551e2befca1f51ace"
+      },
+      {
+        "bytes": 1788,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/06-declaration.json",
+        "sha256": "b6bbf2ac7b13fe4886dc84e15fcfbced10e27807894eb0b065147244bfa26517"
+      },
+      {
+        "bytes": 69953,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/06-tdfol-native-view.json",
+        "sha256": "eddb97427641490db8962916d992a9a15c94e18c00668dda491ef9fcd60a66b9"
+      }
+    ],
+    "packet_sha256": "81ab7d0a101f7d0f3e3eeb1b443b65e0b673d8fdb78a76681a635531c0d9066f",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-o",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 6,
+    "outputs": [
+      {
+        "bytes": 934837,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/06-pending.json",
+        "sha256": "807363fd072fcb117133764eedda5bbeeeca4bc73229ec0551e2befca1f51ace"
+      },
+      {
+        "bytes": 1788,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/06-declaration.json",
+        "sha256": "b6bbf2ac7b13fe4886dc84e15fcfbced10e27807894eb0b065147244bfa26517"
+      }
+    ],
+    "packet_sha256": "81ab7d0a101f7d0f3e3eeb1b443b65e0b673d8fdb78a76681a635531c0d9066f",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-p",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 7,
+    "outputs": [
+      {
+        "bytes": 934845,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/07-pending.json",
+        "sha256": "d6a484831efe64a45cd682b677fcf81fe554301f9afe54de82747ab3be196832"
+      },
+      {
+        "bytes": 1796,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/07-declaration.json",
+        "sha256": "417f6d37dd614f5157c4426b516958ead9b1a89892e3521c2f6ebb7b6e28b74a"
+      },
+      {
+        "bytes": 69993,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/07-tdfol-native-view.json",
+        "sha256": "7c3929936d8ac47283e84b90ffddc4c192518d238a0eab25fc779174886c4b86"
+      }
+    ],
+    "packet_sha256": "bd2e95542463e99f7b9652e4d72a6c8d97619f5d06f18429813d94877097e4f3",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-p",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 7,
+    "outputs": [
+      {
+        "bytes": 934845,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/07-pending.json",
+        "sha256": "d6a484831efe64a45cd682b677fcf81fe554301f9afe54de82747ab3be196832"
+      },
+      {
+        "bytes": 1796,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/07-declaration.json",
+        "sha256": "417f6d37dd614f5157c4426b516958ead9b1a89892e3521c2f6ebb7b6e28b74a"
+      }
+    ],
+    "packet_sha256": "bd2e95542463e99f7b9652e4d72a6c8d97619f5d06f18429813d94877097e4f3",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-f",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": true,
+    "original_position": 8,
+    "outputs": [
+      {
+        "bytes": 934841,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/08-pending.json",
+        "sha256": "087306623e6841ec92a2225e3c200f7489688477e975aa24e17d2b872ea4b211"
+      },
+      {
+        "bytes": 1792,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/08-declaration.json",
+        "sha256": "4b46342749a57f10067aa69e7fb23707b57feb41bdae0e90fab4fd778fb01c58"
+      },
+      {
+        "bytes": 69973,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/08-tdfol-native-view.json",
+        "sha256": "15e1b7c10c01ff5c56aa0972a447f79547ecae679b58d142b3a4f73386f8ada8"
+      }
+    ],
+    "packet_sha256": "36ac579b763174b15bd23cd6b5230ee2b04a64189c0b50b3a0abb7d3410f2d14",
+    "registry_family_qualified": false,
+    "sealed_legal_family": "deontic",
+    "semantic_accuracy": null,
+    "status": "native_parser_view_prepared"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "native_view_preparation",
+    "id": "native-tuning-begonia-t2-q2-f",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": true,
+    "original_position": 8,
+    "outputs": [
+      {
+        "bytes": 934841,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/08-pending.json",
+        "sha256": "087306623e6841ec92a2225e3c200f7489688477e975aa24e17d2b872ea4b211"
+      },
+      {
+        "bytes": 1792,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepared-native-views-v02/development/08-declaration.json",
+        "sha256": "4b46342749a57f10067aa69e7fb23707b57feb41bdae0e90fab4fd778fb01c58"
+      }
+    ],
+    "packet_sha256": "36ac579b763174b15bd23cd6b5230ee2b04a64189c0b50b3a0abb7d3410f2d14",
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "DCEC_qualifier_refusal",
+      "model_calls": 0,
+      "reason": "DCEC native parser view requires qualifier-free original deontic request",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "qualified_DCEC_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-o",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": false,
+    "original_position": 9,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-o",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": false,
+    "original_position": 9,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-p",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": false,
+    "original_position": 10,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-p",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": false,
+    "original_position": 10,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-f",
+    "native_parser_profile": "tdfol",
+    "native_view_API_called": false,
+    "original_position": 11,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  },
+  {
+    "admitted": false,
+    "attempt_stage": "unchanged_pending_preparation",
+    "id": "native-tuning-begonia-t3-q3-f",
+    "native_parser_profile": "dcec",
+    "native_view_API_called": false,
+    "original_position": 11,
+    "refusal": {
+      "admitted": false,
+      "backend_calls": 0,
+      "case": "unchanged_temporal_pending_profile",
+      "model_calls": 0,
+      "reason": "unsupported temporal/calendar profile",
+      "refused": true
+    },
+    "semantic_accuracy": null,
+    "status": "temporal_profile_refused"
+  }
+]

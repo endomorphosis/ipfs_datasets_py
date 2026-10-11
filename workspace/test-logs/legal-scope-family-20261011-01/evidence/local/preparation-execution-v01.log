@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_scope_native_pilot.py", line 455, in <module>
+    main()
+  File "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_scope_native_pilot.py", line 404, in main
+    assert name in source_before, ("unfrozen producer", name, path)
+           ^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('unfrozen producer', 'ipfs_datasets_py.logic.syntax_core', '/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/syntax_core/__init__.py')

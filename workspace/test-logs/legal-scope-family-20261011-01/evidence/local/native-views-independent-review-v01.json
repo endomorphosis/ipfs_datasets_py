@@ -1,0 +1,404 @@
+{
+  "schema": "saved-native-views-independent-static-review/v1",
+  "created_at": "2026-10-11T19:37:50.990Z",
+  "passed": true,
+  "findings": [],
+  "review_scope": "Read-only saved-file, strict JSON, source/test AST and immutable Git-object verification. No project/test owner import, producer call, test execution, model/numerical execution, compiler, network or resource operation by this reviewer.",
+  "package_root": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets",
+  "source_baseline": "7fc3f57a94108030be3cceca7368920754754a94",
+  "observed_isolated_HEAD": "7fc3f57a94108030be3cceca7368920754754a94",
+  "exact_owned_files": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+      "bytes": 13297,
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d",
+      "AST_parsed": true
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py",
+      "bytes": 29921,
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90",
+      "AST_parsed": true
+    }
+  ],
+  "build": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/saved-native-views-build-v01.json",
+    "bytes": 21081,
+    "sha256": "8f0f958ebe36a0b7c33e9f71eca8f4a41e3d8bdd97a753fd25d86360d2917b93",
+    "authored_status": "authored_frozen_static_syntax_checked_not_executed",
+    "pin_matches": true
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": {
+      "bytes": 57189,
+      "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": {
+      "bytes": 28721,
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": {
+      "bytes": 29788,
+      "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/families/registry.py": {
+      "bytes": 51399,
+      "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": {
+      "bytes": 29000,
+      "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": {
+      "bytes": 16858,
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py": {
+      "bytes": 66185,
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/family-adapter-independent-review-v01.json": {
+      "bytes": 17730,
+      "sha256": "f26414e062bb48ce7be48df2022f3bb39c182ffa5a0091637069fa0f8e36c894"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": {
+      "bytes": 57189,
+      "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": {
+      "bytes": 28721,
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": {
+      "bytes": 29788,
+      "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/families/registry.py": {
+      "bytes": 51399,
+      "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": {
+      "bytes": 29000,
+      "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": {
+      "bytes": 16858,
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py": {
+      "bytes": 13297,
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py": {
+      "bytes": 66185,
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py": {
+      "bytes": 29921,
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/saved-native-views-build-v01.json": {
+      "bytes": 21081,
+      "sha256": "8f0f958ebe36a0b7c33e9f71eca8f4a41e3d8bdd97a753fd25d86360d2917b93"
+    }
+  },
+  "APIs": [
+    {
+      "arguments": "value",
+      "line": 96,
+      "name": "digest"
+    },
+    {
+      "arguments": "raw",
+      "line": 101,
+      "name": "parse_json_bytes"
+    },
+    {
+      "arguments": "",
+      "line": 138,
+      "name": "producer_pins"
+    },
+    {
+      "arguments": "packet, declaration, *, expected_packet_sha256, native_parser_profile",
+      "line": 147,
+      "name": "prepare_native_view"
+    },
+    {
+      "arguments": "output, packet, declaration, *, expected_packet_sha256, native_parser_profile",
+      "line": 228,
+      "name": "validate_native_view"
+    }
+  ],
+  "api_contract": {
+    "preparation": "prepare_native_view(packet,declaration,*,expected_packet_sha256,native_parser_profile) requires exact lowercase tdfol or dcec, complete original pending packet and explicit caller declaration; both JSON snapshots are detached before owner calls.",
+    "validation": "validate_native_view(output,packet,declaration,*,expected_packet_sha256,native_parser_profile) checks closed complete output/content seal, regenerates from retained original inputs and compares canonical full JSON bytes.",
+    "transport": "parse_json_bytes and digest are pure finite JSON transport, with strict duplicate-key rejection, exact JSON types/string keys, UTF8 and finite-number validation; input/output 32MiB and depth128 bounds.",
+    "digest_authority": "expected_packet_sha256 and all nested digest fields are canonical-content digests (compact sorted ensure_ascii=False finite UTF8 JSON), distinct from original file byte SHA and checkpoint custody/authentication.",
+    "source_joins": "Unchanged adapter.validate_pending/prepare_family regenerate source ID/SHA and complete report/checkpoint/position/control/lineage/candidate/facet bindings; original snapshots remain necessary external replay inputs.",
+    "raw_joint": "Raw learned refusal remains original raw parent; separate joint selected proposal must deterministically reproduce saved joint result from selected same-forward scores. Raw reports without scores retain saved geometry consistency but gain no head replay or model authentication.",
+    "source_occurrences": "Explicit caller occurrence and modality anchor must cover saved copied facets, preserve exact character slices/UTF8 coordinate accounting through original owner, and avoid learned-facet overlap; declared or absent physical-context identity never becomes verified custody.",
+    "caller_interpretation": "No cue matching, modality rewriting, qualifier erasure, clock/event/owner inference or canonical-label creation. Every qualifier interpretation and activation/exception scope is supplied and validated by unchanged typed bridge.",
+    "parser_roundtrip": "Each parser independently preserves full native AST print/reparse and original modal/action/argument spine plus ordered qualifier ledger; cross-parser AST equality and cross-family semantic equivalence are expressly absent.",
+    "producer_scope": "Called pure-owner endpoint pins are compared before and after preparation. These are read-only source-file endpoints, not continuous custody or authenticated loaded bytecode/model/checkpoint proof."
+  },
+  "static_checked": {
+    "owns_no_old_owner_edits": true,
+    "stdlib_only_literal_imports": [
+      "__future__",
+      "copy",
+      "hashlib",
+      "importlib",
+      "json",
+      "pathlib",
+      "re"
+    ],
+    "lazy_owner_acquisition": [
+      "saved_span_family_adapter",
+      "legal_source_family_bridge"
+    ],
+    "sealed_old_owner_replay_before_alternate_view": true,
+    "original_output_request_reports_bindings_preserved": true,
+    "deontic_authority_flags_checked_false": true,
+    "native_report_authority_flags_checked_false": true,
+    "output_closed_schema_and_full_regeneration": true,
+    "input_aliases_detached_and_output_snapshots_independent": true,
+    "source_endpoints_before_after_checked": true,
+    "mathematical_model_or_native_execution_verified": false
+  },
+  "registered_family_boundary": {
+    "sealed_family": "deontic",
+    "sealed_route": "legal-route/deontic/v1",
+    "old_native_parser_profile": "deontic_fol",
+    "alternate_native_parser_profiles": [
+      "tdfol",
+      "dcec"
+    ],
+    "profile": "saved-ground-deontic-native-parser-views/v1",
+    "tdfol_scope": "ground Boolean/deontic null-context fragment; caller-declared conditions outside modality and any exception waives at evaluation time; no temporal operators/quantifiers.",
+    "dcec_scope": "ground qualifier-free O/P/F Object predicate fragment; independent native zero-arity Object function constants, not TDFOL constant ASTs.",
+    "registry_distinction": "Existing typed route TDFOL temporal_first_order and DCEC/event/modal/quantifier family metadata are broader identities. No alias resolution or qualified-family claim arises from choosing this native_parser_profile.",
+    "refusals": [
+      "All original saved-span temporal/calendar facets remain refused.",
+      "DCEC rejects every nonempty condition or exception without deleting them.",
+      "Wrong aliases/family argument, unfilled or overlapping cue, changed literal/scope, agent/modal context/clock/quantifier/event/cognitive declarations and malformed/resealed packet/report/output are refused.",
+      "Original raw and joint abstentions remain rejected by original pending adapter; joint proposal may coexist with an unchanged refused raw parent."
+    ],
+    "authority_false_flags": [
+      "qualified",
+      "admitted",
+      "formalized",
+      "proof_authority",
+      "source_semantics_verified",
+      "reviewer_authenticated",
+      "semantic_gold",
+      "training_masks_emitted",
+      "training_executed",
+      "model_executed",
+      "encoder_executed",
+      "Lake_executed",
+      "backend_executed",
+      "family_qualified",
+      "registry_family_qualified",
+      "all_logic_families_supported",
+      "source_context_custody_verified",
+      "target_access",
+      "cross_family_equivalence_verified",
+      "old_calendar_gate_equivalence_verified",
+      "checkpoint_authenticated",
+      "model_authenticated",
+      "encoder_authenticated"
+    ],
+    "authority_false_flag_count": 23,
+    "compiler_scope": "Lean body preparation/native parser validation only. Separate actual lake build legal is required; no compiler/build pass or proof/semantic authority is established by this static receipt."
+  },
+  "old_adapter_independence": {
+    "reviewer_authored_old_adapter": true,
+    "not_self_qualified_by_this_review": true,
+    "reused_existing_independent_review": {
+      "findings": [],
+      "passed": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/family-adapter-independent-review-v01.json",
+      "schema": "saved-span-family-adapter-independent-static-review/v1"
+    },
+    "independent_review_pin": {
+      "bytes": 17730,
+      "sha256": "f26414e062bb48ce7be48df2022f3bb39c182ffa5a0091637069fa0f8e36c894"
+    },
+    "reused_old_bytes_unchanged_in_current_prior_and_baseline": true,
+    "endpoint_checked_owner_count": 12,
+    "owner_endpoint_map": [
+      {
+        "bytes": 36925,
+        "current_prior_baseline_equal": true,
+        "git_blob": "9ce309ebd225459ecb6928ad42f0e51fbfff75e2",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+        "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+      },
+      {
+        "bytes": 25441,
+        "current_prior_baseline_equal": true,
+        "git_blob": "9de2c5b696832565a307a74a24dd2a6c257da31b",
+        "relative_path": "tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+        "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+      },
+      {
+        "bytes": 21178,
+        "current_prior_baseline_equal": true,
+        "git_blob": "c44085c2e590b15fe2143691a6189d80714079d7",
+        "relative_path": "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+        "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+      },
+      {
+        "bytes": 7838,
+        "current_prior_baseline_equal": true,
+        "git_blob": "831d650fc53a1aa2108bd4bbec05d1321b75f8e4",
+        "relative_path": "ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+        "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+      },
+      {
+        "bytes": 11880,
+        "current_prior_baseline_equal": true,
+        "git_blob": "c4d8e5318421c1a3d297acc91640a7e3bc90d2fb",
+        "relative_path": "ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+        "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+      },
+      {
+        "bytes": 29000,
+        "current_prior_baseline_equal": true,
+        "git_blob": "20d150b9409907c71fec95ba2d6cd22eeb957e45",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+        "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+      },
+      {
+        "bytes": 16858,
+        "current_prior_baseline_equal": true,
+        "git_blob": "669c7d3a7d8df39e094cb84fad39fd4ce164fa71",
+        "relative_path": "ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+        "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+      },
+      {
+        "bytes": 66185,
+        "current_prior_baseline_equal": true,
+        "git_blob": "08465317b037aa00e24a1cac8b6a2a353e00f6c2",
+        "relative_path": "ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+        "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+      },
+      {
+        "bytes": 51399,
+        "current_prior_baseline_equal": true,
+        "git_blob": "913cead23854064b5958a973a663a6fc8644f36e",
+        "relative_path": "ipfs_datasets_py/logic/families/registry.py",
+        "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450"
+      },
+      {
+        "bytes": 28721,
+        "current_prior_baseline_equal": true,
+        "git_blob": "c89b513ad59ba3e8c124be78ac2a93355f88a829",
+        "relative_path": "ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+        "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+      },
+      {
+        "bytes": 29788,
+        "current_prior_baseline_equal": true,
+        "git_blob": "6fab7228536c780d1b38704c946532fd9c27cb2f",
+        "relative_path": "ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+        "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+      },
+      {
+        "bytes": 57189,
+        "current_prior_baseline_equal": true,
+        "git_blob": "baa0353e9da94dc1542a5fadb4296710e55f6ec5",
+        "relative_path": "ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+        "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+      }
+    ],
+    "closure_limit": "Twelve declared direct reused owner/test endpoints are bound here. This receipt does not close every transitive import/package-initializer dependency, historical worktree or later runtime plan."
+  },
+  "tests": {
+    "review_type": "Static definitions/assertions/parametrization and helper-loading review only; no passing-test observation.",
+    "AST_test_functions": 26,
+    "declared_cases": 123,
+    "exact_build_function_line_axes_case_map_matches": true,
+    "unchanged_reused_fixture_functions": 19,
+    "unchanged_reused_fixture_cases": 79,
+    "sibling_cases_counted_in_new_123": false,
+    "fixture_loading": "Module-scope lazy pytest fixture uses spec.loader.exec_module on unchanged sibling helper module. That operation executes sibling imports/constants/decorators/definitions, not sibling test functions or subprocess bodies.",
+    "new_suite_subprocess_calls": false,
+    "fresh_process_numeric_import_denial_newly_observed": false,
+    "import_guard_assertion_scope": "New source import-boundary test examines AST of stdlib import syntax/lazy owner names. Fresh-Python numerical import controls reside in unchanged sibling test body and are not executed merely loading fixtures.",
+    "meaningful_assertion_strata": [
+      "O/P/F plain/condition/exception TDFOL native views and qualifier-free DCEC independent constants/canonical inversion.",
+      "Qualified DCEC refusals, nested Boolean expression and explicit operand-order preservation.",
+      "Same-forward joint binding and raw refusal coexistence; full96-row report snapshot and nonselected-row tamper.",
+      "Unicode repeated literal occurrences, unary absent object, meaningless declared cue demonstrating no legal meaning inference.",
+      "Profile aliases/unsupported scopes/cue and geometry mutations, temporal retained-refusal.",
+      "Packet/joint/output tampering even after repaired inner and outer digest seals, authority flag/type changes.",
+      "Finite exact JSON types/duplicate keys/UTF8/bounds/depth/cycles, detached snapshots, transport owner laziness and changing producer endpoints."
+    ],
+    "parallel_static_checker": "/root/real_code_data_20261011/hub_saved_identity_audit",
+    "checker_execution_count": 0
+  },
+  "qualification": {
+    "static_interface_and_artifact_consistency_passed": true,
+    "family_qualification": false,
+    "legal_semantics_verified": false,
+    "reviewer_authenticated": false,
+    "source_context_custody_verified": false,
+    "checkpoint_or_model_authenticated": false,
+    "semantic_gold_created": false,
+    "training_admission_granted": false,
+    "training_or_weight_selection_performed": false,
+    "numerical_execution_performed": false,
+    "native_compiler_execution_performed": false,
+    "observed_actual_statutory_label_count": 0
+  },
+  "limitations": [
+    "This is a static qualification of frozen new code and tests, not a numerical/parser/compiler execution receipt or an assertion that123tests passed.",
+    "Saved content SHA joins authenticate only the declared content consistency once original files are independently pinned; reported checkpoint identity does not authenticate checkpoint bytes or original model execution.",
+    "Caller cue/qualifier/physical-occurrence declarations are not natural-language interpretation review or source truth; emitted Boolean structure can be semantically wrong while structurally exact.",
+    "Nested legacy bridge family/logic_family labels remain unchanged as bounded native metadata and do not confer registry-family qualification.",
+    "Direct source endpoint equality across two isolates and immutable7fc objects is an observed endpoint comparison, not continuity or foreign-working-file preservation.",
+    "Pure API calls still lazily import existing owners and read producer source pins. This is not a process/network sandbox or complete package-initializer/import closure.",
+    "Temporal/event/cognitive families, explicit clock/owner/agent metadata, reviewed statutory targets, independent heldout legal evaluation and actual subsequent native build remain separate work."
+  ]
+}

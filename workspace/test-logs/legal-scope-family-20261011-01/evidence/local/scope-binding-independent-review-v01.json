@@ -1,0 +1,418 @@
+{
+  "schema": "statutory-scope-binding-independent-static-review/v1",
+  "created_at": "2026-10-11T19:45:44.750Z",
+  "passed": true,
+  "findings": [],
+  "review_scope": "Read-only frozen source/test/build JSON and AST plus unchanged owner/Git-object inspection. No project/producer/test import or execution, source resolver call, models/numerical libraries, compiler, network or resource operation by this reviewer.",
+  "package_root": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets",
+  "source_base_commit": "7fc3f57a94108030be3cceca7368920754754a94",
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-review-independent-v01.json": {
+      "bytes": 13347,
+      "sha256": "393ffc9cd61f76c189a5c86ea102ad676e2dfa72224c8961f266b43c51d41273"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/actual-temporal-proposal-diagnostics-v01.json": {
+      "bytes": 204528,
+      "sha256": "1df837289e963870cad9dae0cc970f5315a0b7b28e79255d37c4d8c9cbfed9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": {
+      "bytes": 29993,
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": {
+      "bytes": 4214,
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py": {
+      "bytes": 15802,
+      "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py": {
+      "bytes": 34663,
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py": {
+      "bytes": 29041,
+      "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py": {
+      "bytes": 42670,
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope.py": {
+      "bytes": 33666,
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py": {
+      "bytes": 16503,
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py": {
+      "bytes": 31211,
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+      "bytes": 33517,
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py": {
+      "bytes": 46298,
+      "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-test-harness-independent-review-v01.json": {
+      "bytes": 55257,
+      "sha256": "243bf48280154a7fe6c822cccaf6a1b0b15c726002db44d2e58810da5b497111"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-views-independent-review-v01.json": {
+      "bytes": 23760,
+      "sha256": "de86f285b784f53f4bc065817b05bd48ec089b3f28dab08cfb96847be8b6463b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/retained-owner-pins.json": {
+      "bytes": 5487,
+      "sha256": "03bdf2404ef2cafe822dd4a291fc499ebe660cfa272925dc2d7f191bf7f0fb9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/statutory-scope-binding-build-v01.json": {
+      "bytes": 16448,
+      "sha256": "2e50fd39aa7bb28d0d16ea0eeedf707b0b9924b8bbd5bf0bebb9ee62138f05aa"
+    }
+  },
+  "APIs": [
+    {
+      "arguments": "value",
+      "line": 40,
+      "name": "digest"
+    },
+    {
+      "arguments": "raw",
+      "line": 45,
+      "name": "parse_json_bytes"
+    },
+    {
+      "arguments": "packet, reviewed_submissions, *, expected_packet_sha256, artifact_resolver, recording=None, preflight=None",
+      "line": 139,
+      "name": "prepare_binding_slots"
+    },
+    {
+      "arguments": "packet, reviewed_submissions, scope_sidecars, *, expected_packet_sha256, artifact_resolver, recording=None, preflight=None",
+      "line": 351,
+      "name": "bind_scope_declarations"
+    },
+    {
+      "arguments": "receipt, packet, reviewed_submissions, scope_sidecars, *, expected_packet_sha256, artifact_resolver, recording=None, preflight=None",
+      "line": 447,
+      "name": "validate_binding"
+    }
+  ],
+  "exact_owned_files": {
+    "source": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+      "bytes": 29041,
+      "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+    },
+    "tests": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+      "bytes": 46298,
+      "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+    },
+    "build": {
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/statutory-scope-binding-build-v01.json",
+      "bytes": 16448,
+      "sha256": "2e50fd39aa7bb28d0d16ea0eeedf707b0b9924b8bbd5bf0bebb9ee62138f05aa"
+    }
+  },
+  "unchanged_owner_count": 10,
+  "unchanged_owners": [
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 29993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 4214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 15802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+      "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "relative_path": "ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 33666,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+      "relative_path": "tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 16503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+      "relative_path": "tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 31211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "relative_path": "tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830",
+      "unchanged_from_immutable_baseline": true
+    },
+    {
+      "bytes": 33517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "relative_path": "tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328",
+      "unchanged_from_immutable_baseline": true
+    }
+  ],
+  "reuse_independence": {
+    "reviewer_authored_old_statutory_source_packet_owner": true,
+    "old_owner_not_self_qualified_as_reviewed_gold": true,
+    "prior_independent_source_packet_review": {
+      "findings": [],
+      "passed": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-review-independent-v01.json",
+      "pin": {
+        "bytes": 13347,
+        "sha256": "393ffc9cd61f76c189a5c86ea102ad676e2dfa72224c8961f266b43c51d41273"
+      }
+    },
+    "prior_review_source_sha256_matches_current": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938",
+    "current_review_target": "Different newly authored submission-to-scope transport owner; exact old owner bytes retained."
+  },
+  "verified_static_contract": {
+    "preparation_slots": "prepare_binding_slots replays source packet, optional supplied recording and preflight; returns one original-order physical item, null unsubmitted slot, and one null caller sidecar slot per received declaration. It generates no completed review or scope declaration.",
+    "upstream_custody": "_setup detaches packet/submissions/optional receipts and calls recorder.validate_recording and preflight.validate_preflight before using fields. _closing repeats the same validations/context reads and compares packet/submissions/recording/preflight endpoint bytes.",
+    "sidecar_binding": "Closed sidecar header joins packet canonical digest, exact submission ID+full content digest, complete item-declaration digest, full immutable physical/source/context envelope and exact full source/context request digest. Unique pair/submission-item and global binding_id required.",
+    "complete_context": "Request always preserves identity-normalized complete raw-section text with declared_context role, empty unresolved context bindings and its raw UTF8 SHA. Scope input/declaration exact bytes must match request; no truncation, none_required substitution or official-HTML relabeling.",
+    "source_context_coordinates": "Original source role anchors use selected-source Unicode characters; context occurrences translate by item selected_char_start. Literal slices and source/UTF8 physical selectors remain replayed by unchanged packet/recorder owners. Equal text cannot substitute a different physical envelope.",
+    "explicit_maps": "All maps are closed and bounded. Completed joins require original ordered exhaustive rule and modality lists, every rule/facet/qualifier slot, every original anchor and attachment. Rule/canonical aliases compare only explicit declarations, never infer source meaning.",
+    "repeated_leaf_sites": "Each qualifier index binds an exact graph path, facet and affected rule. Duplicate (rule,path) sites refuse; supplied set equals every actual leaf site×affected rule; per-rule/facet leaf order preserves local-first then inner-to-outer shared attachment traversal.",
+    "shared_attachments": "Each original attachment joins an explicit group path with same facet, exact affected-rule membership set, and each original attached anchor inside that group. Shared references cannot be silently narrowed/dropped.",
+    "binder_geometry": "Existing scope validator runs before _join and validates occurrence facets, declared binder variable/domain, attachment paths, scope containment, repeated use outside scope and unique associations. Typechecking/legal quantifier meaning remain false.",
+    "declaration_transport": "Existing canonical statement_scope_v1 FAMILY_EXTENSION BridgeView carries exact declared payload and CID; exact serialized reconstruction validated. No flat canonical projection, native AST lowering, formal target or accepted family output is created.",
+    "status_preservation": "Physical item order, complete original declaration entry, preflight diagnostics/status, recording dispute, scope sidecar and unresolved/coverage/binder content remain visible. Successful scope transport never upgrades partial, inconsistent, unresolved or disputed review status.",
+    "exact_replay": "validate_binding rebuilds the complete receipt from retained packet/submissions/sidecars/optional upstream receipts and compares canonical full JSON bytes. Repaired nested/outer seals do not bypass source/maps/status/view/authority regeneration.",
+    "import_boundary": "Eager imports are collections/copy and five existing pure legal IR owners. No direct model/numerical/test/backend/compiler imports or calls exist in new source. This does not establish complete package-initializer or transitive import behavior."
+  },
+  "closed_map_shapes": {
+    "rule_bindings": [
+      "rule_index",
+      "scope_rule_id"
+    ],
+    "modality_bindings": [
+      "rule_index",
+      "scope_occurrence_id"
+    ],
+    "qualifier_bindings": [
+      "rule_index",
+      "facet",
+      "qualifier_index",
+      "scope_leaf_path"
+    ],
+    "anchor_bindings": [
+      "anchor_id",
+      "scope_occurrence_id"
+    ],
+    "attachment_bindings": [
+      "attachment_id",
+      "scope_path"
+    ],
+    "partial_null_meaning": "Null scope declaration/map is unanswered and unassessed; explicit empty map is cardinality-checked on complete sidecar.",
+    "canonical_symbol_scope": "Explicit alias equality only. Source literal and declared canonical symbol can differ without claiming semantic normalization."
+  },
+  "limits": {
+    "packet_and_full_result_bytes": 8388608,
+    "ordinary_JSON_depth": 24,
+    "ordinary_JSON_nodes": 1000000,
+    "source_packet_rows": 32,
+    "context_artifacts": 16,
+    "context_total_bytes": 1048576,
+    "selected_total_bytes": 32768,
+    "submissions": 20,
+    "sidecars": 640,
+    "qualifier_map_rows": 3072,
+    "selected_source_characters": 16384,
+    "complete_context_characters": 16384,
+    "scope_rules": 32,
+    "scope_occurrences": 512,
+    "scope_JSON_nodes": 25000,
+    "scope_JSON_depth": 20,
+    "scope_expression_nodes": 1024,
+    "scope_expression_depth": 6,
+    "scope_request_bytes": 65536,
+    "scope_declaration_bytes": 65536,
+    "complete_scope_bridge_view_bytes": 65536,
+    "no_source_context_rule_or_leaf_truncation": true,
+    "limit_status": "profile_limit preserves full supplied sidecar/physical/source bindings. Header/input/body seals and closed bounded map rows are checked, while out-of-profile graphs explicitly remain unvalidated.",
+    "complete_bridge_wrapper": "Payload and complete wrapper caps are distinct. A valid payload can be graph-checked yet profile-limited after adding BridgeView wrapper; view remains absent and scope_bridge_transport_validated=false.",
+    "ordinary_transport": "Duplicate-key/invalid UTF8/nonordinary values refused through inherited strict parser. Floats and floating score packets are refused; closed review/sidecar schemas constrain the supplied structure.",
+    "complete_result_limit": "Oversized aggregate result or excessive JSON depth/node count fails closed; no selected subset or dropped nested evidence is returned."
+  },
+  "statuses": {
+    "binding": [
+      "pending_scope_declaration",
+      "partial_binding",
+      "profile_limit",
+      "joined_declared_scope_only"
+    ],
+    "review_and_binding_are_distinct": true,
+    "graph_validation_flag_only_after_scope_validation": true,
+    "bridge_validation_flag_only_after_complete_view_validation": true,
+    "top_pending_if_zero_submissions": true,
+    "missing_sidecar_does_not_erase_received_declaration": true,
+    "no_completed_scope_generated_for_zero_submissions": true,
+    "trigger": "Original archival trigger list is retained verbatim. It has no rule association in old schema, so trigger_to_rule_linkage_assessed remains false."
+  },
+  "authority": {
+    "false_flag_count": 51,
+    "false_flags": [
+      "qualified",
+      "accepted",
+      "admitted",
+      "training_qualified",
+      "semantic_gold",
+      "source_semantics_verified",
+      "source_authority_authenticated",
+      "official_current_law_authenticated",
+      "reviewer_identity_authenticated",
+      "reviewer_independence_authenticated",
+      "independent_review_completed",
+      "actual_training_or_evaluation_admission",
+      "fresh_holdout_qualified",
+      "global_unseen_verified",
+      "proof_authority",
+      "family_bridge_admitted",
+      "Lake_qualified",
+      "model_executed",
+      "encoder_executed",
+      "training_executed",
+      "human_review_authenticated",
+      "independent_adjudication_completed",
+      "signature_verification_executed",
+      "completed_submissions_generated",
+      "target_created",
+      "reviewer_blindness_verified",
+      "evidence_contents_interpreted",
+      "file_bytes_verified_by_dictionary_api",
+      "source_fidelity_established",
+      "semantic_equivalence_assessed",
+      "semantic_profile_validated",
+      "binder_terms_typechecked",
+      "normalization_approved",
+      "lowering_authorized",
+      "target_access",
+      "target_eligibility",
+      "declared_consistency_is_legal_correctness",
+      "symbolic_aliases_inferred",
+      "cross_references_resolved",
+      "Boolean_scope_inferred",
+      "modality_cues_inferred",
+      "statement_scope_synthesized",
+      "formal_output_lowered",
+      "scope_declaration_truth_verified",
+      "review_status_promoted",
+      "formalized",
+      "native_lowering_performed",
+      "temporal_origin_resolved",
+      "binder_roles_inferred",
+      "trigger_to_rule_linkage_assessed",
+      "scope_binding_authorizes_lowering"
+    ],
+    "all_admission_mask_fields": [
+      "weak_decoder_fit",
+      "strong_semantic_fit",
+      "contrastive_supervision",
+      "proof_supervision",
+      "fidelity_evaluation"
+    ],
+    "all_admission_masks_value": 0,
+    "gold_labels_created": 0,
+    "human_reviews_authenticated": 0,
+    "qualified_training_pairs": 0,
+    "formal_targets_created": 0,
+    "model_calls": 0,
+    "encoder_calls": 0,
+    "prover_calls": 0,
+    "context_resolved": false,
+    "native_lowering_performed": false,
+    "full_logic_family_equivalence": false,
+    "scope_binding_authorizes_lowering": false,
+    "legal_semantics_verified": false,
+    "review_status_promoted": false
+  },
+  "tests": {
+    "AST_functions": 42,
+    "authored_cases": 89,
+    "exact_build_inventory_match": true,
+    "current_test_execution_observed": false,
+    "current_pass_count_asserted": false,
+    "fixture_scope": "Self-contained synthetic archived-section and review/sidecar constructors; no actual independently reviewed statute gold. When run, tmp_path supplies ordinary local artifact files and explicit fake parent provenance.",
+    "coverage": [
+      "Empty8physical rows with0submissions/sidecars/labels; complete/missing/partial/disputed/inconsistent/unresolved review transport.",
+      "Shared and repeated qualifier leaf multiplicity/order and attachment affected-rule/anchor coverage; symbol aliases remain explicit.",
+      "Unicode source-vs-context coordinate joins, context/body/hash/physical substitution and exact source envelope.",
+      "Malformed maps/unknown submissions/duplicates/renamed replay, upstream receipt tampering and resealed output authority/view/status tampering.",
+      "Existing binder facets, scope escapes, full source/context literal coverage declarations and no semantic inference.",
+      "Selected/context/rule/sidecar/outer transport and complete BridgeView wrapper limits without truncation.",
+      "Strict ordinary JSON, input/output detachment, absent facets and nonflat connectives."
+    ],
+    "naming_caveat": "test_shared_attachment_cannot_be_silently_made_local directly exercises conditions-to-exceptions facet mismatch; explicit affected-rule loss is covered separately by test_attachment_cannot_drop_an_affected_rule.",
+    "fixture_guard": "Autouse guard begins after initial project imports, denies finite four numerical roots and two socket methods; it is not a process fence or complete fresh-import isolation. Copied reviewed external harness provides finite broader selected-suite control.",
+    "independent_parallel_checker": "/root/real_code_data_20261011/hub_saved_identity_audit",
+    "parallel_core_conclusion": "No concrete blocker; source/context selectors, exhaustive maps, affected rules, binder escapes, retained statuses/masks and full output replay independently reviewed.",
+    "reviewer_executions": 0
+  },
+  "qualification": {
+    "static_new_owner_interface_and_transport_consistency_passed": true,
+    "actual_real_packet_scope_pilot_verified": false,
+    "actual_tests_compiler_or_model_math_verified": false,
+    "human_identity_or_independence_authenticated": false,
+    "statutory_gold_or_semantic_fidelity_established": false,
+    "source_authority_or_currentness_established": false,
+    "actual_training_or_evaluation_admission": false,
+    "full_family_or_Lake_qualification": false
+  },
+  "limitations": [
+    "Current real8 statutory items have0human reviews and0admitted targets; no scope sidecar or reviewed label is invented by this review or module. Authored fixtures remain engineering diagnostics.",
+    "Scope success is lossless caller declaration transport, not legal correctness, completed human review/adjudication, normalized alias approval, binder term typing, temporal/event origin resolution or interpretation completeness.",
+    "Graph validation may coexist with partial/inconsistent/unresolved/disputed source review; preserved upstream status and false flags prevent admission or lowering authorization.",
+    "Local artifact resolver/hash/selector replay verifies supplied archived bytes, not original Parquet export revalidation, current official law, source authority or truthful reviewer identity.",
+    "Finite strict closed transports have explicit size/profile limits; profile-limited supplied declarations are retained as unvalidated evidence rather than accepted graph/view.",
+    "No native compiler target is emitted or run by this sidecar owner. Existing temporal parser refusals and broader registered family metadata requirements remain separate.",
+    "Ten declared reused owner/test endpoints are compared with immutable7fc bytes; this receipt does not claim a complete transitive import closure, historical continuity or foreign working-file preservation.",
+    "The89authored cases are static declarations, not passing-test observations; subsequent root saved test/runtime receipts require separate qualification."
+  ]
+}

@@ -1,0 +1,1173 @@
+{
+  "actual_scope_pilot_helper_pin": {
+    "bytes": 4683,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_actual_scope_pilot.py",
+    "sha256": "aa3aae66ca19eb09f45c19b45b98a380e7b03a7f77950f1abac5a11cd8067fa7"
+  },
+  "artifact_count": 72,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/audit_git_integration.py": {
+      "bytes": 4029,
+      "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/compiler-protocol-independent-review-v01.json": {
+      "bytes": 66369,
+      "sha256": "2cf850b816e612d806b4c792412a51e8f38541edf3c21db372a4cde4195799ad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/copy_contribution.py": {
+      "bytes": 2169,
+      "sha256": "bf1d758886f3ea4f27dd7dd228ef69c387804c4faa95cdd5dbef4326f534636f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py": {
+      "bytes": 15230,
+      "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py": {
+      "bytes": 78154,
+      "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/integration-helper-independent-review-v01.json": {
+      "bytes": 59147,
+      "sha256": "22000edb9b56e208086fb5b39dd60a31f55a3b8d0fdfabefca2ca3f2962c45ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_compiler_protocol.py": {
+      "bytes": 4669,
+      "sha256": "0463026e5f2c66d93f8fd749703d7d03edc147cbb78b47337f410b3050f3c6c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_contribution_inventory.py": {
+      "bytes": 3902,
+      "sha256": "de33e40ee6339927aa78781453de226c0c7107533d41b340e25d7e464c771b3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_github_checks.py": {
+      "bytes": 2376,
+      "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_staged_map.py": {
+      "bytes": 5873,
+      "sha256": "367539f0fb1bfdaf9d538b6d6ee98990243297f26b50254a5ad6507d59dacc47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_native_build.py": {
+      "bytes": 4645,
+      "sha256": "3af389a06f11f18b347a94fd025b93b9e5b4e09c4d146691d3ccb851ece583b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json": {
+      "bytes": 378311,
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-artifact-pins.json": {
+      "bytes": 2765,
+      "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/audit_git_integration.py": {
+      "bytes": 4029,
+      "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/canonical-intake.json": {
+      "bytes": 643,
+      "sha256": "302eb7af14e55cb2e2b7a28c70729aeec31b62d9caa7949f387604d6689b3e63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py": {
+      "bytes": 2167,
+      "sha256": "1a66851e232235da9c8a38c6f6414b1915480e7f5693427cb58cb074e4bfc18d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py": {
+      "bytes": 57189,
+      "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py": {
+      "bytes": 28721,
+      "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py": {
+      "bytes": 29788,
+      "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py": {
+      "bytes": 7838,
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py": {
+      "bytes": 15230,
+      "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py": {
+      "bytes": 78154,
+      "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/families/registry.py": {
+      "bytes": 51399,
+      "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py": {
+      "bytes": 29000,
+      "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": {
+      "bytes": 16858,
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": {
+      "bytes": 29993,
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": {
+      "bytes": 4214,
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py": {
+      "bytes": 15802,
+      "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py": {
+      "bytes": 34663,
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py": {
+      "bytes": 29041,
+      "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py": {
+      "bytes": 42670,
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py": {
+      "bytes": 66185,
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge.py": {
+      "bytes": 11848,
+      "sha256": "d7c940a67f471d0e7f84e88048b3bc29100f0f232abdbb3b4382bcc672dd81ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py": {
+      "bytes": 15723,
+      "sha256": "d0bac1b69ea4462170eff0c3cd6a7763f9273b849a726342809683db007053f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_lake.py": {
+      "bytes": 11239,
+      "sha256": "caa676d1918e87b11198437097182f8782c7eb5e949273d8c0cdf988694369f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope.py": {
+      "bytes": 33666,
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py": {
+      "bytes": 16503,
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py": {
+      "bytes": 18662,
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_native_views.py": {
+      "bytes": 29921,
+      "sha256": "6fa7b07bd5f3bfc3c750f65cb99917cdfaa07bd370e2321529775ad338707a90"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py": {
+      "bytes": 31211,
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py": {
+      "bytes": 33517,
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py": {
+      "bytes": 46298,
+      "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-test-harness-independent-review-v01.json": {
+      "bytes": 55257,
+      "sha256": "243bf48280154a7fe6c822cccaf6a1b0b15c726002db44d2e58810da5b497111"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.log": {
+      "bytes": 912,
+      "sha256": "33ff348f880295e995fc31fe9bb1cc24e2e73fe5d817d386f73a54beb3ef251b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/inert-tests-v01.xml": {
+      "bytes": 195427,
+      "sha256": "f0b17d76366225efb369d367893959c6a4713a6aea3488cc8a137eff4b80bdc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/intake-readiness-v01.json": {
+      "bytes": 996,
+      "sha256": "d5dd7f192d13054da5b058159bb02d529ac3924bdb2a440dc7de1cfe835ed907"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/integration-helper-static-build-v01.json": {
+      "bytes": 2186,
+      "sha256": "e1b71da0e27d666280ae00fca44cbd365ae1b4653af5f109f695fefe6adf3475"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/native-views-independent-review-v01.json": {
+      "bytes": 23760,
+      "sha256": "de86f285b784f53f4bc065817b05bd48ec089b3f28dab08cfb96847be8b6463b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_actual_scope_pilot.py": {
+      "bytes": 4683,
+      "sha256": "aa3aae66ca19eb09f45c19b45b98a380e7b03a7f77950f1abac5a11cd8067fa7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol.py": {
+      "bytes": 4477,
+      "sha256": "b1f6342969f1900700b433cf8b37a804d294f1a540a3797eb82c6705c46e1aca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol_draft_v01.py": {
+      "bytes": 4470,
+      "sha256": "1dbda7842e47587526cd0b28ab38d2f5671883d63f6f3dbd4e607d9de3ee6390"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory.py": {
+      "bytes": 2446,
+      "sha256": "ccfdebc1a20d6092c73a94ee61e6fad1874512f6fb63ec0a3847c12fb97d812c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory_draft_v01.py": {
+      "bytes": 2432,
+      "sha256": "5904de48a8216318b5f2859b3cca3bb2640c1faca3efca2299c277ffd56caa70"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_scope_native_pilot.py": {
+      "bytes": 29975,
+      "sha256": "f07a2e4ddce24660eab76798fc81dc6502fb5d0f089bc809ac6b3e7e8e7145e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_canonical_endpoints.py": {
+      "bytes": 1295,
+      "sha256": "ebb815762aeaba42b18d238ba515f56392547078827e7fd6d7623c7e9a2be5d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_github_checks.py": {
+      "bytes": 2376,
+      "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_staged_map.py": {
+      "bytes": 5875,
+      "sha256": "89364cf132172a775759862ad4cf5339ad34d8e13fa75012814a3b91ef406469"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/retained-owner-pins.json": {
+      "bytes": 5487,
+      "sha256": "03bdf2404ef2cafe822dd4a291fc499ebe660cfa272925dc2d7f191bf7f0fb9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py": {
+      "bytes": 4681,
+      "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/saved-native-views-build-v01.json": {
+      "bytes": 21081,
+      "sha256": "8f0f958ebe36a0b7c33e9f71eca8f4a41e3d8bdd97a753fd25d86360d2917b93"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/selected-inert-tests-observation-v01.json": {
+      "bytes": 4975,
+      "sha256": "fd501d6cc670ad5734bf6aad9aa389cc4d04ccfe6f3d658299705f40212dd9eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/statutory-scope-binding-build-v01.json": {
+      "bytes": 16448,
+      "sha256": "2e50fd39aa7bb28d0d16ea0eeedf707b0b9924b8bbd5bf0bebb9ee62138f05aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json": {
+      "bytes": 21931,
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    }
+  },
+  "check_count": 91,
+  "checks": [
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:prepare_compiler_protocol.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:run_native_build.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:audit_git_integration.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:copy_contribution.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:record_staged_map.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:record_github_checks.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:record_canonical_endpoints.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:prepare_contribution_inventory.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:prepare_actual_scope_pilot.py",
+      "passed": true
+    },
+    {
+      "detail": "Stdlib AST parsing only; module not imported or executed.",
+      "name": "AST:bootstrap_inert.py",
+      "passed": true
+    },
+    {
+      "detail": "Parent-announced final frozen directory adaptation.",
+      "name": "final_protocol_generator_pin",
+      "passed": true
+    },
+    {
+      "detail": "Parent-announced final frozen directory adaptation.",
+      "name": "final_inventory_generator_pin",
+      "passed": true
+    },
+    {
+      "detail": "Byte exact against the separately retained previous contribution helper.",
+      "name": "unchanged_prior_clone:audit_git_integration.py",
+      "passed": true
+    },
+    {
+      "detail": "Byte exact against the separately retained previous contribution helper.",
+      "name": "unchanged_prior_clone:record_github_checks.py",
+      "passed": true
+    },
+    {
+      "detail": "Byte exact against the separately retained previous contribution helper.",
+      "name": "unchanged_prior_clone:bootstrap_inert.py",
+      "passed": true
+    },
+    {
+      "detail": "Original draft retained. Only preparation directory references change.",
+      "name": "directory_only_final_adaptation:prepare_compiler_protocol.py",
+      "passed": true
+    },
+    {
+      "detail": "Original draft retained. Only preparation directory references change.",
+      "name": "directory_only_final_adaptation:prepare_contribution_inventory.py",
+      "passed": true
+    },
+    {
+      "detail": "Reused prior review is separately pinned, not regenerated.",
+      "name": "prior_integration_review_pass",
+      "passed": true
+    },
+    {
+      "detail": "Previous actual native protocol review remains separate; no claim its compiler result covers this new batch.",
+      "name": "prior_protocol_review_pass",
+      "passed": true
+    },
+    {
+      "detail": "Prior review binds the prior helper bytes used for this clone comparison.",
+      "name": "prior_integration_review_exact_binding:copy_contribution.py",
+      "passed": true
+    },
+    {
+      "detail": "Prior review binds the prior helper bytes used for this clone comparison.",
+      "name": "prior_integration_review_exact_binding:record_staged_map.py",
+      "passed": true
+    },
+    {
+      "detail": "Prior review binds the prior helper bytes used for this clone comparison.",
+      "name": "prior_integration_review_exact_binding:audit_git_integration.py",
+      "passed": true
+    },
+    {
+      "detail": "Prior review binds the prior helper bytes used for this clone comparison.",
+      "name": "prior_integration_review_exact_binding:record_github_checks.py",
+      "passed": true
+    },
+    {
+      "detail": "Previous native driver pin is exact.",
+      "name": "prior_protocol_driver_binding",
+      "passed": true
+    },
+    {
+      "detail": "Previous generator pin is exact.",
+      "name": "prior_protocol_generator_binding",
+      "passed": true
+    },
+    {
+      "detail": "Byte endpoint equal to prior independently reviewed native gate owner. No new Git object or execution observation here.",
+      "name": "native_gate_owner_unchanged:legal_source_family_bridge.py",
+      "passed": true
+    },
+    {
+      "detail": "Byte endpoint equal to prior independently reviewed native gate owner. No new Git object or execution observation here.",
+      "name": "native_gate_owner_unchanged:legal_source_family_lake.py",
+      "passed": true
+    },
+    {
+      "detail": "Byte endpoint equal to prior independently reviewed native gate owner. No new Git object or execution observation here.",
+      "name": "native_gate_owner_unchanged:legal_pilot_lake.py",
+      "passed": true
+    },
+    {
+      "detail": "Byte endpoint equal to prior independently reviewed native gate owner. No new Git object or execution observation here.",
+      "name": "native_gate_owner_unchanged:process.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/families/registry.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+      "passed": true
+    },
+    {
+      "detail": "Current source endpoint exact against the retained owner ledger; no producer import.",
+      "name": "retained_owner_endpoint:tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "passed": true
+    },
+    {
+      "detail": "Final generator reads the actual root preparation helper output directory.",
+      "name": "future_preparation_directory_contract",
+      "passed": true
+    },
+    {
+      "detail": "Key explicitly emitted by the frozen preparation helper, not an assumed old summary alias.",
+      "name": "future_preparation_summary_key:native_requests_predeclared",
+      "passed": true
+    },
+    {
+      "detail": "Key explicitly emitted by the frozen preparation helper, not an assumed old summary alias.",
+      "name": "future_preparation_summary_key:input_pins",
+      "passed": true
+    },
+    {
+      "detail": "Key explicitly emitted by the frozen preparation helper, not an assumed old summary alias.",
+      "name": "future_preparation_summary_key:loaded_producer_pins",
+      "passed": true
+    },
+    {
+      "detail": "Key explicitly emitted by the frozen preparation helper, not an assumed old summary alias.",
+      "name": "future_preparation_summary_key:output_pins",
+      "passed": true
+    },
+    {
+      "detail": "Root saved one selected eleven-suite attempt: 744 passed, two native opt-in skips. This reviewer ran no tests.",
+      "name": "saved_selected_test_observation",
+      "passed": true
+    },
+    {
+      "detail": "No broad rerun or new numerical execution inferred.",
+      "name": "selected_test_observation_suite_count",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_saved_span_family_adapter.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_statutory_declaration_preflight.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_joint_span_selection.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_statutory_review_recording.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_legal_source_family_bridge.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_legal_source_family_bridge_independent.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_legal_source_family_lake.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_saved_span_native_views.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_statutory_scope_declaration_binding.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_canonical_statement_scope.py",
+      "passed": true
+    },
+    {
+      "detail": "Saved test source identity still exact.",
+      "name": "selected_test_endpoint:test_canonical_statement_scope_bridge.py",
+      "passed": true
+    },
+    {
+      "detail": "Retain original log and XML bytes, including skips.",
+      "name": "saved_attempt_pin:log_pin",
+      "passed": true
+    },
+    {
+      "detail": "Retain original log and XML bytes, including skips.",
+      "name": "saved_attempt_pin:xml_pin",
+      "passed": true
+    },
+    {
+      "detail": "Saved XML read only, without executing any test.",
+      "name": "saved_XML_counts",
+      "passed": true
+    },
+    {
+      "detail": "Canonical helper ROOT points to the shared checkout; only exact HEAD/symbolic HEAD/index byte endpoints are read.",
+      "name": "canonical_helper_root_resolution",
+      "passed": true
+    },
+    {
+      "detail": "Helper hardcodes the unchanged original physical blank packet file SHA before parsing.",
+      "name": "actual_scope_packet_file_pin",
+      "passed": true
+    },
+    {
+      "detail": "File-byte and canonical-content identities remain distinct.",
+      "name": "actual_scope_packet_content_pin",
+      "passed": true
+    },
+    {
+      "detail": "Retained prior empty recording; exact full producer replay remains mandatory in actual pilot execution.",
+      "name": "actual_scope_empty_recording_pin",
+      "passed": true
+    },
+    {
+      "detail": "No caller review or scope content is invented by this helper.",
+      "name": "actual_scope_zero_declaration_call:binding.prepare_binding_slots(packet,[],**opts)",
+      "passed": true
+    },
+    {
+      "detail": "No caller review or scope content is invented by this helper.",
+      "name": "actual_scope_zero_declaration_call:binding.bind_scope_declarations(packet,[],[],**opts)",
+      "passed": true
+    },
+    {
+      "detail": "No caller review or scope content is invented by this helper.",
+      "name": "actual_scope_zero_declaration_call:binding.validate_binding(result,packet,[],[],**opts)",
+      "passed": true
+    },
+    {
+      "detail": "Native driver requires exact protocol and driver byte pins in a passed independent protocol receipt before producer import; repins all bound files at startup and closure.",
+      "name": "compiler_review_fence",
+      "passed": true
+    },
+    {
+      "detail": "Driver permits exactly three ordered Python subprocess calls: prlimit-wrapped Lake version, Lean version, then Lake build legal; no generic shell execution or Python socket calls.",
+      "name": "compiler_process_allowlist",
+      "passed": true
+    },
+    {
+      "detail": "Pure unchanged gate regenerates the request manifest and generated file digest map before the native build. All expected compiled modules and binary pins must match; no timeout/truncation/resource/cleanup failure tolerated.",
+      "name": "compiler_regeneration",
+      "passed": true
+    },
+    {
+      "detail": "Previous 60s wall/CPU, Lean threads2, sampled tree RSS2GiB, output262144B, input8MiB and workspace128MiB remain unchanged. Version probes are separate5s/16384B/16MiB; sampled guards and per-process CPU are not kernel aggregate quotas.",
+      "name": "compiler_resource_limits",
+      "passed": true
+    },
+    {
+      "detail": "Explicit twelve source-only DEVELOPMENT rows × two parser profiles produce24 attempts: nine TDFOL ground and three qualifier-free DCEC requests, six temporal and six DCEC qualifier refusal attempts, fourteen expected modules. Nine unique eligible packet/declaration pairs; no registered-family qualification.",
+      "name": "compiler_denominators",
+      "passed": true
+    },
+    {
+      "detail": "Generator requires completed native preparation, selected tests and four passed independent source/helper/result reviews. It creates the actual plan exclusively and requires separate exact actual-protocol/driver review; this receipt is not that later review.",
+      "name": "compiler_protocol_future_gate",
+      "passed": true
+    },
+    {
+      "detail": "Copy requires exact inventory_pin and copy_helper_pin in a passed independent closed-inventory review. Every source is an ordinary nonalias file under this own F and outside isolated datasets/workspace trees, with exact SHA/size before copying.",
+      "name": "copy_review_binding",
+      "passed": true
+    },
+    {
+      "detail": "Only fresh isolated datasets/workspace evidence directories under the new task prefix; canonical relative local/prepared/native-build keys, exclusive binary writes, copied SHA/size checks and closing source pin checks.",
+      "name": "copy_destinations",
+      "passed": true
+    },
+    {
+      "detail": "Inventory freezes sorted own top-level ordinary files and three explicit result trees. Updated native preparation directory maps to prepared; actual scope maps to prepared/actual-scope; native build maps to native-build. Duplicate paths and file/directory prefix collisions refused.",
+      "name": "inventory_selection",
+      "passed": true
+    },
+    {
+      "detail": "Actual dynamic selection, failed attempts/drafts, nonsymlink payloads, no weight/foreign-ledger contents and all no-collision pins must be independently reviewed after generator execution and before either copy. Filename policy alone is not content qualification.",
+      "name": "inventory_prerequisite",
+      "passed": true
+    },
+    {
+      "detail": "Cached changed-path/status set exact equals closed copied inventory plus new source-code-stage-v01 or root doc77/publication/source gitlink. Stage0 object/mode and regular worktree/index SHA/size exact; old source owners equal HEAD blobs.",
+      "name": "staged_map_exact_scope",
+      "passed": true
+    },
+    {
+      "detail": "Code/doc diff check strict. Full cached diff permits whitespace warnings solely on complete owned log/XML paths, exhaustive header/paired-excerpt parsing. Original evidence remains byte exact.",
+      "name": "staged_map_raw_evidence",
+      "passed": true
+    },
+    {
+      "detail": "Root staged gitlinks retain every prior pointer except external/ipfs_datasets to the supplied actual source merge; actual source/root stage receipts require subsequent independent object/index review.",
+      "name": "staged_map_gitlinks",
+      "passed": true
+    },
+    {
+      "detail": "Read-only Git tree/blob/parent/ancestry queries check own single parent, normal two-parent merges, exact changed scopes and object IDs, all old actual first-parent entries preserved except source link, retained owners and combined root-to-source actual merge join.",
+      "name": "merge_object_audit",
+      "passed": true
+    },
+    {
+      "detail": "GitHub helper uses read-only PR view, GraphQL query and check/annotation GETs, all bound to exact PR head; requires every observed context optional and bounded complete<=100, records failures and conservatively leaves hosted_ci_passed false. No overrides, retries or merge.",
+      "name": "github_snapshot_only",
+      "passed": true
+    },
+    {
+      "detail": "Canonical helper uses Git --no-optional-locks for HEAD/symbolic HEAD and reads the previously declared index files as bytes; exact equality to intake required. It does not refresh indexes, inspect dirty source bodies, mutate refs or claim continuous custody.",
+      "name": "canonical_endpoint_only",
+      "passed": true
+    },
+    {
+      "detail": "Optional static inspection agrees with current frozen APIs: exact immutable blank packet/file digests, prior empty recorder replay, full artifact resolver joins, empty submissions/sidecars, eight pending rows, three complete-context profile limits21347/28500/71688, no truncation or invented targets. This reviewer authored the scope producer; its independent source review is elsewhere.",
+      "name": "actual_scope_helper_contract",
+      "passed": true
+    }
+  ],
+  "copy_helper_pin": {
+    "bytes": 2167,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py",
+    "sha256": "1a66851e232235da9c8a38c6f6414b1915480e7f5693427cb58cb074e4bfc18d"
+  },
+  "created_at_utc": "2026-10-11T19:47:02.140777+00:00",
+  "findings": [],
+  "future_preparation_helper_pin": {
+    "bytes": 29975,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_scope_native_pilot.py",
+    "sha256": "f07a2e4ddce24660eab76798fc81dc6502fb5d0f089bc809ac6b3e7e8e7145e4"
+  },
+  "helpers": {
+    "audit_git_integration.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import argparse, subprocess, hashlib, json, os"
+      ],
+      "pin": {
+        "bytes": 4029,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/audit_git_integration.py",
+        "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+      }
+    },
+    "bootstrap_inert.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import importlib.abc, sys, os",
+        "from types import ModuleType"
+      ],
+      "pin": {
+        "bytes": 1208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/bootstrap_inert.py",
+        "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+      }
+    },
+    "copy_contribution.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path, PurePosixPath",
+        "import argparse, hashlib, json, os"
+      ],
+      "pin": {
+        "bytes": 2167,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py",
+        "sha256": "1a66851e232235da9c8a38c6f6414b1915480e7f5693427cb58cb074e4bfc18d"
+      }
+    },
+    "prepare_actual_scope_pilot.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import hashlib, json, os, sys",
+        "from bootstrap_inert import install, ROOT, PACKAGES",
+        "from ipfs_datasets_py.logic.legal_ir import statutory_scope_declaration_binding as binding"
+      ],
+      "pin": {
+        "bytes": 4683,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_actual_scope_pilot.py",
+        "sha256": "aa3aae66ca19eb09f45c19b45b98a380e7b03a7f77950f1abac5a11cd8067fa7"
+      }
+    },
+    "prepare_compiler_protocol.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import hashlib, json, os, ast"
+      ],
+      "pin": {
+        "bytes": 4477,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol.py",
+        "sha256": "b1f6342969f1900700b433cf8b37a804d294f1a540a3797eb82c6705c46e1aca"
+      },
+      "preserved_draft_pin": {
+        "bytes": 4470,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol_draft_v01.py",
+        "sha256": "1dbda7842e47587526cd0b28ab38d2f5671883d63f6f3dbd4e607d9de3ee6390"
+      }
+    },
+    "prepare_contribution_inventory.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path, PurePosixPath",
+        "import json, hashlib, os"
+      ],
+      "pin": {
+        "bytes": 2446,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory.py",
+        "sha256": "ccfdebc1a20d6092c73a94ee61e6fad1874512f6fb63ec0a3847c12fb97d812c"
+      },
+      "preserved_draft_pin": {
+        "bytes": 2432,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory_draft_v01.py",
+        "sha256": "5904de48a8216318b5f2859b3cca3bb2640c1faca3efca2299c277ffd56caa70"
+      }
+    },
+    "record_canonical_endpoints.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import argparse, subprocess, hashlib, json, os"
+      ],
+      "pin": {
+        "bytes": 1295,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_canonical_endpoints.py",
+        "sha256": "ebb815762aeaba42b18d238ba515f56392547078827e7fd6d7623c7e9a2be5d8"
+      }
+    },
+    "record_github_checks.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import argparse, subprocess, json, os"
+      ],
+      "pin": {
+        "bytes": 2376,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_github_checks.py",
+        "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+      }
+    },
+    "record_staged_map.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path, PurePosixPath",
+        "import argparse, subprocess, hashlib, json, os, re"
+      ],
+      "pin": {
+        "bytes": 5875,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_staged_map.py",
+        "sha256": "89364cf132172a775759862ad4cf5339ad34d8e13fa75012814a3b91ef406469"
+      }
+    },
+    "run_native_build.py": {
+      "AST_parsed": true,
+      "imports": [
+        "from pathlib import Path",
+        "import hashlib, json, os, sys",
+        "from bootstrap_inert import install, ROOT",
+        "from ipfs_datasets_py.logic.autoformal import legal_source_family_lake as gate"
+      ],
+      "pin": {
+        "bytes": 4681,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py",
+        "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+      }
+    }
+  },
+  "inventory_generator_pin": {
+    "bytes": 2446,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory.py",
+    "sha256": "ccfdebc1a20d6092c73a94ee61e6fad1874512f6fb63ec0a3847c12fb97d812c"
+  },
+  "native_driver_pin": {
+    "bytes": 4681,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py",
+    "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+  },
+  "operating_conditions": [
+    "Run all assertion-based root helpers with assertions enabled: no -O or PYTHONOPTIMIZE.",
+    "Execute the inventory generator once at the planned pre-copy snapshot. Its four explicit excluded filenames are contribution-copy-inputs-v01.json, source-staged-map-v01.json, root-staged-map-v01.json and root-publication.json. Later review/publication observations remain separate by sequence; future unrelated observations are not generically excluded by name.",
+    "Actual inventory independent review must close the exact resulting selection, source contents, relative keys and file/directory collisions before copy; helper naming policy alone cannot establish arbitrary weight/foreign-ledger exclusion.",
+    "Final actual compiler protocol and driver require an independent exact byte review after preparation. This source-only helper receipt authorizes no arbitrary later protocol or compiler batch.",
+    "All CLI --output paths must be fresh ordinary owned F receipt destinations. Generic read-only Git/GitHub helpers accept caller output paths; their exclusive receipt write is not intrinsically restricted to F.",
+    "Maintain immutable reviewed inventories, source-stage metadata, current helper bytes and bound artifacts across executions. Endpoint checks do not claim atomic or continuous custody.",
+    "Use fresh inert processes. Synthetic namespace __file__ paths are not executed package initializers; bootstrap guards new imports of named numerical roots, not previously imported or native internal operations.",
+    "Native-child subprocess/network behavior is outside the Python audit. No kernel network namespace, sealed full toolchain tree, aggregate RSS/CPU/thread quota or filesystem quota claimed.",
+    "Actual stage objects, normal merges, remote CI outcomes, final canonical endpoints and publication each need separate saved receipts and independent final audit."
+  ],
+  "passed": true,
+  "pending_actual_scope": {
+    "actual_inventory_review_required": true,
+    "actual_merge_or_remote_CI_pass_claimed": false,
+    "actual_native_build_pass_claimed": false,
+    "actual_staged_map_review_required": true,
+    "compiler_protocol_review_required": true,
+    "current_actual_scope_pilot_executed_by_reviewer": false,
+    "preparation_result_review_required": true
+  },
+  "prior_clone_comparison": {
+    "audit_git_integration.py": {
+      "byte_exact_clone": true,
+      "current_pin": {
+        "bytes": 4029,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/audit_git_integration.py",
+        "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+      },
+      "prior_pin": {
+        "bytes": 4029,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/audit_git_integration.py",
+        "sha256": "933d78e99c2c84046ea72ec8181b29cafa6b2e814c429e81126723752fede158"
+      },
+      "unified_diff": ""
+    },
+    "bootstrap_inert.py": {
+      "byte_exact_clone": true,
+      "current_pin": {
+        "bytes": 1208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/bootstrap_inert.py",
+        "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+      },
+      "prior_pin": {
+        "bytes": 1208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/bootstrap_inert.py",
+        "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+      },
+      "unified_diff": ""
+    },
+    "copy_contribution.py": {
+      "byte_exact_clone": false,
+      "current_pin": {
+        "bytes": 2167,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py",
+        "sha256": "1a66851e232235da9c8a38c6f6414b1915480e7f5693427cb58cb074e4bfc18d"
+      },
+      "prior_pin": {
+        "bytes": 2169,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/copy_contribution.py",
+        "sha256": "bf1d758886f3ea4f27dd7dd228ef69c387804c4faa95cdd5dbef4326f534636f"
+      },
+      "unified_diff": "--- /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/copy_contribution.py\n+++ /home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/copy_contribution.py\n@@ -10,7 +10,7 @@\n review=json.loads((F/'contribution-inventory-independent-review-v01.json').read_bytes())\n assert review['passed'] is True and review['findings']==[] and review['inventory_pin']==pin(inventory_path) and review['copy_helper_pin']==pin(__file__)\n root=F/args.kind\n-prefix='workspace/test-logs/legal-formal-output-20261011-01/evidence' if args.kind=='datasets' else 'artifacts/legal-formal-output-20261011-01/evidence'\n+prefix='workspace/test-logs/legal-scope-family-20261011-01/evidence' if args.kind=='datasets' else 'artifacts/legal-scope-family-20261011-01/evidence'\n dest=root/prefix;assert not dest.exists() and dest.resolve()==dest\n assert type(inventory['entries']) is dict and inventory['entries']\n for rel,value in inventory['entries'].items():\n"
+    },
+    "prepare_compiler_protocol.py": {
+      "byte_exact_clone": false,
+      "current_pin": {
+        "bytes": 4477,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol.py",
+        "sha256": "b1f6342969f1900700b433cf8b37a804d294f1a540a3797eb82c6705c46e1aca"
+      },
+      "prior_pin": {
+        "bytes": 4669,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_compiler_protocol.py",
+        "sha256": "0463026e5f2c66d93f8fd749703d7d03edc147cbb78b47337f410b3050f3c6c3"
+      },
+      "unified_diff": "--- /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_compiler_protocol.py\n+++ /home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol.py\n@@ -1,40 +1,35 @@\n-\"\"\"Pin the completed inert preparation and unchanged native compiler envelope.\"\"\"\n+\"\"\"Freeze completed inert preparations and the unchanged native compiler envelope.\"\"\"\n from pathlib import Path\n import hashlib,json,os,ast\n-F=Path(__file__).resolve().parent;D=F/'datasets';PREP=F/'prepared-pilot-v01'\n-def pin(path):\n- p=Path(path);assert p.is_file() and not p.is_symlink() and p.resolve()==p\n- raw=p.read_bytes();return {'path':str(p),'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}\n-def read(path):return json.loads(Path(path).read_bytes())\n-summary=read(PREP/'preparation-summary.json');assert summary['passed'] and summary['native_requests_predeclared']==9 and summary['temporal_refused']==3\n-manifest=read(PREP/'native-preparation-manifest.json');assert manifest['status']=='prepared' and manifest['target']=='legal' and manifest['backend_executed'] is False\n-tests=read(F/'selected-inert-tests-observation-v01.json');assert tests['final_passed']==417 and tests['final_skipped']==2 and tests['final_errors']==tests['final_failures']==0\n-review_names=['intake-independent-review-v01.json','family-adapter-independent-review-v01.json','statutory-preflight-independent-review-v01.json','development-fixture-independent-review-v02.json','inert-test-harness-independent-review-v01.json']\n-for name in review_names:\n- value=read(F/name);assert value['passed'] is True and value['findings']==[],name\n-paths=[F/'prepare_compiler_protocol.py',F/'run_native_build.py',F/'bootstrap_inert.py',F/'run_inert_tests.py',F/'selected-inert-tests-observation-v01.json',F/'preparation-observation-v01.json',F/'preparation-execution-v01.log',PREP/'preparation-summary.json',*[F/n for n in review_names],F/'saved-span-family-adapter-build-v01.json',F/'statutory-declaration-preflight-build-v01.json']\n-paths += [Path(v['path']) for v in summary['input_pins']]+[Path(v['path']) for v in summary['loaded_producer_pins'].values()]+[Path(v['path']) for v in summary['output_pins']]+[Path(v['path']) for v in tests['selected_tests']]\n-paths += [Path(v[k]['path']) for v in tests['attempts'] for k in ('log_pin','xml_pin')]\n+F=Path(__file__).resolve().parent;PREP=F/'prepared-native-views-v01'\n+def pin(p):\n+ p=Path(p);assert p.is_file() and not p.is_symlink() and p.resolve()==p\n+ b=p.read_bytes();return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}\n+def read(p):return json.loads(Path(p).read_bytes())\n+s=read(PREP/'preparation-summary.json');assert s['passed'] and s['native_requests_predeclared']==12\n+m=read(PREP/'native-preparation-manifest.json');assert m['status']=='prepared' and m['target']=='legal' and not m['backend_executed']\n+t=read(F/'selected-inert-tests-observation-v01.json');assert t['final_errors']==t['final_failures']==0 and t['final_passed']>417\n+review_names=['native-views-independent-review-v01.json','scope-binding-independent-review-v01.json','preparation-helper-independent-review-v01.json','preparation-result-independent-review-v01.json']\n+for n in review_names:\n+ v=read(F/n);assert v['passed'] and v['findings']==[],n\n+paths=[F/'prepare_compiler_protocol.py',F/'run_native_build.py',F/'bootstrap_inert.py',F/'run_inert_tests.py',F/'selected-inert-tests-observation-v01.json',F/'preparation-execution-v01.log',PREP/'preparation-summary.json',*[F/n for n in review_names],F/'saved-native-views-build-v01.json',F/'statutory-scope-binding-build-v01.json']\n+paths += [Path(v['path']) for v in s['input_pins']]+[Path(v['path']) for v in s['loaded_producer_pins'].values()]+[Path(v['path']) for v in s['output_pins']]+[Path(v['path']) for v in t['selected_tests']]\n+paths += [Path(v[k]['path']) for v in t['attempts'] for k in ('log_pin','xml_pin')]\n lake=Path('/home/barberb/.elan/toolchains/leanprover--lean4---v4.34.1/bin/lake');lean=lake.parent/'lean';prlimit=Path('/usr/bin/prlimit').resolve(strict=True)\n for p in (lake,lean,prlimit):assert p.read_bytes()[:4]==b'\\x7fELF'\n paths += [lake,lean,prlimit]\n ast.parse((F/'run_native_build.py').read_text())\n-value={'schema':'saved-span-native-compiler-execution/v1','scope':'Compile nine exposed authored saved-prediction interpretations only; no new inference or statutory adjudication',\n- 'bound_file_pins':[pin(p) for p in sorted(set(paths))],'request_file':str(PREP/'native-requests.json'),\n- 'prepared_manifest_file':str(PREP/'native-preparation-manifest.json'),'regenerated_file_sha256':manifest['file_sha256'],\n- 'toolchain':'leanprover/lean4:v4.34.1','lake_executable':str(lake),'lean_executable':str(lean),'prlimit_executable':str(prlimit),\n- 'output_directory':str(F/'native-build-v01'),'command':[str(lake),'build','legal'],\n- 'expected_modules':['LegalSourceFamily.Prelude',*[v['module'] for v in manifest['candidates']],'LegalSourceFamily'],\n- 'declared_denominators':{'development_requested':12,'native_requested':9,'temporal_refused':3,'full_original_report_rows':96,'statutory_rows':8,'statutory_saved_lanes':2,'real_review_items_pending':8,'human_submissions':0,'semantic_labels':0},\n- 'existing_gate_limits_unchanged':{'timeout_seconds':60,'cpu_seconds':60,'Lean_threads':2,'sampled_tree_rss_bytes':2147483648,'max_output_bytes':262144,'max_input_bytes':8388608,'max_workspace_bytes':134217728},\n- 'existing_version_probe_limits':{'per_probe_timeout_seconds':5,'per_probe_max_output_bytes':16384,'default_workspace_bytes':16777216},\n- 'resource_scope':'Separate pre-existing native compiler gate; no numerical admission or prior guardian cap change',\n- 'sampled_rss_guard_is_not_kernel_aggregate_quota':True,'sampled_workspace_guard_is_not_filesystem_quota':True,\n- 'python_network_calls_prohibited':True,'kernel_network_namespace_claimed':False,'generated_project_package_dependencies':[],\n- 'native_internal_child_network_calls_not_audited_by_python':True,'native_ELF_avoids_elan_downloads':True,\n- 'model_calls':0,'encoder_calls':0,'optimizer_updates':0,'checkpoint_tensors_opened':False,\n- 'training_or_eval_admission':False,'source_semantics_verified':False,'all_logic_families_supported':False,\n- 'unsupported_mixed_batch_already_blocked':True,'requires_independent_protocol_and_driver_review':True}\n-with (F/'compiler-execution-protocol-v01.json').open('x') as stream:\n- json.dump(value,stream,indent=2,sort_keys=True,allow_nan=False);stream.write('\\n');stream.flush();os.fsync(stream.fileno())\n-print('Pinned protocol prepared without compiler execution')\n+v={'schema':'saved-span-native-compiler-execution/v1','scope':'Compile12native parser views of9previously exposed authored predictions; no new inference, registered-family qualification or statutory adjudication',\n+'bound_file_pins':[pin(p) for p in sorted(set(paths))],'request_file':str(PREP/'native-requests.json'),'prepared_manifest_file':str(PREP/'native-preparation-manifest.json'),'regenerated_file_sha256':m['file_sha256'],\n+'toolchain':'leanprover/lean4:v4.34.1','lake_executable':str(lake),'lean_executable':str(lean),'prlimit_executable':str(prlimit),'output_directory':str(F/'native-build-v01'),'command':[str(lake),'build','legal'],\n+'expected_modules':['LegalSourceFamily.Prelude',*[x['module'] for x in m['candidates']],'LegalSourceFamily'],\n+'declared_denominators':{'development_rows':12,'profiles':2,'attempts':24,'native_requests':12,'tdfol_requests':9,'dcec_requests':3,'temporal_refusals':6,'dcec_qualifier_refusals':6,'full_original_report_rows':96,'statutory_rows':8,'statutory_saved_lanes':2,'real_review_items_pending':8,'human_submissions':0,'semantic_labels':0},\n+'existing_gate_limits_unchanged':{'timeout_seconds':60,'cpu_seconds':60,'Lean_threads':2,'sampled_tree_rss_bytes':2147483648,'max_output_bytes':262144,'max_input_bytes':8388608,'max_workspace_bytes':134217728},\n+'existing_version_probe_limits':{'per_probe_timeout_seconds':5,'per_probe_max_output_bytes':16384,'default_workspace_bytes':16777216},\n+'resource_scope':'Separate pre-existing native compiler gate; no numerical admission or prior guardian cap change',\n+'sampled_rss_guard_is_not_kernel_aggregate_quota':True,'sampled_workspace_guard_is_not_filesystem_quota':True,'python_network_calls_prohibited':True,'kernel_network_namespace_claimed':False,'generated_project_package_dependencies':[],\n+'native_internal_child_network_calls_not_audited_by_python':True,'native_ELF_avoids_elan_downloads':True,'model_calls':0,'encoder_calls':0,'optimizer_updates':0,'checkpoint_tensors_opened':False,\n+'training_or_eval_admission':False,'source_semantics_verified':False,'registry_family_qualified':False,'all_logic_families_supported':False,'unsupported_mixed_batch_already_blocked':True,'requires_independent_protocol_and_driver_review':True}\n+assert len(v['expected_modules'])==14\n+with (F/'compiler-execution-protocol-v01.json').open('x') as f:json.dump(v,f,indent=2,sort_keys=True,allow_nan=False);f.write('\\n');f.flush();os.fsync(f.fileno())\n+print('Protocol frozen; no compiler execution')\n"
+    },
+    "prepare_contribution_inventory.py": {
+      "byte_exact_clone": false,
+      "current_pin": {
+        "bytes": 2446,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory.py",
+        "sha256": "ccfdebc1a20d6092c73a94ee61e6fad1874512f6fb63ec0a3847c12fb97d812c"
+      },
+      "prior_pin": {
+        "bytes": 3902,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_contribution_inventory.py",
+        "sha256": "de33e40ee6339927aa78781453de226c0c7107533d41b340e25d7e464c771b3d"
+      },
+      "unified_diff": "--- /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_contribution_inventory.py\n+++ /home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_contribution_inventory.py\n@@ -1,92 +1,30 @@\n-\"\"\"Declare the exact static evidence selection; no weights or foreign ledgers.\"\"\"\n+\"\"\"Freeze a closed evidence snapshot, excluding weights and foreign archives.\"\"\"\n from pathlib import Path,PurePosixPath\n-import hashlib,json,os\n+import json,hashlib,os\n F=Path(__file__).resolve().parent\n-NAMES='''\n-audit_git_integration.py\n-authored-development-cue-declarations-v02.json\n-authored-development-cue-declarations.json\n-authored-development-source-only-v02.json\n-authored-development-source-only.json\n-baseline-heads.json\n-bootstrap_inert.py\n-canonical-intake.json\n-compiler-execution-protocol-v01.json\n-compiler-protocol-independent-review-v01.json\n-contribution.md\n-contribution_draft_v01.md\n-copy_contribution.py\n-development-fixture-independent-review-v02.json\n-family-adapter-independent-review-v01.json\n-inert-test-harness-independent-review-v01.json\n-integration-helper-independent-review-v01.json\n-inert-tests-v01.log\n-inert-tests-v01.xml\n-inert-tests-v02.log\n-inert-tests-v02.xml\n-inert-tests-v03.log\n-inert-tests-v03.xml\n-inert-tests-v04.log\n-inert-tests-v04.xml\n-inert-tests-v05.log\n-inert-tests-v05.xml\n-intake-independent-review-v01.json\n-main-progress-review.json\n-native-build-execution-v01.log\n-native-build-result-v01.json\n-native-result-independent-review-v01.json\n-native-result-independent-review-v02.json\n-preparation-execution-v01.log\n-preparation-observation-v01.json\n-preparation-result-independent-review-v01.json\n-prepare_compiler_protocol.py\n-prepare_contribution_inventory.py\n-prepare_development_inputs.py\n-prepare_development_inputs_draft_v01.py\n-prepare_development_inputs_v02.py\n-prepare_formal_output_pilot.py\n-prepare_formal_output_pilot_draft_v01.py\n-prepare_formal_output_pilot_draft_v02.py\n-record_github_checks.py\n-record_staged_map.py\n-record_staged_map_draft_v01.py\n-record_staged_map_draft_v02.py\n-retained-owner-pins.json\n-review_main_progress.py\n-run_inert_tests.py\n-run_inert_tests_draft_v01.py\n-run_inert_tests_draft_v02.py\n-run_native_build.py\n-saved-span-family-adapter-build-v01.json\n-selected-inert-tests-observation-v01.json\n-source-code-stage-v01.json\n-source-code-stage-v02.json\n-source-guide_draft_v01.md\n-statutory-declaration-preflight-build-v01.json\n-statutory-preflight-independent-review-v01.json\n-statutory-source-only-inputs.json\n-'''.split()\n-assert len(NAMES)==len(set(NAMES))\n+EXCLUDED={'contribution-copy-inputs-v01.json','source-staged-map-v01.json','root-staged-map-v01.json','root-publication.json'}\n def pin(p):\n  assert p.is_file() and not p.is_symlink() and p.resolve()==p\n  b=p.read_bytes();return {'path':str(p),'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest()}\n-entries={'local/'+n:pin(F/n) for n in NAMES}\n-for directory,prefix in [('prepared-pilot-v01','prepared'),('native-build-v01','native-build')]:\n+# The resulting sorted names and pins are reviewed before the copy helper runs.\n+selected=[];entries={}\n+for p in sorted(F.iterdir()):\n+ if p.is_dir():continue\n+ assert not p.is_symlink() and p.is_file()\n+ if p.name in EXCLUDED:continue\n+ assert p.suffix in {'.json','.py','.md','.log','.xml'},p\n+ assert 'checkpoint' not in p.name and 'weights' not in p.name\n+ selected.append(p.name);entries['local/'+p.name]=pin(p)\n+for directory,prefix in [('prepared-native-views-v01','prepared'),('actual-scope-pilot-v01','prepared/actual-scope'),('native-build-v01','native-build')]:\n  root=F/directory;assert root.is_dir() and not root.is_symlink()\n  for p in sorted(root.rglob('*')):\n-  assert not p.is_symlink() and (p.is_dir() or p.is_file())\n+  assert not p.is_symlink() and (p.is_file() or p.is_dir())\n   if p.is_dir():continue\n-  assert p.suffix in ('.json','.lean','.toml') or p.name=='lean-toolchain',p\n+  assert p.suffix in {'.json','.lean','.toml'} or p.name=='lean-toolchain'\n   rel=prefix+'/'+p.relative_to(root).as_posix();assert rel not in entries;entries[rel]=pin(p)\n for rel in entries:\n  p=PurePosixPath(rel);assert not p.is_absolute() and p.as_posix()==rel and all(v not in ('','.','..') for v in rel.split('/'))\n  assert not any(other.startswith(rel+'/') for other in entries)\n-value={'schema':'formal-output-contribution-copy-inventory/v1','passed':True,'findings':[],\n- 'entries':dict(sorted(entries.items())),'count':len(entries),'bytes':sum(v['bytes'] for v in entries.values()),\n- 'selected_top_level_names':NAMES,'prepared_directories':['prepared-pilot-v01','native-build-v01'],\n- 'weight_bodies_excluded':True,'full_foreign_ledgers_excluded':True,'full_training_archive_excluded':True,\n- 'failed_attempts_and_correction_drafts_retained':True,'inventory_itself_excluded_to_avoid_self_digest':True,\n- 'later_staged_review_and_publication_observations_remain_separate':True,'new_semantic_labels':0}\n-with (F/'contribution-copy-inputs-v01.json').open('x') as stream:\n- json.dump(value,stream,indent=2,sort_keys=True);stream.write('\\n');stream.flush();os.fsync(stream.fileno())\n-print(json.dumps({'files':value['count'],'bytes':value['bytes']}))\n+v={'schema':'scope-native-contribution-copy-inventory/v1','passed':True,'findings':[],'entries':dict(sorted(entries.items())),'count':len(entries),'bytes':sum(x['bytes'] for x in entries.values()),'selected_top_level_names':selected,'prepared_directories':['prepared-native-views-v01','actual-scope-pilot-v01','native-build-v01'],'weight_bodies_excluded':True,'full_foreign_ledgers_excluded':True,'full_training_archive_excluded':True,'failed_attempts_and_correction_drafts_retained':True,'inventory_itself_excluded_to_avoid_self_digest':True,'later_staged_review_and_publication_observations_remain_separate':True,'new_semantic_labels':0}\n+with (F/'contribution-copy-inputs-v01.json').open('x') as f:json.dump(v,f,indent=2,sort_keys=True);f.write('\\n');f.flush();os.fsync(f.fileno())\n+print(json.dumps({'files':v['count'],'bytes':v['bytes']}))\n"
+    },
+    "record_github_checks.py": {
+      "byte_exact_clone": true,
+      "current_pin": {
+        "bytes": 2376,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_github_checks.py",
+        "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+      },
+      "prior_pin": {
+        "bytes": 2376,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_github_checks.py",
+        "sha256": "2c192ed59848e3433fe58cb928483eef96337598562d8fb6d4a019d703ead62b"
+      },
+      "unified_diff": ""
+    },
+    "record_staged_map.py": {
+      "byte_exact_clone": false,
+      "current_pin": {
+        "bytes": 5875,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_staged_map.py",
+        "sha256": "89364cf132172a775759862ad4cf5339ad34d8e13fa75012814a3b91ef406469"
+      },
+      "prior_pin": {
+        "bytes": 5873,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_staged_map.py",
+        "sha256": "367539f0fb1bfdaf9d538b6d6ee98990243297f26b50254a5ad6507d59dacc47"
+      },
+      "unified_diff": "--- /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/record_staged_map.py\n+++ /home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/record_staged_map.py\n@@ -12,22 +12,22 @@\n   parts=PurePosixPath(rel)\n   assert not parts.is_absolute() and parts.as_posix()==rel and all(v not in ('','.','..') for v in rel.split('/'))\n   assert rel.startswith(('local/','prepared/','native-build/')) and len(pin['sha256'])==64 and pin['bytes']>=0\n- prefix='workspace/test-logs/legal-formal-output-20261011-01/evidence' if a.kind=='datasets' else 'artifacts/legal-formal-output-20261011-01/evidence'\n+ prefix='workspace/test-logs/legal-scope-family-20261011-01/evidence' if a.kind=='datasets' else 'artifacts/legal-scope-family-20261011-01/evidence'\n  expected={prefix+'/'+rel:{'status':'A','mode':'100644','sha256':pin['sha256'],'bytes':pin['bytes']} for rel,pin in inventory['entries'].items()}\n  if a.kind=='datasets':\n   for pin in json.loads((F/'retained-owner-pins.json').read_bytes()).values():\n    path=Path(pin['path']);assert path.is_file() and not path.is_symlink() and path.resolve()==path and root.resolve() in path.parents\n    raw=path.read_bytes()\n    assert sha(raw)==pin['sha256'] and len(raw)==pin['bytes'] and git(root,'show','HEAD:'+path.relative_to(root).as_posix())==raw\n-  stage=json.loads((F/'source-code-stage-v02.json').read_bytes())\n+  stage=json.loads((F/'source-code-stage-v01.json').read_bytes())\n   owners=stage.get('files',stage.get('entries'))\n   assert isinstance(owners,dict),stage.keys()\n   for path,pin in owners.items():\n    rel=PurePosixPath(path);assert not rel.is_absolute() and rel.as_posix()==path and all(v not in ('','.','..') for v in path.split('/')) and path not in expected\n    expected[path]={'status':'A','mode':'100644','sha256':pin['sha256'],'bytes':pin['bytes']}\n  else:\n-  raw=(F/'contribution.md').read_bytes();expected['implementation_plan/docs/76-legal-formal-output-2026-10-11.md']={'status':'A','mode':'100644','sha256':sha(raw),'bytes':len(raw)}\n-  raw=(F/'root-publication.json').read_bytes();expected['artifacts/legal-formal-output-20261011-01/publication.json']={'status':'A','mode':'100644','sha256':sha(raw),'bytes':len(raw)}\n+  raw=(F/'contribution.md').read_bytes();expected['implementation_plan/docs/77-legal-scope-native-views-2026-10-11.md']={'status':'A','mode':'100644','sha256':sha(raw),'bytes':len(raw)}\n+  raw=(F/'root-publication.json').read_bytes();expected['artifacts/legal-scope-family-20261011-01/publication.json']={'status':'A','mode':'100644','sha256':sha(raw),'bytes':len(raw)}\n   assert a.source_merge and len(a.source_merge)==40\n   expected['external/ipfs_datasets']={'status':'M','mode':'160000','object':a.source_merge}\n  raw=git(root,'diff','--cached','--name-status','-z');parts=raw.split(b'\\0');assert parts[-1]==b'';parts.pop();assert len(parts)%2==0\n"
+    },
+    "run_native_build.py": {
+      "byte_exact_clone": false,
+      "current_pin": {
+        "bytes": 4681,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py",
+        "sha256": "7523cdd9a2c97010ce29e0dcb97c22fb246d2372c746bfdd1617139c2ecf7a24"
+      },
+      "prior_pin": {
+        "bytes": 4645,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_native_build.py",
+        "sha256": "3af389a06f11f18b347a94fd025b93b9e5b4e09c4d146691d3ccb851ece583b4"
+      },
+      "unified_diff": "--- /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/run_native_build.py\n+++ /home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/run_native_build.py\n@@ -51,8 +51,8 @@\n  and result['workspace_cleaned'])\n summary={'schema':'saved-span-native-compiler-pilot-result/v1','passed':passed,'findings':[] if passed else ['native compiler gate did not fully pass'],\n  'protocol_pin':pin(P),'driver_pin':pin(__file__),'independent_review_pin':pin(REVIEW),\n- 'development_requests':9,'development_temporal_refusals':3,'compiled_modules':len(result['compiled_modules']),\n- 'expected_modules':11,'command':result['command'],'returncode':result['returncode'],\n+ 'development_requests':12,'development_temporal_refusals':6,'development_qualifier_refusals':6,'compiled_modules':len(result['compiled_modules']),\n+ 'expected_modules':14,'command':result['command'],'returncode':result['returncode'],\n  'semantic_accuracy':None,'actual_statutory_semantic_labels':0,'training_or_eval_admission':False,\n  'model_calls':0,'encoder_calls':0,'optimizer_updates':0,'observed_native_process_calls':observed,\n  'receipt_pin':pin(Path(plan['output_directory'])/'source-family-receipt.json'),\n"
+    }
+  },
+  "prior_independent_reviews": [
+    {
+      "bytes": 59147,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/integration-helper-independent-review-v01.json",
+      "sha256": "22000edb9b56e208086fb5b39dd60a31f55a3b8d0fdfabefca2ca3f2962c45ab"
+    },
+    {
+      "bytes": 66369,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/compiler-protocol-independent-review-v01.json",
+      "sha256": "2cf850b816e612d806b4c792412a51e8f38541edf3c21db372a4cde4195799ad"
+    }
+  ],
+  "protocol_generator_pin": {
+    "bytes": 4477,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/prepare_compiler_protocol.py",
+    "sha256": "b1f6342969f1900700b433cf8b37a804d294f1a540a3797eb82c6705c46e1aca"
+  },
+  "qualification": {
+    "Git_calls": 0,
+    "compiler_calls": 0,
+    "cross_family_equivalence_verified": false,
+    "encoder_calls": 0,
+    "helper_execution_count": 0,
+    "helper_static_contract_consistency_passed": true,
+    "model_calls": 0,
+    "network_calls": 0,
+    "optimizer_updates": 0,
+    "producer_import_count": 0,
+    "registry_family_qualified": false,
+    "reviewer_authenticated": false,
+    "semantic_accuracy": null,
+    "semantic_gold": false,
+    "source_or_index_mutations": 0,
+    "source_semantics_verified": false,
+    "test_execution_count": 0,
+    "training_or_evaluation_admission": false
+  },
+  "retained_owner_endpoint_count": 17,
+  "retained_owner_endpoints_exact": true,
+  "reviewer_authored_scope_source_pin": {
+    "bytes": 29041,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py",
+    "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07"
+  },
+  "reviewer_authored_scope_test_pin": {
+    "bytes": 46298,
+    "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_scope_declaration_binding.py",
+    "sha256": "d051c2ca96d8e68c993e031b6db57edc14907c8667e67ea14bb0eea1cd4bc9bb"
+  },
+  "reviewer_task": "/root/review_workflow_design_20261011",
+  "root_base_commit": "d6fcc62c171c80a67b9b00a1cf5c594030b28eab",
+  "saved_selected_test_observation": {
+    "attempts": 1,
+    "errors": 0,
+    "failures": 0,
+    "observation_pin": {
+      "bytes": 4975,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/selected-inert-tests-observation-v01.json",
+      "sha256": "fd501d6cc670ad5734bf6aad9aa389cc4d04ccfe6f3d658299705f40212dd9eb"
+    },
+    "passed": 744,
+    "selected_suite_count": 11,
+    "skipped": 2,
+    "synthetic_accuracy_only_not_legal_truth": true,
+    "tests_executed_by_reviewer": false
+  },
+  "schema": "scope-native-integration-helper-independent-review/v1",
+  "scope": "Independent static helper/source and saved byte/JSON/XML review only; no helper/producer/test/model/compiler/network/Git execution or mutation by this reviewer. New scope producer was authored by reviewer and is not independently self-qualified here.",
+  "source_base_commit": "7fc3f57a94108030be3cceca7368920754754a94",
+  "unchanged_native_gate_owner_pins": [
+    {
+      "bytes_equal": true,
+      "current_pin": {
+        "bytes": 21178,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+        "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+      },
+      "prior_pin": {
+        "bytes": 21178,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+        "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+      }
+    },
+    {
+      "bytes_equal": true,
+      "current_pin": {
+        "bytes": 11880,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+        "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+      },
+      "prior_pin": {
+        "bytes": 11880,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+        "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+      }
+    },
+    {
+      "bytes_equal": true,
+      "current_pin": {
+        "bytes": 15230,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py",
+        "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+      },
+      "prior_pin": {
+        "bytes": 15230,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py",
+        "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+      }
+    },
+    {
+      "bytes_equal": true,
+      "current_pin": {
+        "bytes": 78154,
+        "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py",
+        "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+      },
+      "prior_pin": {
+        "bytes": 78154,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py",
+        "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+      }
+    }
+  ]
+}

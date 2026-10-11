@@ -1,0 +1,35 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": "all_conditions_at_evaluation_time",
+    "candidate_sha256": "c1e6f5fa21cb7e4092694dfd5fba83929101618e37af75fe3a9af67494c0efc5",
+    "canonical_ir_sha256": "dc4158220bfe9e9dd77f0f082761672d4c040ba6932a5649dab9dd2f374c486c",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": "any_exception_waives_at_evaluation_time",
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [],
+        "exceptions": [],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7"
+  },
+  "occurrence": {
+    "end_char": 68,
+    "modality_anchor": {
+      "canonical_value": "P",
+      "end_char": 21,
+      "source_text": "may",
+      "start_char": 18
+    },
+    "occurrence_id": "development-native-tuning-begonia-t0-q0-p",
+    "source_text": "Begonia Authority may inspect the certified begonia public register.",
+    "start_char": 0
+  },
+  "packet_sha256": "4927bf2a02186cc9c713c8ec245dd479132df4e5fb4c40e133ca0736ffdf9d22",
+  "schema": "saved-span-family-declaration/v1"
+}
