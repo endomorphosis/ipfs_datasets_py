@@ -23,6 +23,9 @@ PROFILE = "python-numerical-structure@1"
 SCHEMA = "numerical-source-logic/v1"
 MAX_OBLIGATIONS = 256
 MAX_REPORT_BYTES = 8 * 1024 * 1024
+COMPOUND_SCHEMA = "numerical-selected-eigenpair-contract@1"
+MAX_COMPOUND_SUMMARIES = 8
+MAX_COMPOUND_SUMMARY_BYTES = 4096
 _FALSE = dict(proof_authority=False, source_semantics_verified=False,
     whole_program_semantics_verified=False, completion_authority=False,
     execution_authority=False, source_executed=False, model_inference_executed=False)
@@ -160,6 +163,167 @@ def _derive_obligations(program):
     return rows
 
 
+def _selected_eigenpair_pattern(function, commands, expressions):
+    """Join one straight-line def/use pattern, never infer NumPy semantics.
+
+    This is deliberately not a general substitution engine: extra assignments,
+    calls or control flow are fences. Distinct parameter/local symbols prevent
+    simultaneous unpacking and later rebinding from conflating old/new values.
+    """
+    if len(function.cfg.blocks) != 1 or function.cfg.edges:
+        return None, "control_flow_not_supported"
+    ordered = [commands[key] for key in function.cfg.blocks[0].command_ids]
+    ordered = [command for command in ordered if not (
+        command.kind.value == "skip" and not command.expression_ids
+        and not command.attributes.to_dict().get("unsupported_construct"))]
+    if ([command.kind.value for command in ordered] != ["assign", "assign", "return"]
+            or any(len(command.expression_ids) != 1 for command in ordered)
+            or len(function.parameter_symbol_ids) != 1):
+        return None, "straight_line_statement_shape_not_supported"
+    eig_assign, index_assign, returned = ordered
+    eig_pattern = eig_assign.attributes.to_dict().get("assignment_pattern", {})
+    index_pattern = index_assign.attributes.to_dict().get("assignment_pattern", {})
+    elements = eig_pattern.get("elements", ())
+    if (eig_pattern.get("kind") not in {"tuple", "list"} or len(elements) != 2
+            or any(item.get("kind") != "name" for item in elements)
+            or index_pattern.get("kind") != "name"):
+        return None, "unpacking_pattern_not_supported"
+    values, vectors = (item["symbol_id"] for item in elements)
+    selected = index_pattern["symbol_id"]
+    parameter, = function.parameter_symbol_ids
+    if (len({parameter, values, vectors, selected}) != 4
+            or set(eig_assign.target_symbol_ids) != {values, vectors}
+            or tuple(index_assign.target_symbol_ids) != (selected,)):
+        return None, "rebound_or_aliased_symbols"
+
+    def symbol(expression_id, expected):
+        value = expressions[expression_id]
+        return value.kind.value == "symbol" and tuple(value.symbol_ids) == (expected,)
+
+    def argument(expression_id, callee, *, keyword=None):
+        value = expressions[expression_id]
+        attrs = value.attributes.to_dict()
+        if (value.kind.value != "call" or attrs.get("call_kind") != "python.call"
+                or attrs.get("callee_resolution") != "declared_import"
+                or attrs.get("imported_callee") != callee or len(value.operand_ids) != 2):
+            return None
+        if attrs.get("positional_count") == 1 and attrs.get("keyword_names") == []:
+            return value.operand_ids[1]
+        if keyword and attrs.get("positional_count") == 0 and attrs.get("keyword_names") == [keyword]:
+            return value.operand_ids[1]
+        return None
+
+    eig = eig_assign.expression_ids[0]
+    input_expression = argument(eig, "numpy.linalg.eig", keyword="a")
+    selection = index_assign.expression_ids[0]
+    magnitude = argument(selection, "numpy.argmax", keyword="a")
+    magnitude_input = argument(magnitude, "numpy.abs") if magnitude is not None else None
+    if (input_expression is None or not symbol(input_expression, parameter)
+            or magnitude_input is None or not symbol(magnitude_input, values)):
+        return None, "eigensystem_or_magnitude_selection_not_matched"
+    output = expressions[returned.expression_ids[0]]
+    if (output.attributes.to_dict().get("call_kind") != "python.tuple"
+            or len(output.operand_ids) != 2):
+        return None, "returned_pair_not_matched"
+    value, vector = (expressions[key] for key in output.operand_ids)
+    if (value.kind.value != "index" or vector.kind.value != "index"
+            or len(value.operand_ids) != 2 or len(vector.operand_ids) != 2
+            or not symbol(value.operand_ids[0], values)
+            or not symbol(value.operand_ids[1], selected)
+            or not symbol(vector.operand_ids[0], vectors)):
+        return None, "returned_value_flow_not_matched"
+    axes = expressions[vector.operand_ids[1]]
+    if (axes.attributes.to_dict().get("call_kind") != "python.tuple"
+            or len(axes.operand_ids) != 2 or not symbol(axes.operand_ids[1], selected)):
+        return None, "returned_column_not_matched"
+    full_slice = expressions[axes.operand_ids[0]]
+    slice_attrs = full_slice.attributes.to_dict()
+    if (slice_attrs.get("call_kind") != "python.slice"
+            or slice_attrs.get("explicit_bounds") != [False, False, False]
+            or len(full_slice.operand_ids) != 3
+            or any(expressions[key].type_ref != "python.literal.NoneType"
+                   or expressions[key].attributes.to_dict().get("value") is not None
+                   for key in full_slice.operand_ids)):
+        return None, "partial_or_strided_column_not_supported"
+    return dict(input_expression=input_expression, eig_expression=eig,
+        magnitude_expression=magnitude, selection_expression=selection,
+        returned_value_expression=value.expression_id, returned_vector_expression=vector.expression_id,
+        return_expression=output.expression_id, values_symbol=values, vectors_symbol=vectors,
+        selected_symbol=selected, eig_assignment_command=eig_assign.command_id,
+        selection_assignment_command=index_assign.command_id, return_command=returned.command_id), None
+
+
+_COMPOUND_REASONS = {
+    "selected_eigenpair_runtime_interpretation":
+        "Bind actual NumPy callable identities, ndarray types, dtype, exceptions, aliasing and effects; declared imports and annotations are not runtime evidence.",
+    "selected_eigenpair_dimensions":
+        "Establish a nonempty square input, an equally long eigenvalue vector and an eigenvector matrix with corresponding columns; no shape is inferred from an annotation.",
+    "selected_eigenpair_value_column":
+        "Interpret tuple unpacking and ndarray indexing so the returned value and whole vector column use the same selected index and eig call result.",
+    "selected_eigenpair_magnitude_selection":
+        "Interpret abs and argmax as magnitude maximization, with explicit complex, axis, tie and nonfinite policies; no spectral dominance follows from syntax alone.",
+    "selected_eigenpair_nonzero":
+        "Establish a nonzero returned vector; a not-allclose-to-zero guard additionally needs its own reviewed comparison policy, not merely exact inequality.",
+    "selected_eigenpair_finite":
+        "Bind and establish finiteness of the returned value and vector for the chosen real/complex floating-point interpretation.",
+    "selected_eigenpair_approximate_residual":
+        "Establish the source-bound approximate eigenpair residual under an explicit comparison relation and reviewed arithmetic; no tolerance/default or norm-based threshold is invented.",
+}
+
+
+def _compound_contracts(program, coverage, source_sha256):
+    commands = {value.command_id: value for value in program.commands}
+    expressions = {value.expression_id: value for value in program.expressions}
+    covered = {row["function_id"]: row["structurally_complete"] for row in coverage}
+    contracts, obligations, assessments = [], [], []
+    for function in program.functions:
+        if covered.get(function.function_id) is not True:
+            roles, reason = None, "incomplete_or_unsupported_function"
+        else:
+            roles, reason = _selected_eigenpair_pattern(function, commands, expressions)
+        assessments.append(dict(function_id=function.function_id,
+            status="matched_syntax_only" if roles else "not_matched", reason=reason))
+        if roles is None:
+            continue
+        spans = list(dict.fromkeys(span for key in (
+            "eig_assignment_command", "selection_assignment_command", "return_command")
+            for span in commands[roles[key]].span_ids))
+        contract = dict(schema=COMPOUND_SCHEMA, kind="selected_eigenpair", status="pending",
+            function_id=function.function_id, source_sha256=source_sha256,
+            source_ref_ids=list(function.source_ref_ids), span_ids=spans,
+            pattern_status="matched_syntax_only", roles=roles,
+            tuple_components=[dict(symbol_id=roles["values_symbol"], component=0),
+                              dict(symbol_id=roles["vectors_symbol"], component=1)],
+            tolerance_policy="unresolved_no_defaults_assumed", runtime_identity_verified=False,
+            source_obligations_discharged=0, assumptions_asserted=False, **_FALSE)
+        contract["contract_id"] = "numerical-contract:" + _sha(contract)[:32]
+        bound = []
+        for kind, reason in _COMPOUND_REASONS.items():
+            row = dict(kind=kind, expression_id=roles["return_expression"],
+                source_ref_ids=list(function.source_ref_ids), span_ids=spans,
+                function_ids=[function.function_id], roles=dict(compound_contract_id=contract["contract_id"], **roles),
+                status="pending", reason=reason, assumptions_asserted=False,
+                source_binding_is_semantic_proof=False, **_FALSE)
+            row["obligation_id"] = "numerical:" + _sha(row)[:32]
+            obligations.append(row); bound.append(row["obligation_id"])
+        contract["obligation_ids"] = bound
+        contracts.append(contract)
+    return contracts, obligations, assessments
+
+
+def _compound_summary(contracts):
+    rows = [dict(contract_id=row["contract_id"], kind=row["kind"], function_id=row["function_id"],
+        status="pending", source_ref_ids=row["source_ref_ids"], span_ids=row["span_ids"],
+        roles={key: row["roles"][key] for key in ("input_expression", "eig_expression",
+            "selection_expression", "returned_value_expression", "returned_vector_expression")},
+        pending_obligation_kinds=list(_COMPOUND_REASONS), proof_authority=False,
+        source_obligations_discharged=0) for row in contracts[:MAX_COMPOUND_SUMMARIES]]
+    while len(_raw(rows)) > MAX_COMPOUND_SUMMARY_BYTES:
+        rows.pop()
+    return dict(compound_contracts=rows, compound_contract_count=len(contracts),
+        omitted_compound_contract_summaries=len(contracts)-len(rows))
+
+
 def _fol(row):
     # These are explicit unresolved predicates over source expression identities.
     # There is no axiom asserting any predicate, nor an invented entity referent.
@@ -259,11 +423,70 @@ theorem last_index_bound (extent : Nat) (nonempty : 0 < extent) : extent - 1 < e
 """
 
 
+_LEAN_COMPOUND = """
+-- A proposed mathematical contract, not the runtime interpretation of NumPy.
+def EigensystemDimensions (rows columns valuesCount vectorRows vectorColumns : Nat) : Prop :=
+  0 < rows ∧ columns = rows ∧ valuesCount = rows ∧ vectorRows = rows ∧ vectorColumns = rows
+
+def SameSelectedColumn {α : Type} (values : Nat → α) (vectors : Nat → Nat → α)
+    (selected : Nat) (value : α) (vector : Nat → α) : Prop :=
+  value = values selected ∧ ∀ row, vector row = vectors row selected
+
+def NonzeroVector {α : Type} (zero : α) (n : Nat) (vector : Nat → α) : Prop :=
+  ∃ row, row < n ∧ vector row ≠ zero
+
+def FiniteEigenpair {α : Type} (finite : α → Prop)
+    (n : Nat) (value : α) (vector : Nat → α) : Prop :=
+  finite value ∧ ∀ row, row < n → finite (vector row)
+
+-- `close` has no chosen tolerance or floating-point semantics. Those remain
+-- source interpretation obligations, including the direction of comparison.
+def ApproximateEigenpairResidual {α : Type} (zero : α) (add mul : α → α → α)
+    (close : α → α → Prop) (n : Nat) (matrix : Nat → Nat → α)
+    (vector : Nat → α) (value : α) : Prop :=
+  ∀ row, row < n → close
+    (finiteSum zero add (fun column => mul (matrix row column) (vector column)) n)
+    (mul value (vector row))
+
+def SelectedEigenpair {α β : Type} (zero : α) (add mul : α → α → α)
+    (finite : α → Prop) (close : α → α → Prop) (le : β → β → Prop)
+    (n : Nat) (matrix : Nat → Nat → α) (score : Nat → β)
+    (selected : Nat) (value : α) (vector : Nat → α) : Prop :=
+  NonzeroVector zero n vector ∧ FiniteEigenpair finite n value vector ∧
+    ApproximateEigenpairResidual zero add mul close n matrix vector value ∧
+    SelectionMax le n score selected
+
+-- Both the eigensystem properties and the selection property are premises.
+-- This theorem does not prove either premise for any source library call.
+theorem selected_column_contract {α β : Type} (zero : α) (add mul : α → α → α)
+    (finite : α → Prop) (close : α → α → Prop) (le : β → β → Prop)
+    (n : Nat) (matrix vectors : Nat → Nat → α) (values : Nat → α)
+    (score : Nat → β) (selected : Nat)
+    (choice : SelectionMax le n score selected)
+    (columns : ∀ j, j < n → NonzeroVector zero n (fun row => vectors row j) ∧
+      FiniteEigenpair finite n (values j) (fun row => vectors row j) ∧
+      ApproximateEigenpairResidual zero add mul close n matrix (fun row => vectors row j) (values j)) :
+    SelectedEigenpair zero add mul finite close le n matrix score selected
+      (values selected) (fun row => vectors row selected) := by
+  exact ⟨(columns selected choice.1).1, (columns selected choice.1).2.1,
+    (columns selected choice.1).2.2, choice⟩
+"""
+
+
 def _lean(rows):
     definitions = {"index_safety": "IndexSafety", "matrix_shape": "MatrixShape",
-                   "eigenpair_residual": "EigenpairResidual"}
+                   "eigenpair_residual": "EigenpairResidual",
+                   "selected_eigenpair_dimensions": "EigensystemDimensions",
+                   "selected_eigenpair_value_column": "SameSelectedColumn",
+                   "selected_eigenpair_magnitude_selection": "SelectionMax",
+                   "selected_eigenpair_nonzero": "NonzeroVector",
+                   "selected_eigenpair_finite": "FiniteEigenpair",
+                   "selected_eigenpair_approximate_residual": "ApproximateEigenpairResidual"}
     bindings = []
     lines = [_LEAN_BASE]
+    compound = any(row["kind"] in _COMPOUND_REASONS for row in rows)
+    if compound:
+        lines.append(_LEAN_COMPOUND)
     for row in rows:
         definition = definitions.get(row["kind"])
         if row["kind"] == "selection":
@@ -282,7 +505,8 @@ def _lean(rows):
     return dict(family="higher_order", encoding="Lean4", status="prepared_not_built",
         library="NumericalObligations", source=source,
         source_sha256=hashlib.sha256(source.encode()).hexdigest(), bindings=bindings,
-        conditional_lemmas=["normalized_index_bounds", "last_index_bound"],
+        conditional_lemmas=["normalized_index_bounds", "last_index_bound"] +
+            (["selected_column_contract"] if compound else []),
         source_obligations_discharged=0, lake_executed=False, **_FALSE)
 
 
@@ -298,6 +522,11 @@ def formalize_numerical_source(source_text, *, path="source.py"):
     wire = structural.to_dict()
     program = structural.program
     obligations = _derive_obligations(program) if program is not None else []
+    contracts, compound_obligations, assessments = (_compound_contracts(program,
+        wire["function_coverage"], wire["source_sha256"]) if program is not None else ([], [], []))
+    obligations.extend(compound_obligations)
+    if len(obligations) > MAX_OBLIGATIONS:
+        raise NumericalLogicError("numerical obligation count exceeds bound")
     native = None
     if program is not None:
         bridge = SoftwareVerificationSyntaxBridge().round_trip(program)
@@ -321,6 +550,7 @@ def formalize_numerical_source(source_text, *, path="source.py"):
         pending_obligation_count=counts[row["function_id"]]) for row in coverage]
     report = dict(schema=SCHEMA, profile=PROFILE, source_sha256=wire["source_sha256"],
         path=path, structural=wire, pending_obligations=obligations, projections=projections,
+        compound_contracts=contracts, compound_contract_assessments=assessments,
         unsupported_families=profile["unsupported_families"],
         coverage=dict(structural_status=wire["status"],
                       function_coverage=wire["function_coverage"],
@@ -339,6 +569,7 @@ def formalize_numerical_source(source_text, *, path="source.py"):
         families_with_artifacts=[family for family, present in
             (("program", native), ("first_order", fol or smt), ("higher_order", lean)) if present],
         per_function=functions[:16], omitted_function_summaries=max(0, len(functions)-16), **_FALSE)
+    report["summary"].update(_compound_summary(contracts))
     report["report_sha256"] = _sha(report)
     return report
 
