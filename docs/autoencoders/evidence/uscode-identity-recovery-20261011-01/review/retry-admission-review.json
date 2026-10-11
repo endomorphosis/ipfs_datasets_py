@@ -1,0 +1,381 @@
+{
+  "attempt": "ordinal-profile-02",
+  "check_count": 11,
+  "checks": [
+    {
+      "evidence": {
+        "binding": "22d8a3b91cf4eb88aaec44406d59b29d0fba9b34998c39c89ebc8343f212ef46",
+        "command": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6",
+        "readiness": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039"
+      },
+      "name": "frozen_readiness_and_exact_launch_binding",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "returncode": 1,
+        "root_transcript_observation": "1fb58f2b221f033c18984eea7f570be2df3d2f76e0b42e7665f298562553220c",
+        "tool_session_id": 6063
+      },
+      "name": "root_reports_admission_refusal_before_genuine_child",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "adoption_receipt_exists": false,
+        "attempt_exists": false,
+        "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-02"
+      },
+      "name": "runtime_attempt02_and_adoption_absent",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "scope": "static ordering; no admission helper execution",
+        "source_pins": [
+          "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c",
+          "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2"
+        ]
+      },
+      "name": "admission_checks_precede_any_record_lease_or_child_creation",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "canonical_records_sha256": "3d574ed787c165957b2f8fa8edb462407989ce77e12252c3fd1e90845d5b651c",
+        "changed_records": 0,
+        "current_ledger_sha256": "eea633e9ea0c486080998683505e640a6754aa6fa718e746e5ccdc6c2c96c7d8",
+        "missing_records": 0,
+        "new_records": 0,
+        "record_count": 509
+      },
+      "name": "ledger_byte_identical_to_readiness02",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "foreign_record_count": 508,
+        "own_failed_claim": "ce044fc614564ad7a92886ed385f443d",
+        "own_failed_claim_bytes": 16777216,
+        "own_failed_claim_status": "retained"
+      },
+      "name": "all_prior_foreign_records_and_failed_own_claim_preserved",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "attempt02_claim_count": 0,
+        "status_counts": {
+          "released": 408,
+          "retained": 101
+        }
+      },
+      "name": "no_new_attempt02_record_or_active_disk_claim",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "acquisitions_total": 20,
+        "active_lease_count": 0,
+        "config_canonical_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+        "current_scheduler_sha256": "143d80c81fbf789af8a152582661a88d780af2f36c385a1fb42ab36d57365336",
+        "releases_total": 20,
+        "waiting_request_count": 0
+      },
+      "name": "scheduler_unchanged_and_no_lease_or_waiter",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "guard_caps": {
+          "child_process_slots": 1,
+          "cpu_slots": 1,
+          "memory_mb": 768,
+          "seconds": 300,
+          "storage_bytes": 16777216
+        },
+        "limit_bytes": 145000000000
+      },
+      "name": "unchanged145GBcap_and16MiB_request",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "additional_requested_bytes": 16777216,
+        "minimum_free_bytes": 35094544384,
+        "outstanding_full_reservations_bytes": 48181777216,
+        "required_free_bytes": 48198554432,
+        "shortfall_bytes": 13104010048
+      },
+      "name": "current_filesystem_free_condition_independently_refuses",
+      "passed": true
+    },
+    {
+      "evidence": {
+        "ledger": [
+          66306,
+          67028721,
+          6127585,
+          1791695488349847532,
+          1791695488356020474
+        ],
+        "scheduler": [
+          66306,
+          572670,
+          1761,
+          1791695488371083150,
+          1791695488374021493
+        ]
+      },
+      "name": "ledger_and_scheduler_witnesses_fenced_after_read",
+      "passed": true
+    }
+  ],
+  "created_at": "2026-10-11T05:29:19.907704+00:00",
+  "custody": {
+    "active_or_reserved_disk_claims": 0,
+    "canonical_records_sha256": "3d574ed787c165957b2f8fa8edb462407989ce77e12252c3fd1e90845d5b651c",
+    "changed_records": 0,
+    "foreign_records_preserved": 508,
+    "ledger": {
+      "bytes": 6127585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "eea633e9ea0c486080998683505e640a6754aa6fa718e746e5ccdc6c2c96c7d8",
+      "stat_signature": [
+        66306,
+        67028721,
+        6127585,
+        1791695488349847532,
+        1791695488356020474
+      ]
+    },
+    "missing_records": 0,
+    "new_records": 0,
+    "record_count": 509,
+    "scheduler": {
+      "bytes": 1761,
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "sha256": "143d80c81fbf789af8a152582661a88d780af2f36c385a1fb42ab36d57365336",
+      "stat_signature": [
+        66306,
+        572670,
+        1761,
+        1791695488371083150,
+        1791695488374021493
+      ]
+    },
+    "scheduler_active_leases": 0,
+    "scheduler_waiters": 0,
+    "status_counts": {
+      "released": 408,
+      "retained": 101
+    }
+  },
+  "filesystem_free_observation": {
+    "existing_full_claims_bytes": 48181777216,
+    "free_bytes_decrease_since_last_persisted_usage": 18374025216,
+    "last_completed_guardian_accounting": {
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 143738597997,
+        "inventory": {
+          "apparent_bytes": 95573597997,
+          "entry_count": 1358973,
+          "special_file_count": 5,
+          "symlink_count": 799
+        },
+        "limit_bytes": 145000000000,
+        "minimum_filesystem_free_bytes": 53482049536,
+        "observed_apparent_bytes": 95573597997,
+        "outstanding_full_reservations_bytes": 48165000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "observed_headroom_bytes": 1261402003,
+      "released_at": 1791695133.746728,
+      "reservation_id": "0a9ad2cbb9b64e388027c6fa9ab90bb3"
+    },
+    "last_persisted_usage_observation": {
+      "checked_at": 1791695488.1920967,
+      "minimum_filesystem_free_bytes": 53468569600,
+      "observed_apparent_bytes": 95573628229,
+      "outstanding_full_reservations_bytes": 48181777216,
+      "reservation_id": "ce044fc614564ad7a92886ed385f443d"
+    },
+    "minimum_free_bytes": 35094544384,
+    "observed_at": "2026-10-11T05:29:19.930815+00:00",
+    "observed_free_shortfall_bytes": 13104010048,
+    "requested_claim_bytes": 16777216,
+    "required_free_bytes": 48198554432,
+    "roots": [
+      {
+        "device": 66306,
+        "free_bytes": 35094544384,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+        "total_bytes": 4031871553536
+      },
+      {
+        "device": 66306,
+        "free_bytes": 35094544384,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+        "total_bytes": 4031871553536
+      },
+      {
+        "device": 66306,
+        "free_bytes": 35094544384,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+        "total_bytes": 4031871553536
+      },
+      {
+        "device": 66306,
+        "free_bytes": 35094544384,
+        "inode": 533856,
+        "path": "/tmp/pytest-of-barberb",
+        "total_bytes": 4031871553536
+      }
+    ]
+  },
+  "findings": [
+    {
+      "blocking_actual_execution": true,
+      "bytes": 13104010048,
+      "code": "filesystem_free_below_full_claims_plus_request",
+      "description": "Current statvfs free bytes alone fail the pinned admission condition. Existing records have no active/reserved claims or scheduler leases to await. No claim was changed or released.",
+      "kind": "execution_gate"
+    },
+    {
+      "blocking_audit": false,
+      "code": "rejected_fresh_inventory_not_durable",
+      "description": "The frozen owner computes fresh named-root inventory and free bytes, then raises before returning/persisting the failed account. The exact rejected observed/charged/free values are not recoverable from the unchanged ledger. Current free observation independently establishes the free gate; it does not reconstruct or assert a 145 GB charged-byte overrun.",
+      "kind": "measurement_limit"
+    }
+  ],
+  "input_pins": {
+    "exact_command": {
+      "bytes": 1907,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/command.json",
+      "sha256": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6",
+      "stat_signature": [
+        66306,
+        85903296,
+        1907,
+        1791695853086418072,
+        1791695853088958570
+      ]
+    },
+    "guardian": {
+      "bytes": 7202,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/run_guarded_identity_diagnosis.py",
+      "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2",
+      "stat_signature": [
+        66306,
+        86118545,
+        7202,
+        1791693302009849745,
+        1791693302009849745
+      ]
+    },
+    "prior_failed_resource_review": {
+      "bytes": 11704,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+      "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+      "stat_signature": [
+        66306,
+        86119238,
+        11704,
+        1791695762483092227,
+        1791695762483092227
+      ]
+    },
+    "readiness02": {
+      "bytes": 23561,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json",
+      "sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039",
+      "stat_signature": [
+        66306,
+        86164739,
+        23561,
+        1791696185890582912,
+        1791696185890582912
+      ]
+    },
+    "resource_owner": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c",
+      "stat_signature": [
+        66306,
+        66978845,
+        36724,
+        1791127795297886636,
+        1791127795297886636
+      ]
+    },
+    "retry_launch_binding": {
+      "bytes": 784,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-launch-binding.json",
+      "sha256": "22d8a3b91cf4eb88aaec44406d59b29d0fba9b34998c39c89ebc8343f212ef46",
+      "stat_signature": [
+        66306,
+        86164797,
+        784,
+        1791696365243737297,
+        1791696365243737297
+      ]
+    },
+    "root_observation": {
+      "bytes": 739,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-admission-root-observation.json",
+      "sha256": "1fb58f2b221f033c18984eea7f570be2df3d2f76e0b42e7665f298562553220c",
+      "stat_signature": [
+        66306,
+        86164841,
+        739,
+        1791696419879807666,
+        1791696419879807666
+      ]
+    }
+  },
+  "limits": [
+    "No fresh whole-root inventory was performed by this reviewer.",
+    "No original source Parquet body, runtime database, model, embedding or training asset was read.",
+    "Filesystem free space can change after this observation; this receipt is not admission authorization.",
+    "The free-space decrease is not attributed to any fixture or foreign actor without independent evidence.",
+    "Guardian exit status and exception are bound to the parent transcript observation; the rejected guardian had no saved PID/birth or runtime receipt to verify.",
+    "No claims or leases were acquired, released, recovered, reset or mutated."
+  ],
+  "no_attempt_evidence": {
+    "attempt02_adoption_receipt_exists": false,
+    "attempt02_exists": false,
+    "attempt02_record_count": 0,
+    "child_created": false,
+    "child_identity": null,
+    "child_identity_check": "not_applicable; code refuses before Popen and no admitted attempt exists",
+    "guardian_os_pid_binding_available": false,
+    "new_disk_record_created": false,
+    "new_resource_lease_created": false,
+    "runtime_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01"
+  },
+  "passed": true,
+  "recommendation": {
+    "current_gate": "filesystem-free condition under retained reservations",
+    "duration": "unknown",
+    "raise_caps": false,
+    "repeat_launch_attempted": false,
+    "required_next_step": "A legitimate externally owned storage/claim state change followed by root guardian fresh locked admission; preserve all retained and foreign records.",
+    "retry_now": false,
+    "temporary_active_foreign_claim_supported": false
+  },
+  "root_reported_exception": {
+    "error": "storage reservation capacity exceeded",
+    "error_type": "DaemonResourceError",
+    "failure_stage": "owner.__enter__._account(additional=16777216)",
+    "guardian_returncode": 1,
+    "scope": "Parent transcript observation; no child execution or successful diagnosis.",
+    "tool_session_id": 6063
+  },
+  "schema": "identity-diagnosis-retry-admission-review/v1",
+  "status": "admission_refused_before_reservation_and_child"
+}

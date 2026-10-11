@@ -1,0 +1,29 @@
+{
+  "authenticated_base": {
+    "bytes": 13343,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_identity_evidence.py",
+    "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6"
+  },
+  "helpers_imported_or_executed": false,
+  "limits": {
+    "maximum_entries": 4096,
+    "maximum_file_bytes": 2097152,
+    "maximum_package_bytes": 16777216
+  },
+  "package_execution": false,
+  "pending_gates": [
+    "Independent pending publication method review of both new helpers",
+    "Final pending STATUS accepted review",
+    "Root-controlled package execution and immutable publication verification"
+  ],
+  "schema": "pending-identity-packager-static-source-pin/v1",
+  "source": {
+    "bytes": 15028,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_pending_identity_evidence.py",
+    "sha256": "ae354bcfc81199d553b00417dabdb650b2a278d2d6a41d85c2abe27f350e73f2"
+  },
+  "source_only_scope": "Distinct pending index/schema; captured ModuleType utility reuse; strict no-result/Parquet selection; accepted static/document/readiness and explicit pinned no-child retry audit; inherited parent coverage only; fresh bounded two-repository publication paths.",
+  "syntax_ast_parsed": true,
+  "tests_repeated": false,
+  "timestamp_utc": "2026-10-11T05:35:02.524010+00:00"
+}

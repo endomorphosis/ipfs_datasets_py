@@ -1,0 +1,17 @@
+{
+  "legacy_helpers": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/parent-replay-guardian-source-r2",
+  "new": {
+    "bytes": 7202,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/run_guarded_identity_diagnosis.py",
+    "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2"
+  },
+  "new_campaign_runtime_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01",
+  "only_change": "Fresh runtime campaign directory; admission, existing-scheduler adoption, PID-birth custody, watch and release logic unchanged",
+  "original": {
+    "bytes": 7194,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/run_guarded_reconciliation.py",
+    "sha256": "405d4f9d670f448bb4c11b06964c87bd6319e00380bb3aefe16de3dab628be92"
+  },
+  "resource_policy": "Frozen145GB scoped owner plus exact existing shared scheduler; no capacity reset or foreign release",
+  "schema": "uscode-identity-recovery-guardian-reuse/v1"
+}

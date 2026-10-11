@@ -1,0 +1,107 @@
+{
+  "classification_control": {
+    "archive_physical_rows": 443905,
+    "diverse_full_length_id_hash_legal_values": true,
+    "full_archive_materialized_copies": 0,
+    "memory_mb": 256,
+    "retained_rows": 64969,
+    "spill_enabled": false,
+    "status_columns": 3,
+    "status_rows": 64969,
+    "synthetic": true,
+    "threads": 1
+  },
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+    "-q",
+    "--tb=short",
+    "--junitxml=/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml"
+  ],
+  "errors": 0,
+  "failures": 0,
+  "genuine_retry_executed": false,
+  "intermediate_synthetic_failure": {
+    "stdout": {
+      "bytes": 2838,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.log",
+      "sha256": "b6c6a06908dca84bd4230cf99d0c3ce666a631538918530cacd47f2daab9998b"
+    },
+    "xml": {
+      "bytes": 9937,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.xml",
+      "sha256": "2fa6613e2308f4f62ed41774008f0aafbcea39fb95d0b20eea0f3a93b66fadad"
+    }
+  },
+  "models_executed": false,
+  "original_genuine_failed_attempt": {
+    "child_log": {
+      "bytes": 2270,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child.log",
+      "sha256": "86203a13bbb22abf8dbb0d57d0f79f6c9a327db5ff0c6adadd3d33095379c248"
+    },
+    "failure": {
+      "bytes": 3226,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/failure.json",
+      "sha256": "e3336143648e85397db222d590fec7e00cec5bba1c1f44e6ff0c352c77d8352e"
+    }
+  },
+  "original_source_read": false,
+  "owners": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 3469,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/docs/autoencoders/uscode_identity_recovery.md",
+      "sha256": "9ed3fe4084b81e8ef433cabfcb4e0739d0b675ca34cdf30ce8920af538eaf58f"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 31301,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+      "sha256": "e7c605bd1b49fa7377adc9a8f229e1f2ed874656fbbad8f752c6ee42f6a525dc"
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 21760,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6"
+    }
+  },
+  "parent_commit": "7b2155fc211fe2b3b60455c2bcd11d7c8c41f3a9",
+  "preserved_execution_sha256": {
+    "archive_reconciliation": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+    "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+    "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+    "span_pages": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+    "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+    "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+  },
+  "prior_151_control_receipt": {
+    "bytes": 3878,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-control-receipt.json",
+    "sha256": "4334ed7b1d8394b1d1448288e9ab01d6bbbbc5790c2c99514426caa399e5c2c1"
+  },
+  "prior_151_controls_not_repeated": true,
+  "schema": "uscode-identity-diagnosis-memory-fix-control-receipt/v1",
+  "scope": "archive classification memory shape; original predicate precedence and exact baseline/identity/custody gates preserved",
+  "skipped": 0,
+  "source_state": "tested working files before separately authorized followup commit",
+  "stdout": {
+    "bytes": 1200,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.log",
+    "sha256": "9cdd657e6992994bad7f9529d1a6d39be80ef99c41cd699ec47aa614383dab37"
+  },
+  "test_cases": 45,
+  "timestamp_utc": "2026-10-11T05:16:50.122212+00:00",
+  "worktree": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011",
+  "xml": {
+    "bytes": 7974,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml",
+    "sha256": "8b6a2d7cea68822e9df7c6a681fcdc12241ec0c7b7568a318dafb27447730c76"
+  }
+}

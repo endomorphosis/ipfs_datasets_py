@@ -1,5 +1,7 @@
 # US Code span processing plan
 
+Latest identity follow-up: [reviewed ordinal diagnosis and admission-pending continuation](uscode_identity_recovery_20261011.md). The memory fix passes archive-sized synthetic controls; genuine ordinal results remain pending after fresh storage admission refused the retry. The accepted parent counts and unresolved archive IDs remain unchanged.
+
 Latest measured continuation: [completed October 11 source reconciliation and remaining plan](uscode_archive_rollout_20261011.md). The historical results below retain their original scope.
 
 Process every source occurrence in the pinned US Code span cache through an explicit inventory, source resolution and task disposition. Reuse existing source bytes, embeddings, checkpoints, compiler observations and research controls. Add learned reconstruction and formal checking as independently measured stages. Every span must be accounted for; successful capture, generated IR, reviewed legal meaning and checked proofs have separate completion criteria.

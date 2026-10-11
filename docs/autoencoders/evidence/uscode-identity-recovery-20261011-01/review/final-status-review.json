@@ -1,0 +1,591 @@
+{
+  "actual_result_review_completed": false,
+  "check_count": 27,
+  "checks": [
+    {
+      "basis": "Regular bounded STATUS.md bytes and before/open/after witnesses match the final root-provided SHA-256.",
+      "id": "exact_final_document_custody",
+      "passed": true
+    },
+    {
+      "basis": "The document leads with execution incomplete and distinguishes first OOM, second admission denial and synthetic validation.",
+      "id": "no_successful_genuine_identity_result",
+      "passed": true
+    },
+    {
+      "basis": "All counts are inherited authenticated parent measurements; complete outside-target physical identities were not retained.",
+      "id": "parent_source_counts_and_distinct_archive_denominators",
+      "passed": true
+    },
+    {
+      "basis": "The bounded local survey reproduces seven compiler component blobs and explicitly excludes producer launch/extraction authenticity.",
+      "id": "compiler_identity_and_extraction_owner_separation",
+      "passed": true
+    },
+    {
+      "basis": "Available ingestion per-document counter and later census group counter are distinguished; original launch is not recovered.",
+      "id": "available_per_document_recipe_is_only_a_hypothesis",
+      "passed": true
+    },
+    {
+      "basis": "Projected stopped metadata survey verifies all archive span rows have recorded valid hashes/legal IDs; this is not a new source scan.",
+      "id": "nonblank_archive_metadata_not_missing_placeholders",
+      "passed": true
+    },
+    {
+      "basis": "Metadata pair findings are distinct from unexecuted full-ID candidates and do not imply global source uniqueness or aliases.",
+      "id": "recorded_pair_findings_have_retained_subset_scope",
+      "passed": true
+    },
+    {
+      "basis": "Earlier forensics was an 18,342-occurrence prefix comparison and is not promoted to full-source absence.",
+      "id": "seed_prefix_zero_match_different_scope",
+      "passed": true
+    },
+    {
+      "basis": "Frozen memory-fix source and four-byte-identical integration files are authenticated while newer upstream progress is retained.",
+      "id": "source_and_integrated_commit_binding",
+      "passed": true
+    },
+    {
+      "basis": "Method gate requires full baseline reproduction, then only ordinal alteration and complete ID/hash/legal join; no genuine counters are invented.",
+      "id": "baseline_first_and_exact_alternate_join_pending",
+      "passed": true
+    },
+    {
+      "basis": "151 old controls and 45 focused followup controls retain their separate execution/version scope; no 196-unique claim is made.",
+      "id": "151_historic_controls_and45_followup_not_summed",
+      "passed": true
+    },
+    {
+      "basis": "Only already accepted 31-check original and 15-check memory method reviews are cited; pending publication helpers are not claimed accepted here.",
+      "id": "accepted_method_review_counts",
+      "passed": true
+    },
+    {
+      "basis": "Accepted failure resource review records stopped/reaped child and absent lease, but retained disk claim and unknown high-water; no successful finalization is implied.",
+      "id": "failed_attempt_outcome_runtime_and_claim_honest",
+      "passed": true
+    },
+    {
+      "basis": "Final 45 controls and intermediate synthetic failure remain preserved; archive-sized classifier shape is separate from whole genuine baseline/candidate execution.",
+      "id": "synthetic_memory_shape_not_actual_counter_result",
+      "passed": true
+    },
+    {
+      "basis": "Frozen readiness permits fresh admission only; root session refusal and independent narrow resource audit establish no admitted attempt02.",
+      "id": "second_readiness_and_admission_denial",
+      "passed": true
+    },
+    {
+      "basis": "Exact timestamped free-space arithmetic and 509 unchanged record history match the accepted rejection receipt; no current inventory is repeated.",
+      "id": "timestamped_free_gap_and_unchanged_history",
+      "passed": true
+    },
+    {
+      "basis": "Resource owner conflates named-root charge and filesystem-free failure; document correctly avoids reconstructing unavailable rejected values or blaming fixtures.",
+      "id": "fresh_accounting_and_cause_not_invented",
+      "passed": true
+    },
+    {
+      "basis": "Bounded directory ownership survey identifies no surviving safely attributable fixture cleanup; denial is not bypassed by foreign deletion/release.",
+      "id": "no_fixture_or_foreign_cleanup_claim",
+      "passed": true
+    },
+    {
+      "basis": "Outer 768 MiB equals 805,306,368 bytes; DuckDB uses decimal MB. Storage, CPU, timeout and row/output/report/example bounds remain unchanged.",
+      "id": "precise_unchanged_resource_units",
+      "passed": true
+    },
+    {
+      "basis": "This receipt accepts wording only; no execution, successful result, package closure or pending publication helper acceptance is asserted.",
+      "id": "pending_publication_and_actual_result_scope",
+      "passed": true
+    },
+    {
+      "basis": "Frozen local source/parent forensics distinguish clipping and ordinal mismatch hypotheses from unexplained historical count differences.",
+      "id": "count_difference_and_clipping_remain_hypotheses",
+      "passed": true
+    },
+    {
+      "basis": "The plan preserves original assets and requires independent source/profile custody and learned reconstruction denominators; no semantics are inferred from identity/compiler equality.",
+      "id": "original_assets_and_semantic_reconstruction_gates",
+      "passed": true
+    },
+    {
+      "basis": "Distinct family/dimension/schema/task/profile routes and checkpoint catalogs remain parallel; this campaign introduces no replacement checkpoint.",
+      "id": "parallel_family_checkpoint_manager_and_publication_contract",
+      "passed": true
+    },
+    {
+      "basis": "Inherited accepted parent plan binds 26 tensors/27,142 parameters and 512-token retained profile versus base8192 capacity. Warm state is not a qualified learned teacher or expanded context.",
+      "id": "warm_state_teacher_and_context_capacity_qualified",
+      "passed": true
+    },
+    {
+      "basis": "All 19 local STATUS links resolve inside this campaign; the one older parent link uses an immutable40hex commit. No network verification or package closure is repeated.",
+      "id": "bounded_document_relative_links_resolve",
+      "passed": true
+    },
+    {
+      "basis": "Read-only Git diffs show zero removed lines in four owned older entrypoints. Added notes retain parent/unresolved scope and say synthetic pass, genuine retry refused, no alternate full-ID result or reconstruction score.",
+      "id": "four_older_entrypoints_are_additive_pending_acknowledgments",
+      "passed": true
+    },
+    {
+      "basis": "All review inputs and owned older document witnesses remain unchanged after comparison. No source/index/claim mutation or model/corpus/test execution occurred.",
+      "id": "all_reviewed_file_witnesses_stable_before_publication",
+      "passed": true
+    }
+  ],
+  "completed": true,
+  "created_at": "2026-10-11T05:43:08.988283+00:00",
+  "document": {
+    "bytes": 13553,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/STATUS.md",
+    "sha256": "5f91232093489cbb2795a30b90cf167d6c3457f18fb033871a6fd35e3ac0086b",
+    "stat_signature": [
+      66306,
+      85903290,
+      13553,
+      1791697272923091036,
+      1791697272923091036
+    ]
+  },
+  "findings": [],
+  "input_pins": {
+    "campaign": {
+      "bytes": 2100,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/campaign.json",
+      "sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517",
+      "stat_signature": [
+        66306,
+        85866877,
+        2100,
+        1791692953395086434,
+        1791692953395086434
+      ]
+    },
+    "failed_resource_review": {
+      "bytes": 11704,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+      "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+      "stat_signature": [
+        66306,
+        86119238,
+        11704,
+        1791695762483092227,
+        1791695762483092227
+      ]
+    },
+    "integration_binding": {
+      "bytes": 1180,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/integration-source-binding.json",
+      "sha256": "e2d03176441239029d463cc40c8516cae94cc009ec5b01f6bd1c6ff0b4205646",
+      "stat_signature": [
+        66306,
+        86164708,
+        1180,
+        1791696042766327976,
+        1791696042766327976
+      ]
+    },
+    "local_recipe": {
+      "bytes": 21808,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/local-recipe-survey.json",
+      "sha256": "944976e2e0793ec7d2d1af2f1f0e19c8a84cc9eb1139aaf1cf83721c532d0645",
+      "stat_signature": [
+        66306,
+        86118570,
+        21808,
+        1791693446788171285,
+        1791693446788171285
+      ]
+    },
+    "memory_control": {
+      "bytes": 5399,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-control-receipt.json",
+      "sha256": "3e630bdfaaa68e818298068cdb5f3be0d1df04a38be0e5fd2939ef2a6ad8d2f9",
+      "stat_signature": [
+        66306,
+        86164624,
+        5399,
+        1791695810125708962,
+        1791695810125708962
+      ]
+    },
+    "memory_method_review": {
+      "bytes": 19925,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-memory-review.json",
+      "sha256": "0435518ccbf6827372eabf907d921762e7177f2626bb034c5692418b5c72f013",
+      "stat_signature": [
+        66306,
+        86164668,
+        19925,
+        1791696008874214031,
+        1791696008874214031
+      ]
+    },
+    "metadata_survey": {
+      "bytes": 84633,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-pilot-resource-survey.json",
+      "sha256": "0d66f88b749579028d41d529dbfc2254a6a70baa8e195f3eba13097693339185",
+      "stat_signature": [
+        66306,
+        86118594,
+        84633,
+        1791693531500356994,
+        1791693531500356994
+      ]
+    },
+    "original_control": {
+      "bytes": 3878,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-control-receipt.json",
+      "sha256": "4334ed7b1d8394b1d1448288e9ab01d6bbbbc5790c2c99514426caa399e5c2c1",
+      "stat_signature": [
+        66306,
+        86119103,
+        3878,
+        1791694535944673151,
+        1791694535944673151
+      ]
+    },
+    "original_method_review": {
+      "bytes": 24239,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-review.json",
+      "sha256": "341b9d5a13491534fc0a3513a0be2a0888928d4bf4285f5001740ea732896e88",
+      "stat_signature": [
+        66306,
+        86119133,
+        24239,
+        1791695051604434670,
+        1791695051604434670
+      ]
+    },
+    "parent_document": {
+      "bytes": 35825,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/STATUS.md",
+      "sha256": "bb4f9faf364b933e8eb63d0f840b1ec644caf49cf5a4ee4122af671dea9a9f0e",
+      "stat_signature": [
+        66306,
+        63751767,
+        35825,
+        1791689177416676701,
+        1791689177416676701
+      ]
+    },
+    "parent_document_review": {
+      "bytes": 34279,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/final-status-review.json",
+      "sha256": "ede06d72ea7a5515de68282076fabf5970e26579cea425823cd09d703a1cff03",
+      "stat_signature": [
+        66306,
+        63751834,
+        34279,
+        1791689340892441370,
+        1791689340892441370
+      ]
+    },
+    "parent_identity_forensics": {
+      "bytes": 15513,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+      "sha256": "a7b82bc7a2efa6340bf6bc229b0d73c14a13bf2b2450a1c180902493fc62571d",
+      "stat_signature": [
+        66306,
+        63751824,
+        15513,
+        1791688669035446714,
+        1791688669035446714
+      ]
+    },
+    "parent_summary": {
+      "bytes": 15942,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+      "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac",
+      "stat_signature": [
+        66306,
+        63751833,
+        15942,
+        1791688956764078357,
+        1791688956764078357
+      ]
+    },
+    "readiness02": {
+      "bytes": 23561,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json",
+      "sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039",
+      "stat_signature": [
+        66306,
+        86164739,
+        23561,
+        1791696185890582912,
+        1791696185890582912
+      ]
+    },
+    "remote_producer": {
+      "bytes": 56832,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/remote-producer-survey.json",
+      "sha256": "775a1d791691978cc0f1b7777779d870ff7e63765ae7f6018de03ce78a604aac",
+      "stat_signature": [
+        66306,
+        86118581,
+        56832,
+        1791693472769100278,
+        1791693472769100278
+      ]
+    },
+    "retry_admission_review": {
+      "bytes": 13627,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-admission-review.json",
+      "sha256": "b1e693a3ebb790a8f9d8dbda6479263573a7e2092fb7fb135f08289fc4a583c1",
+      "stat_signature": [
+        66306,
+        86164887,
+        13627,
+        1791696559931115243,
+        1791696559931115243
+      ]
+    },
+    "run_plan": {
+      "bytes": 2853,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/run-plan.json",
+      "sha256": "0f6328f73d575d889b2c8e04fa782b36b619f58b72e8441e0b56347cf0b2751c",
+      "stat_signature": [
+        66306,
+        85903297,
+        2853,
+        1791695853089585906,
+        1791695853092958723
+      ]
+    },
+    "temporary_ownership_survey": {
+      "bytes": 4252,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/memory-control-temporary-ownership-survey.json",
+      "sha256": "7ff4fa4779ba80a55e4d301aff2e298cf32cc7bd619667fb314600eb71282b86",
+      "stat_signature": [
+        66306,
+        86164884,
+        4252,
+        1791696550578936462,
+        1791696550578936462
+      ]
+    }
+  },
+  "limits": [
+    "No current resource inventory, live ledger/scheduler reread, original Parquet scan, runtime database open, model/embedding read, model job, test execution or independent result replay was performed.",
+    "Warm-state and retained context facts are inherited from the authenticated accepted parent plan; model weights were not rehashed.",
+    "This document review does not approve pending publication helper code or assert an executed pending package/remote verification.",
+    "The genuine alternate ordinal counter and global source uniqueness remain unmeasured.",
+    "Older document relative-link closure against newly generated packages remains a publication-stage verification gate."
+  ],
+  "older_entrypoints": [
+    {
+      "added_lines_sha256": "ad328e1bc9cd03e89c9edd01c5fc71119730a0455873a51141868a5690b182cb",
+      "baseline_sha256": "00ed2b3666dedd5fb394546a2241800f000795aadf256b65baa8fea1c36009bf",
+      "current": {
+        "bytes": 4666,
+        "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/68-uscode-all-span-processing-plan-2026-10-07.md",
+        "sha256": "c99bea6c82e67fff08d4325b4e09b9863814a39a5f937eb3a6a1166eff9f8fc4",
+        "stat_signature": [
+          66306,
+          83150066,
+          4666,
+          1791697163033816220,
+          1791697163033816220
+        ]
+      },
+      "removed_line_count": 0,
+      "scope": "additive pending followup only; older body/measurements preserved"
+    },
+    {
+      "added_lines_sha256": "ad328e1bc9cd03e89c9edd01c5fc71119730a0455873a51141868a5690b182cb",
+      "baseline_sha256": "0d90cd0bc39642f4905ee69eed60287d2a4820911abbd08aa63629987ef0bff4",
+      "current": {
+        "bytes": 8547,
+        "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/69-uscode-span-intake-progress-2026-10-07.md",
+        "sha256": "5ec2382b29fed5e3ae7754b1c145f7c0723eada10da97bed344a039b0cee70ff",
+        "stat_signature": [
+          66306,
+          83150305,
+          8547,
+          1791697163034003960,
+          1791697163034003960
+        ]
+      },
+      "removed_line_count": 0,
+      "scope": "additive pending followup only; older body/measurements preserved"
+    },
+    {
+      "added_lines_sha256": "a0c80d5e138e25d7e651aa8ad45a41a7eeec6c240c893e6e141caea2c2323edb",
+      "baseline_sha256": "5a04652818b7325a024fb95e4f87c5c1c0dd8e576efa7798746a2cfc73f9e5c1",
+      "current": {
+        "bytes": 28651,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/progress_integration.md",
+        "sha256": "04ddf22e82932533dbfa06556fc5280087449f2a2ef98763d30eb89c05c5fc23",
+        "stat_signature": [
+          66306,
+          83657475,
+          28651,
+          1791697163033482292,
+          1791697163033482292
+        ]
+      },
+      "removed_line_count": 0,
+      "scope": "additive pending followup only; older body/measurements preserved"
+    },
+    {
+      "added_lines_sha256": "96dd3ecdcb299058e90e7254c4bd325b3d7098fbfdd7f0aa38229a64b5a9681b",
+      "baseline_sha256": "578f548a24f0456a3a7a6cef8bac4361f4126db76904e1618c70b8acc5346212",
+      "current": {
+        "bytes": 36888,
+        "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/uscode_all_span_processing_plan_20261007.md",
+        "sha256": "a7a630f45caed0a6a766c239ac385b3033e29c36c1057a57eb3d4bbe0f6920b0",
+        "stat_signature": [
+          66306,
+          83674337,
+          36888,
+          1791697163032925665,
+          1791697163032925665
+        ]
+      },
+      "removed_line_count": 0,
+      "scope": "additive pending followup only; older body/measurements preserved"
+    }
+  ],
+  "passed": true,
+  "relative_links": [
+    {
+      "exists": true,
+      "label": "campaign manifest",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/campaign.json",
+      "target": "campaign.json"
+    },
+    {
+      "kind": "immutable_parent_document_reference",
+      "label": "completed source reconciliation and comprehensive reconstruction plan",
+      "network_rechecked": false,
+      "target": "https://github.com/endomorphosis/lift_coding/blob/4f67a392f4a2203bbce344207211ef5a9adfc19c/implementation_plan/docs/72-uscode-archive-reconciliation-rollout-2026-10-11.md"
+    },
+    {
+      "exists": true,
+      "label": "local recipe survey",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/local-recipe-survey.json",
+      "target": "review/local-recipe-survey.json"
+    },
+    {
+      "exists": true,
+      "label": "pinned Hub survey",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/remote-producer-survey.json",
+      "target": "review/remote-producer-survey.json"
+    },
+    {
+      "exists": true,
+      "label": "metadata and resource survey",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-pilot-resource-survey.json",
+      "target": "review/identity-pilot-resource-survey.json"
+    },
+    {
+      "exists": true,
+      "label": "Integration binding",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/integration-source-binding.json",
+      "target": "review/integration-source-binding.json"
+    },
+    {
+      "exists": true,
+      "label": "151 integrated controls",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-control-receipt.json",
+      "target": "review/identity-diagnosis-control-receipt.json"
+    },
+    {
+      "exists": true,
+      "label": "31-check independent method review",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-review.json",
+      "target": "review/implementation-review.json"
+    },
+    {
+      "exists": true,
+      "label": "failure snapshots",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/measured-failed-run-01/snapshot.json",
+      "target": "measured-failed-run-01/snapshot.json"
+    },
+    {
+      "exists": true,
+      "label": "independent cleanup review",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+      "target": "review/failed-attempt-resource-review.json"
+    },
+    {
+      "exists": true,
+      "label": "45 focused controls",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-control-receipt.json",
+      "target": "review/identity-diagnosis-memory-fix-control-receipt.json"
+    },
+    {
+      "exists": true,
+      "label": "15-check independent memory review",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-memory-review.json",
+      "target": "review/implementation-memory-review.json"
+    },
+    {
+      "exists": true,
+      "label": "original preflight",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-01/index.json",
+      "target": "preflight-01/index.json"
+    },
+    {
+      "exists": true,
+      "label": "first readiness",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness.json",
+      "target": "review/pilot-readiness.json"
+    },
+    {
+      "exists": true,
+      "label": "second readiness",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json",
+      "target": "review/pilot-readiness-02.json"
+    },
+    {
+      "exists": true,
+      "label": "Root observation",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-admission-root-observation.json",
+      "target": "review/retry-admission-root-observation.json"
+    },
+    {
+      "exists": true,
+      "label": "11-check independent rejection audit",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-admission-review.json",
+      "target": "review/retry-admission-review.json"
+    },
+    {
+      "exists": true,
+      "label": "temporary-directory ownership survey",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/memory-control-temporary-ownership-survey.json",
+      "target": "review/memory-control-temporary-ownership-survey.json"
+    },
+    {
+      "exists": true,
+      "label": "reused guardian",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/guard-reuse.json",
+      "target": "guard-reuse.json"
+    },
+    {
+      "exists": true,
+      "label": "run plan",
+      "resolved": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/run-plan.json",
+      "target": "run-plan.json"
+    }
+  ],
+  "resolved_draft_findings": [
+    {
+      "finding": "Use exact binary outer-memory unit.",
+      "resolution": "768 MiB outer memory; DuckDB256 MB unchanged."
+    },
+    {
+      "finding": "Incidental611 manifest count lacked a complete pinned inventory in this review.",
+      "resolution": "Removed count; actual paired table-body custody remains a future gate."
+    }
+  ],
+  "schema": "uscode-identity-recovery-final-status-review/v1",
+  "scope": "Independent bounded final-document review against frozen receipts and inherited approved reconstruction/resource plan. Publication packaging/helper acceptance and remote verification remain separate.",
+  "status": "accepted"
+}

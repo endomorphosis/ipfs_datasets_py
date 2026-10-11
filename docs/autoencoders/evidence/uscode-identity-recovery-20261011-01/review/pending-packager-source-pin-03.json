@@ -1,0 +1,29 @@
+{
+  "changes": [
+    "Allow only exact hash-authenticated stopped failed-resource audit with its single known informational finding",
+    "Require completed accepted cleanup, no successful diagnosis, own claim retained, scheduler lease absent, and explicit no disk/all-resource release claims",
+    "Retain all-checks-passed enforcement and zero-finding requirements for method and final document reviews"
+  ],
+  "completed_packager_unmodified": true,
+  "failed_resource_audit_sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+  "helpers_imported_or_executed": false,
+  "original_failed_receipt_unmodified": true,
+  "package_execution": false,
+  "prior_helper_and_method_review_snapshot": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-pending-02/index.json",
+    "sha256": "35608dbd118cd91dac8e6c507efe7bca749ed5e60c5d7bdb9158caad39f24640"
+  },
+  "prior_source_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pending-packager-source-pin-02.json",
+    "sha256": "e515c22f2801a7151e94559b598f0dcc940efa5f38bea4750f79874270132dae"
+  },
+  "schema": "pending-identity-packager-static-source-pin/v3",
+  "source": {
+    "bytes": 21009,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_pending_identity_evidence.py",
+    "sha256": "52ff80257f6ad09f627e53acdde834a3bfec5fec48874f55119c2e5408cc5779"
+  },
+  "syntax_ast_parsed": true,
+  "tests_repeated": false,
+  "timestamp_utc": "2026-10-11T05:49:13.794363+00:00"
+}

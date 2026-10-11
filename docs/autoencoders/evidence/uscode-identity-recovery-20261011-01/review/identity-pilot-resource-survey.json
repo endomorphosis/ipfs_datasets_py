@@ -1,0 +1,2362 @@
+{
+  "admission_and_review_gates": [
+    "Before executing, authenticate campaign/parent/source/progress/producer pins and unchanged stat witnesses; require absent output destination and stopped parent lock/no WAL.",
+    "Pin the new owner code/schema and all normalization/ID recipes in a new manifest. Keep the frozen archived-target generation unchanged.",
+    "Use the existing resource guardian for one fresh locked named-root admission census with the entire requested storage reservation charged; refuse if insufficient.",
+    "Acquire only the run's own one-CPU/one-child/1536MiB scheduler lease under the unchanged scheduler policy; record lease/process birth/group custody.",
+    "Count DB, shards, indexes, staging and every report/custody receipt against the hard logical output/guardian caps. Do not assume compression ratios or subtract foreign retained claims.",
+    "Bound complete-section hydration to 8MiB and preserve the accepted 64-valid-document historical ordinal replay. Refuse oversized candidates before advancing the cursor.",
+    "Independent stopped review must reconstruct raw/source-location custody and all identity rows under different page sizes, compare historical IDs and ordered accounting digests, and qualify full-source uniqueness only after exhaustion.",
+    "Require stopped process group, successful own claim/lease release, exact preexisting foreign-record preservation and attribution of legitimate concurrent additions.",
+    "Scale only after measuring bytes per identity/pair/index, time per page and process-lifetime self high-water; reduce page count or stop when admission/output/time bounds refuse.",
+    "Training, distillation, registry import and model publication remain later, separate family/dimension/schema/task gates using retained eligible assets."
+  ],
+  "campaign": {
+    "parent_evidence_authenticated": true,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/campaign.json",
+    "sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517"
+  },
+  "created_at": "2026-10-11T04:36:58.420Z",
+  "diagnostics": {
+    "archive_metadata_cohorts": [
+      {
+        "both_fields_present": 359524,
+        "exact_id_joined": false,
+        "joined_hash_equal": 0,
+        "joined_legal_equal": 0,
+        "joined_pair_equal": 0,
+        "legal_empty": 0,
+        "legal_null": 0,
+        "legal_whitespace_only": 0,
+        "plain_hash_and_legal_present": 359524,
+        "rows": 359524,
+        "sha_empty": 0,
+        "sha_null": 0,
+        "sha_valid_plain_hex": 359524,
+        "sha_whitespace_only": 0,
+        "status": "gap"
+      },
+      {
+        "both_fields_present": 62001,
+        "exact_id_joined": true,
+        "joined_hash_equal": 62001,
+        "joined_legal_equal": 62001,
+        "joined_pair_equal": 62001,
+        "legal_empty": 0,
+        "legal_null": 0,
+        "legal_whitespace_only": 0,
+        "plain_hash_and_legal_present": 62001,
+        "rows": 62001,
+        "sha_empty": 0,
+        "sha_null": 0,
+        "sha_valid_plain_hex": 62001,
+        "sha_whitespace_only": 0,
+        "status": "gap"
+      },
+      {
+        "both_fields_present": 19411,
+        "exact_id_joined": false,
+        "joined_hash_equal": 0,
+        "joined_legal_equal": 0,
+        "joined_pair_equal": 0,
+        "legal_empty": 0,
+        "legal_null": 0,
+        "legal_whitespace_only": 0,
+        "plain_hash_and_legal_present": 19411,
+        "rows": 19411,
+        "sha_empty": 0,
+        "sha_null": 0,
+        "sha_valid_plain_hex": 19411,
+        "sha_whitespace_only": 0,
+        "status": "sealed"
+      },
+      {
+        "both_fields_present": 2968,
+        "exact_id_joined": true,
+        "joined_hash_equal": 2968,
+        "joined_legal_equal": 2968,
+        "joined_pair_equal": 2968,
+        "legal_empty": 0,
+        "legal_null": 0,
+        "legal_whitespace_only": 0,
+        "plain_hash_and_legal_present": 2968,
+        "rows": 2968,
+        "sha_empty": 0,
+        "sha_null": 0,
+        "sha_valid_plain_hex": 2968,
+        "sha_whitespace_only": 0,
+        "status": "sealed"
+      }
+    ],
+    "archive_projected_metadata_only": true,
+    "bounded_nonempty_hash_examples": [
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:42:671.",
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_span_id": "uscode-span-0000005fc113d9415c206a5479ec5d1c6d199636decad7cfe7d9954f4c5ab743",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:33:2220",
+        "source_sha256": "54de318fd1b6000b4909959572a71aeaa6a5fef6c834d4db927e5cafa618379e",
+        "source_span_id": "uscode-span-0000109495e544fde577470e5500a58c2f49875a0b89353e21fe0bcb81aef2ca",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:26:32",
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+        "source_span_id": "uscode-span-0000109ccf9f21fcec035057fd09055405fcbfcdce05372803c98efefecdc49a",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:19:3006",
+        "source_sha256": "56e7d130f35778f13810ebf2c1e048cb737291f100b386d0370330c11fa187c0",
+        "source_span_id": "uscode-span-000016b2cdb8ba52c550432269591dd219f4b64d345b8547e6804ec5a1602fd6",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:10:1086a",
+        "source_sha256": "7e0408243f5ae46a8a266290a91e9859d67d8d8e69a90952d47ced9501b86804",
+        "source_span_id": "uscode-span-00001f5bb8c2ecab2fd3e69876cc2af999ca3c4756f257c84f8b7983670e382c",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:10:8897",
+        "source_sha256": "1947e424a93cca30eb885c794203f9584751f2f607f5deb9f56b78ea1cd2b843",
+        "source_span_id": "uscode-span-000020850caa44a08cf95d557b0c6fd831731ef1b23278a82024af3cb94c9219",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:20:1099c",
+        "source_sha256": "c9f56b89a4c444956863a33d1b51634049c0a52c2bd915fbecf9f33b5ffacf03",
+        "source_span_id": "uscode-span-000021bf1190a839671f60f62c34d357377fbcb0febb7ce02bec5a3543bc573b",
+        "status": "gap"
+      },
+      {
+        "code_identity": "",
+        "legal_id": "usc:us:15:1051",
+        "source_sha256": "5d001531daef90eb2c88dc6205f5b503676c7dbe0efe212a98fe9cc2a0cfc4f7",
+        "source_span_id": "uscode-span-000021eaf10ec79d034cc56657f77e6cf0e2f6992a73ae3df44cd7d88f8c4cb1",
+        "status": "gap"
+      }
+    ],
+    "bounded_unresolved_pair_examples": [
+      {
+        "archived_id": "uscode-span-00036faefb0d5583d6ed5308717b4ac8a3fd5897a3bfd1d86578e041b2048e6f",
+        "archived_status": "gap",
+        "distinct_ids": 4,
+        "example_section": 34817,
+        "example_source_span_id": "uscode-span-00510dba4f954a8029f5e9d44dcc2cdf2883f2cf1a8f7e6c86e30bb01e8ada60",
+        "legal_id": "usc:us:34:20101",
+        "physical_occurrences": 4,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-00052362557836d998ddc873551020a73155d28d8ae3e924ce839e21762df05c",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 51495,
+        "example_source_span_id": "uscode-span-0d1286a83485297cc32c13ebba0a5d62fe3ab1e141d0c998d1d45edf0da807bd",
+        "legal_id": "usc:us:49:106.",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-0009143f1347afa7e09ad1cda4187dfdb3366e6c11122b47a6fc005efb96fa97",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 41043,
+        "example_source_span_id": "uscode-span-18a3d9e6824e921056c119c90eb53060450a5933fc101fdb2fd741ee75c9b65a",
+        "legal_id": "usc:us:42:1397dd.",
+        "physical_occurrences": 1,
+        "source_sha256": "57d78377efd0f334d2e12e2aecf904e24bed7b8faaf338f74f807df94618922b"
+      },
+      {
+        "archived_id": "uscode-span-0009d6839e76f411e5ef79514ed06e4258580a68fa88d2de9a5fc0d736aa972d",
+        "archived_status": "gap",
+        "distinct_ids": 4,
+        "example_section": 34817,
+        "example_source_span_id": "uscode-span-00510dba4f954a8029f5e9d44dcc2cdf2883f2cf1a8f7e6c86e30bb01e8ada60",
+        "legal_id": "usc:us:34:20101",
+        "physical_occurrences": 4,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-000aa86cf7ec988490dd527cfd67062538e1f71a3b04f0f8556a5dd9d5d8879a",
+        "archived_status": "gap",
+        "distinct_ids": 11,
+        "example_section": 19272,
+        "example_source_span_id": "uscode-span-049644324af54dc91173e9d65fcf7f19bdf70c06fd09ce242dd64dc99e266c85",
+        "legal_id": "usc:us:20:1103g",
+        "physical_occurrences": 11,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-000ed7703f4f7f5c0dd6bfbeaa1f42bce645e6cec1d35eff2e6a5088cac07ccc",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 28033,
+        "example_source_span_id": "uscode-span-015f5e97744857c23e79d527f7f57654cd54e2bf29b5a499438e45e839d57be5",
+        "legal_id": "usc:us:26:381",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-000fc8dbc32def0d868f1f7d7294e5b9d418c2f8f3bbf6ec903d76ac37243806",
+        "archived_status": "gap",
+        "distinct_ids": 2,
+        "example_section": 38983,
+        "example_source_span_id": "uscode-span-083f7bc5815c04474b3967435d9b2cfd36fe0f8ac271ffd9c4c151aab152da13",
+        "legal_id": "usc:us:42:241.",
+        "physical_occurrences": 2,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-000fe1153529ed3192e2471cd40719e00977de399a43ad417aa37e2e2c385fb4",
+        "archived_status": "gap",
+        "distinct_ids": 3,
+        "example_section": 22231,
+        "example_source_span_id": "uscode-span-02ac6b030ea3f7d166aac9dd24ee997d750dfc5329a1483a517adbfb6f7c26c1",
+        "legal_id": "usc:us:22:2151",
+        "physical_occurrences": 3,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-0011d3a91f6dd00493b98456fb51904c6253de75a66248fd71a6be82479c5bbc",
+        "archived_status": "gap",
+        "distinct_ids": 8,
+        "example_section": 40128,
+        "example_source_span_id": "uscode-span-0465061fc40cac4ecb1a8667964e81ec830c21675b7a370ea1dd4659cb978a81",
+        "legal_id": "usc:us:42:300aa",
+        "physical_occurrences": 8,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-001820e041286efb488d553281d640c58aaf14fa9da570c4f2e40f2158e15418",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 14785,
+        "example_source_span_id": "uscode-span-18a20d9ccf08c21c08d3c603cc00eb5711f8c6c0fa27f314c7ef28e266b15d53",
+        "legal_id": "usc:us:18:2327",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-00184064f69fa252f9d76f781cc183c46df997c0b83e08c32558469a7463c4a0",
+        "archived_status": "gap",
+        "distinct_ids": 11,
+        "example_section": 51649,
+        "example_source_span_id": "uscode-span-0041e40e487bf2e23c2db3d376f4ba121bf63003b8c248ec5355b3be20f8035a",
+        "legal_id": "usc:us:49:5338.",
+        "physical_occurrences": 11,
+        "source_sha256": "57d78377efd0f334d2e12e2aecf904e24bed7b8faaf338f74f807df94618922b"
+      },
+      {
+        "archived_id": "uscode-span-001f7cd50dfd5c363ca6a95069cce78550e8da14811ea17e7042e65db920dad1",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 29380,
+        "example_source_span_id": "uscode-span-1b7b6d35a0393ce047e5c32799cf9e04e19e6cde768e06f9a365fe4fecf794a4",
+        "legal_id": "usc:us:26:6412",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-00200505f3c9cad026acd7b365a424448c89a3662dbb1fbd629b27e31b70bfde",
+        "archived_status": "gap",
+        "distinct_ids": 2,
+        "example_section": 53065,
+        "example_source_span_id": "uscode-span-00dcb3352b5ae898430ec966290a7e970c7657b194b1eaeeb34dc62c215ae825",
+        "legal_id": "usc:us:5:3301",
+        "physical_occurrences": 2,
+        "source_sha256": "38178a20b470cfd18299fb1593dd4ba706f1a83321dac051d01086efd8b7a96f"
+      },
+      {
+        "archived_id": "uscode-span-0024996a8020fa8900fd8dd0def3db78d5bb11cb073bf0cf611db3ceb8403ec5",
+        "archived_status": "gap",
+        "distinct_ids": 26,
+        "example_section": 40836,
+        "example_source_span_id": "uscode-span-05411ab34a52cacc01101ae26731cfe67c768ba37c63234bb4d9886f518efb19",
+        "legal_id": "usc:us:42:1395",
+        "physical_occurrences": 26,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-00259e729502ac1232b04a719f931aa5b6d8c29dee57547f546119abcf8a3509",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 40832,
+        "example_source_span_id": "uscode-span-0cbdb3433632d51ba189b85201394a4b332d06dfc294a33bd5be20a12547fd40",
+        "legal_id": "usc:us:42:1395i",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "archived_id": "uscode-span-0025f08ee04f1bb22e2c4b8a03fd6385f31fe492cdda25b82e5d2b3266143ac1",
+        "archived_status": "gap",
+        "distinct_ids": 1,
+        "example_section": 22722,
+        "example_source_span_id": "uscode-span-161045c1d59a681198d445a7f19dcb8b928560076edc95f6f2284be1ea470e91",
+        "legal_id": "usc:us:22:2651a",
+        "physical_occurrences": 1,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      }
+    ],
+    "campaign_sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517",
+    "custody": {
+      "final_database": {
+        "bytes": 30158848,
+        "content_hash_rechecked": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/reconciliation.duckdb",
+        "sha256": "f78813a0f1b072d02d5ca2d9b52f4b37527887d1ade02bacf505591a2271e635",
+        "stat_signature": [
+          66306,
+          85721463,
+          30158848,
+          1791688027450199619,
+          1791688027450199619
+        ],
+        "stat_witness_matches": true
+      },
+      "final_manifest": {
+        "bytes": 3079,
+        "content_hash_rechecked": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+        "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+        "stat_signature": [
+          66306,
+          85721464,
+          3079,
+          1791686734692837095,
+          1791686734692837095
+        ],
+        "stat_witness_matches": true
+      },
+      "final_report": {
+        "bytes": 12140,
+        "content_hash_rechecked": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json",
+        "sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+        "stat_signature": [
+          66306,
+          85721526,
+          12140,
+          1791688027866621480,
+          1791688027871202779
+        ],
+        "stat_witness_matches": true
+      },
+      "progress": {
+        "bytes": 52701179,
+        "content_hash_rechecked": true,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+        "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+        "stat_signature": [
+          66306,
+          75023679,
+          52701179,
+          1791385411069107548,
+          1791385411069107548
+        ],
+        "stat_witness_matches": true
+      },
+      "source": {
+        "authenticated_completed_review_sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+        "bytes": 374277662,
+        "content_hash_rechecked": false,
+        "inspection": "Parquet footer/schema only; source data pages not read",
+        "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+        "stat_signature": [
+          66306,
+          12190549,
+          374277662,
+          1790444227598474211,
+          1790444227839614223
+        ],
+        "stat_witness_matches": true
+      }
+    },
+    "db_schemas": {
+      "reconciliation_state": [
+        [
+          "key",
+          "VARCHAR",
+          "NO",
+          "PRI",
+          null,
+          null
+        ],
+        [
+          "value",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ]
+      ],
+      "target_occurrences": [
+        [
+          "occurrence_id",
+          "BLOB",
+          "NO",
+          "PRI",
+          null,
+          null
+        ],
+        [
+          "source_span_id",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "source_sha256",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "legal_id",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "entry_cid",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "title",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "section",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "citation",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "source_section_offset",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "historical_document_batch_index",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "historical_span_ordinal",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "utf8_bytes",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "unicode_characters",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "token_count",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "byte_cohort",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "token_cohort",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "source_join_disposition",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "source_section_span_ordinal",
+          "BIGINT",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "source_text_origin",
+          "VARCHAR",
+          "YES",
+          null,
+          null,
+          null
+        ],
+        [
+          "raw_source_text_present",
+          "BOOLEAN",
+          "YES",
+          null,
+          null,
+          null
+        ]
+      ]
+    },
+    "db_tables": [
+      [
+        "reconciliation_state"
+      ],
+      [
+        "target_occurrences"
+      ]
+    ],
+    "elapsed_seconds": 1.1271473889937624,
+    "footers": {
+      "progress": {
+        "arrow_metadata": {},
+        "row_groups": 5,
+        "rows": 443905,
+        "schema": [
+          {
+            "name": "record_kind",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "dataset_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "agent_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "role",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "heartbeat",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "documents",
+            "nullable": true,
+            "type": "int32"
+          },
+          {
+            "name": "source_parquet",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "source_span_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "legal_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "sealed",
+            "nullable": true,
+            "type": "bool"
+          },
+          {
+            "name": "claim_worker",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "claim_token",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "source_sha256",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "reason",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "code_identity",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "term_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "term_kind",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "term_value",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "task_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "failure_mode",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "work_kind",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "owner_agent",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "sealed_count",
+            "nullable": true,
+            "type": "int32"
+          },
+          {
+            "name": "gap_count",
+            "nullable": true,
+            "type": "int32"
+          },
+          {
+            "name": "pending_count",
+            "nullable": true,
+            "type": "int32"
+          },
+          {
+            "name": "admitted",
+            "nullable": true,
+            "type": "bool"
+          },
+          {
+            "name": "formalized",
+            "nullable": true,
+            "type": "bool"
+          }
+        ],
+        "selected_column_stats": [
+          {
+            "column": "source_span_id",
+            "compressed_bytes": 7550227,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 0,
+            "rows": 123566,
+            "uncompressed_bytes": 9885313
+          },
+          {
+            "column": "legal_id",
+            "compressed_bytes": 903160,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 0,
+            "rows": 123566,
+            "uncompressed_bytes": 2254307
+          },
+          {
+            "column": "status",
+            "compressed_bytes": 11860,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 0,
+            "rows": 123566,
+            "uncompressed_bytes": 30121
+          },
+          {
+            "column": "source_sha256",
+            "compressed_bytes": 6048718,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 0,
+            "rows": 123566,
+            "uncompressed_bytes": 8402521
+          },
+          {
+            "column": "code_identity",
+            "compressed_bytes": 11925,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 0,
+            "rows": 123566,
+            "uncompressed_bytes": 30185
+          },
+          {
+            "column": "source_span_id",
+            "compressed_bytes": 7508260,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 1,
+            "rows": 122880,
+            "uncompressed_bytes": 9830433
+          },
+          {
+            "column": "legal_id",
+            "compressed_bytes": 896825,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 1,
+            "rows": 122880,
+            "uncompressed_bytes": 2241035
+          },
+          {
+            "column": "status",
+            "compressed_bytes": 11691,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 1,
+            "rows": 122880,
+            "uncompressed_bytes": 29745
+          },
+          {
+            "column": "source_sha256",
+            "compressed_bytes": 6013597,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 1,
+            "rows": 122880,
+            "uncompressed_bytes": 8355873
+          },
+          {
+            "column": "code_identity",
+            "compressed_bytes": 11756,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 1,
+            "rows": 122880,
+            "uncompressed_bytes": 29809
+          },
+          {
+            "column": "source_span_id",
+            "compressed_bytes": 7507988,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 2,
+            "rows": 122880,
+            "uncompressed_bytes": 9830433
+          },
+          {
+            "column": "legal_id",
+            "compressed_bytes": 896543,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 2,
+            "rows": 122880,
+            "uncompressed_bytes": 2241595
+          },
+          {
+            "column": "status",
+            "compressed_bytes": 11657,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 2,
+            "rows": 122880,
+            "uncompressed_bytes": 29858
+          },
+          {
+            "column": "source_sha256",
+            "compressed_bytes": 5996410,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 2,
+            "rows": 122880,
+            "uncompressed_bytes": 8355873
+          },
+          {
+            "column": "code_identity",
+            "compressed_bytes": 11722,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 2,
+            "rows": 122880,
+            "uncompressed_bytes": 29922
+          },
+          {
+            "column": "source_span_id",
+            "compressed_bytes": 4557616,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 3,
+            "rows": 74578,
+            "uncompressed_bytes": 5966273
+          },
+          {
+            "column": "legal_id",
+            "compressed_bytes": 545297,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 3,
+            "rows": 74578,
+            "uncompressed_bytes": 1361113
+          },
+          {
+            "column": "status",
+            "compressed_bytes": 7181,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 3,
+            "rows": 74578,
+            "uncompressed_bytes": 18129
+          },
+          {
+            "column": "source_sha256",
+            "compressed_bytes": 3656371,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 3,
+            "rows": 74578,
+            "uncompressed_bytes": 5071337
+          },
+          {
+            "column": "code_identity",
+            "compressed_bytes": 7246,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 3,
+            "rows": 74578,
+            "uncompressed_bytes": 18193
+          },
+          {
+            "column": "source_span_id",
+            "compressed_bytes": 29,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 4,
+            "rows": 1,
+            "uncompressed_bytes": 27
+          },
+          {
+            "column": "legal_id",
+            "compressed_bytes": 29,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 4,
+            "rows": 1,
+            "uncompressed_bytes": 27
+          },
+          {
+            "column": "status",
+            "compressed_bytes": 37,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 4,
+            "rows": 1,
+            "uncompressed_bytes": 35
+          },
+          {
+            "column": "source_sha256",
+            "compressed_bytes": 29,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 4,
+            "rows": 1,
+            "uncompressed_bytes": 27
+          },
+          {
+            "column": "code_identity",
+            "compressed_bytes": 29,
+            "has_min_max": true,
+            "null_count": 0,
+            "row_group": 4,
+            "rows": 1,
+            "uncompressed_bytes": 27
+          }
+        ]
+      },
+      "source": {
+        "arrow_metadata": {},
+        "row_groups": 1,
+        "rows": 60077,
+        "schema": [
+          {
+            "name": "ipfs_cid",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "title_number",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "title_name",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "section_number",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "law_name",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "jsonld_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "date_modified",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "source_url",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "text",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "citations_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "chapter_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "legislative_history_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "subsections_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "parser_warnings_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "is_part_of_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "raw_json",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "source_file",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "source_type",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "corpus_key",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "hf_dataset_id",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "citation_text",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "normalized_citation",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "state_code",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "search_query",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "generated_at",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "candidate_count",
+            "nullable": true,
+            "type": "int64"
+          },
+          {
+            "name": "archived_count",
+            "nullable": true,
+            "type": "int64"
+          },
+          {
+            "name": "primary_candidate_url",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "primary_candidate_title",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "primary_candidate_source",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "primary_candidate_source_type",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "primary_candidate_score",
+            "nullable": true,
+            "type": "int64"
+          },
+          {
+            "name": "candidate_urls",
+            "nullable": true,
+            "type": "list<element: string>"
+          },
+          {
+            "name": "archived_source_urls",
+            "nullable": true,
+            "type": "list<element: null>"
+          },
+          {
+            "name": "manifest_path",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "manifest_directory",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "promotion_output_dir",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "promotion_json_path",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "promotion_parquet_path",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "target_parquet_path",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "target_local_parquet_path",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "target_parquet_file",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "preferred_parquet_names",
+            "nullable": true,
+            "type": "list<element: string>"
+          },
+          {
+            "name": "cid_field",
+            "nullable": true,
+            "type": "string"
+          },
+          {
+            "name": "state_field",
+            "nullable": true,
+            "type": "string"
+          }
+        ],
+        "selected_column_stats": [
+          {
+            "column": "text",
+            "compressed_bytes": 121582828,
+            "has_min_max": false,
+            "null_count": 9,
+            "row_group": 0,
+            "rows": 60077,
+            "uncompressed_bytes": 326130695
+          }
+        ]
+      }
+    },
+    "kernel_maxrss_KiB_process_lifetime_self": 362404,
+    "memory_limit": "256MB",
+    "parent_evidence_authenticated": true,
+    "query_snapshot": {
+      "archive_metadata_cohorts": "SELECT a.status,f.source_span_id IS NOT NULL AS exact_id_joined,count(*) AS rows,\n count(*) FILTER (WHERE a.source_sha256 IS NULL) AS sha_null,\n count(*) FILTER (WHERE a.source_sha256='') AS sha_empty,\n count(*) FILTER (WHERE a.source_sha256<>'' AND trim(a.source_sha256)='') AS sha_whitespace_only,\n count(*) FILTER (WHERE regexp_full_match(a.source_sha256,'[0-9a-f]{64}')) AS sha_valid_plain_hex,\n count(*) FILTER (WHERE a.legal_id IS NULL) AS legal_null,\n count(*) FILTER (WHERE a.legal_id='') AS legal_empty,\n count(*) FILTER (WHERE a.legal_id<>'' AND trim(a.legal_id)='') AS legal_whitespace_only,\n count(*) FILTER (WHERE coalesce(trim(a.source_sha256),'')<>'' AND coalesce(trim(a.legal_id),'')<>'') AS both_fields_present,\n count(*) FILTER (WHERE regexp_full_match(a.source_sha256,'[0-9a-f]{64}') AND coalesce(trim(a.legal_id),'')<>'') AS plain_hash_and_legal_present,\n count(*) FILTER (WHERE f.source_span_id IS NOT NULL AND a.source_sha256=f.source_sha256) AS joined_hash_equal,\n count(*) FILTER (WHERE f.source_span_id IS NOT NULL AND a.legal_id=f.legal_id) AS joined_legal_equal,\n count(*) FILTER (WHERE f.source_span_id IS NOT NULL AND a.source_sha256=f.source_sha256 AND a.legal_id=f.legal_id) AS joined_pair_equal\n FROM archive a LEFT JOIN final.target_occurrences f ON f.source_span_id=a.source_span_id\n WHERE a.record_kind='span' GROUP BY 1,2 ORDER BY 1,2",
+      "bounded_nonempty_hash_examples": "SELECT status,source_span_id,source_sha256,legal_id,code_identity FROM archive WHERE record_kind='span' AND coalesce(trim(source_sha256),'')<>'' ORDER BY source_span_id LIMIT 8",
+      "bounded_unresolved_pair_examples": "WITH pairs AS (SELECT legal_id,source_sha256,count(*) AS physical_occurrences,count(DISTINCT source_span_id) AS distinct_ids,min(source_span_id) AS example_source_span_id,min(source_section_offset) AS example_section FROM final.target_occurrences GROUP BY 1,2), unresolved AS (SELECT a.* FROM archive a WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM final.target_occurrences f WHERE f.source_span_id=a.source_span_id)) SELECT u.source_span_id AS archived_id,u.source_sha256,u.legal_id,u.status AS archived_status,p.physical_occurrences,p.distinct_ids,p.example_source_span_id,p.example_section FROM unresolved u JOIN pairs p USING(legal_id,source_sha256) ORDER BY u.source_span_id LIMIT 16",
+      "durable_state": "SELECT * FROM final.reconciliation_state WHERE key<>'accounting'",
+      "target_stats": "SELECT count(*) AS rows,count(DISTINCT source_span_id) AS span_ids,count(DISTINCT legal_id) AS legal_ids,count(DISTINCT (legal_id,source_sha256)) AS legal_hash_pairs,min(source_section_offset) AS first_section,max(source_section_offset) AS last_section,min(source_section_span_ordinal) AS min_local_ordinal,max(source_section_span_ordinal) AS max_local_ordinal,sum(utf8_bytes) AS normalized_span_bytes,min(utf8_bytes) AS min_utf8_bytes,max(utf8_bytes) AS max_utf8_bytes FROM final.target_occurrences",
+      "unresolved_vs_persisted_target_pairs": "WITH pairs AS (SELECT legal_id,source_sha256,count(*) AS physical_occurrences,count(DISTINCT source_span_id) AS distinct_ids,min(source_span_id) AS example_source_span_id,min(source_section_offset) AS example_section FROM final.target_occurrences GROUP BY 1,2), unresolved AS (SELECT a.* FROM archive a WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM final.target_occurrences f WHERE f.source_span_id=a.source_span_id)) SELECT u.status,count(*) AS unresolved_rows,count(*) FILTER (WHERE coalesce(trim(u.source_sha256),'')<>'' AND coalesce(trim(u.legal_id),'')<>'') AS fields_present,count(*) FILTER (WHERE p.legal_id IS NOT NULL) AS recorded_pair_matches_persisted_target,count(*) FILTER (WHERE p.physical_occurrences=1) AS unique_physical_target_pair,count(*) FILTER (WHERE p.physical_occurrences>1) AS ambiguous_target_pair FROM unresolved u LEFT JOIN pairs p USING(legal_id,source_sha256) GROUP BY 1 ORDER BY 1"
+    },
+    "source_body_read": false,
+    "spill_disabled": true,
+    "state_rows": [
+      {
+        "key": "next_section",
+        "value": "60077"
+      },
+      {
+        "key": "next_span",
+        "value": "0"
+      },
+      {
+        "key": "done",
+        "value": "true"
+      },
+      {
+        "key": "seed_applied",
+        "value": "true"
+      }
+    ],
+    "stopped_input_lock": {
+      "mode": "shared_nonblocking_read_only",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/writer.lock",
+      "stat_signature": [
+        66306,
+        85721466,
+        0,
+        1791686734700710458,
+        1791686734700710458
+      ],
+      "wal_absent": true
+    },
+    "target_stats": [
+      {
+        "first_section": 0,
+        "last_section": 60032,
+        "legal_hash_pairs": 54915,
+        "legal_ids": 6742,
+        "max_local_ordinal": 5300,
+        "max_utf8_bytes": 6787,
+        "min_local_ordinal": 0,
+        "min_utf8_bytes": 1,
+        "normalized_span_bytes": 4912571,
+        "rows": 64969,
+        "span_ids": 64969
+      }
+    ],
+    "threads": 1,
+    "unresolved_vs_persisted_target_pairs": [
+      {
+        "ambiguous_target_pair": 2508,
+        "fields_present": 359524,
+        "recorded_pair_matches_persisted_target": 3699,
+        "status": "gap",
+        "unique_physical_target_pair": 1191,
+        "unresolved_rows": 359524
+      },
+      {
+        "ambiguous_target_pair": 0,
+        "fields_present": 19411,
+        "recorded_pair_matches_persisted_target": 1,
+        "status": "sealed",
+        "unique_physical_target_pair": 1,
+        "unresolved_rows": 19411
+      }
+    ]
+  },
+  "execution": {
+    "aliases_created": 0,
+    "archive_projected_metadata_inspected": true,
+    "bounded_metadata_query_note": "Two preliminary read-only queries refused before any metadata scan (unknown column; unsupported ATTACH parameter syntax). Corrected bounded diagnostic completed; no state changes or spill occurred.",
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "embeddings_generated": 0,
+    "leases_acquired": 0,
+    "leases_released": 0,
+    "models_loaded": 0,
+    "named_root_censuses_performed": 0,
+    "prior_source_campaign_writes": 0,
+    "raw_source_data_pages_read": false,
+    "read_only_db": true,
+    "source_footer_only": true,
+    "source_jobs_started": 0,
+    "stat_witness_integers_preserved_exactly": true,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-pilot-resource-survey.json"
+    ]
+  },
+  "findings": [
+    "All 443,904 archived span rows have a nonblank legal_id and a valid plain 64-hex source_sha256. Missing/null/empty/whitespace-only metadata is not the explanation for the unresolved rows.",
+    "All 64,969 existing exact-ID joins agree with recorded source_sha256 and legal_id: 62,001 gap records and 2,968 sealed records.",
+    "Against the complete 64,969-row persisted target subset, 3,700 unresolved archive rows match a recorded legal_id/source_sha256 pair: 1,192 singleton physical-target pairs and 2,508 ambiguous target pairs. Singleton status is relative to that subset only.",
+    "Of those pair hits, gaps contribute 3,699 (1,191 singleton, 2,508 ambiguous); sealed rows contribute one singleton. 375,235 unresolved rows have no pair match in the persisted target subset.",
+    "The earlier zero-hit seed result concerned only source sections 0..127 and remains correct within that scope.",
+    "Persisted targets contain 54,915 distinct legal/hash pairs, including 3,537 repeated pairs and a maximum of 73 physical occurrences per pair. Repeated short content weakens location recovery.",
+    "Source exhaustion does not provide a full-source identity table: 3,776,019 outside-target occurrence identities remain aggregate-only. Their ordered digest and bounded examples are retained.",
+    "The recorded historical source total differs from the completed generation by 1,654 occurrences; no cause is authenticated by this survey.",
+    "The latest finalized guardian census has 674,809,450 bytes of named-root headroom, while the current unchanged ledger preserves 99 retained foreign claims totaling 47,965,000,000 bytes. This stale census is not an admission authorization."
+  ],
+  "immediate_metadata_only_diagnostic_plan": {
+    "baseline_requirement": "Every one of the 64,969 retained historical IDs must reproduce before a per-document-ordinal hypothesis is evaluated.",
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 256,
+    "fresh_admission_required": true,
+    "guardian_storage_bytes": 16777216,
+    "maximum_persisted_target_rows": 65536,
+    "maximum_projected_archive_rows": 500000,
+    "module_output_storage_cap_bytes": 8388608,
+    "not_started_by_this_agent": true,
+    "outer_memory_mb": 768,
+    "promotion_allowed": false,
+    "raw_source_data_pages_allowed": false,
+    "scope": "Next root-owned guarded diagnostic; distinct from the later source-identity paging proposal.",
+    "timeout_seconds": 300
+  },
+  "low_information_content_diagnostics": {
+    "interpretation": "Exact digest equality to a known UTF-8 literal is a low-information content cohort, not a missing-field or placeholder verdict. It does not authenticate unknown archive text or a physical occurrence.",
+    "largest_persisted_text_hash_cohorts": [
+      {
+        "legal_ids": 3635,
+        "max_utf8_bytes": 2,
+        "min_utf8_bytes": 2,
+        "physical_occurrences": 10092,
+        "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec"
+      },
+      {
+        "legal_ids": 1447,
+        "max_utf8_bytes": 4,
+        "min_utf8_bytes": 4,
+        "physical_occurrences": 3330,
+        "source_sha256": "57d78377efd0f334d2e12e2aecf904e24bed7b8faaf338f74f807df94618922b"
+      },
+      {
+        "legal_ids": 690,
+        "max_utf8_bytes": 7,
+        "min_utf8_bytes": 7,
+        "physical_occurrences": 1381,
+        "source_sha256": "97b9fb31f4294b42ff514f21fab5696d6bbd98f0e7037cf12ca12980e50aa9d2"
+      },
+      {
+        "legal_ids": 810,
+        "max_utf8_bytes": 6,
+        "min_utf8_bytes": 6,
+        "physical_occurrences": 810,
+        "source_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958"
+      },
+      {
+        "legal_ids": 444,
+        "max_utf8_bytes": 33,
+        "min_utf8_bytes": 33,
+        "physical_occurrences": 444,
+        "source_sha256": "811adbb979c34447a619ce8f024bc2cb12a3fd132eceb3d61dc7d660270383f6"
+      },
+      {
+        "legal_ids": 268,
+        "max_utf8_bytes": 4,
+        "min_utf8_bytes": 4,
+        "physical_occurrences": 308,
+        "source_sha256": "b2eccb988bec9703e453124fafca045fd3843ce6464b9ec9d30d511031e99bb5"
+      },
+      {
+        "legal_ids": 290,
+        "max_utf8_bytes": 11,
+        "min_utf8_bytes": 11,
+        "physical_occurrences": 290,
+        "source_sha256": "b13d22bedcfd5ae09d2fd7a8f4b6db2418279922bb1dca1d7bd42d914834ad59"
+      },
+      {
+        "legal_ids": 226,
+        "max_utf8_bytes": 38,
+        "min_utf8_bytes": 38,
+        "physical_occurrences": 226,
+        "source_sha256": "97c4f11258ea2d5d987802800a37927e8d23d8edce28235067fa62482b1c5872"
+      }
+    ],
+    "literal_digest_cohorts": [
+      {
+        "exact_id_joined": false,
+        "literal_utf8_candidate": "Repealed.",
+        "rows": 517,
+        "source_sha256": "98bb9c942b29e89d9f37ea86c3f71bcf86aa8187356f86d42f47d96c2ca8c0a2",
+        "status": "gap"
+      },
+      {
+        "exact_id_joined": false,
+        "literal_utf8_candidate": ".",
+        "rows": 259,
+        "source_sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+        "status": "gap"
+      },
+      {
+        "exact_id_joined": true,
+        "literal_utf8_candidate": "Repealed.",
+        "rows": 73,
+        "source_sha256": "98bb9c942b29e89d9f37ea86c3f71bcf86aa8187356f86d42f47d96c2ca8c0a2",
+        "status": "gap"
+      },
+      {
+        "exact_id_joined": true,
+        "literal_utf8_candidate": ".",
+        "rows": 13,
+        "source_sha256": "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+        "status": "gap"
+      }
+    ],
+    "query_snapshot": {
+      "literal_digest_cohorts": {
+        "parameters": [
+          "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+          [
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "cdb4ee2aea69cc6a83331bbe96dc2caa9a299d21329efb0336fc02a82e1839a8",
+            "5ec1f7e700f37c3d0b2981d04855fc34b94aaa15457b05ca571817442d228f81",
+            "ab5df625bc76dbd4e163bed2dd888df828f90159bb93556525c31821b6541d46",
+            "bb7208bc9b5d7c04f1236a82a0093a5e33f40423d5ba8d4266f7092c3ba43b62",
+            "8a8de823d5ed3e12746a62ef169bcf372be0ca44f0a1236abc35df05d96928e1",
+            "41b805ea7ac014e23556e98bb374702a08344268f92489a02f0880849394a1e4",
+            "e7ac0786668e0ff0f02b62bd04f45ff636fd82db63b1104601c975dc005f3a67",
+            "f89bf797c3b1dda4ee48380783e5e979067686a6a9540c5a40e8d75ae5f3d199",
+            "8cca9bdc836007edec9df387444bbca0513dcdc3c3b8317206b9c53d045554f2",
+            "fd0ad9026eee596b7072a762941f60bef57e760a230edd450b3a634825685c2a",
+            "0e77e68ba5473d98840c3212f4a8cb801226494f1162c8001a9f4ed7b00cbaa8",
+            "917020704bc0ccd7011808786b6f45539bb605b31b92acdacef18cc328ce9469",
+            "98bb9c942b29e89d9f37ea86c3f71bcf86aa8187356f86d42f47d96c2ca8c0a2"
+          ]
+        ],
+        "sql": "SELECT a.status,f.source_span_id IS NOT NULL AS exact_id_joined,a.source_sha256,count(*) AS rows FROM read_parquet(?) a LEFT JOIN final.target_occurrences f USING(source_span_id) WHERE record_kind='span' AND a.source_sha256 IN (SELECT unnest(?)) GROUP BY 1,2,3 ORDER BY 4 DESC"
+      }
+    },
+    "target_pair_uniqueness": [
+      {
+        "max_occurrences_per_pair": 73,
+        "pairs": 54915,
+        "repeated_pairs": 3537,
+        "singleton_pairs": 51378
+      }
+    ]
+  },
+  "raw_free_ordinal_diagnostic": {
+    "aliases_created": false,
+    "available_fields": [
+      "citation",
+      "entry_cid",
+      "legal_id",
+      "title",
+      "section",
+      "source_sha256",
+      "historical_document_batch_index",
+      "historical_span_ordinal",
+      "source_section_span_ordinal",
+      "source_section_offset"
+    ],
+    "executed": false,
+    "feasible_with_conditions": true,
+    "identity_payload_fields": [
+      "canonical_citation",
+      "entry_cid",
+      "legal_id",
+      "ordinal",
+      "query",
+      "release_id",
+      "release_point",
+      "schema_version",
+      "section",
+      "text_sha256",
+      "title",
+      "unit_id"
+    ],
+    "next_diagnostic": "Under a separately named hypothesis, replace only ordinal with source_section_span_ordinal, hash the prospective identity, and compare ID+recorded SHA+legal ID against projected archive metadata. Keep every candidate physical occurrence and collision count; retain bounded examples.",
+    "not_established": [
+      "Actual historical archive producer",
+      "Reason for the 1,654 historical/current difference",
+      "Full-source physical uniqueness",
+      "Automatic alias eligibility",
+      "Embedding/checkpoint applicability"
+    ],
+    "profile": {
+      "accepted_identity_reconstruction": "historical-64-document-ordinal/v1",
+      "query": "ipfs_uscode",
+      "release_id": "ipfs-uscode-5016b86a",
+      "schema_version": "uscode-sparse-autoformal-span-v1"
+    },
+    "required_precondition": "Reconstruct every one of the 64,969 accepted historical IDs exactly from pinned normalization and complete identity context before changing any field. release_point and unit_id are not separate persisted target columns; derivation must follow the pinned producer input rather than guessing.",
+    "scope": "Existing retained target rows only; no raw source text or model needed for prospective identity hashing."
+  },
+  "recommended_initial_source_only_pilot": {
+    "child_process_slots": 1,
+    "clone_parent_database": false,
+    "completion": "Commit bounded complete identity pages into a new owned generation, including outsider identities. Preserve cursor/count/digests and sampled usage for a stopped independent review.",
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 256,
+    "entire_output_storage_cap_bytes": 112000000,
+    "fresh_guardian_admission_required": true,
+    "guardian_storage_bytes": 128000000,
+    "max_file_bytes": 536870912,
+    "max_page_bytes": 4194304,
+    "max_page_spans": 64,
+    "max_pages": 1024,
+    "max_row_group_bytes": 2147483648,
+    "max_section_bytes": 8388608,
+    "max_source_occurrences": 65536,
+    "not_started": true,
+    "outer_memory_mib": 1536,
+    "projected_decoded_row_group_bytes": 339392388,
+    "purpose": "Measure complete-source row storage/index amplification and recipe/pair diagnostics; no model/embedding/tokenizer/IR training or proof.",
+    "runtime_estimate_limit": "Previously measured paging fits these memory/CPU limits, but a new full-row owner and index schema have no measured duration. The deadline and output cap must stop safely at the last committed cursor.",
+    "source_column_projection": [
+      "ipfs_cid",
+      "title_number",
+      "title_name",
+      "section_number",
+      "law_name",
+      "source_url",
+      "text",
+      "citation_text",
+      "normalized_citation"
+    ],
+    "timeout_seconds": 600
+  },
+  "refusal_policy": [
+    "Never promote an alias, ready record, teacher label or proof from a metadata-only pair hit.",
+    "Refuse missing/invalid SHA, empty legal ID, mismatched original source/revision/recipe pins, normalized-text digest disagreement or incomplete raw-source custody.",
+    "Refuse physical ambiguity across all candidate locations; uniqueness within the retained-target subset or a pilot prefix is insufficient.",
+    "Keep the archived ID and each proposed alternate recipe ID distinct until the actual historical producer is authenticated.",
+    "Preserve every candidate and its multiplicity; repeated short fragments, identical legal/hash pairs and changed ordinal regimes require explicit qualification.",
+    "While source paging remains incomplete, label unseen-source uniqueness as pending rather than unique.",
+    "Refuse use of metadata/null-CID or legacy citation fallback as statutory text.",
+    "Do not release, reset or shrink any foreign disk reservation or scheduler lease to admit this work."
+  ],
+  "resources": {
+    "current_state_is_admission_authorization": false,
+    "filesystem_available_bytes": 57728368640,
+    "host_memory": {
+      "MemAvailable": "111389816 kB",
+      "MemTotal": "127601388 kB",
+      "SwapFree": "12487836 kB",
+      "SwapTotal": "16777212 kB"
+    },
+    "latest_guardian_census": {
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 144325190550,
+        "inventory": {
+          "apparent_bytes": 96360190550,
+          "entry_count": 1364329,
+          "special_file_count": 6,
+          "symlink_count": 713
+        },
+        "limit_bytes": 145000000000,
+        "minimum_filesystem_free_bytes": 66304081920,
+        "observed_apparent_bytes": 96360190550,
+        "outstanding_full_reservations_bytes": 47965000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "fresh_admission_required": true,
+      "headroom_at_finalization_bytes": 674809450,
+      "released_at": 1791688054.5274317,
+      "reservation_id": "9389af128d5b4aaa8b8598fb66326405"
+    },
+    "ledger": {
+      "canonical_records_sha256": "020151de21e2d3246b823c81c45972be9333336f8d5dee0c620c0737ae76e70f",
+      "limit_bytes": 145000000000,
+      "outstanding_full_claims_bytes": 47965000000,
+      "outstanding_record_count": 99,
+      "outstanding_records": {
+        "009b71918a2e42118859174b1bb8a693": {
+          "created_at": 1790470834.2283578,
+          "owner_pid": 782877,
+          "status": "retained",
+          "storage_bytes": 200000000
+        },
+        "03d975deb7684361abbbfc1fd7999048": {
+          "created_at": 1790552127.2616363,
+          "owner_pid": 3378820,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "0573ed4b2bd8408da6fb4f07e77e5478": {
+          "created_at": 1791076289.5141833,
+          "owner_pid": 2850465,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "05a2312e42c545b492f4932490dc58b6": {
+          "created_at": 1790433336.800577,
+          "owner_pid": 140908,
+          "status": "retained",
+          "storage_bytes": 180000000
+        },
+        "06080822b0b14999b55b462a37620f24": {
+          "created_at": 1791349827.4398153,
+          "owner_pid": 4105276,
+          "status": "retained",
+          "storage_bytes": 400000000
+        },
+        "0bebf32982af445e831700681eac1586": {
+          "created_at": 1790552087.513989,
+          "owner_pid": 3368867,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "0f4698c1b5b047ec9d539f2dbfab2ed0": {
+          "created_at": 1791057039.9839342,
+          "owner_pid": 1607680,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "12a43b169d9747e0af5cfa28f0e66595": {
+          "created_at": 1791118721.6561265,
+          "owner_pid": 3069723,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "197b8975b9ef44e5a4950ba88bc52317": {
+          "created_at": 1790524946.4803162,
+          "owner_pid": 1209494,
+          "status": "retained",
+          "storage_bytes": 80000000
+        },
+        "1acde7257b3e41958cd3426140eed165": {
+          "created_at": 1790658110.5188227,
+          "owner_pid": 380709,
+          "status": "retained",
+          "storage_bytes": 600000000
+        },
+        "1ad1d378129a45acb6f8e972a8392d60": {
+          "created_at": 1790629057.857283,
+          "owner_pid": 1049465,
+          "status": "retained",
+          "storage_bytes": 120000000
+        },
+        "209e07d4d9f74ce1be5452ad93258aa1": {
+          "created_at": 1790425169.1195068,
+          "owner_pid": 2346303,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "24b5fb790064496e981b3338388cef39": {
+          "created_at": 1790551305.7554348,
+          "owner_pid": 3175345,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "2537e017ec5c4bb9b09d97a197ee9336": {
+          "created_at": 1790480336.4567378,
+          "owner_pid": 3072461,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "297afa219ed346c6b0e77ac2dcb04783": {
+          "created_at": 1790348408.9417813,
+          "owner_pid": 623988,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "2ad915af9c3047f9824438463da73b37": {
+          "created_at": 1790551894.3734245,
+          "owner_pid": 3320881,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "2d4c9da5e53043b18f6552eb8e6990af": {
+          "created_at": 1790428902.472991,
+          "owner_pid": 3259878,
+          "status": "retained",
+          "storage_bytes": 400000000
+        },
+        "2deaec2bdb614e4781912da2c1541623": {
+          "created_at": 1790629044.8565588,
+          "owner_pid": 1049464,
+          "status": "retained",
+          "storage_bytes": 220000000
+        },
+        "304467ad285444d1b28806057db0d17c": {
+          "created_at": 1790628819.4905443,
+          "owner_pid": 992205,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "36a5096b586048cfab4ce5d6a3d63787": {
+          "created_at": 1790629048.239726,
+          "owner_pid": 1049465,
+          "status": "retained",
+          "storage_bytes": 220000000
+        },
+        "3afd60c9361c44b39c382e8327afa748": {
+          "created_at": 1791094351.7641933,
+          "owner_pid": 179203,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "3be5d085b9f7498dbd2ab555739458bf": {
+          "created_at": 1791131821.2752233,
+          "owner_pid": 2402117,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "46b02aabb1f44f769143755554857d79": {
+          "created_at": 1790531630.2788575,
+          "owner_pid": 2842117,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "474ee6b5ae784516ae1dab7ca38c8cc6": {
+          "created_at": 1791056475.066208,
+          "owner_pid": 1421156,
+          "status": "retained",
+          "storage_bytes": 4000000000
+        },
+        "4835b100977c45f3bab812aeac98bebc": {
+          "created_at": 1790921751.2135599,
+          "owner_pid": 999932,
+          "status": "retained",
+          "storage_bytes": 500000000
+        },
+        "4ea25ddadcb54fa1a797b01e469476cc": {
+          "created_at": 1790529451.872282,
+          "owner_pid": 2310422,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "52969aded7da4ca7aea32eec5f65b34a": {
+          "created_at": 1790662077.2634308,
+          "owner_pid": 1527573,
+          "status": "retained",
+          "storage_bytes": 600000000
+        },
+        "53f45e0990464673ba62693cf2aff8f8": {
+          "created_at": 1791099783.3236399,
+          "owner_pid": 2236415,
+          "status": "retained",
+          "storage_bytes": 1200000000
+        },
+        "58040b11816843e486bcb44e8338bd00": {
+          "created_at": 1790551482.990024,
+          "owner_pid": 3222851,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "595bd5f94ee7415ea390a1f46d37b8f4": {
+          "created_at": 1790629054.755166,
+          "owner_pid": 1049464,
+          "status": "retained",
+          "storage_bytes": 120000000
+        },
+        "59e2d6d1d77c412fa4a2e719eb3485d4": {
+          "created_at": 1790628802.9568644,
+          "owner_pid": 987454,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "5e1dbee50a724fed96b6f6a24f0ba00a": {
+          "created_at": 1790551325.9388146,
+          "owner_pid": 3182566,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "5e7a3953a9da453c907976fc0a266793": {
+          "created_at": 1791093570.5043216,
+          "owner_pid": 4154155,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "5ec04d4960404fdea5fce74881416e21": {
+          "created_at": 1791130565.0872946,
+          "owner_pid": 2027229,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "5f3497ae47224e3db174311ef6e3caa1": {
+          "created_at": 1790425630.5676188,
+          "owner_pid": 2459731,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "5ffa8e3f64cf4a05932798801cadf444": {
+          "created_at": 1791138428.0548842,
+          "owner_pid": 41543,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "60efbd79db0e45628b5acbe4ea21c8f3": {
+          "created_at": 1791119122.1505215,
+          "owner_pid": 3194445,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "621046712fa544e78dc738e95648b8f7": {
+          "created_at": 1790498726.9211087,
+          "owner_pid": 3323505,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "626a02434b7b4c569415731a25d3b9f9": {
+          "created_at": 1790463353.168979,
+          "owner_pid": 3181298,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "64dc750e5a1e4cd08fed48ad8b43fdd8": {
+          "created_at": 1791094094.4247587,
+          "owner_pid": 109760,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "6594c0cfff564c43b6237e87314da06d": {
+          "created_at": 1790551612.2233865,
+          "owner_pid": 3254527,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "66ac618811f8466480bf876b28010108": {
+          "created_at": 1790628873.6793854,
+          "owner_pid": 1006961,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "6bf81288533d4a4fba5d29372ff69529": {
+          "created_at": 1790373983.3787515,
+          "owner_pid": 2691213,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "77683ba77bcb40eb85d19dfe946802bc": {
+          "created_at": 1791131001.9326262,
+          "owner_pid": 2181574,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "77dedd5a6cea41eab960b9f5c67d6bb6": {
+          "created_at": 1790531247.5524082,
+          "owner_pid": 2751058,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "7bae0dfca193405b9c64d57f88b9cb52": {
+          "created_at": 1791147420.9359214,
+          "owner_pid": 4121264,
+          "status": "retained",
+          "storage_bytes": 400000000
+        },
+        "7dea88cac74c46b989517e4078897e00": {
+          "created_at": 1790471491.3934295,
+          "owner_pid": 943230,
+          "status": "retained",
+          "storage_bytes": 50000000
+        },
+        "7ee0d2fdbb4b4176b32fad8ada3cff1f": {
+          "created_at": 1791348864.0264945,
+          "owner_pid": 3827124,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "7f774906c9e447059d7e1675288b5172": {
+          "created_at": 1790425487.9487062,
+          "owner_pid": 2422949,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "7f84b1fdcb834acfbf02d2586014cc0b": {
+          "created_at": 1790471281.439002,
+          "owner_pid": 891954,
+          "status": "retained",
+          "storage_bytes": 200000000
+        },
+        "81d46ee6a7c242a9885ba8e8a6a38a7d": {
+          "created_at": 1790482046.9206495,
+          "owner_pid": 3482730,
+          "status": "retained",
+          "storage_bytes": 350000000
+        },
+        "8827ac316aae4ecbbfddf9dedf0332d7": {
+          "created_at": 1790344472.6628764,
+          "owner_pid": 3850850,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "88d024d77b9e4cc6beaf9cb0e596f00d": {
+          "created_at": 1790628765.6059742,
+          "owner_pid": 977720,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "8d1cee6dcc5241b3b31ee0836ae23859": {
+          "created_at": 1790652149.269612,
+          "owner_pid": 2978997,
+          "status": "retained",
+          "storage_bytes": 750000000
+        },
+        "8f634b6b77984543a24831abb9423ede": {
+          "created_at": 1790629019.0960188,
+          "owner_pid": 1043267,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "8fe9e6c5b2e141ae9d1ef4093de00c7d": {
+          "created_at": 1791130579.1493225,
+          "owner_pid": 2048284,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "925d20c66d464740ba035f4f66cdf4d1": {
+          "created_at": 1790815597.2383723,
+          "owner_pid": 2604950,
+          "status": "retained",
+          "storage_bytes": 750000000
+        },
+        "95f34652267a4512820e6ae26e7000bc": {
+          "created_at": 1791130685.4172628,
+          "owner_pid": 2088123,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "969675cb3c3e449ab0fd7dbe2ca29634": {
+          "created_at": 1790445867.789078,
+          "owner_pid": 3150929,
+          "status": "retained",
+          "storage_bytes": 50000000
+        },
+        "9995e6239f4f458886fc7f98a221e093": {
+          "created_at": 1791138874.0565906,
+          "owner_pid": 256511,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "9ff3b600b0be46e8842d05a62d149ba1": {
+          "created_at": 1791090471.2815363,
+          "owner_pid": 3186029,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "a312dcd5f2e6405db2023e265226b94b": {
+          "created_at": 1790438961.641702,
+          "owner_pid": 1495500,
+          "status": "retained",
+          "storage_bytes": 50000000
+        },
+        "a4388e7397f543b1bd68fbe522556dc2": {
+          "created_at": 1790486046.2398462,
+          "owner_pid": 261842,
+          "status": "retained",
+          "storage_bytes": 50000000
+        },
+        "aac1a959a09343f8b24040016fee2c4c": {
+          "created_at": 1790466472.367901,
+          "owner_pid": 3927785,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "ace678f9047a4f399de1c05893cd33ae": {
+          "created_at": 1790530147.3244317,
+          "owner_pid": 2479881,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "ad8ac488792847ff80e8d97bf7fec70b": {
+          "created_at": 1790923603.2089183,
+          "owner_pid": 1750611,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "aebb073f220842cc8fe11a7a20d5b150": {
+          "created_at": 1791128306.9962783,
+          "owner_pid": 1413618,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "af51e1abd59442fb8fd55a61781b5961": {
+          "created_at": 1790455532.712056,
+          "owner_pid": 1298097,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "af5bab36df5a4c59a9b6a52867d09b81": {
+          "created_at": 1790456152.8670585,
+          "owner_pid": 1449264,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "b08a7cfa09c648e69851ca85c306f285": {
+          "created_at": 1790467023.634099,
+          "owner_pid": 4061722,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "b1531f8ac021442284701cdab3d3c9d1": {
+          "created_at": 1790551864.575768,
+          "owner_pid": 3314918,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "b5c38886316c4fe080e49d84774be92e": {
+          "created_at": 1791685919.460727,
+          "owner_pid": 243641,
+          "status": "retained",
+          "storage_bytes": 200000000
+        },
+        "b5fe34de7d834f038ef575057b7a6539": {
+          "created_at": 1790551428.5197847,
+          "owner_pid": 3208881,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "b61ddc6d8fa34208abc3a19517206b01": {
+          "created_at": 1791128522.6860263,
+          "owner_pid": 1465685,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "b664aecfb14f4acdacd0caa9e62c5256": {
+          "created_at": 1791093895.430533,
+          "owner_pid": 61217,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "ba3cba0ddfc64b44b88400a78b4da0ef": {
+          "created_at": 1790628822.6958585,
+          "owner_pid": 992206,
+          "status": "retained",
+          "storage_bytes": 1500000000
+        },
+        "bb1fe8809afd4066be3f8167345e87f3": {
+          "created_at": 1790551547.6252182,
+          "owner_pid": 3237195,
+          "status": "retained",
+          "storage_bytes": 75000000
+        },
+        "bd320bc608d243f4863daeab23e6579b": {
+          "created_at": 1791147406.6372073,
+          "owner_pid": 4121263,
+          "status": "retained",
+          "storage_bytes": 400000000
+        },
+        "bd482976b5b94085887ff34e193d198c": {
+          "created_at": 1790438359.8011603,
+          "owner_pid": 1353386,
+          "status": "retained",
+          "storage_bytes": 900000000
+        },
+        "c258894ac4f44b09bc550265d9cc838d": {
+          "created_at": 1790529803.5237477,
+          "owner_pid": 2394342,
+          "status": "retained",
+          "storage_bytes": 150000000
+        },
+        "c2773bf889f64efc8fc433c89f2cf03b": {
+          "created_at": 1790451980.1652424,
+          "owner_pid": 439946,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "c396f8aa732a40569deb9d9f4c18e554": {
+          "created_at": 1790426527.2142782,
+          "owner_pid": 2677266,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "c5385ffead94445bbfc6662c31f3c390": {
+          "created_at": 1791119589.2058375,
+          "owner_pid": 3319553,
+          "status": "retained",
+          "storage_bytes": 100000000
+        },
+        "d86d41b441f54b4e8e4dc0f92b694f05": {
+          "created_at": 1790424988.2308743,
+          "owner_pid": 2303222,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "d8e0d85bcbb44a77848c26f41371e211": {
+          "created_at": 1791119310.2716076,
+          "owner_pid": 3247479,
+          "status": "retained",
+          "storage_bytes": 300000000
+        },
+        "d93220e986a04c658630dffa0847fb01": {
+          "created_at": 1790424770.1303413,
+          "owner_pid": 2248683,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "dc5a24634a8f4ab2bb03946fb64e6921": {
+          "created_at": 1791349054.2096076,
+          "owner_pid": 3877584,
+          "status": "retained",
+          "storage_bytes": 200000000
+        },
+        "e240695167ee46709e93139873255877": {
+          "created_at": 1791129251.0840921,
+          "owner_pid": 1679885,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "e76a7eaf115c4780b4fdec07a505d86c": {
+          "created_at": 1790470689.6834934,
+          "owner_pid": 748095,
+          "status": "retained",
+          "storage_bytes": 200000000
+        },
+        "e8b041892be947a7b1762eac60a8b7ec": {
+          "created_at": 1790428789.2881126,
+          "owner_pid": 3230097,
+          "status": "retained",
+          "storage_bytes": 400000000
+        },
+        "eb303394c53e48378c9a56b3f909285a": {
+          "created_at": 1790483186.2998812,
+          "owner_pid": 3763964,
+          "status": "retained",
+          "storage_bytes": 325000000
+        },
+        "ec90bcac1c394496b6dba037b4852254": {
+          "created_at": 1790424684.788046,
+          "owner_pid": 2226559,
+          "status": "retained",
+          "storage_bytes": 1000000000
+        },
+        "ed98eab092564602b9c3920370deda94": {
+          "created_at": 1790375649.1973433,
+          "owner_pid": 3110046,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "f03a653cc81942bd9f9009a7e32da4f7": {
+          "created_at": 1790474508.1906228,
+          "owner_pid": 1665851,
+          "status": "retained",
+          "storage_bytes": 750000000
+        },
+        "f0d21ef4e10443b993b0735b1e94aee9": {
+          "created_at": 1790999611.0823169,
+          "owner_pid": 723490,
+          "status": "retained",
+          "storage_bytes": 800000000
+        },
+        "f4250feb221a463f8e13429e062e0866": {
+          "created_at": 1791100658.4823263,
+          "owner_pid": 2483937,
+          "status": "retained",
+          "storage_bytes": 1200000000
+        },
+        "f86ac5ac38e549bfba20dc03564ff41c": {
+          "created_at": 1790425382.5125947,
+          "owner_pid": 2395475,
+          "status": "retained",
+          "storage_bytes": 250000000
+        },
+        "fc86a5aaeb5d4606823b2ec3e2be4cb4": {
+          "created_at": 1790460963.6660662,
+          "owner_pid": 2609318,
+          "status": "retained",
+          "storage_bytes": 750000000
+        },
+        "febe02de33b5437693152a309627351c": {
+          "created_at": 1791119026.925268,
+          "owner_pid": 3170617,
+          "status": "retained",
+          "storage_bytes": 100000000
+        }
+      },
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "record_count": 506,
+      "sha256": "3ea869b59e8457e43b6d6ca3c30131f82cb785a6f8366c98d37b631ebb8388ef",
+      "stat_signature": [
+        66306,
+        67028716,
+        6122550,
+        1791688054547789962,
+        1791688054553411784
+      ],
+      "status_counts": {
+        "released": 407,
+        "retained": 99
+      }
+    },
+    "new_named_root_census_performed": false,
+    "observed_at_unix": 1791693228.021313,
+    "resource_mutations": false,
+    "scheduler": {
+      "config": {
+        "lane_reservations": {
+          "validation": {
+            "cpu_slots": 1,
+            "memory_mb": 0
+          }
+        },
+        "max_gpu_memory_percent": null,
+        "max_memory_percent": null,
+        "max_swap_percent": null,
+        "max_waiting_requests": 256,
+        "proof_backoff_seconds": 2,
+        "proof_cpu_stall_percent": 50,
+        "proof_io_stall_percent": 10,
+        "proof_memory_headroom_mb": 2458,
+        "proof_memory_stall_percent": 2,
+        "proof_safety_enabled": true,
+        "require_known_gpu_for_gpu_work": true,
+        "reserved_gpu_memory_mb": 0,
+        "reserved_memory_mb": 0,
+        "total_child_process_slots": 4,
+        "total_cpu_slots": 4,
+        "total_gpu_memory_mb": null,
+        "total_memory_mb": 9830,
+        "total_unified_memory_mb": null
+      },
+      "config_canonical_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+      "leases": {},
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "sha256": "b62a7937836b5d77528417a1091bc487897eb957d31c41aae53ec60bf019215d",
+      "stat_signature": [
+        66306,
+        572666,
+        1691,
+        1791688054561092663,
+        1791688054564411874
+      ],
+      "waiters": {}
+    },
+    "source_projected_columns_footer": [
+      {
+        "column": "ipfs_cid",
+        "compressed_bytes": 3313132,
+        "null_count": 9,
+        "uncompressed_bytes": 3817619
+      },
+      {
+        "column": "title_number",
+        "compressed_bytes": 571,
+        "null_count": 9,
+        "uncompressed_bytes": 654
+      },
+      {
+        "column": "title_name",
+        "compressed_bytes": 1489,
+        "null_count": 9,
+        "uncompressed_bytes": 1785
+      },
+      {
+        "column": "section_number",
+        "compressed_bytes": 260770,
+        "null_count": 9,
+        "uncompressed_bytes": 397527
+      },
+      {
+        "column": "law_name",
+        "compressed_bytes": 1258129,
+        "null_count": 9,
+        "uncompressed_bytes": 2695470
+      },
+      {
+        "column": "source_url",
+        "compressed_bytes": 495929,
+        "null_count": 9,
+        "uncompressed_bytes": 6347834
+      },
+      {
+        "column": "text",
+        "compressed_bytes": 121582828,
+        "null_count": 9,
+        "uncompressed_bytes": 326130695
+      },
+      {
+        "column": "citation_text",
+        "compressed_bytes": 345,
+        "null_count": 60068,
+        "uncompressed_bytes": 402
+      },
+      {
+        "column": "normalized_citation",
+        "compressed_bytes": 345,
+        "null_count": 60068,
+        "uncompressed_bytes": 402
+      }
+    ],
+    "source_projected_decoded_total_bytes": 339392388
+  },
+  "schema": "uscode-identity-pilot-resource-and-schema-survey/v1",
+  "source_identity_inventory_design": {
+    "archive_pair_catalog": "Index recorded legal_id+source_sha256 to all physical candidate locations, with counts and distinct locations. Do not select MIN, first occurrence, nearest ordinal or an arbitrary generated ID.",
+    "legacy_fallback": "Preserve historical fallback ordinal behavior and label citation/law-name fallback provenance explicitly. Fallback text is not eligible statutory raw-text or semantic authority.",
+    "model_linkage": "Link existing embeddings/checkpoints only after exact text custody and original producer/tokenizer/normalization/encoder/task/schema eligibility. IR family, schema/version, decoder task and 8D/384D/768D model profiles remain separate inventories.",
+    "new_generation_required": true,
+    "parent_mutation_allowed": false,
+    "physical_occurrence_key": "Domain-separated digest of pinned source artifact/revision, physical row and local sentence index plus extraction/normalization profile. Keep it distinct from context-dependent archived/generated span IDs.",
+    "raw_span_offset_contract": "If raw byte/character offsets or whitespace alignment are persisted, qualify an explicit reversible mapping algorithm and independently check that replaying each raw slice produces the exact normalized span SHA/bytes. Otherwise leave raw-span offsets unqualified/null and bind through the source row, local ordinal, pinned extraction and raw-document digest.",
+    "reuse": "Reference frozen original source/progress artifacts, accepted parent target rows, old full seed rows and their receipts, and pinned normalization/pager owners. Do not regenerate model embeddings or copy the laws blob.",
+    "sections_table_fields": [
+      "source_artifact_sha256",
+      "source_revision",
+      "source_repository_id",
+      "source_row_group_index",
+      "physical_row_in_group",
+      "source_section_offset",
+      "entry_cid",
+      "legal_id",
+      "title",
+      "section",
+      "citation",
+      "raw_document_text_sha256",
+      "raw_document_utf8_bytes",
+      "normalized_document_sha256",
+      "normalization_profile",
+      "valid_document_ordinal",
+      "historical_document_batch_index",
+      "historical_first_span_ordinal",
+      "source_text_origin",
+      "raw_source_text_present"
+    ],
+    "spans_table_fields": [
+      "physical_occurrence_key",
+      "source_section_offset",
+      "source_section_span_ordinal",
+      "normalized_span_sha256",
+      "normalized_span_utf8_bytes",
+      "normalized_span_unicode_characters",
+      "historical_source_span_id",
+      "historical_span_ordinal",
+      "normalization_profile",
+      "source_text_origin",
+      "raw_source_text_present"
+    ]
+  },
+  "status": "bounded_diagnostics_complete_pilot_not_admitted",
+  "storage_estimates": {
+    "compact_fixed_width_floor": {
+      "assumed_bytes_per_span_high": 120,
+      "assumed_bytes_per_span_low": 72,
+      "exclusions": "Section dictionary, pair indexes, DB pages, shard headers, manifests, staging, duplicate copies and raw-offset maps; fixed-width assumptions must be measured in the pilot.",
+      "full_span_payload_high_bytes": 460918560,
+      "full_span_payload_low_bytes": 276551136
+    },
+    "full_source_occurrences": 3840988,
+    "initial_pilot": {
+      "fixed_width_payload_high_bytes": 7864320,
+      "fixed_width_payload_low_bytes": 4718592,
+      "maximum_occurrences": 65536,
+      "target_db_linear_extrapolation_bytes": 30422051.478828363
+    },
+    "interpretation": "A full 20-column source table is poorly supported by the present sub-675MB named-root headroom. A compact binary-hash/sharded design may fit but has not been measured. Full-run admission must follow actual pilot storage/index measurements and fresh guardian accounting.",
+    "latest_increment": {
+      "database_growth_bytes": 2883584,
+      "linear_full_source_growth_bytes": 2240253143.4045305,
+      "new_targets": 4944,
+      "observed_growth_bytes_per_new_target": 583.2491909385113
+    },
+    "retained_target_db": {
+      "bytes": 30158848,
+      "linear_full_source_bytes": 1783000712.059967,
+      "observed_bytes_per_row": 464.2036663639582,
+      "rows": 64969,
+      "scope": "Extrapolation from a 20-column target-only DuckDB with duplicate strings/index overhead; not a prediction for a compact new schema."
+    }
+  }
+}

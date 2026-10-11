@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="29" skipped="0" tests="37" time="4.500" timestamp="2026-10-11T04:52:45.179696+00:00" hostname="spark-b271"><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_independent_reference_counter_reset_and_no_original_source" time="0.266"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:127: in test_independent_reference_counter_reset_and_no_original_source
+    report=recovery.run_identity_diagnosis(**ctx["arguments"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:358: in run_identity_diagnosis
+    _require(not any(destination.is_relative_to(p.parent) for p in paths.values()), "output cannot alias an input parent")
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:46: in _require
+    raise IdentityRecoveryError(message)
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_duplicate_physical_occurrences_remain_ambiguous" time="0.102"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:146: in test_duplicate_physical_occurrences_remain_ambiguous
+    report=recovery.run_identity_diagnosis(**ctx["arguments"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:358: in run_identity_diagnosis
+    _require(not any(destination.is_relative_to(p.parent) for p in paths.values()), "output cannot alias an input parent")
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:46: in _require
+    raise IdentityRecoveryError(message)
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_zero_matches_do_not_erase_unresolved_ids" time="0.094"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:164: in test_zero_matches_do_not_erase_unresolved_ids
+    report=recovery.run_identity_diagnosis(**ctx["arguments"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:358: in run_identity_diagnosis
+    _require(not any(destination.is_relative_to(p.parent) for p in paths.values()), "output cannot alias an input parent")
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:46: in _require
+    raise IdentityRecoveryError(message)
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.uscode_identity_recovery.IdentityRecoveryError: output cannot alias an input parent</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_all_baselines_gate_every_alternate_hash" time="0.118"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'baseline ID'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:177: in test_all_baselines_gate_every_alternate_hash
+    refuse(ctx,"baseline ID")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'baseline ID'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_explicit_input_pins_refuse[database]" time="0.085"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'SHA-256 differs'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:183: in test_explicit_input_pins_refuse
+    refuse(ctx,"SHA-256 differs",**{"expected_"+name+"_sha256":"0"*64})
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'SHA-256 differs'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_explicit_input_pins_refuse[manifest]" time="0.086"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'SHA-256 differs'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:183: in test_explicit_input_pins_refuse
+    refuse(ctx,"SHA-256 differs",**{"expected_"+name+"_sha256":"0"*64})
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'SHA-256 differs'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_explicit_input_pins_refuse[report]" time="0.093"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'SHA-256 differs'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:183: in test_explicit_input_pins_refuse
+    refuse(ctx,"SHA-256 differs",**{"expected_"+name+"_sha256":"0"*64})
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'SHA-256 differs'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_explicit_input_pins_refuse[progress]" time="0.098"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'SHA-256 differs'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:183: in test_explicit_input_pins_refuse
+    refuse(ctx,"SHA-256 differs",**{"expected_"+name+"_sha256":"0"*64})
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'SHA-256 differs'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_explicit_input_pins_refuse[accepted_review]" time="0.094"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'SHA-256 differs'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:183: in test_explicit_input_pins_refuse
+    refuse(ctx,"SHA-256 differs",**{"expected_"+name+"_sha256":"0"*64})
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'SHA-256 differs'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;0]" time="0.088"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;1]" time="0.082"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;2]" time="0.090"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;3]" time="0.102"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;4]" time="0.101"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;5]" time="0.087"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_review_acceptance_and_binding_refusal[&lt;lambda&gt;6]" time="0.089"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'review|checks|binding'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:193: in test_review_acceptance_and_binding_refusal
+    refuse(ctx,"review|checks|binding")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'review|checks|binding'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_duplicate_archive_ids_refuse_even_with_repin[False]" time="0.101"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'duplicate or conflicting'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:209: in test_duplicate_archive_ids_refuse_even_with_repin
+    refuse(ctx,"duplicate or conflicting")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'duplicate or conflicting'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_duplicate_archive_ids_refuse_even_with_repin[True]" time="0.102"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'duplicate or conflicting'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:209: in test_duplicate_archive_ids_refuse_even_with_repin
+    refuse(ctx,"duplicate or conflicting")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'duplicate or conflicting'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_wal_and_writer_refuse" time="0.099"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'WAL'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:216: in test_wal_and_writer_refuse
+    refuse(ctx,"WAL")
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'WAL'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_symlink_and_input_parent_destination_refuse" time="0.089" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_foreign_destination_race_preserved" time="0.085"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'destination already exists'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:238: in test_foreign_destination_race_preserved
+    with pytest.raises(ValueError,match="destination already exists"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'destination already exists'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[memory_mb-0]" time="0.083" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[memory_mb-257]" time="0.079" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[max_retained_rows-0]" time="0.092" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[max_archive_rows-500001]" time="0.097" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[example_limit-33]" time="0.096" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[max_output_bytes-8388609]" time="0.098" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_config_bound_refusal[max_report_bytes-2097153]" time="0.104" /><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_actual_bounds_refuse_without_publication[extra0-retained row]" time="0.096"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'retained row'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:258: in test_actual_bounds_refuse_without_publication
+    refuse(ctx,match,**extra)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'retained row'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_actual_bounds_refuse_without_publication[extra1-archive row]" time="0.100"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'archive row'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:258: in test_actual_bounds_refuse_without_publication
+    refuse(ctx,match,**extra)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'archive row'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_actual_bounds_refuse_without_publication[extra2-report exceeds]" time="0.114"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'report exceeds'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:258: in test_actual_bounds_refuse_without_publication
+    refuse(ctx,match,**extra)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'report exceeds'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_actual_bounds_refuse_without_publication[extra3-artifact exceeds]" time="0.093"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'artifact exceeds'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:258: in test_actual_bounds_refuse_without_publication
+    refuse(ctx,match,**extra)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'artifact exceeds'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_input_mutation_after_baseline_refuses" time="0.097"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'input witness changed'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:263: in test_input_mutation_after_baseline_refuses
+    refuse(ctx,"input witness changed",_after_baseline=lambda:ctx["review"].write_text("changed"))
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'input witness changed'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_staging_failure_never_publishes[corrupt]" time="0.102"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'staged|interrupted'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:276: in test_staging_failure_never_publishes
+    refuse(ctx,"staged|interrupted",_before_publish=fail)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'staged|interrupted'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_staging_failure_never_publishes[extra]" time="0.100"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'staged|interrupted'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:276: in test_staging_failure_never_publishes
+    refuse(ctx,"staged|interrupted",_before_publish=fail)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'staged|interrupted'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_staging_failure_never_publishes[symlink]" time="0.096"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'staged|interrupted'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:276: in test_staging_failure_never_publishes
+    refuse(ctx,"staged|interrupted",_before_publish=fail)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'staged|interrupted'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase><testcase classname="tests.unit.optimizers.logic_theorem_optimizer.test_uscode_identity_recovery" name="test_staging_failure_never_publishes[interrupt]" time="0.101"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'staged|interrupted'&#10;  Actual message: 'output cannot alias an input parent'">tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:276: in test_staging_failure_never_publishes
+    refuse(ctx,"staged|interrupted",_before_publish=fail)
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:117: in refuse
+    with pytest.raises((recovery.IdentityRecoveryError,OSError),match=match):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'staged|interrupted'
+E     Actual message: 'output cannot alias an input parent'</failure></testcase></testsuite></testsuites>

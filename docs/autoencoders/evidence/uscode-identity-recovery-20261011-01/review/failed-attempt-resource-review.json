@@ -1,0 +1,319 @@
+{
+  "all_own_resources_released": false,
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01",
+  "check_count": 8,
+  "checks": [
+    {
+      "evidence": "Root explicitly reported guarded child/guardian completion before this inspection.",
+      "id": "stopped_failure_notification",
+      "passed": true
+    },
+    {
+      "evidence": "Frozen command matches first readiness; 768 MB outer, 16 MiB reservation, one CPU/child.",
+      "id": "exact_failed_command_and_caps",
+      "passed": true
+    },
+    {
+      "evidence": "Return code 1, captured PID/birth, reaped leader and no live own process group or guardian owner.",
+      "id": "failed_child_reaped_group_stopped",
+      "passed": true
+    },
+    {
+      "evidence": "Own scheduler lease is absent; shared config checksum is unchanged.",
+      "id": "own_lease_absent_config_preserved",
+      "passed": true
+    },
+    {
+      "evidence": "Own 16 MiB disk record is retained for context_failed, as root directed; it remains charged for next admission.",
+      "id": "own_retained_disk_claim_honest",
+      "passed": true
+    },
+    {
+      "evidence": "All 508 readiness-era foreign records match the exact canonical checksum; newer legitimate foreign entries are kept separate.",
+      "id": "preexisting_foreign_history_preserved",
+      "passed": true
+    },
+    {
+      "evidence": "No results directory or resources-final receipt exists; failure is not a successful diagnosis or finalization.",
+      "id": "failed_result_not_published",
+      "passed": true
+    },
+    {
+      "evidence": "Frozen regular metadata and logs fit reservation; original readiness remains byte-identical.",
+      "id": "bounded_durable_failure_evidence",
+      "passed": true
+    }
+  ],
+  "completed": true,
+  "created_at": "2026-10-11T05:15:04.427741+00:00",
+  "failure": {
+    "baseline_and_hypothesis_stage_reached": false,
+    "child_elapsed_seconds": 28.941,
+    "inner_duckdb_oom": "failed to allocate 4.0 MiB at CREATE TEMP TABLE classified; 241.2 MiB/244.1 MiB used",
+    "reported_error": "source census child exited 1",
+    "reported_error_type": "RuntimeError",
+    "results_published": false,
+    "returncode": 1,
+    "source_data_pages_read": false
+  },
+  "findings": [
+    {
+      "finding": "Own disk reservation remains retained/context_failed for 16,777,216 bytes. No resources-final.json exists; no disk release is claimed. Root explicitly requires preserving this charged claim for the next admission.",
+      "severity": "information"
+    }
+  ],
+  "lease_observations": {
+    "all_sampled_observations_healthy": true,
+    "current_own_lease_absence_independently_checked": true,
+    "event_count": 17,
+    "last_observation_at_unix": 1791695487.9398208,
+    "last_observation_lease_present": true,
+    "observation_count": 16,
+    "post_finalize_absence_observed": false,
+    "schemas": [
+      "guardian-owned-lease-observation/v1",
+      "guardian-owned-lease-watchdog-start/v1"
+    ],
+    "scope": "Sampled own-lease health until failure; absence checked independently after context exit. No continuous coverage or successful post-finalize event is claimed.",
+    "stages": [
+      "monitor",
+      "post_spawn",
+      "pre_spawn"
+    ]
+  },
+  "mutations": {
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "diagnostic_jobs_started": 0,
+    "foreign_resources_changed": false,
+    "leases_acquired": 0,
+    "leases_released": 0,
+    "models_loaded": 0,
+    "old_receipts_changed": false,
+    "raw_source_reads": 0,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json"
+    ]
+  },
+  "own_disk_claim_released": false,
+  "own_disk_claim_retained": true,
+  "own_resource_custody": {
+    "cached_failure_snapshot_scope": "cached_owner_primitives_only",
+    "cached_snapshot_precedes_context_exit": true,
+    "current_scheduler_lease_absent": true,
+    "lease_id": "9a67e2490d9248bda0d4acff8829342f",
+    "next_admission_must_include_retained_bytes": 16777216,
+    "reservation_id": "ce044fc614564ad7a92886ed385f443d",
+    "resources_final_exists": false,
+    "terminal_record": {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 75286201,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01"
+      },
+      "child": {
+        "birth": "71354721",
+        "pid": 3156324
+      },
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "created_at": 1791695473.6767254,
+      "external_charges": {},
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 10775,
+        "attempt_limit_bytes": 16777216,
+        "charged_bytes": 143755405445,
+        "checked_at": 1791695488.1920967,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 1,
+          "rss_bytes": 23126016
+        },
+        "inventory": {
+          "apparent_bytes": 95573628229,
+          "entry_count": 1358983,
+          "special_file_count": 5,
+          "symlink_count": 799
+        },
+        "limit_bytes": 145000000000,
+        "memory_limit_bytes": 805306368,
+        "minimum_filesystem_free_bytes": 53468569600,
+        "observed_apparent_bytes": 95573628229,
+        "outstanding_full_reservations_bytes": 48181777216,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 1,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 10775
+      },
+      "memory_mb": 768,
+      "owner_pid": 3152900,
+      "prior_children": [],
+      "reservation_id": "ce044fc614564ad7a92886ed385f443d",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 16777216,
+      "workload": "canonical_trainer"
+    }
+  },
+  "own_scheduler_lease_absent": true,
+  "process_custody": {
+    "bounded_proc_entries_inspected": 488,
+    "captured_child": {
+      "birth": "71354721",
+      "pid": 3156324
+    },
+    "captured_owner_birth": "71353265",
+    "captured_owner_pid": 3152900,
+    "current_child": null,
+    "current_owner": null,
+    "live_group": [],
+    "zombie_group": []
+  },
+  "readiness_pin": {
+    "bytes": 21017,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness.json",
+    "sha256": "e711378cee0eec76f9ecaa2c65e64eedbd0decb0688bcaab1490a21baf32e2a4",
+    "stat_signature": [
+      66306,
+      86119201,
+      21017,
+      1791695374899532663,
+      1791695374899532663
+    ]
+  },
+  "resource_cleanup_accepted": true,
+  "runtime_pins": {
+    "child-exit.json": {
+      "bytes": 516,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child-exit.json",
+      "sha256": "a438d0807f237295c5196bbc660510fd782e117fa130f496f4c0fa1f29e4023d",
+      "stat_signature": [
+        66306,
+        75286207,
+        516,
+        1791695488266820929,
+        1791695488266820929
+      ]
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child-identity.json",
+      "sha256": "ea760809c70692887ee69981b3fd5a8b7bc272607fc497f83ea2930fe3724d09",
+      "stat_signature": [
+        66306,
+        75286206,
+        44,
+        1791695473818955656,
+        1791695473818955656
+      ]
+    },
+    "child.log": {
+      "bytes": 2270,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child.log",
+      "sha256": "86203a13bbb22abf8dbb0d57d0f79f6c9a327db5ff0c6adadd3d33095379c248",
+      "stat_signature": [
+        66306,
+        75286205,
+        2270,
+        1791695474738243013,
+        1791695474738243013
+      ]
+    },
+    "command.json": {
+      "bytes": 7296,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/command.json",
+      "sha256": "9731c71b0f485a664f8986f45b5df38baa85519bef26d812cd9fb7d25431182b",
+      "stat_signature": [
+        66306,
+        75286202,
+        7296,
+        1791695473802189089,
+        1791695473802189089
+      ]
+    },
+    "failure.json": {
+      "bytes": 3226,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/failure.json",
+      "sha256": "e3336143648e85397db222d590fec7e00cec5bba1c1f44e6ff0c352c77d8352e",
+      "stat_signature": [
+        66306,
+        75286208,
+        3226,
+        1791695488299120693,
+        1791695488299120693
+      ]
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/lease-binding.json",
+      "sha256": "7b55f078cde02f0147987cc23cb539f2705b9a2e36fe2fa176e9e35b22381140",
+      "stat_signature": [
+        66306,
+        75286204,
+        693,
+        1791695473814764423,
+        1791695473814764423
+      ]
+    },
+    "lease-observations.jsonl": {
+      "bytes": 16854,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/lease-observations.jsonl",
+      "sha256": "a3312cf5cc57b98c2f1b4ab7161270d6c5ee7961bd5d77ea74b66000641b3cec",
+      "stat_signature": [
+        66306,
+        75286203,
+        16854,
+        1791695487939996922,
+        1791695487939996922
+      ]
+    }
+  },
+  "schema": "uscode-failed-identity-attempt-resource-review/v1",
+  "shared_resource_custody": {
+    "current_foreign_lease_ids": [],
+    "current_outstanding_full_claims_bytes": 48181777216,
+    "ledger_pin": {
+      "bytes": 6127585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "eea633e9ea0c486080998683505e640a6754aa6fa718e746e5ccdc6c2c96c7d8",
+      "stat_signature": [
+        66306,
+        67028721,
+        6127585,
+        1791695488349847532,
+        1791695488356020474
+      ]
+    },
+    "new_foreign_entries_preserved": {},
+    "preexisting_foreign_canonical_records_sha256": "491d408ec596016f46c876270b4960f221227d0aaa9269fe7c2a80c1db670252",
+    "preexisting_foreign_record_count": 508,
+    "scheduler_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+    "scheduler_pin": {
+      "bytes": 1761,
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "sha256": "143d80c81fbf789af8a152582661a88d780af2f36c385a1fb42ab36d57365336",
+      "stat_signature": [
+        66306,
+        572670,
+        1761,
+        1791695488371083150,
+        1791695488374021493
+      ]
+    }
+  },
+  "status": "failed_attempt_stopped_with_retained_own_disk_claim",
+  "successful_diagnosis": false,
+  "usage_observations": {
+    "cached_initial_usage_group_rss_bytes": 23126016,
+    "cached_initial_usage_scope": "Only cached initial guardian observation survives; no saved usage series or child kernel high-water report exists.",
+    "count": 0,
+    "current_attempt_bytes": 30899,
+    "guardian_finalized_bytes_available": false,
+    "maximum_sampled_group_rss_bytes": null,
+    "rss_scope": "Sampled process-group observations only, not a kernel or isolated-stage peak"
+  }
+}

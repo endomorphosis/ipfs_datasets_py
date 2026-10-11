@@ -1,0 +1,360 @@
+{
+  "accepted_document_review": {
+    "bytes": 24561,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/final-status-review.json",
+    "sha256": "f0ef4df5e64e92a088d09964f310b68261925d71f955b96419214c78b7d1133e",
+    "stat_signature": [
+      66306,
+      86165193,
+      24561,
+      1791697388988649887,
+      1791697388988649887
+    ]
+  },
+  "accepted_memory_review": {
+    "bytes": 19925,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-memory-review.json",
+    "sha256": "0435518ccbf6827372eabf907d921762e7177f2626bb034c5692418b5c72f013",
+    "stat_signature": [
+      66306,
+      86164668,
+      19925,
+      1791696008874214031,
+      1791696008874214031
+    ]
+  },
+  "accepted_parent_summary": {
+    "bytes": 15942,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+    "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac",
+    "stat_signature": [
+      66306,
+      63751833,
+      15942,
+      1791688956764078357,
+      1791688956764078357
+    ]
+  },
+  "authenticated_ancestor_verifier": {
+    "bytes": 18562,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/operator-source/verify_publication.py",
+    "sha256": "8769ac3705b16d5ae4b4de361dccc0bdff3b3b262c7e868d40a4f94e476922ae",
+    "stat_signature": [
+      66306,
+      63751799,
+      18562,
+      1791687564449333244,
+      1791687564449333244
+    ]
+  },
+  "check_count": 25,
+  "checks": [
+    {
+      "evidence": "Independently captured/parsing-only both final pending helpers, frozen completed utilities and8769 ancestor against exact SHA, canonical regular O_NOFOLLOW fd/path before/read/after witnesses. No module/import/main/closure or network helper was executed by reviewer.",
+      "id": "bounded-frozen-source-capture",
+      "passed": true
+    },
+    {
+      "evidence": "Pending index uses uscode-identity-recovery-pending-evidence-index/v1 and awaiting_storage_admission; pending manifest/verification receipts have distinct schemas. Both actual diagnosis and result review completion remain explicitly false.",
+      "id": "separate-pending-schema-and-stage",
+      "passed": true
+    },
+    {
+      "evidence": "Pending packager compiles captured90111 utility bytes into ModuleType and uses capture/copy/link functions, not completed-results main/reviewed. Pending verifier compiles capturedaba749 definitions, retaining authenticated8769 manifest/HTTP/Git utilities without calling either completed main/closure.",
+      "id": "completed-helper-functions-only",
+      "passed": true
+    },
+    {
+      "evidence": "Both source contracts refuse any Parquet suffix after lowercase normalization, report/candidate/result paths, measured-run and pilot-results* paths, including review drafts.",
+      "id": "case-insensitive-no-parquet",
+      "passed": true
+    },
+    {
+      "evidence": "Every selected/fetched JSON body rejects actual diagnosis and independent-pilot-result schemas or report/candidate actual-output pins under renamed paths. Metadata-only prepared replay source remains allowed while its output/review is absent.",
+      "id": "no-relabelled-actual-results",
+      "passed": true
+    },
+    {
+      "evidence": "Pending source walker rejects aliases, bounds traversal at4096 entries, admits only JSON/JSONL/XML/MD/PY/log bodies, excludes generated top index/publication recursion and checks required method/resource/control/document inventory.",
+      "id": "bounded-canonical-selection",
+      "passed": true
+    },
+    {
+      "evidence": "Per-body captures require canonical bounded regular files, exact pinned-length reads plus excess byte, fd/path signatures and source selection/witness fences before and after copying. Parent summary and utility witnesses are fenced across mutations.",
+      "id": "stable-all-body-capture",
+      "passed": true
+    },
+    {
+      "evidence": "2 MiB per file and16 MiB per repository package include all selected body bytes, encoded index and rewritten standalone document. Fresh canonical destination checks precede writes and source index creation.",
+      "id": "package-file-and-aggregate-caps",
+      "passed": true
+    },
+    {
+      "evidence": "Both repository destinations and standalone documents must be absent; owned exclusive writes/fsync/readback precede fresh campaign index. This is reviewable staging, not a model/resource admission override or a whole-package atomicity claim.",
+      "id": "fresh-exclusive-copy-and-readback",
+      "passed": true
+    },
+    {
+      "evidence": "Same index bytes are used for root and datasets; index pins cover every selected body. Remote manifest closure requires indexes/standalones/all indexed and explicit extra bodies with no missing or unindexed entries.",
+      "id": "dual-index-and-byte-coverage",
+      "passed": true
+    },
+    {
+      "evidence": "Both helpers require final STATUS accepted review, zero findings, nonempty all-passed checks/exact count and document path/bytes/SHA. Current independent final reviewf0ef... binds frozen13,553-byte STATUS5f912... with27 checks.",
+      "id": "accepted-document-capture",
+      "passed": true
+    },
+    {
+      "evidence": "Rewrites use exact root ../../artifacts/ and datasets evidence/ prefixes for relative Markdown targets; fragments, absolute paths and URI schemes remain unchanged; remote standalone bytes must equal that deterministic rewrite.",
+      "id": "relative-only-link-rebasing",
+      "passed": true
+    },
+    {
+      "evidence": "Pinnedb1 denial audit passes11 checks while preserving its two known execution/measurement findings. No zero-findings requirement is imposed on the capacity refusal; no child/attempt/new record/lease/adoption or actual outputs are falsely accepted.",
+      "id": "admission-review-with-known-findings",
+      "passed": true
+    },
+    {
+      "evidence": "Denial pins readiness02 and failed-resource/launch/command bodies; its frozen readiness binds all16 plan/args/method/history/control bodies. Independent current reads verified each path/byte/SHA against readiness pins.",
+      "id": "exact-readiness-planning-control-chain",
+      "passed": true
+    },
+    {
+      "evidence": "Current memory review and readiness bind03d0dac and the exact four owner files across method/control/commit binding. Remote verifier additionally requires published datasets source extras to match their tested SHA/byte pins.",
+      "id": "accepted-current-code-and-owner-closure",
+      "passed": true
+    },
+    {
+      "evidence": "Exact database/manifest/report/progress/accepted-review metadata path/SHA/positive byte pins agree with admitted arguments under128MiB input ceilings; pending publication never opens or replays source/DB/model inputs.",
+      "id": "five-original-input-metadata-pins",
+      "passed": true
+    },
+    {
+      "evidence": "Packager/verifier agree on status accepted_parent_counts_not_new_measurement and retained_physical_occurrences64,969/archived_distinct_ids443,904/unresolved_archived_ids378,935/source_occurrences3,840,988; source_summary_pin refers to accepted1e8... parent summary15942bytes.",
+      "id": "parent-coverage-exact-field-contract",
+      "passed": true
+    },
+    {
+      "evidence": "Frozen denial records35,094,544,384B filesystem free vs48,198,554,432B existing claims plus request, exact shortfall13,104,010,048B. Refused fresh global inventory is not a durable receipt or future admission; foreign claims/caps are not changed.",
+      "id": "resource-observation-scope",
+      "passed": true
+    },
+    {
+      "evidence": "Method evidence separates45 current focused controls from151 historical controls, genuine failed01 and pre-child denied02. None is relabeled as a successful corpus diagnosis, numerical reconstruction gain, learned teacher, alias, embedding reuse or proof qualification.",
+      "id": "static-controls-and-failures-separate",
+      "passed": true
+    },
+    {
+      "evidence": "Authenticated old functions enforce expected repositories, safe relative paths, complete40hex immutable commits, bounded HTTP exact SHA/bytes, one package generation/repository, manifest stability and six fetch workers.",
+      "id": "immutable-http-and-main-contract",
+      "passed": true
+    },
+    {
+      "evidence": "Remote verifier requires exact root datasets/accelerate gitlinks and unique root/datasets/accelerate main checks proving both published ancestry and preservation of admitted prior mains with read-only Git operations.",
+      "id": "two-gitlinks-and-three-main-histories",
+      "passed": true
+    },
+    {
+      "evidence": "Pending index keeps models/training/embedding/proof false and aliases zero; neither publication helper loads source bodies, vectors, models/tokenizers, inference/training, registers/uploads models or creates aliases.",
+      "id": "no-model-or-source-authority",
+      "passed": true
+    },
+    {
+      "evidence": "This is static contract acceptance only. No packaging/verification or genuine retry/replay was executed by reviewer; independent built-package closure and immutable remote publication checks remain separate gates.",
+      "id": "no-execution-or-current-result-claim",
+      "passed": true
+    },
+    {
+      "evidence": "Current packager52ff differs from preserved e049 only by the exact c9f failed-audit pin and its failed-resource predicate. The authenticated audit has8 passed checks and exactly one informational retained16MiB claim finding; completed cleanup/nonsuccess/retained/notreleased/leaseabsence flags are explicitly checked. All method/document zero-finding gates remain unchanged.",
+      "id": "known-informational-retention-gate",
+      "passed": true
+    },
+    {
+      "evidence": "Root reports e049 preflight refused the informational audit before writes. Reviewer independently verifies source index, both repository package directories and both standalone document destinations absent; old e049/b178/14f72 are preserved in authenticated preflight-pending-02 snapshot. No diagnosis/replay or result output occurred.",
+      "id": "actual-preflight-refusal-before-writes",
+      "passed": true
+    }
+  ],
+  "created_at_utc": "2026-10-11T05:51:30.688434+00:00",
+  "document_at_static_review": {
+    "bytes": 13553,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/STATUS.md",
+    "sha256": "5f91232093489cbb2795a30b90cf167d6c3457f18fb033871a6fd35e3ac0086b",
+    "stat_signature": [
+      66306,
+      85903290,
+      13553,
+      1791697272923091036,
+      1791697272923091036
+    ]
+  },
+  "failed_attempt_resource_review": {
+    "bytes": 11704,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+    "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+    "stat_signature": [
+      66306,
+      86119238,
+      11704,
+      1791695762483092227,
+      1791695762483092227
+    ]
+  },
+  "findings": [],
+  "genuine_diagnosis_or_replay_executed_by_reviewer": false,
+  "helpers_executed_by_reviewer": false,
+  "limits": [
+    "Acceptance covers the frozen static publication contract, not built package bytes or current remote mains.",
+    "Storage refusal establishes no numerical counter-hypothesis result or source/encoder compatibility.",
+    "Old donor checkpoints and cached embeddings remain preserved references; no new model availability or teacher/fidelity/proof qualification is introduced."
+  ],
+  "network_verification_executed_by_reviewer": false,
+  "packaging_executed_by_reviewer": false,
+  "passed": true,
+  "pending_actual_result_review_completed": false,
+  "preserved_preflight_packager": {
+    "bytes": 20123,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-pending-02/operator-source/package_pending_identity_evidence.py",
+    "sha256": "e049dcacf0a01ae708b5bd80ec635ef821f820499a2a0d9504b1ac93cf02b5fd",
+    "stat_signature": [
+      66306,
+      86381040,
+      20123,
+      1791697699941348465,
+      1791697699941348465
+    ]
+  },
+  "prior_archived_method_review": {
+    "bytes": 14357,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-pending-02/review/pending-publication-method-review.json",
+    "sha256": "14f72e30ef9c82165724af4e811be6b0e7181c88658b6798be1226bffe05c00f",
+    "stat_signature": [
+      66306,
+      86381049,
+      14357,
+      1791697699948904411,
+      1791697699948904411
+    ]
+  },
+  "prior_preflight_index": {
+    "bytes": 754,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-pending-02/index.json",
+    "sha256": "35608dbd118cd91dac8e6c507efe7bca749ed5e60c5d7bdb9158caad39f24640",
+    "stat_signature": [
+      66306,
+      86381050,
+      754,
+      1791697699954703382,
+      1791697699954703382
+    ]
+  },
+  "readiness02": {
+    "bytes": 23561,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json",
+    "sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039",
+    "stat_signature": [
+      66306,
+      86164739,
+      23561,
+      1791696185890582912,
+      1791696185890582912
+    ]
+  },
+  "resolved_review_items": [
+    {
+      "finding": "Initial pending verifier parent coverage field names/scope differed from emitted index.",
+      "resolution": "Both now use exact status and physical/unresolved field contract plus frozen parent summary pin."
+    },
+    {
+      "finding": "Pending policies could admit relabeled independent replay drafts and uppercase Parquet.",
+      "resolution": "Both now reject pilot-results* paths, actual report/replay schemas/output pins and case-insensitive Parquet suffixes."
+    },
+    {
+      "finding": "Planning/method/current code bodies needed complete denial/readiness custody.",
+      "resolution": "Frozen denial binds readiness02; exact16-body planning/control chain and accepted03 four-owner code custody are verified before/after publication."
+    },
+    {
+      "finding": "First static acceptance missed the genuine failed-resource audit informational finding; its generic zero-findings predicate made the pending packager refuse before writes.",
+      "resolution": "Narrow52ff gate requires exact c9f hash/schema/status,8 all-passed checks, single known informational finding and explicit retained/notreleased/current-lease-absent flags. First accepted review/helper bytes remain archived; no reservation release or successful-diagnosis claim is introduced."
+    }
+  ],
+  "retry_admission_review": {
+    "bytes": 13627,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/retry-admission-review.json",
+    "sha256": "b1e693a3ebb790a8f9d8dbda6479263573a7e2092fb7fb135f08289fc4a583c1",
+    "stat_signature": [
+      66306,
+      86164887,
+      13627,
+      1791696559931115243,
+      1791696559931115243
+    ]
+  },
+  "reviewer": "/root/parallel_research_recovery",
+  "root_packager_preflight": {
+    "actual_diagnosis_completed": false,
+    "executed": true,
+    "outcome": "refused_before_writes_at_failed_resource_information_finding_gate",
+    "package_destinations_absent_verified": [
+      "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/index.json",
+      "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/uscode-identity-recovery-20261011-01",
+      "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/uscode_identity_recovery_20261011.md",
+      "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/artifacts/uscode-identity-recovery-20261011-01",
+      "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007/implementation_plan/docs/73-uscode-identity-recovery-2026-10-11.md"
+    ],
+    "source_sha256": "e049dcacf0a01ae708b5bd80ec635ef821f820499a2a0d9504b1ac93cf02b5fd"
+  },
+  "schema": "uscode-identity-recovery-pending-publication-method-review/v1",
+  "source_file_pins": {
+    "package_identity_evidence.py": {
+      "bytes": 13343,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_identity_evidence.py",
+      "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6",
+      "stat_signature": [
+        66306,
+        86118830,
+        13343,
+        1791695759086700848,
+        1791695759086700848
+      ]
+    },
+    "package_pending_identity_evidence.py": {
+      "bytes": 21009,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_pending_identity_evidence.py",
+      "sha256": "52ff80257f6ad09f627e53acdde834a3bfec5fec48874f55119c2e5408cc5779",
+      "stat_signature": [
+        66306,
+        86164931,
+        21009,
+        1791697732293901590,
+        1791697732293901590
+      ]
+    },
+    "verify_identity_publication.py": {
+      "bytes": 16675,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/verify_identity_publication.py",
+      "sha256": "aba749850fd8697e397674bcb6ef27e174cb16462950b84d5c8f150f5b4b6b49",
+      "stat_signature": [
+        66306,
+        86119104,
+        16675,
+        1791695759086974188,
+        1791695759086974188
+      ]
+    },
+    "verify_pending_identity_publication.py": {
+      "bytes": 19862,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/verify_pending_identity_publication.py",
+      "sha256": "b178033a90c908e37ea52318ab337aaca16f35f93ca40575fdac231014b7dd43",
+      "stat_signature": [
+        66306,
+        86164925,
+        19862,
+        1791697322108788821,
+        1791697322108788821
+      ]
+    }
+  },
+  "status": "accepted",
+  "tests_repeated_by_reviewer": false
+}

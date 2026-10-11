@@ -1,0 +1,89 @@
+{
+  "canonical_user_worktrees_mutated": false,
+  "datasets": {
+    "preserved_main_commit": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+    "source_integrated_head": "7ad6821334058e82c0c30da646c83a5b8e0b9fda",
+    "worktree": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007"
+  },
+  "four_tested_files_unchanged": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 3469,
+      "sha256": "9ed3fe4084b81e8ef433cabfcb4e0739d0b675ca34cdf30ce8920af538eaf58f"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 31301,
+      "sha256": "e7c605bd1b49fa7377adc9a8f229e1f2ed874656fbbad8f752c6ee42f6a525dc"
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 21760,
+      "sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6"
+    }
+  },
+  "historical_source_worktree": {
+    "clean": true,
+    "head": "271ad796288e17039f036af6a0d003a4628da6ed",
+    "path": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-datasets-20261007"
+  },
+  "nine_previous_execution_owners_unchanged": {
+    "ipfs_datasets_py/logic/autoformal/constitution_inventory.py": {
+      "bytes": 11156,
+      "owner": "constitution_inventory",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "ipfs_datasets_py/logic/autoformal/uscode_ingest.py": {
+      "bytes": 10156,
+      "owner": "uscode_ingest",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py": {
+      "bytes": 23320,
+      "owner": "intake",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py": {
+      "bytes": 13440,
+      "owner": "span_pages",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py": {
+      "bytes": 26696,
+      "owner": "archive_reconciliation",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py": {
+      "bytes": 24269,
+      "owner": "resume_owner",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py": {
+      "bytes": 8703,
+      "owner": "uscode_dataset",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py": {
+      "bytes": 24447,
+      "owner": "census",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    "scripts/ops/legal_ir/resume_uscode_archive.py": {
+      "bytes": 1523,
+      "owner": "resume_cli",
+      "sha256": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e"
+    }
+  },
+  "root": {
+    "gitlinks": [
+      "160000 commit daea0547cae0ef64e5b78c67030916648138bcda\texternal/ipfs_accelerate",
+      "160000 commit fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52\texternal/ipfs_datasets"
+    ],
+    "preserved_main_commit": "570128e0d6a568a9c05b3dd60f704c1ee5d184bf",
+    "worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007"
+  },
+  "schema": "identity-diagnosis-prepublication-main-preservation/v1",
+  "scope": "Prepublication integration custody; remote main and exact final published bytes are verified separately",
+  "tested_source_commit": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad"
+}

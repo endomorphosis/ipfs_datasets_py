@@ -1,0 +1,479 @@
+{
+  "changed_paths": [
+    "docs/autoencoders/uscode_identity_recovery.md",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py"
+  ],
+  "check_count": 15,
+  "checks": [
+    {
+      "evidence": "Original implementation review, first unexecuted replay source and preflight-01 operator bodies remain exactly hash-bound and unchanged; this is an additive follow-up review.",
+      "id": "preserved-accepted-history",
+      "passed": true
+    },
+    {
+      "evidence": "Commit03d0dac7397bea25b3c7363ff07a7299df3dd4ad changes only module, controls and doc atop7b2155; all four present owner blobs equal captured frozen bytes and tree is clean.",
+      "id": "committed-followup-bytes",
+      "passed": true
+    },
+    {
+      "evidence": "Independent AST comparison proves the module is unchanged outside _load_archive; CLI, runtime limits, identity descriptors, all-baseline gate, candidate joins/counts, source witnesses, output protocol and publication custody remain as previously accepted.",
+      "id": "narrow-function-scope",
+      "passed": true
+    },
+    {
+      "evidence": "Independently rehashed all seven inherited extraction/identity owners plus resume owner/CLI against original accepted pins; none changed.",
+      "id": "all-prior-execution-pins-preserved",
+      "passed": true
+    },
+    {
+      "evidence": "Ledger, classified and unresolved are projected TEMP views over authenticated archive metadata; no full archive/classified/unresolved row/string tables are persisted in the in-memory connection.",
+      "id": "lazy-metadata-projections",
+      "passed": true
+    },
+    {
+      "evidence": "One archive-ID/retained-ID join groups status by archive ID into exactly three columns: ID, bool_or exactSHA/legal, bool_or differentSHA. Its row count is explicitly <=retained rows, already capped65,536.",
+      "id": "single-compact-status-join",
+      "passed": true
+    },
+    {
+      "evidence": "Exact-match flag wins over differingSHA; otherwise differingSHA wins over legal-ID mismatch; absence of any compact ID yields unresolved. Metadata remains excluded first. Grouped boolean predicates equal the original EXISTS conditions for every physical occurrence.",
+      "id": "classification-precedence-equivalent",
+      "passed": true
+    },
+    {
+      "evidence": "A valid span appears in compact status iff at least one retained row has that archive ID. Anti-joining compact IDs therefore preserves the original unresolved ELSE branch; hash/legal mismatches stay excluded from hypotheses.",
+      "id": "unresolved-anti-join-equivalent",
+      "passed": true
+    },
+    {
+      "evidence": "Original projected archive count, dataset/kind, duplicate/conflict/invalid ID and retained-membership checks remain; counts must still match the authenticated parent dispositions before baseline verification/hypotheses.",
+      "id": "same-refusal-and-parent-accounting",
+      "passed": true
+    },
+    {
+      "evidence": "New control includes exact match plus a conflicting physical hash/legal row under the same ID, legal-only mismatch, hash mismatch, unresolved and metadata. It verifies exact dispositions, unresolved rows, views-only full archive storage and compactthree-column status.",
+      "id": "mixed-physical-precedence-control",
+      "passed": true
+    },
+    {
+      "evidence": "443,905 synthetic metadata rows with diverse full-length64hex IDs/hashes/legal strings and64,969 resident wide retained rows pass classification at unchanged256 MB, one thread and empty no-spill directory. This is a synthetic cardinality/shape control, not a genuine corpus result or guarantee of total process RSS.",
+      "id": "full-cardinality-synthetic-memory-control",
+      "passed": true
+    },
+    {
+      "evidence": "Independently parsed45 current module controls with zero failures/errors/skips and verified XML/stdout/control/commit-binding SHA pins. The earlier151-control receipt remains historical evidence; its108 inherited controls were not rerun or counted as current executions.",
+      "id": "authenticated-focused-regression",
+      "passed": true
+    },
+    {
+      "evidence": "Original genuine attempt01 OOM produced no results; its independently reviewed PID-birth/group/lease cleanup and retained16 MiB context_failed claim remain separate evidence. Intermediate view-only synthetic OOM receipts are preserved and superseded only for code readiness by passing compact-status controls.",
+      "id": "recorded-failures-retained",
+      "passed": true
+    },
+    {
+      "evidence": "Current packager90111f81... and verifieraba74985... equal preserved accepted bodies after only changing original runtime results path01 to02 and adding three required memory/readiness02/failed-resource review paths. All prior byte/schema/authority/index/main ancestry checks remain intact; guardian body unchanged.",
+      "id": "path-only-operator-followup",
+      "passed": true
+    },
+    {
+      "evidence": "No genuine attempt02, independent result replay, source rescan, model/tokenizer/inference/training/alias or publication helper ran in this review. Resource readiness02, guarded success, stopped independent result review and final document/publication gates remain pending.",
+      "id": "no-new-result-or-qualification",
+      "passed": true
+    }
+  ],
+  "commit_binding": {
+    "bytes": 2332,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-commit-binding.json",
+    "sha256": "9e646b989cfacd7db37d7e54862d31e1e0f9d77a64bcd247a3268fa720927e93",
+    "stat_signature": [
+      66306,
+      86164630,
+      2332,
+      1791695828952116392,
+      1791695828952116392
+    ]
+  },
+  "control_receipt": {
+    "bytes": 5399,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-control-receipt.json",
+    "sha256": "3e630bdfaaa68e818298068cdb5f3be0d1df04a38be0e5fd2939ef2a6ad8d2f9",
+    "stat_signature": [
+      66306,
+      86164624,
+      5399,
+      1791695810125708962,
+      1791695810125708962
+    ]
+  },
+  "created_at_utc": "2026-10-11T05:20:08.813929+00:00",
+  "findings": [],
+  "genuine_retry_executed_by_reviewer": false,
+  "intermediate_synthetic_failure": {
+    "stdout": {
+      "bytes": 2838,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.log",
+      "sha256": "b6c6a06908dca84bd4230cf99d0c3ce666a631538918530cacd47f2daab9998b"
+    },
+    "xml": {
+      "bytes": 9937,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.xml",
+      "sha256": "2fa6613e2308f4f62ed41774008f0aafbcea39fb95d0b20eea0f3a93b66fadad"
+    }
+  },
+  "limits": [
+    "Synthetic complete archive cardinality is not actual stopped-result acceptance.",
+    "Unchanged256 MB DuckDB budget is separate from the outer process RSS/resource admission policy.",
+    "Original attempted run and retained claim remain preserved; no successful attempt01 result is claimed.",
+    "Original producer recipe, global source uniqueness, aliases, cached embeddings, learned teacher, semantic gold/fidelity and proof stay unqualified."
+  ],
+  "models_executed_by_reviewer": false,
+  "operator_file_pins": {
+    "package_identity_evidence.py": {
+      "current": {
+        "bytes": 13343,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_identity_evidence.py",
+        "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6",
+        "stat_signature": [
+          66306,
+          86118830,
+          13343,
+          1791695759086700848,
+          1791695759086700848
+        ]
+      },
+      "only_profile_and_three_required_reviews_changed": true,
+      "preserved_preflight_01": {
+        "bytes": 13207,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-01/operator-source/package_identity_evidence.py",
+        "sha256": "ea7014a907ca9ac4f0e0a9b2702bf82ee3dd5eec567193dddaaa807ebd282bec",
+        "stat_signature": [
+          66306,
+          86119221,
+          13207,
+          1791695554142174326,
+          1791695554142174326
+        ]
+      }
+    },
+    "verify_identity_publication.py": {
+      "current": {
+        "bytes": 16675,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/verify_identity_publication.py",
+        "sha256": "aba749850fd8697e397674bcb6ef27e174cb16462950b84d5c8f150f5b4b6b49",
+        "stat_signature": [
+          66306,
+          86119104,
+          16675,
+          1791695759086974188,
+          1791695759086974188
+        ]
+      },
+      "only_profile_and_three_required_reviews_changed": true,
+      "preserved_preflight_01": {
+        "bytes": 16527,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-01/operator-source/verify_identity_publication.py",
+        "sha256": "707e018eb2d7ccf085549be43519de16afd30a39cd16a12f42387676f4a348e9",
+        "stat_signature": [
+          66306,
+          86119222,
+          16527,
+          1791695554147194556,
+          1791695554147194556
+        ]
+      }
+    }
+  },
+  "original_failed_attempt_resource_review": {
+    "bytes": 11704,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+    "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+    "stat_signature": [
+      66306,
+      86119238,
+      11704,
+      1791695762483092227,
+      1791695762483092227
+    ]
+  },
+  "original_source_read_by_reviewer": false,
+  "original_unexecuted_attempt_01_replay_source": {
+    "bytes": 20777,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/independent_identity_result_replay.py",
+    "sha256": "edb724ec76679115dc7b7ff4b53761e382610a4e598213b966ca8006b7553840",
+    "stat_signature": [
+      66306,
+      86119202,
+      20777,
+      1791695424778274124,
+      1791695424778274124
+    ]
+  },
+  "owner_commit": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+  "owner_file_pins": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 3469,
+      "committed_bytes_match": true,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/docs/autoencoders/uscode_identity_recovery.md",
+      "sha256": "9ed3fe4084b81e8ef433cabfcb4e0739d0b675ca34cdf30ce8920af538eaf58f",
+      "stat_signature": [
+        66306,
+        85903308,
+        3469,
+        1791695746852670708,
+        1791695746852670708
+      ]
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 31301,
+      "committed_bytes_match": true,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+      "sha256": "e7c605bd1b49fa7377adc9a8f229e1f2ed874656fbbad8f752c6ee42f6a525dc",
+      "stat_signature": [
+        66306,
+        86034379,
+        31301,
+        1791695746851670666,
+        1791695746851670666
+      ]
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "committed_bytes_match": true,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2",
+      "stat_signature": [
+        66306,
+        86034380,
+        1266,
+        1791693915626050112,
+        1791693915626050112
+      ]
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 21760,
+      "committed_bytes_match": true,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6",
+      "stat_signature": [
+        66306,
+        86119071,
+        21760,
+        1791695746852670708,
+        1791695746852670708
+      ]
+    }
+  },
+  "owner_parent": "7b2155fc211fe2b3b60455c2bcd11d7c8c41f3a9",
+  "owner_tree_clean": true,
+  "owner_worktree": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011",
+  "passed": true,
+  "preflight_01_index": {
+    "bytes": 1384,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-01/index.json",
+    "sha256": "e1b370ab556e764a9a5d46d60360746fb537adff1c12cfef4c1f2a215bd0c329",
+    "stat_signature": [
+      66306,
+      86119223,
+      1384,
+      1791695554151894754,
+      1791695554151894754
+    ]
+  },
+  "prior_accepted_implementation_review": {
+    "bytes": 24239,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-review.json",
+    "sha256": "341b9d5a13491534fc0a3513a0be2a0888928d4bf4285f5001740ea732896e88",
+    "stat_signature": [
+      66306,
+      86119133,
+      24239,
+      1791695051604434670,
+      1791695051604434670
+    ]
+  },
+  "prior_execution_file_pins": {
+    "archive_reconciliation": {
+      "bytes": 26696,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "stat_signature": [
+        66306,
+        86023882,
+        26696,
+        1791693196253797620,
+        1791693196253797620
+      ]
+    },
+    "census": {
+      "bytes": 24447,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "stat_signature": [
+        66306,
+        86023886,
+        24447,
+        1791693196255797613,
+        1791693196255797613
+      ]
+    },
+    "constitution_inventory": {
+      "bytes": 11156,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "stat_signature": [
+        66306,
+        86020501,
+        11156,
+        1791693196027704936,
+        1791693196027704936
+      ]
+    },
+    "intake": {
+      "bytes": 23320,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "stat_signature": [
+        66306,
+        86023662,
+        23320,
+        1791693196235797677,
+        1791693196235797677
+      ]
+    },
+    "resume_cli": {
+      "bytes": 1523,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/resume_uscode_archive.py",
+      "sha256": "8ef2bfb848775863c4e34eab01cb90ad2c806a95312b07b824b72d30891bfc9e",
+      "stat_signature": [
+        66306,
+        86031090,
+        1523,
+        1791693196861795672,
+        1791693196861795672
+      ]
+    },
+    "resume_owner": {
+      "bytes": 24269,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_resume.py",
+      "sha256": "499c218d47a701937b96a8e19cbf8dd37be8e38ca499dec0c097a5d0c7379aba",
+      "stat_signature": [
+        66306,
+        86023883,
+        24269,
+        1791693196253797620,
+        1791693196253797620
+      ]
+    },
+    "span_pages": {
+      "bytes": 13440,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "stat_signature": [
+        66306,
+        86023664,
+        13440,
+        1791693196235797677,
+        1791693196235797677
+      ]
+    },
+    "uscode_dataset": {
+      "bytes": 8703,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "stat_signature": [
+        66306,
+        86023884,
+        8703,
+        1791693196253797620,
+        1791693196253797620
+      ]
+    },
+    "uscode_ingest": {
+      "bytes": 10156,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "stat_signature": [
+        66306,
+        86020594,
+        10156,
+        1791693196033798324,
+        1791693196033798324
+      ]
+    }
+  },
+  "publication_helpers_executed_by_reviewer": false,
+  "regression_evidence": {
+    "JUnit": {
+      "bytes": 7974,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml",
+      "sha256": "8b6a2d7cea68822e9df7c6a681fcdc12241ec0c7b7568a318dafb27447730c76",
+      "stat_signature": [
+        66306,
+        86119240,
+        7974,
+        1791695767424269165,
+        1791695767424269165
+      ]
+    },
+    "cases": 45,
+    "classification_control": {
+      "archive_physical_rows": 443905,
+      "diverse_full_length_id_hash_legal_values": true,
+      "full_archive_materialized_copies": 0,
+      "memory_mb": 256,
+      "retained_rows": 64969,
+      "spill_enabled": false,
+      "status_columns": 3,
+      "status_rows": 64969,
+      "synthetic": true,
+      "threads": 1
+    },
+    "command": [
+      "python",
+      "-m",
+      "pytest",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "-q",
+      "--tb=short",
+      "--junitxml=/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml"
+    ],
+    "duration_seconds": 8.582,
+    "errors": 0,
+    "existing_diagnosis_controls": 43,
+    "failures": 0,
+    "new_memory_controls": 2,
+    "prior_151_controls_not_repeated": true,
+    "reviewer_repeated_tests": false,
+    "skips": 0,
+    "stdout": {
+      "bytes": 1200,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.log",
+      "sha256": "9cdd657e6992994bad7f9529d1a6d39be80ef99c41cd699ec47aa614383dab37",
+      "stat_signature": [
+        66306,
+        86119239,
+        1200,
+        1791695767521539243,
+        1791695767521539243
+      ]
+    }
+  },
+  "reviewer": "/root/parallel_research_recovery",
+  "schema": "uscode-identity-recovery-independent-memory-implementation-review/v1",
+  "source_mutations_by_reviewer": false,
+  "status": "accepted",
+  "tests_repeated_by_reviewer": false,
+  "unchanged_guardian": {
+    "bytes": 7202,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/run_guarded_identity_diagnosis.py",
+    "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2",
+    "stat_signature": [
+      66306,
+      86118545,
+      7202,
+      1791693302009849745,
+      1791693302009849745
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "acceptance": {
+    "aliases_created": 0,
+    "all_retained_baseline_ids_must_reproduce": true,
+    "archive_rows_relabelled": 0,
+    "candidate_full_ID_hash_legal_id_join_required": true,
+    "candidate_global_uniqueness_established": false,
+    "embeddings_or_weights_created": 0,
+    "independent_parent_review_required": true,
+    "input_hashes_and_existing_stopped_lock_required": true,
+    "semantic_or_proof_authority": false,
+    "training_or_inference": false
+  },
+  "bounds": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 256,
+    "maximum_archive_rows": 500000,
+    "maximum_examples": 32,
+    "maximum_report_bytes": 2097152,
+    "maximum_retained_rows": 65536,
+    "outer_memory_mb": 768,
+    "outer_storage_bytes": 16777216,
+    "output_storage_bytes": 8388608,
+    "threads": 1,
+    "timeout_seconds": 300
+  },
+  "expected_metadata_pair_baseline": {
+    "same_legal_id_and_text_sha256_unresolved_rows": 3700,
+    "within_retained_subset_multiple_occurrences": 2508,
+    "within_retained_subset_single_occurrence": 1192
+  },
+  "input_scope": "Accepted phase04 stopped target DB, report, manifest and original progress; current source Parquet remains referenced only",
+  "next_steps_if_supported": [
+    "Recover original producer launch and source-order/extraction custody",
+    "Measure and admit separate complete source occurrence shards before global uniqueness claims",
+    "Preserve exact original encoder-input and context compatibility before any archived vector reuse"
+  ],
+  "original_raw_source_body_read": false,
+  "parent_source_complete": true,
+  "producer_recipe_actual_launch_authenticated": false,
+  "proposed_alternate_recipe": "Same declared binding and canonical JSON; replace historical64-document ordinal with stored section-local ordinal after reproducing every current retained ID",
+  "purpose": "Diagnose per-document ordinal IDs using accepted retained source rows; preserve identities and qualify no models",
+  "retained_occurrences": 64969,
+  "schema": "uscode-identity-recovery-run-plan/v1",
+  "unresolved_archive_ids": 378935
+}

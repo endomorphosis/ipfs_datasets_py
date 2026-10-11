@@ -1,0 +1,538 @@
+{
+  "applicable_AGENTS": "No AGENTS.md along referenced canonical source/document paths or workspace root ancestors checked.",
+  "available_recipe_facts": [
+    {
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "commit_date_utc": "2026-09-26T18:42:24Z",
+      "fact": "Initial available Git addition already has ProcessPoolExecutor pool.map(_parse_document,chunk,chunksize=1); _parse_document calls inventory_uscode_documents([document]). The separate outer commit buffer has 64 documents. len(spans) identity ordinal resets per document, not per 64-document commit buffer. Earlier uncommitted producer forms and actual original launch remain unknown.",
+      "initial_git_addition": true,
+      "owner": "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py"
+    },
+    {
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "fact": "SCHEMA uscode-sparse-autoformal-span-v1. _clean collapses whitespace. Inventory normalizes/filters empty documents, splits on _sentences, and uses ordinal=len(spans) inside each invocation. Identity is sorted compact ensure_ascii=True JSON UTF8 SHA256 prefixed uscode-span-. document_ordinal is metadata, not an identity key.",
+      "owner": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py"
+    },
+    {
+      "candidate_defaults": {
+        "query": "ipfs_uscode",
+        "release_id": "ipfs-uscode-5016b86a",
+        "release_point": "",
+        "schema_version": "uscode-sparse-autoformal-span-v1",
+        "unit_id": "legal_id when nonempty"
+      },
+      "fact": "Entrypoint sets document release_id before worker parse; identity release_id comes from inventory argument. Actual launcher arguments are not authenticated by inspected archive metadata.",
+      "identity_keys": [
+        "canonical_citation",
+        "entry_cid",
+        "legal_id",
+        "ordinal",
+        "query",
+        "release_id",
+        "release_point",
+        "schema_version",
+        "section",
+        "text_sha256",
+        "title",
+        "unit_id"
+      ]
+    },
+    {
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "fact": "_sentences collapses Unicode whitespace to an ASCII space, strips, and splits at (?<=[.!?])\\s+. Identity uses the sentence UTF8 SHA256.",
+      "owner": "ipfs_datasets_py/logic/autoformal/constitution_inventory.py"
+    },
+    {
+      "fact": "Record citation priority is normalized_citation, citation_text, official_cite, generated title/section citation; selected law columns omit official_cite. Text fallback is cleaned text, law_name, citation. Blank/null-CID handling and selected columns must stay explicit.",
+      "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py"
+    },
+    {
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "fact": "enqueue retains caller source_span_id but slices text[:MAX_TEXT], MAX_TEXT=32*1024 characters, before stored source_sha256. Duplicate IDs in enqueue or existing cache are skipped. These are available full-vs-truncated hash/occurrence-collapse mechanisms, not proven causes of unresolved IDs or count difference.",
+      "owner": "ipfs_datasets_py/logic/autoformal/span_cache.py"
+    },
+    {
+      "commit": "3aaf849afbf00766cc0cee5e37726524dde5e298",
+      "fact": "Initial Sept30 intake already declares historical-64-document-ordinal/v1 and rewrites per-document identity ordinal to cumulative span ordinal across 64 valid documents. Its document asserts the pinned ledger used 64 documents per inventory call. This later available reconciliation assertion is not an original launch proof and differs from available Sept26 ingest code.",
+      "owner": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py"
+    }
+  ],
+  "compiler_digest_search": {
+    "authentication_scope": "Exact digest match authenticates seven available compiler/parser/decompiler blobs. EDIT_SCOPES excludes the ingest, sentence splitting, record loader and identity generator. It does not authenticate the original extraction process, launch, context, model or recipe.",
+    "candidate_commits": 25,
+    "candidate_rows": [
+      {
+        "commit": "1d17bfc7ed3db5b675e8f79e0e20e5b2c8ae12bb",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "5e7f15587898dda5960720a407b9f42fb7b6389a",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "1c84ab2ed3bdca1bab3dde1ed82f4d94e28dd856",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "be6afb8cc56f41dca71dec550fcf24874a7ba316",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "b8a9bb35a8234d1c12204f2bae34d2a0c2635056",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "6e6a28823e0baae5fa32793ebf5a06d84749a19e",
+        "files": 7,
+        "identity": "sha256:a9f828dfe65385113bfca820dc80fc85120ffba028f4992c38a78169b19e4c78"
+      },
+      {
+        "commit": "f59b695af2ba24b2f040aa8814a9fe1680c0f509",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "5b98c9d6a8bd07b86d199891396a462ebb693445",
+        "files": 7,
+        "identity": "sha256:d4c9265937dedb80f75427de30db837bd2a91db07d4c2f61a139789fe915c8d2"
+      },
+      {
+        "commit": "a8dafc66e5d2b62bc86a82415ff7a35c5a4d9ff8",
+        "files": 7,
+        "identity": "sha256:65b5d0302234c19c966735b984e7d2cd500443275d515e4868aad3f84c794c41"
+      },
+      {
+        "commit": "572935fb0b995427d2b22b170eee9f6a5f05e2d2",
+        "files": 7,
+        "identity": "sha256:f55e167439bd98537a28db7fe187f3e1aafd4c1488e499e69b6452cc696305b7"
+      },
+      {
+        "commit": "4bdecbeffc4df42caed0d4ccffa3feca39d18abe",
+        "files": 7,
+        "identity": "sha256:30b2338b87778af006f0cf4c061fdf7d324513076761eda28d528baf7f7c30be"
+      },
+      {
+        "commit": "7c01d2c4bb700edbf5de34dedd96cf148056c691",
+        "files": 7,
+        "identity": "sha256:33466730dcb14685bbc5fbc776f43bf19214d9cb69001190d64772df7cc98ad6"
+      },
+      {
+        "commit": "07c6da9608d56d15046aca4d7819dfbcdf445203",
+        "files": 7,
+        "identity": "sha256:7dc74ebc7654c90f37828b768e6729eefad6496b41c687ab204ad5827afd76f3"
+      },
+      {
+        "commit": "060467eeb99d16f96e7be11cb098f8effeb8b17a",
+        "files": 7,
+        "identity": "sha256:8e662e92577b96d8021876a842cbde7a222f3116884fbe1828ba16d951673e13"
+      },
+      {
+        "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+        "files": 7,
+        "identity": "sha256:05ded12711ebac48224f6f86035701022b35745c0b18242c3903deca6b8ad0c1"
+      }
+    ],
+    "date_range": [
+      "2026-09-25",
+      "2026-10-12"
+    ],
+    "scope": "available Git code snapshots, not original process custody",
+    "target_matches": [
+      {
+        "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+        "compiler_identity": "sha256:05ded12711ebac48224f6f86035701022b35745c0b18242c3903deca6b8ad0c1",
+        "edit_scopes_sha256": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172",
+        "file_sha256": {
+          "ipfs_datasets_py/logic/deontic/formula_builder.py": "156261487326b214c8e9c59f70a87e3faa4dfc20c3c4a4be575555f0ee6fb1ba",
+          "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "9149b6d06d57545977941c89fc3f0da0e54c635cacec706c72e37a1630f055c1",
+          "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "f19ede6f735f20309745802b96038ae2a6443a52d486182bc4584000b96abc7a",
+          "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "74147d2354f8697d0ae9b65783652d11656a529e719a52e137669bfa7ce20ec2",
+          "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": "cfc93cda333f0f9fa7795c8db262588114b599a34a59012be2d93642dde7e2dd",
+          "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": "0d23192b6d9a7f1b33ac223e4817cf6493866fde5cdcd381b8d5cbb648e11970",
+          "ipfs_datasets_py/logic/modal/decompiler.py": "44899e32be387f684aa3f386dea0d6cba05e8bd61c956b483e9a39153f607382"
+        },
+        "source_blobs": {
+          "ipfs_datasets_py/logic/deontic/formula_builder.py": "85f8b5f0468a0239c1bdd321c7649aa139c6adfb",
+          "ipfs_datasets_py/logic/deontic/utils/deontic_parser.py": "4643ae2d61dd575e9bd0fe567d7379f21ada3922",
+          "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": "0467d3113a502f2731fbaad2afe491bc6bc5f1c8",
+          "ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py": "2fa792b5a22699699c845a5ec9b81e22c3482292",
+          "ipfs_datasets_py/logic/legal_ir/extended_compiler.py": "8102f51cc9c0a246ae3f4ee634c0b78b197d2e7c",
+          "ipfs_datasets_py/logic/legal_ir/extended_decompiler.py": "f9d439e32b4f810eaabf504125548d9dd137a555",
+          "ipfs_datasets_py/logic/modal/decompiler.py": "009a525a4d87b2bc5d580cd08dad11b4a379c466"
+        }
+      }
+    ],
+    "unique_compiler_states": 9
+  },
+  "current_repository_HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+  "git_source_provenance": [
+    {
+      "bytes": 12728,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "c2a1589d81155684db244e5f8813f442d83faccc",
+      "immutable_blob_recheck_equal": true,
+      "path": "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py",
+      "sha256": "186fa4c3ee0af016c19b56ec0e72053b4e1e13999b6c63d43817524f29690a1d"
+    },
+    {
+      "bytes": 9718,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "b323742786d0f779f93306dd4c8fb5d69b2c0f65",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "36580b1642ff881374122034b3d339992207d72182740bbc7f4dd64312f1f080"
+    },
+    {
+      "bytes": 11156,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "ea99db9316326cb08514444f9940ca38ab24e678",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    {
+      "bytes": 41884,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "258e7db8f504081424d1e39ae446c448734d735a",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/logic/autoformal/span_cache.py",
+      "sha256": "afdf3178e01adcda3524dca1446a0afc611e0d3e89b0bf1e1a31f2a0fe8e2c98"
+    },
+    {
+      "bytes": 24339,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "743f513d192a1e520201b22fa2c9679f053a044f",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/logic/autoformal/supervisor_queue.py",
+      "sha256": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172"
+    },
+    {
+      "bytes": 8703,
+      "commit": "9422f1835f6ad8ef1bd14414effb5ae9d4fe0895",
+      "git_blob": "6903228ba6bf1198a375c093b5faf06b93a3e5e8",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    {
+      "bytes": 22221,
+      "commit": "3aaf849afbf00766cc0cee5e37726524dde5e298",
+      "git_blob": "98b6baec8706943bf2d05173b1d1a16a01f4ac67",
+      "immutable_blob_recheck_equal": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "66078eb3d047386aaad35f13710ad8628dc842f83b80e894be411dd6492ea9fe"
+    },
+    {
+      "bytes": 21256,
+      "commit": "3aaf849afbf00766cc0cee5e37726524dde5e298",
+      "git_blob": "d25e8f5eb0184543686f2ad8b6ce7f46c5a687fd",
+      "immutable_blob_recheck_equal": true,
+      "path": "docs/autoencoders/legacy_cuda_span_campaign.md",
+      "sha256": "98b0ca387f7d38d0b14e15f28919f9dd5fd22ae75862e425638e90b7619f7cb1"
+    }
+  ],
+  "hypotheses_not_established": [
+    "Original archive may use per-document ordinals, 64-document invocation ordinals, another launcher/release/context or mixed recipes; available code does not choose among them.",
+    "The 1,654 historical count difference remains unexplained; an ordinal recipe changes IDs but alone does not change emitted sentence count.",
+    "Compiler digest match does not establish encoder input/pooling/embedding compatibility or semantic/proof authority."
+  ],
+  "local_source_witnesses": [
+    {
+      "bytes": 30234,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py",
+      "sha256": "592e70c09076ec0fac0559754fddabcc3d60f00104c970b908f5cc41a23edc41",
+      "sha256_final": "592e70c09076ec0fac0559754fddabcc3d60f00104c970b908f5cc41a23edc41",
+      "signature_after": [
+        66306,
+        57850789,
+        30234,
+        1790614783940927225,
+        1790614783940927225
+      ],
+      "signature_before": [
+        66306,
+        57850789,
+        30234,
+        1790614783940927225,
+        1790614783940927225
+      ],
+      "signature_final": [
+        66306,
+        57850789,
+        30234,
+        1790614783940927225,
+        1790614783940927225
+      ]
+    },
+    {
+      "bytes": 10156,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "sha256_final": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "signature_after": [
+        66306,
+        19792100,
+        10156,
+        1790533918635308264,
+        1790533918635308264
+      ],
+      "signature_before": [
+        66306,
+        19792100,
+        10156,
+        1790533918635308264,
+        1790533918635308264
+      ],
+      "signature_final": [
+        66306,
+        19792100,
+        10156,
+        1790533918635308264,
+        1790533918635308264
+      ]
+    },
+    {
+      "bytes": 11156,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "sha256_final": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "signature_after": [
+        66306,
+        19791896,
+        11156,
+        1790497895433018023,
+        1790497895433018023
+      ],
+      "signature_before": [
+        66306,
+        19791896,
+        11156,
+        1790497895433018023,
+        1790497895433018023
+      ],
+      "signature_final": [
+        66306,
+        19791896,
+        11156,
+        1790497895433018023,
+        1790497895433018023
+      ]
+    },
+    {
+      "bytes": 73312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/span_cache.py",
+      "sha256": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964",
+      "sha256_final": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964",
+      "signature_after": [
+        66306,
+        19791989,
+        73312,
+        1790644254314870893,
+        1790644254314870893
+      ],
+      "signature_before": [
+        66306,
+        19791989,
+        73312,
+        1790644254314870893,
+        1790644254314870893
+      ],
+      "signature_final": [
+        66306,
+        19791989,
+        73312,
+        1790644254314870893,
+        1790644254314870893
+      ]
+    },
+    {
+      "bytes": 24339,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/logic/autoformal/supervisor_queue.py",
+      "sha256": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172",
+      "sha256_final": "2802b9a24618abdbd2acd58b5f475c8b634539e68d12d3cfd7a0dff0a2c05172",
+      "signature_after": [
+        66306,
+        19792065,
+        24339,
+        1790497895439018098,
+        1790497895439018098
+      ],
+      "signature_before": [
+        66306,
+        19792065,
+        24339,
+        1790497895439018098,
+        1790497895439018098
+      ],
+      "signature_final": [
+        66306,
+        19792065,
+        24339,
+        1790497895439018098,
+        1790497895439018098
+      ]
+    },
+    {
+      "bytes": 8703,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "sha256_final": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "signature_after": [
+        66306,
+        21898241,
+        8703,
+        1789514364670617401,
+        1789514364670617401
+      ],
+      "signature_before": [
+        66306,
+        21898241,
+        8703,
+        1789514364670617401,
+        1789514364670617401
+      ],
+      "signature_final": [
+        66306,
+        21898241,
+        8703,
+        1789514364670617401,
+        1789514364670617401
+      ]
+    },
+    {
+      "bytes": 22221,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "66078eb3d047386aaad35f13710ad8628dc842f83b80e894be411dd6492ea9fe",
+      "sha256_final": "66078eb3d047386aaad35f13710ad8628dc842f83b80e894be411dd6492ea9fe",
+      "signature_after": [
+        66306,
+        21950456,
+        22221,
+        1790753905436196341,
+        1790753905436196341
+      ],
+      "signature_before": [
+        66306,
+        21950456,
+        22221,
+        1790753905436196341,
+        1790753905436196341
+      ],
+      "signature_final": [
+        66306,
+        21950456,
+        22221,
+        1790753905436196341,
+        1790753905436196341
+      ]
+    },
+    {
+      "bytes": 22285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/autoencoders/legacy_cuda_span_campaign.md",
+      "sha256": "cbf8142cec3e85bde157acf54b105867d1bda1ecf0b8ec7826178f6547995a71",
+      "sha256_final": "cbf8142cec3e85bde157acf54b105867d1bda1ecf0b8ec7826178f6547995a71",
+      "signature_after": [
+        66306,
+        31895811,
+        22285,
+        1790789118008312259,
+        1790789118008312259
+      ],
+      "signature_before": [
+        66306,
+        31895811,
+        22285,
+        1790789118008312259,
+        1790789118008312259
+      ],
+      "signature_final": [
+        66306,
+        31895811,
+        22285,
+        1790789118008312259,
+        1790789118008312259
+      ]
+    }
+  ],
+  "maximum_output_bytes": 2097152,
+  "mutations": {
+    "aliases_created": 0,
+    "canonical_or_frozen_source_changed": false,
+    "material_downloads": 0,
+    "models_or_tokenizers_loaded": 0,
+    "new_receipt_only": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/local-recipe-survey.json",
+    "persistent_databases_opened": 0,
+    "source_corpus_scans": 0,
+    "training_or_proof_authority": false
+  },
+  "next_bounded_diagnosis": [
+    "Authenticate stopped rows/generation/review and independently rebuild every retained baseline ID before varying an ordinal.",
+    "Generate a separately versioned per-document hypothesis by changing only ordinal to source_section_span_ordinal; join unresolved archive on candidate ID + SHA-256 + legal_id. Preserve physical occurrence context; report ambiguity and full-source uniqueness false.",
+    "Keep candidate diagnosis distinct from aliases, original producer custody, embedding reuse or training admission; never rewrite frozen IDs or receipts.",
+    "A zero match cannot establish absence beyond retained target rows; outside-target source identities remain aggregate-only."
+  ],
+  "observed_at_utc": "2026-10-11T04:37:04.451955+00:00",
+  "schema": "uscode-identity-local-recipe-survey/v1",
+  "scope": "Read-only source/Git history/worktree/doc evidence; code hashes only, no corpus rescan, persistent database, checkpoint or vector body read, model import, material download, alias or training mutation.",
+  "starting_frozen_evidence": [
+    {
+      "bytes": 35825,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/STATUS.md",
+      "sha256": "bb4f9faf364b933e8eb63d0f840b1ec644caf49cf5a4ee4122af671dea9a9f0e",
+      "sha256_final": "bb4f9faf364b933e8eb63d0f840b1ec644caf49cf5a4ee4122af671dea9a9f0e",
+      "signature_after": [
+        66306,
+        63751767,
+        35825,
+        1791689177416676701,
+        1791689177416676701
+      ],
+      "signature_before": [
+        66306,
+        63751767,
+        35825,
+        1791689177416676701,
+        1791689177416676701
+      ],
+      "signature_final": [
+        66306,
+        63751767,
+        35825,
+        1791689177416676701,
+        1791689177416676701
+      ]
+    },
+    {
+      "bytes": 15513,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+      "sha256": "a7b82bc7a2efa6340bf6bc229b0d73c14a13bf2b2450a1c180902493fc62571d",
+      "sha256_final": "a7b82bc7a2efa6340bf6bc229b0d73c14a13bf2b2450a1c180902493fc62571d",
+      "signature_after": [
+        66306,
+        63751824,
+        15513,
+        1791688669035446714,
+        1791688669035446714
+      ],
+      "signature_before": [
+        66306,
+        63751824,
+        15513,
+        1791688669035446714,
+        1791688669035446714
+      ],
+      "signature_final": [
+        66306,
+        63751824,
+        15513,
+        1791688669035446714,
+        1791688669035446714
+      ]
+    }
+  ]
+}

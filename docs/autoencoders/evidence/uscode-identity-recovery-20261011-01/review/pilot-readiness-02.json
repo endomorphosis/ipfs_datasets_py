@@ -1,0 +1,631 @@
+{
+  "attempt": "ordinal-profile-02",
+  "bounds": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 256,
+    "maximum_archive_rows": 500000,
+    "maximum_examples": 32,
+    "maximum_report_bytes": 2097152,
+    "maximum_retained_rows": 65536,
+    "outer_memory_mb": 768,
+    "outer_storage_bytes": 16777216,
+    "output_storage_bytes": 8388608,
+    "threads": 1,
+    "timeout_seconds": 300
+  },
+  "check_count": 13,
+  "checks": [
+    {
+      "evidence": "First readiness, preflight archive, original151 controls and failed-attempt review retain exact pins.",
+      "id": "attempt01_frozen",
+      "passed": true
+    },
+    {
+      "evidence": "Separate15-check independent review accepts only the memory-shape fix; original31-check method review remains bound.",
+      "id": "accepted_memory_review",
+      "passed": true
+    },
+    {
+      "evidence": "All four current owner files equal the committed03d0dac blobs; CLI and nine generation owners remain unchanged.",
+      "id": "latest_four_owners_committed",
+      "passed": true
+    },
+    {
+      "evidence": "Authenticated45 focused controls include a443905-row diverse synthetic archive and64969 retained rows under256MB/no-spill; original151 controls were not repeated.",
+      "id": "separate_45_controls",
+      "passed": true
+    },
+    {
+      "evidence": "Every baseline still precedes alternate hashing; exact full ID/hash/legal joins retain physical ambiguity and no authority promotions.",
+      "id": "unchanged_identity_gates",
+      "passed": true
+    },
+    {
+      "evidence": "38-item command and arguments match exactly; only output attempt path changes with all five parent pins and caps preserved.",
+      "id": "exact_attempt02_command",
+      "passed": true
+    },
+    {
+      "evidence": "All old input stat witnesses agree; shared existing lock and no WAL checked without reopening raw source.",
+      "id": "stopped_parent_input_custody",
+      "passed": true
+    },
+    {
+      "evidence": "Guard byte-for-byte unchanged; only the earlier fresh runtime campaign path differs from accepted predecessor.",
+      "id": "unchanged_guardian",
+      "passed": true
+    },
+    {
+      "evidence": "Attempt02 is absent; guardian must create its owned parent only after fresh admission.",
+      "id": "fresh_destination",
+      "passed": true
+    },
+    {
+      "evidence": "Failed own16MiB claim is intentionally retained/context_failed and remains in the next admission baseline; its old lease is absent.",
+      "id": "retained_failed_claim_charged",
+      "passed": true
+    },
+    {
+      "evidence": "All508 first-readiness-era records still match; current later records are captured without release/reset.",
+      "id": "foreign_history_preserved",
+      "passed": true
+    },
+    {
+      "evidence": "768MB outer,256MB DuckDB,16MiB reservation,8MiB output,2MiB report,oneCPU/child,300sec and65536/500000 row ceilings.",
+      "id": "caps_unchanged",
+      "passed": true
+    },
+    {
+      "evidence": "Current global measurements are stale. Guard must fresh-admit; successful stopped results need independent full candidate/count/custody/resource review.",
+      "id": "fresh_admission_and_actual_review_pending",
+      "passed": true
+    }
+  ],
+  "control_scope": {
+    "controls_repeated_by_reviewer": false,
+    "memory_fix45_authenticated_separately": true,
+    "original151_retained_unchanged": true,
+    "synthetic_classification_is_not_real_job_or_whole_process_rss_qualification": true
+  },
+  "created_at": "2026-10-11T05:23:05.867500+00:00",
+  "current_resource_snapshot": {
+    "active_leases": {},
+    "canonical_records_sha256": "3d574ed787c165957b2f8fa8edb462407989ce77e12252c3fd1e90845d5b651c",
+    "config_canonical_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+    "first_readiness_canonical_records_sha256": "491d408ec596016f46c876270b4960f221227d0aaa9269fe7c2a80c1db670252",
+    "first_readiness_record_count": 508,
+    "fresh_named_root_census_performed": false,
+    "latest_completed_guardian_accounting": {
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 143738597997,
+        "inventory": {
+          "apparent_bytes": 95573597997,
+          "entry_count": 1358973,
+          "special_file_count": 5,
+          "symlink_count": 799
+        },
+        "limit_bytes": 145000000000,
+        "minimum_filesystem_free_bytes": 53482049536,
+        "observed_apparent_bytes": 95573597997,
+        "outstanding_full_reservations_bytes": 48165000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "observed_headroom_bytes": 1261402003,
+      "released_at": 1791695133.746728,
+      "reservation_id": "0a9ad2cbb9b64e388027c6fa9ab90bb3"
+    },
+    "ledger": {
+      "bytes": 6127585,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "eea633e9ea0c486080998683505e640a6754aa6fa718e746e5ccdc6c2c96c7d8",
+      "stat_signature": [
+        66306,
+        67028721,
+        6127585,
+        1791695488349847532,
+        1791695488356020474
+      ]
+    },
+    "newer_records_since_first_readiness": {
+      "ce044fc614564ad7a92886ed385f443d": {
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 75286201,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01"
+        },
+        "created_at": 1791695473.6767254,
+        "owner_pid": 3152900,
+        "status": "retained",
+        "storage_bytes": 16777216
+      }
+    },
+    "observed_at": "2026-10-11T05:23:05.867500+00:00",
+    "outstanding_full_claims_bytes": 48181777216,
+    "record_count": 509,
+    "retained_claim_count": 101,
+    "retained_first_failed_own_claim_bytes": 16777216,
+    "retained_first_failed_own_claim_id": "ce044fc614564ad7a92886ed385f443d",
+    "scheduler": {
+      "bytes": 1761,
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "sha256": "143d80c81fbf789af8a152582661a88d780af2f36c385a1fb42ab36d57365336",
+      "stat_signature": [
+        66306,
+        572670,
+        1761,
+        1791695488371083150,
+        1791695488374021493
+      ]
+    },
+    "snapshot_authorizes_admission": false,
+    "waiting_requests": {}
+  },
+  "exact_command": [
+    "python",
+    "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+    "--database-path",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/reconciliation.duckdb",
+    "--expected-database-sha256",
+    "f78813a0f1b072d02d5ca2d9b52f4b37527887d1ade02bacf505591a2271e635",
+    "--manifest-path",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+    "--expected-manifest-sha256",
+    "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+    "--report-path",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json",
+    "--expected-report-sha256",
+    "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+    "--progress-parquet",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+    "--expected-progress-sha256",
+    "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+    "--accepted-review-path",
+    "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+    "--expected-accepted-review-sha256",
+    "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+    "--output-directory",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-02/results",
+    "--memory-mb",
+    "256",
+    "--max-retained-rows",
+    "65536",
+    "--max-archive-rows",
+    "500000",
+    "--max-input-bytes",
+    "134217728",
+    "--max-report-bytes",
+    "2097152",
+    "--max-output-bytes",
+    "8388608",
+    "--example-limit",
+    "32"
+  ],
+  "findings": [],
+  "guardian": {
+    "bytes": 7202,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/run_guarded_identity_diagnosis.py",
+    "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2",
+    "stat_signature": [
+      66306,
+      86118545,
+      7202,
+      1791693302009849745,
+      1791693302009849745
+    ]
+  },
+  "input_pins": {
+    "accepted_review": {
+      "bytes": 36835,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+      "sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+      "stat_signature": [
+        66306,
+        63751826,
+        36835,
+        1791688627029119598,
+        1791688627029119598
+      ]
+    },
+    "database": {
+      "bytes": 30158848,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/reconciliation.duckdb",
+      "sha256": "f78813a0f1b072d02d5ca2d9b52f4b37527887d1ade02bacf505591a2271e635",
+      "stat_signature": [
+        66306,
+        85721463,
+        30158848,
+        1791688027450199619,
+        1791688027450199619
+      ]
+    },
+    "manifest": {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+      "stat_signature": [
+        66306,
+        85721464,
+        3079,
+        1791686734692837095,
+        1791686734692837095
+      ]
+    },
+    "progress": {
+      "bytes": 52701179,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "stat_signature": [
+        66306,
+        75023679,
+        52701179,
+        1791385411069107548,
+        1791385411069107548
+      ]
+    },
+    "report": {
+      "bytes": 12140,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json",
+      "sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+      "stat_signature": [
+        66306,
+        85721526,
+        12140,
+        1791688027866621480,
+        1791688027871202779
+      ]
+    }
+  },
+  "limits": [
+    "Passing focused classification controls does not guarantee actual full diagnostic memory fit, baseline reproduction, candidate yield or successful execution. Caps and refusal policy remain unchanged.",
+    "Own first failed disk claim is retained; all-own-resources-released is not claimed for that failed attempt.",
+    "No original source, model, tokenizer, embedding or training run was performed by this readiness reviewer."
+  ],
+  "memory_fix_classification_control": {
+    "archive_physical_rows": 443905,
+    "diverse_full_length_id_hash_legal_values": true,
+    "full_archive_materialized_copies": 0,
+    "memory_mb": 256,
+    "retained_rows": 64969,
+    "spill_enabled": false,
+    "status_columns": 3,
+    "status_rows": 64969,
+    "synthetic": true,
+    "threads": 1
+  },
+  "mutations": {
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "foreign_resources_changed": false,
+    "genuine_diagnosis_started": 0,
+    "leases_acquired": 0,
+    "leases_released": 0,
+    "models_loaded": 0,
+    "original_readiness_changed": false,
+    "tests_repeated": 0,
+    "writes": [
+      "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json"
+    ]
+  },
+  "operator_file_pins": {
+    "package_identity_evidence.py": {
+      "bytes": 13343,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_identity_evidence.py",
+      "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6",
+      "stat_signature": [
+        66306,
+        86118830,
+        13343,
+        1791695759086700848,
+        1791695759086700848
+      ]
+    },
+    "verify_identity_publication.py": {
+      "bytes": 16675,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/verify_identity_publication.py",
+      "sha256": "aba749850fd8697e397674bcb6ef27e174cb16462950b84d5c8f150f5b4b6b49",
+      "stat_signature": [
+        66306,
+        86119104,
+        16675,
+        1791695759086974188,
+        1791695759086974188
+      ]
+    }
+  },
+  "owner_commit": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+  "owner_file_pins": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 3469,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/docs/autoencoders/uscode_identity_recovery.md",
+      "sha256": "9ed3fe4084b81e8ef433cabfcb4e0739d0b675ca34cdf30ce8920af538eaf58f",
+      "stat_signature": [
+        66306,
+        85903308,
+        3469,
+        1791695746852670708,
+        1791695746852670708
+      ]
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 31301,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+      "sha256": "e7c605bd1b49fa7377adc9a8f229e1f2ed874656fbbad8f752c6ee42f6a525dc",
+      "stat_signature": [
+        66306,
+        86034379,
+        31301,
+        1791695746851670666,
+        1791695746851670666
+      ]
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2",
+      "stat_signature": [
+        66306,
+        86034380,
+        1266,
+        1791693915626050112,
+        1791693915626050112
+      ]
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 21760,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6",
+      "stat_signature": [
+        66306,
+        86119071,
+        21760,
+        1791695746852670708,
+        1791695746852670708
+      ]
+    }
+  },
+  "owner_parent_commit": "7b2155fc211fe2b3b60455c2bcd11d7c8c41f3a9",
+  "passed": true,
+  "pending_gates": [
+    "Fresh guardian disk admission including the retained failed16MiB claim and every foreign full claim",
+    "Acquisition and monitoring of only the new own scheduler lease",
+    "Explicit successful stop and independent actual-result review before publishing any result"
+  ],
+  "pins": {
+    "arguments.json": {
+      "bytes": 1675,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/arguments.json",
+      "sha256": "36529e3ae728b36874b7649fb2b13659e83d7e59228533efec665b3dd9c5336a",
+      "stat_signature": [
+        66306,
+        85903313,
+        1675,
+        1791695853073022966,
+        1791695853085958455
+      ]
+    },
+    "command.json": {
+      "bytes": 1907,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/command.json",
+      "sha256": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6",
+      "stat_signature": [
+        66306,
+        85903296,
+        1907,
+        1791695853086418072,
+        1791695853088958570
+      ]
+    },
+    "guard-reuse.json": {
+      "bytes": 1105,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/guard-reuse.json",
+      "sha256": "10ac8e410ceecd707f592e291102f5eb6505c9621d4e518f9e2e9f7dd8f5622d",
+      "stat_signature": [
+        66306,
+        85903271,
+        1105,
+        1791693302009937777,
+        1791693302009937777
+      ]
+    },
+    "memoryfix45_stdout": {
+      "bytes": 1200,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.log",
+      "sha256": "9cdd657e6992994bad7f9529d1a6d39be80ef99c41cd699ec47aa614383dab37",
+      "stat_signature": [
+        66306,
+        86119239,
+        1200,
+        1791695767521539243,
+        1791695767521539243
+      ]
+    },
+    "memoryfix45_xml": {
+      "bytes": 7974,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml",
+      "sha256": "8b6a2d7cea68822e9df7c6a681fcdc12241ec0c7b7568a318dafb27447730c76",
+      "stat_signature": [
+        66306,
+        86119240,
+        7974,
+        1791695767424269165,
+        1791695767424269165
+      ]
+    },
+    "original151_stdout": {
+      "bytes": 2021,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-combined-controls.log",
+      "sha256": "377d8f404e198f45f841f6ced2cbab6acdfc582aa82c73bc354283ae18c4c830",
+      "stat_signature": [
+        66306,
+        86119090,
+        2021,
+        1791694521023647862,
+        1791694521023647862
+      ]
+    },
+    "original151_xml": {
+      "bytes": 27459,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-combined-controls.xml",
+      "sha256": "790714ef0f52a56ac0820673730fceed1a69e6efb2b83d1b209f76d27d8da433",
+      "stat_signature": [
+        66306,
+        86119101,
+        27459,
+        1791694520981647581,
+        1791694520981647581
+      ]
+    },
+    "preflight-01/index.json": {
+      "bytes": 1384,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/preflight-01/index.json",
+      "sha256": "e1b370ab556e764a9a5d46d60360746fb537adff1c12cfef4c1f2a215bd0c329",
+      "stat_signature": [
+        66306,
+        86119223,
+        1384,
+        1791695554151894754,
+        1791695554151894754
+      ]
+    },
+    "review/failed-attempt-resource-review.json": {
+      "bytes": 11704,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/failed-attempt-resource-review.json",
+      "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8",
+      "stat_signature": [
+        66306,
+        86119238,
+        11704,
+        1791695762483092227,
+        1791695762483092227
+      ]
+    },
+    "review/identity-diagnosis-control-receipt.json": {
+      "bytes": 3878,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-control-receipt.json",
+      "sha256": "4334ed7b1d8394b1d1448288e9ab01d6bbbbc5790c2c99514426caa399e5c2c1",
+      "stat_signature": [
+        66306,
+        86119103,
+        3878,
+        1791694535944673151,
+        1791694535944673151
+      ]
+    },
+    "review/identity-diagnosis-memory-fix-commit-binding.json": {
+      "bytes": 2332,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-commit-binding.json",
+      "sha256": "9e646b989cfacd7db37d7e54862d31e1e0f9d77a64bcd247a3268fa720927e93",
+      "stat_signature": [
+        66306,
+        86164630,
+        2332,
+        1791695828952116392,
+        1791695828952116392
+      ]
+    },
+    "review/identity-diagnosis-memory-fix-control-receipt.json": {
+      "bytes": 5399,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-control-receipt.json",
+      "sha256": "3e630bdfaaa68e818298068cdb5f3be0d1df04a38be0e5fd2939ef2a6ad8d2f9",
+      "stat_signature": [
+        66306,
+        86164624,
+        5399,
+        1791695810125708962,
+        1791695810125708962
+      ]
+    },
+    "review/implementation-memory-review.json": {
+      "bytes": 19925,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-memory-review.json",
+      "sha256": "0435518ccbf6827372eabf907d921762e7177f2626bb034c5692418b5c72f013",
+      "stat_signature": [
+        66306,
+        86164668,
+        19925,
+        1791696008874214031,
+        1791696008874214031
+      ]
+    },
+    "review/implementation-review.json": {
+      "bytes": 24239,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/implementation-review.json",
+      "sha256": "341b9d5a13491534fc0a3513a0be2a0888928d4bf4285f5001740ea732896e88",
+      "stat_signature": [
+        66306,
+        86119133,
+        24239,
+        1791695051604434670,
+        1791695051604434670
+      ]
+    },
+    "review/pilot-readiness.json": {
+      "bytes": 21017,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness.json",
+      "sha256": "e711378cee0eec76f9ecaa2c65e64eedbd0decb0688bcaab1490a21baf32e2a4",
+      "stat_signature": [
+        66306,
+        86119201,
+        21017,
+        1791695374899532663,
+        1791695374899532663
+      ]
+    },
+    "run-plan.json": {
+      "bytes": 2853,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/run-plan.json",
+      "sha256": "0f6328f73d575d889b2c8e04fa782b36b619f58b72e8441e0b56347cf0b2751c",
+      "stat_signature": [
+        66306,
+        85903297,
+        2853,
+        1791695853089585906,
+        1791695853092958723
+      ]
+    }
+  },
+  "prior_readiness_pin": {
+    "bytes": 21017,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness.json",
+    "sha256": "e711378cee0eec76f9ecaa2c65e64eedbd0decb0688bcaab1490a21baf32e2a4",
+    "stat_signature": [
+      66306,
+      86119201,
+      21017,
+      1791695374899532663,
+      1791695374899532663
+    ]
+  },
+  "ready_for_guarded_admission_attempt": true,
+  "required_guardian_invocation": [
+    "python",
+    "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/run_guarded_identity_diagnosis.py",
+    "--command-file",
+    "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/command.json",
+    "--attempt",
+    "ordinal-profile-02",
+    "--source-root",
+    "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011",
+    "--storage-bytes",
+    "16777216",
+    "--memory-mb",
+    "768",
+    "--seconds",
+    "300"
+  ],
+  "schema": "uscode-identity-pilot-independent-readiness/v2",
+  "stopped_parent_lock": {
+    "mode": "shared_nonblocking_read_only",
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/writer.lock",
+    "stat_signature": [
+      66306,
+      85721466,
+      0,
+      1791686734700710458,
+      1791686734700710458
+    ],
+    "wal_absent": true
+  }
+}

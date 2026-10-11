@@ -1,0 +1,41 @@
+{
+  "files": {
+    "STATUS.md": {
+      "bytes": 5753,
+      "sha256": "e35ff97d6643445f7b7967bf3c880dbf20bb293097a8e1b30cb4ce5a02c582de"
+    },
+    "arguments.json": {
+      "bytes": 1675,
+      "sha256": "4a70ba0365e32f4ec3772b3f1be0994b1c3e6efa5035e40cf8bd0e84079370bc"
+    },
+    "campaign.json": {
+      "bytes": 2100,
+      "sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517"
+    },
+    "command.json": {
+      "bytes": 1907,
+      "sha256": "455f1f8ffc68f3a478c3a9ed6037fa6570f7466bf20cbb62e80430b88cbf9034"
+    },
+    "guard-reuse.json": {
+      "bytes": 1105,
+      "sha256": "10ac8e410ceecd707f592e291102f5eb6505c9621d4e518f9e2e9f7dd8f5622d"
+    },
+    "operator-source/package_identity_evidence.py": {
+      "bytes": 13207,
+      "sha256": "ea7014a907ca9ac4f0e0a9b2702bf82ee3dd5eec567193dddaaa807ebd282bec"
+    },
+    "operator-source/run_guarded_identity_diagnosis.py": {
+      "bytes": 7202,
+      "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2"
+    },
+    "operator-source/verify_identity_publication.py": {
+      "bytes": 16527,
+      "sha256": "707e018eb2d7ccf085549be43519de16afd30a39cd16a12f42387676f4a348e9"
+    },
+    "run-plan.json": {
+      "bytes": 2106,
+      "sha256": "60dade0ebf7b53a6ecaa768550d9e89a59c1450521ca8a315107bb8ecfa3e1ab"
+    }
+  },
+  "schema": "immutable-identity-attempt01-preflight/v1"
+}

@@ -1,0 +1,19 @@
+{
+  "destination_writes": false,
+  "failure": "Informational retained disk claim finding incorrectly treated as zero-findings resource audit requirement",
+  "files": {
+    "operator-source/package_pending_identity_evidence.py": {
+      "bytes": 20123,
+      "sha256": "e049dcacf0a01ae708b5bd80ec635ef821f820499a2a0d9504b1ac93cf02b5fd"
+    },
+    "operator-source/verify_pending_identity_publication.py": {
+      "bytes": 19862,
+      "sha256": "b178033a90c908e37ea52318ab337aaca16f35f93ca40575fdac231014b7dd43"
+    },
+    "review/pending-publication-method-review.json": {
+      "bytes": 14357,
+      "sha256": "14f72e30ef9c82165724af4e811be6b0e7181c88658b6798be1226bffe05c00f"
+    }
+  },
+  "schema": "pending-publication-preflight-source-snapshot/v1"
+}

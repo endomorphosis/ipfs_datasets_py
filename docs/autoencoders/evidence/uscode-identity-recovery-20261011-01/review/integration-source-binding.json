@@ -1,0 +1,26 @@
+{
+  "byte_identical_source_files": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 3469,
+      "sha256": "9ed3fe4084b81e8ef433cabfcb4e0739d0b675ca34cdf30ce8920af538eaf58f"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 31301,
+      "sha256": "e7c605bd1b49fa7377adc9a8f229e1f2ed874656fbbad8f752c6ee42f6a525dc"
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 21760,
+      "sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6"
+    }
+  },
+  "integrated_source_commit": "35dd4766943482005a79490fc4a949951f1463a5",
+  "preserved_datasets_main_commit": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+  "published": false,
+  "schema": "identity-diagnosis-integration-source-binding/v1",
+  "scope": "Pre-publication code integration only; canonical user working trees untouched",
+  "tested_source_commit": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad"
+}

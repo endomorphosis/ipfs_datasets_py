@@ -335,3 +335,10 @@ review-byte custody gap caused by a postlaunch resource-pin supplement.
 The [accepted all-span continuation and remaining plan](uscode_archive_rollout_20261011.md) scans all 60,077 physical source records under the pinned generation. Independent review verifies **3,840,988 source occurrences**, **64,969 exact archived ID joins** and **378,935 unresolved archived IDs**. Source exhaustion is complete; complete outside-target identities, learned semantic/text reconstruction and source-bound proofs remain separate gaps.
 
 The contribution reuses frozen source/progress assets and the existing donor/checkpoint lineages, preserves the published arbitrary-native cache adapter, and adds no model inference, training or replacement weights. Archive-ID recovery and full-source identity shards precede qualified cache routing and reconstruction pilots.
+
+
+## October 11 archive identity implementation and admission gate
+
+The [identity-recovery follow-up](uscode_identity_recovery_20261011.md) preserves the completed source scan and tests a separately scoped per-document ordinal hypothesis against authenticated retained metadata. A legal-ID/hash comparison finds 3,700 unresolved archive rows with retained matches; these are not measured alternate full-ID hits or approved aliases. The original 151 controls preceded the memory fix; 45 current focused controls include full archive/retained synthetic cardinality at the unchanged 256 MB/no-spill limit. Independent method reviews accept the implementation.
+
+The first genuine attempt failed at that memory limit, and the retry was refused by fresh storage admission before any child or new claim. The independent audit records a timestamped 13,104,010,048-byte filesystem-free shortfall, with unchanged resource history and no active lease. Genuine ordinal results, full-source uniqueness, original encoder context, learned semantic/text reconstruction and proofs remain pending. Original source, embeddings, checkpoints and foreign reservations are preserved; [compact pending evidence](evidence/uscode-identity-recovery-20261011-01/index.json) keeps admission refusal separate from actual result acceptance.

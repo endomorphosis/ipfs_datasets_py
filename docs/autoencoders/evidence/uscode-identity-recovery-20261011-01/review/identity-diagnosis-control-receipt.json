@@ -1,0 +1,70 @@
+{
+  "base_commit": "e6a9a93b14b220a946ec53de559255716cf53f42",
+  "command": [
+    "python",
+    "-m",
+    "pytest",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_resume.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py",
+    "-q",
+    "--tb=short",
+    "--junitxml=/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-combined-controls.xml"
+  ],
+  "errors": 0,
+  "failures": 0,
+  "genuine_diagnosis_executed": false,
+  "models_executed": false,
+  "old_generation_code_pins_unchanged": true,
+  "original_source_read": false,
+  "owners": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 2851,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/docs/autoencoders/uscode_identity_recovery.md",
+      "sha256": "3e16bcb41d059d0281190348e7b92af814f8ff84cdd7df1d90d225fa70af4660"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 29969,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+      "sha256": "d63d933fdb0848be4c32cf5bac93fa7b88b337c12e1d6f3581a17f78115843b4"
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 16686,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "sha256": "f90f7d60e67dcac86ae6f2aeafbe9b69991e75de25376d9909100fef9d7fbb70"
+    }
+  },
+  "preserved_execution_sha256": {
+    "archive_reconciliation": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+    "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+    "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+    "span_pages": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+    "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+    "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+  },
+  "schema": "uscode-identity-diagnosis-control-receipt/v1",
+  "skipped": 0,
+  "source_state": "uncommitted working files awaiting parent review and commit authorization",
+  "stdout": {
+    "bytes": 2021,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-combined-controls.log",
+    "sha256": "377d8f404e198f45f841f6ced2cbab6acdfc582aa82c73bc354283ae18c4c830"
+  },
+  "test_cases": 151,
+  "timestamp_utc": "2026-10-11T04:55:35.941930+00:00",
+  "worktree": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011",
+  "xml": {
+    "bytes": 27459,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-combined-controls.xml",
+    "sha256": "790714ef0f52a56ac0820673730fceed1a69e6efb2b83d1b209f76d27d8da433"
+  }
+}

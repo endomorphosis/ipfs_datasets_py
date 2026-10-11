@@ -1,0 +1,20 @@
+{
+  "accepted_review_path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/window-04-results-review.json",
+  "database_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/reconciliation.duckdb",
+  "example_limit": 32,
+  "expected_accepted_review_sha256": "79c0c03f839c5bf1a545d9b9e13b1892648058fc3911868443f366e660a50287",
+  "expected_database_sha256": "f78813a0f1b072d02d5ca2d9b52f4b37527887d1ade02bacf505591a2271e635",
+  "expected_manifest_sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044",
+  "expected_progress_sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+  "expected_report_sha256": "70b1d6645b6ce96394646af3104c28e55feb3eaa25de0d68e7129e03c377d66d",
+  "manifest_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/manifest.json",
+  "max_archive_rows": 500000,
+  "max_input_bytes": 134217728,
+  "max_output_bytes": 8388608,
+  "max_report_bytes": 2097152,
+  "max_retained_rows": 65536,
+  "memory_mb": 256,
+  "output_directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-02/results",
+  "progress_parquet": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+  "report_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-span-rollout-20261011/archived-reconciliation-04/results/report.json"
+}

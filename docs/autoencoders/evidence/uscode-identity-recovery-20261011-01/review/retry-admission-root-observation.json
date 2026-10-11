@@ -1,0 +1,16 @@
+{
+  "attempt": "ordinal-profile-02",
+  "command_sha256": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6",
+  "error": "storage reservation capacity exceeded",
+  "error_type": "DaemonResourceError",
+  "exact_tool_session_id": 6063,
+  "failure_stage": "owner.__enter__._account(additional=16777216)",
+  "foreign_reservations_changed_by_root": false,
+  "genuine_diagnostic_started": false,
+  "guardian_returncode": 1,
+  "readiness_sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039",
+  "resource_limits_changed": false,
+  "runtime_attempt_exists": false,
+  "schema": "identity-diagnosis-admission-observation/v1",
+  "scope": "Root transcript observation; independent shared-resource audit pending"
+}

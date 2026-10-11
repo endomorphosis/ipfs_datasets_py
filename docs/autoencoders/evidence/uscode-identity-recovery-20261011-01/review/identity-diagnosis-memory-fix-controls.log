@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: mock-3.15.1, xdist-3.8.0, benchmark-5.2.3, cov-7.1.0, base-url-2.1.0, trio-0.8.0, typeguard-4.5.2, env-1.7.0, hypothesis-6.152.1, playwright-0.8.0, timeout-2.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 45 items
+
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py . [  2%]
+...........................................F                             [100%]
+
+=================================== FAILURES ===================================
+________ test_complete_archive_cardinality_classifies_at_unchanged_cap _________
+tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py:357: in test_complete_archive_cardinality_classifies_at_unchanged_cap
+    assert recovery._load_archive(db,path,report,500000)==(443904,378935)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py:252: in _load_archive
+    counts = dict(db.execute("SELECT disposition,count(*) FROM classified GROUP BY 1").fetchall())
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   _duckdb.OutOfMemoryException: Out of Memory Error: failed to allocate data of size 8.0 MiB (242.4 MiB/244.1 MiB used)
+E   Database is launched in in-memory mode and no temporary directory is specified.
+E   Unused blocks cannot be offloaded to disk.
+E   
+E   Launch the database with a persistent storage back-end
+E   Or set SET temp_directory='/path/to/tmp.tmp'
+E   
+E   Possible solutions:
+E   * Reducing the number of threads (SET threads=X)
+E   * Disabling insertion-order preservation (SET preserve_insertion_order=false)
+E   * Increasing the memory limit (SET memory_limit='...GB')
+E   
+E   See also https://duckdb.org/docs/stable/guides/performance/how_to_tune_workloads
+- generated xml file: /home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.xml -
+=========================== short test summary info ============================
+FAILED tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py::test_complete_archive_cardinality_classifies_at_unchanged_cap
+========================= 1 failed, 44 passed in 8.19s =========================

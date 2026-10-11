@@ -1,0 +1,47 @@
+{
+  "limits": {
+    "automatic_alias_creation": false,
+    "model_inference": false,
+    "new_vectors_or_weights": false,
+    "original_assets_mutated": false,
+    "training": false
+  },
+  "parent_evidence": {
+    "STATUS.md": {
+      "bytes": 35825,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/STATUS.md",
+      "sha256": "bb4f9faf364b933e8eb63d0f840b1ec644caf49cf5a4ee4122af671dea9a9f0e"
+    },
+    "campaign-summary.json": {
+      "bytes": 15942,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+      "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac"
+    },
+    "publication-verification.json": {
+      "bytes": 121743,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/publication-verification.json",
+      "sha256": "2f061097cf41960a005f1dfbbb87e4ade9313e8a4fadf4ba20805b57f813080b"
+    },
+    "review/final-status-review.json": {
+      "bytes": 34279,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/final-status-review.json",
+      "sha256": "ede06d72ea7a5515de68282076fabf5970e26579cea425823cd09d703a1cff03"
+    },
+    "review/identity-recovery-forensics.json": {
+      "bytes": 15513,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/identity-recovery-forensics.json",
+      "sha256": "a7b82bc7a2efa6340bf6bc229b0d73c14a13bf2b2450a1c180902493fc62571d"
+    },
+    "review/merge-preservation.json": {
+      "bytes": 3204,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/review/merge-preservation.json",
+      "sha256": "38b1eb7d050de058c8d14960ea52d6d15aa3eea1694d9a3f015b0698845308ee"
+    }
+  },
+  "parent_publication": {
+    "datasets": "e6a9a93b14b220a946ec53de559255716cf53f42",
+    "root": "4f67a392f4a2203bbce344207211ef5a9adfc19c"
+  },
+  "schema": "uscode-identity-recovery-campaign/v1",
+  "scope": "Bounded authenticated span recipe and identity recovery diagnostics; no alias promotion, model run or raw-source replacement"
+}

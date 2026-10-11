@@ -1,0 +1,94 @@
+{
+  "child_returncode": 1,
+  "destination": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/measured-failed-run-01",
+  "files": {
+    "child-exit.json": {
+      "bytes": 516,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child-exit.json",
+      "sha256": "a438d0807f237295c5196bbc660510fd782e117fa130f496f4c0fa1f29e4023d",
+      "witness": [
+        66306,
+        75286207,
+        516,
+        1791695488266820929,
+        1791695488266820929
+      ]
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child-identity.json",
+      "sha256": "ea760809c70692887ee69981b3fd5a8b7bc272607fc497f83ea2930fe3724d09",
+      "witness": [
+        66306,
+        75286206,
+        44,
+        1791695473818955656,
+        1791695473818955656
+      ]
+    },
+    "child.log": {
+      "bytes": 2270,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/child.log",
+      "sha256": "86203a13bbb22abf8dbb0d57d0f79f6c9a327db5ff0c6adadd3d33095379c248",
+      "witness": [
+        66306,
+        75286205,
+        2270,
+        1791695474738243013,
+        1791695474738243013
+      ]
+    },
+    "command.json": {
+      "bytes": 7296,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/command.json",
+      "sha256": "9731c71b0f485a664f8986f45b5df38baa85519bef26d812cd9fb7d25431182b",
+      "witness": [
+        66306,
+        75286202,
+        7296,
+        1791695473802189089,
+        1791695473802189089
+      ]
+    },
+    "failure.json": {
+      "bytes": 3226,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/failure.json",
+      "sha256": "e3336143648e85397db222d590fec7e00cec5bba1c1f44e6ff0c352c77d8352e",
+      "witness": [
+        66306,
+        75286208,
+        3226,
+        1791695488299120693,
+        1791695488299120693
+      ]
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/lease-binding.json",
+      "sha256": "7b55f078cde02f0147987cc23cb539f2705b9a2e36fe2fa176e9e35b22381140",
+      "witness": [
+        66306,
+        75286204,
+        693,
+        1791695473814764423,
+        1791695473814764423
+      ]
+    },
+    "lease-observations.jsonl": {
+      "bytes": 16854,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01/lease-observations.jsonl",
+      "sha256": "a3312cf5cc57b98c2f1b4ab7161270d6c5ee7961bd5d77ea74b66000641b3cec",
+      "witness": [
+        66306,
+        75286203,
+        16854,
+        1791695487939996922,
+        1791695487939996922
+      ]
+    }
+  },
+  "schema": "stopped-failed-identity-diagnosis-snapshot/v1",
+  "source": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01",
+  "source_outputs_promoted": false,
+  "total_bytes": 30899
+}

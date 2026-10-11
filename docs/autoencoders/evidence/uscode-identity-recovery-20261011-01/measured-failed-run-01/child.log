@@ -1,0 +1,25 @@
+logic tree pin compiler=/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py decompiler=/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/logic/legal_ir/canonical_decompiler.py parser=/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/logic/deontic/utils/deontic_parser.py
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py", line 28, in <module>
+    main()
+  File "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py", line 23, in main
+    report=run_identity_diagnosis(**vars(parser.parse_args(argv)))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py", line 423, in run_identity_diagnosis
+    archive_ids, unresolved = _load_archive(db,paths["progress"],report,max_archive_rows)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py", line 245, in _load_archive
+    db.execute("CREATE TEMP TABLE classified AS SELECT l.*,CASE WHEN record_kind<>'span' THEN 'excluded_nonspan' "
+_duckdb.OutOfMemoryException: Out of Memory Error: failed to allocate data of size 4.0 MiB (241.2 MiB/244.1 MiB used)
+Database is launched in in-memory mode and no temporary directory is specified.
+Unused blocks cannot be offloaded to disk.
+
+Launch the database with a persistent storage back-end
+Or set SET temp_directory='/path/to/tmp.tmp'
+
+Possible solutions:
+* Reducing the number of threads (SET threads=X)
+* Disabling insertion-order preservation (SET preserve_insertion_order=false)
+* Increasing the memory limit (SET memory_limit='...GB')
+
+See also https://duckdb.org/docs/stable/guides/performance/how_to_tune_workloads

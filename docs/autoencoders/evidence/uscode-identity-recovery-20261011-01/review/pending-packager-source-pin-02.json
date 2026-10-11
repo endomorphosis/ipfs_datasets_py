@@ -1,0 +1,26 @@
+{
+  "authenticated_base_sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6",
+  "changes": [
+    "Refuse pilot-results* paths, actual diagnostic/replay schemas and actual report/candidate output-pin JSON",
+    "Bind every readiness02 plan/argument/review/control pin to captured body bytes",
+    "Require accepted03 current-memory commit and all four owner-file metadata pins agree across readiness, memory review, control and commit binding",
+    "Require exact five input pins agree with admitted arguments and positive bounded metadata bytes without opening input bodies"
+  ],
+  "helpers_imported_or_executed": false,
+  "package_execution": false,
+  "parent_coverage_field_names_unchanged": true,
+  "prior_helper_bytes_retained_by_parent": "preflight-pending",
+  "prior_source_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pending-packager-source-pin.json",
+    "sha256": "25006adaec4b194bcffff39b361502c6ad51b1d25679823bfdab995a258c73ab"
+  },
+  "schema": "pending-identity-packager-static-source-pin/v2",
+  "source": {
+    "bytes": 20123,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_pending_identity_evidence.py",
+    "sha256": "e049dcacf0a01ae708b5bd80ec635ef821f820499a2a0d9504b1ac93cf02b5fd"
+  },
+  "syntax_ast_parsed": true,
+  "tests_repeated": false,
+  "timestamp_utc": "2026-10-11T05:39:05.591848+00:00"
+}

@@ -1,0 +1,310 @@
+{
+  "actual_diagnosis_completed": false,
+  "actual_result_review_completed": false,
+  "aliases_promoted": 0,
+  "embedding_reuse_qualified": false,
+  "files": {
+    "STATUS.md": {
+      "bytes": 13553,
+      "sha256": "5f91232093489cbb2795a30b90cf167d6c3457f18fb033871a6fd35e3ac0086b"
+    },
+    "arguments.json": {
+      "bytes": 1675,
+      "sha256": "36529e3ae728b36874b7649fb2b13659e83d7e59228533efec665b3dd9c5336a"
+    },
+    "campaign.json": {
+      "bytes": 2100,
+      "sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517"
+    },
+    "command.json": {
+      "bytes": 1907,
+      "sha256": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6"
+    },
+    "guard-reuse.json": {
+      "bytes": 1105,
+      "sha256": "10ac8e410ceecd707f592e291102f5eb6505c9621d4e518f9e2e9f7dd8f5622d"
+    },
+    "measured-failed-run-01/child-exit.json": {
+      "bytes": 516,
+      "sha256": "a438d0807f237295c5196bbc660510fd782e117fa130f496f4c0fa1f29e4023d"
+    },
+    "measured-failed-run-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "ea760809c70692887ee69981b3fd5a8b7bc272607fc497f83ea2930fe3724d09"
+    },
+    "measured-failed-run-01/child.log": {
+      "bytes": 2270,
+      "sha256": "86203a13bbb22abf8dbb0d57d0f79f6c9a327db5ff0c6adadd3d33095379c248"
+    },
+    "measured-failed-run-01/command.json": {
+      "bytes": 7296,
+      "sha256": "9731c71b0f485a664f8986f45b5df38baa85519bef26d812cd9fb7d25431182b"
+    },
+    "measured-failed-run-01/failure.json": {
+      "bytes": 3226,
+      "sha256": "e3336143648e85397db222d590fec7e00cec5bba1c1f44e6ff0c352c77d8352e"
+    },
+    "measured-failed-run-01/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "7b55f078cde02f0147987cc23cb539f2705b9a2e36fe2fa176e9e35b22381140"
+    },
+    "measured-failed-run-01/lease-observations.jsonl": {
+      "bytes": 16854,
+      "sha256": "a3312cf5cc57b98c2f1b4ab7161270d6c5ee7961bd5d77ea74b66000641b3cec"
+    },
+    "measured-failed-run-01/snapshot.json": {
+      "bytes": 3406,
+      "sha256": "a7053035f50bdec52657d6d0f639d264cd953aa61609ecd125026a0a2a533ae0"
+    },
+    "operator-source/package_identity_evidence.py": {
+      "bytes": 13343,
+      "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6"
+    },
+    "operator-source/package_pending_identity_evidence.py": {
+      "bytes": 21009,
+      "sha256": "52ff80257f6ad09f627e53acdde834a3bfec5fec48874f55119c2e5408cc5779"
+    },
+    "operator-source/run_guarded_identity_diagnosis.py": {
+      "bytes": 7202,
+      "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2"
+    },
+    "operator-source/verify_identity_publication.py": {
+      "bytes": 16675,
+      "sha256": "aba749850fd8697e397674bcb6ef27e174cb16462950b84d5c8f150f5b4b6b49"
+    },
+    "operator-source/verify_pending_identity_publication.py": {
+      "bytes": 19862,
+      "sha256": "b178033a90c908e37ea52318ab337aaca16f35f93ca40575fdac231014b7dd43"
+    },
+    "preflight-01/STATUS.md": {
+      "bytes": 5753,
+      "sha256": "e35ff97d6643445f7b7967bf3c880dbf20bb293097a8e1b30cb4ce5a02c582de"
+    },
+    "preflight-01/arguments.json": {
+      "bytes": 1675,
+      "sha256": "4a70ba0365e32f4ec3772b3f1be0994b1c3e6efa5035e40cf8bd0e84079370bc"
+    },
+    "preflight-01/campaign.json": {
+      "bytes": 2100,
+      "sha256": "809786015e239d9e12720aaac620f9b16073c8f5766b4047c09f6593e6c45517"
+    },
+    "preflight-01/command.json": {
+      "bytes": 1907,
+      "sha256": "455f1f8ffc68f3a478c3a9ed6037fa6570f7466bf20cbb62e80430b88cbf9034"
+    },
+    "preflight-01/guard-reuse.json": {
+      "bytes": 1105,
+      "sha256": "10ac8e410ceecd707f592e291102f5eb6505c9621d4e518f9e2e9f7dd8f5622d"
+    },
+    "preflight-01/index.json": {
+      "bytes": 1384,
+      "sha256": "e1b370ab556e764a9a5d46d60360746fb537adff1c12cfef4c1f2a215bd0c329"
+    },
+    "preflight-01/operator-source/package_identity_evidence.py": {
+      "bytes": 13207,
+      "sha256": "ea7014a907ca9ac4f0e0a9b2702bf82ee3dd5eec567193dddaaa807ebd282bec"
+    },
+    "preflight-01/operator-source/run_guarded_identity_diagnosis.py": {
+      "bytes": 7202,
+      "sha256": "0e31cb13502cfff410535d8ee1c910e57a00b5e360aed895e51b6952e1a241b2"
+    },
+    "preflight-01/operator-source/verify_identity_publication.py": {
+      "bytes": 16527,
+      "sha256": "707e018eb2d7ccf085549be43519de16afd30a39cd16a12f42387676f4a348e9"
+    },
+    "preflight-01/run-plan.json": {
+      "bytes": 2106,
+      "sha256": "60dade0ebf7b53a6ecaa768550d9e89a59c1450521ca8a315107bb8ecfa3e1ab"
+    },
+    "preflight-pending-02/index.json": {
+      "bytes": 754,
+      "sha256": "35608dbd118cd91dac8e6c507efe7bca749ed5e60c5d7bdb9158caad39f24640"
+    },
+    "preflight-pending-02/operator-source/package_pending_identity_evidence.py": {
+      "bytes": 20123,
+      "sha256": "e049dcacf0a01ae708b5bd80ec635ef821f820499a2a0d9504b1ac93cf02b5fd"
+    },
+    "preflight-pending-02/operator-source/verify_pending_identity_publication.py": {
+      "bytes": 19862,
+      "sha256": "b178033a90c908e37ea52318ab337aaca16f35f93ca40575fdac231014b7dd43"
+    },
+    "preflight-pending-02/review/pending-publication-method-review.json": {
+      "bytes": 14357,
+      "sha256": "14f72e30ef9c82165724af4e811be6b0e7181c88658b6798be1226bffe05c00f"
+    },
+    "preflight-pending/package_pending_identity_evidence.py": {
+      "bytes": 15028,
+      "sha256": "ae354bcfc81199d553b00417dabdb650b2a278d2d6a41d85c2abe27f350e73f2"
+    },
+    "preflight-pending/verify_pending_identity_publication.py": {
+      "bytes": 13959,
+      "sha256": "40f7b8e7a3aacfafd0d437744fdd300abd01d61b9223eb8c81c808360ad44f47"
+    },
+    "review/failed-attempt-resource-review.json": {
+      "bytes": 11704,
+      "sha256": "c9f5ecf78c03db250b37658fdcdde0f22b04ab971337ee62a7b509355c9e6bc8"
+    },
+    "review/final-status-review.json": {
+      "bytes": 24561,
+      "sha256": "f0ef4df5e64e92a088d09964f310b68261925d71f955b96419214c78b7d1133e"
+    },
+    "review/identity-diagnosis-combined-controls.log": {
+      "bytes": 2021,
+      "sha256": "377d8f404e198f45f841f6ced2cbab6acdfc582aa82c73bc354283ae18c4c830"
+    },
+    "review/identity-diagnosis-combined-controls.xml": {
+      "bytes": 27459,
+      "sha256": "790714ef0f52a56ac0820673730fceed1a69e6efb2b83d1b209f76d27d8da433"
+    },
+    "review/identity-diagnosis-commit-binding.json": {
+      "bytes": 2039,
+      "sha256": "fcbfb7a20ecd63c192fdf3730e19268a66cf1ecb8b9c97dada8385bfbf6c1497"
+    },
+    "review/identity-diagnosis-control-receipt.json": {
+      "bytes": 3878,
+      "sha256": "4334ed7b1d8394b1d1448288e9ab01d6bbbbc5790c2c99514426caa399e5c2c1"
+    },
+    "review/identity-diagnosis-focused-controls-02.xml": {
+      "bytes": 7441,
+      "sha256": "63d6fa339cb3ab8f82a6efad50495fe9f741a8a0092ae8fbf882cf3c48a2448d"
+    },
+    "review/identity-diagnosis-focused-controls.xml": {
+      "bytes": 27088,
+      "sha256": "242b30eeead9e18d60965b2fb0c3a8d4354a91dea1097194af7754901547f4e0"
+    },
+    "review/identity-diagnosis-memory-fix-commit-binding.json": {
+      "bytes": 2332,
+      "sha256": "9e646b989cfacd7db37d7e54862d31e1e0f9d77a64bcd247a3268fa720927e93"
+    },
+    "review/identity-diagnosis-memory-fix-control-receipt.json": {
+      "bytes": 5399,
+      "sha256": "3e630bdfaaa68e818298068cdb5f3be0d1df04a38be0e5fd2939ef2a6ad8d2f9"
+    },
+    "review/identity-diagnosis-memory-fix-controls-02.log": {
+      "bytes": 1200,
+      "sha256": "9cdd657e6992994bad7f9529d1a6d39be80ef99c41cd699ec47aa614383dab37"
+    },
+    "review/identity-diagnosis-memory-fix-controls-02.xml": {
+      "bytes": 7974,
+      "sha256": "8b6a2d7cea68822e9df7c6a681fcdc12241ec0c7b7568a318dafb27447730c76"
+    },
+    "review/identity-diagnosis-memory-fix-controls.log": {
+      "bytes": 2838,
+      "sha256": "b6c6a06908dca84bd4230cf99d0c3ce666a631538918530cacd47f2daab9998b"
+    },
+    "review/identity-diagnosis-memory-fix-controls.xml": {
+      "bytes": 9937,
+      "sha256": "2fa6613e2308f4f62ed41774008f0aafbcea39fb95d0b20eea0f3a93b66fadad"
+    },
+    "review/identity-pilot-resource-survey.json": {
+      "bytes": 84633,
+      "sha256": "0d66f88b749579028d41d529dbfc2254a6a70baa8e195f3eba13097693339185"
+    },
+    "review/implementation-memory-review.json": {
+      "bytes": 19925,
+      "sha256": "0435518ccbf6827372eabf907d921762e7177f2626bb034c5692418b5c72f013"
+    },
+    "review/implementation-review.json": {
+      "bytes": 24239,
+      "sha256": "341b9d5a13491534fc0a3513a0be2a0888928d4bf4285f5001740ea732896e88"
+    },
+    "review/independent_identity_result_replay.py": {
+      "bytes": 20777,
+      "sha256": "edb724ec76679115dc7b7ff4b53761e382610a4e598213b966ca8006b7553840"
+    },
+    "review/independent_identity_result_replay_02.py": {
+      "bytes": 22561,
+      "sha256": "41f10ecc6f8784a2c628d0fb43ce8a33344d6c20d53520ea54c50743e2e361ed"
+    },
+    "review/integration-source-binding.json": {
+      "bytes": 1180,
+      "sha256": "e2d03176441239029d463cc40c8516cae94cc009ec5b01f6bd1c6ff0b4205646"
+    },
+    "review/local-recipe-survey.json": {
+      "bytes": 21808,
+      "sha256": "944976e2e0793ec7d2d1af2f1f0e19c8a84cc9eb1139aaf1cf83721c532d0645"
+    },
+    "review/memory-control-temporary-ownership-survey.json": {
+      "bytes": 4252,
+      "sha256": "7ff4fa4779ba80a55e4d301aff2e298cf32cc7bd619667fb314600eb71282b86"
+    },
+    "review/merge-preservation.json": {
+      "bytes": 3995,
+      "sha256": "e8e2eb4c073e4486f5c9229525e03ca4cc8abe75a5d7fdb1f6099cb81692d8fd"
+    },
+    "review/pending-packager-source-pin-02.json": {
+      "bytes": 1460,
+      "sha256": "e515c22f2801a7151e94559b598f0dcc940efa5f38bea4750f79874270132dae"
+    },
+    "review/pending-packager-source-pin-03.json": {
+      "bytes": 1600,
+      "sha256": "c6d3022fdd419a7cf56342c87a048f63d1d878fec9d8e40fea2df1af63a74cd5"
+    },
+    "review/pending-packager-source-pin.json": {
+      "bytes": 1401,
+      "sha256": "25006adaec4b194bcffff39b361502c6ad51b1d25679823bfdab995a258c73ab"
+    },
+    "review/pending-publication-method-review-02.json": {
+      "bytes": 18060,
+      "sha256": "1599283b100fe94ba2ffa7abd64195d79e3019e05fb6a1cf4236d7071730df62"
+    },
+    "review/pending-publication-method-review.json": {
+      "bytes": 18060,
+      "sha256": "1599283b100fe94ba2ffa7abd64195d79e3019e05fb6a1cf4236d7071730df62"
+    },
+    "review/pilot-readiness-02.json": {
+      "bytes": 23561,
+      "sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039"
+    },
+    "review/pilot-readiness.json": {
+      "bytes": 21017,
+      "sha256": "e711378cee0eec76f9ecaa2c65e64eedbd0decb0688bcaab1490a21baf32e2a4"
+    },
+    "review/remote-producer-survey.json": {
+      "bytes": 56832,
+      "sha256": "775a1d791691978cc0f1b7777779d870ff7e63765ae7f6018de03ce78a604aac"
+    },
+    "review/retry-admission-guardian-stderr.log": {
+      "bytes": 1075,
+      "sha256": "b4e06b5b0665957ed76fdcdce7d594faa96c689ce69eb4a640c0cf4f131d7fda"
+    },
+    "review/retry-admission-review.json": {
+      "bytes": 13627,
+      "sha256": "b1e693a3ebb790a8f9d8dbda6479263573a7e2092fb7fb135f08289fc4a583c1"
+    },
+    "review/retry-admission-root-observation.json": {
+      "bytes": 739,
+      "sha256": "1fb58f2b221f033c18984eea7f570be2df3d2f76e0b42e7665f298562553220c"
+    },
+    "review/retry-launch-binding.json": {
+      "bytes": 784,
+      "sha256": "22d8a3b91cf4eb88aaec44406d59b29d0fba9b34998c39c89ebc8343f212ef46"
+    },
+    "run-plan.json": {
+      "bytes": 2853,
+      "sha256": "0f6328f73d575d889b2c8e04fa782b36b619f58b72e8441e0b56347cf0b2751c"
+    }
+  },
+  "models_executed": false,
+  "parent_coverage": {
+    "archived_distinct_ids": 443904,
+    "retained_physical_occurrences": 64969,
+    "source_occurrences": 3840988,
+    "source_summary_pin": {
+      "bytes": 15942,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-rollout-20261011/campaign-summary.json",
+      "sha256": "1e8f47645348cf54eaae2821853fcd08d2e144712ae5ada8f3fd220bbf101dac"
+    },
+    "status": "accepted_parent_counts_not_new_measurement",
+    "unresolved_archived_ids": 378935
+  },
+  "proof_authority": false,
+  "reused_utility": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/operator-source/package_identity_evidence.py",
+    "sha256": "90111f8143f3c5e181380b280d4ccc3fa2de8fe61d7cf6efde16aa8cc4f695f6"
+  },
+  "schema": "uscode-identity-recovery-pending-evidence-index/v1",
+  "scope": "Accepted method and blocked execution; no actual ordinal results",
+  "stage": "awaiting_storage_admission",
+  "training_executed": false
+}

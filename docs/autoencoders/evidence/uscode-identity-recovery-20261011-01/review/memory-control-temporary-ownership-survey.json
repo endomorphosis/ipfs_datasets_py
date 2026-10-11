@@ -1,0 +1,79 @@
+{
+  "authenticated_surviving_owned_bytes": 0,
+  "authenticated_surviving_owned_paths": [],
+  "bounded_metadata_observations": [
+    {
+      "attributed_to_our_two_memory_controls": false,
+      "contents_inspected": false,
+      "metadata_only": true,
+      "path": "/tmp/pytest-of-barberb/pytest-1777",
+      "recursive_size_measured": false,
+      "stat_result": "/tmp/pytest-of-barberb/pytest-1777|birth=2026-10-11 01:49:32.953842996 +0000|mtime=2026-10-11 01:50:36.788502050 +0000|ctime=2026-10-11 01:50:36.788502050 +0000|inode=572671"
+    },
+    {
+      "attributed_to_our_two_memory_controls": false,
+      "contents_inspected": false,
+      "metadata_only": true,
+      "path": "/tmp/pytest-of-barberb/pytest-1862",
+      "recursive_size_measured": false,
+      "stat_result": "absent at observation"
+    },
+    {
+      "attributed_to_our_two_memory_controls": false,
+      "contents_inspected": false,
+      "metadata_only": true,
+      "path": "/tmp/pytest-of-barberb/pytest-1863",
+      "recursive_size_measured": false,
+      "stat_result": "absent at observation"
+    },
+    {
+      "attributed_to_our_two_memory_controls": false,
+      "contents_inspected": false,
+      "metadata_only": true,
+      "path": "/tmp/pytest-of-barberb/pytest-1864",
+      "recursive_size_measured": false,
+      "stat_result": "/tmp/pytest-of-barberb/pytest-1864|birth=2026-10-11 05:25:59.963187261 +0000|mtime=2026-10-11 05:26:00.283196030 +0000|ctime=2026-10-11 05:26:00.283196030 +0000|inode=572669"
+    }
+  ],
+  "cleanup_recommended_paths": [],
+  "files_deleted": 0,
+  "foreign_fixtures_mutated": false,
+  "future_control_custody_recommendation": "For future controls, specify a fresh exclusive --basetemp under an owned admitted attempt and record that path in the frozen command receipt; do not infer current foreign root ownership from matching fixture names.",
+  "original_assets_mutated": false,
+  "ownership_conclusion": "No surviving observed root was created in either authenticated run window. The historical base-directory names are absent from frozen stdout/XML and cannot be recovered safely from these records. Subsequent pytest retention appears to have pruned both earlier roots; later roots remain unowned by this survey.",
+  "runs": [
+    {
+      "failures": 1,
+      "recorded_pytest_base_directory": null,
+      "stdout": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.log",
+      "stdout_end_utc": "2026-10-11T05:14:12.629472+00:00",
+      "stdout_sha256": "b6c6a06908dca84bd4230cf99d0c3ce666a631538918530cacd47f2daab9998b",
+      "suite_elapsed_seconds": 8.167,
+      "suite_start_utc": "2026-10-11T05:14:04.393080+00:00",
+      "tests": 45,
+      "xml": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls.xml",
+      "xml_sha256": "2fa6613e2308f4f62ed41774008f0aafbcea39fb95d0b20eea0f3a93b66fadad"
+    },
+    {
+      "failures": 0,
+      "recorded_pytest_base_directory": null,
+      "stdout": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.log",
+      "stdout_end_utc": "2026-10-11T05:16:07.521539+00:00",
+      "stdout_sha256": "9cdd657e6992994bad7f9529d1a6d39be80ef99c41cd699ec47aa614383dab37",
+      "suite_elapsed_seconds": 8.582,
+      "suite_start_utc": "2026-10-11T05:15:58.842134+00:00",
+      "tests": 45,
+      "xml": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-memory-fix-controls-02.xml",
+      "xml_sha256": "8b6a2d7cea68822e9df7c6a681fcdc12241ec0c7b7568a318dafb27447730c76"
+    }
+  ],
+  "schema": "uscode-memory-controls-temporary-ownership-survey/v1",
+  "scope": "Only four known pytest root directory metadata records; no fixture body scan/global inventory.",
+  "synthetic_parquet_cleanup": {
+    "committed_test_sha256": "bdd6ff35358f8e8367c0680a30be66876f4ce69e6f7408c6df678e3e1eb62cb6",
+    "deleted_in_finally_on_success_or_failure": true,
+    "path_basename": "synthetic-443905-identities.parquet",
+    "test": "test_complete_archive_cardinality_classifies_at_unchanged_cap"
+  },
+  "timestamp_utc": "2026-10-11T05:29:10.578771+00:00"
+}

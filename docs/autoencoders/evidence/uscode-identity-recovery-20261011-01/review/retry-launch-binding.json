@@ -1,0 +1,22 @@
+{
+  "actual_completion_claimed": false,
+  "attempt": "ordinal-profile-02",
+  "command": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/command.json",
+    "sha256": "16c533d603119c454e081a40768e03795116c4a246c2e4c2f2fe06bb3f3cc7d6"
+  },
+  "guard_caps": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "memory_mb": 768,
+    "seconds": 300,
+    "storage_bytes": 16777216
+  },
+  "owner_commit": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+  "readiness": {
+    "bytes": 23561,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/pilot-readiness-02.json",
+    "sha256": "fdd81ddb50ea7a3b7ce97f2c19009114a917cd47f0f17a51f7b3648f31c43039"
+  },
+  "schema": "identity-diagnosis-root-launch-binding/v1"
+}

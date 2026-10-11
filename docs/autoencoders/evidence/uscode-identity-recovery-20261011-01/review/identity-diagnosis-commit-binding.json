@@ -1,0 +1,37 @@
+{
+  "branch": "agent/uscode-identity-recovery-20261011",
+  "commit": "7b2155fc211fe2b3b60455c2bcd11d7c8c41f3a9",
+  "committed_owners": {
+    "docs/autoencoders/uscode_identity_recovery.md": {
+      "bytes": 2851,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/docs/autoencoders/uscode_identity_recovery.md",
+      "sha256": "3e16bcb41d059d0281190348e7b92af814f8ff84cdd7df1d90d225fa70af4660"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py": {
+      "bytes": 29969,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_identity_recovery.py",
+      "sha256": "d63d933fdb0848be4c32cf5bac93fa7b88b337c12e1d6f3581a17f78115843b4"
+    },
+    "scripts/ops/legal_ir/diagnose_uscode_identity.py": {
+      "bytes": 1266,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/scripts/ops/legal_ir/diagnose_uscode_identity.py",
+      "sha256": "2219235f42cfa4eb7a1c4fcc15c02dec0b02aadd4120e4fea831487e3b691fc2"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py": {
+      "bytes": 16686,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_identity_recovery.py",
+      "sha256": "f90f7d60e67dcac86ae6f2aeafbe9b69991e75de25376d9909100fef9d7fbb70"
+    }
+  },
+  "control_receipt": {
+    "bytes": 3878,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-identity-recovery-20261011-01/review/identity-diagnosis-control-receipt.json",
+    "sha256": "4334ed7b1d8394b1d1448288e9ab01d6bbbbc5790c2c99514426caa399e5c2c1"
+  },
+  "genuine_diagnosis_executed": false,
+  "only_four_new_owned_files_changed": true,
+  "pushed": false,
+  "schema": "uscode-identity-diagnosis-commit-binding/v1",
+  "timestamp_utc": "2026-10-11T04:57:02.207056+00:00",
+  "working_and_git_bytes_match": true
+}
