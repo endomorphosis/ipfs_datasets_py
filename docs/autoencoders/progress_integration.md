@@ -292,3 +292,24 @@ legal/native-family/Lake admissions change; masks remain zero and formal output 
 ## October 7: bounded all-span intake implementation
 
 The [intake progress report](uscode_span_intake_progress_20261007.md) records paired-v1/v2 feed support, full UTF-8 cache writes and a restartable source census. All 335 integrated controls pass. A bounded fresh-process resume preserves 9,748 prefix occurrences and reaches 18,342 occurrences across 128 source sections, including 2,165 exact archived joins; the remaining 441,739 archived IDs await further source scanning. The archive export and full source inventory have different scopes, and inferred larger totals remain conditional. Original assets and historical IDs remain intact; token counts, learned reconstruction and proof results are not inferred from this census. [Compact receipts](evidence/uscode-span-intake-20261007/index.json) preserve the failed larger-batch attempt, successful recovery and independent 31-check replay.
+
+
+## October 11: positive-retention loss and casewise refusal floors
+
+The [matched objective trial](../implementation/legal_scope_retention_gate_pilot_20261011.md)
+adds opt-in BCE/λ1 positive-parent squared-hinge support training with identical
+3,169-parameter predicted-trigger heads and240 updates each. All fitted states
+retain38 baseline exact positives and52 positive emissions on selection, but
+introduce new negative IDs, so both select actualcold0. BCE120's unchanged13
+negative count conceals two removed/two newly emitted negatives; the new pure
+casewise selector catches that substitution. Fresh selected whole36/64 and
+unsupported8/64 remain the measured parent's scores. Margin gives no selected
+gain and has weaker aggregate TRAIN metrics than BCE control. All four earlier
+banks and512 archived full parent outputs remain exact. Current179 tests pass;
+local and downloaded selected replay each reproduce1,280 complete outputs.
+All six original states and two selected aliases are retained at
+[the immutable experiment lane](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/eb1890f255b096ef81a8a2364bd28fef296bbfd8/experiments/positive-retention-20261011/run-01). No defaults, old numerical producers,
+native latent weights, logic-family/Lake or legal-semantic admissions change.
+The fresh-main reconciliation incorporates current native384 and US Code intake
+work; genuine arbitrary-source native routing and reviewed legal targets remain
+the next integration gaps.
