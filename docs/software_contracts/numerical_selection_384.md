@@ -47,6 +47,14 @@ Both calls accept `scheduler`, `parent_lease`, `cancel_event`, and
 worker execution and replay. RSS enforcement samples the process tree and can
 overshoot its reservation. The worker has no provider or training path.
 
+The shared [process runner](../../ipfs_datasets_py/logic/backends/codebase_process.py)
+also retains child ownership when an outer alarm or other exception interrupts
+execution. It attempts bounded process-group termination, reaps the leader and
+drains pipe threads before re-raising the original exception. Cleanup failures
+are attached to that exception; a second interruption does not replace it.
+This cleanup covers the retained process group. Descendants that deliberately
+create separate sessions remain outside this executor's tracking scope.
+
 `prepare_numerical_selection` reads captured source without asserting that it is
 current. The inference and validation APIs fence that historical population
 with current repository observations. `load_numerical_selection` authenticates a
@@ -114,3 +122,13 @@ Local commands, logs, source hashes and JUnit results are retained under
 `artifacts/supervisor-numerical-adapter-20261011/datasets-02/` and
 `datasets-budget-01/` in the supervisor workspace. These checks did not measure
 Terminal-Bench success, token savings, holdout improvement, or theorem discharge.
+
+The subsequent cleanup qualification ran all 30 inference tests together with
+seven [native process tests](../../tests/unit/logic/backends/test_codebase_process_parallel_limits.py):
+37 passed. Real Linux alarms interrupted a sleeping worker with a grandchild
+that ignored SIGTERM, including a second alarm during cleanup. The tests check
+original-exception identity, leader reaping, closed output pipes, no live group
+descendants and workspace removal. The checkpoint remained unchanged and actual
+cached CPU inference still passed. Evidence is retained under
+`artifacts/supervisor-numerical-runtime-20261011/cancellation-01/` in the supervisor
+workspace.

@@ -611,6 +611,44 @@ class _BoundedCapture:
         return bytes(self._value)
 
 
+def _cleanup_failed_execution(process, workers, grace_seconds, error) -> None:
+    """Retain child ownership when caller control flow interrupts execution.
+
+    Each bounded step is independent so a second interruption does not replace
+    the original exception or prevent the remaining cleanup attempts. This
+    retains the executor's existing process-group scope, not escaped sessions.
+    """
+    notes = []
+
+    def attempt(label, action):
+        try:
+            return action()
+        except BaseException as cleanup_error:
+            notes.append(f"{label}: {type(cleanup_error).__name__}")
+            return None
+
+    attempt("terminate leader", lambda: _terminate_process_tree(process, grace_seconds=grace_seconds))
+    # The leader can already be dead while a descendant ignores SIGTERM.
+    attempt("terminate remaining group", lambda: _terminate_remaining_group(process.pid, grace_seconds))
+    if attempt("inspect leader", process.poll) is None:
+        attempt("kill leader", process.kill)
+        attempt("reap leader", lambda: process.wait(timeout=max(.1, grace_seconds)))
+    if attempt("inspect leader cleanup", process.poll) is None:
+        notes.append("leader termination could not be confirmed")
+    streams = {id(stream): stream for stream in (process.stdin, process.stdout, process.stderr) if stream is not None}
+    for worker, stream in workers:
+        if worker.ident is not None:
+            attempt("join pipe worker", lambda: worker.join(timeout=max(.1, grace_seconds)))
+        if worker.is_alive():
+            # Closing a buffered stream while a reader holds its lock blocks.
+            streams.pop(id(stream), None)
+            notes.append("pipe worker survived bounded cleanup")
+    for stream in streams.values():
+        attempt("close process pipe", stream.close)
+    for note in notes[:12]:
+        error.add_note("bounded process cleanup: " + note)
+
+
 class SubprocessExecutor:
     """Production executor using a new process group and bounded pipe drains."""
 
@@ -671,107 +709,118 @@ class SubprocessExecutor:
             creationflags=creation_flags,
             preexec_fn=preexec,
         )
-        assert process.stdout is not None
-        assert process.stderr is not None
-        stdout = _BoundedCapture(invocation.limits.max_output_bytes)
-        stderr = _BoundedCapture(invocation.limits.max_output_bytes)
-        readers = (
-            threading.Thread(target=stdout.drain, args=(process.stdout,), daemon=True),
-            threading.Thread(target=stderr.drain, args=(process.stderr,), daemon=True),
-        )
-        for reader in readers:
-            reader.start()
-
-        if invocation.stdin is not None:
-            assert process.stdin is not None
-
-            def write_stdin() -> None:
-                try:
-                    process.stdin.write(invocation.stdin or b"")
-                    process.stdin.flush()
-                except (BrokenPipeError, OSError):
-                    pass
-                finally:
-                    try:
-                        process.stdin.close()
-                    except OSError:
-                        pass
-
-            threading.Thread(target=write_stdin, daemon=True).start()
-
-        deadline = started + invocation.limits.timeout_seconds
-        resident_exhausted = False
-        next_memory_sample = started
-        timed_out = False
-        cancelled = False
-        tree_terminated = False
-        while process.poll() is None:
-            if (invocation.limits.resident_memory_bytes is not None
-                    and self._clock() >= next_memory_sample):
-                next_memory_sample = self._clock() + 0.1
-                if _process_tree_resident_bytes(process.pid) > invocation.limits.resident_memory_bytes:
-                    resident_exhausted = True
-                    tree_terminated = _terminate_process_tree(
-                        process, grace_seconds=invocation.limits.termination_grace_seconds)
-                    break
-            if _is_cancelled(cancellation):
-                cancelled = True
-                tree_terminated = _terminate_process_tree(
-                    process,
-                    grace_seconds=invocation.limits.termination_grace_seconds,
-                )
-                break
-            if self._clock() >= deadline:
-                timed_out = True
-                tree_terminated = _terminate_process_tree(
-                    process,
-                    grace_seconds=invocation.limits.termination_grace_seconds,
-                )
-                break
-            time.sleep(self._poll_interval_seconds)
-
+        workers = []
         try:
-            returncode = process.wait(
-                timeout=max(0.1, invocation.limits.termination_grace_seconds)
+            assert process.stdout is not None
+            assert process.stderr is not None
+            stdout = _BoundedCapture(invocation.limits.max_output_bytes)
+            stderr = _BoundedCapture(invocation.limits.max_output_bytes)
+            readers = (
+                threading.Thread(target=stdout.drain, args=(process.stdout,), daemon=True),
+                threading.Thread(target=stderr.drain, args=(process.stderr,), daemon=True),
             )
-        except subprocess.TimeoutExpired:  # pragma: no cover - hostile OS boundary.
-            tree_terminated = _terminate_process_tree(
-                process,
-                grace_seconds=invocation.limits.termination_grace_seconds,
-            )
-            returncode = process.poll()
+            for reader, stream in zip(readers, (process.stdout, process.stderr)):
+                workers.append((reader, stream))
+                reader.start()
 
-        if _living_group_descendants(process.pid, process.pid):
-            tree_terminated = (
-                _terminate_remaining_group(
-                    process.pid, invocation.limits.termination_grace_seconds
+            if invocation.stdin is not None:
+                assert process.stdin is not None
+
+                def write_stdin() -> None:
+                    try:
+                        process.stdin.write(invocation.stdin or b"")
+                        process.stdin.flush()
+                    except (BrokenPipeError, OSError):
+                        pass
+                    finally:
+                        try:
+                            process.stdin.close()
+                        except OSError:
+                            pass
+
+                writer = threading.Thread(target=write_stdin, daemon=True)
+                workers.append((writer, process.stdin))
+                writer.start()
+
+            deadline = started + invocation.limits.timeout_seconds
+            resident_exhausted = False
+            next_memory_sample = started
+            timed_out = False
+            cancelled = False
+            tree_terminated = False
+            while process.poll() is None:
+                if (invocation.limits.resident_memory_bytes is not None
+                        and self._clock() >= next_memory_sample):
+                    next_memory_sample = self._clock() + 0.1
+                    if _process_tree_resident_bytes(process.pid) > invocation.limits.resident_memory_bytes:
+                        resident_exhausted = True
+                        tree_terminated = _terminate_process_tree(
+                            process, grace_seconds=invocation.limits.termination_grace_seconds)
+                        break
+                if _is_cancelled(cancellation):
+                    cancelled = True
+                    tree_terminated = _terminate_process_tree(
+                        process,
+                        grace_seconds=invocation.limits.termination_grace_seconds,
+                    )
+                    break
+                if self._clock() >= deadline:
+                    timed_out = True
+                    tree_terminated = _terminate_process_tree(
+                        process,
+                        grace_seconds=invocation.limits.termination_grace_seconds,
+                    )
+                    break
+                time.sleep(self._poll_interval_seconds)
+
+            try:
+                returncode = process.wait(
+                    timeout=max(0.1, invocation.limits.termination_grace_seconds)
                 )
-                or tree_terminated
+            except subprocess.TimeoutExpired:  # pragma: no cover - hostile OS boundary.
+                tree_terminated = _terminate_process_tree(
+                    process,
+                    grace_seconds=invocation.limits.termination_grace_seconds,
+                )
+                returncode = process.poll()
+
+            if _living_group_descendants(process.pid, process.pid):
+                tree_terminated = (
+                    _terminate_remaining_group(
+                        process.pid, invocation.limits.termination_grace_seconds
+                    )
+                    or tree_terminated
+                )
+            for reader in readers:
+                reader.join(timeout=max(0.1, invocation.limits.termination_grace_seconds))
+            resource_exhausted = resident_exhausted or (
+                not timed_out
+                and not cancelled
+                and returncode is not None
+                and returncode < 0
+                and (
+                    invocation.limits.cpu_seconds is not None
+                    or invocation.limits.memory_bytes is not None
+                )
             )
-        for reader in readers:
-            reader.join(timeout=max(0.1, invocation.limits.termination_grace_seconds))
-        resource_exhausted = resident_exhausted or (
-            not timed_out
-            and not cancelled
-            and returncode is not None
-            and returncode < 0
-            and (
-                invocation.limits.cpu_seconds is not None
-                or invocation.limits.memory_bytes is not None
+            return RawProcessResult(
+                returncode=returncode,
+                stdout=stdout.value,
+                stderr=stderr.value,
+                elapsed_seconds=max(0.0, self._clock() - started),
+                pid=process.pid,
+                timed_out=timed_out,
+                cancelled=cancelled,
+                output_truncated=stdout.truncated or stderr.truncated,
+                process_tree_terminated=tree_terminated,
+                resource_exhausted=resource_exhausted,
             )
-        )
-        return RawProcessResult(
-            returncode=returncode,
-            stdout=stdout.value,
-            stderr=stderr.value,
-            elapsed_seconds=max(0.0, self._clock() - started),
-            pid=process.pid,
-            timed_out=timed_out,
-            cancelled=cancelled,
-            output_truncated=stdout.truncated or stderr.truncated,
-            process_tree_terminated=tree_terminated,
-            resource_exhausted=resource_exhausted,
-        )
+        except BaseException as error:
+            try:
+                _cleanup_failed_execution(process, workers, invocation.limits.termination_grace_seconds, error)
+            except BaseException as cleanup_error:
+                error.add_note("bounded process cleanup: unexpected " + type(cleanup_error).__name__)
+            raise
 
 
 def _validate_workspace_path(path: str, limits: ToolRunLimits) -> PurePosixPath:

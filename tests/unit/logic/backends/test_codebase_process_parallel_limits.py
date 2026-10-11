@@ -1,10 +1,13 @@
 """Native Linux launches enforce limits without Python preexec in pool threads."""
 from concurrent.futures import ThreadPoolExecutor
 import json
+import os
 import resource
+import signal
 import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -87,3 +90,98 @@ def test_native_timeout_still_terminates_child_group():
     result = module.run_bounded_stdin_tool([sys.executable, "-c", "import time; time.sleep(30)"], "",
         limits=module.ToolRunLimits(timeout_seconds=0.1, cpu_seconds=1, memory_bytes=256 * 1024 * 1024))
     assert result.timed_out and result.process_tree_terminated and result.workspace_cleaned
+
+
+@pytest.mark.parametrize("interrupt_cleanup", [False, True])
+def test_outer_alarm_preserves_exception_and_drains_native_child_group(tmp_path, monkeypatch, interrupt_cleanup):
+    """The supervisor's outer deadline raises outside the ordinary cancel API."""
+    class RefreshExpired(BaseException):
+        pass
+
+    original = RefreshExpired("original outer refresh deadline")
+    secondary = KeyboardInterrupt("secondary alarm during cleanup")
+    alarms = []
+    ready = tmp_path / "ready"
+    identities = tmp_path / "identities.json"
+    workspaces = tmp_path / "workspaces"
+    leaf = (
+        "import os,signal,time,pathlib,json; "
+        "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
+        "birth=int(pathlib.Path('/proc/self/stat').read_text().rsplit(')',1)[1].split()[19]); "
+        f"pathlib.Path({str(identities)!r}).write_text(json.dumps([os.getpid(),birth])); "
+        f"pathlib.Path({str(ready)!r}).write_text('ready'); time.sleep(30)"
+    )
+    leader = f"import subprocess,sys,time; subprocess.Popen([sys.executable,'-c',{leaf!r}]); time.sleep(30)"
+    processes, timer_errors = [], []
+    timer_finished = threading.Event()
+
+    def spawn(*args, **kwargs):
+        process = subprocess.Popen(*args, **kwargs)
+        processes.append(process)
+        return process
+
+    def expire_after_child_ready():
+        end = time.monotonic() + 5
+        while not ready.exists() and not timer_finished.is_set() and time.monotonic() < end:
+            time.sleep(.005)
+        if ready.exists() and not timer_finished.is_set():
+            signal.setitimer(signal.ITIMER_REAL, .02)
+        elif not timer_finished.is_set():
+            timer_errors.append("native grandchild did not become ready")
+
+    def expire(_signum, _frame):
+        alarms.append(True)
+        raise original if len(alarms) == 1 else secondary
+
+    if interrupt_cleanup:
+        def interrupted_termination(*args, **kwargs):
+            signal.setitimer(signal.ITIMER_REAL, .01)
+            time.sleep(1)
+            pytest.fail("second alarm failed to interrupt cleanup")
+        monkeypatch.setattr(module, "_terminate_process_tree", interrupted_termination)
+
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+    assert previous_timer == (0., 0.), "qualification must not replace an active caller alarm"
+    watcher = threading.Thread(target=expire_after_child_ready, daemon=True)
+    runner = module.BoundedToolRunner(workspace_root=workspaces,
+        executor=module.SubprocessExecutor(popen=spawn))
+    try:
+        signal.signal(signal.SIGALRM, expire)
+        watcher.start()
+        with pytest.raises(RefreshExpired) as caught:
+            module.run_bounded_stdin_tool([sys.executable, "-c", leader], "", runner=runner,
+                limits=module.ToolRunLimits(timeout_seconds=10, termination_grace_seconds=.08,
+                    memory_bytes=256 * 1024**2))
+        assert caught.value is original
+        if interrupt_cleanup:
+            assert len(alarms) == 2
+            assert "bounded process cleanup: terminate leader: KeyboardInterrupt" in original.__notes__
+        else:
+            assert len(alarms) == 1
+        assert not timer_errors and ready.exists()
+        assert len(processes) == 1 and processes[0].poll() is not None
+        assert processes[0].stdout.closed and processes[0].stderr.closed
+        end = time.monotonic() + 1
+        while module._living_group_descendants(processes[0].pid, processes[0].pid) and time.monotonic() < end:
+            time.sleep(.005)
+        assert not module._living_group_descendants(processes[0].pid, processes[0].pid)
+        assert not list(workspaces.iterdir())
+    finally:
+        timer_finished.set()
+        watcher.join(timeout=1)
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        # A failing regression must not itself leave a sleeping worker behind.
+        for process in processes:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=2)
+        if identities.exists():
+            pid, birth = json.loads(identities.read_text())
+            try:
+                fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+                if int(fields[19]) == birth and fields[0] != "Z":
+                    os.kill(pid, signal.SIGKILL)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
