@@ -1,0 +1,10 @@
+{
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py": {
+    "bytes": 13440,
+    "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+  },
+  "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py": {
+    "bytes": 26696,
+    "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+  }
+}

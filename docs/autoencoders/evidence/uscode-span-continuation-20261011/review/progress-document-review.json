@@ -1,0 +1,167 @@
+{
+  "accepted": true,
+  "check_count": 16,
+  "checks": [
+    {
+      "basis": "Final report explicitly false for scan completion, all-source inventory, inference, training, semantic reconstruction, token counts, admission and proof; document states those limits.",
+      "id": "scope-and-no-model-claims",
+      "passed": true
+    },
+    {
+      "basis": "Seed18342/2165/16177, first18406/2172/16234 and final24191/2806/21385 match independent result receipt and reports.",
+      "id": "three-window-accounting",
+      "passed": true
+    },
+    {
+      "basis": "5849 additional source occurrences =641 targets+5208 outsiders; archive443904 is distinct-ID/ledger scope, final pending441098; full-source total remains unknown.",
+      "id": "delta-and-ledger-denominators",
+      "passed": true
+    },
+    {
+      "basis": "Cursor199:64 leaves section199 remainder pending; one page before exec and128 after are scoped independently from historical seed.",
+      "id": "partial-cursor-and-paging",
+      "passed": true
+    },
+    {
+      "basis": "Outside-target full rows omitted; exact aggregates/digests/examples documented rather than claiming a complete source-occurrence inventory.",
+      "id": "aggregate-outsider-custody",
+      "passed": true
+    },
+    {
+      "basis": "Pinned original source/queue and five old extractor owners retained; independent result replay verifies every old seed row and target with explicit citation-fallback provenance.",
+      "id": "historical-source-and-seed-reuse",
+      "passed": true
+    },
+    {
+      "basis": "64-span/4MiB page,8MiB section,240MB output/256MB admission; guardian4009757B distinguished from stopped4014922B including post-finalization receipts.",
+      "id": "resource-and-disk-limits",
+      "passed": true
+    },
+    {
+      "basis": "844372KiB *1024 =864636928B, process lifetime high-water;1536MiB outer versus768MB DuckDB setting; cooperative enforcement, no full-corpus fit claim.",
+      "id": "kernel-rss-scope",
+      "passed": true
+    },
+    {
+      "basis": "78 owner cases and19 final rerun not pooled as unique tests;375 integrated intake plus70 separate Source384 controls correctly named and bound to tested merge.",
+      "id": "controls-attribution",
+      "passed": true
+    },
+    {
+      "basis": "28 passed checks with zero findings; source descriptor/digest replay, stopped own processes, released own claims/lease and unchanged foreign ledger supported by result review.",
+      "id": "independent-replay-and-cleanup",
+      "passed": true
+    },
+    {
+      "basis": "os.execv fresh Python interpreter retains OS PID/birth; no second OS process claim.",
+      "id": "cold-interpreter-resume",
+      "passed": true
+    },
+    {
+      "basis": "Incoming5d5769f through merge25c8687 preserves Unicode source fix and all seven actual-runtime owner hashes from56f4a65.",
+      "id": "concurrent-main-and-source-lineage",
+      "passed": true
+    },
+    {
+      "basis": "Ten checkpoint/eight cache/preprocessing/donor files rehashed; four families x8/384/768 is namespace plan, not twelve qualified models. Native schema/task/codec selectors and legal/formal/text heads stay separate.",
+      "id": "old-assets-and-distinct-IR-lanes",
+      "passed": true
+    },
+    {
+      "basis": "Existing dual-donor768 initialization with26 copied tensors/27142 parameters/zero updates is preserved. Reference-supervised native-interface fitting is distinct from later qualified teacher-output distillation.",
+      "id": "existing-warm-start-versus-KD",
+      "passed": true
+    },
+    {
+      "basis": "Retained512-token producer versus8192 model capacity stays explicit; representable task/schema/codec/span geometry required before pilot, with original32-value/eight-clause/512-output profile limitation.",
+      "id": "native-tokenizer-and-output-profile-gates",
+      "passed": true
+    },
+    {
+      "basis": "Raw UTF8 custody/offsets/residual/source-anchor routes are separate from learned semantic/text decoding and native proof checking; normalized hashes cannot substitute for byte-roundtrip originals.",
+      "id": "exact-prose-versus-semantic-versus-proof",
+      "passed": true
+    }
+  ],
+  "completed": true,
+  "document_pin": {
+    "bytes": 12822,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/PROGRESS.md",
+    "sha256": "f98432f4b52e0e931b539d317d3cf7c529879f9df5d038cb1d5b99efa59d6f67"
+  },
+  "evidence_pins": [
+    {
+      "bytes": 3079,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/measured-run/results/manifest.json",
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    {
+      "bytes": 12024,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/measured-run/results/report.json",
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    },
+    {
+      "bytes": 12024,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/measured-run/results/seed-and-first-page-report.json",
+      "sha256": "4fcdfbced75652de562c589ffc710abd65e9df6c4210ae34f337b8efc1c7a436"
+    },
+    {
+      "bytes": 4388,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/measured-run/resources-final.json",
+      "sha256": "695fe3a12767b54252dfd71850a675a9b54d65b8f6db36b6538f87f30034f4a1"
+    },
+    {
+      "bytes": 515,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/measured-run/child-exit.json",
+      "sha256": "805ff6a48c540efc2789e5b7f5cff5b872d642548a1d80b6343533d887068f1f"
+    },
+    {
+      "bytes": 29412,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/results-review.json",
+      "sha256": "a51dff39b62eeb9f7d71568ea07e8a9fa9903efee7b812841a43fb880015c660"
+    },
+    {
+      "bytes": 32235,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/parallel-research-survey.json",
+      "sha256": "e317961cb0aa484e0951eda72fb5963937b0eec18750a2cd86921f89480c216b"
+    },
+    {
+      "bytes": 13302,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/implementation-review.json",
+      "sha256": "d4778e0afb653863e770132c66b11e7e930ae341b33100daab2969ed9a06da23"
+    },
+    {
+      "bytes": 12322,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/integrated-controls-receipt.json",
+      "sha256": "2ebcb1ee22788e54060a1267f172ade1c3fe103ba7b3004711b6633b11efa68b"
+    },
+    {
+      "bytes": 6331,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/incoming-source384-controls-receipt.json",
+      "sha256": "662726a3d26ba21d9498591a9f0ef205b7acd452c820b71eef6faae9e76c9f00"
+    },
+    {
+      "bytes": 1460,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/source-lineage.json",
+      "sha256": "25cac3c8eab90ac26f25ce7d6bb96e6263c925cbdacad106c2421a044611b39f"
+    },
+    {
+      "bytes": 1850,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/seed_then_resume_archive.py",
+      "sha256": "12486da67b0bfcce2715ae9fba04ca6d90ec5b6badea15a5a6372084e0d96275"
+    }
+  ],
+  "models_or_provers_executed": false,
+  "observed_at_utc": "2026-10-11T00:27:39.851380+00:00",
+  "proof_authority": false,
+  "publication_packaging_remaining": "Root will assemble index.json and immutable publication readback. This review accepts document claims and next-stage gates, not an as-yet completed GitHub publication.",
+  "resolved_requested_clarifications": [
+    "Preserve already existing dual-donor768 parameter initialization; separate reference-supervised interface fitting from teacher-output KD qualification.",
+    "Require representable task/schema/output-codec/span geometry before pilots; authenticated embeddings alone do not generalize the closed Legal codec.",
+    "Correct storage paragraph punctuation and retain correct Source384 test attribution."
+  ],
+  "schema": "uscode-span-continuation-independent-progress-document-review/v1",
+  "source_jobs_repeated": false,
+  "tests_repeated": false,
+  "unresolved_findings": []
+}

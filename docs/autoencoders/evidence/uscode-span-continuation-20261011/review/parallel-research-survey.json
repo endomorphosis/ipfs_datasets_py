@@ -1,0 +1,653 @@
+{
+  "ModelManager_mutated": false,
+  "alignment_agent_recovery": {
+    "aligned_interface_preparation_generation_20261002": {
+      "missing_selected_rows": 18,
+      "optimizer_steps": 0,
+      "scope": "This exact older preparation generation only; later separately authenticated native768 caches and trained formula decoders do exist.",
+      "selected_native_ready_rows": 0,
+      "status": "unavailable",
+      "trained_checkpoints": 0
+    },
+    "already_ancestor_of_reviewed_main": true,
+    "clean_when_observed": true,
+    "commit": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+    "dual_donor_preparation": {
+      "copied_decoder_tensors": 26,
+      "copied_parameter_count": 27142,
+      "dimension": 768,
+      "donor_pins": {
+        "legacy8_checkpoint_sha256": "ffca84492b81ab94fa291ae6ddbe52cfc84318f3516a22f901d468de255b6cbe",
+        "legacy8_codec_sha256": "25d32d252ce8ef0fab2b6315068898fa3205246bc5f8abfad1ffbce8a1bfd6e1",
+        "legacy8_weights_sha256": "e96a6e3ff5771b9227aa98919aee2745d42cd3361e0f85d5d2771ed88e9d1995",
+        "teacher384_checkpoint_sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61",
+        "teacher384_codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+        "teacher384_weights_sha256": "17ddd2026a72eda808e5223cc32c5c6fd0b523fc2ec771f620c9b3179793a05a"
+      },
+      "native_encoder_execution": false,
+      "new_auxiliary_connector_parameter_count": 264,
+      "new_boundary_parameter_count": 295296,
+      "optimizer_steps": 0,
+      "status": "initialized_unaligned",
+      "synthetic_gradient_probe_passed": true
+    },
+    "environment_agent_names_do_not_prove_live_training": true,
+    "locked_worktree": "/home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003"
+  },
+  "canonical_trees_preserved": {
+    "both_foreign_dirty_trees_left_untouched": true,
+    "datasets_head": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+    "workspace_head": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d"
+  },
+  "completed": true,
+  "concurrent_work": [
+    {
+      "behavior": "Allow Unicode within Python comment tokens while preserving exact UTF-8 source identity and native AST byte offsets across CR/LF newlines; executable tokens remain ASCII.",
+      "changed_files": [
+        "ipfs_datasets_py/logic/formalization/autoencoder/security/source_program_binding_384.py",
+        "tests/unit/logic/formalization/autoencoder/test_security_source_program_binding_384.py",
+        "tests/integration/logic/software_contracts/test_source384_unicode_comment_lake.py"
+      ],
+      "first_observed_head": "5c69724316a3365bdb22023ba5608fced96d568a",
+      "latest_observed_head": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+      "latest_observed_status": "",
+      "publication_independently_checked": false,
+      "separate_from_legal_span_intake": true,
+      "source_commit": "7a82e32dcaa9664a1a98a6110aa739d07f1eadf3",
+      "source_to_program_fixture_builds_are_not_learned_accuracy": true,
+      "test_execution_independently_checked": false,
+      "worktree": "/home/barberb/lift_coding/.worktrees/source384-unicode-comments-20261011"
+    },
+    {
+      "artifact_root": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01",
+      "no_claim_of_filesystem_wide_model_absence": true,
+      "observations": "An intake and remote-intake receipt plus fresh isolated datasets/workspace checkouts exist as of this survey. No new numerical result was observed in these two intake receipts. Another session may be preparing continuation."
+    }
+  ],
+  "corpus_processing_implications": [
+    "Resume the owned source-occurrence census from its durable 128-section cursor using the exact verified queue and canonical source; do not restart learned decoder training to obtain source accounting.",
+    "Account for all source occurrences and archive joins separately. Historical sealed flags and mock stable-sha256 8D compiler observations are diagnostic provenance, not new model or proof completion.",
+    "Keep four IR families, dimensions, native input profiles, schema/version, tasks and codecs independently selected. Existing Legal experiment format/profile/version fields remain unknown until explicitly adapted.",
+    "Reuse authenticated original 8D/384D learned heads and valid native768 caches when preparing a separately identified transfer generation. Older aligned preparation lacking its own 18 input receipts must not be relabelled ready using unrelated later source cohorts.",
+    "Before arbitrary corpus inference, replace the fixed 48-paragraph normative adapter with a separately reviewed bounded input contract while retaining source/context/producer/output identities; no silent truncation or fixed-vocabulary representability claim.",
+    "Fresh reviewed semantic targets, nonempty qualifiers, abstention/error accounting, exact learned prose reconstruction and longer input/output geometry remain unqualified; lower loss and archived replay alone do not resolve these gaps.",
+    "Preserve the concurrent Oct11 Unicode source-binding contribution and the foreign legal-decoder continuation checkouts during integration. Re-read remote main before publishing to retain incoming work."
+  ],
+  "encoder_or_training_executed": false,
+  "historical_registration_and_publication": {
+    "active_other_process_refreshed": false,
+    "all_prior_records_and_activity_preserved_in_historical_receipt": true,
+    "distinct_fitted_tensor_endpoints": 3,
+    "fitted_recipe_role_bindings": 6,
+    "genuine_ModelManager_count_after": 684,
+    "genuine_ModelManager_count_before": 678,
+    "last_verified_observation": "2026-10-07",
+    "live_database_reopened_by_this_survey": false,
+    "public_immutable_repositories": [
+      {
+        "downloaded_files_checked": 12,
+        "files_verified": true,
+        "native_receipt_idempotent_reuse": true,
+        "producer_reports_prior_files_and_visibility_preserved": true,
+        "receipt_pin": {
+          "bytes": 12213,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-native-receipt.json",
+          "sha256": "265f4c10174ec0777ac8226b5a855e26a3651a72ed2acc488002a8ca419d7994"
+        },
+        "repository_id": "Publicus/legal-ir-autoencoder",
+        "revision": "b5915b4ad93579dc2755d5357e20cba94698ad6c"
+      },
+      {
+        "downloaded_files_checked": 12,
+        "files_verified": true,
+        "native_receipt_idempotent_reuse": true,
+        "producer_reports_prior_files_and_visibility_preserved": true,
+        "receipt_pin": {
+          "bytes": 12283,
+          "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/publication-live-r1/Publicus--legal-ir-autoencoder-384d-native-receipt.json",
+          "sha256": "8ce65a15479099d902cd532639d3ad10aae2a6bf2cd6e70d2524a62d58b421de"
+        },
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      }
+    ],
+    "raw_original_containers_per_repository": 9,
+    "registration_does_not_grant_runtime_teacher_or_proof_qualification": true,
+    "remote_HF_file_downloads_not_repeated_in_this_survey": true,
+    "schema_profile_format_unknown_not_invented": true
+  },
+  "instructions": {
+    "applicable_AGENTS_found": false,
+    "search_scope": [
+      "workspace and home AGENTS names",
+      "selected dataset and root worktrees"
+    ],
+    "unrelated_AGENTS_excluded": [
+      "external/meta-wearables-dat-ios/AGENTS.md",
+      "external/meta-wearables-dat-android/AGENTS.md"
+    ]
+  },
+  "live_read_only_remote_main": {
+    "datasets": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+    "workspace": "2d6d7acdc0154e8e85351126e1bb1ed59b3b03ca"
+  },
+  "measured_research": [
+    {
+      "dual_bank_tensor_sha256": "6e47fc6d5452bd0becbe4e36e60be7ee0a388d969dad68dc817123307412cea5",
+      "exposed_v3_exact_of_48": {
+        "dual_bank": 30,
+        "original_parent": 31,
+        "retained_control": 33
+      },
+      "original_parent_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "retained_control_and_dual_three_TRAIN_cohorts_exact": [
+        48,
+        48,
+        48
+      ],
+      "retained_control_tensor_sha256": "9e5772d99191e311b15f316138a27407d4a73346af3ce495129ad5febcf5bd4c",
+      "scope": "Already exposed authored fixed-vocabulary formula panels, empty qualifiers; not prose equality, fresh legal fidelity or proof.",
+      "track": "Native LegalIR384 semantic formula reconstruction"
+    },
+    {
+      "arbitrary_new_source_IO_supported_by_this_runtime": false,
+      "input_vectors": "Exact retained width-specific paragraph/clause caches with 48 paragraphs, 180 clauses and 216 native vectors per lane",
+      "limits": {
+        "actual_retained_native768_experiment_ceiling": 512,
+        "current_decoder_output_cap": 512,
+        "historical_native768_model_profile_ceiling": 8192,
+        "maximum_clause_slots": 8
+      },
+      "native_producer_runtime_attestation_or_full_transitive_closure_qualified": false,
+      "new_encoder_or_training_execution": false,
+      "selected_states": 4,
+      "source_rows_each": 48,
+      "token_status_EOS_archived_parity_each": 48,
+      "track": "Selected native384/native768 cached runtime"
+    },
+    {
+      "deterministic_source_withheld_original_prose_UTF8_exact_of_48": 0,
+      "learned_prose_decoder_evaluated": false,
+      "scope": "Different checkpoints/cohort from exposed wording-v3; exact semantic authored document cannot recover originating prose through the current deterministic renderer.",
+      "semantic_IR_exact_of_48": 48,
+      "track": "Original legal-text round trip"
+    },
+    {
+      "default_promoted": false,
+      "feature_width": 64,
+      "fresh_authored_positive_exact_of_64": {
+        "MLP": 39,
+        "linear": 37,
+        "parent": 28
+      },
+      "fresh_authored_unsupported_emissions_of_64": {
+        "MLP": 12,
+        "linear": 11,
+        "parent": 7
+      },
+      "scope": "Byte-encoder features are separate from native8/384/768 embedding lanes.",
+      "track": "Raw-source support/action residual"
+    },
+    {
+      "all_admission_masks_zero": true,
+      "default_changed": false,
+      "formal_output": null,
+      "fresh_authored_positive_exact_of_64": 38,
+      "fresh_authored_unsupported_emissions_of_64": 13,
+      "optimizer_updates": 480,
+      "public_hub_revision_from_historical_release": "ae5a6b555f66f9ea7cdf3f46a03c689d07485bb5",
+      "raw_action_spans_exact_of_64": 61,
+      "selected_step": 0,
+      "source_semantics_verified": false,
+      "track": "Latest support-gate pilot integrated after the first plan",
+      "trained_candidates_all_rejected": true
+    },
+    {
+      "all_vector_MSE_models_trail_TRAIN_only_PCA": true,
+      "cached_vector_widths": [
+        8,
+        384,
+        768
+      ],
+      "frozen_raw_PCA_AE_decoder_outputs_identical_pairs": 192,
+      "native_source_rows": 64,
+      "scope": "Source vector reconstruction does not establish downstream semantic improvements.",
+      "selected_models": 9,
+      "track": "Source-only representation controls"
+    }
+  ],
+  "models_loaded": false,
+  "observed_at_utc": "2026-10-11T00:05:57.680671+00:00",
+  "original_embedding_preprocessing_and_donor_bytes_verified_now": [
+    {
+      "actual_pin": {
+        "bytes": 1510086,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/preprocessing.json",
+        "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 614534,
+        "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 3471450,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/dimension-inputs-384.json",
+        "sha256": "43e03db69c8f2f99664c3382f402940ddd1874cd2cf785f454bb500e31620c79"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 124731,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/source-plan.json",
+        "sha256": "d68a025f15751a06986916e0559125b492d3611ce2e66a7c3b222e35f5511385"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 2755053,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/production-384.json",
+        "sha256": "44a99cb3fe34022215cb8f485fc525472df6ce5132e75d0c3591b2b7fc745855"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 2864122,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/preprocessing.json",
+        "sha256": "f4acb7b6b20a38c226a509e331d638fa667c929bd5b8970be44048d549f072ae"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 6788970,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/dimension-inputs-768.json",
+        "sha256": "c8d31b3808408063d6b8e3a1f82cbdaf68bd67099dcdd35b10ba22cd7e59f923"
+      },
+      "matches_expected": true
+    },
+    {
+      "actual_pin": {
+        "bytes": 7268615,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-r2-20261004/preparation-r1/results/production-768.json",
+        "sha256": "6303d75e1bedf3254282da2c4aa025c0580894587c2328fc4b5dc30d3baef312"
+      },
+      "matches_expected": true
+    }
+  ],
+  "proof_authority": false,
+  "public_models_or_dataset_uploaded": false,
+  "retained_fitted_checkpoint_bytes_verified_now": [
+    {
+      "actual_pin": {
+        "bytes": 2797024,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/selected-state.json",
+        "sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff"
+      },
+      "dimension": 384,
+      "expected_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "6c7609b8f2f54afefbb832157b5f8a7590a77df4393feb9f3c61d8bf9be6caff",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "control_wording_ce_selected_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797028,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/control-wording-ce/last-attempt-state.json",
+        "sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26"
+      },
+      "dimension": 384,
+      "expected_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "cf2d10df31f8cb1145369aeef3cfc717629dd7f14c69b5ba62ba956b5eaa4f26",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/control-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "control_wording_ce_last_attempt_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797399,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/selected-state.json",
+        "sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05"
+      },
+      "dimension": 384,
+      "expected_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "d2439394a7827b55c363a8f9b7f5ad74c4a9cf6875e869886c6840ba74088b05",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "balanced_wording_ce_selected_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797403,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r2/results/balanced-wording-ce/last-attempt-state.json",
+        "sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1"
+      },
+      "dimension": 384,
+      "expected_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "c7af74bd4dc8ab10b54692f665c2561b83a1417ed117d071f7c984be67611aa1",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/balanced-wording-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "balanced_wording_ce_last_attempt_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797164,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/selected-state.json",
+        "sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e"
+      },
+      "dimension": 384,
+      "expected_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "c51cbb51150cb16de2e4617f7c1d03b53cf5f65d430ebadc0923ba199284405e",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/selected-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "dual_bank_retention_ce_selected_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797168,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-dual-bank-replay-20261007/training-384-r1/results/dual-bank-retention-ce/last-attempt-state.json",
+        "sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f"
+      },
+      "dimension": 384,
+      "expected_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+      "immutable_hub_binding": {
+        "checkpoint_sha256": "4269e6d957f9a31d2d9b09b0d90f345f5da00a003c0c898a59d7fcb3220ff61f",
+        "path_in_repo": "experiments/retained-wording-recipes-20261007/run-01-dual-6e47fc6d5452/checkpoints/384d/dual-bank-retention-ce/last-attempt-state.json",
+        "repository_id": "Publicus/legal-ir-autoencoder-384d",
+        "revision": "ac8f3439bfd2409797dfdab245c120b93b3d0747"
+      },
+      "matches_expected": true,
+      "native_format_id": null,
+      "native_profile_id": null,
+      "native_schema_version": null,
+      "role": "dual_bank_retention_ce_last_attempt_semantic_decoder_state",
+      "runtime_ready": false,
+      "task_id": "semantic_IR_reconstruction",
+      "teacher_qualified": false
+    }
+  ],
+  "retained_normative_checkpoint_bytes_verified_now": [
+    {
+      "actual_pin": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "dimension": 384,
+      "historical_model_manager_selector": {
+        "checkpoint_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:0ea60eed1f606e655940a8e45c5db151d9686fcb8bb532b94866e6f8947262c8",
+        "role": "normative_wording_zero_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      },
+      "matches_expected": true,
+      "recipe": "normative-wording-zero",
+      "tensor_sha256_from_authenticated_historical_receipt": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3"
+    },
+    {
+      "actual_pin": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "dimension": 384,
+      "historical_model_manager_selector": {
+        "checkpoint_sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266",
+        "dimension": 384,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:aa588d1669769d996f9626d2693ff5866ce402ca3372574e18e290342c7e4435",
+        "role": "normative_wording_ce_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      },
+      "matches_expected": true,
+      "recipe": "normative-wording-ce",
+      "tensor_sha256_from_authenticated_historical_receipt": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594"
+    },
+    {
+      "actual_pin": {
+        "bytes": 4778674,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f"
+      },
+      "dimension": 768,
+      "historical_model_manager_selector": {
+        "checkpoint_sha256": "c8beca3ef5ea2d477ebc9a1564c8922404b245098a0b56083197cd6185c3083f",
+        "dimension": 768,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:958f84ca889bf8c19e39f293e015b5bc54b23f49e751c25304020ab217912b6d",
+        "role": "normative_wording_zero_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      },
+      "matches_expected": true,
+      "recipe": "normative-wording-zero",
+      "tensor_sha256_from_authenticated_historical_receipt": "991f9a1abdf01b72ac5f827adde5ef7be5af28fc0dc3a3db8e4e6e2d8816f379"
+    },
+    {
+      "actual_pin": {
+        "bytes": 4779949,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-768-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3"
+      },
+      "dimension": 768,
+      "historical_model_manager_selector": {
+        "checkpoint_sha256": "aa2f75cad0ade34a3965a4f0b71bdc2fe962f5b863b38133927978ea2673aeb3",
+        "dimension": 768,
+        "dimension_role": "input_embedding",
+        "format_id": null,
+        "ir_family_id": "legal_ir",
+        "profile_id": null,
+        "record_id": "ir-model-asset-binding/v1:d537d0366d6e846dfb9610ea6b237ccde8ec0389e33ead2c51b511f49cdcaa7a",
+        "role": "normative_wording_ce_selected_semantic_decoder_state",
+        "schema_version": null,
+        "task_id": "semantic_IR_reconstruction"
+      },
+      "matches_expected": true,
+      "recipe": "normative-wording-ce",
+      "tensor_sha256_from_authenticated_historical_receipt": "3fe21b42657bf33f5d0d129d538b72dbb5808f9cc491a3822abd902b13a74b6d"
+    }
+  ],
+  "reviewed_root_gitlinks": {
+    "accelerate": "036ce8679b8f9d926ed0ac95dc03743673a4fb16",
+    "datasets": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a"
+  },
+  "schema": "uscode-span-continuation-parallel-research-survey/v1",
+  "scope": "Read-only selected branch/worktree, current remote main, retained model/embedding bytes and published research receipt survey. Not an exhaustive survey of every filesystem or remote branch. No model execution, fitting, registration, upload, or foreign-tree mutation.",
+  "selected_branch_retention": [
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+      "ref": "codex/legal-support-gate-model-20261007-01"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+      "ref": "codex/legal-support-action-model-20261007-01"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+      "ref": "codex/legal-trigger-readout-model-20261007-01"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "1530efd07032bac88229c6c97ca5994d498e6216",
+      "ref": "codex/legal-scope-span-training-20261007-01"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+      "ref": "codex/source-v2-warm-start-20261004"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+      "ref": "codex/legal-original-text-roundtrip-retained-20261004"
+    },
+    {
+      "ancestor_of_reviewed_datasets_main": true,
+      "commit": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+      "ref": "codex/alignment-decoder-768-20261003"
+    }
+  ],
+  "source_pins": [
+    {
+      "bytes": 16223,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/evidence/retained-wording-20261007/checkpoint-availability.json",
+      "sha256": "551ce13fe7a1d1956383a71abb145adab67afaab6d0b96aa316345d0aba20fce"
+    },
+    {
+      "bytes": 10679,
+      "path": "/home/barberb/lift_coding/artifacts/normative-retained-cache-runtime-20261007/generation/generation-result.json",
+      "sha256": "bb9cdd93b03ebbe6d489b03f3af6a80bc9530d6a48a734fe2fc2009376b6abc1"
+    },
+    {
+      "bytes": 7799,
+      "path": "/home/barberb/lift_coding/artifacts/normative-retained-cache-runtime-20261007/preflight/retained-assets-preflight.json",
+      "sha256": "6480455ffad424963d241005dee2a33f71f45e1f112b9fa085ccfba2c3b233bb"
+    },
+    {
+      "bytes": 3486,
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/reconciliation-decision.json",
+      "sha256": "8594a48f58db198a47ea9f2c83a71cace6dc367acfd61179fe8dde4a6095b189"
+    },
+    {
+      "bytes": 38006,
+      "path": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/model-manager-live-r1/registration-result.json",
+      "sha256": "103e95512c83d894bf0a432cc44debbcf57cb589fb3077288d90832737b99320"
+    },
+    {
+      "bytes": 22308,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/research-survey/research-survey.json",
+      "sha256": "ccf5b752697277d04419cd84ef6e853eb025f276fe6911d559288ae04bc78bd1"
+    },
+    {
+      "bytes": 1425,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/source-inputs.json",
+      "sha256": "cdf8563c39b1d4b8d841c41ba154addd8f0a6115e3f31692b30861f75e9a6b6e"
+    },
+    {
+      "bytes": 6427,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/bounded-census-report.json",
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70"
+    },
+    {
+      "bytes": 565,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/donor-pins.json",
+      "sha256": "8284f3dda68384de197c71f38a641bfc71cc036cdb8497b464e9a511337bb965"
+    },
+    {
+      "bytes": 1236,
+      "path": "/home/barberb/lift_coding/artifacts/gte-decoder-reuse-20261001/run-01/summary.json",
+      "sha256": "d42ae4124d1e30a25f1f89ff1dbe133f4c64059bd7c6b1e5e054d5a4272cbb74"
+    },
+    {
+      "bytes": 1364,
+      "path": "/home/barberb/lift_coding/artifacts/gte-aligned-interface-training-preparation-20261002/run-01/summary.json",
+      "sha256": "873824edf3ba584b88aa066c9de28a69ce900b21e7bd01f2db87176e5b0733ab"
+    },
+    {
+      "bytes": 104509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-support-gate-20261007-01/release/results/summary.json",
+      "sha256": "d5ff2e16e9cefdeb11c2e4671b26524548f025b392902adfbba1660a58bce85c"
+    },
+    {
+      "bytes": 604,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/intake.json",
+      "sha256": "0eb6307b1750e3348747ba8e721c4989aa3e26a058a00f86d1b37fdf3583c428"
+    },
+    {
+      "bytes": 211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/remote-intake.json",
+      "sha256": "b4b73d0942a2e606eb690aa462dfe4a16e4948c7a423b22138f3e006ccf0c029"
+    },
+    {
+      "bytes": 24001,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/progress_integration.md",
+      "sha256": "d5fe6605495da924c80da0a24ab43cd7863381970dc9f6b347e88411b7348427"
+    },
+    {
+      "bytes": 15551,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/contextual_legal_reconstruction_runtime.md",
+      "sha256": "ee8cb120795ce9ee8c696d952169da5544c34e3ae4f2f6adeeacc58701532fa6"
+    },
+    {
+      "bytes": 6916,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/docs/autoencoders/normative_cached_legal_ir_runtime.md",
+      "sha256": "3b556f37bd184d61e4786fa914086ca45b7531f309b2b1c531d06cbc7ee23cc9"
+    }
+  ]
+}

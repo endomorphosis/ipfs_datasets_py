@@ -1,0 +1,11 @@
+{
+  "schema": "uscode-continuation-guard-reuse/v1",
+  "original_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/operator-source/run_guarded_census_phase.py",
+  "original_sha256": "c9a4d3218e2b609fee72f3c9736cc99d199143b2a9276903f9dca7e1ebcaa34c",
+  "new_path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/run_guarded_reconciliation.py",
+  "new_sha256": "58b9d37b2a76c31ff303cbd6ec0a39a3c544153364687fe38c0927072e2aae03",
+  "only_semantic_delta": "fresh campaign output namespace",
+  "helper_root": "artifacts/autoencoder-dual-bank-fit-20261007/parent-replay-guardian-source-r2",
+  "resource_cap_changed": false,
+  "models_or_resources_started": false
+}

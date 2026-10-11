@@ -1,0 +1,25 @@
+{
+  "checkpoint_bytes_changed": false,
+  "controller_owner_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+  "executed_integration_commit": "56f4a65ef1260188c8ea3216f392636aa97316a7",
+  "historical_frozen_commit": "271ad796288e17039f036af6a0d003a4628da6ed",
+  "incoming_main": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+  "incoming_source_binding_commit": "7a82e32dcaa9664a1a98a6110aa739d07f1eadf3",
+  "integrated_merge_commit": "25c86872660677c4ce8da81887b847e994097b47",
+  "model_inference_executed": false,
+  "new_embeddings_generated": false,
+  "pager_owner_commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+  "run_source_code_sha256": {
+    "archive_reconciliation": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+    "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+    "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+    "span_pages": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+    "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+    "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+  },
+  "schema": "uscode-span-continuation-source-lineage/v1",
+  "source_pins_verified_after_merge": true,
+  "source_pins_verified_after_merge_count": 7,
+  "training_executed": false
+}

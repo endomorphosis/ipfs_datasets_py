@@ -1,0 +1,59 @@
+{
+  "bounds": {
+    "example_limit": 16,
+    "max_page_bytes": 4194304,
+    "max_page_spans": 64,
+    "max_row_group_bytes": 2147483648,
+    "max_section_bytes": 8388608
+  },
+  "identity_reconstruction": "historical-64-document-ordinal/v1",
+  "inventory_scope": "archived-targets; outside-target sources have aggregate accounting only",
+  "progress": {
+    "bytes": 52701179,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+    "path_in_repo": "autoformal/uscode/resume-checkpoint.parquet",
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "revision": "765176c6db79ba65c1697c21dead43666350b730",
+    "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+  },
+  "schema": "uscode-archived-target-reconciliation/v1",
+  "seed": {
+    "files": {
+      "census.duckdb": {
+        "bytes": 8663040,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census.duckdb",
+        "sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f"
+      },
+      "manifest.json": {
+        "bytes": 1711,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+        "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+      },
+      "report.json": {
+        "bytes": 6427,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/report.json",
+        "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70"
+      }
+    },
+    "manifest_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+    "next_section": 128,
+    "source_occurrence_count": 18342
+  },
+  "source": {
+    "bytes": 374277662,
+    "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "release_id": "ipfs-uscode-5016b86a",
+    "repository_id": "justicedao/ipfs_uscode",
+    "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+  },
+  "source_code_sha256": {
+    "archive_reconciliation": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+    "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+    "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+    "span_pages": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+    "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+    "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+  }
+}

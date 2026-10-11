@@ -1,0 +1,11 @@
+{
+  "id": "justicedao/uscode-autoformal-span-cache",
+  "sha": "765176c6db79ba65c1697c21dead43666350b730",
+  "lastModified": "2026-10-01T00:28:36.000Z",
+  "private": false,
+  "gated": false,
+  "file_count": 6016,
+  "url": "https://huggingface.co/api/datasets/justicedao/uscode-autoformal-span-cache",
+  "pinned_processing_revision": "765176c6db79ba65c1697c21dead43666350b730",
+  "pinned_processing_revision_is_current": true
+}

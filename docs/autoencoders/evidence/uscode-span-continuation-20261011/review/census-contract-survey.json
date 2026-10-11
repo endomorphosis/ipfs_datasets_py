@@ -1,0 +1,153 @@
+{
+  "schema": "uscode-span-continuation-census-contract-survey/v1",
+  "survey_date": "2026-10-11",
+  "scope": "Read-only recovery of the census contract, repository history, existing source and saved output. No corpus processing, model inference, training, uploading, resource mutation or checkout changes.",
+  "applicable_agents_files": [],
+  "repositories": {
+    "datasets": {
+      "read_only_worktree": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+      "head": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+      "github_main_from_ls_remote": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+      "working_tree_clean": true,
+      "newer_census_implementation_in_local_branches": false,
+      "integrated_census_commit": "f80dbc0a240ed2c28bff11fc831fedd416445a55",
+      "original_census_agent_commit": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+      "integrated_lossless_commit": "b365f61de54c59ce05835bc9fb980651754b9112",
+      "integrated_paired_feed_commits": [
+        "e638449976acd54606cdc36e13cbe98e0d40c258",
+        "5626e3dd04b8fa41a767ee7e21ad23faf2b5cd6c"
+      ]
+    },
+    "root": {
+      "read_only_worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007",
+      "head": "c7a9e8d6725a110f6bd3b299acbb3ab434870fce",
+      "cached_origin_main": "2d6d7acdc0154e8e85351126e1bb1ed59b3b03ca",
+      "scope": "This survey did not fetch or verify root remote; parent owns current main integration."
+    },
+    "frozen": {
+      "worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-datasets-20261007",
+      "head_from_worktree_registry": "271ad796288e17039f036af6a0d003a4628da6ed",
+      "untouched": true
+    }
+  },
+  "reusable_files": [
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "line": 246,
+      "role": "Pinned local sole-writer census with transactional occurrence/count/cursor commits, restart and exact disposition reports."
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "line": 200,
+      "role": "Historical 64-valid-document ordinal replay; include_candidates=True preserves unlisted and mismatched occurrences. Matched-only default remains compatible."
+    },
+    {
+      "path": "scripts/ops/legal_ir/census_uscode_sources.py",
+      "role": "Source-only census CLI; no model, download, training or existing live catalog."
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+      "role": "Existing controls for historical boundaries, restart, atomic rollback, conflicts, explicit lengths, optional local tokenizer, exclusive writer and foreign database refusal."
+    },
+    {
+      "path": "docs/autoencoders/uscode_source_census.md",
+      "role": "Budget and complete normalized historical sentence extraction contract."
+    },
+    {
+      "path": "docs/autoencoders/uscode_span_intake_progress_20261007.md",
+      "role": "Measured results and unresolved scope."
+    },
+    {
+      "path": "artifacts/uscode-all-span-intake-20261007/operator-source/resume_stopped_census.py",
+      "repository": "root",
+      "role": "Clone a stopped WAL-free manifest/database into a fresh result directory and resume without mutating old findings."
+    },
+    {
+      "path": "artifacts/uscode-all-span-intake-20261007/operator-source/run_guarded_census_phase.py",
+      "repository": "root",
+      "role": "Fresh named attempt, existing resource owner and scheduler adoption, sampled usage, child PID/birth ownership, lease watchdog, deadline and durable finalization."
+    }
+  ],
+  "saved_generation": {
+    "directory": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results",
+    "database_bytes": 8663040,
+    "manifest_bytes": 1711,
+    "report_bytes": 6427,
+    "disposition_parquet_bytes": 630,
+    "read_only_database_inspection": true,
+    "wal_present": false,
+    "initialized": true,
+    "next_section": 128,
+    "done": false,
+    "source_occurrence_count": 18342,
+    "distinct_source_section_offset_count": 128,
+    "minimum_source_section_offset": 0,
+    "maximum_source_section_offset": 127,
+    "source_dispositions": {
+      "matched": 2165,
+      "unlisted_source": 16177
+    },
+    "archived_span_count": 443904,
+    "pending_archived_source_scan_count_from_saved_report": 441739,
+    "current_extractor_code_matches_saved_generation": true,
+    "source_code_sha256": {
+      "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "tokenizer": null,
+    "inputs_exist": true,
+    "inputs_rehashed_by_this_survey": false,
+    "progress": {
+      "repository": "justicedao/uscode-autoformal-span-cache",
+      "revision": "765176c6db79ba65c1697c21dead43666350b730",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "bytes": 52701179
+    },
+    "source": {
+      "repository": "justicedao/ipfs_uscode",
+      "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "bytes": 374277662,
+      "physical_rows": 60077,
+      "historical_valid_documents": 60068
+    }
+  },
+  "existing_constraints": [
+    "Resume matches exact source/progress paths, revisions, hashes, extraction code hashes, tokenizer and section/span/byte bounds. Runtime section_batch_size, memory, output storage and max_batches are not generation identity fields.",
+    "The saved generation has no tokenizer. Adding genuine 384D or 768D producer token counts creates a separate pinned generation or separately keyed measurement, rather than changing its existing manifest.",
+    "Complete-source text reconstruction differs from the present historical whitespace-normalized sentence extraction. The pinned original section bytes remain available, but the census does not preserve original sentence byte offsets or decoder text outputs.",
+    "Every regenerated occurrence is persisted, including unlisted occurrences. Current census is not limited to the archived 443,904 sealed/gap export.",
+    "Historical original counters conditionally imply 3,842,642 underlying inventory rows; this is not an authenticated denominator or measured full fit.",
+    "A single section exceeding max_section_bytes=8388608, max_batch_spans=8192 or max_batch_bytes=33554432 is refused without advancing its cursor. One-section batches fix multi-section overflow but do not solve single-section overflow.",
+    "The 128 MiB output default checks after transactions and exports; resource enforcement is cooperative/polled and is not a kernel quota.",
+    "The old operator wrapper hardcodes the October 7 package root and helpers. Reuse it only after the parent independently authenticates helper/code/resource binding and creates a fresh owned attempt.",
+    "Original compiled, mock 8D and sealed observations never become learned reconstruction, model eligibility, training qualification or proof success."
+  ],
+  "recommendation": {
+    "immediate_existing_path": [
+      "Authenticate current resource accounting and shared scheduler state without releasing foreign claims; parent owns those actions.",
+      "Rehash the two existing immutable local inputs and verify saved manifest/database state and absence of an unreconciled WAL.",
+      "Clone the saved manifest and database into a fresh owned attempt; reuse exact code hashes and source/text bounds.",
+      "Resume with section_batch_size=1 and an explicitly bounded window, such as max_batches=64, under one CPU slot and observed process-group memory/storage/deadline bounds.",
+      "Independently replay the new committed prefix; report actual matched/unlisted counts, original offsets, non-skipped ordinals, maximum observed memory/storage and explicit stop reasons."
+    ],
+    "next_implementation_if_scaling_beyond_bounded_windows": [
+      "Implement a separately versioned immutable source-occurrence shard sink with content hashes, physical section ranges and transactional controller manifest/cursor updates. Keep archive join aliases and aggregate counts in one controller; do not silently discard unlisted source identities.",
+      "If the campaign deliberately selects an archived-target scope instead, declare a distinct generation and retain full-source accounting/dispositions separately. Do not describe an archived-target scan as a complete source inventory.",
+      "Provide explicit pending/overflow dispositions or a reviewed section/span streaming interface for a section that cannot fit current bounds, preserving the historical extraction and ordinal contract.",
+      "Measure output bytes per occurrence and runtime across varied sections before selecting a full-run reservation. Existing first 128 sections do not establish a fit for all sources.",
+      "After census scale controls, reconcile paired/modal bodies against canonical occurrences, then route only compatible authenticated native caches/checkpoints by IR family, dimension, schema/version, decoder task and producer context."
+    ],
+    "avoid": [
+      "Do not retrain models or replace existing assets to complete census.",
+      "Do not rehash archived IDs using current per-document ordinals.",
+      "Do not call all unlisted observations new text, duplicates, missing work or drift without further source/generation evidence.",
+      "Do not lower model quality or proof gates merely to treat the archived sealed flag as complete."
+    ]
+  }
+}

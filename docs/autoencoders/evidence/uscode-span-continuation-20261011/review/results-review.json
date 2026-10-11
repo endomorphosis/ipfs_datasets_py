@@ -1,0 +1,711 @@
+{
+  "actual_disk_accounting": {
+    "current_directory_apparent_file_bytes_at_review": 4014922,
+    "current_size_sampled_unix": 1791678240.779391,
+    "difference_bytes": 5165,
+    "guardian_finalization_attempt_bytes": 4009757,
+    "post_finalize_lease_observation_bytes": 777,
+    "resources_final_receipt_bytes_written_after_finalization": 4388,
+    "scope": "Guardian finalization precedes the appended post_finalize lease observation and resources-final.json receipt; current directory sum is independently measured only for this owned stopped attempt, without another whole-filesystem census."
+  },
+  "actual_final": {
+    "cursor": [
+      199,
+      64
+    ],
+    "outside_occurrences": 21385,
+    "source_occurrences": 24191,
+    "target_occurrences": 2806
+  },
+  "actual_first_page": {
+    "cursor": [
+      128,
+      64
+    ],
+    "outside_occurrences": 16234,
+    "source_occurrences": 18406,
+    "target_occurrences": 2172
+  },
+  "actual_receipt_pins": {
+    "child-exit.json": {
+      "bytes": 515,
+      "sha256": "805ff6a48c540efc2789e5b7f5cff5b872d642548a1d80b6343533d887068f1f"
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "sha256": "96a641b7a0742b3f0bd2ff86b1f522f41a6fc3be05a09890ccfc7815452ea2f3"
+    },
+    "child.log": {
+      "bytes": 11390,
+      "sha256": "b458e3fb4ee9d1568fc5b8bed1be4d983b15ca6248151d3eca1a35d972a73e3a"
+    },
+    "command.json": {
+      "bytes": 5741,
+      "sha256": "3a86529bf3bc414ae72c31e82b8df2bced2ac04490ef7ab4efee9afda5bd7d77"
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "sha256": "e6cfe3990f6d87f631164f735ba9b310f21d22cb6541b8e5c55ea74fc7d46231"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 20576,
+      "sha256": "a8013e730d26a88527997b7d396675b54795194f77fc3da8c8c75c013e9df4d7"
+    },
+    "resources-final.json": {
+      "bytes": 4388,
+      "sha256": "695fe3a12767b54252dfd71850a675a9b54d65b8f6db36b6538f87f30034f4a1"
+    },
+    "results/manifest.json": {
+      "bytes": 3079,
+      "sha256": "8e7be4a16b3202c9e3a93c3d77cb6845e1e10488588c48eb351740e1370e0044"
+    },
+    "results/reconciliation.duckdb": {
+      "bytes": 3944448,
+      "sha256": "e30cf49fecc0efb7135662c4313b610659638f794076453859749d5d9799998f"
+    },
+    "results/report.json": {
+      "bytes": 12024,
+      "sha256": "e07a58085abd67ff74db7fbfcfcfaeff526d80a594c2be68c778d50ac2a4df05"
+    },
+    "results/seed-and-first-page-report.json": {
+      "bytes": 12024,
+      "sha256": "4fcdfbced75652de562c589ffc710abd65e9df6c4210ae34f337b8efc1c7a436"
+    }
+  },
+  "actual_seed": {
+    "cursor": [
+      128,
+      0
+    ],
+    "outside_occurrences": 16177,
+    "source_occurrences": 18342,
+    "target_occurrences": 2165
+  },
+  "checkpoints_independently_replayed": [
+    {
+      "all_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "cursor": [
+        0,
+        0
+      ],
+      "outside_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+      "outside_occurrences": 0,
+      "scope": "Initial empty state before seeded prefix replay",
+      "source_occurrences": 0,
+      "target_occurrences": 0
+    },
+    {
+      "cursor": [
+        128,
+        0
+      ],
+      "outside_occurrences": 16177,
+      "scope": "All old prefix rows compared through every v1 field; only 2165 archived target rows imported into the new persisted target table, and all 16177 outsiders included in recomputed aggregate/digest custody",
+      "source_occurrences": 18342,
+      "target_occurrences": 2165
+    },
+    {
+      "all_occurrence_digest": "c3beceed06452827d6cee9038e876d900fccf5ce65d69b4f9ae3f44df60632ee",
+      "cursor": [
+        128,
+        64
+      ],
+      "outside_target_digest": "ea1348428f29e8730f08df7da945b354bf9da936c428c2a758605df23ec4dc97",
+      "outside_target_occurrence_count": 16234,
+      "scope": "Independent descriptor/accounting replay equals seed plus first newly committed page",
+      "source_occurrence_count": 18406,
+      "target_occurrence_count": 2172
+    },
+    {
+      "all_occurrence_digest": "6698f1075e0325788724a9d13a423c6f88333ac661da2ef05316d07eeff1616f",
+      "cursor": [
+        199,
+        64
+      ],
+      "outside_target_digest": "13539588c4693fa9efa4af9001a73ef5616eb1a33be7ef88f62aa52f295e9b7f",
+      "outside_target_occurrence_count": 21385,
+      "scope": "Independent differently paged descriptor replay equals final cold-interpreter-resume accounting",
+      "source_occurrence_count": 24191,
+      "target_occurrence_count": 2806
+    }
+  ],
+  "checks": [
+    {
+      "id": "stopped-reconciliation.duckdb",
+      "passed": true
+    },
+    {
+      "id": "stopped-census.duckdb",
+      "passed": true
+    },
+    {
+      "id": "old-prefix-custody-counts",
+      "passed": true
+    },
+    {
+      "detail": {
+        "old_columns_compared": [
+          "occurrence_id",
+          "source_span_id",
+          "source_sha256",
+          "legal_id",
+          "entry_cid",
+          "title",
+          "section",
+          "citation",
+          "source_section_offset",
+          "historical_document_batch_index",
+          "historical_span_ordinal",
+          "utf8_bytes",
+          "unicode_characters",
+          "token_count",
+          "byte_cohort",
+          "token_cohort",
+          "source_join_disposition"
+        ],
+        "old_target_rows": 2165
+      },
+      "id": "every-old-target-field-retained",
+      "passed": true
+    },
+    {
+      "id": "durable-report-cursor-and-accounting",
+      "passed": true
+    },
+    {
+      "id": "target-physical-count",
+      "passed": true
+    },
+    {
+      "id": "physical-accounting-equality",
+      "passed": true
+    },
+    {
+      "id": "generation-manifest-digest",
+      "passed": true
+    },
+    {
+      "id": "original-source-artifact",
+      "passed": true
+    },
+    {
+      "id": "original-progress-artifact",
+      "passed": true
+    },
+    {
+      "id": "immutable-seed-census.duckdb",
+      "passed": true
+    },
+    {
+      "id": "immutable-seed-manifest.json",
+      "passed": true
+    },
+    {
+      "id": "immutable-seed-report.json",
+      "passed": true
+    },
+    {
+      "id": "executed-code-closure",
+      "passed": true
+    },
+    {
+      "detail": {
+        "duplicate_span_count": 0,
+        "ignored_nonspan_row_count": 1,
+        "ledger_row_count": 443905,
+        "record_kind_counts": {
+          "meta": 1,
+          "span": 443904
+        },
+        "span_row_count": 443904,
+        "unique_span_count": 443904
+      },
+      "id": "all-archive-identities-valid-and-unique",
+      "passed": true
+    },
+    {
+      "detail": {
+        "all_old_columns_verified": true,
+        "compared_old_occurrences": 18342,
+        "compared_old_targets": 2165
+      },
+      "id": "complete-old-prefix-independent-replay",
+      "passed": true
+    },
+    {
+      "detail": {
+        "all_new_columns_verified": true,
+        "compared_target_occurrences": 2806
+      },
+      "id": "every-final-target-independent-replay",
+      "passed": true
+    },
+    {
+      "detail": {
+        "actual_page_size": 64,
+        "all_digest": "6698f1075e0325788724a9d13a423c6f88333ac661da2ef05316d07eeff1616f",
+        "different_replay_page_size": 37,
+        "max_page_candidates": 37,
+        "max_serialized_candidate_page_bytes": 80883,
+        "outside_digest": "13539588c4693fa9efa4af9001a73ef5616eb1a33be7ef88f62aa52f295e9b7f",
+        "replay_pages_read": 758,
+        "replayed_source_occurrences": 24191
+      },
+      "id": "all-and-outside-accounting-independent-replay",
+      "passed": true
+    },
+    {
+      "detail": {
+        "final_cursor": [
+          199,
+          64
+        ],
+        "partial_cursor": [
+          128,
+          64
+        ],
+        "seed_prefix_accounting": {
+          "all_occurrence_digest": "f993b0aec6f8b2e2dd164968930ff47ca8dbba8539b8a6810aecd71805cb4d11",
+          "empty_section_count": 0,
+          "max_source_unicode_characters": 3931,
+          "max_source_utf8_bytes": 3939,
+          "outside_target_byte_cohorts": {
+            "le_4096": 370,
+            "le_512": 15807
+          },
+          "outside_target_digest": "8057fba7985285511eaeebda17070880c49e36d355abfb40a3dc24c438361179",
+          "outside_target_examples": [
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "f7e4974f40c5195f3dccbab0b2d3a56845c22843b5fb810672664dc1406f2e3b",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 0,
+              "source_sha256": "1d1b932916ddd23b221c642bff16f451508fdbc067a5666ee17cb35de1168958",
+              "source_span_id": "uscode-span-e6a9b94d19f36965fb052be8d2633c3f289d3d641fcf035cb3e3ad1dda33c2af",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 6,
+              "utf8_bytes": 6
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "13decd76b20287c7274fbf617671bd38611e0d1cf0b9c7b7be17e0c9c99593f9",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 1,
+              "source_sha256": "b532af870b2e9b1a59ea89be9ae9ee29f28e3a132bf2dbc20139cc3137256258",
+              "source_span_id": "uscode-span-cad8e69c87afbb3d0cb2d1da8d9faf22a543c438e9345710a9efa17ec4248096",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 37,
+              "utf8_bytes": 37
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "2d96b559af4a94639d35ea47d0e63e97b11aa5509534a02be4f5fcce76802691",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 2,
+              "source_sha256": "536de206d749145fc7944f4b3b408e964fdcc3571ac291dd4d71b8c1aa398023",
+              "source_span_id": "uscode-span-ab1a5071e25330c45d2e60456417caa4d018c2de0d0facefb8b61b63d30984d6",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 100,
+              "utf8_bytes": 100
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "a63a9ced37c879705b1f19e02085dce5b41bec22905414bd7c10e527cca81510",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 3,
+              "source_sha256": "370f333dd3bb5a9effedae6e65a104bae02113719f357c9d42e5a7e8b4c8100e",
+              "source_span_id": "uscode-span-6ed2637b580e6536a57b2eb716274a5967946c8d43d644f442dc4bc04e4efeb4",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 61,
+              "utf8_bytes": 61
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "7bd0a2b087ce49971868fa3862dcdfd97692d393d150cb0f6a5d281745052ca5",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 4,
+              "source_sha256": "3ae853538f72391e3e03c46d0e134dfd52ffcc98d086d56eb02e1901e969da77",
+              "source_span_id": "uscode-span-bbe5f5cee07f694f6b67be92d45129faed7939dba471de82ae348bfc0e9b1ff9",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 45,
+              "utf8_bytes": 46
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "dd4baba28b8916b9fdd480dc43b37278bfd6565ca178bcf3fe73533d00aefcf8",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 7,
+              "source_sha256": "4a21b1ff080f7359dfdfe41c0788c70d0f715b2a34e3726fb86c44f34d4c52cf",
+              "source_span_id": "uscode-span-650833c08b4e7f273ef5139aa90d6925d4240872610fe0d48d582860432384e9",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 13,
+              "utf8_bytes": 13
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "a55cafca6a0bcf6232227e5b988331989fefc7f95acbb8df00d177ce3c02f8d6",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 8,
+              "source_sha256": "a6ce69c2f6c0ba36cee7673c90e3930171b139ab73bccf33ed4cf5af5acdc237",
+              "source_span_id": "uscode-span-1f32b4e806d7ed8d801c33f7537ceacc34bf4b73545b4cbb50be659160bf7161",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 23,
+              "utf8_bytes": 23
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "521b2a7612f452f017bbcd952d55168dd573a29d9606013fe5aac33fe15b0723",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 9,
+              "source_sha256": "9a051a23e76e5e17576fcda8f4c90d74192ddc5956fdfe336f0790d7f30ba9fb",
+              "source_span_id": "uscode-span-f1184fbf7579c1b944473a0015b96b548c9060ad6fbf2cfc6bc5d0e683c34b53",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 17,
+              "utf8_bytes": 18
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "48ccde4cab857c3d48ba8a5fc9040ef5b3be2407daffdf93459302ac3e7aede5",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 10,
+              "source_sha256": "b18f4973de6d5c9aa29ee1d4084b3297c5004523ecb12723028dd227675446a9",
+              "source_span_id": "uscode-span-7d1cd63965654f3c4c4428797ea95ebef036a3cea830f845a71067a7b06e3c0c",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 9,
+              "utf8_bytes": 9
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "8a832fb6432a265b673feff7f822fa7b4f711b385d4eaae2c0ff216ddce3f2eb",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 11,
+              "source_sha256": "0a3a32f896be06a76e7fde8a4966aaaec5fc412c076e19b99fe531763213bfc8",
+              "source_span_id": "uscode-span-89641f1ddb83ad232c0b10549938f6b66759c0d5545eab2159e2a7cccf79ae84",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 13,
+              "utf8_bytes": 13
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "e114036e14f7a06efae1f5f023b9b2c80929f453c08b6e84e51930b99d22a2e8",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 12,
+              "source_sha256": "63f8478b7fb3291be314da60614484220bcb627794a44da8ccea023cdf184fbc",
+              "source_span_id": "uscode-span-79c54af83dd5ec5bd1ddfeca5e8b2bfa087af6eedec120527dd2903b4f025af7",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 17,
+              "utf8_bytes": 18
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "ca6957b66470a69e4e2f175c4372b08e771d1983825f7ed8d3abd71a9d00cac4",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 14,
+              "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+              "source_span_id": "uscode-span-879e427a2caaf56124a138bebaf1d7f2995201920a9b2b425f053e2c7c11226c",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 2,
+              "utf8_bytes": 2
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "8eebbee8c6efc974b1cfc82eb39196d1478af64c880643799b7fd33be2b0c4c3",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 16,
+              "source_sha256": "9c8b8a8e7b5bd66c048dfa95141e6470329dc2667199fa361dc33175aeaad6ab",
+              "source_span_id": "uscode-span-91e499af21de45a0e504975089989803e63c603d0bca1a7858481ab0a47c1ff7",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 19,
+              "utf8_bytes": 19
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "edd33ade850d80f2b02f0bbb19dd9c09d68529a6ddf06ed11cad702c5d184493",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 17,
+              "source_sha256": "ae2f90b90795def5c5c7892f95c172a24085328c44a0c93c2dd8d514807081ce",
+              "source_span_id": "uscode-span-8596635d8f71997d3eecff3633907e8f4c5b7a25034e0e0cacb5fa1ecd3bae66",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 44,
+              "utf8_bytes": 46
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "e69f427c0868c9c09d0283d6be1d62cc6aecb18ed9cbb83ecc8e91f35108c929",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 18,
+              "source_sha256": "5bfe62d9f7d85f01c08cd136878aff9508276fa1d75c2ae2f21c43cf29316eec",
+              "source_span_id": "uscode-span-34ff27a0c9c778b23dcf32ff6e84bd08c871ba6629079dce7b5a5ad245d343ab",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 2,
+              "utf8_bytes": 2
+            },
+            {
+              "legal_id": "usc:us:1:1",
+              "occurrence_id": "7126bd9551c9e8656561312a1eab9c1e3fe664a10d32210ef88bb417de7d453a",
+              "source_section_offset": 0,
+              "source_section_span_ordinal": 20,
+              "source_sha256": "033af693a0bd92c8326871739f691bbab6fa0b5a220ddb1d30fce0d9521efc6e",
+              "source_span_id": "uscode-span-41e68c6440afd986c8c2576b1cad23b219547679413754e1219330ecb310345f",
+              "source_text_origin": "normalized_source_text",
+              "unicode_characters": 14,
+              "utf8_bytes": 16
+            }
+          ],
+          "outside_target_occurrence_count": 16177,
+          "source_byte_cohorts": {
+            "le_4096": 411,
+            "le_512": 17931
+          },
+          "source_occurrence_count": 18342,
+          "source_text_origins": {
+            "normalized_source_text": 18342
+          },
+          "source_unicode_characters": 1489416,
+          "source_utf8_bytes": 1502974,
+          "target_dispositions": {
+            "matched": 2165
+          },
+          "target_occurrence_count": 2165
+        }
+      },
+      "id": "seed-first-page-independent-replay",
+      "passed": true
+    },
+    {
+      "detail": {
+        "cursor": [
+          199,
+          64
+        ],
+        "section_sentence_count": 140
+      },
+      "id": "actual-within-section-resume-cursor",
+      "passed": true
+    },
+    {
+      "detail": {
+        "mechanism": "os.execv replaces the Python interpreter in the same OS PID/birth; cold module state, not a second OS process identity"
+      },
+      "id": "seed-page-cold-interpreter-exec-provenance",
+      "passed": true
+    },
+    {
+      "detail": {
+        "final_maxrss": {
+          "bytes": 864636928,
+          "raw": 844372,
+          "raw_unit": "KiB",
+          "scope": "Current process lifetime high-water RSS from getrusage(RUSAGE_SELF); not an isolated phase peak or process-group peak"
+        },
+        "scope": "Reported getrusage RUSAGE_SELF lifetime high-water, independently checked conversion; no continuous reviewer memory sampling",
+        "seed_maxrss": {
+          "bytes": 816418816,
+          "raw": 797284,
+          "raw_unit": "KiB",
+          "scope": "Current process lifetime high-water RSS from getrusage(RUSAGE_SELF); not an isolated phase peak or process-group peak"
+        }
+      },
+      "id": "kernel-highwater-units-and-bound",
+      "passed": true
+    },
+    {
+      "detail": {
+        "cleanup_receipt": {
+          "child_created": true,
+          "final_group_usage": {
+            "available": true,
+            "live_processes": 0,
+            "rss_bytes": 0
+          },
+          "identity": {
+            "birth": "69608702",
+            "pid": 2287180
+          },
+          "initial_live_processes": 0,
+          "leader_reaped": true,
+          "leader_returncode": 0,
+          "live_group_processes": 0,
+          "scope": "direct_child_reaped; surviving_group_members_stopped; orphan_zombies_not_reaped_here",
+          "signals": []
+        },
+        "identity": {
+          "birth": "69608702",
+          "pid": 2287180
+        },
+        "leader_now": null,
+        "live_group_pids": []
+      },
+      "id": "owned-pid-birth-group-stopped",
+      "passed": true
+    },
+    {
+      "detail": {
+        "foreign_ledger_sha256": "3e9c79dea6d13eb36099678cfb0eba39cbc32c74630dbdb9786ace369d9de6bb",
+        "foreign_retained_claim_count": 98,
+        "lease_count": 0,
+        "lease_id": "a45fa329f3754e659b48003f6c0b9b5c",
+        "prior_ledger_sha256": "3e9c79dea6d13eb36099678cfb0eba39cbc32c74630dbdb9786ace369d9de6bb",
+        "reservation_id": "0fad712f43b34bb5be0994725bf38051",
+        "waiter_count": 0
+      },
+      "id": "own-claim-lease-released-and-foreign-retained",
+      "passed": true
+    },
+    {
+      "detail": {
+        "cap_bytes": 145000000000,
+        "final_attempt_bytes": 4009757,
+        "final_charged_bytes": 142308189205,
+        "reservation_bytes": 256000000,
+        "scope": "cooperative_admission_and_polled_usage_not_kernel_quota"
+      },
+      "id": "actual-resource-bounds",
+      "passed": true
+    },
+    {
+      "id": "no-model-semantic-or-proof-upgrade",
+      "passed": true
+    },
+    {
+      "detail": {
+        "current_directory_apparent_file_bytes_at_review": 4014922,
+        "current_size_sampled_unix": 1791678240.779391,
+        "difference_bytes": 5165,
+        "guardian_finalization_attempt_bytes": 4009757,
+        "post_finalize_lease_observation_bytes": 777,
+        "resources_final_receipt_bytes_written_after_finalization": 4388,
+        "scope": "Guardian finalization precedes the appended post_finalize lease observation and resources-final.json receipt; current directory sum is independently measured only for this owned stopped attempt, without another whole-filesystem census."
+      },
+      "id": "guardian-finalization-vs-current-directory-size",
+      "passed": true
+    },
+    {
+      "detail": {
+        "event_count": 21,
+        "last_event": {
+          "capability_persisted": false,
+          "changed_known_configuration_fields": [],
+          "configuration_matches": true,
+          "continuous_coverage_claimed": false,
+          "elapsed_seconds": 0.00011725001968443394,
+          "expected": "absent",
+          "expected_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+          "healthy": true,
+          "lease_id": "a45fa329f3754e659b48003f6c0b9b5c",
+          "lease_present": false,
+          "observed_at_monotonic": 696118.695610547,
+          "observed_at_unix": 1791678045.2967389,
+          "observed_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+          "read_only": true,
+          "schema": "guardian-owned-lease-observation/v1",
+          "stage": "post_finalize",
+          "state_bytes": 1559,
+          "state_sha256": "563447d8b6d0e8c1140940e9de18b26381553b69a5c56f3903eb3b0cd4ee9ee2",
+          "unknown_configuration_fields_present": false
+        },
+        "observation_count": 20,
+        "scope": "Bounded read-only own-lease observations, no continuous coverage claim",
+        "start_binding_matches_saved": true,
+        "watchdog_start_count": 1
+      },
+      "id": "sampled-owned-lease-custody",
+      "passed": true
+    }
+  ],
+  "completed": true,
+  "elapsed_seconds": 5.497238801908679,
+  "findings": [],
+  "immutable_seed_pins": [
+    {
+      "bytes": 8663040,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census.duckdb",
+      "sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f"
+    },
+    {
+      "bytes": 1711,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    {
+      "bytes": 6427,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/report.json",
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70"
+    }
+  ],
+  "input_pins": [
+    {
+      "bytes": 374277662,
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "role": "source",
+      "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "stable_witness": true
+    },
+    {
+      "bytes": 52701179,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "role": "progress",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "stable_witness": true
+    }
+  ],
+  "limits": [
+    "Only prefix through physical cursor 199:64 independently replayed, not all 60,077 source sections or all 443,904 archived IDs.",
+    "21,385 outside-target occurrences have exact independently verified aggregate accounting/digest and bounded examples; a full persisted outside-source inventory is absent by design.",
+    "Kernel RSS is process-lifetime self high-water; it is not a separately isolated seed/resume phase peak or process-group peak.",
+    "Cold resume uses os.execv and retains the OS PID/birth; successful new-interpreter resume is evidenced by pinned operator code/event and final CLI receipts.",
+    "Guardian admission and usage are cooperative polling, not kernel quotas or continuous coverage.",
+    "No token cohorts, semantic reconstruction, model training, model/schema promotion or proof result was measured."
+  ],
+  "mode": "Read-only stopped DB/receipt/source review; bounded pager replay in reviewer only, no new census generation/job/lease/claim or source write",
+  "mutations": {
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "foreign_resources_changed": false,
+    "jobs_launched": 0,
+    "leases_acquired": 0,
+    "leases_released": 0,
+    "models_loaded": 0
+  },
+  "observed_at_unix": 1791678191.6371157,
+  "passed": true,
+  "schema": "uscode-span-continuation-independent-results-review/v1",
+  "source_pins": {
+    "archive_reconciliation": {
+      "expected_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    "census": {
+      "expected_sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    "constitution_inventory": {
+      "expected_sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "intake": {
+      "expected_sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "span_pages": {
+      "expected_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+    },
+    "uscode_dataset": {
+      "expected_sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "uscode_ingest": {
+      "expected_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    }
+  },
+  "source_reconciliation_job_started_by_reviewer": false
+}

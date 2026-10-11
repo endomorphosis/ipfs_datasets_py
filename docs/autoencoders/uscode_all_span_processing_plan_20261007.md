@@ -1,5 +1,7 @@
 # US Code span processing plan
 
+Latest measured continuation: [October 11 reconciliation progress](uscode_span_continuation_20261011.md). The historical results below retain their original scope.
+
 Process every source occurrence in the pinned US Code span cache through an explicit inventory, source resolution and task disposition. Reuse existing source bytes, embeddings, checkpoints, compiler observations and research controls. Add learned reconstruction and formal checking as independently measured stages. Every span must be accounted for; successful capture, generated IR, reviewed legal meaning and checked proofs have separate completion criteria.
 
 The first campaign covers the cache at [revision 765176c6db79ba65c1697c21dead43666350b730](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/tree/765176c6db79ba65c1697c21dead43666350b730). Expansion to new upstream sections or cache revisions creates a new inventory generation. This plan schedules no model training or numerical processing by itself.

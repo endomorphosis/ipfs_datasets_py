@@ -1,0 +1,140 @@
+{
+  "design_conditionally_accepted": true,
+  "foreign_tree_mutated": false,
+  "implementation_or_execution_independently_verified": false,
+  "jobs_run": false,
+  "model_loaded": false,
+  "new_controller_scope": {
+    "different_universes_explicit": true,
+    "no_claim_to_complete_full_physical_source_inventory": true,
+    "persisted_target_occurrences": "Every physical regenerated occurrence whose ID appears in any archived span row, including invalid/conflicting/hash/citation-mismatched ledger identities",
+    "remaining_source_occurrences": "Transactional aggregate accounting, byte/length cohorts, rolling digest, bounded identity-only examples; full unarchived row inventory is deliberately not persisted",
+    "schema": "uscode-archived-target-reconciliation/v1"
+  },
+  "observed_at_utc": "2026-10-11T00:09:31.315647+00:00",
+  "old_v1_source_owners": [
+    {
+      "actual_sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "expected_sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "owner": "intake",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "unchanged": true
+    },
+    {
+      "actual_sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "expected_sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "owner": "census",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "unchanged": true
+    },
+    {
+      "actual_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "expected_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "owner": "uscode_ingest",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "unchanged": true
+    },
+    {
+      "actual_sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "expected_sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "owner": "constitution_inventory",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "unchanged": true
+    },
+    {
+      "actual_sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "expected_sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "owner": "uscode_dataset",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "unchanged": true
+    }
+  ],
+  "open_verification": [
+    "Committed new iterator/controller/CLI sources and focused tests",
+    "Fresh-process interruption/resume equivalence and seed-reuse result receipts",
+    "Measured bounded resource and actual scan accounting",
+    "Current remote main retention before publication"
+  ],
+  "phase": "conceptual_review_before_committed_code_and_actual_results",
+  "proof_authority": false,
+  "required_invariants": [
+    {
+      "acceptance": "Compare all candidate source IDs/digests/ordinals to the old iterator across the 63/64/65 valid-document boundary, including null-CID and citation-fallback records.",
+      "id": "identity-64-valid-docs",
+      "requirement": "Global span ordinal accumulates within each group of 64 historically valid records independently of pager batch size. Null-CID metadata consumes no valid-document or span ordinal. Real-CID records with raw blank text retain historical USCodeParquetRecord citation fallback and consume its ordinals."
+    },
+    {
+      "acceptance": "Byte/hash-equivalent old/new iterator fixtures including Unicode and source references; explicit fallback source_text_origin and raw_source_text_present=False.",
+      "id": "exact-normalized-sentence",
+      "requirement": "Preserve the exact historical normalized sentence bytes for span identity; bind original section source artifact/row separately. Unicode, punctuation, whitespace, citation fallback and duplicate occurrences must not be silently changed or deduplicated."
+    },
+    {
+      "acceptance": "Single section exceeding previous 8192-span batch limit is paged; page byte/candidate limits enforced; invalid first oversized candidate does not advance cursor.",
+      "id": "bounded-page",
+      "requirement": "Generate at most one bounded page of candidate dictionaries plus one pending candidate; a full historical sentence list remains bounded by max_section_bytes. Candidate and section byte overflow fail before durable progress."
+    },
+    {
+      "acceptance": "Fault injection before commit rolls back rows, counters, digest and cursor; resumed fresh process matches uninterrupted output under different page limits.",
+      "id": "cursor-atomicity",
+      "requirement": "Persist next_section and next_span atomically with target occurrence rows, aggregate counts, rolling digest and seed state. next_span is zero when a section completes."
+    },
+    {
+      "acceptance": "Duplicate source/CID/text and duplicated/conflicting/invalid archive ledger rows preserve distinct occurrence and ledger denominators.",
+      "id": "physical-accounting",
+      "requirement": "Every physical candidate contributes exactly once. target_occurrence_count + unarchived_occurrence_count equals all_source_occurrence_count. Report archived ledger physical rows, distinct IDs, matched source occurrences and matching archived rows separately."
+    },
+    {
+      "acceptance": "Full scan, mid-section stop/resume, section-boundary resume and changed page limits produce exactly the same terminal digest and accounting.",
+      "id": "ordered-digest",
+      "requirement": "Digest covers every candidate in canonical physical source order, including unarchived candidates, with stable domain and serialization. Page size, target filtering, counters, timing and other execution choices cannot change it."
+    },
+    {
+      "acceptance": "Wrong seed hash, report, cursor, occurrence field, source/queue pin or active writer refuses before prefix import. Seed import and imported marker commit together.",
+      "id": "authenticated-seed-replay",
+      "requirement": "Read-only seed bytes are authenticated under a shared stopped-writer lock with WAL absent. Require exact old manifest/input/code bindings and report/state agreement. Reconstruct the entire 18342-occurrence prefix through the new pager and compare every original census._occurrence field, both matched and unlisted, before importing."
+    },
+    {
+      "acceptance": "Five old source pins remain unchanged; old v1 resume remains supported; old seed snapshots and original assets remain byte-identical.",
+      "id": "separate-generation",
+      "requirement": "Implement new iterator/controller/CLI as additive owners. Do not edit the five old v1 source-code owners, overwrite old DB or modify old model/cache checkpoints."
+    },
+    {
+      "acceptance": "All reports retain model/inference/training/admitted/formalized/proof flags false; original asset identity and IR family/dimension/schema/task inventories are unaffected.",
+      "id": "no-authority-upgrade",
+      "requirement": "Source identity matching is neither semantic/schema/task compatibility nor model training or formal/proof admission. Legacy citation fallback is provenance rather than genuine statutory text."
+    },
+    {
+      "acceptance": "Report cursor/end-of-source witness, physical sections, exclusions, fallback counts and unresolved archive identities separately.",
+      "id": "complete-means-physical-source-exhausted",
+      "requirement": "Source scan is complete only after exhausting the pinned raw source rows, including metadata exclusions. Completion can retain unresolved archived identities. A target subset fully joined early is not whole-source completion."
+    }
+  ],
+  "resolved_conceptual_questions": [
+    {
+      "question": "Should all-candidate v1 seed be reduced to matched rows only?",
+      "resolution": "Persist only archived-target rows in new inventory, but replay and count/digest all 18342 seed candidates before importing; filtering must not change prefix coverage."
+    },
+    {
+      "question": "Should blank raw-text real-CID rows be skipped?",
+      "resolution": "No. Preserve the actual historical citation fallback for ordinal compatibility and identify the fallback explicitly. Null-CID metadata remains excluded."
+    },
+    {
+      "question": "Can paged extraction replace existing v1 source files?",
+      "resolution": "No. Add separately pinned owners; the old seed manifest binds those exact five file hashes."
+    }
+  ],
+  "schema": "uscode-archived-target-reconciliation-design-review/v1",
+  "seed_scope": {
+    "all_occurrences": 18342,
+    "archive_queue_sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+    "manifest_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+    "matched_occurrences": 2165,
+    "next_section": 128,
+    "next_span": 0,
+    "no_text_copied": true,
+    "no_token_counts": true,
+    "schema": "uscode-source-occurrence-census/v1",
+    "source_artifact_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "unarchived_occurrences": 16177
+  }
+}

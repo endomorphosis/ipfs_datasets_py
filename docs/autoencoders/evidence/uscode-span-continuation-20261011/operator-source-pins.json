@@ -1,0 +1,10 @@
+{
+  "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/seed_then_resume_archive.py": {
+    "bytes": 1850,
+    "sha256": "12486da67b0bfcce2715ae9fba04ca6d90ec5b6badea15a5a6372084e0d96275"
+  },
+  "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/run_guarded_reconciliation.py": {
+    "bytes": 7199,
+    "sha256": "58b9d37b2a76c31ff303cbd6ec0a39a3c544153364687fe38c0927072e2aae03"
+  }
+}

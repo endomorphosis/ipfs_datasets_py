@@ -1,0 +1,144 @@
+{
+  "cherry_pick_owner_file_equivalence": [
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "original_commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "original_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3",
+      "original_commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "original_sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d",
+      "relative_path": "scripts/ops/legal_ir/reconcile_uscode_archive.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "cff96a88b2f37e3ca795fe6c8fa02480f05f392343ca1908848eb6d1d20016fd",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "cff96a88b2f37e3ca795fe6c8fa02480f05f392343ca1908848eb6d1d20016fd",
+      "relative_path": "docs/autoencoders/uscode_archived_target_reconciliation.md"
+    }
+  ],
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "-o",
+    "cache_dir=/tmp/pytest-of-barberb/uscode-incoming-source384-93abhdwr/cache",
+    "--basetemp",
+    "/tmp/pytest-of-barberb/uscode-incoming-source384-93abhdwr/fixtures",
+    "--junitxml",
+    "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/incoming-source384-controls.xml",
+    "tests/unit/logic/formalization/autoencoder/test_security_source_program_binding_384.py"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+  "elapsed_seconds": 1.57,
+  "integrated_merge_ancestry": [
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+      "name": "prior_main"
+    },
+    {
+      "ancestor_of_test_end_commit": false,
+      "commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "name": "pager_original"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "4905c985dae6800bad9d6dae80e63725ce5af6b5",
+      "name": "pager_integrated"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "56f4a65ef1260188c8ea3216f392636aa97316a7",
+      "name": "controller_integrated"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "7a82e32dcaa9664a1a98a6110aa739d07f1eadf3",
+      "name": "incoming_unicode_source_fix"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+      "name": "incoming_source_merge"
+    }
+  ],
+  "junit_pin": {
+    "bytes": 16519,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/incoming-source384-controls.xml",
+    "sha256": "1f526372795a8676367551136196184e208fcefa197b657a6063b548ccec82db"
+  },
+  "junit_suite_headers": [
+    {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "70",
+      "time": "0.947",
+      "timestamp": "2026-10-11T00:22:13.470814+00:00"
+    }
+  ],
+  "log_pin": {
+    "bytes": 99,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/incoming-source384-controls.log",
+    "sha256": "5171faa645ca0369eb0fec7edf54ab4a0b75d7edc574baced3789acc507ef597"
+  },
+  "native_Lake_integration_selected": false,
+  "network_or_models_or_training_jobs": false,
+  "observed_at_utc": "2026-10-11T00:22:12.992444+00:00",
+  "observed_cases": 70,
+  "original_pager_not_ancestor_is_expected": "Integration cherry-picked the two original owner commits; all six committed owner files have exact byte equality, and integrated pager/controller commits are ancestors of tested HEAD.",
+  "passed": true,
+  "proof_authority": false,
+  "returncode": 0,
+  "schema": "uscode-span-continuation-incoming-source384-controls/v1",
+  "source_commit_after": "25c86872660677c4ce8da81887b847e994097b47",
+  "source_commit_before": "25c86872660677c4ce8da81887b847e994097b47",
+  "source_pins": [
+    {
+      "bytes": 13391,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/formalization/autoencoder/test_security_source_program_binding_384.py",
+      "sha256": "1524389f385bdb725f4d58a8f878c82d9b5328720fb796eaa34693afbe611392"
+    },
+    {
+      "bytes": 17554,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/formalization/autoencoder/security/source_program_binding_384.py",
+      "sha256": "3bf9f897b0260ac5dd8a4ea671cdce3bcbf7f7201b7dcdf23b82b1890b513d19"
+    }
+  ],
+  "source_pins_unchanged": true,
+  "temporary_synthetic_fixtures_removed": true,
+  "temporary_synthetic_root": "/tmp/pytest-of-barberb/uscode-incoming-source384-93abhdwr",
+  "tree_status_observed_after_controls": ""
+}

@@ -1,0 +1,262 @@
+{
+  "actual_results_remaining": [
+    "Root integrated controls on cherry-picked source closure",
+    "Root bounded seeded real source resume with fresh process",
+    "Independent result/accounting/resource/source-custody review after completed actual receipts"
+  ],
+  "checks": [
+    {
+      "id": "identity-64-valid-docs",
+      "implementation": "Pager reconstructs prefix counts from physical source rows, resets ordinal per64 valid record.text documents, excludes null CID and retains citation fallback exactly.",
+      "source_tests": [
+        "test_small_paged_candidates_equal_original_iterator_exactly",
+        "test_resume_inside_section_and_across_64_document_boundary",
+        "test_null_metadata_and_legacy_citation_fallback_preserve_exact_group_ordinals"
+      ],
+      "status": "accepted"
+    },
+    {
+      "id": "exact-normalized-sentence",
+      "implementation": "Uses original normalize_uscode_hit and _sentences, same canonical identity fields and source text SHA; Unicode/source fallback witnesses explicit.",
+      "source_tests": [
+        "test_small_paged_candidates_equal_original_iterator_exactly",
+        "test_legacy_citation_fallback_has_explicit_provenance"
+      ],
+      "status": "accepted"
+    },
+    {
+      "id": "bounded-page",
+      "implementation": "Full raw and fallback record text bounded before historical sentence list; one page plus pending candidate dictionaries; max_page_spans immediate yield and candidate byte refusal preserve first-uncommitted cursor.",
+      "source_tests": [
+        "test_section_exceeding_old_span_bound_pages_without_all_candidate_dictionaries",
+        "test_byte_pages_are_complete_and_bounded",
+        "test_oversized_later_candidate_does_not_advance_over_it",
+        "test_fallback_text_is_bounded_before_sentence_materialization"
+      ],
+      "status": "accepted"
+    },
+    {
+      "actual_fresh_process_result_pending": true,
+      "id": "cursor-atomicity",
+      "implementation": "_write_page commits target rows, accounting/digest, next_section/next_span and done in one transaction; BaseException rolls back. Hydration matched flags are TEMP only.",
+      "source_tests": [
+        "test_resume_inside_one_section_matches_fresh_digest_and_counts",
+        "test_page_transaction_failure_retains_cursor_counts_digest_and_rows"
+      ],
+      "status": "accepted_for_implementation"
+    },
+    {
+      "id": "physical-accounting",
+      "implementation": "_classify uses every archived span-row ID, not only valid matching targets; _rows retains conflicts/invalid/hash/citation mismatches. Reports separate physical ledger rows, distinct archive/target IDs, target occurrence rows, outside-target totals and all candidate totals; equality checked.",
+      "source_tests": [
+        "test_all_archive_rows_and_outside_target_scope_are_explicit",
+        "test_conflicts_invalid_archive_and_mismatches_remain_target_occurrences",
+        "test_duplicate_physical_sources_have_distinct_occurrence_keys"
+      ],
+      "status": "accepted"
+    },
+    {
+      "bounds_policy": "Page bounds are immutable per generation. Fresh generations using different bounds compare equal; changing bounds on an existing generation refuses.",
+      "id": "ordered-digest",
+      "implementation": "Each ordered full canonical occurrence descriptor extends SHA256 from prior32 digest bytes. All occurrences, including outsiders, are included. Descriptor includes archive join disposition, so stability is within the pinned source+archive generation. Page/time/batch choices do not enter the digest.",
+      "source_tests": [
+        "test_resume_inside_one_section_matches_fresh_digest_and_counts",
+        "test_verified_seed_import_matches_full_replay_and_preserves_old_files"
+      ],
+      "status": "accepted_with_scope_clarification"
+    },
+    {
+      "id": "authenticated-seed-replay",
+      "implementation": "Shared stopped-writer lock, no WAL, seed manifest/report/DB byte witnesses, exact original code/input/profile binding, report/disposition/state checks, source extent/done verification, exact source-order OLD_COLUMNS replay, exact prefix cursor, precommit witnesses and one import transaction including seed_applied marker. New counts/digests are computed for every seed occurrence.",
+      "source_tests": [
+        "test_verified_seed_import_matches_full_replay_and_preserves_old_files",
+        "test_seed_import_rollback_cannot_double_count_prefix",
+        "test_seed_wrong_occurrence_binding_refused_before_import",
+        "test_seed_wal_code_and_report_custody_refused",
+        "test_seed_active_writer_is_refused_without_modification"
+      ],
+      "status": "accepted"
+    },
+    {
+      "id": "separate-generation",
+      "implementation": "New pager/controller/CLI/doc/tests are additive. Five original v1 code owners match old manifest hashes. New reconciliation DB/manifest scope preserves old census artifacts.",
+      "source_tests": [
+        "test_changed_paging_pins_and_seed_lineage_refused",
+        "test_foreign_database_and_concurrent_writer_are_refused"
+      ],
+      "status": "accepted"
+    },
+    {
+      "id": "no-authority-upgrade",
+      "implementation": "Report explicitly sets inference_executed, training_executed, semantic_reconstruction_measured, admitted, formalized and proof_authority false. No embedding/model imports or execution added. Metadata/citation fallback provenance does not confer genuine statutory text authority.",
+      "source_tests": [
+        "test_all_archive_rows_and_outside_target_scope_are_explicit",
+        "test_legacy_citation_fallback_has_explicit_provenance"
+      ],
+      "status": "accepted"
+    },
+    {
+      "id": "complete-means-physical-source-exhausted",
+      "implementation": "Pager done only when next_section equals pinned Parquet raw row count; empty/null-CID metadata produces empty pages and still advances raw cursor. Full target inventory flag remains false for omitted outsider rows. Seed done checked against original source extent and exact replay boundary.",
+      "source_tests": [
+        "test_all_archive_rows_and_outside_target_scope_are_explicit",
+        "test_final_cursor_empty_file_hash_and_section_validation",
+        "test_seed_wal_code_and_report_custody_refused"
+      ],
+      "status": "accepted"
+    },
+    {
+      "actual_guardian_resource_result_pending": true,
+      "id": "process-rss-units",
+      "implementation": "getrusage RUSAGE_SELF ru_maxrss reports Linux KiB converted to bytes, Darwin bytes, otherwise unknown platform-dependent conversion; scope explicitly current-process-lifetime high-water mark, not phase/group peak. DuckDB memory/spill and output cooperative limits documented.",
+      "status": "accepted"
+    }
+  ],
+  "completed": true,
+  "jobs_run": false,
+  "models_or_provers_run": false,
+  "observed_at_utc": "2026-10-11T00:18:17.318888+00:00",
+  "old_v1_source_pins": [
+    {
+      "actual_pin": {
+        "bytes": 23320,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+        "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+      },
+      "matches_historical_manifest": true,
+      "owner": "intake"
+    },
+    {
+      "actual_pin": {
+        "bytes": 24447,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+        "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+      },
+      "matches_historical_manifest": true,
+      "owner": "census"
+    },
+    {
+      "actual_pin": {
+        "bytes": 10156,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+      },
+      "matches_historical_manifest": true,
+      "owner": "uscode_ingest"
+    },
+    {
+      "actual_pin": {
+        "bytes": 11156,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      },
+      "matches_historical_manifest": true,
+      "owner": "constitution_inventory"
+    },
+    {
+      "actual_pin": {
+        "bytes": 8703,
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+        "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+      },
+      "matches_historical_manifest": true,
+      "owner": "uscode_dataset"
+    }
+  ],
+  "owner_control_receipts": [
+    {
+      "owner_executed_controls_independently_read": true,
+      "pin": {
+        "bytes": 14468,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/archive-reconciliation-controls.xml",
+        "sha256": "768f9a7b1fa85f3638558a6a02c8a608381463ecefe39ca6d5c32b5e5825cc51"
+      },
+      "reviewer_reran_tests": false,
+      "suite_headers": [
+        {
+          "errors": "0",
+          "failures": "0",
+          "hostname": "spark-b271",
+          "name": "pytest",
+          "skipped": "0",
+          "tests": "78",
+          "time": "10.359",
+          "timestamp": "2026-10-11T00:15:41.422080+00:00"
+        }
+      ],
+      "testcase_count": 78
+    },
+    {
+      "owner_executed_controls_independently_read": true,
+      "pin": {
+        "bytes": 3725,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/review/archive-reconciliation-final-controls.xml",
+        "sha256": "691e8495af15cc070ad90416bbcf886b38bc8bd6bed926e6cbc826f33adccd1b"
+      },
+      "reviewer_reran_tests": false,
+      "suite_headers": [
+        {
+          "errors": "0",
+          "failures": "0",
+          "hostname": "spark-b271",
+          "name": "pytest",
+          "skipped": "0",
+          "tests": "19",
+          "time": "4.234",
+          "timestamp": "2026-10-11T00:16:47.359868+00:00"
+        }
+      ],
+      "testcase_count": 19
+    }
+  ],
+  "proof_authority": false,
+  "resolved_closure_items": [
+    "Explicit proof_authority=False in new controller report",
+    "Seed tampering controls cover fabricated cursor beyond extent, shortened in-range cursor with unconsumed rows, and false completed marker before source end",
+    "Digest and seed documentation states new full-descriptor digests including archive disposition are recomputed and generation-scoped",
+    "Root-requested semantic_reconstruction_measured=False explicitly included and asserted"
+  ],
+  "resource_reservations_created": false,
+  "reviewed_commits": {
+    "controller": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+    "observed_controller_head": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+    "pager": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9"
+  },
+  "reviewed_tree_clean": true,
+  "schema": "uscode-span-continuation-independent-implementation-review/v1",
+  "scope": "Independent read-only committed source/test/doc review and SHA/XML verification. No pytest run, source job, model execution, resource claim, foreign DB open or foreign-tree mutation by reviewer.",
+  "source_pins": [
+    {
+      "bytes": 13440,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+    },
+    {
+      "bytes": 26696,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    {
+      "bytes": 1379,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/scripts/ops/legal_ir/reconcile_uscode_archive.py",
+      "sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d"
+    },
+    {
+      "bytes": 14608,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py",
+      "sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3"
+    },
+    {
+      "bytes": 14456,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py",
+      "sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e"
+    },
+    {
+      "bytes": 5198,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011/docs/autoencoders/uscode_archived_target_reconciliation.md",
+      "sha256": "cff96a88b2f37e3ca795fe6c8fa02480f05f392343ca1908848eb6d1d20016fd"
+    }
+  ],
+  "status": "source_and_control_receipts_accepted",
+  "unresolved_blocking_source_findings": 0
+}

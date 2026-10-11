@@ -1,0 +1,246 @@
+{
+  "all_expected_cases_passed": true,
+  "cherry_pick_owner_file_equivalence": [
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "original_commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "original_sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3",
+      "original_commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "original_sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b",
+      "relative_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d",
+      "relative_path": "scripts/ops/legal_ir/reconcile_uscode_archive.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e",
+      "relative_path": "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py"
+    },
+    {
+      "bytes_equal": true,
+      "integrated_sha256": "cff96a88b2f37e3ca795fe6c8fa02480f05f392343ca1908848eb6d1d20016fd",
+      "original_commit": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+      "original_sha256": "cff96a88b2f37e3ca795fe6c8fa02480f05f392343ca1908848eb6d1d20016fd",
+      "relative_path": "docs/autoencoders/uscode_archived_target_reconciliation.md"
+    }
+  ],
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "-o",
+    "cache_dir=/tmp/pytest-of-barberb/uscode-continuation-integrated-qj9ueilt/cache",
+    "--basetemp",
+    "/tmp/pytest-of-barberb/uscode-continuation-integrated-qj9ueilt/fixtures",
+    "--junitxml",
+    "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/integrated-controls.xml",
+    "tests/unit/logic/test_span_cache.py",
+    "tests/unit/logic/test_span_cache_quack.py",
+    "tests/unit/logic/test_span_cache_feed.py",
+    "tests/unit/logic/test_span_cache_paired_feed.py",
+    "tests/unit/logic/test_span_cache_exchange.py",
+    "tests/unit/logic/test_span_cache_exchange_validation.py",
+    "tests/unit/logic/test_span_cache_exchange_outputs.py",
+    "tests/unit/logic/test_paired_span_census.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py"
+  ],
+  "cwd": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+  "elapsed_seconds": 76.096,
+  "expected_cases": 375,
+  "integrated_merge_ancestry": [
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "a1b5c73e5b687d8bd6c3b3051788860fd6e2f07a",
+      "name": "prior_main"
+    },
+    {
+      "ancestor_of_test_end_commit": false,
+      "commit": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+      "name": "pager_original"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "4905c985dae6800bad9d6dae80e63725ce5af6b5",
+      "name": "pager_integrated"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "56f4a65ef1260188c8ea3216f392636aa97316a7",
+      "name": "controller_integrated"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "7a82e32dcaa9664a1a98a6110aa739d07f1eadf3",
+      "name": "incoming_unicode_source_fix"
+    },
+    {
+      "ancestor_of_test_end_commit": true,
+      "commit": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+      "name": "incoming_source_merge"
+    }
+  ],
+  "junit_pin": {
+    "bytes": 60768,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/integrated-controls.xml",
+    "sha256": "641743ed66555a6b3c70e6db60e56cc121dfdc013388aab0a25b2a0916cb28ef"
+  },
+  "junit_suite_headers": [
+    {
+      "errors": "0",
+      "failures": "0",
+      "hostname": "spark-b271",
+      "name": "pytest",
+      "skipped": "0",
+      "tests": "375",
+      "time": "74.542",
+      "timestamp": "2026-10-11T00:21:26.813001+00:00"
+    }
+  ],
+  "log_pin": {
+    "bytes": 511,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/validation/integrated-controls.log",
+    "sha256": "eb2b9f46ef5b6ede8f60f4f156d470da0353ea2da97f38dbb15b53f2a18a0c89"
+  },
+  "network_or_models_or_training_jobs": false,
+  "observed_at_utc": "2026-10-11T00:21:26.269675+00:00",
+  "observed_cases": 375,
+  "original_pager_not_ancestor_is_expected": "Integration cherry-picked the two original owner commits; all six committed owner files have exact byte equality, and integrated pager/controller commits are ancestors of tested HEAD.",
+  "prior_harness_failure": "attempt-01 retained cacheprovider-disabled pytest startup failure; zero collected cases; corrected harness restores cache provider with owned temporary cache",
+  "proof_authority": false,
+  "returncode": 0,
+  "schema": "uscode-span-continuation-integrated-controls/v1",
+  "source_commit": "25c86872660677c4ce8da81887b847e994097b47",
+  "source_commit_after_tests": "25c86872660677c4ce8da81887b847e994097b47",
+  "source_pins": [
+    {
+      "bytes": 43857,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache.py",
+      "sha256": "82de0ac0f8707dc9148c406790d7adb792043be49e92290c204daaa43f6052d0"
+    },
+    {
+      "bytes": 2742,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_quack.py",
+      "sha256": "15bd377eea334e163b319e662002487657a91752f0a49d99c75be27f719ee81f"
+    },
+    {
+      "bytes": 20830,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_feed.py",
+      "sha256": "aa9293afa38ad3f349216aa6912ac89952ae0c5538b76911d22e5712faee956f"
+    },
+    {
+      "bytes": 25786,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_paired_feed.py",
+      "sha256": "62a50b84a7340b5b2ac5d416ce48fdf130de98c2d2f10f4982d7fdaf50d83642"
+    },
+    {
+      "bytes": 16524,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_exchange.py",
+      "sha256": "ce13513daf55a1ee31917e6d4216949149a60201d271a3aaee9431583f8b48bb"
+    },
+    {
+      "bytes": 9114,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_exchange_validation.py",
+      "sha256": "f13878f1c8193ae3f97a32e7fe496b31c2d7e2e90fe79d54edaa621b5116aa84"
+    },
+    {
+      "bytes": 25763,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_span_cache_exchange_outputs.py",
+      "sha256": "3ec333cb681e22e77814f9288ab058ad38be323c2f24c02f50466dabe0f96387"
+    },
+    {
+      "bytes": 28296,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/logic/test_paired_span_census.py",
+      "sha256": "69208d7e26bfbeba891bc496d4d012023816cb114913175d34132ee3a2eb7366"
+    },
+    {
+      "bytes": 14997,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_intake.py",
+      "sha256": "e166a9bac1a56aa459e9b9618e315638e11f983b7a014c455da823f988eb940b"
+    },
+    {
+      "bytes": 13535,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+      "sha256": "4cb0c3b7ec93c3ccf5195292f665eb1c3d1c715f9ca304931c1d75e066a22096"
+    },
+    {
+      "bytes": 14608,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_legacy_span_pages.py",
+      "sha256": "74110702f3b0ef33a92590f02a4d6a63f762ce5918e9a8ced412567eca5f65a3"
+    },
+    {
+      "bytes": 14456,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_archive_reconciliation.py",
+      "sha256": "99490814a7fc882ba2bd44fa0b70960aea0adfe8adba8e94e8e147633a6d278e"
+    },
+    {
+      "bytes": 77906,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/span_cache.py",
+      "sha256": "5d390725291aa966d34f3e48d0ee58148626eb8281cd3079e153a2d9018e05d0"
+    },
+    {
+      "bytes": 40532,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+      "sha256": "97e6a59859fb9ca59b069a85ca9d569beddbe20eb1e10b62d1d128ad0162ec47"
+    },
+    {
+      "bytes": 59780,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/paired_span_census.py",
+      "sha256": "b3652d9cd022ec489a86337f129493ca34071cb44baa52a86d7e457a8495ef9e"
+    },
+    {
+      "bytes": 23320,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    {
+      "bytes": 24447,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    {
+      "bytes": 13440,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_pages.py",
+      "sha256": "d62189ec28e8dfff38dc1aa592bc45d5f8d7cf53f988963205a98269228de4c5"
+    },
+    {
+      "bytes": 26696,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_archive_reconciliation.py",
+      "sha256": "deeb3dc351d05712f0ba5f318e67abfab38c233a5c0f0ed4ee6fe0dfef6b543b"
+    },
+    {
+      "bytes": 1379,
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/scripts/ops/legal_ir/reconcile_uscode_archive.py",
+      "sha256": "b9c692f2413b5358eec3eae5db6c557ba1aed3dcb698928be2d4a14b78840c3d"
+    }
+  ],
+  "source_pins_unchanged_after_tests": true,
+  "synthetic_temporary_root": "/tmp/pytest-of-barberb/uscode-continuation-integrated-qj9ueilt",
+  "temporary_synthetic_fixtures_removed": true,
+  "tree_status_observed_after_controls": ""
+}

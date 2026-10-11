@@ -1,0 +1,8 @@
+[
+  "/home/barberb/.local/bin/python",
+  "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/operator-source/seed_then_resume_archive.py",
+  "--source-root",
+  "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007",
+  "--arguments-file",
+  "/home/barberb/lift_coding/artifacts/uscode-span-continuation-20261011/archive-arguments.json"
+]

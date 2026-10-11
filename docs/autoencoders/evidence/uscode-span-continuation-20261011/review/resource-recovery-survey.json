@@ -1,0 +1,254 @@
+{
+  "agents_md": {
+    "checked_ancestors": true,
+    "relevant_files_found": []
+  },
+  "all_saved_generation_code_pins_match": true,
+  "created_at_unix": 1791677105.5392606,
+  "disk": {
+    "affordable_additional_storage_bytes_at_sample": 2915969116,
+    "charged_bytes": 142084030884,
+    "inventory": {
+      "apparent_bytes": 94319030884,
+      "entry_count": 1354278,
+      "special_file_count": 5,
+      "symlink_count": 686
+    },
+    "inventory_elapsed_seconds": 15.923385230009444,
+    "inventory_sampled_unix": 1791677027.4160619,
+    "ledger_bytes": 6107372,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "ledger_sha256_at_inventory": "3e9c79dea6d13eb36099678cfb0eba39cbc32c74630dbdb9786ace369d9de6bb",
+    "ledger_sha256_at_receipt": "3e9c79dea6d13eb36099678cfb0eba39cbc32c74630dbdb9786ace369d9de6bb",
+    "ledger_unchanged_during_inventory": true,
+    "minimum_filesystem_free_bytes_at_sample": 144381792256,
+    "outstanding_full_reservations_bytes": 47765000000,
+    "reservation_counts": {
+      "released": 401,
+      "retained": 98
+    },
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 533856,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "roots_match_ledger": true,
+    "scope": "named_roots_only_apparent_bytes; each pathname counted, symlinks not followed; retained full claims remain charged; new admission must repeat fresh accounting",
+    "storage_limit_bytes": 145000000000
+  },
+  "host": {
+    "boot_id": "82e446b4-5572-47d2-a5ea-4259f31bb2d9",
+    "gpu_budget_required_for_source_only_census": 0,
+    "load_average": [
+      9.7177734375,
+      8.416015625,
+      7.52978515625
+    ],
+    "logical_cpu_count": 20,
+    "memory_bytes": {
+      "MemAvailable": 114392981504,
+      "MemTotal": 130663821312,
+      "SwapFree": 12979060736,
+      "SwapTotal": 17179865088
+    },
+    "pressure": {
+      "cpu": "some avg10=40.11 avg60=34.52 avg300=39.05 total=266788909669\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0",
+      "io": "some avg10=0.80 avg60=6.52 avg300=2.91 total=8326980205\nfull avg10=0.76 avg60=6.31 avg300=2.81 total=7518117422",
+      "memory": "some avg10=0.01 avg60=0.04 avg300=0.00 total=3463839322\nfull avg10=0.01 avg60=0.04 avg300=0.00 total=3105659799"
+    },
+    "uptime_seconds": 695178.94
+  },
+  "limits_and_missing_assumptions": [
+    "Headroom is a point-in-time cooperative census, not a future reservation or filesystem quota.",
+    "98 retained foreign disk reservations remain charged and must not be auto-released after reboot or owner disappearance.",
+    "Host CPU pressure can approach the proof safety threshold; let the unchanged scheduler decide admission.",
+    "Only 128 of 60,077 source sections are covered; complete reconciliation and source span identity/ordering remain unresolved.",
+    "Token cohorts remain unmeasured; no learned encoder, decoder, fitting, semantic assessment or proof authority was exercised."
+  ],
+  "mode": "read_only_inputs_state_and_resources; only this compact receipt is created",
+  "mutations": {
+    "cap_changed": false,
+    "claims_acquired": 0,
+    "claims_released": 0,
+    "jobs_launched": 0,
+    "leases_acquired": 0,
+    "leases_cancelled": 0,
+    "leases_released": 0,
+    "models_loaded": 0,
+    "shared_scheduler_config_changed": false
+  },
+  "previous_generations": {
+    "source-census-01": {
+      "claim_status": "released",
+      "next_section": 112,
+      "occurrences": 9748,
+      "recovered_by": "source-census-resume-02"
+    },
+    "source-census-resume-02": {
+      "claim_status": "released",
+      "database_bytes": 8663040,
+      "done": false,
+      "manifest_canonical_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+      "manifest_file_sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2",
+      "matched": 2165,
+      "next_section": 128,
+      "occurrences": 18342,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results",
+      "report_manifest_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+      "source_text_copied": false,
+      "unlisted": 16177,
+      "wal_exists": false,
+      "writer_lock_observed_unheld": true
+    }
+  },
+  "recommended_initial_bounded_request": {
+    "child_process_slots": 1,
+    "cpu_slots": 1,
+    "duckdb_memory_mb": 768,
+    "fresh_admission_required": true,
+    "outer_memory_mb": 1536,
+    "requires_gpu": false,
+    "scope": "conservative initial continuation, not a measured full-corpus output-size guarantee",
+    "storage_bytes": 256000000
+  },
+  "resource_helper_compatibility": {
+    "adoption_helper_sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f",
+    "canonical_dataset_tree_has_census": false,
+    "canonical_scheduler_sha256": "f156511991e33d3b4ba523c3c5080ea30d0a53ad8a4dbcccea0487432679a9aa",
+    "current_canonical_owner_sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c",
+    "frozen_owner_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+    "frozen_owner_sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c",
+    "frozen_scheduler_sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4",
+    "frozen_scheduler_source_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2",
+    "frozen_source_exists": true,
+    "guardian_helpers_root": "/home/barberb/lift_coding/artifacts/autoencoder-dual-bank-fit-20261007/parent-replay-guardian-source-r2",
+    "old_guarded_census_wrapper": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/operator-source/run_guarded_census_phase.py",
+    "old_scheduler_config_matches_live": true,
+    "reuse_notes": [
+      "Import resource owner and scheduler through the exact authenticated old overlay; canonical scheduler bytes changed.",
+      "Use the owned integration source root that contains the saved census producer, whose five hashes still match the manifest.",
+      "Create a fresh owned attempt and fresh lease/watchdog bindings; never reuse October 7 lease identity.",
+      "Clone only the stopped generation manifest and checkpointed DuckDB under fresh accounting, then resume, keeping old results immutable."
+    ]
+  },
+  "saved_generation_code_pins": {
+    "census": {
+      "expected_sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    "constitution_inventory": {
+      "expected_sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+      "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+    },
+    "intake": {
+      "expected_sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    "uscode_dataset": {
+      "expected_sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+      "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+    },
+    "uscode_ingest": {
+      "expected_sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471",
+      "path": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+      "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+    }
+  },
+  "scheduler": {
+    "config": {
+      "lane_reservations": {
+        "validation": {
+          "cpu_slots": 1,
+          "memory_mb": 0
+        }
+      },
+      "max_gpu_memory_percent": null,
+      "max_memory_percent": null,
+      "max_swap_percent": null,
+      "max_waiting_requests": 256,
+      "proof_backoff_seconds": 2.0,
+      "proof_cpu_stall_percent": 50.0,
+      "proof_io_stall_percent": 10.0,
+      "proof_memory_headroom_mb": 2458,
+      "proof_memory_stall_percent": 2.0,
+      "proof_safety_enabled": true,
+      "require_known_gpu_for_gpu_work": true,
+      "reserved_gpu_memory_mb": 0,
+      "reserved_memory_mb": 0,
+      "total_child_process_slots": 4,
+      "total_cpu_slots": 4,
+      "total_gpu_memory_mb": null,
+      "total_memory_mb": 9830,
+      "total_unified_memory_mb": null
+    },
+    "config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+    "lease_recovery_called": false,
+    "leases": 0,
+    "old_binding_reusable": false,
+    "resource_admission_exercised": false,
+    "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "state_sha256": "87e3e23c597bed51c985252f2d520049c33975ea86123e91de47542cda3ae8be",
+    "waiters": 0
+  },
+  "schema": "uscode-source-census-resource-recovery-survey/v1",
+  "supersession_survey": {
+    "newer_saved_generation_found": false,
+    "no_live_job_started_by_this_survey": true,
+    "scope": "US Code census/intake paths among artifact and test-log file listing plus disk ledger attempted directories"
+  },
+  "verified_inputs": [
+    {
+      "bytes": 374277662,
+      "ctime_ns": 1790444227839614223,
+      "device": 66306,
+      "inode": 12190549,
+      "matches": true,
+      "mtime_ns": 1790444227598474211,
+      "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "release_id": "ipfs-uscode-5016b86a",
+      "repository_id": "justicedao/ipfs_uscode",
+      "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+      "role": "source",
+      "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+      "stable_stat_witness": true,
+      "verified_sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+    },
+    {
+      "bytes": 52701179,
+      "ctime_ns": 1791385411069107548,
+      "device": 66306,
+      "inode": 75023679,
+      "matches": true,
+      "mtime_ns": 1791385411069107548,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+      "path_in_repo": "autoformal/uscode/resume-checkpoint.parquet",
+      "repository_id": "justicedao/uscode-autoformal-span-cache",
+      "revision": "765176c6db79ba65c1697c21dead43666350b730",
+      "role": "progress",
+      "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03",
+      "stable_stat_witness": true,
+      "verified_sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+    }
+  ]
+}
