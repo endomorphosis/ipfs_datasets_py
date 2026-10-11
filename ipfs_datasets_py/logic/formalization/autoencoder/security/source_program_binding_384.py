@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import io
 import json
+import tokenize
 
 from ....software_verification.program import ProgramExpression, ProgramIR
 from ....software_verification.source_adapters import (
-    SourceAdapterStatus, adapt_source_to_software_verification,
+    SourceAdapterStatus, _line_byte_offsets, adapt_source_to_software_verification,
 )
 from ....software_verification.syntax_bridge import SoftwareVerificationSyntaxBridge
 
@@ -59,8 +61,18 @@ def _require(condition, code, *, status="unsupported"):
 
 
 def _guard(source):
-    _require(source.isascii() and all(ord(c) >= 32 or c in "\n\t" for c in source)
+    _require(all(ord(c) >= 32 or c in "\r\n\t" for c in source)
              and "\x7f" not in source, "source_encoding_unsupported")
+    # Permit Unicode only in genuine comments, not identifiers normalized by
+    # Python, string contents, or executable tokens. Tokenization sees parser
+    # newlines; parsing, hashing and byte provenance retain the original text.
+    lexical_source = source.replace("\r\n", "\n").replace("\r", "\n")
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(lexical_source).readline):
+            _require(token.type == tokenize.COMMENT or token.string.isascii(),
+                     "source_encoding_unsupported")
+    except (tokenize.TokenError, SyntaxError) as exc:
+        raise _Rejected("python_syntax_unsupported") from exc
     try:
         tree = ast.parse(source, type_comments=True)
     except (ValueError, SyntaxError, RecursionError) as exc:
@@ -166,9 +178,7 @@ def _native_context(source, guarded):
              and all(item.type_ref == "any" for item in symbols.values())
              and native_function.return_type == "any", "native_symbol_scope_changed")
     bindings = {item.name: item.symbol_id for item in symbols.values() if item.kind.value != "result"}
-    offsets = [0]
-    for line in source.splitlines(keepends=True):
-        offsets.append(offsets[-1] + len(line))
+    offsets = _line_byte_offsets(source)
     seen = set()
     expression_binding = {}
 
@@ -260,7 +270,8 @@ def qualify_source_candidate(source_text, candidate):
     annotated ``int``, returning one ``+ - * < <= > >= == !=`` operation on
     those parameters, directly or through one fresh local assignment. Optional
     return annotations must agree. Division, calls and other control flow are
-    explicit frontiers. The original candidate is never changed.
+    explicit frontiers. Unicode comments and CR/LF newlines retain exact UTF-8
+    provenance; executable tokens remain ASCII. The candidate is never changed.
     """
     report = dict(schema=SCHEMA, status="unsupported", qualified=False, source_sha256=None,
         candidate_sha256=None, checks=[], projections=[], source_binding=None,
