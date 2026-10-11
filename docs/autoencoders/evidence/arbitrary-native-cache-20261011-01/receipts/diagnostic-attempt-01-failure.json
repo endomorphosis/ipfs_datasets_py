@@ -1,0 +1,26 @@
+{
+  "actual_command": [
+    "python",
+    "analyze_native_pilot.py",
+    "--plan",
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+    "--results",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results",
+    "--output",
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json"
+  ],
+  "cause": "Python3.12 pathlib import graph preloads URL parsing modules; no networking invocation",
+  "encoder_decoder_training_execution": false,
+  "error_message": "fresh interpreter required; a denied library is already loaded",
+  "error_type": "ValueError",
+  "failure_location": "fence before canonical or output analysis",
+  "helper_sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c",
+  "no_output_created": true,
+  "original_native_numerical_results_modified": false,
+  "returncode": 1,
+  "schema": "arbitrary-native-postdiagnostic-attempt-failure/v1",
+  "separate_stdlib_only_reproduction_preloaded_modules": [
+    "urllib",
+    "urllib.parse"
+  ]
+}

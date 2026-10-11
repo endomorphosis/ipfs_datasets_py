@@ -1,0 +1,76 @@
+{
+  "cleanup_error": null,
+  "lease_cancellation_read": false,
+  "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "record": {
+    "artifacts_durable_asserted": false,
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 85721246,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01"
+    },
+    "child": {
+      "birth": "70399307",
+      "pid": 250600
+    },
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "created_at": 1791685919.460727,
+    "external_charges": {},
+    "last_usage": {
+      "additional_requested_bytes": 0,
+      "attempt_bytes": 38682,
+      "attempt_limit_bytes": 200000000,
+      "charged_bytes": 143576336825,
+      "checked_at": 1791685949.2956743,
+      "external_charged_bytes": 0,
+      "group_rss": {
+        "available": true,
+        "live_processes": 1,
+        "rss_bytes": 11792384
+      },
+      "inventory": {
+        "apparent_bytes": 95355336825,
+        "entry_count": 1357803,
+        "special_file_count": 5,
+        "symlink_count": 697
+      },
+      "limit_bytes": 145000000000,
+      "memory_limit_bytes": 1610612736,
+      "minimum_filesystem_free_bytes": 63978926080,
+      "observed_apparent_bytes": 95355336825,
+      "outstanding_full_reservations_bytes": 48221000000,
+      "process_slot_estimate_exceeded": false,
+      "reserved_child_process_slots": 1,
+      "scope": "named_roots_only_apparent_bytes",
+      "total_attempt_charged_bytes": 38682
+    },
+    "memory_mb": 1536,
+    "owner_pid": 243641,
+    "prior_children": [],
+    "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+    "scheduler_lane": "hammer_lean",
+    "status": "active",
+    "storage_bytes": 200000000,
+    "workload": "canonical_trainer"
+  },
+  "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+  "resource_lease": {
+    "acquired_at": 1791685919.5351536,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "gpu_memory_mb": 0,
+    "lane": "hammer_lean",
+    "lease_id": "17bc3044c3e24682b81e0abba4ca7b64",
+    "locally_released_flag": false,
+    "memory_mb": 1536,
+    "owner_pid": 243641,
+    "parent_lease_id": null,
+    "requires_gpu": false,
+    "unified_memory_mb": 0,
+    "wait_seconds": 6.399350240826607e-07
+  },
+  "scheduler_state_read": false,
+  "schema": "guardian-cached-resource-snapshot/v1",
+  "snapshot_scope": "cached_owner_primitives_only"
+}

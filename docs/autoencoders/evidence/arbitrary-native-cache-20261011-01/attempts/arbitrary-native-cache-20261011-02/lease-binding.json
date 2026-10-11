@@ -1,0 +1,24 @@
+{
+  "capability_persisted": false,
+  "config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+  "lock_identity": [
+    66306,
+    524340
+  ],
+  "lock_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json.lock",
+  "own_fields": {
+    "acquired_at": 1791686179.571292,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "gpu_memory_mb": 0,
+    "lane": "hammer_lean",
+    "lease_id": "7bcf08278d0748ecb9534a5699eeba8e",
+    "memory_mb": 1536,
+    "owner_birth_marker": "70422753",
+    "owner_pid": 325830,
+    "parent_lease_id": null,
+    "requires_gpu": false,
+    "unified_memory_mb": 0
+  },
+  "state_path": "/tmp/ipfs-datasets-resource-scheduler-1000.json"
+}

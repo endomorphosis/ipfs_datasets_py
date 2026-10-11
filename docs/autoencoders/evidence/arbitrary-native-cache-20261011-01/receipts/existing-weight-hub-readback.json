@@ -1,0 +1,54 @@
+{
+  "checkpoint_identity_verified_via": "published regular Git blob identities or full LFS SHA256/size",
+  "downloads_of_weight_bodies": 0,
+  "local_checkpoint_bytes_unchanged": true,
+  "metadata_files_examined": 3167,
+  "new_weights_created": false,
+  "numerical_replay_performed": false,
+  "observed_at_utc": "2026-10-11T02:41:15.111175+00:00",
+  "passed": true,
+  "previous_Hub_identity_inventory_preservation_claimed": false,
+  "private": false,
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "eb1890f255b096ef81a8a2364bd28fef296bbfd8",
+  "schema": "arbitrary-native-cache-existing-weight-hub-readback/v1",
+  "states": [
+    {
+      "checkpoint": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "git_blob_oid": "57e3eb7158c0f3f51ebb687242f936331c95fc87",
+      "matching_existing_hub_files": [
+        {
+          "blob_id": "57e3eb7158c0f3f51ebb687242f936331c95fc87",
+          "bytes": 2798242,
+          "lfs_sha256": null,
+          "path": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-zero/selected-state.json",
+          "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/eb1890f255b096ef81a8a2364bd28fef296bbfd8/releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-zero/selected-state.json"
+        }
+      ],
+      "recipe": "normative-wording-zero"
+    },
+    {
+      "checkpoint": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "git_blob_oid": "5b024901302817bdafc8e38be703d52f090da45b",
+      "matching_existing_hub_files": [
+        {
+          "blob_id": "5b024901302817bdafc8e38be703d52f090da45b",
+          "bytes": 2797392,
+          "lfs_sha256": null,
+          "path": "releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-ce/selected-state.json",
+          "url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/eb1890f255b096ef81a8a2364bd28fef296bbfd8/releases/20261006-normative-wording-checkpoints-v1/checkpoints/384d/normative-wording-ce/selected-state.json"
+        }
+      ],
+      "recipe": "normative-wording-ce"
+    }
+  ],
+  "uploads": 0
+}

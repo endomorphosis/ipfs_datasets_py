@@ -1,0 +1,635 @@
+{
+  "actual_optimizer_updates": 0,
+  "bytes": 2308360,
+  "file_count": 99,
+  "files": {
+    "attempts/arbitrary-native-cache-20261011-01/child-exit.json": {
+      "bytes": 72,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child-exit.json",
+      "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/child-identity.json": {
+      "bytes": 43,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child-identity.json",
+      "sha256": "c7217d38ab9bb61173bd97891f36d945e5eedfa6ba45e0b4abebbe26f9ecc327"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/child.log": {
+      "bytes": 6196,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child.log",
+      "sha256": "6784e317fcf892fe0fa16d3b408b4a98b3e24560b3bbab1956a6bcf23372832f"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/command.json": {
+      "bytes": 1032,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/command.json",
+      "sha256": "3a279e0f9d4e31ddc196a4a9d9407bfbc3d28cb05f4c3da6a6faecc3ced55bf8"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/failure-primary.json": {
+      "bytes": 4839,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/failure-primary.json",
+      "sha256": "3e76dcc336142abbecaff4e839b3bd0ae95269d8ce3d885b33c0023e29c2f50a"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/group-rss-observations.jsonl": {
+      "bytes": 17460,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/group-rss-observations.jsonl",
+      "sha256": "5b912cac561417ce1990dc0d863c78e932f8173ca85f702ea814927f35187521"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/group-rss-summary.json": {
+      "bytes": 1734,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/group-rss-summary.json",
+      "sha256": "e5303d341b492f18d83d544b945c68dbabeec27b12369f8a56d9ca0963dafb49"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/guardian-exit.json": {
+      "bytes": 4360,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/guardian-exit.json",
+      "sha256": "3c00422cd549276dd1517979f2db99a3fbd54e36fb3d1c03da3f9d7100ec593d"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/lease-binding.json": {
+      "bytes": 693,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/lease-binding.json",
+      "sha256": "de0883b2cc04df20e94aa7a74430d28b089b64b8e072a58674c198447243947c"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/lease-observations.jsonl": {
+      "bytes": 34990,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/lease-observations.jsonl",
+      "sha256": "7cf6b5a67e85ad6dc243c1b1527a24dc1f0e62980c871df1aeaa8b9ad64bcee9"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/pre-admission.json": {
+      "bytes": 7950,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/pre-admission.json",
+      "sha256": "da616ceed286aa9b7ff12d0d6217f3f50dfeec9fc37c862d6add0456592be060"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/resources-final-failure.json": {
+      "bytes": 4595,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/resources-final-failure.json",
+      "sha256": "0ad53e97a5ebdeb3c89b7db1367e70a6d7e3d15eadcab7d91e11f95c6e7f5a06"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/resources-start.json": {
+      "bytes": 2536,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/resources-start.json",
+      "sha256": "793afc3e414e58add5dbbe2ba967ae56f4299ddc00ed853b35a0d43ebb2885e5"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/results/source-production/failure-summary.json": {
+      "bytes": 755,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/results/source-production/failure-summary.json",
+      "sha256": "f4ba6297018602d49c118ba17cecd1a46516963c968cf9735210948f5f829a68"
+    },
+    "attempts/arbitrary-native-cache-20261011-01/scheduler-adoption.json": {
+      "bytes": 4645,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/scheduler-adoption.json",
+      "sha256": "4879c724255fd2aa9bdb216ec70523a1fb5295fcbd5e97414bee4271ae50ba15"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/child-exit.json": {
+      "bytes": 105,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/child-exit.json",
+      "sha256": "cebecdfb128a5f13d293b224883a2ff50330762cc8f8d0692acdcc2fa19ecfd3"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/child-identity.json": {
+      "bytes": 43,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/child-identity.json",
+      "sha256": "00cfeff523e438dc0edb51985dbe70cb9a02433b9068345395fa1272d10a62d5"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/child.log": {
+      "bytes": 2203,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/child.log",
+      "sha256": "d0e1547d0f92918c4ac1c451a5b61c9e2385cc3370f5966b40479a3380f5b9e7"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/command.json": {
+      "bytes": 1032,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/command.json",
+      "sha256": "9b0f0ebbf217346d7af3b17ca00bf710e757d73ca722a3d8460ffb357e09d28f"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/group-rss-observations.jsonl": {
+      "bytes": 12982,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/group-rss-observations.jsonl",
+      "sha256": "498dffa80a7bc14545973a670c7f5195e3f2d664ae76c574b23ae6310d322fb5"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/group-rss-summary.json": {
+      "bytes": 1735,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/group-rss-summary.json",
+      "sha256": "a4a6f1ae3aebfc4c985953520c4bd448c829619f222128d79cf08c4033a89b5b"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/guardian-exit.json": {
+      "bytes": 518,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/guardian-exit.json",
+      "sha256": "b94c3a83418d6ea7e00496b6e02c9b60e793b6d34a808c4ce07f596828908e2d"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/lease-binding.json": {
+      "bytes": 692,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/lease-binding.json",
+      "sha256": "654e7c66cb467deec78921dfb84fcb363f2eee904211b99066f010c480206ecd"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/lease-observations.jsonl": {
+      "bytes": 27628,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/lease-observations.jsonl",
+      "sha256": "1ec543cad03bb4dc2485e0ed9fe7abe0fab9f0c37ea49dcb65dc32fe82e9f8ea"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/owned-group-final.json": {
+      "bytes": 189,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/owned-group-final.json",
+      "sha256": "c3d47e2a0139a60e88dac8fdb8af84a4df726f3116d14a24827761c8dbb90c3f"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/pre-admission.json": {
+      "bytes": 7950,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/pre-admission.json",
+      "sha256": "a2015679ea53d9cff4c295a0af334fd1ebebd6c207a11b031475b21c23a4b9d5"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/resource-observations.json": {
+      "bytes": 872,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/resource-observations.json",
+      "sha256": "cfc858c7822ebd85448dcbcb5aa2fc29641b1ccd30a09a7440b689ad4e1a2e35"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/resources-final.json": {
+      "bytes": 6258,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/resources-final.json",
+      "sha256": "f71e85f6418c0dee0863bf61ab4ee6ca1311079649bc259b18379856a27c24b4"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/resources-start.json": {
+      "bytes": 2536,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/resources-start.json",
+      "sha256": "6240659a873ae852d966edebd542ec985ed5a7d508d0162a604ed18dd147ca18"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/both-decoder-plans-before-generation.json": {
+      "bytes": 516656,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/both-decoder-plans-before-generation.json",
+      "sha256": "2a49802f97189b0cc300cf24d0cf4264c032cf81ebc315f26779e620b08357fc"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json": {
+      "bytes": 32794,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json",
+      "sha256": "44c1636c020ba7d64afe71c101877fc7dc9b10fc95678076e400677f0f519b0d"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json": {
+      "bytes": 32801,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json",
+      "sha256": "d0dc2b5f078f1f9a6257fc883002a812203a183e154c8f1ccd90fb57bb1a3c51"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json": {
+      "bytes": 38209,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json": {
+      "bytes": 330754,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+      "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/source-production/summary.json": {
+      "bytes": 17510,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/summary.json",
+      "sha256": "6465ea0d0320a647ed447c6fc373119bd97ddf487d7a192fa73c58ac5e76a4df"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/results/summary.json": {
+      "bytes": 25649,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/summary.json",
+      "sha256": "14e8c67beb96c883125264de0c9bf8526e6ee4f1dfa7e9b00cda539e1c33382d"
+    },
+    "attempts/arbitrary-native-cache-20261011-02/scheduler-adoption.json": {
+      "bytes": 4645,
+      "category": "owned_attempt_evidence",
+      "origin": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/scheduler-adoption.json",
+      "sha256": "c0b9ec36022b944be3c07c783a39f4c240a8d82bd85b2785b85280c42e534e21"
+    },
+    "helpers/analyze_native_pilot-draft-01.py.txt": {
+      "bytes": 22504,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-01.py",
+      "sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44"
+    },
+    "helpers/analyze_native_pilot-draft-02.py.txt": {
+      "bytes": 23740,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot-draft-02.py",
+      "sha256": "fd2fbf51c3efd15281729a5770d566cf9314c0364325d664379f2b437513980c"
+    },
+    "helpers/analyze_native_pilot.py.txt": {
+      "bytes": 24600,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+      "sha256": "7d3c4620298ca5a0abe21a8e67de1e5b017c471c8ee8b5565617b19566bbe18a"
+    },
+    "helpers/capture_resource_snapshot.py.txt": {
+      "bytes": 1269,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/capture_resource_snapshot.py",
+      "sha256": "239aefad5b31b0e07868e2ff124ec0db03fd1b2538fa668e4cfa6bc77da5b099"
+    },
+    "helpers/capture_validation.py.txt": {
+      "bytes": 2390,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/capture_validation.py",
+      "sha256": "72f853c4075fc324e9157d32ef01e1aeb28741a47e9fd9721f7092d2a2fd46d1"
+    },
+    "helpers/prepare_contribution.py.txt": {
+      "bytes": 20287,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/prepare_contribution.py",
+      "sha256": "6d4c117d431524e537fcd884b24c90a5ef727c9d44123ebca2dfc75156385b7a"
+    },
+    "helpers/prepare_native_plan.py.txt": {
+      "bytes": 3759,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/prepare_native_plan.py",
+      "sha256": "6c4e0c14efd86276ae789995fb4d255b2f41d0246d7a9b9a3884bc03a0d2a46c"
+    },
+    "helpers/run_native_cache_pilot-draft-01.py.txt": {
+      "bytes": 8874,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot-draft-01.py",
+      "sha256": "a31ba1f025df084c85697ca9d4c65e190bc7120be22adc55053400b66c910211"
+    },
+    "helpers/run_native_cache_pilot.py.txt": {
+      "bytes": 9284,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot.py",
+      "sha256": "3a00cf6e9ce8120c62c0fe74310ac919f27bc267aa9030bc6dea50d15608824a"
+    },
+    "helpers/run_scope_guardian.py.txt": {
+      "bytes": 38281,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "helpers/verify_existing_hub_weights.py.txt": {
+      "bytes": 2048,
+      "category": "reviewed_helper_text",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/verify_existing_hub_weights.py",
+      "sha256": "618c3a45e148e066b4c208dcfe7091c5eb916e2dfb76e3fca9e2f14718cff7a3"
+    },
+    "receipts/adapter-contract-review.json": {
+      "bytes": 26651,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/adapter-contract-review.json",
+      "sha256": "15d1bf1e2f85f2701096071af8e318a14e9f8ec9c38e646fc428168e3c6c2f85"
+    },
+    "receipts/adapter-tests-draft-01.xml": {
+      "bytes": 40686,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/adapter-tests-draft-01.xml",
+      "sha256": "c91fb58c8801060ecfc4c66f71dc38dccddba2a65a67921b287452d1f6ffc72a"
+    },
+    "receipts/cache-module-build.json": {
+      "bytes": 6362,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/cache-module-build.json",
+      "sha256": "fed39546835a4f03598ac25c942899896fe5eb69582b449ac3f113676af71eb7"
+    },
+    "receipts/corrected-adapter-tests.xml": {
+      "bytes": 11426,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/corrected-adapter-tests.xml",
+      "sha256": "a68107f1b51971564d87fc06d49bf14e1d86921e1ad72f5ef4576dc93491f5a9"
+    },
+    "receipts/diagnostic-attempt-01-failure.json": {
+      "bytes": 1165,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-attempt-01-failure.json",
+      "sha256": "9ba74667cd01fac2ba015419eb54c9cdf461a54a31d4663904a0d69c9ad30b48"
+    },
+    "receipts/diagnostic-attempt-02.log": {
+      "bytes": 724,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-attempt-02.log",
+      "sha256": "dbe8daa505f1947f32a2a4684c6637d4d17bc5a1caaedaa3f59d1551b02f7694"
+    },
+    "receipts/diagnostic-helper-build-draft-01.json": {
+      "bytes": 1350,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-01.json",
+      "sha256": "0b8be423f6cdec6951cc4fceac4bc6568fa8fa453977364bc18e99f22423ab89"
+    },
+    "receipts/diagnostic-helper-build-draft-02.json": {
+      "bytes": 1924,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build-draft-02.json",
+      "sha256": "706e350fad032294954ade423f4ccc8d545ed7416b7f144924e30aba85942628"
+    },
+    "receipts/diagnostic-helper-build.json": {
+      "bytes": 2630,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-build.json",
+      "sha256": "721122fc2481e3db76aecb3dd5d5d4ae4d1577af7bf44e568fc570bb5827e5d0"
+    },
+    "receipts/diagnostic-helper-retry-review.json": {
+      "bytes": 9408,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-retry-review.json",
+      "sha256": "3f1af2d3a8e46a02a09377180a069b1b42e8f6447502ec9b152e8d5d61ec6152"
+    },
+    "receipts/diagnostic-helper-review-draft-01.json": {
+      "bytes": 1712,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review-draft-01.json",
+      "sha256": "136aff3453327efceedbded55c33005369042f8d42c69e95c85ff11163c4faf1"
+    },
+    "receipts/diagnostic-helper-review.json": {
+      "bytes": 10678,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/diagnostic-helper-review.json",
+      "sha256": "5f6b94d3c68e66eac4cf6f61ae96dd2b9dd36f6efe1ccadf334df0dd50a9fe41"
+    },
+    "receipts/existing-weight-hub-readback.json": {
+      "bytes": 2662,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/existing-weight-hub-readback.json",
+      "sha256": "295ae342916cdc94d7fb224b126ecb9971ed52619256988235e82f9718628bdc"
+    },
+    "receipts/experiment-plan-draft-01.json": {
+      "bytes": 20901,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan-draft-01.json",
+      "sha256": "a674dedae06b1dbc8028a3f83907ab5c745506ba04da08bedcd376c3ebc184b9"
+    },
+    "receipts/experiment-plan-draft-02.json": {
+      "bytes": 20901,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan-draft-02.json",
+      "sha256": "b51412b7a42f0e04815776555c7282c5e68bb42004281296d08628ae67149da9"
+    },
+    "receipts/experiment-plan-draft-03.json": {
+      "bytes": 20901,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan-draft-03.json",
+      "sha256": "4880887b7e05708660ec9772605b8898526ff39a7800aec7c105f782abdad79e"
+    },
+    "receipts/experiment-plan.json": {
+      "bytes": 20901,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+      "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+    },
+    "receipts/guardian-console-attempt-01.jsonl": {
+      "bytes": 216,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/guardian-console-attempt-01.jsonl",
+      "sha256": "efa04faecce7815d5c15828f887b3427b628c74c77fc4a6e1c180177fb10b43b"
+    },
+    "receipts/guardian-console-attempt-02.jsonl": {
+      "bytes": 208,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/guardian-console-attempt-02.jsonl",
+      "sha256": "07fdddb805a744a09b29c3f603ff96554375a964603934c327636b06fb62da05"
+    },
+    "receipts/incoming-main-integration.json": {
+      "bytes": 1040,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/incoming-main-integration.json",
+      "sha256": "1a98ddb12a67dcf7b5585ee82ee7df482910b20c55dc47df05ba27b20e0cd99c"
+    },
+    "receipts/intake.json": {
+      "bytes": 646,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/intake.json",
+      "sha256": "b38b600f59af2ad012f7e2d1d1bb4d5f3a644435e567432d822f13a15c4d4075"
+    },
+    "receipts/native-producer-review.json": {
+      "bytes": 22252,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/native-producer-review.json",
+      "sha256": "ad46422a6b56480ae2ebe439afc18ac7a1342b2c650157d980783a0123ab8967"
+    },
+    "receipts/post-generation-diagnostics.json": {
+      "bytes": 111344,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/post-generation-diagnostics.json",
+      "sha256": "379bd82de67952b4cd4959619839d258546ac97aad42ba8e108581b02add3d33"
+    },
+    "receipts/preparation-cli-tests.xml": {
+      "bytes": 22387,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-cli-tests.xml",
+      "sha256": "822bc38905714b24ab48ac50b48e17c822c49112d32d6f0c101dc57f87161194"
+    },
+    "receipts/preparation-helper-build.json": {
+      "bytes": 7765,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-helper-build.json",
+      "sha256": "fe53f702a6ae7ad7a4fcdc52e3bb21e4776b6e85eaf65d71d6e232f0e40a765e"
+    },
+    "receipts/protocol-review-admitted-reconstruction.json": {
+      "bytes": 56631,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-admitted-reconstruction.json",
+      "sha256": "f1a4cc72a0e6d99fda0c1e0aeb57d76abe6472586c67d773f0026870895ef945"
+    },
+    "receipts/protocol-review-draft-01.json": {
+      "bytes": 40091,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-draft-01.json",
+      "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1"
+    },
+    "receipts/protocol-review.json": {
+      "bytes": 54197,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json",
+      "sha256": "45c862b2db26bfebd9a57c9df6f77c03f8a157d06041d0e1a38e0f9291ef141c"
+    },
+    "receipts/protocol-supplement-attempt02.json": {
+      "bytes": 3567,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-supplement-attempt02.json",
+      "sha256": "ce5097c8cf85856b11cb2ed3c97e167164f10224a36893c54db6491774c1d689"
+    },
+    "receipts/real-law-source-pilot.json": {
+      "bytes": 31436,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json",
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5"
+    },
+    "receipts/resource-compatibility-attempt-02.json": {
+      "bytes": 6800,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility-attempt-02.json",
+      "sha256": "a5f2a94a5d4e5d7269db38b76a6110ee06d9d8c75fa41fb4e6e5bea9cafc123a"
+    },
+    "receipts/resource-compatibility.json": {
+      "bytes": 6800,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility.json",
+      "sha256": "f3044ebad392d13f9c6018ed421638e70c639738e0c8a5f0b708d5dfbb40f4d5"
+    },
+    "receipts/results-resource-review.json": {
+      "bytes": 84588,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/results-resource-review.json",
+      "sha256": "5634d4d0fc1f307c312b041e0e243ced9eada53b43cca282d8d40217c7bb1f4a"
+    },
+    "receipts/runtime-final-tests.xml": {
+      "bytes": 6042,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-final-tests.xml",
+      "sha256": "e808bdeb010781760df99a78340193e7ff24b3933403a42c0882b93da57e1953"
+    },
+    "receipts/runtime-frozen-tests.xml": {
+      "bytes": 6233,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-frozen-tests.xml",
+      "sha256": "fa954ca443d4c2242ae05146e83ddf092172baf40e8cedcf0f8df53fd4d313ac"
+    },
+    "receipts/runtime-pilot-review.json": {
+      "bytes": 23406,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-pilot-review.json",
+      "sha256": "15aa3a1eab7b94f5cafcb9d4dd1697df8bcc9d8872c89d24a4244da0d7acc0d8"
+    },
+    "receipts/runtime-retry-review.json": {
+      "bytes": 24317,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-retry-review.json",
+      "sha256": "34d9b7b4317c06ef8865101eb85571ff187b50225378db29b55df8f3421c76c6"
+    },
+    "receipts/runtime-review.json": {
+      "bytes": 48638,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-review.json",
+      "sha256": "a8a607368f0730a921b5a77d18806be198c2ca3290b745ea0dc4a0d21f50ea82"
+    },
+    "receipts/source-artifact-pins.json": {
+      "bytes": 2765,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-artifact-pins.json",
+      "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+    },
+    "receipts/source-family-intake-review.json": {
+      "bytes": 42303,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-family-intake-review.json",
+      "sha256": "6921bd6ee7ceb7ea1184be8dc57772fc5e670ac7e909c0caa3c02d5fe9e9e48e"
+    },
+    "receipts/source-requests.json": {
+      "bytes": 6328,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "receipts/source-view-provenance.json": {
+      "bytes": 30901,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json",
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "receipts/validation.json": {
+      "bytes": 4849,
+      "category": "review_or_result_or_plan",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/validation.json",
+      "sha256": "60790a02d6ef3724eccb34e582e397ef1a407428c0fee9d60a09a97ed7e28b88"
+    },
+    "source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "category": "complete_exact_section_view",
+      "origin": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    }
+  },
+  "formal_output": null,
+  "frozen_candidate_outputs": 16,
+  "full_foreign_ledger_bodies_copied": false,
+  "historical_admitted_review_exact_bytes_retained": false,
+  "local_full_snapshot_pins": {
+    "resource-after-finalization-attempt-02.json": {
+      "bytes": 9076063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-after-finalization-attempt-02.json",
+      "sha256": "976ef9e1d2d9e7ccb86f6837909d43f095f6bb2378242488f1858014ae94e2f5"
+    },
+    "resource-after-finalization.json": {
+      "bytes": 9071880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-after-finalization.json",
+      "sha256": "9f3476f3d5e7823153be2267d670e66d233c9dc9200fb5fe8e0b4cdf29eeece4"
+    },
+    "resource-before-admission-attempt-02.json": {
+      "bytes": 9071876,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission-attempt-02.json",
+      "sha256": "710b94558c3084045a5d05b4247e55a1fe704c97425be41dda4a7270184ad9e9"
+    },
+    "resource-before-admission.json": {
+      "bytes": 9069663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission.json",
+      "sha256": "d95373067722021391467a0906506e84db82a72ff204782725cc2f0a52e71af7"
+    }
+  },
+  "native384_encoded_inputs": 8,
+  "original_absolute_custody_paths_preserved": true,
+  "parent_Parquet_DB_copied": false,
+  "portable_replay_without_rebinding_claimed": false,
+  "qualified": false,
+  "raw_weights_copied": 0,
+  "review_reconstruction_is_byte_identical": false,
+  "schema": "arbitrary-native-cache-source-evidence-manifest/v1"
+}

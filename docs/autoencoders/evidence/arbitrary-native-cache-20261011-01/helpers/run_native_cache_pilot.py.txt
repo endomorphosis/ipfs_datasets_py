@@ -1,0 +1,170 @@
+"""Bounded real-source native384 input and frozen-decoder candidate pilot.
+
+No targets, fitting, checkpoint selection or Lake/proof admission occur. The
+historical guardian's admission phase name remains ``training``; this child
+performs only source encoding and opt-in frozen candidate generation.
+"""
+from contextlib import ExitStack
+from hashlib import sha256
+import argparse
+import importlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import sys
+import time
+from types import ModuleType
+from unittest.mock import patch
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def pin(path):
+    path = Path(path)
+    require(path.is_file() and not path.is_symlink(), "ordinary pinned file required")
+    raw = path.read_bytes()
+    return dict(path=str(path.resolve()), bytes=len(raw), sha256=sha256(raw).hexdigest())
+
+
+def read(path):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, "duplicate JSON field")
+            result[key] = value
+        return result
+    return json.loads(Path(path).read_bytes(), object_pairs_hook=pairs,
+        parse_constant=lambda value: (_ for _ in ()).throw(ValueError("nonfinite JSON")))
+
+
+def write(path, value):
+    with Path(path).open("x") as stream:
+        json.dump(value, stream, ensure_ascii=True, sort_keys=True, allow_nan=False, indent=2)
+        stream.write("\n"); stream.flush(); os.fsync(stream.fileno())
+    return pin(path)
+
+
+def bootstrap(root):
+    sys.path.insert(0, str(root))
+    for name in ("ipfs_datasets_py", "ipfs_datasets_py.logic", "ipfs_datasets_py.logic.formalization",
+        "ipfs_datasets_py.logic.formalization.autoencoder", "ipfs_datasets_py.optimizers",
+        "ipfs_datasets_py.optimizers.logic_theorem_optimizer"):
+        module = ModuleType(name)
+        module.__path__ = [str(root.joinpath(*name.split(".")))]
+        module.__file__ = str(root.joinpath(*name.split("."), "__init__.py"))
+        sys.modules[name] = module
+
+
+def denied(*args, **kwargs):
+    raise AssertionError("optimizer, backward or extra encoding prohibited in this pilot")
+
+
+def training_fence(operation):
+    # Torch's import-time rule map distinguishes API function identities. A
+    # shared replacement for grad/backward creates conflicting trace rules.
+    def refused(*args, **kwargs):
+        raise AssertionError(operation + " prohibited in this pilot")
+    return refused
+
+
+def main(args):
+    started = time.monotonic()
+    plan = read(args.plan)
+    require(plan["schema"] == "arbitrary-native-law-input-pilot-plan/v1"
+        and plan["dimension"] == 384 and plan["source_count"] == 8
+        and plan["actual_optimizer_updates"] == 0 and plan["semantic_gold"] is False,
+        "frozen source-only native384 pilot plan required")
+    originals = plan["artifacts"]
+    for path, expected in originals.items():
+        actual = pin(path)
+        require({key: actual[key] for key in ("bytes", "sha256")} == expected, "reviewed input/source byte binding differs")
+    output = Path(args.output)
+    require(not output.exists(), "fresh pilot output directory required")
+    output.mkdir()
+    forbidden = set(plan["forbidden_reference_paths"])
+
+    def audit(event, values):
+        if event in ("socket.connect", "socket.getaddrinfo"):
+            raise AssertionError("network prohibited in the source-only pilot")
+        if event == "open" and isinstance(values[0], (str, bytes)):
+            name = os.fsdecode(values[0])
+            if str(Path(name).absolute()) in forbidden:
+                raise AssertionError("reference/census parent read prohibited during generation")
+
+    sys.addaudithook(audit)
+    bootstrap(Path(plan["package_root"]))
+    spec = importlib.util.spec_from_file_location("arbitrary_native_legal_source_cli", plan["helper_path"])
+    helper = importlib.util.module_from_spec(spec); spec.loader.exec_module(helper)
+    import torch
+    torch.set_num_threads(1)
+    torch.set_num_interop_threads(1)
+    lanes = []
+    with ExitStack() as stack:
+        stack.enter_context(patch.object(torch.optim.Optimizer, "__init__", training_fence("optimizer")))
+        stack.enter_context(patch.object(torch.Tensor, "backward", training_fence("Tensor.backward")))
+        stack.enter_context(patch.object(torch.autograd, "backward", training_fence("autograd.backward")))
+        stack.enter_context(patch.object(torch.autograd, "grad", training_fence("autograd.grad")))
+        production_directory = output / "source-production"
+        production = helper.prepare(plan["source_configuration"], output_directory=production_directory)
+        cache_path = production_directory / "source-cache.json"
+        cache = read(cache_path)
+        require(cache["status"] == "ready" and cache["complete"] is True and len(cache["rows"]) == 8,
+                "all eight recorded native inputs must be ready")
+        runtime = importlib.import_module("ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_legal_ir_runtime")
+        producer = importlib.import_module("ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime")
+        stack.enter_context(patch.object(producer, "produce_native_embedding_receipt", denied))
+        source_pins = {name: pin(path) for name, path in runtime.source_owner_paths().items()}
+        prepared = []
+        for state in plan["decoder_states"]:
+            options = dict(request=dict(ir_family_id="legal_ir", dimension=384, dimension_role="input_embedding",
+                task_id="semantic_IR_reconstruction", checkpoint_sha256=state["checkpoint_pin"]["sha256"],
+                decoder_contract_id=runtime.DECODER_CONTRACT_ID, training_recipe_name=state["recipe"]),
+                checkpoint_pin=state["checkpoint_pin"], preprocessing_pin=state["preprocessing_pin"],
+                donor_checkpoint_pin=state["donor_checkpoint_pin"], source_cache_pin=pin(cache_path),
+                source_requests_pin=plan["source_configuration"]["source_requests_pin"],
+                native384_receipt_refs=cache["native_receipt_refs"], native768_report_refs=None,
+                source_artifact_pins=plan["source_configuration"]["source_artifact_pins"],
+                source_owner_pins=source_pins, row_ids=[row["id"] for row in cache["rows"]], deadline_seconds=120)
+            prepared_plan = runtime.prepare_arbitrary_native_legal_ir_runtime(**options)
+            prepared.append((state, options, prepared_plan))
+        # Both source-only plans are durable before either frozen decoder opens.
+        write(output / "both-decoder-plans-before-generation.json", [entry[2] for entry in prepared])
+        for state, options, prepared_plan in prepared:
+            before_rng = torch.get_rng_state().clone()
+            handle = runtime.open_arbitrary_native_legal_ir_autoencoder(**options)
+            report = handle.infer_cached()
+            raw = report["raw_candidate_report"]
+            require(raw["row_count"] == 8 and raw["weights_unchanged"] is True
+                and raw["source_inputs_unchanged"] is True and raw["ambient_rng_preserved"] is True
+                and torch.equal(before_rng, torch.get_rng_state())
+                and not any(report["authority"].values()), "frozen candidate custody or authority differs")
+            report_pin = write(output / (state["recipe"] + "-candidates.json"), report)
+            lanes.append(dict(recipe=state["recipe"], selected_checkpoint=state["checkpoint_pin"],
+                model_tensor_sha256=raw["model_tensor_sha256"], candidates=report_pin, source_count=8,
+                eos_reached=sum(row["eos_reached"] for row in raw["predictions"]),
+                source_semantic_accuracy_measured=False, legal_fidelity_qualified=False))
+            del handle
+    for path, expected in originals.items():
+        actual = pin(path)
+        require({key: actual[key] for key in ("bytes", "sha256")} == expected, "original source/asset bytes changed")
+    summary = dict(schema="arbitrary-native-law-input-pilot-results/v1", status="completed",
+        source_count=8, dimension=384, source_cache=pin(cache_path), source_production=production,
+        frozen_decoder_lanes=lanes, source_only=True, actual_optimizer_updates=0, checkpoint_selection_executed=False,
+        teacher_or_reference_targets_accessed=False, semantic_gold=False, source_semantics_verified=False,
+        legal_fidelity_qualified=False, proof_authority=False, Lake_executed=False, default_promotion=False,
+        actual_native768_executed=False, learned8_executed=False, all_original_artifacts_byte_exact=True,
+        target_representability_verified=False, output_scope="normative32 unqualified candidates",
+        namespace_bootstrap_used=True, elapsed_seconds=time.monotonic()-started,
+        model_resource_scope="unchanged historical guardian:2CPU/1536MiB/200MB/onechild/300seconds")
+    write(output / "summary.json", summary)
+    print(json.dumps(dict(status="completed", source_count=8, actual_optimizer_updates=0, lanes=lanes)), flush=True)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--plan", required=True); parser.add_argument("--output", required=True)
+    main(parser.parse_args())

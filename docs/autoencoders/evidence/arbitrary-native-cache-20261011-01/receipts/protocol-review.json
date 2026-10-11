@@ -1,0 +1,862 @@
+{
+  "adapter_and_runtime_checks": [
+    "Closed source rows and typed SourceSpan records, exact identity-normalized UTF8 selectors, all physical occurrence IDs retained even where prose is equal.",
+    "Native384 requires actual native-execution receipt profile, pinned current producer/assets, exact source text plus complete SourceSpan join, untruncated recorded token coverage and finite native float32 unit384 vectors. Injected fixtures, projected8 inputs, width substitutions, missing paragraph/clause records and silent normalization refuse readiness.",
+    "Native768 generic cache support is a separate recorded-consistency lane requiring complete bounded production/loading inventories; producer reports lack physical SourceSpan, so text-only producer join and producer_source_span_present=false are retained. It is not exercised or numerically qualified by this pilot.",
+    "Both cache inputs and contexts are regenerated from explicit original requests/refs and independently verified source files; modified/resealed caches fail. Row/clauses bounds64/8 and artifact/token bounds remain closed.",
+    "Runtime resolver authenticates the plaintext source and returns the local path required by corpus._read_verified. Source documents remain opaque UTF8 bytes; they are not parsed as targets or JSON.",
+    "Origin checks at _prepare entry, _source_packet entry, post-cache validation, final preparation, lazy model opening and later rechecks precede the new validation/model boundaries. Exact current owner pins are fenced before/after use; the dynamic 768 profile has an explicit origin check.",
+    "Runtime uses the separate new contract ID in capture, plan and describe; original normative owner files and retained assay registration are not changed by this opt-in adapter.",
+    "Opening remains lazy and explicit; original selected state, normative32 vocabulary/codec, original TRAIN-only preprocessing/count prior and donor restoration remain fixed. New input readiness does not add actors/actions to the 32-symbol output language."
+  ],
+  "artifacts": {
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/42046bd361a033a24264dc41de1fe6cafd68072f": {
+      "bytes": 394,
+      "sha256": "e1790949631401af1bfb6c9c7aeec7fcf612e274d73579d99f704faea40c8ba7"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/4eca68d85ecd3034cf4174d8a4033a75344ea62d": {
+      "bytes": 57,
+      "sha256": "948201d8329907aae938fa62f9ceeed53f5694dacc2b87b9f3b78b37ee986529"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/9a1eb90bbac323ea08aa5629b624fe6ae75db121b904799c2266a1e2c2de22d2": {
+      "bytes": 66746168,
+      "sha256": "9a1eb90bbac323ea08aa5629b624fe6ae75db121b904799c2266a1e2c2de22d2"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/a8b3208c2884c4efb86e49300fdd3dc877220cdf": {
+      "bytes": 125,
+      "sha256": "b6d346be366a7d1d48332dbc9fdf3bf8960b5d879522b7799ddba59e76237ee3"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/bcc565b3b20a79e17f048e97717303f26ea833e5": {
+      "bytes": 583,
+      "sha256": "00273cdfb3e05c7304d180270bdef8adae45023e7bdfc396338bdd815943dc59"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/c17ed520ed8438736732a54957a69306b8822215": {
+      "bytes": 711661,
+      "sha256": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/d1514c3162bbe87b343f565fadc62e6c06f04f03": {
+      "bytes": 190,
+      "sha256": "4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/db4787d654117aedec30099876bfa6431eb39827": {
+      "bytes": 385,
+      "sha256": "73348a3d8f8ae4cc5f851dc6b98be3ea819390b814e83656d5eebbadf75fe43e"
+    },
+    "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/blobs/fb140275c155a9c7c5a3b3e0e77a9e839594a938": {
+      "bytes": 231508,
+      "sha256": "07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/protocol-review.json": {
+      "bytes": 36623,
+      "sha256": "8debd5f9d35b63f4cfe52c684961afee71cf409da423eb2873391b67e8ba41ad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/adapter-contract-review.json": {
+      "bytes": 26651,
+      "sha256": "15d1bf1e2f85f2701096071af8e318a14e9f8ec9c38e646fc428168e3c6c2f85"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/adapter-tests-draft-01.xml": {
+      "bytes": 40686,
+      "sha256": "c91fb58c8801060ecfc4c66f71dc38dccddba2a65a67921b287452d1f6ffc72a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/cache-module-build.json": {
+      "bytes": 6362,
+      "sha256": "fed39546835a4f03598ac25c942899896fe5eb69582b449ac3f113676af71eb7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/capture_validation.py": {
+      "bytes": 2390,
+      "sha256": "72f853c4075fc324e9157d32ef01e1aeb28741a47e9fd9721f7092d2a2fd46d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/corrected-adapter-tests.xml": {
+      "bytes": 11426,
+      "sha256": "a68107f1b51971564d87fc06d49bf14e1d86921e1ad72f5ef4576dc93491f5a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py": {
+      "bytes": 19729,
+      "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 13334,
+      "sha256": "b450bec7518c3528a34c15c9119aefa791273176f871c27c9f4f77acd14df113"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py": {
+      "bytes": 14249,
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py": {
+      "bytes": 21833,
+      "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+      "bytes": 15840,
+      "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py": {
+      "bytes": 14873,
+      "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+      "bytes": 37989,
+      "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py": {
+      "bytes": 13794,
+      "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py": {
+      "bytes": 11090,
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py": {
+      "bytes": 29300,
+      "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py": {
+      "bytes": 9228,
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py": {
+      "bytes": 26392,
+      "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py": {
+      "bytes": 25942,
+      "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py": {
+      "bytes": 20524,
+      "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py": {
+      "bytes": 14958,
+      "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py": {
+      "bytes": 16041,
+      "sha256": "e2e87fe9e2d69a6d75c0ce61ec6141bc29f2d059d27b83139bd1df1817179378"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 13044,
+      "sha256": "13a0eef50ca26dc4e5fa61f6bf83400b182a8b9153dd52f9d1a902c9015f4c60"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py": {
+      "bytes": 22672,
+      "sha256": "1810e73e5751b0406a0ac9dfb67a631e7312354186832fb79934f99447c8d632"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_contextual_legal_ir_runtime.py": {
+      "bytes": 13460,
+      "sha256": "907f802e33121913a242482f898286243bfe160fffe966716860bb3f2c606965"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_normative_cached_legal_ir_runtime.py": {
+      "bytes": 33189,
+      "sha256": "26a67c41cc4dbfc927ce68eacaee6913b08dbde326c110472f891354934e32a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_normative_legal_ir_runtime.py": {
+      "bytes": 10788,
+      "sha256": "04bd5e60d16da66fcfc652b8ab40a520fab45104873ef39efd34e4478ef0e2e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py": {
+      "bytes": 19509,
+      "sha256": "e9c5ed0728e065c90438d9b203915ca22791432a31564ca4aab8c616ede5d18c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan-draft-03.json": {
+      "bytes": 20901,
+      "sha256": "4880887b7e05708660ec9772605b8898526ff39a7800aec7c105f782abdad79e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json": {
+      "bytes": 20901,
+      "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/guardian-console-attempt-01.jsonl": {
+      "bytes": 216,
+      "sha256": "efa04faecce7815d5c15828f887b3427b628c74c77fc4a6e1c180177fb10b43b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/incoming-main-integration.json": {
+      "bytes": 1040,
+      "sha256": "1a98ddb12a67dcf7b5585ee82ee7df482910b20c55dc47df05ba27b20e0cd99c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/native-local-assets-observation.json": {
+      "bytes": 7635,
+      "sha256": "c31bbe41ae26a08a95917e63e3b77671cdb764fc0760dd74ddf2679df76d64c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/native-producer-review.json": {
+      "bytes": 22252,
+      "sha256": "ad46422a6b56480ae2ebe439afc18ac7a1342b2c650157d980783a0123ab8967"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-cli-tests.xml": {
+      "bytes": 22387,
+      "sha256": "822bc38905714b24ab48ac50b48e17c822c49112d32d6f0c101dc57f87161194"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-helper-build.json": {
+      "bytes": 7765,
+      "sha256": "fe53f702a6ae7ad7a4fcdc52e3bb21e4776b6e85eaf65d71d6e232f0e40a765e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/prepare_native_plan.py": {
+      "bytes": 3759,
+      "sha256": "6c4e0c14efd86276ae789995fb4d255b2f41d0246d7a9b9a3884bc03a0d2a46c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-draft-01.json": {
+      "bytes": 40091,
+      "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/real-law-source-pilot.json": {
+      "bytes": 31436,
+      "sha256": "f3f6cf1e2b59443889cb491cdb4bb1dd8a78db12fdf4613b483681e0812770a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-after-finalization.json": {
+      "bytes": 9071880,
+      "sha256": "9f3476f3d5e7823153be2267d670e66d233c9dc9200fb5fe8e0b4cdf29eeece4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission-attempt-02.json": {
+      "bytes": 9071876,
+      "sha256": "710b94558c3084045a5d05b4247e55a1fe704c97425be41dda4a7270184ad9e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission.json": {
+      "bytes": 9069663,
+      "sha256": "d95373067722021391467a0906506e84db82a72ff204782725cc2f0a52e71af7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility-attempt-02.json": {
+      "bytes": 6800,
+      "sha256": "a5f2a94a5d4e5d7269db38b76a6110ee06d9d8c75fa41fb4e6e5bea9cafc123a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility.json": {
+      "bytes": 6800,
+      "sha256": "f3044ebad392d13f9c6018ed421638e70c639738e0c8a5f0b708d5dfbb40f4d5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot-draft-01.py": {
+      "bytes": 8874,
+      "sha256": "a31ba1f025df084c85697ca9d4c65e190bc7120be22adc55053400b66c910211"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot.py": {
+      "bytes": 9284,
+      "sha256": "3a00cf6e9ce8120c62c0fe74310ac919f27bc267aa9030bc6dea50d15608824a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-final-tests.xml": {
+      "bytes": 6042,
+      "sha256": "e808bdeb010781760df99a78340193e7ff24b3933403a42c0882b93da57e1953"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-frozen-tests.xml": {
+      "bytes": 6233,
+      "sha256": "fa954ca443d4c2242ae05146e83ddf092172baf40e8cedcf0f8df53fd4d313ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-pilot-review.json": {
+      "bytes": 23406,
+      "sha256": "15aa3a1eab7b94f5cafcb9d4dd1697df8bcc9d8872c89d24a4244da0d7acc0d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-review.json": {
+      "bytes": 48638,
+      "sha256": "a8a607368f0730a921b5a77d18806be198c2ca3290b745ea0dc4a0d21f50ea82"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-artifact-pins.json": {
+      "bytes": 2765,
+      "sha256": "d8418735b0cb7847fb95f259ac07fd0e26f9de888f931a5176e0df4f41277677"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-family-intake-review.json": {
+      "bytes": 42303,
+      "sha256": "6921bd6ee7ceb7ea1184be8dc57772fc5e670ac7e909c0caa3c02d5fe9e9e48e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+      "bytes": 6328,
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/validation.json": {
+      "bytes": 4849,
+      "sha256": "60790a02d6ef3724eccb34e582e397ef1a407428c0fee9d60a09a97ed7e28b88"
+    },
+    "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json": {
+      "bytes": 614534,
+      "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json": {
+      "bytes": 2797392,
+      "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json": {
+      "bytes": 2798242,
+      "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/preprocessing.json": {
+      "bytes": 1510086,
+      "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child-exit.json": {
+      "bytes": 72,
+      "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child-identity.json": {
+      "bytes": 43,
+      "sha256": "c7217d38ab9bb61173bd97891f36d945e5eedfa6ba45e0b4abebbe26f9ecc327"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/child.log": {
+      "bytes": 6196,
+      "sha256": "6784e317fcf892fe0fa16d3b408b4a98b3e24560b3bbab1956a6bcf23372832f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/command.json": {
+      "bytes": 1032,
+      "sha256": "3a279e0f9d4e31ddc196a4a9d9407bfbc3d28cb05f4c3da6a6faecc3ced55bf8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/failure-primary.json": {
+      "bytes": 4839,
+      "sha256": "3e76dcc336142abbecaff4e839b3bd0ae95269d8ce3d885b33c0023e29c2f50a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/group-rss-observations.jsonl": {
+      "bytes": 17460,
+      "sha256": "5b912cac561417ce1990dc0d863c78e932f8173ca85f702ea814927f35187521"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/group-rss-summary.json": {
+      "bytes": 1734,
+      "sha256": "e5303d341b492f18d83d544b945c68dbabeec27b12369f8a56d9ca0963dafb49"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/guardian-exit.json": {
+      "bytes": 4360,
+      "sha256": "3c00422cd549276dd1517979f2db99a3fbd54e36fb3d1c03da3f9d7100ec593d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "de0883b2cc04df20e94aa7a74430d28b089b64b8e072a58674c198447243947c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/lease-observations.jsonl": {
+      "bytes": 34990,
+      "sha256": "7cf6b5a67e85ad6dc243c1b1527a24dc1f0e62980c871df1aeaa8b9ad64bcee9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/pre-admission.json": {
+      "bytes": 7950,
+      "sha256": "da616ceed286aa9b7ff12d0d6217f3f50dfeec9fc37c862d6add0456592be060"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/resources-final-failure.json": {
+      "bytes": 4595,
+      "sha256": "0ad53e97a5ebdeb3c89b7db1367e70a6d7e3d15eadcab7d91e11f95c6e7f5a06"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/resources-start.json": {
+      "bytes": 2536,
+      "sha256": "793afc3e414e58add5dbbe2ba967ae56f4299ddc00ed853b35a0d43ebb2885e5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/results/source-production/failure-summary.json": {
+      "bytes": 755,
+      "sha256": "f4ba6297018602d49c118ba17cecd1a46516963c968cf9735210948f5f829a68"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01/scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "4879c724255fd2aa9bdb216ec70523a1fb5295fcbd5e97414bee4271ae50ba15"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "failed_attempt01_review": {
+    "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01",
+    "bounded_foreign_observation": {
+      "added_own_retained_reservations": 1,
+      "after_at_utc": "2026-10-11T02:33:08.798735+00:00",
+      "before_at_utc": "2026-10-11T02:28:58.378253+00:00",
+      "byte_equal_old_reservation_bodies": 502,
+      "changed_foreign_reservation_fields": [
+        "last_usage"
+      ],
+      "changed_old_reservation_bodies": 1,
+      "continuous_preservation_claimed": false,
+      "foreign_lease_changed_fields": [
+        "expires_at",
+        "heartbeat_at"
+      ],
+      "foreign_lease_heartbeat_and_expiry_moved": true,
+      "foreign_lease_identity_preserved": true,
+      "foreign_record_scope": "One independently active foreign owner retained identity/status/resources and changed sampled last_usage; these observations alone do not attribute its updates to a writer.",
+      "new_reservations": 504,
+      "old_reservations": 503,
+      "raw_shared_observations_local_only": true,
+      "removed_old_reservations": 0,
+      "shared_config_and_ledger_caps_unchanged": true,
+      "whole_ledger_immutability_claimed": false
+    },
+    "child_returncode": 1,
+    "cleanup": {
+      "artifacts_durable_before_disk_release": false,
+      "automatic_scheduler_reset": false,
+      "disk_claim_bytes": 200000000,
+      "disk_released": false,
+      "failed_disk_claim_retained": true,
+      "leader_reaped": true,
+      "lease_locally_released_flag": true,
+      "live_owned_group_processes": 0,
+      "own_lease_absent_in_post_observation": true,
+      "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+      "retention_reason": "context_failed",
+      "signals_sent": []
+    },
+    "decoder_calls": 0,
+    "encoded_input_count_from_general_failure_receipt": null,
+    "failure_cause": "Same denied function patched multiple Torch APIs; import-time torch._dynamo trace map rejects duplicate function identity with conflicting rules.",
+    "guardian_model_started_means_child_gate_permitted_not_encoder_forward": true,
+    "guardian_returncode": 1,
+    "independently_recomputed_sampled_RSS": {
+      "continuous_coverage_claimed": false,
+      "counts": {
+        "gated": 29,
+        "model": 4,
+        "post_model": 2
+      },
+      "kernel_hard_cap": false,
+      "limit_bytes": 1610612736,
+      "model_phase_max_gap_seconds": 1.0249768840149045,
+      "peaks_bytes": {
+        "gated": 11792384,
+        "model": 791248896,
+        "post_model": 0
+      },
+      "terminal_post_model_max_gap_seconds": 11.57674756506458
+    },
+    "native_forward_count_scope": "Inference from exact saved traceback at producer sentence_transformers import, which precedes SentenceTransformer construction and _produce_results in the pinned source. It is not a general zero-count inference from an unreturned producer call or numerical instrumentation.",
+    "native_forward_count_supported_by_specific_traceback_and_producer_control_flow": 0,
+    "optimizer_calls": 0,
+    "producer_returned_calls": 0,
+    "producer_started_calls": 1,
+    "scientific_status": "failed before model construction or native forward; no candidate/cache/verified production receipt was returned",
+    "training_executed": false
+  },
+  "findings": [],
+  "guardian_resource_checks": {
+    "admission_guaranteed": false,
+    "compatibility_check_acquired_resource": false,
+    "contract": {
+      "child_slots": 1,
+      "cpu_slots": 2,
+      "rss_mib": 1536,
+      "storage_bytes": 200000000,
+      "wall_seconds": 300
+    },
+    "fixed_shared_cap_snapshot": {
+      "child_slots": 4,
+      "cpu_slots": 4,
+      "memory_mb": 9830,
+      "proof_safety_enabled": true,
+      "reserved_memory_mb": 0
+    },
+    "hardware_limit_scope": "Cooperative shared admission and sampled RSS/deadline supervision; not a kernel hard memory or disk cap. No continuous unsampled bound or whole-ledger immutability is inferred from static compatibility.",
+    "prior_review": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/protocol-review.json",
+    "resource_check_receipt_passed": true,
+    "runtime_contract": "Guardian revalidates exact review/plan/runner/guardian/all review artifacts before creating a fresh attempt or resources; fixed historical10-source resource closure, owned reservation and shared lease, lease watchdog, gated own process group/PID birth, RSS sampling and deadline, child return/summary checks, own-only group cleanup with zero remaining live group processes, durable own reservation finalization and release. Actual admission, census, observed RSS, cleanup and release remain to be audited after execution. Attempt01 observed its failed full200MB claim retained and own lease released; retry must obtain fresh normal admission without deleting or reconciling that claim automatically.",
+    "same_guardian_bytes_as_prior_independent_review": true,
+    "shared_caps_raised": false
+  },
+  "guardian_sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed",
+  "incoming_integration": {
+    "canonical_HEAD_index_mutated_by_reviewer": false,
+    "canonical_preservation_by_root_reported_not_rechecked_this_retry": true,
+    "old_source_base": "28a4790ab6952321da0dcf5066e1015f097695d8",
+    "read_only_git_diff_paths_independently_matched": [
+      "ipfs_datasets_py/logic/software_contracts/codebase_source_384.py",
+      "ipfs_datasets_py/logic/software_contracts/codebase_source_units_384.py",
+      "ipfs_datasets_py/logic/software_verification/__init__.py",
+      "ipfs_datasets_py/logic/software_verification/numerical_logic.py",
+      "ipfs_datasets_py/logic/software_verification/numerical_source.py",
+      "tests/unit/logic/software_contracts/test_source384_formalization_budget.py",
+      "tests/unit/logic/software_verification/test_numerical_logic.py",
+      "tests/unit/logic/software_verification/test_numerical_source.py"
+    ],
+    "receipt": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/incoming-main-integration.json",
+    "relevant_legal_plan_pins_unchanged": true,
+    "source_base": "db432c5a93a207436f9a4279d888fddee931e390"
+  },
+  "independence": {
+    "Git_mutations": false,
+    "Hub_access": false,
+    "authored_data_note": "Reviewer previously authored source-only intake/pilot/views/provenance; those establish byte custody, not semantic gold. Runtime, cache, CLI, runner and plan were authored by other agents/root.",
+    "model_forwards": 0,
+    "models_loaded": false,
+    "numeric_modules_imported": false,
+    "optimizer_steps": 0,
+    "resource_claims": 0,
+    "review_operations": "standard-library reads, streaming SHA256, JSON source joins, source/AST inspection, saved XML inspection only",
+    "reviewer": "/root/real_code_data_20261011",
+    "source_code_edits": false,
+    "tests_run_by_reviewer": 0
+  },
+  "limitations": [
+    "No successful numerical pilot result is qualified yet. Attempt01 import failure and own cleanup/retained disk claim are saved and reviewed; actual retry token coverage/native384 output, frozen candidates, admission/RSS/cleanup and final custody still require completed saved receipts.",
+    "Source pilot is exposed and split-unassigned. Eight local archived occurrences and complete raw section views are not human-reviewed targets, exhaustive corpus/group exclusions, official current-law authority, or a held-out generalization assay.",
+    "Native receipts establish recorded producer/assets/source/token/vector consistency, not cryptographic attestation of genuine encoder execution. Generic cache first matching valid receipt follows explicit reference order; this plan uses fresh bounded production.",
+    "The output checkpoint remains normative32 candidate language. Arbitrary real actors/actions, statutory exceptions/cross-references/context, lossless target serialization and legal semantics have not been qualified; canonical byte codec and family syntax validators confer no gold authority.",
+    "Python exact-path audit hooks, owner __file__ checks, explicit file fences, optimizer/grad patches and cooperative guardian controls are scoped runtime barriers, not an OS sandbox, an exhaustive interpreter import closure, or protection against malicious in-memory code replacement.",
+    "Procedure completion does not imply every candidate reaches EOS or legal reconstruction succeeds; partial/raw candidates must remain visible. No selected improvement, formal admission, runtime default registration or Lake/proof qualification occurs."
+  ],
+  "observed_at_utc": "2026-10-11T02:36:10.731056+00:00",
+  "package_root": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+  "passed": true,
+  "phase": "training",
+  "phase_explanation": "Guardian requires legacy phase training. The unchanged source-only native384/frozen-candidate plan has zero optimizer updates and training_executed=false. Attempt01 failed during library import; this review qualifies the narrow distinct-function retry for a fresh attempt02 under the same caps, not completed native results, fidelity or user approval.",
+  "pin_verification": {
+    "all_plan_artifacts_independently_rehashed": true,
+    "closure_scope": "Explicit current 26 runtime owners, local nine GTE-small assets, helper/runner/guardian, source views/requests, frozen checkpoint/transform/donor files, and the ten unchanged historical resource-owner source files; not every transitive Python/package/library in the process.",
+    "guardian_resource_source_artifact_count": 10,
+    "mismatches": [],
+    "plan_artifact_count": 52,
+    "review_artifact_count": 113
+  },
+  "plan_sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f",
+  "preparation_and_runner_checks": [
+    "CLI closed produce384 configuration expands eight exact source spans into eight unique physical native inputs with sixteen paragraph/clause role aliases; no sentence/legal meaning segmentation is inferred from literal double-newline boundaries.",
+    "CLI strict source resolver, before/after identity fences and exact raw aliases precede fresh exclusive output and encoding. produce384 uses only pinned local snapshot/batch4; reuse384/768 has no encoder path. Typed injected fixtures refuse. Failed unreturned calls report unknown encoded count rather than zero.",
+    "Runner rehashes all52 plan artifacts before starting and at completion, installs exact-path census/Parquet read barriers and Python network audit barriers, uses an isolated package namespace, and patches Optimizer initialization plus Tensor/autograd backward and grad before production.",
+    "After one fresh native production receipt, extra encoder production is denied; cache must have all eight complete ready rows. Both frozen decoder plans are saved before either decoder is opened.",
+    "Each frozen source-only generation receives vectors and literal source contexts only, with no target/reference argument, teacher, parser repair, gold clause count, scores or selection. Tensor/source-input/RNG custody is checked before saving candidates; all returned authority flags must remain false.",
+    "Two fixed384 recipes each generate eight requested rows, at most512 raw output tokens with eight-literal-clause ceiling and120-second decoder deadline. Partial/deadline or non-EOS outputs remain diagnostics. No semantic accuracy or legal fidelity metric is computed."
+  ],
+  "qualification": {
+    "Lake_executed": false,
+    "checkpoint_selection_executed": false,
+    "default_promotion": false,
+    "learned8_execution_approved": false,
+    "legal_fidelity_qualified": false,
+    "native768_execution_approved_by_this_plan": false,
+    "native_lane_executed_if_started": 384,
+    "proof_authority": false,
+    "runtime_contract_id": "arbitrary-native-source-cache-legal-ir/v1",
+    "scope": "source-only native384 readiness and frozen normative32 candidate custody, no real-law fidelity claim",
+    "semantic_gold": false,
+    "source_semantics_verified": false,
+    "target_representability_verified": false
+  },
+  "resolved_findings": [
+    {
+      "finding": "Resolver returned bytes where corpus/native validator required a path.",
+      "resolution": "Root runtime returns independently authenticated pin path; CLI has the same strict path contract and tests execute real corpus._read_verified on Unicode plaintext view."
+    },
+    {
+      "finding": "New runtime description retained inherited old decoder ID.",
+      "resolution": "Root added explicit new DECODER_CONTRACT_ID in describe and a regression assertion; final runtime pin is bound."
+    },
+    {
+      "finding": "Origin checks originally occurred after portions of preparation/cache validation.",
+      "resolution": "Integration review prompted root to add pre-preparation/pre-sourcepacket/post-cache origin checks and post-capture foreign cache module regression; final32 receipt and exact runtime pin are bound."
+    },
+    {
+      "finding": "Attempt01 shared denial function conflicted with Torch import-time identity rule mapping.",
+      "resolution": "Root authored distinct training_fence closures for each of the same four APIs; exact AST-isolated change and unchanged caps/source/checkpoint bindings independently verified. Successful retry import/production remains to be observed."
+    }
+  ],
+  "retry_review": {
+    "all_other_plan_fields_and51_artifact_pins_unchanged": true,
+    "blocked_APIs": [
+      "optimizer",
+      "Tensor.backward",
+      "autograd.backward",
+      "autograd.grad"
+    ],
+    "caps_unchanged": true,
+    "change_scope": "Add training_fence(operation), whose nested def creates a distinct refusal function at each call, and replace shared denied at the same four training APIs. Extra encoding still uses denied. Static AST normalization after removing the new factory and restoring denied is exactly equal to prior runner.",
+    "findings": [],
+    "fresh_compatibility_check": {
+      "admission_guaranteed": false,
+      "bytes": 6800,
+      "passed": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility-attempt-02.json",
+      "resource_claim_acquired": false,
+      "same_caps": true,
+      "sha256": "a5f2a94a5d4e5d7269db38b76a6110ee06d9d8c75fa41fb4e6e5bea9cafc123a"
+    },
+    "fresh_pre_admission_observation": {
+      "bytes": 9071876,
+      "continuous_preservation_claimed": false,
+      "failed_200MB_claim_still_retained": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission-attempt-02.json",
+      "raw_observation_local_only": true,
+      "reservation_count": 504,
+      "sha256": "710b94558c3084045a5d05b4247e55a1fe704c97425be41dda4a7270184ad9e9",
+      "snapshot_only": true
+    },
+    "model_source_checkpoint_assets_views_helper_runtime_cache_unchanged": true,
+    "numeric_execution_to_verify_retry_performed_by_reviewer": false,
+    "only_plan_artifact_changed": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot.py",
+    "passed": true,
+    "prior_protocol": {
+      "bytes": 40091,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-draft-01.json",
+      "sha256": "9ce3b3bedc6796b1d57760edd4730ef06791dfa2dd2a1f0b0caa18ee126cafa1"
+    },
+    "prior_runner": {
+      "bytes": 8874,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot-draft-01.py",
+      "sha256": "a31ba1f025df084c85697ca9d4c65e190bc7120be22adc55053400b66c910211"
+    },
+    "runtime_success_of_fix_not_yet_observed": true
+  },
+  "run_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01",
+  "runner_sha256": "3a00cf6e9ce8120c62c0fe74310ac919f27bc267aa9030bc6dea50d15608824a",
+  "saved_test_receipts": {
+    "XML_receipts_observed_not_executed_by_reviewer": {
+      "adapter-tests-draft-01.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 202
+      },
+      "corrected-adapter-tests.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 61
+      },
+      "preparation-cli-tests.xml": {
+        "errors": 0,
+        "failures": 13,
+        "skipped": 0,
+        "tests": 29
+      },
+      "runtime-final-tests.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 31
+      },
+      "runtime-frozen-tests.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 32
+      }
+    },
+    "count_method": "35 unchanged cache +136 unchanged retained normative controls from draft receipt,30 corrected CLI controls,32 final frozen runtime controls; repeated earlier runtime controls are not added. These unit controls use explicit native/model doubles and do not attest real native or decoder execution.",
+    "current_control_count": 233,
+    "initial_failure_history": "Initial preparation-cli-tests.xml retained13 failures/29 cases for resolver bytes-versus-path bug; corrected CLI30 and final runtime32 receipts are the current controls."
+  },
+  "schema": "arbitrary-native-law-input-independent-protocol-review/v2",
+  "source_join_verification": {
+    "complete_raw_section_views": true,
+    "custody_origin": "Pinned archived Parquet physical sections/release and reconciliation occurrences; prior bounded independent extraction receipt is bound, parent Parquet/DB are forbidden during child generation. This is archived byte custody, not official current-law or source-semantic authority.",
+    "exact_raw_section_hash_and_UTF8_char_byte_slices_verified": true,
+    "full_section_view_bytes": 148931,
+    "historical_normalized_raw_equality": true,
+    "identity_normalization": true,
+    "ready_token_eligibility_before_actual_production": "unmeasured; actual producer must return complete untruncated token coverage before readiness",
+    "request_utf8_bytes": 2070,
+    "rows": [
+      {
+        "byte_end": 419,
+        "byte_start": 256,
+        "char_byte_selector_verified": true,
+        "citation": "1 U.S.C. 2",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2",
+        "raw_span_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 163
+      },
+      {
+        "byte_end": 1119,
+        "byte_start": 839,
+        "char_byte_selector_verified": true,
+        "citation": "1 U.S.C. 106",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160",
+        "raw_span_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 280
+      },
+      {
+        "byte_end": 1330,
+        "byte_start": 1056,
+        "char_byte_selector_verified": true,
+        "citation": "1 U.S.C. 112",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973",
+        "raw_span_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 274
+      },
+      {
+        "byte_end": 1881,
+        "byte_start": 1656,
+        "char_byte_selector_verified": true,
+        "citation": "1 U.S.C. 112b",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523",
+        "raw_span_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 225
+      },
+      {
+        "byte_end": 7276,
+        "byte_start": 7209,
+        "char_byte_selector_verified": true,
+        "citation": "10 U.S.C. 101",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330",
+        "raw_span_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 67
+      },
+      {
+        "byte_end": 700,
+        "byte_start": 338,
+        "char_byte_selector_verified": true,
+        "citation": "10 U.S.C. 261",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961",
+        "raw_span_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 362
+      },
+      {
+        "byte_end": 722,
+        "byte_start": 378,
+        "char_byte_selector_verified": true,
+        "citation": "10 U.S.C. 276",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5",
+        "raw_span_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 344
+      },
+      {
+        "byte_end": 738,
+        "byte_start": 383,
+        "char_byte_selector_verified": true,
+        "citation": "10 U.S.C. 282",
+        "historical_normalized_raw_equality_verified": true,
+        "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "literal_double_newline_segments": 1,
+        "raw_section_sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3",
+        "raw_span_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "source_byte_selector_verified": true,
+        "source_utf8_bytes": 355
+      }
+    ],
+    "source_count": 8,
+    "unique_request_ids": true
+  }
+}

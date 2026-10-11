@@ -1,0 +1,566 @@
+{
+  "Lake_executed": false,
+  "actual_native768_executed": false,
+  "actual_optimizer_updates": 0,
+  "all_original_artifacts_byte_exact": true,
+  "checkpoint_selection_executed": false,
+  "default_promotion": false,
+  "dimension": 384,
+  "elapsed_seconds": 7.698675454012118,
+  "frozen_decoder_lanes": [
+    {
+      "candidates": {
+        "bytes": 32801,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-zero-candidates.json",
+        "sha256": "d0dc2b5f078f1f9a6257fc883002a812203a183e154c8f1ccd90fb57bb1a3c51"
+      },
+      "eos_reached": 8,
+      "legal_fidelity_qualified": false,
+      "model_tensor_sha256": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3",
+      "recipe": "normative-wording-zero",
+      "selected_checkpoint": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "source_count": 8,
+      "source_semantic_accuracy_measured": false
+    },
+    {
+      "candidates": {
+        "bytes": 32794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/normative-wording-ce-candidates.json",
+        "sha256": "44c1636c020ba7d64afe71c101877fc7dc9b10fc95678076e400677f0f519b0d"
+      },
+      "eos_reached": 8,
+      "legal_fidelity_qualified": false,
+      "model_tensor_sha256": "0b3c7c3b1a5581cd393d9bb8db1d24b87fe2cb9dff0be268aa2b5ed1f88b6594",
+      "recipe": "normative-wording-ce",
+      "selected_checkpoint": {
+        "bytes": 2797392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-ce/selected-state.json",
+        "sha256": "6cab6fe31ef7c98db1508001bc64926b7ff176ef2a9bd385473d8e05f5f8c266"
+      },
+      "source_count": 8,
+      "source_semantic_accuracy_measured": false
+    }
+  ],
+  "learned8_executed": false,
+  "legal_fidelity_qualified": false,
+  "model_resource_scope": "unchanged historical guardian:2CPU/1536MiB/200MB/onechild/300seconds",
+  "namespace_bootstrap_used": true,
+  "output_scope": "normative32 unqualified candidates",
+  "proof_authority": false,
+  "schema": "arbitrary-native-law-input-pilot-results/v1",
+  "semantic_gold": false,
+  "source_cache": {
+    "bytes": 330754,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+    "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+  },
+  "source_count": 8,
+  "source_only": true,
+  "source_production": {
+    "actual_native384_encoded_input_count": 8,
+    "admission_masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "admitted": false,
+    "checkpoint_promoted": false,
+    "config_sha256": "c438185500e50fac6578de824be7c0ce7ab3cd8cd722b326f64589858ae921c5",
+    "counts": {
+      "clause_occurrences": 8,
+      "ready_clause_occurrences": 8,
+      "ready_rows": 8,
+      "refused_rows": 0,
+      "requested_rows": 8,
+      "source_artifacts": 8
+    },
+    "decoder_calls": 0,
+    "decoder_executed": false,
+    "default_promotion": false,
+    "dimension": 384,
+    "dispositions": [
+      {
+        "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "status": "ready",
+        "unavailable_inputs": []
+      },
+      {
+        "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "status": "ready",
+        "unavailable_inputs": []
+      }
+    ],
+    "encoded_input_count_scope": "embedded records in returned verified native receipts",
+    "encoder_executed_by_cache_adapter": false,
+    "encoder_execution_attested": false,
+    "expanded_encoder_input_aliases": [
+      {
+        "input_id": "sha256:cf339a6567e019019b09a9083644e901a015378862d2bd5390bb23249b9ef385",
+        "request_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "byte_end": 419,
+          "byte_start": 256,
+          "citation": "1 U.S.C. 2",
+          "document_id": "usc:us:1:2",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+      },
+      {
+        "input_id": "sha256:cf339a6567e019019b09a9083644e901a015378862d2bd5390bb23249b9ef385",
+        "request_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 459,
+            "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+          },
+          "byte_end": 419,
+          "byte_start": 256,
+          "citation": "1 U.S.C. 2",
+          "document_id": "usc:us:1:2",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+      },
+      {
+        "input_id": "sha256:32872deb39cc3dec0884bfe4090795a8c421dc204c2ce2d0d772f18076f69eab",
+        "request_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "byte_end": 1119,
+          "byte_start": 839,
+          "citation": "1 U.S.C. 106",
+          "document_id": "usc:us:1:106",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+      },
+      {
+        "input_id": "sha256:32872deb39cc3dec0884bfe4090795a8c421dc204c2ce2d0d772f18076f69eab",
+        "request_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 28742,
+            "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+          },
+          "byte_end": 1119,
+          "byte_start": 839,
+          "citation": "1 U.S.C. 106",
+          "document_id": "usc:us:1:106",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+      },
+      {
+        "input_id": "sha256:d37f7f538b5ad4bff535ce2cb8a1a501b9a998c24f9443f843bef8f0d4ca1204",
+        "request_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "byte_end": 1330,
+          "byte_start": 1056,
+          "citation": "1 U.S.C. 112",
+          "document_id": "usc:us:1:112",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+      },
+      {
+        "input_id": "sha256:d37f7f538b5ad4bff535ce2cb8a1a501b9a998c24f9443f843bef8f0d4ca1204",
+        "request_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 9770,
+            "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+          },
+          "byte_end": 1330,
+          "byte_start": 1056,
+          "citation": "1 U.S.C. 112",
+          "document_id": "usc:us:1:112",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+      },
+      {
+        "input_id": "sha256:45db163523a1a06c82b36467417cfb5865866096b2f758a7eda4ba7856a9d280",
+        "request_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "byte_end": 1881,
+          "byte_start": 1656,
+          "citation": "1 U.S.C. 112b",
+          "document_id": "usc:us:1:112b",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+      },
+      {
+        "input_id": "sha256:45db163523a1a06c82b36467417cfb5865866096b2f758a7eda4ba7856a9d280",
+        "request_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 21457,
+            "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+          },
+          "byte_end": 1881,
+          "byte_start": 1656,
+          "citation": "1 U.S.C. 112b",
+          "document_id": "usc:us:1:112b",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+      },
+      {
+        "input_id": "sha256:44bd42ea9764f8de4b564989cd796678bfb83c8c73c421a15753c5657214b490",
+        "request_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "byte_end": 7276,
+          "byte_start": 7209,
+          "citation": "10 U.S.C. 101",
+          "document_id": "usc:us:10:101",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+      },
+      {
+        "input_id": "sha256:44bd42ea9764f8de4b564989cd796678bfb83c8c73c421a15753c5657214b490",
+        "request_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 72690,
+            "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+          },
+          "byte_end": 7276,
+          "byte_start": 7209,
+          "citation": "10 U.S.C. 101",
+          "document_id": "usc:us:10:101",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+      },
+      {
+        "input_id": "sha256:152f8be2948003c330f706cd4be805fa2cd2cf992299be8615b76a8ebacaa51f",
+        "request_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "byte_end": 700,
+          "byte_start": 338,
+          "citation": "10 U.S.C. 261",
+          "document_id": "usc:us:10:261",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+      },
+      {
+        "input_id": "sha256:152f8be2948003c330f706cd4be805fa2cd2cf992299be8615b76a8ebacaa51f",
+        "request_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 6364,
+            "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+          },
+          "byte_end": 700,
+          "byte_start": 338,
+          "citation": "10 U.S.C. 261",
+          "document_id": "usc:us:10:261",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+      },
+      {
+        "input_id": "sha256:2d4b35e6aaed29514e59ad7887e3fdebc3a18662343334e3b134a3d0da861a0c",
+        "request_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "byte_end": 722,
+          "byte_start": 378,
+          "citation": "10 U.S.C. 276",
+          "document_id": "usc:us:10:276",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+      },
+      {
+        "input_id": "sha256:2d4b35e6aaed29514e59ad7887e3fdebc3a18662343334e3b134a3d0da861a0c",
+        "request_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 2312,
+            "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+          },
+          "byte_end": 722,
+          "byte_start": 378,
+          "citation": "10 U.S.C. 276",
+          "document_id": "usc:us:10:276",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+      },
+      {
+        "input_id": "sha256:0f03a5138a34ee4835413a6a7f81beedd711edd2ac1f0065a9fece8966f7f60d",
+        "request_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "role": "paragraph",
+        "slot": null,
+        "source": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "byte_end": 738,
+          "byte_start": 383,
+          "citation": "10 U.S.C. 282",
+          "document_id": "usc:us:10:282",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+      },
+      {
+        "input_id": "sha256:0f03a5138a34ee4835413a6a7f81beedd711edd2ac1f0065a9fece8966f7f60d",
+        "request_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "role": "clause",
+        "slot": 0,
+        "source": {
+          "artifact": {
+            "bytes": 7137,
+            "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+          },
+          "byte_end": 738,
+          "byte_start": 383,
+          "citation": "10 U.S.C. 282",
+          "document_id": "usc:us:10:282",
+          "language": "en",
+          "normalization": "identity",
+          "release_id": "ipfs-uscode-5016b86a",
+          "source_kind": "us_code"
+        },
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+      }
+    ],
+    "formal_output": null,
+    "formalized": false,
+    "mode": "produce384",
+    "native384_producer_calls_returned": 1,
+    "native384_producer_calls_started": 1,
+    "native384_production_executed_by_helper": true,
+    "native768_production_executed_by_helper": false,
+    "native_receipt_refs": [
+      {
+        "bytes": 38209,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+        "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+      }
+    ],
+    "optimizer_calls": 0,
+    "producer_evidence_is_record_consistency": true,
+    "producer_files": {
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41",
+      "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py": "e2e87fe9e2d69a6d75c0ce61ec6141bc29f2d059d27b83139bd1df1817179378"
+    },
+    "proof_authority": false,
+    "qualified": false,
+    "roundtrip_ok": false,
+    "schema": "arbitrary-native-legal-source-preparation/v1",
+    "source_artifact_pins": {
+      "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      }
+    },
+    "source_cache": {
+      "bytes": 330754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+      "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+    },
+    "source_cache_status": "ready",
+    "source_requests_pin": {
+      "bytes": 6328,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "source_semantics_verified": false,
+    "status": "completed",
+    "summary_sha256": "7d0ae93bbeac3d8254fc28264c8110c2afc8e27db896eca2c6965d26cf153bc4",
+    "target_access": false,
+    "training_executed": false,
+    "unique_native384_inputs_requested": 8
+  },
+  "source_semantics_verified": false,
+  "status": "completed",
+  "target_representability_verified": false,
+  "teacher_or_reference_targets_accessed": false
+}

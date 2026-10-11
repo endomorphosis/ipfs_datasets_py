@@ -1,0 +1,906 @@
+{
+  "authority": {
+    "database_write_executed": false,
+    "embeddings_generated": false,
+    "encoder_executed": false,
+    "full_source_dependency_closure_qualified": false,
+    "learned_source_text_reconstruction_qualified": false,
+    "model_task_qualified": false,
+    "native_ir_format_qualified": false,
+    "network_executed": false,
+    "proof_authority": false,
+    "quality_qualified": false,
+    "runtime_admitted": false,
+    "runtime_release_qualified": false,
+    "source_semantics_verified": false,
+    "source_token_budget_qualified": false,
+    "teacher_qualified": false,
+    "training_executed": false
+  },
+  "budgets": {
+    "batch_size": 8,
+    "deadline_seconds": 120,
+    "decoder_output_tokens": 512,
+    "encoder_experiment_tokens": 512,
+    "long_span8192_qualified": false
+  },
+  "consistency_scope": "Bounded per-file reads and repeated endpoint fences; no atomic cross-file snapshot or continuous source currentness.",
+  "model_inference_executed": true,
+  "original_targets_accessed": false,
+  "raw_candidate_report": {
+    "admitted": false,
+    "ambient_rng_preserved": true,
+    "codec_sha256": "cba3e5384e2bee12e709ccc8e9ee430e51cf09a8fc2e8abdd57143fdaa38dba2",
+    "completed": true,
+    "dimension": 384,
+    "encoder_executed": false,
+    "model_tensor_sha256": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3",
+    "model_tensor_sha256_after": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3",
+    "model_tensor_sha256_before": "e918a196684aa2f7d4021c210908eaba2517542e14523d98c4f72419c23ae3b3",
+    "optimizer_executed": false,
+    "output_cap": 512,
+    "predictions": [
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          18,
+          26,
+          7,
+          27,
+          15,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          8,
+          26,
+          7,
+          27,
+          24,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          19,
+          26,
+          7,
+          27,
+          24,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          4,
+          26,
+          17,
+          27,
+          9,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          19,
+          26,
+          7,
+          27,
+          15,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          4,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          11,
+          26,
+          7,
+          27,
+          22,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          11,
+          26,
+          7,
+          27,
+          22,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          11,
+          26,
+          7,
+          27,
+          15,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      },
+      {
+        "eos_reached": true,
+        "generation_status": "eos",
+        "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+        "token_ids": [
+          30,
+          21,
+          27,
+          28,
+          30,
+          6,
+          27,
+          11,
+          26,
+          7,
+          27,
+          22,
+          26,
+          10,
+          27,
+          28,
+          29,
+          26,
+          13,
+          27,
+          28,
+          29,
+          26,
+          14,
+          27,
+          5,
+          26,
+          17,
+          27,
+          16,
+          26,
+          23,
+          27,
+          28,
+          29,
+          31,
+          29,
+          31
+        ]
+      }
+    ],
+    "production_runtime_compatible": false,
+    "proof_authority": false,
+    "qualified": false,
+    "reference_documents_passed_to_generation": false,
+    "row_count": 8,
+    "schema": "contextual-legal-ir-numeric-inference/v1",
+    "source_contexts_sha256": "f35c9166d3788e406be3b8c63c216020e2b514efd46e8a5c5cb354e4545f507c",
+    "source_inputs_sha256": "eb56e50449216c5609c31bee90735dec6bf40ee377c6d8d6b73e64a33ba02b0b",
+    "source_inputs_unchanged": true,
+    "source_semantics_verified": false,
+    "target_access": false,
+    "teacher_qualified": false,
+    "training_executed": false,
+    "weights_unchanged": true
+  },
+  "row_receipts": [
+    {
+      "context_sha256": "5738cc35e4edcbc2908767c5be728a9d17f584dc51b041d360bf5fc240ee3ccc",
+      "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "input_sha256": "fa1a3028be94c835d64d18b946a945234cde7fa86bc7cbaf57d805d824b2b98e",
+      "row_index": 0,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+    },
+    {
+      "context_sha256": "f39eb89b64595c65b4bbdbbf5984ee958119669d4af49d18b66f93f77619c1a9",
+      "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "input_sha256": "75acc4a34de46c438471b5c0b62c6ed7fe8f62c5e8a773f20c1f1baa9e703c02",
+      "row_index": 1,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+    },
+    {
+      "context_sha256": "73bdce7fc6367389f93437cfcb49d8f8a9f4c5265e567bcea838af97c872755b",
+      "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "input_sha256": "b3229974633e61559a8a1da9e1d7197cd6ab34986e911eec25ebcc16a96d795b",
+      "row_index": 2,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+    },
+    {
+      "context_sha256": "057e6fe46b8369bc9c33718824276c1f17f06e1c24a641b4eab5eaab8e9edcdb",
+      "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "input_sha256": "2feb0b02753097aa3e8f7839dab33ac279695974f9877252a831c07d0e531883",
+      "row_index": 3,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+    },
+    {
+      "context_sha256": "c6638283f895c79f0feb417c69dafc432537ee2e86b360f9a2104b1ac751f32a",
+      "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "input_sha256": "7aa90f9ccfb8668d6d723919c6d3edc09d8f53bd557cc62e996b4985963037fb",
+      "row_index": 4,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+    },
+    {
+      "context_sha256": "c14f18202fdcd4a7c86ecdf64f8c4083e0046ea7b7a426385a1b5a043b5347b0",
+      "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "input_sha256": "35b1dcdcc3080eb7d5fd90ddfd1c0555b805f1dd2b4754f19d2fa6a66c8ebd74",
+      "row_index": 5,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+    },
+    {
+      "context_sha256": "3919784674777176da95868f1bd263634f42204bacc087fadc1ee8af09876005",
+      "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "input_sha256": "a03247fef886b503967fa49d64f8e55b8201c7d3250c78f3a82719f4d7498bb5",
+      "row_index": 6,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+    },
+    {
+      "context_sha256": "0948ddd717267b6bc3175818f48194e79e2b51077d6a1ee2750ab8d79fc28bc9",
+      "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "input_sha256": "db8b8a6bb9818d3b440b564416547b7b8f9bf658c802e17046d0cb79179bf033",
+      "row_index": 7,
+      "source_clause_count": 1,
+      "source_padding_mask": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+    }
+  ],
+  "runtime_selection": {
+    "artifact_receipts": {
+      "checkpoint": {
+        "bytes": 2798242,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/normative-wording-zero/selected-state.json",
+        "sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e"
+      },
+      "donor_checkpoint": {
+        "bytes": 614534,
+        "path": "/home/barberb/lift_coding/artifacts/source-reconstruction-v2-20261001/run-01/legal_ir/raw_ce-1729-checkpoint.json",
+        "sha256": "6e3f4d731d798aa2732afc37bd74fec34da3267a323844975d2dab78f59f9c61"
+      },
+      "native384:0": {
+        "bytes": 38209,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+        "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+      },
+      "preprocessing": {
+        "bytes": 1510086,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/training-384-r1/results/preprocessing.json",
+        "sha256": "de96c5f0a90a1472e346f3732ace42f0b4af4b3915026695fb705ae809663d8f"
+      },
+      "source_contexts": {
+        "bytes": 330754,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+        "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+      },
+      "source_inputs": {
+        "bytes": 330754,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/source-cache.json",
+        "sha256": "0502113e21c97cd49a26bb1a70bf571dbae35f4a23e4f0f899fd886c44bf9760"
+      },
+      "source_requests": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      }
+    },
+    "authority": {
+      "database_write_executed": false,
+      "embeddings_generated": false,
+      "encoder_executed": false,
+      "full_source_dependency_closure_qualified": false,
+      "learned_source_text_reconstruction_qualified": false,
+      "model_task_qualified": false,
+      "native_ir_format_qualified": false,
+      "network_executed": false,
+      "proof_authority": false,
+      "quality_qualified": false,
+      "runtime_admitted": false,
+      "runtime_release_qualified": false,
+      "source_semantics_verified": false,
+      "source_token_budget_qualified": false,
+      "teacher_qualified": false,
+      "training_executed": false
+    },
+    "budgets": {
+      "batch_size": 8,
+      "deadline_seconds": 120,
+      "decoder_output_tokens": 512,
+      "encoder_experiment_tokens": 512,
+      "long_span8192_qualified": false
+    },
+    "cached_inference_executed": true,
+    "complete_runtime_io_contract": false,
+    "consistency_scope": "Bounded per-file reads and repeated endpoint fences; no atomic cross-file snapshot or continuous source currentness.",
+    "decoder_contract": {
+      "arbitrary_new_source_inputs_supported": true,
+      "cached_source_scope": "explicit_new_source_occurrences_and_native_receipts",
+      "decoder_format_id": null,
+      "decoder_profile_id": null,
+      "legal_fidelity_qualified": false,
+      "native_ir_schema_version": null,
+      "original_text_reconstruction_supported": false,
+      "output_codec_schema": "typed-json-lexical/v1",
+      "output_scope": "normative32_candidate_language",
+      "output_vocabulary_size": 32,
+      "schema": "normative-cached-decoder-contract/v1",
+      "state_role": "selected",
+      "target_representability_verified": false,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    "decoder_contract_id": "arbitrary-native-source-cache-legal-ir/v1",
+    "decoder_format_id": null,
+    "decoder_profile_id": null,
+    "input_contract": {
+      "clause_vector_binding": "exact_literal_offsets_and_native_production_record",
+      "clause_vectors": "original_raw_cached_vectors",
+      "clause_width": 384,
+      "decoder_feature_normalizations": "saved_separate_paragraph_and_clause_stages_once",
+      "max_source_clauses": 8,
+      "native_execution_attested": false,
+      "native_execution_record_consistency_checked": true,
+      "paragraph_vector_binding": "exact_source_span_and_native_production_record",
+      "paragraph_width": 384,
+      "saved_paragraph_vector_producer_authenticated": false,
+      "source_only": true,
+      "transform_order": "saved_TRAIN_input_transform_then_zero_pad_to_eight"
+    },
+    "model_inference_started": true,
+    "model_load_performed": true,
+    "model_load_started": true,
+    "model_manager_binding_resolved": false,
+    "model_manager_selector": {
+      "checkpoint_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "format_id": null,
+      "ir_family_id": "legal_ir",
+      "profile_id": null,
+      "record_id": "ir-model-asset-binding/v1:0ea60eed1f606e655940a8e45c5db151d9686fcb8bb532b94866e6f8947262c8",
+      "role": "normative_wording_zero_selected_semantic_decoder_state",
+      "schema_version": null,
+      "task_id": "semantic_IR_reconstruction"
+    },
+    "native_ir_schema_version": null,
+    "request": {
+      "checkpoint_sha256": "82f326a83a2d00cc1628ff2e9baf3096aa887348bd07e49883ed3e7c0234014e",
+      "decoder_contract_id": "arbitrary-native-source-cache-legal-ir/v1",
+      "dimension": 384,
+      "dimension_role": "input_embedding",
+      "ir_family_id": "legal_ir",
+      "task_id": "semantic_IR_reconstruction",
+      "training_recipe_name": "normative-wording-zero"
+    },
+    "row_ids": [
+      "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f"
+    ],
+    "saved_training_recipe": {
+      "name": "normative-wording-zero",
+      "weight": 0.0
+    },
+    "schema": "arbitrary-native-legal-ir-description/v1",
+    "source_artifact_receipts": {
+      "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5": {
+        "bytes": 2312,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt",
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3": {
+        "bytes": 7137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt",
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523": {
+        "bytes": 21457,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt",
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160": {
+        "bytes": 28742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt",
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961": {
+        "bytes": 6364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt",
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973": {
+        "bytes": 9770,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt",
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330": {
+        "bytes": 72690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt",
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2": {
+        "bytes": 459,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt",
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      }
+    },
+    "source_cache_binding": {
+      "cache_schema": "arbitrary-native-source-cache/v1",
+      "encoder_execution_attested": false,
+      "native_production_refs": [
+        {
+          "bytes": 38209,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json",
+          "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+        }
+      ],
+      "physical_occurrence_identity_preserved": true,
+      "recorded_native_consistency_checked": true,
+      "schema": "arbitrary-native-source-cache-binding/v1",
+      "selected_clauses": 8,
+      "selected_occurrences": 8,
+      "source_authority_authenticated": false,
+      "source_requests_pin": {
+        "bytes": 6328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json",
+        "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+      },
+      "statutory_semantics_verified": false,
+      "target_representability_verified": false
+    },
+    "source_owner_receipts": {
+      "action_factorized_clause_decoder_experiment": {
+        "bytes": 19729,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/action_factorized_clause_decoder_experiment.py",
+        "sha256": "81145f156594f28a0fc5ccec2d078a6188bb4af0a6fed826a69074116e1aa43e"
+      },
+      "arbitrary_native_legal_ir_runtime": {
+        "bytes": 13334,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+        "sha256": "b450bec7518c3528a34c15c9119aefa791273176f871c27c9f4f77acd14df113"
+      },
+      "arbitrary_native_source_cache": {
+        "bytes": 29148,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+        "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+      },
+      "autoencoder_corpus_manifest": {
+        "bytes": 27947,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+        "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+      },
+      "autoencoder_embedding_production": {
+        "bytes": 26219,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+        "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+      },
+      "autoencoder_embedding_runtime": {
+        "bytes": 19364,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+        "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+      },
+      "autoencoder_training_worker": {
+        "bytes": 100140,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+        "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+      },
+      "clause_source_context": {
+        "bytes": 14249,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+        "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+      },
+      "clause_source_decoder_experiment": {
+        "bytes": 21833,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_decoder_experiment.py",
+        "sha256": "004d432d16a2819eb46a95743d58c26443cc32737311ea8553c5019127f97603"
+      },
+      "contextual_legal_ir_numeric": {
+        "bytes": 15840,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py",
+        "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"
+      },
+      "contextual_legal_ir_runtime": {
+        "bytes": 37249,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+        "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+      },
+      "decoder_cardinality_experiment": {
+        "bytes": 14873,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_cardinality_experiment.py",
+        "sha256": "44f1d91edb8f8cc8bafdc517ab450a003fece945d2e9a25bba933da2e9e12ac1"
+      },
+      "decoder_distillation_experiment": {
+        "bytes": 37989,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py",
+        "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"
+      },
+      "decoder_distillation_experiment_v2": {
+        "bytes": 13794,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment_v2.py",
+        "sha256": "0352c392a518c9ea6ff215c32e5ddd6345d776e2bb32f22fd137b5e34d93c6c6"
+      },
+      "dimension_native_decoder_experiment": {
+        "bytes": 11090,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+        "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+      },
+      "dimension_source_inputs": {
+        "bytes": 28444,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+        "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+      },
+      "gte_multilingual_profile": {
+        "bytes": 15959,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+        "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+      },
+      "ir_model_manager_import": {
+        "bytes": 29300,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ir_model_manager_import.py",
+        "sha256": "5d50f879d6e1e80fc68a29060680fcac9e234f62a3732f7c697f31360ca9506b"
+      },
+      "legal_native_conditioning": {
+        "bytes": 24439,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+        "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+      },
+      "normative_legal_ir_runtime": {
+        "bytes": 9228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py",
+        "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+      },
+      "ordered_clause_recurrent_decoder_experiment": {
+        "bytes": 26392,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/ordered_clause_recurrent_decoder_experiment.py",
+        "sha256": "56392a6f37f528350f18b68b56a016aad170530e93e95e660b6898f1c4cef3da"
+      },
+      "projected_source_decoder_experiment": {
+        "bytes": 25942,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/projected_source_decoder_experiment.py",
+        "sha256": "ce4354a96324285bff08277c3fac43e9885a75e84a50337414f7dea8501af3ee"
+      },
+      "shared_slot_source_decoder_experiment": {
+        "bytes": 20524,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/shared_slot_source_decoder_experiment.py",
+        "sha256": "4a2fec44a1d8756c212a2e64cad774919aed1f8c12b3741c6608e2dd35c7f0d1"
+      },
+      "source_embeddings_768": {
+        "bytes": 13375,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+        "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+      },
+      "source_embeddings_768_complete": {
+        "bytes": 9556,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+        "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+      },
+      "source_value_decoder_experiment": {
+        "bytes": 14958,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_value_decoder_experiment.py",
+        "sha256": "df72b5331c1dc5b98d11974748bb05ba31504db7e7f69854327d080118eeb61e"
+      }
+    },
+    "state_serialization_schema": "private-native-dimension-source-state/v1"
+  },
+  "schema": "arbitrary-native-legal-ir-candidate-inference/v1"
+}

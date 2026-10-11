@@ -1,0 +1,71 @@
+{
+  "actual_admitted_guardian": {
+    "bytes": 38281,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_scope_guardian.py",
+    "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+  },
+  "actual_admitted_plan": {
+    "bytes": 20901,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/experiment-plan.json",
+    "sha256": "69b367fa26cc3223f1957293a924853e7ca669c035b54dd0634052854d218a1f"
+  },
+  "actual_admitted_review": {
+    "bytes": 52865,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json",
+    "sha256": "5aaf410334fd1ca9be2ac061fd9807d266eff4f28247f6f3a677a66af060ca68"
+  },
+  "actual_admitted_runner": {
+    "bytes": 9284,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/run_native_cache_pilot.py",
+    "sha256": "3a00cf6e9ce8120c62c0fe74310ac919f27bc267aa9030bc6dea50d15608824a"
+  },
+  "admitted_review_is_not_current_supplement": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-admitted-reconstruction.json": {
+      "bytes": 56631,
+      "sha256": "f1a4cc72a0e6d99fda0c1e0aeb57d76abe6472586c67d773f0026870895ef945"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json": {
+      "bytes": 54197,
+      "sha256": "45c862b2db26bfebd9a57c9df6f77c03f8a157d06041d0e1a38e0f9291ef141c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-before-admission-attempt-02.json": {
+      "bytes": 9071876,
+      "sha256": "710b94558c3084045a5d05b4247e55a1fe704c97425be41dda4a7270184ad9e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/resource-compatibility-attempt-02.json": {
+      "bytes": 6800,
+      "sha256": "a5f2a94a5d4e5d7269db38b76a6110ee06d9d8c75fa41fb4e6e5bea9cafc123a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/pre-admission.json": {
+      "bytes": 7950,
+      "sha256": "a2015679ea53d9cff4c295a0af334fd1ebebd6c207a11b031475b21c23a4b9d5"
+    }
+  },
+  "current_protocol_preserved_immutable": true,
+  "exact_admitted_review_bytes_gap_disclosed": true,
+  "exact_admitted_review_recovered": false,
+  "followup_numeric_executions": 0,
+  "guardian_pre_admission_authoritative_for_actual_gate": true,
+  "model_source_plan_cap_or_policy_changes": false,
+  "observed_at_utc": "2026-10-11T02:40:21.385691+00:00",
+  "post_admission_changes": [
+    "Add two resource observation artifact pins",
+    "Add fresh compatibility and pre-admission snapshot notes",
+    "Change artifact count111to113",
+    "Change observed_at_utc"
+  ],
+  "post_admission_supplement_observed_at_utc": "2026-10-11T02:36:10.731056+00:00",
+  "post_admission_supplement_review": {
+    "bytes": 54197,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review.json",
+    "sha256": "45c862b2db26bfebd9a57c9df6f77c03f8a157d06041d0e1a38e0f9291ef141c"
+  },
+  "schema": "arbitrary-native-attempt02-protocol-chronology-supplement/v1",
+  "scope": "Accurate admission/supplement chronology and disclosed custody gap, no new runtime gate",
+  "substantive_reconstruction": {
+    "bytes": 56631,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/protocol-review-admitted-reconstruction.json",
+    "sha256": "f1a4cc72a0e6d99fda0c1e0aeb57d76abe6472586c67d773f0026870895ef945"
+  }
+}

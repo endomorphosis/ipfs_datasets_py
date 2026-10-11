@@ -1,0 +1,139 @@
+{
+  "artifacts_durable_before_disk_release": false,
+  "cleanup": {
+    "child_created": true,
+    "identity": {
+      "birth": "70399307",
+      "pid": 250600
+    },
+    "leader_reaped": true,
+    "leader_returncode": 1,
+    "live_group_processes": 0,
+    "signals": []
+  },
+  "failed_disk_claim_retained": true,
+  "group_rss": {
+    "absolute_peak_measured": false,
+    "continuous_coverage_claimed": false,
+    "failure": null,
+    "first_observation_monotonic_by_phase": {
+      "gated": 703993.140963672,
+      "model": 704022.742605181,
+      "post_model": 704026.174182541
+    },
+    "identity": {
+      "birth": "70399307",
+      "pid": 250600
+    },
+    "kernel_hard_cap": false,
+    "last_observation_monotonic_by_phase": {
+      "gated": 704022.36493119,
+      "model": 704025.490370236,
+      "post_model": 704037.750930106
+    },
+    "max_observation_gap_seconds_by_phase": {
+      "gated": 1.17415603203699,
+      "model": 1.0249768840149045,
+      "post_model": 11.57674756506458
+    },
+    "memory_limit_bytes": 1610612736,
+    "model_gate_permitted_at_monotonic": 704022.742603004,
+    "model_leader_reaped_at_monotonic": 704026.174179741,
+    "model_phase_sample_count": 4,
+    "model_phase_wall_seconds": 3.4315767369698733,
+    "poll_seconds": 1.0,
+    "sample_counts_by_phase": {
+      "gated": 29,
+      "model": 4,
+      "post_model": 2
+    },
+    "sampled_model_phase_peak_rss_bytes": 791248896,
+    "sampled_peak_only": true,
+    "sampled_peaks_by_phase": {
+      "gated": 11792384,
+      "model": 791248896,
+      "post_model": 0
+    },
+    "sampler_started_at_monotonic": 703993.140959608,
+    "scheduler_or_claim_mutation": false,
+    "schema": "guardian-owned-group-rss-summary/v1",
+    "timing_scope": "model gate permission through leader reap; includes model import and guardian polling, not isolated fit time"
+  },
+  "resources": {
+    "cleanup_error": null,
+    "lease_cancellation_read": false,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 85721246,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01"
+      },
+      "child": {
+        "birth": "70399307",
+        "pid": 250600
+      },
+      "child_process_slots": 1,
+      "cpu_slots": 2,
+      "created_at": 1791685919.460727,
+      "external_charges": {},
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 38682,
+        "attempt_limit_bytes": 200000000,
+        "charged_bytes": 143576336825,
+        "checked_at": 1791685949.2956743,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 1,
+          "rss_bytes": 11792384
+        },
+        "inventory": {
+          "apparent_bytes": 95355336825,
+          "entry_count": 1357803,
+          "special_file_count": 5,
+          "symlink_count": 697
+        },
+        "limit_bytes": 145000000000,
+        "memory_limit_bytes": 1610612736,
+        "minimum_filesystem_free_bytes": 63978926080,
+        "observed_apparent_bytes": 95355336825,
+        "outstanding_full_reservations_bytes": 48221000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 1,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 38682
+      },
+      "memory_mb": 1536,
+      "owner_pid": 243641,
+      "prior_children": [],
+      "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+    "resource_lease": {
+      "acquired_at": 1791685919.5351536,
+      "child_process_slots": 1,
+      "cpu_slots": 2,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "17bc3044c3e24682b81e0abba4ca7b64",
+      "locally_released_flag": true,
+      "memory_mb": 1536,
+      "owner_pid": 243641,
+      "parent_lease_id": null,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 6.399350240826607e-07
+    },
+    "scheduler_state_read": false,
+    "schema": "guardian-cached-resource-snapshot/v1",
+    "snapshot_scope": "cached_owner_primitives_only"
+  }
+}
