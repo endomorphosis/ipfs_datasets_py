@@ -1,0 +1,22 @@
+{
+  "cleanup": {
+    "child_created": true,
+    "final_group_usage": {
+      "available": true,
+      "live_processes": 0,
+      "rss_bytes": 0
+    },
+    "identity": {
+      "birth": "40418599",
+      "pid": 218230
+    },
+    "initial_live_processes": 0,
+    "leader_reaped": true,
+    "leader_returncode": 1,
+    "live_group_processes": 0,
+    "scope": "direct_child_reaped; surviving_group_members_stopped; orphan_zombies_not_reaped_here",
+    "signals": []
+  },
+  "elapsed_seconds": 29.359,
+  "returncode": 1
+}

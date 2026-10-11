@@ -1,0 +1,70 @@
+{
+  "change": "Source record merge, decoded-byte accounting and returned ready bundles now occur only after the native local ready-state transaction successfully exits/commits. Validation still precedes that transaction; failed bundles stay pending with no partial delivered records or bundle metadata.",
+  "changed_pins": [
+    {
+      "bytes": 40532,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007/ipfs_datasets_py/logic/autoformal/span_cache_feed.py",
+      "sha256": "97e6a59859fb9ca59b069a85ca9d569beddbe20eb1e10b62d1d128ad0162ec47"
+    },
+    {
+      "bytes": 25786,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007/tests/unit/logic/test_span_cache_paired_feed.py",
+      "sha256": "62a50b84a7340b5b2ac5d416ce48fdf130de98c2d2f10f4982d7fdaf50d83642"
+    }
+  ],
+  "controls": {
+    "counts": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 80
+    },
+    "failed_bundle_decoded_bytes_not_charged": true,
+    "four_new_cases": [
+      "failure_before_ready_UPDATE_single_bundle",
+      "failure_before_ready_COMMIT_single_bundle",
+      "later_bundle_UPDATE_failure_does_not_merge_shared_source",
+      "later_bundle_COMMIT_failure_does_not_merge_shared_source"
+    ],
+    "git_diff_check_passed": true,
+    "junit_pin": {
+      "bytes": 13221,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/paired-feed-ready-fix-controls-final.xml",
+      "sha256": "5434108db47b52eef8d6aedbc15d35d386fee2af569465486282cf64771159c4"
+    },
+    "pending_fingerprint_not_acknowledgeable": true,
+    "prior_successes_preserved": true,
+    "real_inert_DuckDB_rollback_and_retry": true,
+    "recovery_and_acknowledgement": true,
+    "ruff_F_passed": true,
+    "seconds": 9.08
+  },
+  "disposition": "PF1_resolved",
+  "execution_scope": "Authored local fixture transport, isolated temporary local databases and Arrow/Parquet controls only. No real corpus jobs, model/encoder/training calls, production database/resource mutation, source-census edits, Hub upload or Git push.",
+  "findings": [],
+  "implementation_commit": "569e256d8c653a243b65922603f1d7d1344e7204",
+  "inherited_paired_feed_commit": "e63844997",
+  "original_failure_reproduction_pin": {
+    "bytes": 961,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/paired-ready-order-reproduction.json",
+    "sha256": "18551a60ed91a43b89a1332fb563e740a5b50103664caf1117cb5922d4b29ccf"
+  },
+  "original_independent_review_pin": {
+    "bytes": 4416,
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/paired-feed-independent-review.json",
+    "sha256": "2b651843714797d2b787853914a3099be5bab69708d27caf8782dc7b30be6625"
+  },
+  "passed": true,
+  "preserved_boundaries": [
+    "Complete paired source UTF-8 and recorded release",
+    "Exact compiler/capture/comparison fields and hashed artifact table references",
+    "v1/v2 dispatch and native capture validation",
+    "No diagnostic vectors inserted as encoder inputs",
+    "No semantic gold, qualification, model-default or proof promotion",
+    "Pinned discovery migration, retry identities and bounded input expansion"
+  ],
+  "remaining_scope": "Real census identity reconciliation and full-corpus resource qualification remain owned by the parent and source/census agent; this fix resolves only delivery readiness ordering.",
+  "review_status": "The original source review was independent of the paired-feed implementation. This followup documents the reviewer-authorized isolated fix and its controls, not a separate third-party review of that fix.",
+  "schema": "paired-span-feed-review-resolution/v1",
+  "worktree_clean": true
+}

@@ -1,0 +1,35 @@
+{
+  "bounds": {
+    "max_batch_bytes": 33554432,
+    "max_batch_spans": 8192,
+    "max_row_group_bytes": 2147483648,
+    "max_section_bytes": 8388608
+  },
+  "identity_reconstruction": "historical-64-document-ordinal/v1",
+  "progress": {
+    "bytes": 52701179,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/input-preparation-01/inputs/resume-checkpoint.parquet",
+    "path_in_repo": "autoformal/uscode/resume-checkpoint.parquet",
+    "repository_id": "justicedao/uscode-autoformal-span-cache",
+    "revision": "765176c6db79ba65c1697c21dead43666350b730",
+    "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+  },
+  "schema": "uscode-source-occurrence-census/v1",
+  "source": {
+    "bytes": 374277662,
+    "path": "/home/barberb/.cache/huggingface/hub/datasets--justicedao--ipfs_uscode/blobs/4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8",
+    "release_id": "ipfs-uscode-5016b86a",
+    "repository_id": "justicedao/ipfs_uscode",
+    "revision": "5016b86a273ce5e4ffd066c5ae9f5fe494dd417e",
+    "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+  },
+  "source_code_sha256": {
+    "census": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1",
+    "constitution_inventory": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095",
+    "intake": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418",
+    "uscode_dataset": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18",
+    "uscode_ingest": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+  },
+  "source_text_copied": false,
+  "tokenizer": null
+}

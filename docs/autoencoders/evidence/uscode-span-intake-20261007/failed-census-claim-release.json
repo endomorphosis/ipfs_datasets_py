@@ -1,0 +1,176 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/child-exit.json": {
+      "bytes": 515,
+      "sha256": "8d635823681e94519e56d59b1fa9d0b4fe6095481a8cd7a83410c5f45bb174f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/child-identity.json": {
+      "bytes": 43,
+      "sha256": "7e7dea461994830bbad3b59f9264bf8a91297a699a27946b7a6d7d5250e43ec2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/child.log": {
+      "bytes": 2250,
+      "sha256": "a441eeea87d9ebd88b9aed09f5e51003420421368804b7a5ea2c7714bb98f3c2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/command.json": {
+      "bytes": 5737,
+      "sha256": "f2460fe2a1a1918e83752be4738e0eb22153434612c73632716b76b1d393dc53"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/failure.json": {
+      "bytes": 3219,
+      "sha256": "ec9f6674cd86e7af6a8fd63e6668fb7a5d8d898ae72bc2b821936d3241ef7587"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "8895a7909efab181d15d9179b9ee78a989f95f7d5dcc537364699b20638b106f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/lease-observations.jsonl": {
+      "bytes": 16861,
+      "sha256": "b4be045c6849fca6f14497a0f5eb729bbc387385f43f1c37f5fd756d7361f51e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/census-disposition-counts.parquet": {
+      "bytes": 629,
+      "sha256": "1aaeaafab1fa3d27e187508432d427771b8bb3561ad8a80c655990cfbcf26e9b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/census.duckdb": {
+      "bytes": 4206592,
+      "sha256": "fffa219d7a81f6438f2dd56a1249a32e13c4cf6edc3db4aeeae4227aa4b3d120"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/manifest.json": {
+      "bytes": 1711,
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/partial-report.json": {
+      "bytes": 6346,
+      "sha256": "e94e87e0668b6410309e51eaf5bf3f8b691a568ab4503a770db24e5a3b7b05f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/report.json": {
+      "bytes": 6346,
+      "sha256": "e94e87e0668b6410309e51eaf5bf3f8b691a568ab4503a770db24e5a3b7b05f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/writer.lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01",
+  "evidence_removed": false,
+  "foreign_claims_after_sha256": "819f61f8cabf9ca978216ad34cc546b548851460362c71385182906bf351da55",
+  "foreign_claims_before_sha256": "819f61f8cabf9ca978216ad34cc546b548851460362c71385182906bf351da55",
+  "foreign_snapshot_equal": true,
+  "old_owner_pid": 215128,
+  "original_child_group_dead": true,
+  "original_lease_absent": true,
+  "replacement_lease_acquired": false,
+  "reservation_id": "b5ce1c6fcdeb479fb79389795aaaddf7",
+  "resources": {
+    "cleanup_error": null,
+    "enforcement": "cooperative_admission_and_polled_usage_not_kernel_quota",
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": true,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 75023741,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01"
+      },
+      "attempt_exceeded_reservation": false,
+      "child": {
+        "birth": "40418599",
+        "pid": 218230
+      },
+      "child_process_slots": 1,
+      "cpu_slots": 1,
+      "created_at": 1791386112.4289048,
+      "external_charges": {},
+      "final_accounting": {
+        "additional_requested_bytes": 0,
+        "charged_bytes": 144313323641,
+        "inventory": {
+          "apparent_bytes": 96548323641,
+          "entry_count": 1368600,
+          "special_file_count": 10,
+          "symlink_count": 763
+        },
+        "limit_bytes": 145000000000,
+        "minimum_filesystem_free_bytes": 153346420736,
+        "observed_apparent_bytes": 96548323641,
+        "outstanding_full_reservations_bytes": 47765000000,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "final_attempt_bytes": 4250942,
+      "final_external_charged_bytes": 0,
+      "final_total_charged_bytes": 4250942,
+      "last_usage": {
+        "additional_requested_bytes": 0,
+        "attempt_bytes": 9215,
+        "attempt_limit_bytes": 128000000,
+        "charged_bytes": 144000210666,
+        "checked_at": 1791386127.2293506,
+        "external_charged_bytes": 0,
+        "group_rss": {
+          "available": true,
+          "live_processes": 1,
+          "rss_bytes": 24154112
+        },
+        "inventory": {
+          "apparent_bytes": 96107210666,
+          "entry_count": 1367177,
+          "special_file_count": 10,
+          "symlink_count": 769
+        },
+        "limit_bytes": 145000000000,
+        "memory_limit_bytes": 1610612736,
+        "minimum_filesystem_free_bytes": 163251716096,
+        "observed_apparent_bytes": 96107210666,
+        "outstanding_full_reservations_bytes": 47893000000,
+        "process_slot_estimate_exceeded": false,
+        "reserved_child_process_slots": 1,
+        "scope": "named_roots_only_apparent_bytes",
+        "total_attempt_charged_bytes": 9215
+      },
+      "memory_mb": 1536,
+      "owner_pid": 215128,
+      "prior_children": [],
+      "released_at": 1791386553.4825835,
+      "reservation_id": "b5ce1c6fcdeb479fb79389795aaaddf7",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "released",
+      "storage_bytes": 128000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "b5ce1c6fcdeb479fb79389795aaaddf7",
+    "resource_lease": null,
+    "roots": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 533856,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "scheduler_lane": "hammer_lean",
+    "schema": "daemon-resource-reservations-v1",
+    "status": "released",
+    "storage_limit_bytes": 145000000000,
+    "workload": "canonical_trainer"
+  },
+  "scheduler_mutated": false,
+  "schema": "owned-failed-census-claim-release/v1",
+  "source_only": true
+}

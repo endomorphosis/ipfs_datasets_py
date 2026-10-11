@@ -1,0 +1,67 @@
+{
+  "schema": "uscode-source-census-implementation-receipt/v1",
+  "commit": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+  "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007",
+  "controls": {
+    "passed": 38,
+    "failures": 0,
+    "errors": 0,
+    "duration_seconds": 4.54,
+    "xml_path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/dataset-census/source-census-controls.xml",
+    "xml_sha256": "191063603a9f95a2358e52e69d89f7ee20e76cdb0eb87f08b73650ee1a2bf9fd"
+  },
+  "source_files": [
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+      "bytes": 23320,
+      "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+      "bytes": 24447,
+      "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/scripts/ops/legal_ir/census_uscode_sources.py",
+      "bytes": 1736,
+      "sha256": "f94070b6484ed22201459b881584328de852bc6f917d267c4f220c8da68712a9"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/tests/unit/optimizers/logic_theorem_optimizer/test_uscode_source_census.py",
+      "bytes": 13535,
+      "sha256": "4cb0c3b7ec93c3ccf5195292f665eb1c3d1c715f9ca304931c1d75e066a22096"
+    },
+    {
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/docs/autoencoders/uscode_source_census.md",
+      "bytes": 4680,
+      "sha256": "e192f47ac4798a2eadf78b9cb4752841d955e84c4a4614365fa29540103282d4"
+    }
+  ],
+  "fixture_cleanup": [
+    {
+      "path": "/tmp/uscode-source-census-controls-20261007-final",
+      "bytes_removed": 24037164,
+      "scope": "Owned synthetic test fixtures; tests completed; no original model/source assets"
+    }
+  ],
+  "resources": {
+    "duckdb_threads": 1,
+    "duckdb_memory_mb": 1024,
+    "proposed_process_group_memory_mib": 1536,
+    "storage_max_bytes": 134217728,
+    "spill_max_mb": 32,
+    "checkpoint_threshold_mb": 8,
+    "section_batch_size_proposal": 16,
+    "bounded_smoke_max_batches": 2,
+    "full_inventory_fit_not_measured": true
+  },
+  "run_by_this_agent": {
+    "fixture_controls_only": true,
+    "actual_corpus_census": false,
+    "model_inference": false,
+    "training": false,
+    "network_upload": false
+  },
+  "default_exports": "Single durable occurrence DuckDB, manifest/report JSON, compact disposition-count Parquet; source text and original queue not copied",
+  "token_counts_measured_without_configured_tokenizer": false
+}

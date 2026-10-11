@@ -1,0 +1,91 @@
+{
+  "behavior": [
+    "New enqueue, census seal/gap, direct seal and claimed completion preserve full source/decompiled strings with exact UTF-8 hashing; the legacy32KiB slicing threshold is never applied.",
+    "SpanCacheTextLimits validates UTF-8 field, combined batch bytes and actual write row budgets before text or compiler-state writes. Declared source_sha256 must match complete source bytes when new text is persisted.",
+    "Skipped/invalid/missing-ID rows and existing enqueue aliases do not consume new-write limits. Unknown nonpersisted gap payloads are not encoded/bound; historical gap counters remain compatible.",
+    "No automatic restoration, byte rewriting or rehashing of historical truncated rows. An explicitly supplied full source mismatching an old seal causes source_changed unsealing while retaining old bytes/hash.",
+    "Remote resume remains advisory-only; long full-source hashes match without adopting remote text, formulas, seals or claims.",
+    "Limits apply to persisted source/decompiled fields, not arbitrary rule payloads, input sequence preparation, Parquet expansion or guaranteed process RSS."
+  ],
+  "branch": "agent/uscode-span-lossless-datasets-20261007",
+  "commit": "fd4cf3f890130f4fed7e6f7efb631ea2ea342ea0",
+  "default_limits": {
+    "max_batch_rows": 4096,
+    "max_batch_text_bytes": 67108864,
+    "max_text_bytes": 1048576
+  },
+  "execution_scope": {
+    "checkpoint_changes": false,
+    "dataset_wide_processing": false,
+    "encoder_execution": false,
+    "git_push": false,
+    "hub_publication": false,
+    "new_model_training": false,
+    "production_database_mutation": false
+  },
+  "followup": "Integrate locally committed two-file change with paired-feed/census contributions; expose chosen text_limits in worker run resource manifests. Compatibility and storage preservation provide no new semantic fidelity or proof admission.",
+  "owned_files": [
+    {
+      "bytes": 77906,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007/ipfs_datasets_py/logic/autoformal/span_cache.py",
+      "sha256": "5d390725291aa966d34f3e48d0ee58148626eb8281cd3079e153a2d9018e05d0"
+    },
+    {
+      "bytes": 43857,
+      "path": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007/tests/unit/logic/test_span_cache.py",
+      "sha256": "82de0ac0f8707dc9148c406790d7adb792043be49e92290c204daaa43f6052d0"
+    }
+  ],
+  "repository_status": "",
+  "schema": "uscode-span-lossless-intake-implementation-receipt/v1",
+  "source_base_commit": "911b9f2530b18f246b90a177a98471bffad609e9",
+  "validation": {
+    "additional_legacy_controls": {
+      "baseline_junit": {
+        "bytes": 1143,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/lossless-intake/baseline-integration.xml",
+        "sha256": "1afa7e7dfd21b2eeb154b42a9135ae4dcccebcbcf6141d9f0ce686ab146459ff"
+      },
+      "baseline_original_owner": {
+        "bytes": 73312,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/lossless-intake/baseline-span-cache.py",
+        "sha256": "2cfb0260aed12f9588562063cdb3cdc7b079f35942d607a1684b08b924672964"
+      },
+      "baseline_result": "Both failures reproduced with exact original span-cache module substituted before collection; all other source and dependency context unchanged. Root will run integration controls with matching sibling accelerate import context.",
+      "baseline_runner": {
+        "bytes": 829,
+        "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/lossless-intake/run_baseline_integration.py",
+        "sha256": "b40205b747a0935ecb4c37a0bba2e19180691e9845a754297daf0e0015d6444e"
+      },
+      "failed": 2,
+      "failures": [
+        {
+          "error": "ModuleNotFoundError: ipfs_accelerate_py.agent_supervisor",
+          "test": "test_supervisor_loop.py::test_sealed_todos_link_to_constitution_span_subgoals"
+        },
+        {
+          "error": "KeyError: count (callback not invoked)",
+          "test": "test_supervisor_loop.py::test_loop_runs_real_autoformal_and_ingests_goals"
+        }
+      ],
+      "passed": 29,
+      "tests": 31
+    },
+    "git_diff_check_passed": true,
+    "owner_junit": {
+      "bytes": 12440,
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-processing-plan-20261007/lossless-intake/span-cache-final.xml",
+      "sha256": "77d771e79271900efe0cf796b47145b819d0e3bfb3ba1b949173edd80cffa548"
+    },
+    "owner_seconds": 19.04,
+    "owner_tests": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 84
+    },
+    "ruff_passed": true,
+    "ruff_select": "F,I"
+  },
+  "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+}

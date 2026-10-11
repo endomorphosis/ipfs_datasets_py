@@ -1,0 +1,161 @@
+{
+  "admitted": false,
+  "complete_source_scan": false,
+  "durable_inventory": "census.duckdb/source_occurrences; ledger indexes are TEMP and rebuilt from the pinned queue",
+  "exports": [
+    {
+      "bytes": 629,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/census-disposition-counts.parquet",
+      "sha256": "1aaeaafab1fa3d27e187508432d427771b8bb3561ad8a80c655990cfbcf26e9b"
+    }
+  ],
+  "extraction_text_scope": "Exact historical normalized sentence bytes; original section bytes remain in the pinned source artifact",
+  "formalized": false,
+  "full_parquet_exported": false,
+  "inference_executed": false,
+  "manifest_sha256": "8e09a20e0e3d2192b06f4a43b2bdacc336f7511f23fbafe92636c2f918875954",
+  "output_bytes_before_report": 1325348,
+  "schema": "uscode-source-occurrence-census/v1",
+  "scope": "Exact historical extraction/source joins only; no model, training, admission, or imported remote completion authority",
+  "source_text_storage": "No copied source text; occurrence hashes and physical source-row references bind the pinned original artifact",
+  "statistics": {
+    "byte_cohorts": {
+      "le_4096": 8,
+      "le_512": 846
+    },
+    "distinct_nonempty_ledger_span_id_count": 443904,
+    "distinct_regenerated_span_id_count": 854,
+    "distinct_source_section_offset_count": 16,
+    "intake_control_counts": {
+      "candidate_span_count": 854,
+      "duplicate_candidate_count": 0,
+      "empty_section_count": 0,
+      "legal_id_mismatch_count": 0,
+      "matched_count": 113,
+      "source_hash_mismatch_count": 0,
+      "unlisted_source_count": 741
+    },
+    "largest_occurrences": [
+      {
+        "legal_id": "usc:us:1:106",
+        "source_section_offset": 13,
+        "source_sha256": "1afbb5fd1355eafd500abf91a6512c6bbecb1f3d21630c1d70669dc0b198fa6f",
+        "source_span_id": "uscode-span-201131b320771286d3f3f0a57e1036d9b6c8da40a3bdd40494b3b00f78f8a0da",
+        "token_count": null,
+        "unicode_characters": 1043,
+        "utf8_bytes": 1095
+      },
+      {
+        "legal_id": "usc:us:1:1",
+        "source_section_offset": 0,
+        "source_sha256": "1c2977cab9d227db140fd7cb6cf266e445faade4a1053ef1e3be7f9fe5447da4",
+        "source_span_id": "uscode-span-12e942c16a9f8cfc5cd4c262d18115a59adf25e908546986c5d9a84f2294df4c",
+        "token_count": null,
+        "unicode_characters": 1085,
+        "utf8_bytes": 1087
+      },
+      {
+        "legal_id": "usc:us:1:106a",
+        "source_section_offset": 14,
+        "source_sha256": "023c806a3de97c8bf4ae8fe3751ae6cf3efd539762b5c419e66a627642557d2f",
+        "source_span_id": "uscode-span-625d34edc103cdda35bab84ae015875b4feda355371a2d150bf107ebb3d83ad0",
+        "token_count": null,
+        "unicode_characters": 815,
+        "utf8_bytes": 815
+      },
+      {
+        "legal_id": "usc:us:1:6",
+        "source_section_offset": 5,
+        "source_sha256": "65d00be8655abbcfa9b58f54f64b45edd94fc5830f1f138bf366f93274ce7419",
+        "source_span_id": "uscode-span-09ad31f9334a809411f0bc60bec3bf4294763d9bcd48ad57ddd6a93f0db2549b",
+        "token_count": null,
+        "unicode_characters": 649,
+        "utf8_bytes": 649
+      },
+      {
+        "legal_id": "usc:us:1:7",
+        "source_section_offset": 6,
+        "source_sha256": "0bea1bdee2f8c8f428a55d08b77d93606cfecb90cd6c6567a8817dd0076ef6c6",
+        "source_span_id": "uscode-span-0a482eeac0a140cf2ad440ecf6aa17481570a91b677eb65ee729c4182ca8e86e",
+        "token_count": null,
+        "unicode_characters": 632,
+        "utf8_bytes": 634
+      },
+      {
+        "legal_id": "usc:us:1:8",
+        "source_section_offset": 7,
+        "source_sha256": "e9b539bd922e3196c8bef902808393b47ce74601d64353fb505625fa0e006851",
+        "source_span_id": "uscode-span-f5898d49334bee6c25392b210bc945fb7f9ffb4cf3e287d3cbbee6aff8c838c1",
+        "token_count": null,
+        "unicode_characters": 560,
+        "utf8_bytes": 560
+      },
+      {
+        "legal_id": "usc:us:1:7",
+        "source_section_offset": 6,
+        "source_sha256": "2cd7debd691ad660cff7efab1ddd88d1598108c79fa388d4c2cf1ac923ed67cb",
+        "source_span_id": "uscode-span-1e1019528e98b870ba08c9f7ffd5b95db8e9d6a8aadbf6e3e22086bf9c04565c",
+        "token_count": null,
+        "unicode_characters": 555,
+        "utf8_bytes": 557
+      },
+      {
+        "legal_id": "usc:us:1:106b",
+        "source_section_offset": 15,
+        "source_sha256": "d02c51bea9ccf1c56f062a9ed9d7c7f837cc908820c015ad22494f3d2ea067de",
+        "source_span_id": "uscode-span-be0388c0b855bb32a5291a783cf5590b1acdc8fe1695879afae03a7a9642d4e0",
+        "token_count": null,
+        "unicode_characters": 541,
+        "utf8_bytes": 541
+      },
+      {
+        "legal_id": "usc:us:1:106",
+        "source_section_offset": 13,
+        "source_sha256": "51ff656858ce5ab6013f97bd64276eab3b9b9138a80dba697e74a92a5b2cdf2c",
+        "source_span_id": "uscode-span-ecf89b755c36024622bf09603b0a096e1a6d4cfc86ab0da1a787f7c3755fb8a8",
+        "token_count": null,
+        "unicode_characters": 490,
+        "utf8_bytes": 494
+      },
+      {
+        "legal_id": "usc:us:1:7",
+        "source_section_offset": 6,
+        "source_sha256": "87b17fac34f3df9157f4ca39464c366f529807e806a5dd39046111e958e969e2",
+        "source_span_id": "uscode-span-c5b51d3397839b721aa3fadbe419f99e8c47259b7e94a309b966a128527ef171",
+        "token_count": null,
+        "unicode_characters": 490,
+        "utf8_bytes": 490
+      }
+    ],
+    "ledger_conflicting_id_count": 0,
+    "ledger_disposition_counts": {
+      "excluded_nonspan": 1,
+      "matched": 113,
+      "pending_source_scan": 443791
+    },
+    "ledger_invalid_record_count": 0,
+    "ledger_row_count": 443905,
+    "ledger_span_record_count": 443904,
+    "next_section": 16,
+    "record_kind_counts": {
+      "meta": 1,
+      "span": 443904
+    },
+    "source_disposition_counts": {
+      "matched": 113,
+      "unlisted_source": 741
+    },
+    "source_lengths": {
+      "above_historical_32768_characters": 0,
+      "above_new_1048576_utf8_bytes": 0,
+      "max_unicode_characters": 1085,
+      "max_utf8_bytes": 1095,
+      "total_unicode_characters": 65755,
+      "total_utf8_bytes": 66359
+    },
+    "source_occurrence_count": 854,
+    "token_cohorts": null
+  },
+  "token_counts_measured": false,
+  "training_executed": false
+}

@@ -1,0 +1,727 @@
+{
+  "schema": "uscode-bounded-census-independent-results-review/v1",
+  "passed": true,
+  "checks": [
+    {
+      "check": "source-census-01 child reaped and group stopped",
+      "passed": true,
+      "evidence": {
+        "returncode": 1,
+        "elapsed_seconds": 29.359
+      }
+    },
+    {
+      "check": "source-census-01 sampled lease observations healthy",
+      "passed": true,
+      "evidence": {
+        "observations": 16,
+        "non_observation_watchdog_records": 1,
+        "continuous_coverage_claimed": false
+      }
+    },
+    {
+      "check": "source-census-resume-02 child reaped and group stopped",
+      "passed": true,
+      "evidence": {
+        "returncode": 0,
+        "elapsed_seconds": 29.245
+      }
+    },
+    {
+      "check": "source-census-resume-02 sampled lease observations healthy",
+      "passed": true,
+      "evidence": {
+        "observations": 18,
+        "non_observation_watchdog_records": 1,
+        "continuous_coverage_claimed": false
+      }
+    },
+    {
+      "check": "Failed claim authenticated release and foreign preservation",
+      "passed": true,
+      "evidence": "b5ce1c6fcdeb479fb79389795aaaddf7"
+    },
+    {
+      "check": "Resume claim and lease released",
+      "passed": true,
+      "evidence": "8258db6b4c6c4c57b6e86a3bd42f84c3"
+    },
+    {
+      "check": "Attempt footprints within admitted storage",
+      "passed": true,
+      "evidence": {
+        "first_final_bytes": 4250942,
+        "resume_final_bytes": 8701600,
+        "resume_reserved_bytes": 64000000
+      }
+    },
+    {
+      "check": "Original and resumed generation pins identical",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+        "bytes": 1711,
+        "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+      }
+    },
+    {
+      "check": "Source owner pin census",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_source_census.py",
+        "sha256": "3698dfbc2bd685cdb6dccc9d096126ad1de2e95b65c79da3e621c6119be0aae1"
+      }
+    },
+    {
+      "check": "Source owner pin intake",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legacy_span_intake.py",
+        "sha256": "1f524bd85b33f97b4855c448a0653637d39fd80aeda4146910998fd18671e418"
+      }
+    },
+    {
+      "check": "Source owner pin uscode_ingest",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/logic/autoformal/uscode_ingest.py",
+        "sha256": "d51102f02c37f36fcc669cf3c7b0d38dd5cd40e92a5b304e0ef86991f5183471"
+      }
+    },
+    {
+      "check": "Source owner pin constitution_inventory",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/logic/autoformal/constitution_inventory.py",
+        "sha256": "d71e77a88276a5ea5d6db1e7ce09add2784ae53ea6586f9aa51ceeae8a538095"
+      }
+    },
+    {
+      "check": "Source owner pin uscode_dataset",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007/ipfs_datasets_py/optimizers/logic_theorem_optimizer/uscode_dataset.py",
+        "sha256": "1d8be585f34c49a29c7b5c3b2b1d245ab7f56b904edcef458ca347d56065aa18"
+      }
+    },
+    {
+      "check": "progress complete byte identity",
+      "passed": true,
+      "evidence": {
+        "bytes": 52701179,
+        "sha256": "7707c001d650876717651a38e442d1522c5bdab6c792539414973922af1c1d03"
+      }
+    },
+    {
+      "check": "source complete byte identity",
+      "passed": true,
+      "evidence": {
+        "bytes": 374277662,
+        "sha256": "4d26df1e3814279e4b4df3af0e454b4f64fc89a81879db926989862b6ad7d8b8"
+      }
+    },
+    {
+      "check": "Stopped prefix rows retained exactly",
+      "passed": true,
+      "evidence": {
+        "old_cursor": 112,
+        "new_cursor": 128,
+        "old_occurrences": 9748,
+        "new_occurrences": 18342,
+        "added_occurrences": 8594,
+        "changed_or_missing_prefix_rows": 0
+      }
+    },
+    {
+      "check": "No duplicate occurrence IDs or source IDs",
+      "passed": true,
+      "evidence": {
+        "occurrences": 18342
+      }
+    },
+    {
+      "check": "Source section range complete without skipped physical rows",
+      "passed": true,
+      "evidence": {
+        "physical_section_offsets": 128
+      }
+    },
+    {
+      "check": "Exact original source ID/hash/legal joins",
+      "passed": true,
+      "evidence": {
+        "exact_joins": [
+          [
+            "matched",
+            2165
+          ]
+        ]
+      }
+    },
+    {
+      "check": "Every regenerated occurrence has explicit disposition",
+      "passed": true,
+      "evidence": {
+        "unlisted_source": 16177,
+        "matched": 2165
+      }
+    },
+    {
+      "check": "Complete archive ID census and conflicts preserved",
+      "passed": true,
+      "evidence": {
+        "span_records": 443904,
+        "distinct_ids": 443904,
+        "invalid_records": 0,
+        "conflicting_ids": 0
+      }
+    },
+    {
+      "check": "Partial task coverage explicitly pending",
+      "passed": true,
+      "evidence": {
+        "excluded_nonspan": 1,
+        "matched": 2165,
+        "pending_source_scan": 441739
+      }
+    },
+    {
+      "check": "Independent original source extraction and64-document ordinals",
+      "passed": true,
+      "evidence": {
+        "reconstructed_occurrences": 18342,
+        "compared_fields": "ID/text SHA/legal ID/physical offset/group/ordinal/UTF8 bytes/Unicode characters"
+      }
+    },
+    {
+      "check": "Measured character/byte lengths and overflow report",
+      "passed": true,
+      "evidence": {
+        "total_utf8_bytes": 1502974,
+        "max_utf8_bytes": 3939,
+        "total_unicode_characters": 1489416,
+        "max_unicode_characters": 3931,
+        "above_historical_32768_characters": 0,
+        "above_new_1048576_utf8_bytes": 0
+      }
+    },
+    {
+      "check": "Token counts unmeasured and no approximate tokenizer labels",
+      "passed": true,
+      "evidence": {
+        "tokenizer": null
+      }
+    },
+    {
+      "check": "Byte cohort counts reconciled",
+      "passed": true,
+      "evidence": {
+        "le_4096": 411,
+        "le_512": 17931
+      }
+    },
+    {
+      "check": "Compact export exact bytes",
+      "passed": true,
+      "evidence": {
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census-disposition-counts.parquet",
+        "bytes": 630,
+        "sha256": "b06d472f3a64138c186a36c0c5b938a15d550085f7079aae769ccca6015e3bee"
+      }
+    },
+    {
+      "check": "Compact export count rows reconciled",
+      "passed": true,
+      "evidence": {
+        "rows": 5
+      }
+    },
+    {
+      "check": "No source text persisted",
+      "passed": true,
+      "evidence": {
+        "source_body_remains_in": "Pinned original Parquet"
+      }
+    },
+    {
+      "check": "No model or proof claims",
+      "passed": true,
+      "evidence": {
+        "inference": false,
+        "training": false,
+        "formalization": false,
+        "admission": false
+      }
+    },
+    {
+      "check": "Historical clipping alternatives lost exact joins with no gains",
+      "passed": true,
+      "evidence": [
+        {
+          "label": "full",
+          "joins": 651,
+          "lost": 0,
+          "gained": 0
+        },
+        {
+          "label": "raw_before_normalization_32768",
+          "joins": 264,
+          "lost": 387,
+          "gained": 0
+        },
+        {
+          "label": "normalized_before_clip_32768",
+          "joins": 264,
+          "lost": 387,
+          "gained": 0
+        },
+        {
+          "label": "raw_before_normalization_16384",
+          "joins": 37,
+          "lost": 614,
+          "gained": 0
+        },
+        {
+          "label": "normalized_before_clip_16384",
+          "joins": 37,
+          "lost": 614,
+          "gained": 0
+        },
+        {
+          "label": "raw_before_normalization_8192",
+          "joins": 20,
+          "lost": 631,
+          "gained": 0
+        },
+        {
+          "label": "normalized_before_clip_8192",
+          "joins": 20,
+          "lost": 631,
+          "gained": 0
+        }
+      ]
+    }
+  ],
+  "findings": [],
+  "complete_source_scan": false,
+  "review_scope": "Authentic partial source accounting and exact bounded restart; not full corpus completion or model reconstruction",
+  "current_inventory": {
+    "byte_cohorts": {
+      "le_4096": 411,
+      "le_512": 17931
+    },
+    "distinct_nonempty_ledger_span_id_count": 443904,
+    "distinct_regenerated_span_id_count": 18342,
+    "distinct_source_section_offset_count": 128,
+    "intake_control_counts": {
+      "candidate_span_count": 18342,
+      "duplicate_candidate_count": 0,
+      "empty_section_count": 0,
+      "legal_id_mismatch_count": 0,
+      "matched_count": 2165,
+      "source_hash_mismatch_count": 0,
+      "unlisted_source_count": 16177
+    },
+    "largest_occurrences": [
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "652055dad9e30cd3874d12a213d999f9ed666a7ac7c2e2fe6a7919c4334b275c",
+        "source_span_id": "uscode-span-9dd96bf4240f748494e4ea638ef1505c26a5cac3c96cd2eb6d2b782597a4deac",
+        "token_count": null,
+        "unicode_characters": 3931,
+        "utf8_bytes": 3939
+      },
+      {
+        "legal_id": "usc:us:10:394",
+        "source_section_offset": 112,
+        "source_sha256": "9db63cce9baa4398a71e261ac2f3444a1ba81256635cbfbc0953c95672b8df75",
+        "source_span_id": "uscode-span-6b61396dd81518d73a20b17638e368b5d921d7fba1bca0f732473893f048d5bf",
+        "token_count": null,
+        "unicode_characters": 2607,
+        "utf8_bytes": 2613
+      },
+      {
+        "legal_id": "usc:us:10:394",
+        "source_section_offset": 112,
+        "source_sha256": "bd3188c4ecbd0c3eb87016b17a82e79be77a240c2f888ad9992c72b3161a8a5d",
+        "source_span_id": "uscode-span-bad82d7d2d12a06090a93a6eaf49123200f7b36196e0da302737626897d85fb0",
+        "token_count": null,
+        "unicode_characters": 2308,
+        "utf8_bytes": 2312
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "5bbd54fe4a9ee1da016af1ae0c9af32791aeec1aac79e1a44164931c23185f75",
+        "source_span_id": "uscode-span-4ba5ccf96aa5ecf7c11495d884f230c07a1fccb9aa7f6abd120f0d04c704d405",
+        "token_count": null,
+        "unicode_characters": 1985,
+        "utf8_bytes": 1989
+      },
+      {
+        "legal_id": "usc:us:10:397",
+        "source_section_offset": 115,
+        "source_sha256": "35e729c872ee0e44b3c562529b99f2b4f5e326e9cc21b8ef4a81b2e14e1e0c40",
+        "source_span_id": "uscode-span-5618ad6e81bab80e48a1d923149d03cf468e1b29387b38b5bcefb434a8e19042",
+        "token_count": null,
+        "unicode_characters": 1752,
+        "utf8_bytes": 1754
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "a4039a5740e264303f47dedb7b40b23cf773bd37caaa10af1f6cb2420f0446ff",
+        "source_span_id": "uscode-span-02a800a1881e35950cf9df0eee04abd407d015142ada1fb30f1c01429a5a55e0",
+        "token_count": null,
+        "unicode_characters": 1665,
+        "utf8_bytes": 1671
+      },
+      {
+        "legal_id": "usc:us:10:384",
+        "source_section_offset": 103,
+        "source_sha256": "521f7fd188d55f497f5c18c34d1da306f021e47256016fe0eafae1554b6a60e7",
+        "source_span_id": "uscode-span-ffddf79947dee31e1d0a3a72c498157f8c522ab2160d848cfe95450cba615e05",
+        "token_count": null,
+        "unicode_characters": 1652,
+        "utf8_bytes": 1658
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "59e8881e4b485fe4e0dcaf99d0084957a6e65912ae311d7827d55560079b2550",
+        "source_span_id": "uscode-span-65638c7df39575c34c5d8646f2667dac948a583c62f1a4ae1d64335aef2ca206",
+        "token_count": null,
+        "unicode_characters": 1635,
+        "utf8_bytes": 1641
+      },
+      {
+        "legal_id": "usc:us:10:113",
+        "source_section_offset": 121,
+        "source_sha256": "c6da1d02ebb30c8055f83be595a6da630cca320b3f7b4f6fa4e275eb48a566f4",
+        "source_span_id": "uscode-span-d77c3e0e020254e38615ce4d894bafb9b8d1b9305ecb42b0706ff40e723be5c3",
+        "token_count": null,
+        "unicode_characters": 1583,
+        "utf8_bytes": 1587
+      },
+      {
+        "legal_id": "usc:us:10:301",
+        "source_section_offset": 64,
+        "source_sha256": "f1f37051d8b7c174b4430e85bad994611f4f4a488f075c5543a83b654433ba06",
+        "source_span_id": "uscode-span-84b0441c605e5dedfaac4659027a1b94538d03ed22a39e00f8b1cd42b5d9c183",
+        "token_count": null,
+        "unicode_characters": 1515,
+        "utf8_bytes": 1519
+      }
+    ],
+    "ledger_conflicting_id_count": 0,
+    "ledger_disposition_counts": {
+      "excluded_nonspan": 1,
+      "matched": 2165,
+      "pending_source_scan": 441739
+    },
+    "ledger_invalid_record_count": 0,
+    "ledger_row_count": 443905,
+    "ledger_span_record_count": 443904,
+    "next_section": 128,
+    "record_kind_counts": {
+      "meta": 1,
+      "span": 443904
+    },
+    "source_disposition_counts": {
+      "matched": 2165,
+      "unlisted_source": 16177
+    },
+    "source_lengths": {
+      "above_historical_32768_characters": 0,
+      "above_new_1048576_utf8_bytes": 0,
+      "max_unicode_characters": 3931,
+      "max_utf8_bytes": 3939,
+      "total_unicode_characters": 1489416,
+      "total_utf8_bytes": 1502974
+    },
+    "source_occurrence_count": 18342,
+    "token_cohorts": null
+  },
+  "initial_partial_export_scope": {
+    "cursor": 16,
+    "occurrences": 854,
+    "matched": 113
+  },
+  "failed_durable_snapshot_scope": {
+    "cursor": 112,
+    "occurrences": 9748,
+    "matched": 1161
+  },
+  "resumed_durable_snapshot_scope": {
+    "cursor": 128,
+    "occurrences": 18342,
+    "matched": 2165,
+    "archive_pending_scan": 441739
+  },
+  "original_attempt_failure": "Configured span/byte batch bound rejected a16-section batch; previously committed rows were preserved",
+  "per_document_ordinal_alternative": {
+    "source_occurrences": 9748,
+    "original64_disposition_counts": {
+      "unlisted_source": 8587,
+      "matched": 1161
+    },
+    "alternative_document_local_disposition_counts": {
+      "matched": 59,
+      "unlisted_source": 9689
+    },
+    "new_exact_matched_occurrences": 0,
+    "lost_exact_matched_occurrences": 1102
+  },
+  "clipping_alternatives": {
+    "receipt": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/historical-clipping-audit.json",
+    "variants": [
+      {
+        "label": "full",
+        "clip_characters": null,
+        "candidate_occurrences": 5611,
+        "distinct_generated_ids": 5611,
+        "disposition_counts": {
+          "matched": 651,
+          "unlisted_source": 4960
+        },
+        "exact_ledger_id_triples": 651,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 0,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 0
+      },
+      {
+        "label": "raw_before_normalization_32768",
+        "clip_characters": 32768,
+        "candidate_occurrences": 4514,
+        "distinct_generated_ids": 4514,
+        "disposition_counts": {
+          "matched": 264,
+          "unlisted_source": 4250
+        },
+        "exact_ledger_id_triples": 264,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 387,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 2364
+      },
+      {
+        "label": "normalized_before_clip_32768",
+        "clip_characters": 32768,
+        "candidate_occurrences": 4514,
+        "distinct_generated_ids": 4514,
+        "disposition_counts": {
+          "matched": 264,
+          "unlisted_source": 4250
+        },
+        "exact_ledger_id_triples": 264,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 387,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 2364
+      },
+      {
+        "label": "raw_before_normalization_16384",
+        "clip_characters": 16384,
+        "candidate_occurrences": 3743,
+        "distinct_generated_ids": 3743,
+        "disposition_counts": {
+          "matched": 37,
+          "unlisted_source": 3706
+        },
+        "exact_ledger_id_triples": 37,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 614,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 3458
+      },
+      {
+        "label": "normalized_before_clip_16384",
+        "clip_characters": 16384,
+        "candidate_occurrences": 3743,
+        "distinct_generated_ids": 3743,
+        "disposition_counts": {
+          "matched": 37,
+          "unlisted_source": 3706
+        },
+        "exact_ledger_id_triples": 37,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 614,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 3458
+      },
+      {
+        "label": "raw_before_normalization_8192",
+        "clip_characters": 8192,
+        "candidate_occurrences": 2897,
+        "distinct_generated_ids": 2897,
+        "disposition_counts": {
+          "matched": 20,
+          "unlisted_source": 2877
+        },
+        "exact_ledger_id_triples": 20,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 631,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 2758
+      },
+      {
+        "label": "normalized_before_clip_8192",
+        "clip_characters": 8192,
+        "candidate_occurrences": 2897,
+        "distinct_generated_ids": 2897,
+        "disposition_counts": {
+          "matched": 20,
+          "unlisted_source": 2877
+        },
+        "exact_ledger_id_triples": 20,
+        "gained_exact_joins_vs_full": 0,
+        "lost_exact_joins_vs_full": 631,
+        "changed_ordinal_ids_of_unchanged_full_sentence_hashes": 2758
+      }
+    ],
+    "accepted": false
+  },
+  "current_export_semantics_inference": {
+    "span_rows_filter": "sealed=TRUE OR status='gap'",
+    "pending_stat_filter": "sealed=FALSE",
+    "inference_about_archived_counter_requires_producer_lineage_check": true,
+    "possible_total_span_cache_records": 3842642,
+    "possible_unexported_non_gap_records": 3398738,
+    "authenticated_archived_inventory_total": false,
+    "interpretation": "Current export omits unsealed/non-gap rows; current pending statistic includes gaps. Conditional historical total3842642 and unexported3398738 are hypotheses until archived producer lineage is authenticated."
+  },
+  "resources": {
+    "scope": "Cooperative admission and polled usage, not kernel quota; no complete peak RSS measurement",
+    "initial_final_bytes": 4250942,
+    "resume_final_bytes": 8701600,
+    "resume_reserved_bytes": 64000000,
+    "admitted_memory_mib": 1536,
+    "final_group_rss_bytes": 0,
+    "initial_sampled_group_rss_bytes": 24154112,
+    "peak_group_rss_authenticated": false,
+    "both_claims_released": true,
+    "both_groups_stopped": true
+  },
+  "artifact_pins": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/command.json",
+      "bytes": 5737,
+      "sha256": "f2460fe2a1a1918e83752be4738e0eb22153434612c73632716b76b1d393dc53"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/child-exit.json",
+      "bytes": 515,
+      "sha256": "8d635823681e94519e56d59b1fa9d0b4fe6095481a8cd7a83410c5f45bb174f4"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/lease-binding.json",
+      "bytes": 693,
+      "sha256": "8895a7909efab181d15d9179b9ee78a989f95f7d5dcc537364699b20638b106f"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/lease-observations.jsonl",
+      "bytes": 16861,
+      "sha256": "b4be045c6849fca6f14497a0f5eb729bbc387385f43f1c37f5fd756d7361f51e"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/manifest.json",
+      "bytes": 1711,
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/report.json",
+      "bytes": 6346,
+      "sha256": "e94e87e0668b6410309e51eaf5bf3f8b691a568ab4503a770db24e5a3b7b05f8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/command.json",
+      "bytes": 5899,
+      "sha256": "69d1063d75057a8ed22f609b6394603c7de15af852583bc14be8a1bfb08b8b7b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/child-exit.json",
+      "bytes": 515,
+      "sha256": "bd6e31c5f99ed70c120efa3f3211a55af3a4dc3326e11d8d9f393045eb2929da"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/lease-binding.json",
+      "bytes": 693,
+      "sha256": "7a0cd8469db4ef5d9137824b2c0e5c6a577c6f5a261b7244a0a37a34428573fa"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/lease-observations.jsonl",
+      "bytes": 18599,
+      "sha256": "da7b30a3dc59b324f1fb10477be05bd66c48c9bcea2de2b26ba67e13c33bb8c6"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+      "bytes": 1711,
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/report.json",
+      "bytes": 6427,
+      "sha256": "bf291513575a72d3145248e4b3d2e9e1bf7a31def5b7a7b679b1aa36e0c14c70"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/manifest.json",
+      "bytes": 1711,
+      "sha256": "34c8dd3eef9d025f3c76f51a79a9b2042399540d1682ab5a5cac0726ac3ca8b2"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census-disposition-counts.parquet",
+      "bytes": 630,
+      "sha256": "b06d472f3a64138c186a36c0c5b938a15d550085f7079aae769ccca6015e3bee"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/input-receipt.json",
+      "bytes": 646,
+      "sha256": "234599656a1b2e76065109bf2c8434e1e3f8417fc367caee339ad7c55fc9b5fe"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/failed-census-claim-release.json",
+      "bytes": 7828,
+      "sha256": "79efdd5847a6b901d44fa41963c45395ef21587b526010c5cadcc590f8764282"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/resources-final.json",
+      "bytes": 4383,
+      "sha256": "f33ced4ab4d5b1913b79a75b1466cd2dbd891487cd8127092cd29f94b67a937b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/failure.json",
+      "bytes": 3219,
+      "sha256": "ec9f6674cd86e7af6a8fd63e6668fb7a5d8d898ae72bc2b821936d3241ef7587"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/partial-report.json",
+      "bytes": 6346,
+      "sha256": "e94e87e0668b6410309e51eaf5bf3f8b691a568ab4503a770db24e5a3b7b05f8"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/historical-clipping-audit.json",
+      "bytes": 64514,
+      "sha256": "b95f948d67c45fd88707e69efe05b3c56dd83bd3c0aafdf88412ef94097e9da0"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/audit_historical_clipping.py",
+      "bytes": 7115,
+      "sha256": "c0338cf23714cb9e23d682953d707e6608ea9fe79a423179ec0b1f1d8ae84caf"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/reconcile_bounded_census.py",
+      "bytes": 15298,
+      "sha256": "2e663428bf9019193c0b5f7f583061029b5490965ff32bde64dc01f735bc2134"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-01/results/census.duckdb",
+      "bytes": 4206592,
+      "sha256": "fffa219d7a81f6438f2dd56a1249a32e13c4cf6edc3db4aeeae4227aa4b3d120"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-all-span-intake-20261007/source-census-resume-02/results/census.duckdb",
+      "bytes": 8663040,
+      "sha256": "3f6f722de861d0b6cd10ca20648d6beebf33caf18ea17f2e3218b54b35c32e4f"
+    }
+  ],
+  "inference_executed": false,
+  "training_executed": false,
+  "semantic_reconstruction_measured": false,
+  "proof_authority": false
+}

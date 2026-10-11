@@ -1,0 +1,207 @@
+{
+  "schema": "uscode-intake-progress-document-review/v1",
+  "scope": "Independent dataset/provenance/result/resource/arithmetic documentary review; broad cache/feed335-test counts belong to their separate test receipts",
+  "document": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/PROGRESS.md",
+    "bytes": 7575,
+    "sha256": "1c8d841b34ca3021ab36a1a6772e1784300f52986397e5b43290f99df7aad2c6"
+  },
+  "passed": true,
+  "checks": [
+    {
+      "check": "Archived distinct-ID denominator and states",
+      "passed": true,
+      "evidence": {
+        "archived_ids": 443904
+      }
+    },
+    {
+      "check": "Source records and projected footer sizes scoped",
+      "passed": true,
+      "evidence": "Physical source rows differ from span occurrences; footer sizes differ from RSS"
+    },
+    {
+      "check": "Source byte identity and cache revision exact",
+      "passed": true,
+      "evidence": "Matches frozen input/manifest receipts"
+    },
+    {
+      "check": "Old report16 versus stopped cursor112 distinguished",
+      "passed": true,
+      "evidence": {
+        "cursor": 112,
+        "occurrences": 9748,
+        "matched": 1161
+      }
+    },
+    {
+      "check": "Bounded128-source record scope and incomplete status",
+      "passed": true,
+      "evidence": {
+        "cursor": 128,
+        "occurrences": 18342,
+        "matched": 2165,
+        "archive_pending_scan": 441739
+      }
+    },
+    {
+      "check": "Exact archived joins and unlisted counts",
+      "passed": true,
+      "evidence": {
+        "matched": 2165,
+        "unlisted_source": 16177
+      }
+    },
+    {
+      "check": "Pending archive IDs not treated as failed/unresolved sources",
+      "passed": true,
+      "evidence": {
+        "excluded_nonspan": 1,
+        "matched": 2165,
+        "pending_source_scan": 441739
+      }
+    },
+    {
+      "check": "Exact retained prefix/addition accounting",
+      "passed": true,
+      "evidence": "Exact full-row prefix comparison and physical offsets0..127 passed"
+    },
+    {
+      "check": "Independent controls and default null token scope",
+      "passed": true,
+      "evidence": "Frozen review passed31 checks/findings[]"
+    },
+    {
+      "check": "Released resource and sampled/peak distinctions",
+      "passed": true,
+      "evidence": {
+        "scope": "Cooperative admission and polled usage, not kernel quota; no complete peak RSS measurement",
+        "initial_final_bytes": 4250942,
+        "resume_final_bytes": 8701600,
+        "resume_reserved_bytes": 64000000,
+        "admitted_memory_mib": 1536,
+        "final_group_rss_bytes": 0,
+        "initial_sampled_group_rss_bytes": 24154112,
+        "peak_group_rss_authenticated": false,
+        "both_claims_released": true,
+        "both_groups_stopped": true
+      }
+    },
+    {
+      "check": "Conditional full-inventory arithmetic not authenticated",
+      "passed": true,
+      "evidence": {
+        "span_rows_filter": "sealed=TRUE OR status='gap'",
+        "pending_stat_filter": "sealed=FALSE",
+        "inference_about_archived_counter_requires_producer_lineage_check": true,
+        "possible_total_span_cache_records": 3842642,
+        "possible_unexported_non_gap_records": 3398738,
+        "authenticated_archived_inventory_total": false,
+        "interpretation": "Current export omits unsealed/non-gap rows; current pending statistic includes gaps. Conditional historical total3842642 and unexported3398738 are hypotheses until archived producer lineage is authenticated."
+      }
+    },
+    {
+      "check": "Export gaps not falsely classified as new spans or ID drift",
+      "passed": true,
+      "evidence": "Source-generation and archived producer lineage remain unresolved"
+    },
+    {
+      "check": "Evidence-supported64-group identity retained",
+      "passed": true,
+      "evidence": {
+        "source_occurrences": 9748,
+        "original64_disposition_counts": {
+          "unlisted_source": 8587,
+          "matched": 1161
+        },
+        "alternative_document_local_disposition_counts": {
+          "matched": 59,
+          "unlisted_source": 9689
+        },
+        "new_exact_matched_occurrences": 0,
+        "lost_exact_matched_occurrences": 1102
+      }
+    },
+    {
+      "check": "Clipping controls preserve exact join-loss results",
+      "passed": true,
+      "evidence": [
+        {
+          "label": "full",
+          "joins": 651,
+          "lost": 0,
+          "gain": 0
+        },
+        {
+          "label": "raw_before_normalization_32768",
+          "joins": 264,
+          "lost": 387,
+          "gain": 0
+        },
+        {
+          "label": "normalized_before_clip_32768",
+          "joins": 264,
+          "lost": 387,
+          "gain": 0
+        },
+        {
+          "label": "raw_before_normalization_16384",
+          "joins": 37,
+          "lost": 614,
+          "gain": 0
+        },
+        {
+          "label": "normalized_before_clip_16384",
+          "joins": 37,
+          "lost": 614,
+          "gain": 0
+        },
+        {
+          "label": "raw_before_normalization_8192",
+          "joins": 20,
+          "lost": 631,
+          "gain": 0
+        },
+        {
+          "label": "normalized_before_clip_8192",
+          "joins": 20,
+          "lost": 631,
+          "gain": 0
+        }
+      ]
+    },
+    {
+      "check": "Three-width float32 floors exact",
+      "passed": true,
+      "evidence": {
+        "dimension_sum": 1160,
+        "bytes_per_float": 4,
+        "archived_floor": 2059714560,
+        "conditional_floor": 17829858880
+      }
+    },
+    {
+      "check": "Storage estimates not claims of encoding/admission",
+      "passed": true,
+      "evidence": "Vector stores/clauses/windows/replicas exceed the arithmetic floor"
+    },
+    {
+      "check": "Capture, reconstruction, training and proof scope distinguished",
+      "passed": true,
+      "evidence": "This slice measures source intake and recovery only"
+    },
+    {
+      "check": "Representations and logic-family tasks remain separated",
+      "passed": true,
+      "evidence": "No diagnostic mock vector or compiler artifact becomes learned/gold output"
+    }
+  ],
+  "findings": [],
+  "required_corrections": [],
+  "source_results_review": {
+    "path": "/home/barberb/lift_coding/artifacts/uscode-all-span-intake-20261007/review/independent-results-review.json",
+    "sha256": "788b949e4ee8dd57ed98fd4e10fdafb6b315720285310f96b4312cfe600d959b"
+  },
+  "publication_note": "When copying this artifact to repository docs, resolve the relative link to the published all-span plan destination.",
+  "mutations": "Only this compact review receipt; no source, job, resource, database or remote mutation."
+}
