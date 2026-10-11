@@ -1,0 +1,1633 @@
+{
+  "actual_outcome": {
+    "Lake_executed": false,
+    "additional_forwards": 0,
+    "all64_candidate_pools_truncated": true,
+    "default_promotion": false,
+    "encoder_calls": 0,
+    "fixed_presence_modality_verified": true,
+    "human_labels": 0,
+    "independent_semantic_holdout": false,
+    "joint_no_compatible_assignment_refusals": 16,
+    "joint_unaccepted_selected_instances": 48,
+    "optimizer_updates": 0,
+    "original_dispositions": 64,
+    "original_overlap_refusals": 56,
+    "original_raw_file_byte_equal_baseline_count": 8,
+    "original_unaccepted_proposals": 8,
+    "proof_authority": false,
+    "same_pass_captured_forwards": 64,
+    "search_budget_exhaustions": 0,
+    "semantic_accuracy": null,
+    "semantic_gain_established": false,
+    "source_exact_copy_and_nonoverlap_verified": true,
+    "source_occurrences": 8
+  },
+  "admitted_review": {
+    "bytes": 47646,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/protocol-review-f7cf97e9361a9b203a2dd90b2a65bfa5d7fdf37b214e450749cda4ae860e5000.json",
+    "sha256": "f7cf97e9361a9b203a2dd90b2a65bfa5d7fdf37b214e450749cda4ae860e5000"
+  },
+  "admitted_review_exact_draft_and_mode0444": true,
+  "all135_admitted_artifact_bindings_currently_exact": true,
+  "all_saved_read_input_closing_byte_fences_passed": true,
+  "analyzer_pin": {
+    "bytes": 9410,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/analyze_joint_readout.py",
+    "sha256": "1b6031447eca0bcd5436fb7adbd1d197c75251324cb80465adfba8ecec11efae"
+  },
+  "attempt_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01",
+  "canonical_checkouts": {
+    "datasets": {
+      "head": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "unchanged_since_intake": true
+    },
+    "root": {
+      "head": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "unchanged_since_intake": true
+    }
+  },
+  "child_exit_pin": {
+    "bytes": 104,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/child-exit.json",
+    "sha256": "12309069709e67eb16270d9cc6b9f2ce0fcf2b9fd9d82c43ab0f0db47c538637"
+  },
+  "closing_saved_read_input_count": 187,
+  "controls": [
+    {
+      "changed_counts": {
+        "canonical_ir": 1,
+        "disposition": 0,
+        "scores": 8
+      },
+      "control": "zero",
+      "name": "raw384-1729"
+    },
+    {
+      "changed_counts": {
+        "canonical_ir": 2,
+        "disposition": 0,
+        "scores": 8
+      },
+      "control": "disabled",
+      "name": "raw384-1729"
+    },
+    {
+      "changed_counts": {
+        "canonical_ir": 0,
+        "disposition": 0,
+        "scores": 8
+      },
+      "control": "rotate",
+      "name": "raw384-1729"
+    },
+    {
+      "changed_counts": {
+        "canonical_ir": 0,
+        "disposition": 0,
+        "scores": 0
+      },
+      "control": "zero",
+      "name": "source_only-1729"
+    },
+    {
+      "changed_counts": {
+        "canonical_ir": 0,
+        "disposition": 0,
+        "scores": 0
+      },
+      "control": "disabled",
+      "name": "source_only-1729"
+    },
+    {
+      "changed_counts": {
+        "canonical_ir": 0,
+        "disposition": 0,
+        "scores": 0
+      },
+      "control": "rotate",
+      "name": "source_only-1729"
+    }
+  ],
+  "findings": [],
+  "independent_exhaustive_objective_verification": {
+    "best_and_runner_up_verified": true,
+    "candidate_top_k": 8,
+    "full_domain_optimality_qualified": false,
+    "rows_verified": 64,
+    "scope": "Exhaustive all compatible assignments only inside saved per-present-facet topK domain; does not execute authored selector or infer semantic role correctness.",
+    "unique_score_domains": 40
+  },
+  "lane_observations": [
+    {
+      "control": "none",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103480,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-none-joint.json",
+        "sha256": "4c392e018bb60b091b384330e4879dd64d271a857d739507d8185cc0a3c0b919"
+      },
+      "joint_selected": 6,
+      "name": "raw384-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161701,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-none.json",
+        "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 102.5750732421875,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1248,
+          "runner_up_score": 102.28474426269531,
+          "search_nodes": 272
+        },
+        {
+          "best_score": 99.70191764831543,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 183,
+          "runner_up_score": 99.53877067565918,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 114.67074012756348,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 217,
+          "runner_up_score": 114.42665576934814,
+          "search_nodes": 80
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 488
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 123.5284595489502,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1146,
+          "runner_up_score": 123.4156322479248,
+          "search_nodes": 136
+        },
+        {
+          "best_score": 127.50637626647949,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 592,
+          "runner_up_score": 127.22063064575195,
+          "search_nodes": 160
+        },
+        {
+          "best_score": 141.42018795013428,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1320,
+          "runner_up_score": 141.29727840423584,
+          "search_nodes": 640
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210721,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-none-scores.json",
+        "sha256": "739b1777c16d8568a109ac67b3b63b343d69ad7c3412b0700b5ede6122c19917"
+      }
+    },
+    {
+      "control": "zero",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-zero-joint.json",
+        "sha256": "564c2e2ae7cac37f7ba290a428e6b522cfc6e0124b54be5a4add2d18ba15e053"
+      },
+      "joint_selected": 6,
+      "name": "raw384-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161715,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-zero.json",
+        "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 90.44996547698975,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1248,
+          "runner_up_score": 90.22394847869873,
+          "search_nodes": 272
+        },
+        {
+          "best_score": 87.71772193908691,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 162,
+          "runner_up_score": 87.57265853881836,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 100.7971887588501,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 217,
+          "runner_up_score": 100.69133472442627,
+          "search_nodes": 80
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 488
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 108.60977840423584,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1146,
+          "runner_up_score": 108.55980396270752,
+          "search_nodes": 144
+        },
+        {
+          "best_score": 112.44705390930176,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 533,
+          "runner_up_score": 112.19905662536621,
+          "search_nodes": 160
+        },
+        {
+          "best_score": 124.70911645889282,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1320,
+          "runner_up_score": 124.63285875320435,
+          "search_nodes": 656
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210915,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-zero-scores.json",
+        "sha256": "8dd0d0800c133e4541b0b9273e647a7403ddf46a8c1743f2aa7faaea80bdb608"
+      }
+    },
+    {
+      "control": "disabled",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103786,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-disabled-joint.json",
+        "sha256": "378e9fb3c914fc6260af7dba7009ff7f59036db7a7994fb0fd0e2c197c737a32"
+      },
+      "joint_selected": 6,
+      "name": "raw384-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161737,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-disabled.json",
+        "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 85.88886165618896,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1292,
+          "runner_up_score": 85.69395160675049,
+          "search_nodes": 256
+        },
+        {
+          "best_score": 83.39242744445801,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 183,
+          "runner_up_score": 83.25866985321045,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 95.710768699646,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 217,
+          "runner_up_score": 95.655442237854,
+          "search_nodes": 80
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 488
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 103.02174949645996,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1146,
+          "runner_up_score": 102.85527038574219,
+          "search_nodes": 144
+        },
+        {
+          "best_score": 107.0767593383789,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 533,
+          "runner_up_score": 106.82035064697266,
+          "search_nodes": 160
+        },
+        {
+          "best_score": 118.44942951202393,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1320,
+          "runner_up_score": 118.41126728057861,
+          "search_nodes": 664
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 211000,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-disabled-scores.json",
+        "sha256": "40cac58d959f46a902bbdcd8295ce55de10f3ebbcacb7c982930c3c937a336d1"
+      }
+    },
+    {
+      "control": "rotate",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103500,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-rotate-joint.json",
+        "sha256": "cd23fa692bdc6d1f5d2d77bcca8eee514dcbb9703f6b3d1231fe413970ca473e"
+      },
+      "joint_selected": 6,
+      "name": "raw384-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161719,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-rotate.json",
+        "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 102.67182922363281,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1248,
+          "runner_up_score": 102.38144111633301,
+          "search_nodes": 272
+        },
+        {
+          "best_score": 99.68079853057861,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 183,
+          "runner_up_score": 99.517653465271,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 114.71146965026855,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 217,
+          "runner_up_score": 114.46844959259033,
+          "search_nodes": 80
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 488
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 123.46517372131348,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1146,
+          "runner_up_score": 123.3510971069336,
+          "search_nodes": 136
+        },
+        {
+          "best_score": 127.55976867675781,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 592,
+          "runner_up_score": 127.27362632751465,
+          "search_nodes": 160
+        },
+        {
+          "best_score": 141.25893020629883,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1320,
+          "runner_up_score": 141.13542938232422,
+          "search_nodes": 640
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210750,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/raw384-1729-rotate-scores.json",
+        "sha256": "f4342d1055551ce0e53d669241e6271c669defefe6dc234d81b69739e24a0db3"
+      }
+    },
+    {
+      "control": "none",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103426,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-none-joint.json",
+        "sha256": "bc15cef5bb7f4ad8b19f0bca1b8c360770bfda41ffedae90014d84e614b23d16"
+      },
+      "joint_selected": 6,
+      "name": "source_only-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-none.json",
+        "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 89.74771022796631,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1088,
+          "runner_up_score": 89.30860805511475,
+          "search_nodes": 224
+        },
+        {
+          "best_score": 89.01837730407715,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 76,
+          "runner_up_score": 88.93677139282227,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 101.6807861328125,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 266,
+          "runner_up_score": 101.40681838989258,
+          "search_nodes": 56
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 560
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 108.21630096435547,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 996,
+          "runner_up_score": 107.80554389953613,
+          "search_nodes": 176
+        },
+        {
+          "best_score": 112.23745155334473,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 432,
+          "runner_up_score": 112.12496948242188,
+          "search_nodes": 152
+        },
+        {
+          "best_score": 125.24279165267944,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 640,
+          "runner_up_score": 125.16978597640991,
+          "search_nodes": 488
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210926,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-none-scores.json",
+        "sha256": "03764cdf706851c1fe9c2a24f1074a0d78f600c3c433f3ed29dcd5abcd61b3ec"
+      }
+    },
+    {
+      "control": "zero",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103426,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-zero-joint.json",
+        "sha256": "bc15cef5bb7f4ad8b19f0bca1b8c360770bfda41ffedae90014d84e614b23d16"
+      },
+      "joint_selected": 6,
+      "name": "source_only-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-zero.json",
+        "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 89.74771022796631,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1088,
+          "runner_up_score": 89.30860805511475,
+          "search_nodes": 224
+        },
+        {
+          "best_score": 89.01837730407715,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 76,
+          "runner_up_score": 88.93677139282227,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 101.6807861328125,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 266,
+          "runner_up_score": 101.40681838989258,
+          "search_nodes": 56
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 560
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 108.21630096435547,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 996,
+          "runner_up_score": 107.80554389953613,
+          "search_nodes": 176
+        },
+        {
+          "best_score": 112.23745155334473,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 432,
+          "runner_up_score": 112.12496948242188,
+          "search_nodes": 152
+        },
+        {
+          "best_score": 125.24279165267944,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 640,
+          "runner_up_score": 125.16978597640991,
+          "search_nodes": 488
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210926,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-zero-scores.json",
+        "sha256": "b6b58e196bc684eb9ddea315c3ef1558901458cb3584b8871f611e4c3fde35cb"
+      }
+    },
+    {
+      "control": "disabled",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103426,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-disabled-joint.json",
+        "sha256": "bc15cef5bb7f4ad8b19f0bca1b8c360770bfda41ffedae90014d84e614b23d16"
+      },
+      "joint_selected": 6,
+      "name": "source_only-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161783,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-disabled.json",
+        "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 89.74771022796631,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1088,
+          "runner_up_score": 89.30860805511475,
+          "search_nodes": 224
+        },
+        {
+          "best_score": 89.01837730407715,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 76,
+          "runner_up_score": 88.93677139282227,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 101.6807861328125,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 266,
+          "runner_up_score": 101.40681838989258,
+          "search_nodes": 56
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 560
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 108.21630096435547,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 996,
+          "runner_up_score": 107.80554389953613,
+          "search_nodes": 176
+        },
+        {
+          "best_score": 112.23745155334473,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 432,
+          "runner_up_score": 112.12496948242188,
+          "search_nodes": 152
+        },
+        {
+          "best_score": 125.24279165267944,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 640,
+          "runner_up_score": 125.16978597640991,
+          "search_nodes": 488
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210930,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-disabled-scores.json",
+        "sha256": "a109be1fde7ea959caf1f58e8f780d4727d40f2fedb00035ae6bdb5f9da43865"
+      }
+    },
+    {
+      "control": "rotate",
+      "joint_refused": 2,
+      "joint_report": {
+        "bytes": 103426,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-rotate-joint.json",
+        "sha256": "bc15cef5bb7f4ad8b19f0bca1b8c360770bfda41ffedae90014d84e614b23d16"
+      },
+      "joint_selected": 6,
+      "name": "source_only-1729",
+      "original_overlap_refusals": 7,
+      "original_proposals": 1,
+      "raw_report": {
+        "bytes": 161777,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-rotate.json",
+        "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+      },
+      "raw_report_file_byte_equal_baseline": true,
+      "rows": [
+        {
+          "best_score": 89.74771022796631,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 1088,
+          "runner_up_score": 89.30860805511475,
+          "search_nodes": 224
+        },
+        {
+          "best_score": 89.01837730407715,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": null,
+          "original_status": "decoded",
+          "retained_domain_compatible_assignments_exhaustive": 76,
+          "runner_up_score": 88.93677139282227,
+          "search_nodes": 80
+        },
+        {
+          "best_score": 101.6807861328125,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 266,
+          "runner_up_score": 101.40681838989258,
+          "search_nodes": 56
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 560
+        },
+        {
+          "best_score": null,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+          "joint_reason": "no_compatible_assignment_in_retained_domain",
+          "joint_status": "abstained",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 0,
+          "runner_up_score": null,
+          "search_nodes": 336
+        },
+        {
+          "best_score": 108.21630096435547,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 996,
+          "runner_up_score": 107.80554389953613,
+          "search_nodes": 176
+        },
+        {
+          "best_score": 112.23745155334473,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 432,
+          "runner_up_score": 112.12496948242188,
+          "search_nodes": 152
+        },
+        {
+          "best_score": 125.24279165267944,
+          "fixed_present_fields": [
+            "actor",
+            "action",
+            "object",
+            "conditions",
+            "exceptions",
+            "temporal"
+          ],
+          "full_domain_optimality": false,
+          "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+          "joint_reason": null,
+          "joint_status": "selected",
+          "original_reason": "copied_spans_overlap",
+          "original_status": "abstained",
+          "retained_domain_compatible_assignments_exhaustive": 640,
+          "runner_up_score": 125.16978597640991,
+          "search_nodes": 488
+        }
+      ],
+      "saved_tensor_before_after_equal": true,
+      "saved_tensor_hash_equals_immutable_checkpoint": true,
+      "score_sidecar": {
+        "bytes": 210928,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/source_only-1729-rotate-scores.json",
+        "sha256": "007e2b072fe429d26884c6ba7f1adb4695c61d4ffc675de76714042893a94bb4"
+      }
+    }
+  ],
+  "limits": [
+    "Copied fragments remain unreviewed statutory roles/modality; compatible output counts are not legal accuracy.",
+    "Actual typed codec success is reported by inspected frozen execution; reviewer checked saved one-rule shapes and literals, did not rerun codec.",
+    "CPU RNG, modes/flags/no-grad assertions are saved runtime evidence; RNG tensors are not retained for independent bit replay or transient-state attestation.",
+    "135 selected code/dependency/artifact byte pins are checked, not whole in-repo/third-party/loader graph or continuous filesystem snapshot.",
+    "Resource bodies compared only at two saved local endpoints; no continuous global ledger/scheduler preservation or kernel quota claim.",
+    "Historical native review-byte custody gap remains unrepaired; no expanded logic family/native8D/768D/proof qualification."
+  ],
+  "observed_at_utc": "2026-10-11T06:43:53.292282+00:00",
+  "owned_group_pin": {
+    "bytes": 189,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/owned-group-final.json",
+    "sha256": "e7d6437e4b1abc52ca9fce5058e6845700b4bc340aeec193c5a59a304198941d"
+  },
+  "parent_exit_pin": {
+    "bytes": 519,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/guardian-exit.json",
+    "sha256": "b6efdda608c21df88faafe8c9586e7edfea300933be69197fb7e59d8ba8c7cb5"
+  },
+  "passed": true,
+  "postanalysis_pin": {
+    "bytes": 324394,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/joint-comparison-diagnostics.json",
+    "sha256": "5e22b82f71d9b9f1feee6494045582936d4fa56df118689a6d27ec5c17fa39b5"
+  },
+  "resource_endpoints": {
+    "after_pin": {
+      "bytes": 6129897,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/resource-after-attempt01.local.json",
+      "sha256": "626886fd1d607667a47b97f8d1dc4b5df80290e77d5e68150e4ad9eb07186ffe"
+    },
+    "all509_prior_full_record_bodies_equal": true,
+    "before_pin": {
+      "bytes": 6127585,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/resource-before-attempt01.local.json",
+      "sha256": "eea633e9ea0c486080998683505e640a6754aa6fa718e746e5ccdc6c2c96c7d8"
+    },
+    "closing_records": 510,
+    "continuous_history_qualified": false,
+    "full_local_shared_ledgers_embedded_or_published": false,
+    "guardian_overall_seconds": 57.75043824699242,
+    "kernel_hard_cap": false,
+    "model_gate_to_reap_wall_seconds": 8.525625995942391,
+    "model_phase_sample_count": 9,
+    "own_added_record_id": "220770050d8444b897483f8e0e7c5cfb",
+    "own_final_charged_bytes": 4688806,
+    "own_status": "released",
+    "own_storage_bytes": 200000000,
+    "owned_lease_absent": true,
+    "owned_live_group_processes": 0,
+    "prior_records": 509,
+    "release_accounting_scope": "Reserved attempt bytes checked before own release; later terminal receipts excluded from charged final count.",
+    "sampled_model_peak_rss_bytes": 681361408
+  },
+  "resource_final_pin": {
+    "bytes": 6260,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/resources-final.json",
+    "sha256": "e2845560553c72da90a45dcc584511bf5c46d475e8fb8dca4dd2b32633064c18"
+  },
+  "rss_summary_pin": {
+    "bytes": 1733,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/group-rss-summary.json",
+    "sha256": "1d9bddb90ce1af75f42754f7276faa211b139007f0562c4a0185e82ba286c17a"
+  },
+  "schema": "joint-readout-result-resource-independent-review/v1",
+  "scope": "Independent saved-JSON/byte/physical-source/resource-endpoint audit, with independent exhaustive topK objective verification written from mathematical contract. No project selector/capture/codec/helper imported or executed; no models/tensor library, tests, forwards, resource APIs, network or Git mutation. Selector implementation authored by reviewer and excluded from implementation self-qualification; retained independent source reviews reused.",
+  "summary_pin": {
+    "bytes": 95920,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-joint-readout-20261011-01/results/summary.json",
+    "sha256": "5dabdfced7f727a6f606a67f639cecc2433679022c37feee81d00563e8b71ab6"
+  },
+  "tensor_hashes_independently_rebuilt_from_checkpoint_JSON_float32_bytes": {
+    "raw384-1729": "860ad8ac2fb9e1d74a35725c8fb956aa3f9ec322fdd84811bbb1a3078c1eb7ef",
+    "source_only-1729": "e9e9d1ea03438959b5165b3a5e9b4822f6ffdfc9253c5b0442ba95bd77d2e54d"
+  },
+  "version": 1
+}

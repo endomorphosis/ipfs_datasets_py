@@ -1,0 +1,20 @@
+{
+  "all_retained_owner_bytes_match_numeric_plan": true,
+  "canonical_mutation": false,
+  "findings": [],
+  "heads_after_fast_forwards": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace": "77569486a4982a534c7414bc6537d8608ecfa3bb"
+  },
+  "main_new_source_paths": [
+    "ipfs_datasets_py/logic/software_contracts/source_unit_numerical_links.py",
+    "tests/unit/logic/software_contracts/test_source_unit_numerical_links.py"
+  ],
+  "numerical_reexecution": false,
+  "passed": true,
+  "retained_owner_count": 24,
+  "root_initial_base": "88a6aaf09388c912a267d735b335bd6cabd2f36b",
+  "schema": "joint-readout-isolated-main-synchronization/v1",
+  "source_initial_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+  "tests_executed_at_initial_source_base": 452
+}

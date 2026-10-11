@@ -1,0 +1,405 @@
+{
+  "API": {
+    "assess_representability": "assess_representability(packet, proposals, *, expected_packet_sha256, artifact_resolver) -> dict",
+    "create_blank_packet": "create_blank_packet(rows, *, artifact_resolver) -> dict",
+    "digest": "digest(value) -> canonical compact sorted UTF8 JSON SHA256, not file-byte SHA",
+    "review_template": "review_template(packet, *, expected_packet_sha256, artifact_resolver) -> dict",
+    "validate_blank_packet": "validate_blank_packet(packet, *, expected_packet_sha256, artifact_resolver) -> dict"
+  },
+  "blank_packet_policy": {
+    "all_admission_masks": 0,
+    "all_authority_flags": false,
+    "all_review_and_context_interpretation_answers": null,
+    "distinct_schema": "statutory-physical-source-context-review-packet/v1",
+    "human_labels": 0,
+    "immutable_snapshot": "Detached canonical JSON input and packet copies; complete opening/closing artifact snapshots. Validation requires independently supplied canonical packet pin and exact reconstruction, including blank answers/masks/authority. Template and geometry APIs use detached pinned snapshots even if a caller mutates its original dictionary during resolver callbacks. Does not chmod or own caller custody.",
+    "null_means": "unanswered, not absent, no normative rule, false eligibility, or empty qualifier list",
+    "predictions_or_suggested_targets_in_packet": false,
+    "review_submissions": 0,
+    "review_submissions_recorder_or_admission_API_added": false,
+    "target_binding": "unassigned with all target fields null"
+  },
+  "created_at_utc": "2026-10-11T06:27:21.963189+00:00",
+  "data_reference_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-view-provenance.json": {
+      "bytes": 30901,
+      "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/real-law-review-packet.json": {
+      "bytes": 48597,
+      "sha256": "b01b12aed00bdd1e0f161cfeb3dbc8a72630fbd7f47de9da8f033b5698f7665d"
+    }
+  },
+  "existing_workflow_reference_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_context_review.py": {
+      "bytes": 21273,
+      "sha256": "50f4d92175c0812c61a3c45f90fbdfa3dec9a087cfb864342abd376b1f11d84c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_review_admission.py": {
+      "bytes": 24249,
+      "sha256": "8cbef743f73fac6c25d6d697ccc02bc10dbf71624ad61f5f31223f7afa30f9ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/alignment_review_provenance.py": {
+      "bytes": 25216,
+      "sha256": "f666f3e5b1be498687662c0b9cfae2d8befe319c58625259ed7e1d360d65f222"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/alignment_richer_review.py": {
+      "bytes": 10920,
+      "sha256": "7d8321eef857937239b31e40152184883ef368a8103342cb3ef1da1d45a49dfc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/alignment_richer_review_admission.py": {
+      "bytes": 21743,
+      "sha256": "d1594da45955c19e8f64e1e1ce0ee2272dd589ed50ffadba3086faf64a650f37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_transfer_corpus.py": {
+      "bytes": 20130,
+      "sha256": "4a073808c4e54647f5c97dcfdd61c14da5e204eb6fea76f4d95c3819e6b64746"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/training_readiness.py": {
+      "bytes": 15691,
+      "sha256": "d2d84a34028580cba068b778a1a7d5e9446cdad8b91a50dd9c17c64dd029c0db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_binding_review.py": {
+      "bytes": 21097,
+      "sha256": "658bce8569101e36852702ceb53f1bc0ab61d6a00ed071e73d7044f39765d59d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_binding_review_workflow.py": {
+      "bytes": 10419,
+      "sha256": "af60454d3d1a573ea97960f69d1a9e6a68ef102608123e368dbd87ee97cb7420"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_label_evidence_intake_workflow.py": {
+      "bytes": 17036,
+      "sha256": "2c8fcb32eac1ba58f57a8cc2e6c5839527f4020a070fd1e1d38cf66a8bb6da9e"
+    }
+  },
+  "existing_workflow_reuse_review": {
+    "alignment_review_provenance": "Fixture signature validity only; does not authenticate an independent competent human or semantics.",
+    "alignment_richer_review_and_admission": "Caller-authored synthetic panel/context and private organizer targets; blank audience separation and null/concordance principles are useful, but no real-law producer or human admission.",
+    "canonical_binding_review": "Authored binding v1 requires exact empty none_required context and authored digest IDs; cannot record physical raw-context law packet. Its strict content pin/blank replay/masks principles reused, not its schema or eligibility.",
+    "canonical_label_evidence_intake_workflow": "Depends on authored v1 recording and is likewise incompatible; no adaptation or aliasing introduced.",
+    "gte_transfer_corpus_and_training_readiness": "Existing source/normalized/group/document connected-component exclusion exists, but requires caller metadata/vector profiles and leaves semantic group/global holdout independence false. New packet only inventories exact and explicitly normalized duplicates while preserving physical occurrences; no global source/family/dependency split closure claimed.",
+    "legal_context_review": "Official HTML document-context workflow preserves body/credits/notes/structural locators and unresolved dependencies. Raw Parquet occurrence coordinates are explicitly not official visible-text coordinates. No official HTML relabeling in new module.",
+    "legal_review_admission": "Separate source/context role refs, qualifier attachment scope and distinct legal/formal/adjudicator roles useful for later declarations; fixed old packet/schema and unverified reviewer identities are not reused as human gold."
+  },
+  "exposure_stages": [
+    "arbitrary-native384-input",
+    "frozen-normative32-diagnostic",
+    "frozen-retained-pointer-comparison",
+    "source-only-review-packet-authored",
+    "source-context-engineering-inspection",
+    "declared-historical-exposure"
+  ],
+  "geometry_proposal_schema": {
+    "anchor_coordinate_space": "selected_source_unicode_characters",
+    "anchor_fields": [
+      "coordinate_space",
+      "char_start",
+      "char_end",
+      "text"
+    ],
+    "facet_values": "Lists of anchors, including explicit empty lists; no implicit absence from nulls. Only caller-declared normative rules assessed.",
+    "fields": [
+      "item_id",
+      "packet_sha256",
+      "review_declaration",
+      "interpretation_status",
+      "rules"
+    ],
+    "mechanical_profile": "One O/P/F rule, mandatory one actor/action, optional other facets at most one; exact unique token-aligned source surfaces and no overlapping copied token spans. Repeated occurrence ambiguity/multi-rule/cardinality/source-length reported as limits, never repaired.",
+    "review_declaration_fields": [
+      "status",
+      "reviewer_id",
+      "reviewed_at_utc",
+      "evidence_artifact",
+      "source_text_sha256",
+      "context_artifact_sha256"
+    ],
+    "review_declaration_status": "caller_declared_source_context_reviewed_proposal",
+    "review_verification": "Evidence file bytes and declaration source/context SHA join checked. Declaration contents, people, time authenticity, independence, semantic fidelity and completeness are NOT verified. All authority/masks remain false/0 even when geometry is representable. No canonical IR, gold labels, targets or admission created.",
+    "rule_fields": [
+      "modality",
+      "actor",
+      "action",
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "status_values": [
+      "normative",
+      "no_normative_rule",
+      "ambiguous",
+      "unsupported"
+    ]
+  },
+  "own_source_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py": {
+      "bytes": 42670,
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_source_review.py": {
+      "bytes": 24853,
+      "sha256": "fcc3dd3fd8afffb10470989531883ef8ed120fc3e87c510e76c90220b3c28cbb"
+    }
+  },
+  "remaining_gates": [
+    "Actual independent source/context role review and representability declarations are unassigned.",
+    "External reviewer identity/competence/independence, disagreement/adjudication and process authorization are not implemented or authenticated.",
+    "Current eight sources remain exposed development observations, never independent heldout gold.",
+    "Fresh source-section/family/dependency grouped splits and duplicate/exposure closure needed before an independent evaluation claim.",
+    "Source-family lowering and Lean/Lake compiler qualification remain separate from source semantics and are not run."
+  ],
+  "resolver_contract": "Receives closed path-free {sha256,bytes}; returns canonical absolute ordinary singly linked local path. No symlink/parent alias/dotdot/bytes-as-path; bounded open/closing size/hash/stat checks. Ordinary independent content-identical copies remain portable identities. No write is performed.",
+  "row_input_example_exact_existing_first_source": {
+    "context": {
+      "artifact": {
+        "bytes": 459,
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "complete_raw_section": true,
+      "normalization": "identity",
+      "selected_char_end": 418,
+      "selected_char_start": 255
+    },
+    "exposure": {
+      "events": [
+        {
+          "case_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+          "evidence_artifact": {
+            "bytes": 38209,
+            "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+          },
+          "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+          "stage": "arbitrary-native384-input"
+        }
+      ],
+      "prior_exposure_complete": false,
+      "status": "previously_exposed_development"
+    },
+    "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+    "physical_origin": {
+      "provenance_artifact": {
+        "bytes": 30901,
+        "sha256": "67087dbc315148137447af9264898c7eb0b5dba746766c4056bdea95b9c51b6a"
+      },
+      "provenance_record_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb"
+    },
+    "source": {
+      "artifact": {
+        "bytes": 459,
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "byte_end": 419,
+      "byte_start": 256,
+      "citation": "1 U.S.C. 2",
+      "document_id": "usc:us:1:2",
+      "language": "en",
+      "normalization": "identity",
+      "release_id": "ipfs-uscode-5016b86a",
+      "source_kind": "us_code"
+    },
+    "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States."
+  },
+  "schema": "statutory-source-review-author-build/v1",
+  "source_constraints": {
+    "contexts": "Complete exact raw section text deduplicated at packet top; selected character offsets and absolute SourceSpan UTF8 selectors replayed separately. No empty none_required assumption.",
+    "exposure_scope": "Case ID and selected source SHA linkage is structurally strict; exposure evidence body is never read. Completeness, reviewer blindness, family/source-section split independence, global duplicates and heldout status remain unverified.",
+    "lexical_tokens": "Actual retained lexical recipe reused lazily; exact literal char/UTF8 offsets and casefold byte IDs; recipe owner code SHA bound. Full token inventory retained even beyond transport limit. No native encoder token count, encoder execution or target representability inferred.",
+    "normalization": "identity only",
+    "origin_metadata_artifacts_max": 16,
+    "origin_metadata_bytes_max": 1048576,
+    "origin_scope": "Only archived-uscode-raw-section-view-provenance/v1 is supported. Exact matching request_id/legal_id/citation/release/view/selector/raw-SHA replay. Original parent export and historical normalized text bytes are not re-read or authenticated. Origin record replay is distinct from local view byte verification.",
+    "physical_identity": "SHA of original export artifact identity, inherited physical_source_section_offset, raw section SHA and raw char/UTF8 selectors. Cached IDs never replace physical identity; exact duplicate physical sources refused; equal text in distinct physical sections retained.",
+    "row_schema_closed": true,
+    "rows_max": 32,
+    "selected_source_bytes_max": 32768,
+    "source_context_artifacts_max": 16,
+    "source_kind": "us_code only; legacy_us_code frontend remains provenance only",
+    "unique_complete_context_bytes_max": 1048576,
+    "unknown_fields": "Explicit candidate/target/review answers rejected in closed row/exposure/provenance structural schemas; annotations and targets remain null."
+  },
+  "static_dependency_code_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "status": "written_static_AST_checked_not_runtime_tested_by_author",
+  "tests_authored": {
+    "actual_test_execution_by_author": false,
+    "coverage": "Unicode absolute selectors/lexical byte IDs; full context identity and closing mutation; path/row/source aliases; origin export/selector/hash joins; normalized-vs-raw separation; duplicate physical/exact-text/normalized identity; metadata duplicate keys; strict exposure linkage/no prediction-body reads/no unseen claim; nulls/masks/authority promotion; detached snapshots; explicit declared proposal geometry, overlap/repetition/multi-rule/token alignment/cardinality; row/context/selected budgets; numerical imports denied.",
+    "function_count": 30,
+    "inventory": [
+      {
+        "name": "test_unicode_source_context_preserves_character_byte_and_lexical_coordinates",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_rejects_wrong_unicode_selectors_raw_normalization_and_source_aliases",
+        "synthetic_cases": 9
+      },
+      {
+        "name": "test_modified_context_bytes_rejected_without_trusting_path_or_declared_hash",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_changed_context_between_opening_and_closing_snapshots_refuses",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_resolver_bytes_are_not_accepted_as_a_path",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_ordinary_view_aliases_refused",
+        "synthetic_cases": 4
+      },
+      {
+        "name": "test_replays_origin_coordinates_identity_crossjoin_and_unqualified_status",
+        "synthetic_cases": 8
+      },
+      {
+        "name": "test_historical_normalized_and_raw_sources_remain_explicitly_separate",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_equal_text_in_distinct_physical_sections_retained_not_merged",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_case_id_alias_cannot_admit_duplicate_physical_occurrence",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_cached_row_id_cannot_override_physical_origin_case_join",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_duplicate_metadata_json_keys_are_rejected_before_source_origin_join",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_packet_content_is_deterministic_under_row_order_but_not_source_identity_changes",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_unknown_exposure_with_no_events_remains_review_only_and_not_unseen",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_rejects_exposure_crossjoins_candidate_fields_targets_and_unseen_claims",
+        "synthetic_cases": 7
+      },
+      {
+        "name": "test_no_exposure_prediction_or_original_export_body_is_opened",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_blank_snapshot_cannot_be_resealed_with_answers_or_promoted_masks",
+        "synthetic_cases": 6
+      },
+      {
+        "name": "test_blank_template_null_means_unanswered_without_absence_or_eligibility",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_input_and_template_return_values_are_detached_and_pin_is_required",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_template_uses_pinned_detached_packet_when_caller_mutates_outer_input",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_geometry_requires_explicit_separate_unverified_review_and_preserves_blank_packet",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_geometry_refuses_undeclared_review_unbound_evidence_and_wrong_anchor_coordinates",
+        "synthetic_cases": 7
+      },
+      {
+        "name": "test_geometry_reports_crossfacet_overlap_without_semantic_repair",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_geometry_reports_repeated_surfaces_and_multirule_profile_limits",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_non_normative_declaration_and_unproposed_cases_are_not_semantic_negatives",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_geometry_misaligned_anchor_is_a_profile_limit_not_a_repaired_target",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_lexical_limit_does_not_truncate_or_claim_semantic_unrepresentability",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_selected_context_and_row_budgets_refuse_without_partial_packet",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_context_artifact_count_and_aggregate_bytes_have_separate_bounds",
+        "synthetic_cases": 1
+      },
+      {
+        "name": "test_packet_and_geometry_work_with_numerical_imports_denied",
+        "synthetic_cases": 1
+      }
+    ],
+    "parameterized_synthetic_cases": 65
+  },
+  "verification_by_author": {
+    "AST_parse_only": true,
+    "Git_or_Hub_mutations": false,
+    "independent_self_approval_claim": false,
+    "models_or_encoder_or_optimizer_or_torch": false,
+    "module_import_or_execution": false,
+    "resource_claims_or_releases": false,
+    "tests_run": false
+  }
+}

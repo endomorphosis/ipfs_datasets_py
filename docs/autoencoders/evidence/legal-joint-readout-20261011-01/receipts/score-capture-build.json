@@ -1,0 +1,71 @@
+{
+  "api": {
+    "attachment": "with capture.attach(handle.model): report = handle.infer_cached()",
+    "constructor": "RetainedSpanScoreCapture(source_rows, *, submitted_positions)",
+    "finalization": "sidecar = capture.finalize(report)",
+    "model_execution": "caller only; capture does not construct/open/invoke a model",
+    "no_model_case": "submitted_positions=[]; attach(None); all sidecar scores null",
+    "scores": "joint-source-span-scores/v1 exact keys schema,tokens,modality_logits,presence_logits,start_logits,end_logits",
+    "sidecar": "retained-span-score-capture/v1; rows[].scores, original outcomes/refusals/raw row hashes; complete original runtime report ASCII JSON SHA256",
+    "source_rows": "closed list of {id,source_text}; 1..64 unique occurrence IDs, duplicate source text allowed"
+  },
+  "execution": {
+    "Git_mutations": 0,
+    "encoder_calls": 0,
+    "forwards_executed": 0,
+    "models_opened": 0,
+    "module_imported_by_author": false,
+    "network_calls": 0,
+    "optimizer_updates": 0,
+    "resource_leases": 0,
+    "tests_run_by_author": false
+  },
+  "implementation_limits": [
+    "Only explicit already-open model supported; unchanged runtime owns tensor/model/source custody.",
+    "Hook metadata and copied score/raw consistency checks are not independent execution attestation.",
+    "Existing owner reports are untouched; scores absent in historical reports cannot be recovered from margins.",
+    "New numerical diagnostic requires root protocol/resource admission; this build is not admission.",
+    "Joint selection changes readout only; no legal accuracy, semantic gold, proof, dimension-family or Lake claim."
+  ],
+  "owned_files": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_retained_span_score_capture.py": {
+      "bytes": 14124,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_retained_span_score_capture.py",
+      "sha256": "ba41b20ba88fd25258055f6d03ba735e239fbaad003ce6f6ebcb9a1fda6d4d01"
+    }
+  },
+  "schema": "retained-span-score-capture-build/v1",
+  "static_checks": {
+    "AST_parsed": true,
+    "old_24_source_owner_pins_unchanged": true,
+    "retained_owner_pins": {
+      "bytes": 8453,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/retained-owner-pins.json",
+      "sha256": "6d085ce4358f0ecce89cc38ae41142bf73b9d4ac4c0497c7ff25ac97eb5aa7e0"
+    },
+    "trailing_whitespace_absent": true
+  },
+  "status": "frozen_authored_not_executed",
+  "test_scope": {
+    "authored_parametrized_cases": 32,
+    "coverage": [
+      "same-output hook returns None and separate deep copies",
+      "full heads retained after original early overlap",
+      "mandatory/optional complete greedy and original ambiguity stops",
+      "one shared callback per submitted physical occurrence and skipped/null rows",
+      "dtype/device/no-grad/shape/finite/exact-float32 rejection",
+      "raw/source/latent/donor/control/authority/closed-schema/count mutation rejection",
+      "temporary hook removal on caller/capture failure",
+      "zero-eligible no-model case",
+      "stable row-major ties and float32 threshold arithmetic",
+      "one-use and existing-hook refusal"
+    ],
+    "executed_by_author": false,
+    "objects": "explicit diagnostic tensor/model doubles; manual callback delivery is not native inference or attestation"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "architecture": {
+    "existing_call_path": "arbitrary_native_span_runtime._SpanHandle._infer_cached -> SpanContinuationDecoder.decode_formal_logic -> SpanLegalFormulaDecoder.decode_formal_logic -> _decode -> one top-level forward per submitted source",
+    "forward_owner": "legal_span_formula._model.<local SpanModel>.forward",
+    "hook": "already-open handle.model.register_forward_hook; same original pass; return None; remove in finally; separate sidecar",
+    "not_saved": [
+      "full presence logits",
+      "full start/end logits",
+      "ranked alternative spans",
+      "later facet decisions after first overlap refusal"
+    ],
+    "original_inference": "stable greedy modality/presence, upper-triangular start+end span ranking, then first cross-facet overlap causes immediate refusal",
+    "output_shapes": {
+      "end": "[1,6,N] same order",
+      "modality": "[1,3] O,P,F",
+      "presence": "[1,4,2] object/conditions/exceptions/temporal absent,present",
+      "start": "[1,6,N] actor/action/object/conditions/exceptions/temporal"
+    },
+    "saved_full_scores": [
+      "modality_logits"
+    ]
+  },
+  "authority": {
+    "Lake_executed": false,
+    "family_bridge_admitted": false,
+    "full_US_Code_validated": false,
+    "full_in_repo_import_graph_qualified": false,
+    "native_8D_or_768_validated": false,
+    "proof_authority": false,
+    "qualified": false,
+    "semantic_accuracy_measured": false,
+    "training_gain_established": false
+  },
+  "bounded_readout": {
+    "candidates": "all left<=right source-token pairs ranked stably; topK8 default, <=16 per present facet; full source <=256 tokens",
+    "evaluation": "same exposed 8 physical sources and matched none/zero/disabled/rotate controls; development diagnostic only, no fresh semantic confirmation",
+    "fixed_decisions": [
+      "modality argmax and ambiguity policy",
+      "every optional presence argmax and ambiguity policy",
+      "all present facets must receive one literal source span"
+    ],
+    "original_refusals": "preserved with original raw output/report hashes; joint candidate separate schema/origin, unaccepted",
+    "scope": "compatibility optimum within retained candidate pool only, unless additional certified coverage exists; topK truncation and ties explicit",
+    "score_arithmetic": "float32 pair sums and margins for original head/rank parity; separate ordered float64 sum of float32 span scores for constrained objective",
+    "search_cutoff": "no canonical proposal after budget stop; best observed assignment can remain diagnostic only",
+    "search_nodes_max": 50000,
+    "unchanged_originals": true
+  },
+  "build_note": {
+    "bytes": 3803,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/score-capture-build.json",
+    "sha256": "195771e9a8535423427308b2344ce1eef1216adb079f8548530026ffe78bff08"
+  },
+  "findings": [],
+  "inspected_owners": {
+    "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  },
+  "resource_feasibility": {
+    "additional_forward_per_capture": 0,
+    "envelope": "root unchanged 2CPU/1536MiB/one child/200MB/300s guarded scope",
+    "historical_actual": "64 dispositions previously completed in ~7.0s helper time with sampled model peak687083520B; not a guarantee for a new admitted run",
+    "max_new_diagnostic_rows": 64,
+    "maximum_score_scalars_per_submitted_row": 3083,
+    "new_encoder_calls": 0,
+    "new_optimizer_updates": 0
+  },
+  "saved_diagnostics": {
+    "bytes": 42878,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/pointer-comparison-diagnostics.json",
+    "sha256": "9b558ffb28feb940a9c3b3fa758ab3d00bd05a250f69c8eaac13110f10e4ac8e"
+  },
+  "saved_reports": [
+    {
+      "bytes": 161737,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-disabled.json",
+      "sha256": "8f336fb88ae95bd05f7387b6ab1ca238e39c7ef0fadaeda48d27817177b47678"
+    },
+    {
+      "bytes": 161701,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-none.json",
+      "sha256": "3078fb86bcd1e7b36e0bc79bfb1649d22b8ae9433885a4f34084d13dd0f59a7c"
+    },
+    {
+      "bytes": 161719,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-rotate.json",
+      "sha256": "df88a51c9085f33c8ce011ed08082964b4bb9bc32b0cd634a9c52e28115a648f"
+    },
+    {
+      "bytes": 161715,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/raw384-1729-zero.json",
+      "sha256": "103e0f7a62c204b4f9fd8633b6e8ff7b4fa869f6bda184d8c51b7ec25d191f8a"
+    },
+    {
+      "bytes": 161783,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-disabled.json",
+      "sha256": "7944b5e5e9ce675766624b3a2669c6187bc179efc243ed394007a8918c8f8311"
+    },
+    {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-none.json",
+      "sha256": "80b07a48730dfa6c9dbcacd207a6a886e00248855f721a5d103f4f3bcd95ab51"
+    },
+    {
+      "bytes": 161777,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-rotate.json",
+      "sha256": "194ff415e3a236bc02e7c54d460bb9ab2eb28ff5db72f54df06bddb340ed81c1"
+    },
+    {
+      "bytes": 161775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-03/results/source_only-1729-zero.json",
+      "sha256": "5edd71835852e430b40e688a33849c91ea6d89c1167b3fc7ff9d97afa945707c"
+    }
+  ],
+  "schema": "retained-span-joint-readout-design-review/v1",
+  "scope": "read-only source and saved-report architecture/score audit; owned new capture authoring after root approval",
+  "training_insights": {
+    "coupling": "heads share encoder features but loss has no explicit cross-facet compatibility or joint span assignment term",
+    "current_loss": "legal_span_formula._loss mean of modality CE and six facet terms; pointer term mean start/end CE; optional presence CE added; absent pointers ignored with zero loss",
+    "joint_readout_gradient": "none; unchanged frozen logits/weights and no optimizer update",
+    "possible_future_objective": "separately versioned structured margin/normalized compatible assignment objective only after eligible reviewed literal role labels and an excluded evaluation are established",
+    "priority": "role fidelity precedes overlap convenience: copied actor fragments as the/as the case and action called are not validated statutory roles",
+    "representability": "one flat O/P/F rule, mandatory actor/action, at most one span per optional facet; multiple obligations, definitions, referents or document context may be outside owner geometry"
+  }
+}

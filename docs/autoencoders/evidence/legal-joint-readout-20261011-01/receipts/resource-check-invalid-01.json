@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "model_execution": false,
+  "resource_acquisition": false,
+  "cause": "Historical guardian --check accepts no execution inputs; rejected supplied --package-root before check."
+}

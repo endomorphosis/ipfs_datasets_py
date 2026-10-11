@@ -1,0 +1,41 @@
+{
+  "additional_files": {
+    "copy-phase-receipt.json": {
+      "bytes": 1275,
+      "origin": {
+        "bytes": 1275,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/contribution-copy-receipt.json",
+        "sha256": "08928448419985c20ae3cc1199059ddea637e019d596a2b2297fd920f5f19dd4"
+      },
+      "sha256": "08928448419985c20ae3cc1199059ddea637e019d596a2b2297fd920f5f19dd4"
+    },
+    "current-contribution-review.json": {
+      "bytes": 10383,
+      "origin": {
+        "bytes": 10383,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/contribution-design-review-v02.json",
+        "sha256": "ecb0ec7175148adff8ccc29378af60fb74736d06bf7c226071331ebc83de2327"
+      },
+      "sha256": "ecb0ec7175148adff8ccc29378af60fb74736d06bf7c226071331ebc83de2327"
+    },
+    "main-synchronization.json": {
+      "bytes": 921,
+      "origin": {
+        "bytes": 921,
+        "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/isolated-main-synchronization.json",
+        "sha256": "6257c16bbdefa2462acb0bc7718a5a5019527f5c8a28d62521e255a156635f62"
+      },
+      "sha256": "6257c16bbdefa2462acb0bc7718a5a5019527f5c8a28d62521e255a156635f62"
+    }
+  },
+  "earlier_input_inventory_unchanged": true,
+  "extension_scope": "Late immutable passing copy/design review, observed copy-phase receipt and isolated main synchronization, separate from the original122-input inventory.",
+  "final_bundle_files": 128,
+  "initial_copy_phase_files": 124,
+  "main_copy_manifest": {
+    "bytes": 88859,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/docs/autoencoders/evidence/legal-joint-readout-20261011-01/manifest.json",
+    "sha256": "a782796dd6ba83d7ea820cc4da3d9e1a3cc02bbd720a545dca868e447c27e16e"
+  },
+  "schema": "joint-readout-contribution-finalization-manifest/v1"
+}

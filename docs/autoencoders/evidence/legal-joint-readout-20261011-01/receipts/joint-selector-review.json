@@ -1,0 +1,93 @@
+{
+  "checked": {
+    "authority": "all qualification/admission/semantics/proof/promotion/training/model/encoder/Lake flags false even when selected or full candidate-domain optimum certified",
+    "bound_correctness": "upper bound sums chosen scores plus each remaining domain maximum. It prunes only when strictly below known second-best score, so preserves best and runner-up ties. Complete assignments sorted by jointscore then canonical facet coordinate order; float64 math.fsum objective explicitly different from original head decision margins.",
+    "closed_source_score_join": "exact full retained tokenizer tokens/text/character offsets; strict score keys/head dimensions; finite exactfloat32 numbers, boolean rejected; no target keys/default missing heads/truncation",
+    "decisions": "modality and all4optional presence argmax fixed before search; all ties<=1e-7 block proposal; actor/action always present; no optional removal to repair conflict",
+    "node_budget": "each attempted assignment counts, including conflicts/pruned nodes. max50000 exactint. If traversal would exceed budget, completed/optimality flags false and no canonical proposal, even when incumbent diagnostics exist.",
+    "optimality": "retained-domain only after completed feasible search; full-domain flag only when no candidate domain truncated; unique_within_guard only when runner-up margin>1e-7 or one feasible assignment. TopK boundary ties disclosed; no globally impossible conclusion for empty limited pool.",
+    "pure_scope": "module import stdlib only; execution lazily reuses pure retained tokenizer and codec/canonical dependencies, does not construct/invoke numerical owners. Full execution import graph not asserted stdlib or qualified.",
+    "ranking": "each presentfacet enumerates all left<=right token pairs; struct.float32 sum and margin; stable score-descending then row-major coordinate order; topK1..16 with full/retained counts and boundary ties",
+    "raw_preservation": "reconstructed independent greedy is explicitly actual_owner_report:false; original early stopping untouched; full later decisions have distinct completed-head origin; joint schema/origin and raw_output_repaired:false",
+    "required_all_facets": "DFS reaches complete depth only after choosing exactly one candidate for each presentfacet; tokenbitmask rejects any shared position; absentfacet heads still validated and cannot become present",
+    "source_copy_and_codec": "output spans source slices with separate exact char/UTF8 coordinates; every mandatory/present facet source-copied; existing one-rule codec/grammar validation must succeed; validation refusal retains no formal proposal"
+  },
+  "execution_by_reviewer": {
+    "encoder_calls": 0,
+    "forwards": 0,
+    "models": 0,
+    "numerical_library_or_model_imports": false,
+    "resource_or_Git_or_network_mutations": 0,
+    "tests": false,
+    "training_steps": 0
+  },
+  "findings": [],
+  "limitations": [
+    "Static correctness review of declared candidate pool, not numerical full-score fidelity attestation.",
+    "No genuine model, encoder or optimizer ran during this review.",
+    "Exposed8law cohort cannot serve as new semantic confirmation.",
+    "Compatible copied spans and typed syntax are not reviewed legal roles; no semantic score or gain established."
+  ],
+  "passed": true,
+  "schema": "joint-span-selector-independent-static-review/v1",
+  "scope": "Independent read-only static source/test review plus inspection of root-produced saved XML; not runtime admission or semantic/model execution attestation.",
+  "selected_retained_owners": {
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  },
+  "source_pin": {
+    "bytes": 16730,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+    "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+  },
+  "test_assessment": {
+    "errors": 0,
+    "failures": 0,
+    "meaningful_cases": [
+      "overlap versus independent greedy with untouched scoreinput",
+      "mandatory6presentfacet+fixedmodality",
+      "no feasible optionalpresence cannot be dropped",
+      "global/near objective tie and topKboundary tie",
+      "budget cutoff retains diagnostic incumbent but no proposal",
+      "completed limited/full-domain optimum distinction",
+      "independent exhaustive oracle for best and runner-up with pruning",
+      "float32addition-induced tie and overflow",
+      "literalUnicode byte/char offsets, duplicate physical occurrences and internal whitespace",
+      "no lexical role heuristic",
+      "closed/head/source/type/limit rejection including absentfacet finite checks",
+      "explicit numerical construction/import denial; typedcodec diagnostic refusal"
+    ],
+    "reviewer_execution": false,
+    "saved_root_execution_xml": {
+      "bytes": 32596,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/joint-inert-tests.xml",
+      "sha256": "e7d84456ea3adafac93abac8596b7c7e03a1ec307308f47438cbf1f05d3249ca"
+    },
+    "skipped": 0,
+    "tests": 61
+  },
+  "test_pin": {
+    "bytes": 18662,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+    "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+  },
+  "training_implication": "Constrained readout has no gradient/update and cannot establish role fidelity. Future training must establish reviewed representable role/presence/modality labels and excluded evaluation first; current independent head CE has no cross-facet compatibility loss. Single-flat-rule/exactunique/nonoverlap target geometry can exclude legitimate multiple obligations/contextual roles."
+}

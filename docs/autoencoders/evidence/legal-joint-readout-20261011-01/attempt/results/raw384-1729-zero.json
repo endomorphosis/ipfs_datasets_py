@@ -1,0 +1,5891 @@
+{
+  "ambient_CPU_RNG_preserved": true,
+  "authority": {
+    "Lake_executed": false,
+    "admitted": false,
+    "bit_identical_new_encoder_outputs_proven": false,
+    "default_promotion": false,
+    "encoder_executed": false,
+    "family_bridge_admitted": false,
+    "formalized": false,
+    "full_in_repo_import_graph_qualified": false,
+    "native_execution_attested": false,
+    "proof_authority": false,
+    "qualified": false,
+    "semantic_accuracy_measured": false,
+    "source_semantics_verified": false,
+    "targets_accessed": false,
+    "training_executed": false
+  },
+  "checkpoint_metadata": {
+    "base_checkpoint_sha256": "2360b2ec89285fc95619ccfe03a59528c70ef09890d4e3675b2618bfa8442424",
+    "checkpoint_sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0",
+    "config": {
+      "architecture": "utf8-byte-pool-bidirectional-gru-tied-film-span-heads/v1",
+      "batch_size": 12,
+      "byte_alphabet": "casefold_utf8_plus1_pad0/v1",
+      "device": "cpu",
+      "dtype": "float32",
+      "embedding_dim": 16,
+      "hidden_size": 32,
+      "initialization": "from_scratch",
+      "latent_dimension": 384,
+      "latent_enabled": true,
+      "learning_rate": 0.001,
+      "loss": "equal_facet_modality_presence_mean_start_end/v1",
+      "max_source_characters": 16384,
+      "max_source_tokens": 256,
+      "max_token_bytes": 2048,
+      "projection_width": 16,
+      "residual_scale": 0.25,
+      "seed": 1729,
+      "tokenizer": "unicode_word_or_punctuation_exact_offsets/v1",
+      "torch_version": "2.13.0+cu130"
+    },
+    "context_contract": {
+      "dimension": 384,
+      "producer_sha256": "0e8a4bff65241bd9f7cfa4fd6200cbf1216d836d4687418d25d1c79d9b3ca12d",
+      "representation_id": "actual_frozen_legal_ir/raw384/v1",
+      "training_index_sha256": "739964281f8eb516ca7849da422d44428d9ce09a3f2b64df2c34da2d26d6949f"
+    },
+    "context_contract_sha256": "a91a3eb04e64b0f7085dabc8cef53b5f6528d337bb20ce6dc6c1807cc7ed71f9",
+    "initialization": {
+      "all_parent_model_tensors_copied": true,
+      "base_config_initialization_scope": "standalone_constructor_descriptor; outer_lineage_defines_actual_weight_provenance",
+      "mode": "warm_start_all_source_parent_model_tensors",
+      "optimizer": "fresh_adam_at_warm_start_then_exact_moment_resumption",
+      "parent_optimizer_moments_transferred": false,
+      "trainable_parameters": "all_model_parameters"
+    },
+    "input_dimension": 384,
+    "latent_enabled": true,
+    "lineage_id": "warm_start_source_span_formula_v1",
+    "model_state_sha256": "8e38507cf282264a9f57f01bda69765a6559aa66adfcb79c7c762ee0fefe8cc6",
+    "schema": "warm-start-span-legal-formula-checkpoint/v1",
+    "source_parent_checkpoint_sha256": "b2e5087b8d77b002711d5f899f634346382cacfdf8df6830c93b63e7250cbce0",
+    "source_parent_optimizer_steps": 800
+  },
+  "control": "zero",
+  "custody_scope": "Bounded per-file reads and repeated endpoint fences; no atomic cross-file snapshot or continuous source currentness.",
+  "decoder_calls": 1,
+  "decoder_contract_id": "arbitrary-raw-gte384-retained-span/v1",
+  "eligible_count": 8,
+  "input_count": 8,
+  "numerical_custody_checked": true,
+  "optimizer_steps_executed": 0,
+  "outcome_counts": {
+    "decoder_abstained": 7,
+    "decoder_proposal": 1
+  },
+  "raw_owner_report": {
+    "admitted": false,
+    "base_checkpoint_sha256": "2360b2ec89285fc95619ccfe03a59528c70ef09890d4e3675b2618bfa8442424",
+    "checkpoint_sha256": "21f4954e11dd482a65e5f1083d2f9cc074b817e049ec0f24ee71b15267a7eac0",
+    "context_contract_sha256": "a91a3eb04e64b0f7085dabc8cef53b5f6528d337bb20ce6dc6c1807cc7ed71f9",
+    "decoded_count": 1,
+    "formalized": false,
+    "initialization": {
+      "all_parent_model_tensors_copied": true,
+      "base_config_initialization_scope": "standalone_constructor_descriptor; outer_lineage_defines_actual_weight_provenance",
+      "mode": "warm_start_all_source_parent_model_tensors",
+      "optimizer": "fresh_adam_at_warm_start_then_exact_moment_resumption",
+      "parent_optimizer_moments_transferred": false,
+      "trainable_parameters": "all_model_parameters"
+    },
+    "latent_ablation": "none",
+    "lineage_id": "warm_start_source_span_formula_v1",
+    "promotion_performed": false,
+    "proof_authority": false,
+    "publication_performed": false,
+    "qualified": false,
+    "roundtrip_ok": false,
+    "rows": [
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 117,
+              "char_start": 106,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.22601699829101562,
+              "text": "subdivision",
+              "token_end_inclusive": 25,
+              "token_start": 25
+            },
+            "actor": {
+              "char_end": 94,
+              "char_start": 82,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8506841659545898,
+              "text": "or any other",
+              "token_end_inclusive": 23,
+              "token_start": 21
+            },
+            "conditions": {
+              "char_end": 80,
+              "char_start": 45,
+              "presence_logit_margin": 19.881242752075195,
+              "present": true,
+              "span_logit_margin": 0.7659530639648438,
+              "text": "The word \"county\" includes a parish",
+              "token_end_inclusive": 19,
+              "token_start": 12
+            },
+            "exceptions": {
+              "char_end": 162,
+              "char_start": 145,
+              "presence_logit_margin": 0.4872215688228607,
+              "present": true,
+              "span_logit_margin": 0.7229499816894531,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32
+            },
+            "object": {
+              "char_end": 162,
+              "char_start": 145,
+              "presence_logit_margin": 11.359487533569336,
+              "present": true,
+              "span_logit_margin": 1.1172513961791992,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32
+            }
+          },
+          "modality_logits": [
+            -0.0019251247867941856,
+            3.1517789363861084,
+            -3.798919439315796
+          ],
+          "tokens": [
+            {
+              "end": 1,
+              "start": 0,
+              "text": "\""
+            },
+            {
+              "end": 7,
+              "start": 1,
+              "text": "County"
+            },
+            {
+              "end": 8,
+              "start": 7,
+              "text": "\""
+            },
+            {
+              "end": 11,
+              "start": 9,
+              "text": "as"
+            },
+            {
+              "end": 21,
+              "start": 12,
+              "text": "including"
+            },
+            {
+              "end": 23,
+              "start": 22,
+              "text": "\""
+            },
+            {
+              "end": 29,
+              "start": 23,
+              "text": "parish"
+            },
+            {
+              "end": 30,
+              "start": 29,
+              "text": "\""
+            },
+            {
+              "end": 31,
+              "start": 30,
+              "text": ","
+            },
+            {
+              "end": 35,
+              "start": 32,
+              "text": "and"
+            },
+            {
+              "end": 38,
+              "start": 36,
+              "text": "so"
+            },
+            {
+              "end": 44,
+              "start": 39,
+              "text": "forth"
+            },
+            {
+              "end": 48,
+              "start": 45,
+              "text": "The"
+            },
+            {
+              "end": 53,
+              "start": 49,
+              "text": "word"
+            },
+            {
+              "end": 55,
+              "start": 54,
+              "text": "\""
+            },
+            {
+              "end": 61,
+              "start": 55,
+              "text": "county"
+            },
+            {
+              "end": 62,
+              "start": 61,
+              "text": "\""
+            },
+            {
+              "end": 71,
+              "start": 63,
+              "text": "includes"
+            },
+            {
+              "end": 73,
+              "start": 72,
+              "text": "a"
+            },
+            {
+              "end": 80,
+              "start": 74,
+              "text": "parish"
+            },
+            {
+              "end": 81,
+              "start": 80,
+              "text": ","
+            },
+            {
+              "end": 84,
+              "start": 82,
+              "text": "or"
+            },
+            {
+              "end": 88,
+              "start": 85,
+              "text": "any"
+            },
+            {
+              "end": 94,
+              "start": 89,
+              "text": "other"
+            },
+            {
+              "end": 105,
+              "start": 95,
+              "text": "equivalent"
+            },
+            {
+              "end": 117,
+              "start": 106,
+              "text": "subdivision"
+            },
+            {
+              "end": 120,
+              "start": 118,
+              "text": "of"
+            },
+            {
+              "end": 122,
+              "start": 121,
+              "text": "a"
+            },
+            {
+              "end": 128,
+              "start": 123,
+              "text": "State"
+            },
+            {
+              "end": 131,
+              "start": 129,
+              "text": "or"
+            },
+            {
+              "end": 141,
+              "start": 132,
+              "text": "Territory"
+            },
+            {
+              "end": 144,
+              "start": 142,
+              "text": "of"
+            },
+            {
+              "end": 148,
+              "start": 145,
+              "text": "the"
+            },
+            {
+              "end": 155,
+              "start": 149,
+              "text": "United"
+            },
+            {
+              "end": 162,
+              "start": 156,
+              "text": "States"
+            },
+            {
+              "end": 163,
+              "start": 162,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            }
+          ]
+        },
+        "family_syntax_checked": true,
+        "formal_outputs": [
+          {
+            "admitted": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"called\",\"actor\":\"as the\",\"conditions\":[\"the presiding officers of both Houses and\"],\"exceptions\":[],\"modality\":\"O\",\"object\":\"the enrolled bill, or\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "origin": "learned_source_span_formula_decoder",
+            "payload": {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false
+          }
+        ],
+        "formalized": false,
+        "formula_text": "{\"rules\":[{\"action\":\"called\",\"actor\":\"as the\",\"conditions\":[\"the presiding officers of both Houses and\"],\"exceptions\":[],\"modality\":\"O\",\"object\":\"the enrolled bill, or\",\"temporal\":[]}]}",
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "minimum_decision_logit_margin": 0.1450634002685547,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": null,
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.3182220458984375,
+              "text": "called",
+              "token_end_inclusive": 21,
+              "token_start": 21
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.1450634002685547,
+              "text": "as the",
+              "token_end_inclusive": 31,
+              "token_start": 30
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "presence_logit_margin": 10.812746047973633,
+              "present": true,
+              "span_logit_margin": 0.9855918884277344,
+              "text": "the presiding officers of both Houses and",
+              "token_end_inclusive": 47,
+              "token_start": 41
+            },
+            "exceptions": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 0.8666151762008667,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "presence_logit_margin": 10.226115226745605,
+              "present": true,
+              "span_logit_margin": 0.5200901031494141,
+              "text": "the enrolled bill, or",
+              "token_end_inclusive": 26,
+              "token_start": 22
+            },
+            "temporal": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 6.980982780456543,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            }
+          },
+          "modality_logits": [
+            3.6379196643829346,
+            -1.1755253076553345,
+            -3.5528385639190674
+          ],
+          "tokens": [
+            {
+              "end": 4,
+              "start": 0,
+              "text": "When"
+            },
+            {
+              "end": 9,
+              "start": 5,
+              "text": "such"
+            },
+            {
+              "end": 14,
+              "start": 10,
+              "text": "bill"
+            },
+            {
+              "end": 15,
+              "start": 14,
+              "text": ","
+            },
+            {
+              "end": 18,
+              "start": 16,
+              "text": "or"
+            },
+            {
+              "end": 24,
+              "start": 19,
+              "text": "joint"
+            },
+            {
+              "end": 35,
+              "start": 25,
+              "text": "resolution"
+            },
+            {
+              "end": 41,
+              "start": 36,
+              "text": "shall"
+            },
+            {
+              "end": 46,
+              "start": 42,
+              "text": "have"
+            },
+            {
+              "end": 53,
+              "start": 47,
+              "text": "passed"
+            },
+            {
+              "end": 58,
+              "start": 54,
+              "text": "both"
+            },
+            {
+              "end": 65,
+              "start": 59,
+              "text": "Houses"
+            },
+            {
+              "end": 66,
+              "start": 65,
+              "text": ","
+            },
+            {
+              "end": 69,
+              "start": 67,
+              "text": "it"
+            },
+            {
+              "end": 75,
+              "start": 70,
+              "text": "shall"
+            },
+            {
+              "end": 78,
+              "start": 76,
+              "text": "be"
+            },
+            {
+              "end": 86,
+              "start": 79,
+              "text": "printed"
+            },
+            {
+              "end": 90,
+              "start": 87,
+              "text": "and"
+            },
+            {
+              "end": 96,
+              "start": 91,
+              "text": "shall"
+            },
+            {
+              "end": 101,
+              "start": 97,
+              "text": "then"
+            },
+            {
+              "end": 104,
+              "start": 102,
+              "text": "be"
+            },
+            {
+              "end": 111,
+              "start": 105,
+              "text": "called"
+            },
+            {
+              "end": 115,
+              "start": 112,
+              "text": "the"
+            },
+            {
+              "end": 124,
+              "start": 116,
+              "text": "enrolled"
+            },
+            {
+              "end": 129,
+              "start": 125,
+              "text": "bill"
+            },
+            {
+              "end": 130,
+              "start": 129,
+              "text": ","
+            },
+            {
+              "end": 133,
+              "start": 131,
+              "text": "or"
+            },
+            {
+              "end": 139,
+              "start": 134,
+              "text": "joint"
+            },
+            {
+              "end": 150,
+              "start": 140,
+              "text": "resolution"
+            },
+            {
+              "end": 151,
+              "start": 150,
+              "text": ","
+            },
+            {
+              "end": 154,
+              "start": 152,
+              "text": "as"
+            },
+            {
+              "end": 158,
+              "start": 155,
+              "text": "the"
+            },
+            {
+              "end": 163,
+              "start": 159,
+              "text": "case"
+            },
+            {
+              "end": 167,
+              "start": 164,
+              "text": "may"
+            },
+            {
+              "end": 170,
+              "start": 168,
+              "text": "be"
+            },
+            {
+              "end": 171,
+              "start": 170,
+              "text": ","
+            },
+            {
+              "end": 175,
+              "start": 172,
+              "text": "and"
+            },
+            {
+              "end": 181,
+              "start": 176,
+              "text": "shall"
+            },
+            {
+              "end": 184,
+              "start": 182,
+              "text": "be"
+            },
+            {
+              "end": 191,
+              "start": 185,
+              "text": "signed"
+            },
+            {
+              "end": 194,
+              "start": 192,
+              "text": "by"
+            },
+            {
+              "end": 198,
+              "start": 195,
+              "text": "the"
+            },
+            {
+              "end": 208,
+              "start": 199,
+              "text": "presiding"
+            },
+            {
+              "end": 217,
+              "start": 209,
+              "text": "officers"
+            },
+            {
+              "end": 220,
+              "start": 218,
+              "text": "of"
+            },
+            {
+              "end": 225,
+              "start": 221,
+              "text": "both"
+            },
+            {
+              "end": 232,
+              "start": 226,
+              "text": "Houses"
+            },
+            {
+              "end": 236,
+              "start": 233,
+              "text": "and"
+            },
+            {
+              "end": 241,
+              "start": 237,
+              "text": "sent"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "to"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "the"
+            },
+            {
+              "end": 258,
+              "start": 249,
+              "text": "President"
+            },
+            {
+              "end": 261,
+              "start": 259,
+              "text": "of"
+            },
+            {
+              "end": 265,
+              "start": 262,
+              "text": "the"
+            },
+            {
+              "end": 272,
+              "start": 266,
+              "text": "United"
+            },
+            {
+              "end": 279,
+              "start": 273,
+              "text": "States"
+            },
+            {
+              "end": 280,
+              "start": 279,
+              "text": "."
+            }
+          ]
+        },
+        "status": "decoded",
+        "syntax_scope": "single_canonical_deontic_rule_with_one_copied_span_per_facet",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 96,
+              "char_start": 93,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.012552261352539,
+              "text": "all",
+              "token_end_inclusive": 18,
+              "token_start": 18
+            },
+            "actor": {
+              "char_end": 237,
+              "char_start": 46,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.2950887680053711,
+              "text": "the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the",
+              "token_end_inclusive": 43,
+              "token_start": 10
+            }
+          },
+          "modality_logits": [
+            0.13114769756793976,
+            1.3668255805969238,
+            -2.3315412998199463
+          ],
+          "tokens": [
+            {
+              "end": 2,
+              "start": 0,
+              "text": "In"
+            },
+            {
+              "end": 6,
+              "start": 3,
+              "text": "the"
+            },
+            {
+              "end": 12,
+              "start": 7,
+              "text": "event"
+            },
+            {
+              "end": 15,
+              "start": 13,
+              "text": "of"
+            },
+            {
+              "end": 18,
+              "start": 16,
+              "text": "an"
+            },
+            {
+              "end": 24,
+              "start": 19,
+              "text": "extra"
+            },
+            {
+              "end": 32,
+              "start": 25,
+              "text": "session"
+            },
+            {
+              "end": 35,
+              "start": 33,
+              "text": "of"
+            },
+            {
+              "end": 44,
+              "start": 36,
+              "text": "Congress"
+            },
+            {
+              "end": 45,
+              "start": 44,
+              "text": ","
+            },
+            {
+              "end": 49,
+              "start": 46,
+              "text": "the"
+            },
+            {
+              "end": 59,
+              "start": 50,
+              "text": "Archivist"
+            },
+            {
+              "end": 62,
+              "start": 60,
+              "text": "of"
+            },
+            {
+              "end": 66,
+              "start": 63,
+              "text": "the"
+            },
+            {
+              "end": 73,
+              "start": 67,
+              "text": "United"
+            },
+            {
+              "end": 80,
+              "start": 74,
+              "text": "States"
+            },
+            {
+              "end": 86,
+              "start": 81,
+              "text": "shall"
+            },
+            {
+              "end": 92,
+              "start": 87,
+              "text": "cause"
+            },
+            {
+              "end": 96,
+              "start": 93,
+              "text": "all"
+            },
+            {
+              "end": 100,
+              "start": 97,
+              "text": "the"
+            },
+            {
+              "end": 105,
+              "start": 101,
+              "text": "laws"
+            },
+            {
+              "end": 109,
+              "start": 106,
+              "text": "and"
+            },
+            {
+              "end": 120,
+              "start": 110,
+              "text": "concurrent"
+            },
+            {
+              "end": 132,
+              "start": 121,
+              "text": "resolutions"
+            },
+            {
+              "end": 140,
+              "start": 133,
+              "text": "enacted"
+            },
+            {
+              "end": 147,
+              "start": 141,
+              "text": "during"
+            },
+            {
+              "end": 152,
+              "start": 148,
+              "text": "said"
+            },
+            {
+              "end": 158,
+              "start": 153,
+              "text": "extra"
+            },
+            {
+              "end": 166,
+              "start": 159,
+              "text": "session"
+            },
+            {
+              "end": 169,
+              "start": 167,
+              "text": "to"
+            },
+            {
+              "end": 172,
+              "start": 170,
+              "text": "be"
+            },
+            {
+              "end": 185,
+              "start": 173,
+              "text": "consolidated"
+            },
+            {
+              "end": 190,
+              "start": 186,
+              "text": "with"
+            },
+            {
+              "end": 191,
+              "start": 190,
+              "text": ","
+            },
+            {
+              "end": 195,
+              "start": 192,
+              "text": "and"
+            },
+            {
+              "end": 205,
+              "start": 196,
+              "text": "published"
+            },
+            {
+              "end": 208,
+              "start": 206,
+              "text": "as"
+            },
+            {
+              "end": 213,
+              "start": 209,
+              "text": "part"
+            },
+            {
+              "end": 216,
+              "start": 214,
+              "text": "of"
+            },
+            {
+              "end": 217,
+              "start": 216,
+              "text": ","
+            },
+            {
+              "end": 221,
+              "start": 218,
+              "text": "the"
+            },
+            {
+              "end": 230,
+              "start": 222,
+              "text": "contents"
+            },
+            {
+              "end": 233,
+              "start": 231,
+              "text": "of"
+            },
+            {
+              "end": 237,
+              "start": 234,
+              "text": "the"
+            },
+            {
+              "end": 244,
+              "start": 238,
+              "text": "volume"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "for"
+            },
+            {
+              "end": 252,
+              "start": 249,
+              "text": "the"
+            },
+            {
+              "end": 257,
+              "start": 253,
+              "text": "next"
+            },
+            {
+              "end": 265,
+              "start": 258,
+              "text": "regular"
+            },
+            {
+              "end": 273,
+              "start": 266,
+              "text": "session"
+            },
+            {
+              "end": 274,
+              "start": 273,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 36,
+              "char_start": 34,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.1476917266845703,
+              "text": "of",
+              "token_end_inclusive": 5,
+              "token_start": 5
+            },
+            "actor": {
+              "char_end": 224,
+              "char_start": 66,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8083324432373047,
+              "text": "or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible",
+              "token_end_inclusive": 39,
+              "token_start": 13
+            },
+            "object": {
+              "char_end": 139,
+              "char_start": 37,
+              "presence_logit_margin": 9.546778678894043,
+              "present": true,
+              "span_logit_margin": 1.2138442993164062,
+              "text": "the United States, a treaty, or a statute shall include the specific article or section and subsection",
+              "token_end_inclusive": 24,
+              "token_start": 6
+            }
+          },
+          "modality_logits": [
+            2.308199405670166,
+            -1.2267543077468872,
+            -1.6490496397018433
+          ],
+          "tokens": [
+            {
+              "end": 3,
+              "start": 0,
+              "text": "All"
+            },
+            {
+              "end": 13,
+              "start": 4,
+              "text": "citations"
+            },
+            {
+              "end": 16,
+              "start": 14,
+              "text": "to"
+            },
+            {
+              "end": 20,
+              "start": 17,
+              "text": "the"
+            },
+            {
+              "end": 33,
+              "start": 21,
+              "text": "Constitution"
+            },
+            {
+              "end": 36,
+              "start": 34,
+              "text": "of"
+            },
+            {
+              "end": 40,
+              "start": 37,
+              "text": "the"
+            },
+            {
+              "end": 47,
+              "start": 41,
+              "text": "United"
+            },
+            {
+              "end": 54,
+              "start": 48,
+              "text": "States"
+            },
+            {
+              "end": 55,
+              "start": 54,
+              "text": ","
+            },
+            {
+              "end": 57,
+              "start": 56,
+              "text": "a"
+            },
+            {
+              "end": 64,
+              "start": 58,
+              "text": "treaty"
+            },
+            {
+              "end": 65,
+              "start": 64,
+              "text": ","
+            },
+            {
+              "end": 68,
+              "start": 66,
+              "text": "or"
+            },
+            {
+              "end": 70,
+              "start": 69,
+              "text": "a"
+            },
+            {
+              "end": 78,
+              "start": 71,
+              "text": "statute"
+            },
+            {
+              "end": 84,
+              "start": 79,
+              "text": "shall"
+            },
+            {
+              "end": 92,
+              "start": 85,
+              "text": "include"
+            },
+            {
+              "end": 96,
+              "start": 93,
+              "text": "the"
+            },
+            {
+              "end": 105,
+              "start": 97,
+              "text": "specific"
+            },
+            {
+              "end": 113,
+              "start": 106,
+              "text": "article"
+            },
+            {
+              "end": 116,
+              "start": 114,
+              "text": "or"
+            },
+            {
+              "end": 124,
+              "start": 117,
+              "text": "section"
+            },
+            {
+              "end": 128,
+              "start": 125,
+              "text": "and"
+            },
+            {
+              "end": 139,
+              "start": 129,
+              "text": "subsection"
+            },
+            {
+              "end": 149,
+              "start": 140,
+              "text": "reference"
+            },
+            {
+              "end": 158,
+              "start": 150,
+              "text": "whenever"
+            },
+            {
+              "end": 168,
+              "start": 159,
+              "text": "available"
+            },
+            {
+              "end": 172,
+              "start": 169,
+              "text": "and"
+            },
+            {
+              "end": 173,
+              "start": 172,
+              "text": ","
+            },
+            {
+              "end": 176,
+              "start": 174,
+              "text": "if"
+            },
+            {
+              "end": 180,
+              "start": 177,
+              "text": "not"
+            },
+            {
+              "end": 190,
+              "start": 181,
+              "text": "available"
+            },
+            {
+              "end": 191,
+              "start": 190,
+              "text": ","
+            },
+            {
+              "end": 197,
+              "start": 192,
+              "text": "shall"
+            },
+            {
+              "end": 200,
+              "start": 198,
+              "text": "be"
+            },
+            {
+              "end": 203,
+              "start": 201,
+              "text": "as"
+            },
+            {
+              "end": 212,
+              "start": 204,
+              "text": "specific"
+            },
+            {
+              "end": 215,
+              "start": 213,
+              "text": "as"
+            },
+            {
+              "end": 224,
+              "start": 216,
+              "text": "possible"
+            },
+            {
+              "end": 225,
+              "start": 224,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 3,
+              "char_start": 2,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.8910322189331055,
+              "text": ")",
+              "token_end_inclusive": 2,
+              "token_start": 2
+            },
+            "actor": {
+              "char_end": 7,
+              "char_start": 2,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.3205728530883789,
+              "text": ") The",
+              "token_end_inclusive": 3,
+              "token_start": 2
+            }
+          },
+          "modality_logits": [
+            1.2263882160186768,
+            4.4566874504089355,
+            -7.032294273376465
+          ],
+          "tokens": [
+            {
+              "end": 1,
+              "start": 0,
+              "text": "("
+            },
+            {
+              "end": 2,
+              "start": 1,
+              "text": "6"
+            },
+            {
+              "end": 3,
+              "start": 2,
+              "text": ")"
+            },
+            {
+              "end": 7,
+              "start": 4,
+              "text": "The"
+            },
+            {
+              "end": 12,
+              "start": 8,
+              "text": "term"
+            },
+            {
+              "end": 14,
+              "start": 13,
+              "text": "\""
+            },
+            {
+              "end": 22,
+              "start": 14,
+              "text": "enlisted"
+            },
+            {
+              "end": 29,
+              "start": 23,
+              "text": "member"
+            },
+            {
+              "end": 30,
+              "start": 29,
+              "text": "\""
+            },
+            {
+              "end": 36,
+              "start": 31,
+              "text": "means"
+            },
+            {
+              "end": 38,
+              "start": 37,
+              "text": "a"
+            },
+            {
+              "end": 45,
+              "start": 39,
+              "text": "person"
+            },
+            {
+              "end": 48,
+              "start": 46,
+              "text": "in"
+            },
+            {
+              "end": 51,
+              "start": 49,
+              "text": "an"
+            },
+            {
+              "end": 60,
+              "start": 52,
+              "text": "enlisted"
+            },
+            {
+              "end": 66,
+              "start": 61,
+              "text": "grade"
+            },
+            {
+              "end": 67,
+              "start": 66,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 163,
+              "char_start": 161,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8912239074707031,
+              "text": "be",
+              "token_end_inclusive": 34,
+              "token_start": 34
+            },
+            "actor": {
+              "char_end": 157,
+              "char_start": 149,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.3381109237670898,
+              "text": "or allow",
+              "token_end_inclusive": 32,
+              "token_start": 31
+            },
+            "object": {
+              "char_end": 174,
+              "char_start": 83,
+              "presence_logit_margin": 7.772708415985107,
+              "present": true,
+              "span_logit_margin": 0.6259326934814453,
+              "text": "the Department of Defense designated by him, may arm, have armed, or allow to be armed, any",
+              "token_end_inclusive": 37,
+              "token_start": 17
+            }
+          },
+          "modality_logits": [
+            0.6840085983276367,
+            2.267179489135742,
+            -3.923001766204834
+          ],
+          "tokens": [
+            {
+              "end": 6,
+              "start": 0,
+              "text": "During"
+            },
+            {
+              "end": 10,
+              "start": 7,
+              "text": "war"
+            },
+            {
+              "end": 13,
+              "start": 11,
+              "text": "or"
+            },
+            {
+              "end": 20,
+              "start": 14,
+              "text": "threat"
+            },
+            {
+              "end": 23,
+              "start": 21,
+              "text": "to"
+            },
+            {
+              "end": 32,
+              "start": 24,
+              "text": "national"
+            },
+            {
+              "end": 41,
+              "start": 33,
+              "text": "security"
+            },
+            {
+              "end": 43,
+              "start": 42,
+              "text": "("
+            },
+            {
+              "end": 44,
+              "start": 43,
+              "text": "a"
+            },
+            {
+              "end": 45,
+              "start": 44,
+              "text": ")"
+            },
+            {
+              "end": 49,
+              "start": 46,
+              "text": "The"
+            },
+            {
+              "end": 59,
+              "start": 50,
+              "text": "President"
+            },
+            {
+              "end": 60,
+              "start": 59,
+              "text": ","
+            },
+            {
+              "end": 68,
+              "start": 61,
+              "text": "through"
+            },
+            {
+              "end": 72,
+              "start": 69,
+              "text": "any"
+            },
+            {
+              "end": 79,
+              "start": 73,
+              "text": "agency"
+            },
+            {
+              "end": 82,
+              "start": 80,
+              "text": "of"
+            },
+            {
+              "end": 86,
+              "start": 83,
+              "text": "the"
+            },
+            {
+              "end": 97,
+              "start": 87,
+              "text": "Department"
+            },
+            {
+              "end": 100,
+              "start": 98,
+              "text": "of"
+            },
+            {
+              "end": 108,
+              "start": 101,
+              "text": "Defense"
+            },
+            {
+              "end": 119,
+              "start": 109,
+              "text": "designated"
+            },
+            {
+              "end": 122,
+              "start": 120,
+              "text": "by"
+            },
+            {
+              "end": 126,
+              "start": 123,
+              "text": "him"
+            },
+            {
+              "end": 127,
+              "start": 126,
+              "text": ","
+            },
+            {
+              "end": 131,
+              "start": 128,
+              "text": "may"
+            },
+            {
+              "end": 135,
+              "start": 132,
+              "text": "arm"
+            },
+            {
+              "end": 136,
+              "start": 135,
+              "text": ","
+            },
+            {
+              "end": 141,
+              "start": 137,
+              "text": "have"
+            },
+            {
+              "end": 147,
+              "start": 142,
+              "text": "armed"
+            },
+            {
+              "end": 148,
+              "start": 147,
+              "text": ","
+            },
+            {
+              "end": 151,
+              "start": 149,
+              "text": "or"
+            },
+            {
+              "end": 157,
+              "start": 152,
+              "text": "allow"
+            },
+            {
+              "end": 160,
+              "start": 158,
+              "text": "to"
+            },
+            {
+              "end": 163,
+              "start": 161,
+              "text": "be"
+            },
+            {
+              "end": 169,
+              "start": 164,
+              "text": "armed"
+            },
+            {
+              "end": 170,
+              "start": 169,
+              "text": ","
+            },
+            {
+              "end": 174,
+              "start": 171,
+              "text": "any"
+            },
+            {
+              "end": 185,
+              "start": 175,
+              "text": "watercraft"
+            },
+            {
+              "end": 188,
+              "start": 186,
+              "text": "or"
+            },
+            {
+              "end": 197,
+              "start": 189,
+              "text": "aircraft"
+            },
+            {
+              "end": 202,
+              "start": 198,
+              "text": "that"
+            },
+            {
+              "end": 205,
+              "start": 203,
+              "text": "is"
+            },
+            {
+              "end": 213,
+              "start": 206,
+              "text": "capable"
+            },
+            {
+              "end": 216,
+              "start": 214,
+              "text": "of"
+            },
+            {
+              "end": 222,
+              "start": 217,
+              "text": "being"
+            },
+            {
+              "end": 227,
+              "start": 223,
+              "text": "used"
+            },
+            {
+              "end": 230,
+              "start": 228,
+              "text": "as"
+            },
+            {
+              "end": 232,
+              "start": 231,
+              "text": "a"
+            },
+            {
+              "end": 238,
+              "start": 233,
+              "text": "means"
+            },
+            {
+              "end": 241,
+              "start": 239,
+              "text": "of"
+            },
+            {
+              "end": 256,
+              "start": 242,
+              "text": "transportation"
+            },
+            {
+              "end": 259,
+              "start": 257,
+              "text": "on"
+            },
+            {
+              "end": 260,
+              "start": 259,
+              "text": ","
+            },
+            {
+              "end": 265,
+              "start": 261,
+              "text": "over"
+            },
+            {
+              "end": 266,
+              "start": 265,
+              "text": ","
+            },
+            {
+              "end": 269,
+              "start": 267,
+              "text": "or"
+            },
+            {
+              "end": 275,
+              "start": 270,
+              "text": "under"
+            },
+            {
+              "end": 281,
+              "start": 276,
+              "text": "water"
+            },
+            {
+              "end": 282,
+              "start": 281,
+              "text": ","
+            },
+            {
+              "end": 286,
+              "start": 283,
+              "text": "and"
+            },
+            {
+              "end": 289,
+              "start": 287,
+              "text": "is"
+            },
+            {
+              "end": 300,
+              "start": 290,
+              "text": "documented"
+            },
+            {
+              "end": 301,
+              "start": 300,
+              "text": ","
+            },
+            {
+              "end": 312,
+              "start": 302,
+              "text": "registered"
+            },
+            {
+              "end": 313,
+              "start": 312,
+              "text": ","
+            },
+            {
+              "end": 316,
+              "start": 314,
+              "text": "or"
+            },
+            {
+              "end": 325,
+              "start": 317,
+              "text": "licensed"
+            },
+            {
+              "end": 331,
+              "start": 326,
+              "text": "under"
+            },
+            {
+              "end": 335,
+              "start": 332,
+              "text": "the"
+            },
+            {
+              "end": 340,
+              "start": 336,
+              "text": "laws"
+            },
+            {
+              "end": 343,
+              "start": 341,
+              "text": "of"
+            },
+            {
+              "end": 347,
+              "start": 344,
+              "text": "the"
+            },
+            {
+              "end": 354,
+              "start": 348,
+              "text": "United"
+            },
+            {
+              "end": 361,
+              "start": 355,
+              "text": "States"
+            },
+            {
+              "end": 362,
+              "start": 361,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 296,
+              "char_start": 290,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 2.72906494140625,
+              "text": "affect",
+              "token_end_inclusive": 47,
+              "token_start": 47
+            },
+            "actor": {
+              "char_end": 89,
+              "char_start": 0,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.24799728393554688,
+              "text": "Support not to affect adversely military preparedness Support (including the provision of",
+              "token_end_inclusive": 12,
+              "token_start": 0
+            },
+            "conditions": {
+              "char_end": 289,
+              "char_start": 245,
+              "presence_logit_margin": 4.4806342124938965,
+              "present": true,
+              "span_logit_margin": 0.4371795654296875,
+              "text": "the provision of such support will adversely",
+              "token_end_inclusive": 46,
+              "token_start": 40
+            },
+            "exceptions": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 3.780216693878174,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            },
+            "object": {
+              "char_end": 213,
+              "char_start": 119,
+              "presence_logit_margin": 16.600662231445312,
+              "present": true,
+              "span_logit_margin": 0.7322826385498047,
+              "text": "the assignment or detail of any personnel) may not be provided to any civilian law enforcement",
+              "token_end_inclusive": 34,
+              "token_start": 18
+            },
+            "temporal": {
+              "char_end": 233,
+              "char_start": 189,
+              "presence_logit_margin": 3.0867600440979004,
+              "present": true,
+              "span_logit_margin": 0.8053703308105469,
+              "text": "civilian law enforcement official under this",
+              "token_end_inclusive": 37,
+              "token_start": 32
+            }
+          },
+          "modality_logits": [
+            -2.6921067237854004,
+            2.638124942779541,
+            -0.221056267619133
+          ],
+          "tokens": [
+            {
+              "end": 7,
+              "start": 0,
+              "text": "Support"
+            },
+            {
+              "end": 11,
+              "start": 8,
+              "text": "not"
+            },
+            {
+              "end": 14,
+              "start": 12,
+              "text": "to"
+            },
+            {
+              "end": 21,
+              "start": 15,
+              "text": "affect"
+            },
+            {
+              "end": 31,
+              "start": 22,
+              "text": "adversely"
+            },
+            {
+              "end": 40,
+              "start": 32,
+              "text": "military"
+            },
+            {
+              "end": 53,
+              "start": 41,
+              "text": "preparedness"
+            },
+            {
+              "end": 61,
+              "start": 54,
+              "text": "Support"
+            },
+            {
+              "end": 63,
+              "start": 62,
+              "text": "("
+            },
+            {
+              "end": 72,
+              "start": 63,
+              "text": "including"
+            },
+            {
+              "end": 76,
+              "start": 73,
+              "text": "the"
+            },
+            {
+              "end": 86,
+              "start": 77,
+              "text": "provision"
+            },
+            {
+              "end": 89,
+              "start": 87,
+              "text": "of"
+            },
+            {
+              "end": 93,
+              "start": 90,
+              "text": "any"
+            },
+            {
+              "end": 103,
+              "start": 94,
+              "text": "equipment"
+            },
+            {
+              "end": 106,
+              "start": 104,
+              "text": "or"
+            },
+            {
+              "end": 115,
+              "start": 107,
+              "text": "facility"
+            },
+            {
+              "end": 118,
+              "start": 116,
+              "text": "or"
+            },
+            {
+              "end": 122,
+              "start": 119,
+              "text": "the"
+            },
+            {
+              "end": 133,
+              "start": 123,
+              "text": "assignment"
+            },
+            {
+              "end": 136,
+              "start": 134,
+              "text": "or"
+            },
+            {
+              "end": 143,
+              "start": 137,
+              "text": "detail"
+            },
+            {
+              "end": 146,
+              "start": 144,
+              "text": "of"
+            },
+            {
+              "end": 150,
+              "start": 147,
+              "text": "any"
+            },
+            {
+              "end": 160,
+              "start": 151,
+              "text": "personnel"
+            },
+            {
+              "end": 161,
+              "start": 160,
+              "text": ")"
+            },
+            {
+              "end": 165,
+              "start": 162,
+              "text": "may"
+            },
+            {
+              "end": 169,
+              "start": 166,
+              "text": "not"
+            },
+            {
+              "end": 172,
+              "start": 170,
+              "text": "be"
+            },
+            {
+              "end": 181,
+              "start": 173,
+              "text": "provided"
+            },
+            {
+              "end": 184,
+              "start": 182,
+              "text": "to"
+            },
+            {
+              "end": 188,
+              "start": 185,
+              "text": "any"
+            },
+            {
+              "end": 197,
+              "start": 189,
+              "text": "civilian"
+            },
+            {
+              "end": 201,
+              "start": 198,
+              "text": "law"
+            },
+            {
+              "end": 213,
+              "start": 202,
+              "text": "enforcement"
+            },
+            {
+              "end": 222,
+              "start": 214,
+              "text": "official"
+            },
+            {
+              "end": 228,
+              "start": 223,
+              "text": "under"
+            },
+            {
+              "end": 233,
+              "start": 229,
+              "text": "this"
+            },
+            {
+              "end": 241,
+              "start": 234,
+              "text": "chapter"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "if"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "the"
+            },
+            {
+              "end": 258,
+              "start": 249,
+              "text": "provision"
+            },
+            {
+              "end": 261,
+              "start": 259,
+              "text": "of"
+            },
+            {
+              "end": 266,
+              "start": 262,
+              "text": "such"
+            },
+            {
+              "end": 274,
+              "start": 267,
+              "text": "support"
+            },
+            {
+              "end": 279,
+              "start": 275,
+              "text": "will"
+            },
+            {
+              "end": 289,
+              "start": 280,
+              "text": "adversely"
+            },
+            {
+              "end": 296,
+              "start": 290,
+              "text": "affect"
+            },
+            {
+              "end": 300,
+              "start": 297,
+              "text": "the"
+            },
+            {
+              "end": 309,
+              "start": 301,
+              "text": "military"
+            },
+            {
+              "end": 322,
+              "start": 310,
+              "text": "preparedness"
+            },
+            {
+              "end": 325,
+              "start": 323,
+              "text": "of"
+            },
+            {
+              "end": 329,
+              "start": 326,
+              "text": "the"
+            },
+            {
+              "end": 336,
+              "start": 330,
+              "text": "United"
+            },
+            {
+              "end": 343,
+              "start": 337,
+              "text": "States"
+            },
+            {
+              "end": 344,
+              "start": 343,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 76,
+              "char_start": 75,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.5785140991210938,
+              "text": "\u2014",
+              "token_end_inclusive": 13,
+              "token_start": 13
+            },
+            "actor": {
+              "char_end": 280,
+              "char_start": 258,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.1973309516906738,
+              "text": "229, or 2332a of title",
+              "token_end_inclusive": 50,
+              "token_start": 45
+            },
+            "conditions": {
+              "char_end": 325,
+              "char_start": 76,
+              "presence_logit_margin": 18.766090393066406,
+              "present": true,
+              "span_logit_margin": 1.0182743072509766,
+              "text": "The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a",
+              "token_end_inclusive": 57,
+              "token_start": 14
+            },
+            "object": {
+              "char_end": 147,
+              "char_start": 76,
+              "presence_logit_margin": 13.428449630737305,
+              "present": true,
+              "span_logit_margin": 1.0418701171875,
+              "text": "The Secretary of Defense, upon the request of the Attorney General, may",
+              "token_end_inclusive": 27,
+              "token_start": 14
+            }
+          },
+          "modality_logits": [
+            2.462031602859497,
+            -0.9153470396995544,
+            -2.051520347595215
+          ],
+          "tokens": [
+            {
+              "end": 9,
+              "start": 0,
+              "text": "Emergency"
+            },
+            {
+              "end": 20,
+              "start": 10,
+              "text": "situations"
+            },
+            {
+              "end": 30,
+              "start": 21,
+              "text": "involving"
+            },
+            {
+              "end": 38,
+              "start": 31,
+              "text": "weapons"
+            },
+            {
+              "end": 41,
+              "start": 39,
+              "text": "of"
+            },
+            {
+              "end": 46,
+              "start": 42,
+              "text": "mass"
+            },
+            {
+              "end": 58,
+              "start": 47,
+              "text": "destruction"
+            },
+            {
+              "end": 60,
+              "start": 59,
+              "text": "("
+            },
+            {
+              "end": 61,
+              "start": 60,
+              "text": "a"
+            },
+            {
+              "end": 62,
+              "start": 61,
+              "text": ")"
+            },
+            {
+              "end": 65,
+              "start": 63,
+              "text": "In"
+            },
+            {
+              "end": 73,
+              "start": 66,
+              "text": "General"
+            },
+            {
+              "end": 75,
+              "start": 74,
+              "text": "."
+            },
+            {
+              "end": 76,
+              "start": 75,
+              "text": "\u2014"
+            },
+            {
+              "end": 79,
+              "start": 76,
+              "text": "The"
+            },
+            {
+              "end": 89,
+              "start": 80,
+              "text": "Secretary"
+            },
+            {
+              "end": 92,
+              "start": 90,
+              "text": "of"
+            },
+            {
+              "end": 100,
+              "start": 93,
+              "text": "Defense"
+            },
+            {
+              "end": 101,
+              "start": 100,
+              "text": ","
+            },
+            {
+              "end": 106,
+              "start": 102,
+              "text": "upon"
+            },
+            {
+              "end": 110,
+              "start": 107,
+              "text": "the"
+            },
+            {
+              "end": 118,
+              "start": 111,
+              "text": "request"
+            },
+            {
+              "end": 121,
+              "start": 119,
+              "text": "of"
+            },
+            {
+              "end": 125,
+              "start": 122,
+              "text": "the"
+            },
+            {
+              "end": 134,
+              "start": 126,
+              "text": "Attorney"
+            },
+            {
+              "end": 142,
+              "start": 135,
+              "text": "General"
+            },
+            {
+              "end": 143,
+              "start": 142,
+              "text": ","
+            },
+            {
+              "end": 147,
+              "start": 144,
+              "text": "may"
+            },
+            {
+              "end": 155,
+              "start": 148,
+              "text": "provide"
+            },
+            {
+              "end": 166,
+              "start": 156,
+              "text": "assistance"
+            },
+            {
+              "end": 169,
+              "start": 167,
+              "text": "in"
+            },
+            {
+              "end": 177,
+              "start": 170,
+              "text": "support"
+            },
+            {
+              "end": 180,
+              "start": 178,
+              "text": "of"
+            },
+            {
+              "end": 191,
+              "start": 181,
+              "text": "Department"
+            },
+            {
+              "end": 194,
+              "start": 192,
+              "text": "of"
+            },
+            {
+              "end": 202,
+              "start": 195,
+              "text": "Justice"
+            },
+            {
+              "end": 213,
+              "start": 203,
+              "text": "activities"
+            },
+            {
+              "end": 222,
+              "start": 214,
+              "text": "relating"
+            },
+            {
+              "end": 225,
+              "start": 223,
+              "text": "to"
+            },
+            {
+              "end": 229,
+              "start": 226,
+              "text": "the"
+            },
+            {
+              "end": 241,
+              "start": 230,
+              "text": "enforcement"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "of"
+            },
+            {
+              "end": 252,
+              "start": 245,
+              "text": "section"
+            },
+            {
+              "end": 256,
+              "start": 253,
+              "text": "175"
+            },
+            {
+              "end": 257,
+              "start": 256,
+              "text": ","
+            },
+            {
+              "end": 261,
+              "start": 258,
+              "text": "229"
+            },
+            {
+              "end": 262,
+              "start": 261,
+              "text": ","
+            },
+            {
+              "end": 265,
+              "start": 263,
+              "text": "or"
+            },
+            {
+              "end": 271,
+              "start": 266,
+              "text": "2332a"
+            },
+            {
+              "end": 274,
+              "start": 272,
+              "text": "of"
+            },
+            {
+              "end": 280,
+              "start": 275,
+              "text": "title"
+            },
+            {
+              "end": 283,
+              "start": 281,
+              "text": "18"
+            },
+            {
+              "end": 290,
+              "start": 284,
+              "text": "during"
+            },
+            {
+              "end": 293,
+              "start": 291,
+              "text": "an"
+            },
+            {
+              "end": 303,
+              "start": 294,
+              "text": "emergency"
+            },
+            {
+              "end": 313,
+              "start": 304,
+              "text": "situation"
+            },
+            {
+              "end": 323,
+              "start": 314,
+              "text": "involving"
+            },
+            {
+              "end": 325,
+              "start": 324,
+              "text": "a"
+            },
+            {
+              "end": 332,
+              "start": 326,
+              "text": "weapon"
+            },
+            {
+              "end": 335,
+              "start": 333,
+              "text": "of"
+            },
+            {
+              "end": 340,
+              "start": 336,
+              "text": "mass"
+            },
+            {
+              "end": 352,
+              "start": 341,
+              "text": "destruction"
+            },
+            {
+              "end": 353,
+              "start": 352,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      }
+    ],
+    "schema": "warm-start-span-legal-formula-inference/v1",
+    "semantic_correctness_verified": false,
+    "source_parent_checkpoint_sha256": "b2e5087b8d77b002711d5f899f634346382cacfdf8df6830c93b63e7250cbce0",
+    "source_parent_optimizer_steps": 800,
+    "status": "partial",
+    "target_access": false,
+    "teacher_forcing": false,
+    "training_executed": false
+  },
+  "rows": [
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 117,
+              "char_start": 106,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.22601699829101562,
+              "text": "subdivision",
+              "token_end_inclusive": 25,
+              "token_start": 25
+            },
+            "actor": {
+              "char_end": 94,
+              "char_start": 82,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8506841659545898,
+              "text": "or any other",
+              "token_end_inclusive": 23,
+              "token_start": 21
+            },
+            "conditions": {
+              "char_end": 80,
+              "char_start": 45,
+              "presence_logit_margin": 19.881242752075195,
+              "present": true,
+              "span_logit_margin": 0.7659530639648438,
+              "text": "The word \"county\" includes a parish",
+              "token_end_inclusive": 19,
+              "token_start": 12
+            },
+            "exceptions": {
+              "char_end": 162,
+              "char_start": 145,
+              "presence_logit_margin": 0.4872215688228607,
+              "present": true,
+              "span_logit_margin": 0.7229499816894531,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32
+            },
+            "object": {
+              "char_end": 162,
+              "char_start": 145,
+              "presence_logit_margin": 11.359487533569336,
+              "present": true,
+              "span_logit_margin": 1.1172513961791992,
+              "text": "the United States",
+              "token_end_inclusive": 34,
+              "token_start": 32
+            }
+          },
+          "modality_logits": [
+            -0.0019251247867941856,
+            3.1517789363861084,
+            -3.798919439315796
+          ],
+          "tokens": [
+            {
+              "end": 1,
+              "start": 0,
+              "text": "\""
+            },
+            {
+              "end": 7,
+              "start": 1,
+              "text": "County"
+            },
+            {
+              "end": 8,
+              "start": 7,
+              "text": "\""
+            },
+            {
+              "end": 11,
+              "start": 9,
+              "text": "as"
+            },
+            {
+              "end": 21,
+              "start": 12,
+              "text": "including"
+            },
+            {
+              "end": 23,
+              "start": 22,
+              "text": "\""
+            },
+            {
+              "end": 29,
+              "start": 23,
+              "text": "parish"
+            },
+            {
+              "end": 30,
+              "start": 29,
+              "text": "\""
+            },
+            {
+              "end": 31,
+              "start": 30,
+              "text": ","
+            },
+            {
+              "end": 35,
+              "start": 32,
+              "text": "and"
+            },
+            {
+              "end": 38,
+              "start": 36,
+              "text": "so"
+            },
+            {
+              "end": 44,
+              "start": 39,
+              "text": "forth"
+            },
+            {
+              "end": 48,
+              "start": 45,
+              "text": "The"
+            },
+            {
+              "end": 53,
+              "start": 49,
+              "text": "word"
+            },
+            {
+              "end": 55,
+              "start": 54,
+              "text": "\""
+            },
+            {
+              "end": 61,
+              "start": 55,
+              "text": "county"
+            },
+            {
+              "end": 62,
+              "start": 61,
+              "text": "\""
+            },
+            {
+              "end": 71,
+              "start": 63,
+              "text": "includes"
+            },
+            {
+              "end": 73,
+              "start": 72,
+              "text": "a"
+            },
+            {
+              "end": 80,
+              "start": 74,
+              "text": "parish"
+            },
+            {
+              "end": 81,
+              "start": 80,
+              "text": ","
+            },
+            {
+              "end": 84,
+              "start": 82,
+              "text": "or"
+            },
+            {
+              "end": 88,
+              "start": 85,
+              "text": "any"
+            },
+            {
+              "end": 94,
+              "start": 89,
+              "text": "other"
+            },
+            {
+              "end": 105,
+              "start": 95,
+              "text": "equivalent"
+            },
+            {
+              "end": 117,
+              "start": 106,
+              "text": "subdivision"
+            },
+            {
+              "end": 120,
+              "start": 118,
+              "text": "of"
+            },
+            {
+              "end": 122,
+              "start": 121,
+              "text": "a"
+            },
+            {
+              "end": 128,
+              "start": 123,
+              "text": "State"
+            },
+            {
+              "end": 131,
+              "start": 129,
+              "text": "or"
+            },
+            {
+              "end": 141,
+              "start": 132,
+              "text": "Territory"
+            },
+            {
+              "end": 144,
+              "start": 142,
+              "text": "of"
+            },
+            {
+              "end": 148,
+              "start": 145,
+              "text": "the"
+            },
+            {
+              "end": 155,
+              "start": 149,
+              "text": "United"
+            },
+            {
+              "end": 162,
+              "start": 156,
+              "text": "States"
+            },
+            {
+              "end": 163,
+              "start": 162,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 36
+      },
+      "id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "latent_donor_id": "sha256:42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb",
+      "latent_donor_position": 0,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 459,
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+        },
+        "byte_end": 419,
+        "byte_start": 256,
+        "citation": "1 U.S.C. 2",
+        "document_id": "usc:us:1:2",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "fa1a3028be94c835d64d18b946a945234cde7fa86bc7cbaf57d805d824b2b98e",
+      "outcome": "decoder_abstained",
+      "position": 0,
+      "preflight": {
+        "content_sha256": "5a5481cfdd58246726348eb69df9664be125b0f065e5776d14d33b1184a54998",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4",
+        "source_text": "\"County\" as including \"parish\", and so forth The word \"county\" includes a parish, or any other equivalent subdivision of a State or Territory of the United States.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 459,
+          "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+        },
+        "byte_end": 419,
+        "byte_start": 256,
+        "citation": "1 U.S.C. 2",
+        "document_id": "usc:us:1:2",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            }
+          ]
+        },
+        "family_syntax_checked": true,
+        "formal_outputs": [
+          {
+            "admitted": false,
+            "family": "deontic",
+            "formalized": false,
+            "format": "typed-deontic-rule/v1",
+            "formula_text": "{\"rules\":[{\"action\":\"called\",\"actor\":\"as the\",\"conditions\":[\"the presiding officers of both Houses and\"],\"exceptions\":[],\"modality\":\"O\",\"object\":\"the enrolled bill, or\",\"temporal\":[]}]}",
+            "formula_text_role": "display_only_full_ast_is_authoritative",
+            "origin": "learned_source_span_formula_decoder",
+            "payload": {
+              "action": "called",
+              "actor": "as the",
+              "conditions": [
+                "the presiding officers of both Houses and"
+              ],
+              "exceptions": [],
+              "modality": "O",
+              "object": "the enrolled bill, or",
+              "temporal": []
+            },
+            "promotion_performed": false,
+            "proof_authority": false,
+            "publication_performed": false,
+            "qualified": false,
+            "roundtrip_ok": false,
+            "semantic_correctness_verified": false
+          }
+        ],
+        "formalized": false,
+        "formula_text": "{\"rules\":[{\"action\":\"called\",\"actor\":\"as the\",\"conditions\":[\"the presiding officers of both Houses and\"],\"exceptions\":[],\"modality\":\"O\",\"object\":\"the enrolled bill, or\",\"temporal\":[]}]}",
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "minimum_decision_logit_margin": 0.1450634002685547,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": null,
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 111,
+              "char_start": 105,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.3182220458984375,
+              "text": "called",
+              "token_end_inclusive": 21,
+              "token_start": 21
+            },
+            "actor": {
+              "char_end": 158,
+              "char_start": 152,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.1450634002685547,
+              "text": "as the",
+              "token_end_inclusive": 31,
+              "token_start": 30
+            },
+            "conditions": {
+              "char_end": 236,
+              "char_start": 195,
+              "presence_logit_margin": 10.812746047973633,
+              "present": true,
+              "span_logit_margin": 0.9855918884277344,
+              "text": "the presiding officers of both Houses and",
+              "token_end_inclusive": 47,
+              "token_start": 41
+            },
+            "exceptions": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 0.8666151762008667,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            },
+            "object": {
+              "char_end": 133,
+              "char_start": 112,
+              "presence_logit_margin": 10.226115226745605,
+              "present": true,
+              "span_logit_margin": 0.5200901031494141,
+              "text": "the enrolled bill, or",
+              "token_end_inclusive": 26,
+              "token_start": 22
+            },
+            "temporal": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 6.980982780456543,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            }
+          },
+          "modality_logits": [
+            3.6379196643829346,
+            -1.1755253076553345,
+            -3.5528385639190674
+          ],
+          "tokens": [
+            {
+              "end": 4,
+              "start": 0,
+              "text": "When"
+            },
+            {
+              "end": 9,
+              "start": 5,
+              "text": "such"
+            },
+            {
+              "end": 14,
+              "start": 10,
+              "text": "bill"
+            },
+            {
+              "end": 15,
+              "start": 14,
+              "text": ","
+            },
+            {
+              "end": 18,
+              "start": 16,
+              "text": "or"
+            },
+            {
+              "end": 24,
+              "start": 19,
+              "text": "joint"
+            },
+            {
+              "end": 35,
+              "start": 25,
+              "text": "resolution"
+            },
+            {
+              "end": 41,
+              "start": 36,
+              "text": "shall"
+            },
+            {
+              "end": 46,
+              "start": 42,
+              "text": "have"
+            },
+            {
+              "end": 53,
+              "start": 47,
+              "text": "passed"
+            },
+            {
+              "end": 58,
+              "start": 54,
+              "text": "both"
+            },
+            {
+              "end": 65,
+              "start": 59,
+              "text": "Houses"
+            },
+            {
+              "end": 66,
+              "start": 65,
+              "text": ","
+            },
+            {
+              "end": 69,
+              "start": 67,
+              "text": "it"
+            },
+            {
+              "end": 75,
+              "start": 70,
+              "text": "shall"
+            },
+            {
+              "end": 78,
+              "start": 76,
+              "text": "be"
+            },
+            {
+              "end": 86,
+              "start": 79,
+              "text": "printed"
+            },
+            {
+              "end": 90,
+              "start": 87,
+              "text": "and"
+            },
+            {
+              "end": 96,
+              "start": 91,
+              "text": "shall"
+            },
+            {
+              "end": 101,
+              "start": 97,
+              "text": "then"
+            },
+            {
+              "end": 104,
+              "start": 102,
+              "text": "be"
+            },
+            {
+              "end": 111,
+              "start": 105,
+              "text": "called"
+            },
+            {
+              "end": 115,
+              "start": 112,
+              "text": "the"
+            },
+            {
+              "end": 124,
+              "start": 116,
+              "text": "enrolled"
+            },
+            {
+              "end": 129,
+              "start": 125,
+              "text": "bill"
+            },
+            {
+              "end": 130,
+              "start": 129,
+              "text": ","
+            },
+            {
+              "end": 133,
+              "start": 131,
+              "text": "or"
+            },
+            {
+              "end": 139,
+              "start": 134,
+              "text": "joint"
+            },
+            {
+              "end": 150,
+              "start": 140,
+              "text": "resolution"
+            },
+            {
+              "end": 151,
+              "start": 150,
+              "text": ","
+            },
+            {
+              "end": 154,
+              "start": 152,
+              "text": "as"
+            },
+            {
+              "end": 158,
+              "start": 155,
+              "text": "the"
+            },
+            {
+              "end": 163,
+              "start": 159,
+              "text": "case"
+            },
+            {
+              "end": 167,
+              "start": 164,
+              "text": "may"
+            },
+            {
+              "end": 170,
+              "start": 168,
+              "text": "be"
+            },
+            {
+              "end": 171,
+              "start": 170,
+              "text": ","
+            },
+            {
+              "end": 175,
+              "start": 172,
+              "text": "and"
+            },
+            {
+              "end": 181,
+              "start": 176,
+              "text": "shall"
+            },
+            {
+              "end": 184,
+              "start": 182,
+              "text": "be"
+            },
+            {
+              "end": 191,
+              "start": 185,
+              "text": "signed"
+            },
+            {
+              "end": 194,
+              "start": 192,
+              "text": "by"
+            },
+            {
+              "end": 198,
+              "start": 195,
+              "text": "the"
+            },
+            {
+              "end": 208,
+              "start": 199,
+              "text": "presiding"
+            },
+            {
+              "end": 217,
+              "start": 209,
+              "text": "officers"
+            },
+            {
+              "end": 220,
+              "start": 218,
+              "text": "of"
+            },
+            {
+              "end": 225,
+              "start": 221,
+              "text": "both"
+            },
+            {
+              "end": 232,
+              "start": 226,
+              "text": "Houses"
+            },
+            {
+              "end": 236,
+              "start": 233,
+              "text": "and"
+            },
+            {
+              "end": 241,
+              "start": 237,
+              "text": "sent"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "to"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "the"
+            },
+            {
+              "end": 258,
+              "start": 249,
+              "text": "President"
+            },
+            {
+              "end": 261,
+              "start": 259,
+              "text": "of"
+            },
+            {
+              "end": 265,
+              "start": 262,
+              "text": "the"
+            },
+            {
+              "end": 272,
+              "start": 266,
+              "text": "United"
+            },
+            {
+              "end": 279,
+              "start": 273,
+              "text": "States"
+            },
+            {
+              "end": 280,
+              "start": 279,
+              "text": "."
+            }
+          ]
+        },
+        "status": "decoded",
+        "syntax_scope": "single_canonical_deontic_rule_with_one_copied_span_per_facet",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 57
+      },
+      "id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "latent_donor_id": "sha256:670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874",
+      "latent_donor_position": 1,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "byte_end": 1119,
+        "byte_start": 839,
+        "citation": "1 U.S.C. 106",
+        "document_id": "usc:us:1:106",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "75acc4a34de46c438471b5c0b62c6ed7fe8f62c5e8a773f20c1f1baa9e703c02",
+      "outcome": "decoder_proposal",
+      "position": 1,
+      "preflight": {
+        "content_sha256": "85a07dc418e9eadbdd25437ae65a748a240ab28fc8698be9ea9a447a0866d0b7",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6",
+        "source_text": "When such bill, or joint resolution shall have passed both Houses, it shall be printed and shall then be called the enrolled bill, or joint resolution, as the case may be, and shall be signed by the presiding officers of both Houses and sent to the President of the United States.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 28742,
+          "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+        },
+        "byte_end": 1119,
+        "byte_start": 839,
+        "citation": "1 U.S.C. 106",
+        "document_id": "usc:us:1:106",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 96,
+              "char_start": 93,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.012552261352539,
+              "text": "all",
+              "token_end_inclusive": 18,
+              "token_start": 18
+            },
+            "actor": {
+              "char_end": 237,
+              "char_start": 46,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.2950887680053711,
+              "text": "the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the",
+              "token_end_inclusive": 43,
+              "token_start": 10
+            }
+          },
+          "modality_logits": [
+            0.13114769756793976,
+            1.3668255805969238,
+            -2.3315412998199463
+          ],
+          "tokens": [
+            {
+              "end": 2,
+              "start": 0,
+              "text": "In"
+            },
+            {
+              "end": 6,
+              "start": 3,
+              "text": "the"
+            },
+            {
+              "end": 12,
+              "start": 7,
+              "text": "event"
+            },
+            {
+              "end": 15,
+              "start": 13,
+              "text": "of"
+            },
+            {
+              "end": 18,
+              "start": 16,
+              "text": "an"
+            },
+            {
+              "end": 24,
+              "start": 19,
+              "text": "extra"
+            },
+            {
+              "end": 32,
+              "start": 25,
+              "text": "session"
+            },
+            {
+              "end": 35,
+              "start": 33,
+              "text": "of"
+            },
+            {
+              "end": 44,
+              "start": 36,
+              "text": "Congress"
+            },
+            {
+              "end": 45,
+              "start": 44,
+              "text": ","
+            },
+            {
+              "end": 49,
+              "start": 46,
+              "text": "the"
+            },
+            {
+              "end": 59,
+              "start": 50,
+              "text": "Archivist"
+            },
+            {
+              "end": 62,
+              "start": 60,
+              "text": "of"
+            },
+            {
+              "end": 66,
+              "start": 63,
+              "text": "the"
+            },
+            {
+              "end": 73,
+              "start": 67,
+              "text": "United"
+            },
+            {
+              "end": 80,
+              "start": 74,
+              "text": "States"
+            },
+            {
+              "end": 86,
+              "start": 81,
+              "text": "shall"
+            },
+            {
+              "end": 92,
+              "start": 87,
+              "text": "cause"
+            },
+            {
+              "end": 96,
+              "start": 93,
+              "text": "all"
+            },
+            {
+              "end": 100,
+              "start": 97,
+              "text": "the"
+            },
+            {
+              "end": 105,
+              "start": 101,
+              "text": "laws"
+            },
+            {
+              "end": 109,
+              "start": 106,
+              "text": "and"
+            },
+            {
+              "end": 120,
+              "start": 110,
+              "text": "concurrent"
+            },
+            {
+              "end": 132,
+              "start": 121,
+              "text": "resolutions"
+            },
+            {
+              "end": 140,
+              "start": 133,
+              "text": "enacted"
+            },
+            {
+              "end": 147,
+              "start": 141,
+              "text": "during"
+            },
+            {
+              "end": 152,
+              "start": 148,
+              "text": "said"
+            },
+            {
+              "end": 158,
+              "start": 153,
+              "text": "extra"
+            },
+            {
+              "end": 166,
+              "start": 159,
+              "text": "session"
+            },
+            {
+              "end": 169,
+              "start": 167,
+              "text": "to"
+            },
+            {
+              "end": 172,
+              "start": 170,
+              "text": "be"
+            },
+            {
+              "end": 185,
+              "start": 173,
+              "text": "consolidated"
+            },
+            {
+              "end": 190,
+              "start": 186,
+              "text": "with"
+            },
+            {
+              "end": 191,
+              "start": 190,
+              "text": ","
+            },
+            {
+              "end": 195,
+              "start": 192,
+              "text": "and"
+            },
+            {
+              "end": 205,
+              "start": 196,
+              "text": "published"
+            },
+            {
+              "end": 208,
+              "start": 206,
+              "text": "as"
+            },
+            {
+              "end": 213,
+              "start": 209,
+              "text": "part"
+            },
+            {
+              "end": 216,
+              "start": 214,
+              "text": "of"
+            },
+            {
+              "end": 217,
+              "start": 216,
+              "text": ","
+            },
+            {
+              "end": 221,
+              "start": 218,
+              "text": "the"
+            },
+            {
+              "end": 230,
+              "start": 222,
+              "text": "contents"
+            },
+            {
+              "end": 233,
+              "start": 231,
+              "text": "of"
+            },
+            {
+              "end": 237,
+              "start": 234,
+              "text": "the"
+            },
+            {
+              "end": 244,
+              "start": 238,
+              "text": "volume"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "for"
+            },
+            {
+              "end": 252,
+              "start": 249,
+              "text": "the"
+            },
+            {
+              "end": 257,
+              "start": 253,
+              "text": "next"
+            },
+            {
+              "end": 265,
+              "start": 258,
+              "text": "regular"
+            },
+            {
+              "end": 273,
+              "start": 266,
+              "text": "session"
+            },
+            {
+              "end": 274,
+              "start": 273,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 51
+      },
+      "id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "latent_donor_id": "sha256:28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294",
+      "latent_donor_position": 2,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 9770,
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+        },
+        "byte_end": 1330,
+        "byte_start": 1056,
+        "citation": "1 U.S.C. 112",
+        "document_id": "usc:us:1:112",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "b3229974633e61559a8a1da9e1d7197cd6ab34986e911eec25ebcc16a96d795b",
+      "outcome": "decoder_abstained",
+      "position": 2,
+      "preflight": {
+        "content_sha256": "bfb9c26a88b7ab0e01bbcf0dab5ffe251ab2e57447e72d046362d39b69ef71fd",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9",
+        "source_text": "In the event of an extra session of Congress, the Archivist of the United States shall cause all the laws and concurrent resolutions enacted during said extra session to be consolidated with, and published as part of, the contents of the volume for the next regular session.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 9770,
+          "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+        },
+        "byte_end": 1330,
+        "byte_start": 1056,
+        "citation": "1 U.S.C. 112",
+        "document_id": "usc:us:1:112",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 36,
+              "char_start": 34,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.1476917266845703,
+              "text": "of",
+              "token_end_inclusive": 5,
+              "token_start": 5
+            },
+            "actor": {
+              "char_end": 224,
+              "char_start": 66,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8083324432373047,
+              "text": "or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible",
+              "token_end_inclusive": 39,
+              "token_start": 13
+            },
+            "object": {
+              "char_end": 139,
+              "char_start": 37,
+              "presence_logit_margin": 9.546778678894043,
+              "present": true,
+              "span_logit_margin": 1.2138442993164062,
+              "text": "the United States, a treaty, or a statute shall include the specific article or section and subsection",
+              "token_end_inclusive": 24,
+              "token_start": 6
+            }
+          },
+          "modality_logits": [
+            2.308199405670166,
+            -1.2267543077468872,
+            -1.6490496397018433
+          ],
+          "tokens": [
+            {
+              "end": 3,
+              "start": 0,
+              "text": "All"
+            },
+            {
+              "end": 13,
+              "start": 4,
+              "text": "citations"
+            },
+            {
+              "end": 16,
+              "start": 14,
+              "text": "to"
+            },
+            {
+              "end": 20,
+              "start": 17,
+              "text": "the"
+            },
+            {
+              "end": 33,
+              "start": 21,
+              "text": "Constitution"
+            },
+            {
+              "end": 36,
+              "start": 34,
+              "text": "of"
+            },
+            {
+              "end": 40,
+              "start": 37,
+              "text": "the"
+            },
+            {
+              "end": 47,
+              "start": 41,
+              "text": "United"
+            },
+            {
+              "end": 54,
+              "start": 48,
+              "text": "States"
+            },
+            {
+              "end": 55,
+              "start": 54,
+              "text": ","
+            },
+            {
+              "end": 57,
+              "start": 56,
+              "text": "a"
+            },
+            {
+              "end": 64,
+              "start": 58,
+              "text": "treaty"
+            },
+            {
+              "end": 65,
+              "start": 64,
+              "text": ","
+            },
+            {
+              "end": 68,
+              "start": 66,
+              "text": "or"
+            },
+            {
+              "end": 70,
+              "start": 69,
+              "text": "a"
+            },
+            {
+              "end": 78,
+              "start": 71,
+              "text": "statute"
+            },
+            {
+              "end": 84,
+              "start": 79,
+              "text": "shall"
+            },
+            {
+              "end": 92,
+              "start": 85,
+              "text": "include"
+            },
+            {
+              "end": 96,
+              "start": 93,
+              "text": "the"
+            },
+            {
+              "end": 105,
+              "start": 97,
+              "text": "specific"
+            },
+            {
+              "end": 113,
+              "start": 106,
+              "text": "article"
+            },
+            {
+              "end": 116,
+              "start": 114,
+              "text": "or"
+            },
+            {
+              "end": 124,
+              "start": 117,
+              "text": "section"
+            },
+            {
+              "end": 128,
+              "start": 125,
+              "text": "and"
+            },
+            {
+              "end": 139,
+              "start": 129,
+              "text": "subsection"
+            },
+            {
+              "end": 149,
+              "start": 140,
+              "text": "reference"
+            },
+            {
+              "end": 158,
+              "start": 150,
+              "text": "whenever"
+            },
+            {
+              "end": 168,
+              "start": 159,
+              "text": "available"
+            },
+            {
+              "end": 172,
+              "start": 169,
+              "text": "and"
+            },
+            {
+              "end": 173,
+              "start": 172,
+              "text": ","
+            },
+            {
+              "end": 176,
+              "start": 174,
+              "text": "if"
+            },
+            {
+              "end": 180,
+              "start": 177,
+              "text": "not"
+            },
+            {
+              "end": 190,
+              "start": 181,
+              "text": "available"
+            },
+            {
+              "end": 191,
+              "start": 190,
+              "text": ","
+            },
+            {
+              "end": 197,
+              "start": 192,
+              "text": "shall"
+            },
+            {
+              "end": 200,
+              "start": 198,
+              "text": "be"
+            },
+            {
+              "end": 203,
+              "start": 201,
+              "text": "as"
+            },
+            {
+              "end": 212,
+              "start": 204,
+              "text": "specific"
+            },
+            {
+              "end": 215,
+              "start": 213,
+              "text": "as"
+            },
+            {
+              "end": 224,
+              "start": 216,
+              "text": "possible"
+            },
+            {
+              "end": 225,
+              "start": 224,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 41
+      },
+      "id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "latent_donor_id": "sha256:36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5",
+      "latent_donor_position": 3,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 21457,
+          "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+        },
+        "byte_end": 1881,
+        "byte_start": 1656,
+        "citation": "1 U.S.C. 112b",
+        "document_id": "usc:us:1:112b",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "2feb0b02753097aa3e8f7839dab33ac279695974f9877252a831c07d0e531883",
+      "outcome": "decoder_abstained",
+      "position": 3,
+      "preflight": {
+        "content_sha256": "b67175fd36aff298478dd50e3b7431ccc625daf1b20225e2c040acf23dfc704c",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c",
+        "source_text": "All citations to the Constitution of the United States, a treaty, or a statute shall include the specific article or section and subsection reference whenever available and, if not available, shall be as specific as possible.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 21457,
+          "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+        },
+        "byte_end": 1881,
+        "byte_start": 1656,
+        "citation": "1 U.S.C. 112b",
+        "document_id": "usc:us:1:112b",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 3,
+              "char_start": 2,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.8910322189331055,
+              "text": ")",
+              "token_end_inclusive": 2,
+              "token_start": 2
+            },
+            "actor": {
+              "char_end": 7,
+              "char_start": 2,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.3205728530883789,
+              "text": ") The",
+              "token_end_inclusive": 3,
+              "token_start": 2
+            }
+          },
+          "modality_logits": [
+            1.2263882160186768,
+            4.4566874504089355,
+            -7.032294273376465
+          ],
+          "tokens": [
+            {
+              "end": 1,
+              "start": 0,
+              "text": "("
+            },
+            {
+              "end": 2,
+              "start": 1,
+              "text": "6"
+            },
+            {
+              "end": 3,
+              "start": 2,
+              "text": ")"
+            },
+            {
+              "end": 7,
+              "start": 4,
+              "text": "The"
+            },
+            {
+              "end": 12,
+              "start": 8,
+              "text": "term"
+            },
+            {
+              "end": 14,
+              "start": 13,
+              "text": "\""
+            },
+            {
+              "end": 22,
+              "start": 14,
+              "text": "enlisted"
+            },
+            {
+              "end": 29,
+              "start": 23,
+              "text": "member"
+            },
+            {
+              "end": 30,
+              "start": 29,
+              "text": "\""
+            },
+            {
+              "end": 36,
+              "start": 31,
+              "text": "means"
+            },
+            {
+              "end": 38,
+              "start": 37,
+              "text": "a"
+            },
+            {
+              "end": 45,
+              "start": 39,
+              "text": "person"
+            },
+            {
+              "end": 48,
+              "start": 46,
+              "text": "in"
+            },
+            {
+              "end": 51,
+              "start": 49,
+              "text": "an"
+            },
+            {
+              "end": 60,
+              "start": 52,
+              "text": "enlisted"
+            },
+            {
+              "end": 66,
+              "start": 61,
+              "text": "grade"
+            },
+            {
+              "end": 67,
+              "start": 66,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 17
+      },
+      "id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "latent_donor_id": "sha256:54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549",
+      "latent_donor_position": 4,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 72690,
+          "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+        },
+        "byte_end": 7276,
+        "byte_start": 7209,
+        "citation": "10 U.S.C. 101",
+        "document_id": "usc:us:10:101",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "7aa90f9ccfb8668d6d723919c6d3edc09d8f53bd557cc62e996b4985963037fb",
+      "outcome": "decoder_abstained",
+      "position": 4,
+      "preflight": {
+        "content_sha256": "b64d3e5d0fd020966d615f61ca56345f06767d62ef06efc07bb457d14bb3d9b1",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1",
+        "source_text": "(6) The term \"enlisted member\" means a person in an enlisted grade.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 72690,
+          "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+        },
+        "byte_end": 7276,
+        "byte_start": 7209,
+        "citation": "10 U.S.C. 101",
+        "document_id": "usc:us:10:101",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 163,
+              "char_start": 161,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.8912239074707031,
+              "text": "be",
+              "token_end_inclusive": 34,
+              "token_start": 34
+            },
+            "actor": {
+              "char_end": 157,
+              "char_start": 149,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.3381109237670898,
+              "text": "or allow",
+              "token_end_inclusive": 32,
+              "token_start": 31
+            },
+            "object": {
+              "char_end": 174,
+              "char_start": 83,
+              "presence_logit_margin": 7.772708415985107,
+              "present": true,
+              "span_logit_margin": 0.6259326934814453,
+              "text": "the Department of Defense designated by him, may arm, have armed, or allow to be armed, any",
+              "token_end_inclusive": 37,
+              "token_start": 17
+            }
+          },
+          "modality_logits": [
+            0.6840085983276367,
+            2.267179489135742,
+            -3.923001766204834
+          ],
+          "tokens": [
+            {
+              "end": 6,
+              "start": 0,
+              "text": "During"
+            },
+            {
+              "end": 10,
+              "start": 7,
+              "text": "war"
+            },
+            {
+              "end": 13,
+              "start": 11,
+              "text": "or"
+            },
+            {
+              "end": 20,
+              "start": 14,
+              "text": "threat"
+            },
+            {
+              "end": 23,
+              "start": 21,
+              "text": "to"
+            },
+            {
+              "end": 32,
+              "start": 24,
+              "text": "national"
+            },
+            {
+              "end": 41,
+              "start": 33,
+              "text": "security"
+            },
+            {
+              "end": 43,
+              "start": 42,
+              "text": "("
+            },
+            {
+              "end": 44,
+              "start": 43,
+              "text": "a"
+            },
+            {
+              "end": 45,
+              "start": 44,
+              "text": ")"
+            },
+            {
+              "end": 49,
+              "start": 46,
+              "text": "The"
+            },
+            {
+              "end": 59,
+              "start": 50,
+              "text": "President"
+            },
+            {
+              "end": 60,
+              "start": 59,
+              "text": ","
+            },
+            {
+              "end": 68,
+              "start": 61,
+              "text": "through"
+            },
+            {
+              "end": 72,
+              "start": 69,
+              "text": "any"
+            },
+            {
+              "end": 79,
+              "start": 73,
+              "text": "agency"
+            },
+            {
+              "end": 82,
+              "start": 80,
+              "text": "of"
+            },
+            {
+              "end": 86,
+              "start": 83,
+              "text": "the"
+            },
+            {
+              "end": 97,
+              "start": 87,
+              "text": "Department"
+            },
+            {
+              "end": 100,
+              "start": 98,
+              "text": "of"
+            },
+            {
+              "end": 108,
+              "start": 101,
+              "text": "Defense"
+            },
+            {
+              "end": 119,
+              "start": 109,
+              "text": "designated"
+            },
+            {
+              "end": 122,
+              "start": 120,
+              "text": "by"
+            },
+            {
+              "end": 126,
+              "start": 123,
+              "text": "him"
+            },
+            {
+              "end": 127,
+              "start": 126,
+              "text": ","
+            },
+            {
+              "end": 131,
+              "start": 128,
+              "text": "may"
+            },
+            {
+              "end": 135,
+              "start": 132,
+              "text": "arm"
+            },
+            {
+              "end": 136,
+              "start": 135,
+              "text": ","
+            },
+            {
+              "end": 141,
+              "start": 137,
+              "text": "have"
+            },
+            {
+              "end": 147,
+              "start": 142,
+              "text": "armed"
+            },
+            {
+              "end": 148,
+              "start": 147,
+              "text": ","
+            },
+            {
+              "end": 151,
+              "start": 149,
+              "text": "or"
+            },
+            {
+              "end": 157,
+              "start": 152,
+              "text": "allow"
+            },
+            {
+              "end": 160,
+              "start": 158,
+              "text": "to"
+            },
+            {
+              "end": 163,
+              "start": 161,
+              "text": "be"
+            },
+            {
+              "end": 169,
+              "start": 164,
+              "text": "armed"
+            },
+            {
+              "end": 170,
+              "start": 169,
+              "text": ","
+            },
+            {
+              "end": 174,
+              "start": 171,
+              "text": "any"
+            },
+            {
+              "end": 185,
+              "start": 175,
+              "text": "watercraft"
+            },
+            {
+              "end": 188,
+              "start": 186,
+              "text": "or"
+            },
+            {
+              "end": 197,
+              "start": 189,
+              "text": "aircraft"
+            },
+            {
+              "end": 202,
+              "start": 198,
+              "text": "that"
+            },
+            {
+              "end": 205,
+              "start": 203,
+              "text": "is"
+            },
+            {
+              "end": 213,
+              "start": 206,
+              "text": "capable"
+            },
+            {
+              "end": 216,
+              "start": 214,
+              "text": "of"
+            },
+            {
+              "end": 222,
+              "start": 217,
+              "text": "being"
+            },
+            {
+              "end": 227,
+              "start": 223,
+              "text": "used"
+            },
+            {
+              "end": 230,
+              "start": 228,
+              "text": "as"
+            },
+            {
+              "end": 232,
+              "start": 231,
+              "text": "a"
+            },
+            {
+              "end": 238,
+              "start": 233,
+              "text": "means"
+            },
+            {
+              "end": 241,
+              "start": 239,
+              "text": "of"
+            },
+            {
+              "end": 256,
+              "start": 242,
+              "text": "transportation"
+            },
+            {
+              "end": 259,
+              "start": 257,
+              "text": "on"
+            },
+            {
+              "end": 260,
+              "start": 259,
+              "text": ","
+            },
+            {
+              "end": 265,
+              "start": 261,
+              "text": "over"
+            },
+            {
+              "end": 266,
+              "start": 265,
+              "text": ","
+            },
+            {
+              "end": 269,
+              "start": 267,
+              "text": "or"
+            },
+            {
+              "end": 275,
+              "start": 270,
+              "text": "under"
+            },
+            {
+              "end": 281,
+              "start": 276,
+              "text": "water"
+            },
+            {
+              "end": 282,
+              "start": 281,
+              "text": ","
+            },
+            {
+              "end": 286,
+              "start": 283,
+              "text": "and"
+            },
+            {
+              "end": 289,
+              "start": 287,
+              "text": "is"
+            },
+            {
+              "end": 300,
+              "start": 290,
+              "text": "documented"
+            },
+            {
+              "end": 301,
+              "start": 300,
+              "text": ","
+            },
+            {
+              "end": 312,
+              "start": 302,
+              "text": "registered"
+            },
+            {
+              "end": 313,
+              "start": 312,
+              "text": ","
+            },
+            {
+              "end": 316,
+              "start": 314,
+              "text": "or"
+            },
+            {
+              "end": 325,
+              "start": 317,
+              "text": "licensed"
+            },
+            {
+              "end": 331,
+              "start": 326,
+              "text": "under"
+            },
+            {
+              "end": 335,
+              "start": 332,
+              "text": "the"
+            },
+            {
+              "end": 340,
+              "start": 336,
+              "text": "laws"
+            },
+            {
+              "end": 343,
+              "start": 341,
+              "text": "of"
+            },
+            {
+              "end": 347,
+              "start": 344,
+              "text": "the"
+            },
+            {
+              "end": 354,
+              "start": 348,
+              "text": "United"
+            },
+            {
+              "end": 361,
+              "start": 355,
+              "text": "States"
+            },
+            {
+              "end": 362,
+              "start": 361,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 76
+      },
+      "id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "latent_donor_id": "sha256:a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee",
+      "latent_donor_position": 5,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 6364,
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+        },
+        "byte_end": 700,
+        "byte_start": 338,
+        "citation": "10 U.S.C. 261",
+        "document_id": "usc:us:10:261",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "35b1dcdcc3080eb7d5fd90ddfd1c0555b805f1dd2b4754f19d2fa6a66c8ebd74",
+      "outcome": "decoder_abstained",
+      "position": 5,
+      "preflight": {
+        "content_sha256": "d7af277d078fd79276bcaad33f0da4b79ec11cc3d58188b7e2ff4d67bbb5a8a1",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c",
+        "source_text": "During war or threat to national security (a) The President, through any agency of the Department of Defense designated by him, may arm, have armed, or allow to be armed, any watercraft or aircraft that is capable of being used as a means of transportation on, over, or under water, and is documented, registered, or licensed under the laws of the United States.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 6364,
+          "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+        },
+        "byte_end": 700,
+        "byte_start": 338,
+        "citation": "10 U.S.C. 261",
+        "document_id": "usc:us:10:261",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 296,
+              "char_start": 290,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 2.72906494140625,
+              "text": "affect",
+              "token_end_inclusive": 47,
+              "token_start": 47
+            },
+            "actor": {
+              "char_end": 89,
+              "char_start": 0,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 0.24799728393554688,
+              "text": "Support not to affect adversely military preparedness Support (including the provision of",
+              "token_end_inclusive": 12,
+              "token_start": 0
+            },
+            "conditions": {
+              "char_end": 289,
+              "char_start": 245,
+              "presence_logit_margin": 4.4806342124938965,
+              "present": true,
+              "span_logit_margin": 0.4371795654296875,
+              "text": "the provision of such support will adversely",
+              "token_end_inclusive": 46,
+              "token_start": 40
+            },
+            "exceptions": {
+              "char_end": null,
+              "char_start": null,
+              "presence_logit_margin": 3.780216693878174,
+              "present": false,
+              "span_logit_margin": null,
+              "text": null,
+              "token_end_inclusive": null,
+              "token_start": null
+            },
+            "object": {
+              "char_end": 213,
+              "char_start": 119,
+              "presence_logit_margin": 16.600662231445312,
+              "present": true,
+              "span_logit_margin": 0.7322826385498047,
+              "text": "the assignment or detail of any personnel) may not be provided to any civilian law enforcement",
+              "token_end_inclusive": 34,
+              "token_start": 18
+            },
+            "temporal": {
+              "char_end": 233,
+              "char_start": 189,
+              "presence_logit_margin": 3.0867600440979004,
+              "present": true,
+              "span_logit_margin": 0.8053703308105469,
+              "text": "civilian law enforcement official under this",
+              "token_end_inclusive": 37,
+              "token_start": 32
+            }
+          },
+          "modality_logits": [
+            -2.6921067237854004,
+            2.638124942779541,
+            -0.221056267619133
+          ],
+          "tokens": [
+            {
+              "end": 7,
+              "start": 0,
+              "text": "Support"
+            },
+            {
+              "end": 11,
+              "start": 8,
+              "text": "not"
+            },
+            {
+              "end": 14,
+              "start": 12,
+              "text": "to"
+            },
+            {
+              "end": 21,
+              "start": 15,
+              "text": "affect"
+            },
+            {
+              "end": 31,
+              "start": 22,
+              "text": "adversely"
+            },
+            {
+              "end": 40,
+              "start": 32,
+              "text": "military"
+            },
+            {
+              "end": 53,
+              "start": 41,
+              "text": "preparedness"
+            },
+            {
+              "end": 61,
+              "start": 54,
+              "text": "Support"
+            },
+            {
+              "end": 63,
+              "start": 62,
+              "text": "("
+            },
+            {
+              "end": 72,
+              "start": 63,
+              "text": "including"
+            },
+            {
+              "end": 76,
+              "start": 73,
+              "text": "the"
+            },
+            {
+              "end": 86,
+              "start": 77,
+              "text": "provision"
+            },
+            {
+              "end": 89,
+              "start": 87,
+              "text": "of"
+            },
+            {
+              "end": 93,
+              "start": 90,
+              "text": "any"
+            },
+            {
+              "end": 103,
+              "start": 94,
+              "text": "equipment"
+            },
+            {
+              "end": 106,
+              "start": 104,
+              "text": "or"
+            },
+            {
+              "end": 115,
+              "start": 107,
+              "text": "facility"
+            },
+            {
+              "end": 118,
+              "start": 116,
+              "text": "or"
+            },
+            {
+              "end": 122,
+              "start": 119,
+              "text": "the"
+            },
+            {
+              "end": 133,
+              "start": 123,
+              "text": "assignment"
+            },
+            {
+              "end": 136,
+              "start": 134,
+              "text": "or"
+            },
+            {
+              "end": 143,
+              "start": 137,
+              "text": "detail"
+            },
+            {
+              "end": 146,
+              "start": 144,
+              "text": "of"
+            },
+            {
+              "end": 150,
+              "start": 147,
+              "text": "any"
+            },
+            {
+              "end": 160,
+              "start": 151,
+              "text": "personnel"
+            },
+            {
+              "end": 161,
+              "start": 160,
+              "text": ")"
+            },
+            {
+              "end": 165,
+              "start": 162,
+              "text": "may"
+            },
+            {
+              "end": 169,
+              "start": 166,
+              "text": "not"
+            },
+            {
+              "end": 172,
+              "start": 170,
+              "text": "be"
+            },
+            {
+              "end": 181,
+              "start": 173,
+              "text": "provided"
+            },
+            {
+              "end": 184,
+              "start": 182,
+              "text": "to"
+            },
+            {
+              "end": 188,
+              "start": 185,
+              "text": "any"
+            },
+            {
+              "end": 197,
+              "start": 189,
+              "text": "civilian"
+            },
+            {
+              "end": 201,
+              "start": 198,
+              "text": "law"
+            },
+            {
+              "end": 213,
+              "start": 202,
+              "text": "enforcement"
+            },
+            {
+              "end": 222,
+              "start": 214,
+              "text": "official"
+            },
+            {
+              "end": 228,
+              "start": 223,
+              "text": "under"
+            },
+            {
+              "end": 233,
+              "start": 229,
+              "text": "this"
+            },
+            {
+              "end": 241,
+              "start": 234,
+              "text": "chapter"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "if"
+            },
+            {
+              "end": 248,
+              "start": 245,
+              "text": "the"
+            },
+            {
+              "end": 258,
+              "start": 249,
+              "text": "provision"
+            },
+            {
+              "end": 261,
+              "start": 259,
+              "text": "of"
+            },
+            {
+              "end": 266,
+              "start": 262,
+              "text": "such"
+            },
+            {
+              "end": 274,
+              "start": 267,
+              "text": "support"
+            },
+            {
+              "end": 279,
+              "start": 275,
+              "text": "will"
+            },
+            {
+              "end": 289,
+              "start": 280,
+              "text": "adversely"
+            },
+            {
+              "end": 296,
+              "start": 290,
+              "text": "affect"
+            },
+            {
+              "end": 300,
+              "start": 297,
+              "text": "the"
+            },
+            {
+              "end": 309,
+              "start": 301,
+              "text": "military"
+            },
+            {
+              "end": 322,
+              "start": 310,
+              "text": "preparedness"
+            },
+            {
+              "end": 325,
+              "start": 323,
+              "text": "of"
+            },
+            {
+              "end": 329,
+              "start": 326,
+              "text": "the"
+            },
+            {
+              "end": 336,
+              "start": 330,
+              "text": "United"
+            },
+            {
+              "end": 343,
+              "start": 337,
+              "text": "States"
+            },
+            {
+              "end": 344,
+              "start": 343,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 56
+      },
+      "id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "latent_donor_id": "sha256:c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864",
+      "latent_donor_position": 6,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 2312,
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+        },
+        "byte_end": 722,
+        "byte_start": 378,
+        "citation": "10 U.S.C. 276",
+        "document_id": "usc:us:10:276",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "a03247fef886b503967fa49d64f8e55b8201c7d3250c78f3a82719f4d7498bb5",
+      "outcome": "decoder_abstained",
+      "position": 6,
+      "preflight": {
+        "content_sha256": "b1dad3ad0c6581d18952e3378a198a653e4f2dea80a2a55d2bb0ac11bcf83573",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa",
+        "source_text": "Support not to affect adversely military preparedness Support (including the provision of any equipment or facility or the assignment or detail of any personnel) may not be provided to any civilian law enforcement official under this chapter if the provision of such support will adversely affect the military preparedness of the United States.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 2312,
+          "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+        },
+        "byte_end": 722,
+        "byte_start": 378,
+        "citation": "10 U.S.C. 276",
+        "document_id": "usc:us:10:276",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+    },
+    {
+      "decoder_row": {
+        "admitted": false,
+        "canonical_ir": null,
+        "family_syntax_checked": false,
+        "formal_outputs": [],
+        "formalized": false,
+        "formula_text": null,
+        "latent_input_enabled": true,
+        "latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+        "learned_formula_generation": true,
+        "promotion_performed": false,
+        "proof_authority": false,
+        "publication_performed": false,
+        "qualified": false,
+        "reason": "copied_spans_overlap",
+        "roundtrip_ok": false,
+        "sample_memory_used": false,
+        "semantic_correctness_verified": false,
+        "source_input_conditioned": true,
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "span_diagnostics": {
+          "facets": {
+            "action": {
+              "char_end": 76,
+              "char_start": 75,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.5785140991210938,
+              "text": "\u2014",
+              "token_end_inclusive": 13,
+              "token_start": 13
+            },
+            "actor": {
+              "char_end": 280,
+              "char_start": 258,
+              "presence_logit_margin": null,
+              "present": true,
+              "span_logit_margin": 1.1973309516906738,
+              "text": "229, or 2332a of title",
+              "token_end_inclusive": 50,
+              "token_start": 45
+            },
+            "conditions": {
+              "char_end": 325,
+              "char_start": 76,
+              "presence_logit_margin": 18.766090393066406,
+              "present": true,
+              "span_logit_margin": 1.0182743072509766,
+              "text": "The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a",
+              "token_end_inclusive": 57,
+              "token_start": 14
+            },
+            "object": {
+              "char_end": 147,
+              "char_start": 76,
+              "presence_logit_margin": 13.428449630737305,
+              "present": true,
+              "span_logit_margin": 1.0418701171875,
+              "text": "The Secretary of Defense, upon the request of the Attorney General, may",
+              "token_end_inclusive": 27,
+              "token_start": 14
+            }
+          },
+          "modality_logits": [
+            2.462031602859497,
+            -0.9153470396995544,
+            -2.051520347595215
+          ],
+          "tokens": [
+            {
+              "end": 9,
+              "start": 0,
+              "text": "Emergency"
+            },
+            {
+              "end": 20,
+              "start": 10,
+              "text": "situations"
+            },
+            {
+              "end": 30,
+              "start": 21,
+              "text": "involving"
+            },
+            {
+              "end": 38,
+              "start": 31,
+              "text": "weapons"
+            },
+            {
+              "end": 41,
+              "start": 39,
+              "text": "of"
+            },
+            {
+              "end": 46,
+              "start": 42,
+              "text": "mass"
+            },
+            {
+              "end": 58,
+              "start": 47,
+              "text": "destruction"
+            },
+            {
+              "end": 60,
+              "start": 59,
+              "text": "("
+            },
+            {
+              "end": 61,
+              "start": 60,
+              "text": "a"
+            },
+            {
+              "end": 62,
+              "start": 61,
+              "text": ")"
+            },
+            {
+              "end": 65,
+              "start": 63,
+              "text": "In"
+            },
+            {
+              "end": 73,
+              "start": 66,
+              "text": "General"
+            },
+            {
+              "end": 75,
+              "start": 74,
+              "text": "."
+            },
+            {
+              "end": 76,
+              "start": 75,
+              "text": "\u2014"
+            },
+            {
+              "end": 79,
+              "start": 76,
+              "text": "The"
+            },
+            {
+              "end": 89,
+              "start": 80,
+              "text": "Secretary"
+            },
+            {
+              "end": 92,
+              "start": 90,
+              "text": "of"
+            },
+            {
+              "end": 100,
+              "start": 93,
+              "text": "Defense"
+            },
+            {
+              "end": 101,
+              "start": 100,
+              "text": ","
+            },
+            {
+              "end": 106,
+              "start": 102,
+              "text": "upon"
+            },
+            {
+              "end": 110,
+              "start": 107,
+              "text": "the"
+            },
+            {
+              "end": 118,
+              "start": 111,
+              "text": "request"
+            },
+            {
+              "end": 121,
+              "start": 119,
+              "text": "of"
+            },
+            {
+              "end": 125,
+              "start": 122,
+              "text": "the"
+            },
+            {
+              "end": 134,
+              "start": 126,
+              "text": "Attorney"
+            },
+            {
+              "end": 142,
+              "start": 135,
+              "text": "General"
+            },
+            {
+              "end": 143,
+              "start": 142,
+              "text": ","
+            },
+            {
+              "end": 147,
+              "start": 144,
+              "text": "may"
+            },
+            {
+              "end": 155,
+              "start": 148,
+              "text": "provide"
+            },
+            {
+              "end": 166,
+              "start": 156,
+              "text": "assistance"
+            },
+            {
+              "end": 169,
+              "start": 167,
+              "text": "in"
+            },
+            {
+              "end": 177,
+              "start": 170,
+              "text": "support"
+            },
+            {
+              "end": 180,
+              "start": 178,
+              "text": "of"
+            },
+            {
+              "end": 191,
+              "start": 181,
+              "text": "Department"
+            },
+            {
+              "end": 194,
+              "start": 192,
+              "text": "of"
+            },
+            {
+              "end": 202,
+              "start": 195,
+              "text": "Justice"
+            },
+            {
+              "end": 213,
+              "start": 203,
+              "text": "activities"
+            },
+            {
+              "end": 222,
+              "start": 214,
+              "text": "relating"
+            },
+            {
+              "end": 225,
+              "start": 223,
+              "text": "to"
+            },
+            {
+              "end": 229,
+              "start": 226,
+              "text": "the"
+            },
+            {
+              "end": 241,
+              "start": 230,
+              "text": "enforcement"
+            },
+            {
+              "end": 244,
+              "start": 242,
+              "text": "of"
+            },
+            {
+              "end": 252,
+              "start": 245,
+              "text": "section"
+            },
+            {
+              "end": 256,
+              "start": 253,
+              "text": "175"
+            },
+            {
+              "end": 257,
+              "start": 256,
+              "text": ","
+            },
+            {
+              "end": 261,
+              "start": 258,
+              "text": "229"
+            },
+            {
+              "end": 262,
+              "start": 261,
+              "text": ","
+            },
+            {
+              "end": 265,
+              "start": 263,
+              "text": "or"
+            },
+            {
+              "end": 271,
+              "start": 266,
+              "text": "2332a"
+            },
+            {
+              "end": 274,
+              "start": 272,
+              "text": "of"
+            },
+            {
+              "end": 280,
+              "start": 275,
+              "text": "title"
+            },
+            {
+              "end": 283,
+              "start": 281,
+              "text": "18"
+            },
+            {
+              "end": 290,
+              "start": 284,
+              "text": "during"
+            },
+            {
+              "end": 293,
+              "start": 291,
+              "text": "an"
+            },
+            {
+              "end": 303,
+              "start": 294,
+              "text": "emergency"
+            },
+            {
+              "end": 313,
+              "start": 304,
+              "text": "situation"
+            },
+            {
+              "end": 323,
+              "start": 314,
+              "text": "involving"
+            },
+            {
+              "end": 325,
+              "start": 324,
+              "text": "a"
+            },
+            {
+              "end": 332,
+              "start": 326,
+              "text": "weapon"
+            },
+            {
+              "end": 335,
+              "start": 333,
+              "text": "of"
+            },
+            {
+              "end": 340,
+              "start": 336,
+              "text": "mass"
+            },
+            {
+              "end": 352,
+              "start": 341,
+              "text": "destruction"
+            },
+            {
+              "end": 353,
+              "start": 352,
+              "text": "."
+            }
+          ]
+        },
+        "status": "abstained",
+        "target_access": false,
+        "teacher_forcing": false,
+        "training_executed": false
+      },
+      "effective_latent_sha256": "be3c67af6c526ea8260fc010cad78a8462695aca986b88d341837069cbe9e622",
+      "encoding": {
+        "outcome": "admitted",
+        "reason": null,
+        "token_count": 63
+      },
+      "id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "latent_donor_id": "sha256:2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f",
+      "latent_donor_position": 7,
+      "latent_donor_source": {
+        "artifact": {
+          "bytes": 7137,
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+        },
+        "byte_end": 738,
+        "byte_start": 383,
+        "citation": "10 U.S.C. 282",
+        "document_id": "usc:us:10:282",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "latent_input_enabled": true,
+      "original_latent_sha256": "db8b8a6bb9818d3b440b564416547b7b8f9bf658c802e17046d0cb79179bf033",
+      "outcome": "decoder_abstained",
+      "position": 7,
+      "preflight": {
+        "content_sha256": "6c2413f548db7e1547e729b3e65d94b563d41c22be9310f44b458bdb6e9ca886",
+        "context": {
+          "applied": false,
+          "requires_resolution": false,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "text": ""
+        },
+        "diagnostics": [],
+        "model_executed": false,
+        "outcome": "unassessed",
+        "proof_authority": false,
+        "qualified": false,
+        "schema": "canonical-decoder-source-preflight/v1",
+        "source_fidelity_established": false,
+        "source_profile": "flat-single-rule-deontic-english/v1",
+        "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb",
+        "source_text": "Emergency situations involving weapons of mass destruction (a) In General .\u2014The Secretary of Defense, upon the request of the Attorney General, may provide assistance in support of Department of Justice activities relating to the enforcement of section 175, 229, or 2332a of title 18 during an emergency situation involving a weapon of mass destruction.",
+        "target_access": false
+      },
+      "source": {
+        "artifact": {
+          "bytes": 7137,
+          "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+        },
+        "byte_end": 738,
+        "byte_start": 383,
+        "citation": "10 U.S.C. 282",
+        "document_id": "usc:us:10:282",
+        "language": "en",
+        "normalization": "identity",
+        "release_id": "ipfs-uscode-5016b86a",
+        "source_kind": "us_code"
+      },
+      "source_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+    }
+  ],
+  "schema": "arbitrary-native-retained-span-inference/v1",
+  "submitted_positions": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "weights_unchanged": true
+}

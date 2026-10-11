@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 61 items
+
+tests/unit/logic/legal_ir/test_joint_span_selection.py ................. [ 27%]
+............................................                             [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/joint-inert-tests.xml -
+============================== 61 passed in 0.16s ==============================

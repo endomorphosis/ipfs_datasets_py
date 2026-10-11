@@ -1,0 +1,64 @@
+{
+  "encoder_execution": false,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "harness": {
+    "bytes": 1525,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/run_inert_tests.py",
+    "sha256": "6893e3554ee0d6a8ef9ab1a1e23f94fb94a9041fab4a0fc94bc3d94d8f8ab50b"
+  },
+  "log": {
+    "bytes": 1954,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-inert-tests.log",
+    "sha256": "5fa57dc1c8d2aaddbcc4a7752c7b65cf585fcf7a4fcf8c322e63c3f9aeeeddb7"
+  },
+  "model_execution": false,
+  "model_import_denials": [
+    "torch",
+    "transformers",
+    "sentence_transformers"
+  ],
+  "network_execution": false,
+  "passed": true,
+  "schema": "joint-readout-inert-validation/v1",
+  "skipped": 0,
+  "source_and_test_pins": [
+    {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    {
+      "bytes": 14124,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_retained_span_score_capture.py",
+      "sha256": "ba41b20ba88fd25258055f6d03ba735e239fbaad003ce6f6ebcb9a1fda6d4d01"
+    },
+    {
+      "bytes": 18662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    },
+    {
+      "bytes": 24853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_source_review.py",
+      "sha256": "fcc3dd3fd8afffb10470989531883ef8ed120fc3e87c510e76c90220b3c28cbb"
+    }
+  ],
+  "tests": 452,
+  "xml": {
+    "bytes": 173708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-inert-tests.xml",
+    "sha256": "ca3add4b8865fa356faf91a96c3114a42a25d68a70b5fd4ffc98e4c7a645d2e3"
+  }
+}

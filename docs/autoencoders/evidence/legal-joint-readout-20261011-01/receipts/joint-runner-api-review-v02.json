@@ -1,0 +1,71 @@
+{
+  "checked": [
+    "per-checkpoint/per-control prepared submitted positions join infer_cached(control)",
+    "same-source closed capture scores match selector input API",
+    "original raw reports written before diagnostics and retained on later failure",
+    "different raw/score/joint output files and schema/origin; original refusals retained",
+    "same-pass hook plus existing model/source custody and extra runner tensors/modes/flags/gradient/RNG checks",
+    "all8 requested physical source IDs/order and null skipped-score rows preserved",
+    "new candidate search<=16topK/50000nodes with fixed modality/presence",
+    "fresh cache uses exact prior native receipt without new encoder calls",
+    "ordinary source/weight/dependency/import-fix artifacts fenced before/after",
+    "historical corpus/targets absent from child artifact input opens",
+    "network/process/update/encoder guards retained; exact libdl-only pinned finder and no subprocess fallback",
+    "legacy guardian envelope unchanged and no actual training under legacy phase name"
+  ],
+  "execution_by_reviewer": {
+    "encoder_calls": 0,
+    "forwards": 0,
+    "models": 0,
+    "numerical_library_or_model_imports": false,
+    "resource_or_Git_or_network_mutations": 0,
+    "tests": false,
+    "training_steps": 0
+  },
+  "findings": [],
+  "limitations": [
+    "No finalized actual plan/protocol review inspected here; final execution still needs their independent review.",
+    "Own capture source is excluded from independent qualification by this reviewer.",
+    "Same exposed8 source occurrences; no legal targets, semantic holdout, accuracy gain, proof/Lake/family/dimension admission."
+  ],
+  "passed": true,
+  "reviewed_files": [
+    {
+      "bytes": 19371,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/run_joint_readout_comparison.py",
+      "sha256": "b94e842e0000a951c18fa82d5e4d0344454906a2efea16d1ab24ebc49cd4e272"
+    },
+    {
+      "bytes": 11347,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/prepare_joint_readout_plan.py",
+      "sha256": "990f1e7e416819ff315c6f66d79eb5cae559a9795f6279f742723efc5dd04e12"
+    },
+    {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "bytes": 18662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/tests/unit/logic/legal_ir/test_joint_span_selection.py",
+      "sha256": "af56bffb0e0db662f673c12b37b86944819cc2efa5bc61661d37d0e928ce2572"
+    }
+  ],
+  "schema": "joint-readout-runner-api-static-review/v1",
+  "scope": "Independent read-only static source/test review plus inspection of root-produced saved XML; not runtime admission or semantic/model execution attestation.",
+  "superseded_finding": {
+    "issue": "Original successfully returned raw inference report could be lost if later diagnostic finalization/selection failed.",
+    "original_draft_retained": {
+      "bytes": 18503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/run_joint_readout_comparison-draft-01.py",
+      "sha256": "8af5c2f4da5ce9c121c61dda760f32a145d4c7c2ab172c5a720ee1994e8c2f0e"
+    },
+    "prior_review": {
+      "bytes": 3429,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/joint-runner-api-review-v01.json",
+      "sha256": "27903acdaf63c18eba8c32d500061da2cddfbd478a52417b21051989b3f918a6"
+    },
+    "resolution": "Raw report is now written exclusively and file+directory fsynced immediately after unchanged infer_cached returns and temporary hook removal, before capture.finalize or selector. STATE tracks durable raw pins; outer exception writes a scoped failure receipt only in the freshly created owned output directory."
+  },
+  "version": 2
+}

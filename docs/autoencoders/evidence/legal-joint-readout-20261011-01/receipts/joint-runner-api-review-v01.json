@@ -1,0 +1,64 @@
+{
+  "checked": [
+    "per-state/per-control prepare positions join exact infer_cached(control)",
+    "source IDs/order/hash/latent donor bindings retained by capture and unchanged runtime",
+    "same top-level original model forward hook captures full heads with no new forward",
+    "scores six-key input matches frozen pure selector API",
+    "fixed full presence and modality; raw early observations distinct from newly completed decisions",
+    "stable row-major float32 span scoring/margins",
+    "separate float64 objective and limited topK8/<=16 candidate scope",
+    "50000 attempted-assignment nodes bound; no proposal after cutoff; truncated full-domain optimality false",
+    "original raw report and separate score/joint schemas/origins",
+    "all selected ordinary artifact pins closed before/after; exact libdl-only resolution/network/process/update/encoder fences",
+    "historical corpus excluded from child artifact opens",
+    "unchanged2CPU1536MiB1child200MB300s guardian caps; no admission qualification by this review"
+  ],
+  "finding_count": 1,
+  "findings": [
+    {
+      "issue": "Successful unchanged infer_cached output is written only after capture.finalize, pure selector and sidecar writes. A later diagnostic failure can discard the returned original raw report.",
+      "owner": "run_joint_readout_comparison.py",
+      "required_change": "Write/fsync original raw report immediately after infer_cached returns and the temporary hook has been removed; then finalize/select/write separate sidecars. Preserve source/weight/RNG checks and all original contracts.",
+      "severity": "retention"
+    }
+  ],
+  "limitations": [
+    "No actual experiment plan supplied in this review; helper draft bytes only.",
+    "Static review is not runtime admission, numerical custody attestation or semantic evaluation.",
+    "No model fit, legal accuracy or proof/Lake/family/dimensional gain established."
+  ],
+  "passed": false,
+  "reviewed_files": [
+    {
+      "bytes": 18503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/run_joint_readout_comparison.py",
+      "sha256": "8af5c2f4da5ce9c121c61dda760f32a145d4c7c2ab172c5a720ee1994e8c2f0e"
+    },
+    {
+      "bytes": 11231,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/prepare_joint_readout_plan.py",
+      "sha256": "321193dd6c01f733683a74bb92603131992120f1ebd55d2cc9fda5281bd765a2"
+    },
+    {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "bytes": 6212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/capture-inert-tests.xml",
+      "sha256": "f9e6b564ea0792f4035fb94c0b510221a45f4af98da02a79306c75e4778b8ee3"
+    }
+  ],
+  "schema": "joint-readout-runner-api-static-review/v1",
+  "scope": "Independent read-only static API/source-join/selector review; own capture module is excluded from independent qualification. No model/library import, test, forward, resource or network execution by reviewer.",
+  "test_observation": {
+    "errors": 0,
+    "failures": 0,
+    "reviewer_executed_tests": false,
+    "skipped": 0,
+    "source": "root-run saved capture-inert-tests.xml only",
+    "tests": 32
+  },
+  "version": 1
+}
