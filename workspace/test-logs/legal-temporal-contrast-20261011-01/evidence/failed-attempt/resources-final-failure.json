@@ -1,0 +1,21 @@
+{
+  "artifacts_durable_before_disk_release": false,
+  "cleanup": {
+    "child_created": false,
+    "leader_reaped": true,
+    "live_group_processes": 0
+  },
+  "failed_disk_claim_retained": true,
+  "group_rss": null,
+  "resources": {
+    "cleanup_error": null,
+    "lease_cancellation_read": false,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": null,
+    "reservation_id": "2046d534d6604ede954ffa10945d806d",
+    "resource_lease": null,
+    "scheduler_state_read": false,
+    "schema": "guardian-cached-resource-snapshot/v1",
+    "snapshot_scope": "cached_owner_primitives_only"
+  }
+}

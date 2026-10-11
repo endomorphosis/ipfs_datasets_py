@@ -1,0 +1,24 @@
+{
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "log_sha256": "73c7ddf188c28228dba92fd7b3ab44343a513df8ac2487a5dee325e67789986a",
+  "model_calls": 0,
+  "numerical_imports_denied": true,
+  "passed": true,
+  "schema": "temporal-contrast-inert-test-observation/v1",
+  "scope": "new corpus and unchanged joint/saved adapter; namespace bootstrap; no top-level initialization qualification",
+  "semantic_gold": false,
+  "skips": 0,
+  "suite_counts": {
+    "artifacts.legal-temporal-contrast-20261011-01.datasets.tests.unit.logic.legal_ir.test_joint_span_selection": 61,
+    "artifacts.legal-temporal-contrast-20261011-01.datasets.tests.unit.logic.legal_ir.test_saved_span_family_adapter": 79,
+    "artifacts.legal-temporal-contrast-20261011-01.datasets.tests.unit.logic.legal_ir.test_temporal_role_contrast_corpus": 57
+  },
+  "tests": 197,
+  "xml": {
+    "bytes": 67805,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-tests-v01.xml",
+    "sha256": "008b94e75e51d006d71bd4c660525317b1987a3d3c090571ae991f6772e28236"
+  }
+}

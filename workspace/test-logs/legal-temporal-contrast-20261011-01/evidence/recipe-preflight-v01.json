@@ -1,0 +1,16 @@
+{
+  "data_export": {
+    "bytes": 4972708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/training-export-v01.json",
+    "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+  },
+  "findings": [],
+  "model_calls": 0,
+  "numerical_imports_denied": true,
+  "passed": true,
+  "plan_sha256": "03974404c4476a395a18667bb52da9a2f741c7a9ba3331f6518b2549f441f794",
+  "runner_sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05",
+  "schema": "temporal-contrast-inert-recipe-preflight/v1",
+  "semantic_gold": false,
+  "validated_actual_export": true
+}

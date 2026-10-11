@@ -1,0 +1,99 @@
+{
+  "all_opening_closing_bound_bytes_exact": true,
+  "all_three_final_guide_copies_byte_identical": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/admission-failure-independent-review-v01.json": {
+      "bytes": 36051,
+      "sha256": "3718d0c462e5de7297f2b8ad9365788c037926c7196f8c9d1a1bfd3eaf384524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/contribution-draft-v01.md": {
+      "bytes": 7328,
+      "sha256": "e073be1d332489bf19c4303c59f5120c767c6fa7d8a0cc979007a7a70ed48b2e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/contribution.md": {
+      "bytes": 7528,
+      "sha256": "409ef94a34ae0478ee52412baa69b2d8a966b7c25905c852947f5e0f4079440b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-independent-review-v02.json": {
+      "bytes": 12700,
+      "sha256": "423d775253dc04ec4b182f3db0ae800215d8acde6a30f53a2eee27b78089b0b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/datasets/docs/autoencoders/legal_temporal_role_contrast_20261011.md": {
+      "bytes": 7528,
+      "sha256": "409ef94a34ae0478ee52412baa69b2d8a966b7c25905c852947f5e0f4079440b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/hf-helper-static-review-v02.json": {
+      "bytes": 9125,
+      "sha256": "16055554c4c991c5bc710da9ffddeed4193219d305e345c8d6a10a86fd6dafe7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-test-observation-v02.json": {
+      "bytes": 2134,
+      "sha256": "648ecaf6faa5c7a81fab8c681a48bdc4a8751fd90e733f48833f935c07829ddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/storage-admission-diagnosis-v01.json": {
+      "bytes": 1114,
+      "sha256": "feed4b28686d35fd59c61ecbc208f196d9efee4a7b76f168fce738e1d8895edb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/temporal-recovery-review-v01.json": {
+      "bytes": 21267,
+      "sha256": "b462bff702e9d86d98e0ea5f6b850e5e3853d2d0de023e983eb51e8857208cd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/training-protocol-independent-review-v01.json": {
+      "bytes": 43320,
+      "sha256": "6b2f95c2d1827690324ffc42161c92eb4f43de1d9b6fbc6a456becb34bd3c115"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/workspace/implementation_plan/docs/78-legal-temporal-role-contrast-2026-10-11.md": {
+      "bytes": 7528,
+      "sha256": "409ef94a34ae0478ee52412baa69b2d8a966b7c25905c852947f5e0f4079440b"
+    }
+  },
+  "authority": {
+    "Git_mutated": false,
+    "checkpoint_JSON_parsed": false,
+    "compiler_executed": false,
+    "default_promotion": false,
+    "limits_or_claims_mutated": false,
+    "model_executed": false,
+    "network_accessed": false,
+    "new_weights_published": false,
+    "qualified_legal_fidelity": false,
+    "resource_acquired": false,
+    "semantic_gold": false,
+    "source_edited": false,
+    "training_executed": false
+  },
+  "created_at_utc": "2026-10-11T22:59:24.573334+00:00",
+  "findings": [],
+  "guide_bytes": 7528,
+  "guide_sha256": "409ef94a34ae0478ee52412baa69b2d8a966b7c25905c852947f5e0f4079440b",
+  "limitations": [
+    "The guide describes predeclared future diagnostic behavior, not executed baseline/postfit measurements or training accuracy.",
+    "Prior endpoint and saved inventory evidence is not continuous custody or current resource-admission guarantee.",
+    "Future helper static reviews do not approve a current payload, default model promotion or Hub mutation."
+  ],
+  "passed": true,
+  "resolved_initial_wording_findings": [
+    "Narrowed all published weights unchanged to exact local parent and no current-round Hub mutation; no global remote closing audit.",
+    "Separated two archival source heads from distinct historical saved event/deadline patches.",
+    "Explicitly retained140unchanged cases from197run; superseded only57draft corpus cases.",
+    "Inserted missing space before223GB."
+  ],
+  "review_method": "Read full final guide and all three byte-identical copies against frozen corpus/protocol/test/admission/recovery/HF source-only receipts. Read-only source/evidence review; no execution, model, network or Git/source mutation.",
+  "reviewed_claims": {
+    "actual_attempt": "Storage accounting refusal before scheduler client/lease, child, model restoration, inference or optimizer updates; actual updates0/new weights0.",
+    "admission_arithmetic": "97,805,041,520apparent+48,181,777,216outstanding+200,000,000request=146,186,818,736 versus145,000,000,000; over1,186,818,736 with sufficient filesystem free space.",
+    "authored_corpus": "144 supported fictional references72TRAIN+36tuning+36challenge;6 separate identical-literal refusal candidates never fitted.",
+    "counterbalance": "Initial global digit/rank shortcut corrected before numerical execution; original source/tests/review/197-case run preserved. Only first57 corpus cases superseded, unchanged140 retained.",
+    "family_and_dimensions": "No currentLake build,8D/768D or active latent decoder qualification; copied-duration role labels do not establish clock or temporal-family semantics.",
+    "final_tests": "258 distinct final local inert cases=61corrected corpus+57recipe+61joint+79adapter; no failures/errors/skips; no full top-level startup qualification.",
+    "future_HF_helpers": "Static source-only reviews with publicationFalse; completed64-update result, fresh concrete payload/scientific claims and exact-parent immutable readback still prerequisite.",
+    "geometry_and_exposure": "Exact segment-assembled character/UTF8 spans and group/source/reference disjointness; shared templates and builder-visible challenge references explicitly admitted.",
+    "ledger_and_generic_flags": "All511old record hashes and raw ledger endpoint bytes unchanged; generated failed ID absent and recordnull; generic retained-claim warning does not establish an actual claim; no release or cap change performed.",
+    "next_work": "Authorized owner headroom resolution/fresh attempt, full diagnostic comparison, additive experimental checkpoints without promotion, independent statutory review, duration/scope/clock join and eventual matched actual8D/384D/768D comparison.",
+    "parent_and_Hub": "Local source-only400 parent byte-identical; no current-round Hub mutation or new weights/publication, no closing audit of every remote weight claimed.",
+    "planned_fit": "Source-only384 dormant conditioning, exact parent400 model weights copied into fresh Adam0, requested32 each for control108 versus contrast168; unequal data/rehearsal exposure and no runtime batch-ID attestation stated.",
+    "recovery_scope": "Two archival source heads preserve same eleven prior temporal/duration/calendar owners and omit newer scope APIs; separate October5event/deadline patches depend on absent occurrence-provenance module."
+  },
+  "reviewer_task": "/root/temporal_recovery_review",
+  "schema": "temporal-contrast-contribution-guide-independent-review/v1"
+}

@@ -1,0 +1,146 @@
+{
+  "actual_round_status": {
+    "Hub_mutation_executed_by_review": false,
+    "actual_new_model_calls": 0,
+    "actual_new_optimizer_updates": 0,
+    "completed64_update_payload_exists": false,
+    "immutable_remote_download_verification_executed_by_review": false,
+    "new_weights_exist": false,
+    "observed_storage_charge_bytes": 146186818736,
+    "own_failed_reservation_present": false,
+    "prepared_publication_inventory_reviewed": false,
+    "publication_approved": false,
+    "resource_limits_or_foreign_claims_changed_by_review": false,
+    "retained_old_ledger_record_count": 511,
+    "training_admission_failed_before_child": true,
+    "unchanged_storage_limit_bytes": 145000000000
+  },
+  "artifacts": {
+    "/home/barberb/.codex/plugins/cache/openai-curated-remote/hugging-face/1.0.0/skills/cli/SKILL.md": {
+      "bytes": 14936,
+      "sha256": "ee85209886c4ec3d3d850489368be193d11a8a3fa589012b39a4a5bbf7c7da2e"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/huggingface_hub/_commit_api.py": {
+      "bytes": 41010,
+      "sha256": "a461120ec89ca5631e66772dfbbd7adf92a04dfbd4a32a24fe13e5f598082162"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/huggingface_hub/hf_api.py": {
+      "bytes": 487935,
+      "sha256": "444326f4016052dca2cc8ead904cba8255f601aefe4c7efeb96865865d2ad1f1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/guardian-execution-v01.log": {
+      "bytes": 225,
+      "sha256": "9e1492dca5ff89ee7e2b72799bf7c1742683c34103b8b80a7a83e29ab2738289"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/hf-before-file-identities-v01.json": {
+      "bytes": 1019575,
+      "sha256": "0af93941ce0d20596561ec38e18fa3c64553bf8c61bfcc67c432787c4fa9fd06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/prepare_hf_release-draft-v01.py": {
+      "bytes": 4291,
+      "sha256": "c37de0120fef0b471b663a2db8d857ee0610f62efb512484699c414ae41286f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/prepare_hf_release.py": {
+      "bytes": 5036,
+      "sha256": "502e43660ce6f519236b3550c47d1c9620ade2e680c2efd4f675defcf4ff6929"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/publish_hf_release-draft-v01.py": {
+      "bytes": 5602,
+      "sha256": "c689b7bfbc9971ff65629fe6f01684780012755f8235ebfbbf1efa2ee76e34b9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/publish_hf_release.py": {
+      "bytes": 5807,
+      "sha256": "0876c7133395264b89f0ca2c6380e595c90220891661be2f8b3560a0799e7388"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/storage-admission-diagnosis-v01.json": {
+      "bytes": 1114,
+      "sha256": "feed4b28686d35fd59c61ecbc208f196d9efee4a7b76f168fce738e1d8895edb"
+    }
+  },
+  "baseline_identity_count": 3311,
+  "corrected_initial_findings": [
+    {
+      "id": "result-review-custody",
+      "observation": "Current preparation binds result_review schema/result_root, exact result JSON path set, and each reviewed result file hash before copying.",
+      "status": "corrected_statically"
+    },
+    {
+      "id": "source-owner-byte-drift",
+      "observation": "Current preparation checks all plan artifacts and every exact source_owner_pins entry before copying source files.",
+      "status": "corrected_statically"
+    },
+    {
+      "id": "resolve-before-symlink-check",
+      "observation": "Current preparation pin() checks canonical absolute input path without first resolving away a symlink.",
+      "status": "corrected_statically"
+    },
+    {
+      "id": "created-commit-durability",
+      "observation": "Current publisher write() fsyncs the created file and containing directory before readback.",
+      "status": "corrected_statically"
+    }
+  ],
+  "custody": "opening/closing saved file byte equality only; no continuous endpoint custody or current remote state attestation",
+  "execution": {
+    "compiler_executed": false,
+    "foreign_mutable_ledgers_read": false,
+    "helper_executed": false,
+    "inference_executed": false,
+    "model_imported": false,
+    "network_accessed": false,
+    "refs_mutated": false,
+    "training_executed": false
+  },
+  "expected_parent_revision": "a2c8aa64d8c363eb796438b385c14058e607a5ec",
+  "findings": [
+    {
+      "helper": "publish_hf_release.py",
+      "id": "reviewed-upload-byte-race",
+      "observation": "CommitOperationAdd receives mutable path strings. The inspected installed SDK reopens path inputs while uploading/preparing payloads, after the local review hash check. Use a checked immutable byte snapshot or equivalent stable file custody and revalidate closure immediately before commit.",
+      "severity": "blocking_before_future_publication"
+    },
+    {
+      "helpers": [
+        "prepare_hf_release.py",
+        "publish_hf_release.py"
+      ],
+      "id": "strict-json-and-closed-contracts",
+      "observation": "read() uses default json.loads, which accepts duplicate keys and nonfinite JSON. Receipt/review/input schemas are not closed. Add strict parsing and explicit closed metadata schemas so ambiguous declarations cannot override reviewed fields.",
+      "severity": "blocking_before_future_publication"
+    },
+    {
+      "helper": "publish_hf_release.py",
+      "id": "payload-count-byte-bounds",
+      "observation": "The publisher checks payload file count but does not check declared/reviewed payload byte totals against all entry sizes or a bounded payload contract. Future concrete publication must check both totals and ordinary normalized entry paths.",
+      "severity": "blocking_before_future_publication"
+    },
+    {
+      "helper": "publish_hf_release.py",
+      "id": "after-identities-refusal-evidence",
+      "observation": "The created commit is durably saved before remote identity assertions, but the fetched immutable after-identities map is not saved before an automatic attribute-change refusal. Save that map/diff before assertions to preserve the exact refusal evidence.",
+      "severity": "recommended_before_future_publication"
+    }
+  ],
+  "future_execution_prerequisites": [
+    "Successful admitted training with two actual32-update arms and saved complete outputs; actual result-independent review matching every saved endpoint.",
+    "Revised frozen helpers with remaining findings resolved; exact prepared payload inventory, helper/CLI/installed dependency bindings and independent concrete publication review.",
+    "Final release README/manifest reviewed against observed outcomes and unchanged semantic/statutory/latent-dimension limitations.",
+    "Live exact-parent and all-old-identities equality at publication; stale state must refuse."
+  ],
+  "passed": false,
+  "positive_static_controls": [
+    "Exact before.sha and all3,311 saved identities are required before mutation.",
+    "The mutation is one create_commit on main with exact parent_commit; operations are prefix-only CommitOperationAdd, without deletes, root-card/default changes or force operation.",
+    "A created-commit receipt is saved before remote readback.",
+    "Unexpected old-identity changes or extra additions cause refusal without a rollback or second mutation.",
+    "hf download selects the returned immutable revision and release prefix, with max_workers2; each expected downloaded file is SHA/size compared to its reviewed local entry."
+  ],
+  "release_prefix": "releases/20261011-temporal-role-contrast-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "temporal-contrast-Hub-helper-static-review/v1",
+  "scope": "read-only source/AST review of future unexecuted helpers; not a concrete payload or publication approval",
+  "skill_used": {
+    "name": "hugging-face:hf-cli",
+    "path": "/home/barberb/.codex/plugins/cache/openai-curated-remote/hugging-face/1.0.0/skills/cli/SKILL.md"
+  }
+}

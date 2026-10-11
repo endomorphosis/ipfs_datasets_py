@@ -1,0 +1,329 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/authored-temporal-contrast-corpus-v01.json": {
+      "bytes": 1672663,
+      "sha256": "47cc9d72fc3678c01962e08d6c61a71c1078bc89ef510e23586e4adfd814c280"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-draft-v01.py": {
+      "bytes": 15257,
+      "sha256": "64cecf8bb7d03e7831fbdd06d52151ed11db7f804005f21dc8b420c4d2bad71c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-independent-review-v01.json": {
+      "bytes": 7657,
+      "sha256": "1c060270b7bd057b07d3b203e22785f8c2d30e20fe24fef6afee0883dc42f958"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-tests-draft-v01.py": {
+      "bytes": 16843,
+      "sha256": "93b166b82f47bddaefd0a8c479cc9635b39f3f704cc296120fb13e4291192e32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/datasets/tests/unit/logic/legal_ir/test_temporal_role_contrast_corpus.py": {
+      "bytes": 18610,
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-corpus-tests-v02.log": {
+      "bytes": 99,
+      "sha256": "138ccb73b20385d00228f882f28042933aea8c5e4deb5e66b070c4e1f0fdfbc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/inert-corpus-tests-v02.xml": {
+      "bytes": 14680,
+      "sha256": "9223a7b4830a192bf4c30a62916192417ff09a29df4d47880e9e85a0a866ff07"
+    }
+  },
+  "authority": {
+    "NumPy_imported": false,
+    "Torch_imported": false,
+    "compiler_executed": false,
+    "corpus_executed": false,
+    "default_promoted": false,
+    "fit_executed": false,
+    "model_executed": false,
+    "network_accessed": false,
+    "proof_authority": false,
+    "qualified": false,
+    "resource_acquired": false,
+    "semantic_gold": false,
+    "source_edited": false,
+    "subject_imported": false,
+    "tests_executed": false
+  },
+  "correction_review": {
+    "code_changes_scope": "Only quantity assignment and meaningful counterbalancing controls; counts, groups, pair/reference, source assembly, latent and exposure contracts retained.",
+    "correction_reason": "The initial authored quantity rule always used base+1 for normative duration and base+2/+3 for distractors, exposing a global magnitude/final-digit role shortcut. The root required correction before numerical execution.",
+    "initial_static_receipt_not_numerical_qualification": true,
+    "revised_rule": "normative_slot=(class_index+lexical_index+split_quantity_rotation)%3; train/tuning/challenge rotations0/1/2; remaining offsets are distractors. Ambiguous6 intentionally repeat the same literal and remain refused.",
+    "superseded_source_and_tests_preserved": true,
+    "superseded_static_review": {
+      "bytes": 7657,
+      "sha256": "1c060270b7bd057b07d3b203e22785f8c2d30e20fe24fef6afee0883dc42f958"
+    }
+  },
+  "created_at_utc": "2026-10-11T22:42:52.969167+00:00",
+  "exposure_limits": {
+    "challenge_layout_is_not_structurally_novel": true,
+    "challenge_reference_free_generation_attested": false,
+    "challenge_reference_visible_to_author": true,
+    "group_ids_disjoint_across_splits": true,
+    "independent_semantic_holdout": false,
+    "new_source_strings": true,
+    "semantic_accuracy_established": false,
+    "statutory_gold": false,
+    "statutory_section_holdout": false,
+    "template_grammar_shared": true
+  },
+  "findings": [],
+  "method": "Read complete revised source/tests, complete preserved draft differences and unchanged legacy label-owner code. Independently checked saved generated JSON source/byte geometry and quantity-role counts with standard-library Python. Subject modules, corpus builder, exports, tests, compiler and model were not executed or imported by reviewer.",
+  "opening_closing_artifact_bytes_exact": true,
+  "passed": true,
+  "quantity_role_distributions": {
+    "ambiguous_diagnostics": {
+      "distractor_last_digits": {
+        "1": 6
+      },
+      "normative_last_digits": {
+        "1": 6
+      },
+      "normative_relative_ranks": [
+        0
+      ],
+      "training_or_supervised_evaluation_population": false
+    },
+    "challenge": {
+      "distractor_last_digits": {
+        "1": 12,
+        "2": 12,
+        "3": 12
+      },
+      "normative_last_digits": {
+        "1": 6,
+        "2": 6,
+        "3": 6
+      },
+      "normative_relative_ranks": [
+        0,
+        1
+      ],
+      "training_or_supervised_evaluation_population": true
+    },
+    "train": {
+      "distractor_last_digits": {
+        "1": 24,
+        "2": 24,
+        "3": 24
+      },
+      "normative_last_digits": {
+        "1": 12,
+        "2": 12,
+        "3": 12
+      },
+      "normative_relative_ranks": [
+        0,
+        1,
+        2
+      ],
+      "training_or_supervised_evaluation_population": true
+    },
+    "tuning": {
+      "distractor_last_digits": {
+        "1": 12,
+        "2": 12,
+        "3": 12
+      },
+      "normative_last_digits": {
+        "1": 6,
+        "2": 6,
+        "3": 6
+      },
+      "normative_relative_ranks": [
+        0,
+        1
+      ],
+      "training_or_supervised_evaluation_population": true
+    }
+  },
+  "review_scope_exclusions": [
+    "Pure preparation helper and executable plan/runner protocol are separate reviews.",
+    "Uniform global quantity-role histograms do not establish removal of every template/source shortcut. Grammar, source styles and class vocabulary remain authored and shared.",
+    "No independent statutory semantic gold or neural accuracy is established; no current8D/768D autoencoder or latent decoder was run."
+  ],
+  "reviewer_task": "/root/temporal_recovery_review",
+  "saved_data_checks": {
+    "all_source_and_span_SHA_matches": true,
+    "challenge_references_available_before_fitting_to_builder_and_recipe": true,
+    "generated_populations": {
+      "ambiguous_diagnostics": 6,
+      "challenge": 36,
+      "train": 72,
+      "tuning": 36
+    },
+    "global_normative_and_distractor_final_digit_histograms_uniform_per_supported_split": true,
+    "legal_semantic_gold": false,
+    "normative_not_always_smallest": true,
+    "source_character_and_UTF8_byte_spans_verified": 1005
+  },
+  "saved_test_observation": {
+    "cases": 61,
+    "errors": 0,
+    "failures": 0,
+    "old57_source_cases_superseded": true,
+    "passed": 61,
+    "skipped": 0,
+    "source": "root saved final inert XMLv02/log inspected; not rerun by reviewer"
+  },
+  "schema": "temporal-role-contrast-corpus-independent-static-and-saved-data-review/v2",
+  "source_contract": {
+    "ambiguous_panel": "Two repeated-identical classes x O/P/F; refusal_candidate distinct from model_example, fit_eligible false, existing legacy _labels requires unique token-aligned atoms and therefore refuses ambiguous temporal literal.",
+    "ambiguous_refusal_rows": 6,
+    "challenge_and_ambiguous_fit_export_refused": true,
+    "challenge_rows": 36,
+    "class_modal_presence_balance": "Train two lexical groups; tuning/challenge one each; every group has O/P/F x absent/present and three modal pairs.",
+    "dimension": 384,
+    "group_count": 24,
+    "latent_enabled": false,
+    "latent_is_zero_placeholder_not_encoder_output": true,
+    "pair_count": 72,
+    "pair_semantics": "Reference rules and fictional text differ only by explicitly authored normative temporal presence; distractor roles retained.",
+    "role_reference_scope": "Fictional copied flat role atoms only; no clocks, event ownership, qualifier scopes or legal semantics declared.",
+    "six_confusion_classes": [
+      "plain_deadline",
+      "condition_duration",
+      "exception_duration",
+      "actor_duration_name",
+      "object_duration_title",
+      "condition_exception_duration"
+    ],
+    "source_inference_export_fields": [
+      "id",
+      "source_text",
+      "latent"
+    ],
+    "source_span_custody": "Segment assembly records character and UTF8-byte coordinates and literal hashes. No first-match selection of repeated source occurrences.",
+    "supervised_export_splits": [
+      "train",
+      "tuning"
+    ],
+    "supported_authored_rows": 144,
+    "supported_duration_literals_unique": true,
+    "train_rows": 72,
+    "tuning_rows": 36
+  },
+  "tests_reviewed": {
+    "functions": [
+      {
+        "line": 28,
+        "name": "test_predeclared_denominators_and_no_legal_authority"
+      },
+      {
+        "line": 40,
+        "name": "test_fixed_builder_returns_independent_mutable_objects"
+      },
+      {
+        "line": 50,
+        "name": "test_every_confusion_class_has_balanced_modal_presence_pairs"
+      },
+      {
+        "line": 60,
+        "name": "test_related_modal_counterfactuals_and_pair_members_stay_in_one_group"
+      },
+      {
+        "line": 74,
+        "name": "test_pair_reference_only_changes_normative_temporal_presence"
+      },
+      {
+        "line": 89,
+        "name": "test_source_reference_and_group_disjointness_are_actual_not_only_flags"
+      },
+      {
+        "line": 104,
+        "name": "test_all_full_and_nested_spans_replay_character_and_utf8_bytes"
+      },
+      {
+        "line": 128,
+        "name": "test_full_facet_geometry_is_nonoverlapping_and_copied_to_reference"
+      },
+      {
+        "line": 142,
+        "name": "test_duration_occurrences_keep_their_declared_role_and_original_full_span"
+      },
+      {
+        "line": 157,
+        "name": "test_distractor_time_is_present_while_normative_temporal_is_absent"
+      },
+      {
+        "line": 168,
+        "name": "test_trainable_normative_duration_differs_from_every_distractor"
+      },
+      {
+        "line": 179,
+        "name": "test_actual_quantity_offsets_are_counterbalanced_across_normative_and_distractor_roles"
+      },
+      {
+        "line": 197,
+        "name": "test_plain_training_control_has_no_single_normative_quantity_digit"
+      },
+      {
+        "line": 209,
+        "name": "test_disabled_latent_384_placeholder_is_never_described_as_encoder_output"
+      },
+      {
+        "line": 221,
+        "name": "test_existing_legacy_label_owner_accepts_every_supported_reference"
+      },
+      {
+        "line": 233,
+        "name": "test_repeated_identical_refusal_candidates_remain_unsupported_by_legacy_labels"
+      },
+      {
+        "line": 249,
+        "name": "test_model_export_does_not_leak_geometry_and_is_independent_of_corpus"
+      },
+      {
+        "line": 259,
+        "name": "test_fit_export_cannot_include_challenge_or_refusal_panel"
+      },
+      {
+        "line": 265,
+        "name": "test_source_only_evaluation_export_has_no_reference_or_occurrence_leak"
+      },
+      {
+        "line": 273,
+        "name": "test_challenge_reference_export_discloses_access_without_attesting_holdout"
+      },
+      {
+        "line": 287,
+        "name": "test_closed_validation_rejects_source_geometry_exposure_and_group_corruption"
+      },
+      {
+        "line": 327,
+        "name": "test_corpus_validation_requires_exact_object"
+      },
+      {
+        "line": 332,
+        "name": "test_closed_validation_keeps_all_denominators_without_model_or_label_execution"
+      },
+      {
+        "line": 345,
+        "name": "test_module_is_standard_library_only_and_never_selects_first_occurrence"
+      }
+    ],
+    "meaningful_controls": [
+      "Exact character/UTF8 byte spans and SHA roundtrip",
+      "Cross-split source/reference/group sets and modal/presence balance",
+      "Normative versus distractor role custody",
+      "Unchanged legacy label compatibility and repeated-atom refusal",
+      "No geometry/reference leakage in source-only exports",
+      "Challenge/ambiguous export refusal and explicit reference visibility",
+      "Closed validation corruption of counts, booleans, source, offsets, roles, group/pair identity, targets, authority, NaN latent and incomplete populations",
+      "Actual quantity-digit histograms and normative relative ranks; plain control12 varies normative digit."
+    ],
+    "results_or_runtime_execution_verified_here": false,
+    "top_level_test_function_count": 24
+  }
+}
