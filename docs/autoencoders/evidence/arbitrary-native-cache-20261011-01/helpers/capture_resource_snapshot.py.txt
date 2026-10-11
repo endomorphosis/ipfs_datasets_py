@@ -1,0 +1,16 @@
+from pathlib import Path
+from hashlib import sha256
+from datetime import datetime,timezone
+import argparse,json,os
+F=Path(__file__).resolve().parent
+p=argparse.ArgumentParser();p.add_argument('--phase',choices=['before-admission','after-finalization'],required=True);p.add_argument('--suffix',default='');a=p.parse_args()
+assert a.suffix in ('','-attempt-02')
+compat=json.loads((F/'resource-compatibility.json').read_bytes())
+paths={'disk_ledger':compat['disk_ledger']['path'],'scheduler':compat['shared_state']['path']}
+records={}
+for name,path in paths.items():
+ q=Path(path);info=q.stat();raw=q.read_bytes();assert len(raw)<=16*1024**2
+ records[name]={'pin':{'path':str(q),'bytes':len(raw),'sha256':sha256(raw).hexdigest()},'value':json.loads(raw),'identity':{'device':info.st_dev,'inode':info.st_ino}}
+v={'schema':'arbitrary-native-pilot-resource-observation/v1','phase':a.phase,'observed_at_utc':datetime.now(timezone.utc).isoformat(),'read_only':True,'records':records,'continuous_preservation_claim':False}
+with (F/('resource-'+a.phase+a.suffix+'.json')).open('x') as f: json.dump(v,f,sort_keys=True,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+print(json.dumps({'phase':a.phase,'ledger_records':len(records['disk_ledger']['value']['reservations'])}))

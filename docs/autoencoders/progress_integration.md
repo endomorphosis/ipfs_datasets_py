@@ -313,3 +313,19 @@ native latent weights, logic-family/Lake or legal-semantic admissions change.
 The fresh-main reconciliation incorporates current native384 and US Code intake
 work; genuine arbitrary-source native routing and reviewed legal targets remain
 the next integration gaps.
+
+
+## October 11: new physical-source native input cache
+
+The [arbitrary native source adapter](arbitrary_native_legal_input_cache_20261011.md)
+closes the fixed-assay input restriction for opt-in source-bound384/768 records.
+Actual GTE-small production encodes8 cached US Code spans; two original frozen
+384D normative states produce16 EOS/canonical-structure candidates. Actor/object
+literal coverage is0/8 per lane and action1/8, exposing the frozen32-token
+target bottleneck. No fitting, selected accuracy gain, statutory gold, native768
+execution, learned8D production, family bridge/Lake or default promotion is claimed.
+233 current controls pass; exact source/native bindings and full failed/successful
+owned attempts are preserved. Incoming numerical-source main is incorporated
+without changing any of52 reviewed pilot files. The original selected weights
+remain byte-exact on the public Hub. The report explicitly retains a historical
+review-byte custody gap caused by a postlaunch resource-pin supplement.

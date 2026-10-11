@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="29" time="0.463" timestamp="2026-10-11T02:20:12.075754+00:00" hostname="spark-b271"><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_unicode_clause_spans_keep_absolute_bytes_and_complete_input_provenance" time="0.002"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:87: in test_unicode_clause_spans_keep_absolute_bytes_and_complete_input_provenance
+    inputs, aliases = helper.expand_embedding_inputs([row], pins)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:105: in expand_embedding_inputs
+    checked, occurrences, _ = cache._requests(requests, resolver)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_identical_full_origins_deduplicate_input_ids_but_preserve_caller_occurrences" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:107: in test_identical_full_origins_deduplicate_input_ids_but_preserve_caller_occurrences
+    inputs, aliases = helper.expand_embedding_inputs([row, other], pins)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:105: in expand_embedding_inputs
+    checked, occurrences, _ = cache._requests(requests, resolver)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_equal_text_at_different_physical_spans_is_not_deduplicated" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:119: in test_equal_text_at_different_physical_spans_is_not_deduplicated
+    inputs, aliases = helper.expand_embedding_inputs([row, other], pins)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:105: in expand_embedding_inputs
+    checked, occurrences, _ = cache._requests(requests, resolver)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_one_physical_selector_with_contradictory_provenance_is_refused" time="0.001"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'contradictory source provenance'&#10;  Actual message: 'artifact could not be read'">tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:130: in test_one_physical_selector_with_contradictory_provenance_is_refused
+    with pytest.raises(ValueError, match="contradictory source provenance"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'contradictory source provenance'
+E     Actual message: 'artifact could not be read'</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[text]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[offset]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[target]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[nested_target]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[nine_clauses]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_malformed_or_target_bearing_requests_refuse_before_any_encoder[duplicate_id]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_resolver_is_defensive_and_refuses_generation_change_with_same_bytes" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_source_aliases_are_refused[symlink]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_source_aliases_are_refused[hardlink]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority[384]" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:184: in test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority
+    result = helper.prepare(cfg, output_directory=tmp_path/"out")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority[768]" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:184: in test_reuse_never_calls_encoder_and_has_no_production_or_semantic_authority
+    result = helper.prepare(cfg, output_directory=tmp_path/"out")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_explicit_producer_record_double_keeps_exact_receipt_bytes_and_real_call_arguments" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:210: in test_explicit_producer_record_double_keeps_exact_receipt_bytes_and_real_call_arguments
+    result = helper.prepare(cfg, output_directory=tmp_path/"out")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_injected_fixture_receipt_cannot_be_qualified_as_native_production" time="0.001"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'diagnostic fixtures refused'&#10;  Actual message: 'artifact could not be read'">tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:226: in test_injected_fixture_receipt_cannot_be_qualified_as_native_production
+    with pytest.raises(ValueError, match="diagnostic fixtures refused"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'diagnostic fixtures refused'
+E     Actual message: 'artifact could not be read'</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_fixed_owner_chunks_respect_256_inputs_without_losing_physical_occurrences" time="0.002"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:256: in test_fixed_owner_chunks_respect_256_inputs_without_losing_physical_occurrences
+    result = helper.prepare(cfg, output_directory=tmp_path/"out")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_source_generation_change_after_production_retains_receipt_and_truthful_failure" time="0.001"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'generation changed'&#10;  Actual message: 'artifact could not be read'">tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:275: in test_source_generation_change_after_production_retains_receipt_and_truthful_failure
+    with pytest.raises(ValueError, match="generation changed"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'generation changed'
+E     Actual message: 'artifact could not be read'</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_unreturned_producer_call_does_not_claim_zero_encoder_work" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:291: in test_unreturned_producer_call_does_not_claim_zero_encoder_work
+    helper.prepare(cfg, output_directory=tmp_path/"out")
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[extra_target]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[width8]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[width384_as768]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[batch_bool]" time="0.001" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[batch17]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_closed_production_config_has_no_width_padding_or_implicit_fallback[prior_lane]" time="0.000" /><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_existing_output_directory_is_preserved_and_no_producer_runs" time="0.001"><failure message="ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read">ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:349: in _read_verified
+    path = Path(path)
+           ^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1164: in __init__
+    super().__init__(*args)
+/usr/lib/python3.12/pathlib.py:373: in __init__
+    raise TypeError(
+E   TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'bytes'
+
+The above exception was the direct cause of the following exception:
+tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:324: in test_existing_output_directory_is_preserved_and_no_producer_runs
+    helper.prepare(cfg, output_directory=output)
+scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py:202: in prepare
+    cache._requests(requests, resolver)
+ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py:180: in _requests
+    artifacts[key] = corpus._read_verified(resolver(dict(ref)), ref, MAX_SOURCE_BYTES)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py:359: in _read_verified
+    raise CorpusManifestError("artifact could not be read") from exc
+E   ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest.CorpusManifestError: artifact could not be read</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_bounded_document_reads_and_unused_artifact_pins_refuse" time="0.001"><failure message="AssertionError: Regex pattern did not match.&#10;  Expected regex: 'unused source artifact'&#10;  Actual message: 'artifact could not be read'">tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py:338: in test_bounded_document_reads_and_unused_artifact_pins_refuse
+    with pytest.raises(ValueError, match="unused source artifact"):
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'unused source artifact'
+E     Actual message: 'artifact could not be read'</failure></testcase><testcase classname="tests.unit.logic.test_prepare_arbitrary_native_legal_sources" name="test_config_reader_rejects_duplicate_json_keys_and_exact_pin_drift" time="0.001" /></testsuite></testsuites>

@@ -1,0 +1,271 @@
+{
+  "geometry_and_decoder_limits": {
+    "decoder_state": "private-native-dimension-source-state/v1 selected semantic_IR_reconstruction; native IR schema/profile/format remain null. Geometry input/projected width equals lane width; learned conditioner hidden32, target embedding16, fixed projection bottleneck8 and max_rules8. Bottleneck8 is not an8D source lane.",
+    "literal_segmentation": "One to eight nonempty clauses separated by literal double newline. Preserve order and exact UTF8 text. Derive both character and byte offsets; paragraph and every clause have independently verified artifact SourceSpan origin.",
+    "preprocessing": "Reuse saved TRAIN-only input transform and separate paragraph/clause normalization exactly once, plus retained count prior, initializer, donor and tensor hashes. Never fit normalization on new selection/final sources. Zero-padding to eight occurs only after applying saved source transforms, as existing geometry requires.",
+    "source_text_head_track": "Ordered-byte source proposal gates are separate tasks and do not consume these native vectors. A cache adapter does not automatically condition their token-pointer features.",
+    "source_vectors": "Real finite exact float32 L2-normalized native vectors at actual384/768 widths. Do not pad/repeat/project vectors, repair normalization, substitute core384/trained384 or pass random/injected fixtures.",
+    "target_codec": "Inherited typed-json-lexical/v1 has32 values: five actors(notary,registrar,secretary,treasurer,trustee), six actions(approve,archive,deliver,examine,preserve,publish), object notice, modalitiesF/O/P, structural fields/punctuation. Arbitrary new source text can be embedded but these states cannot emit arbitrary unseen output atoms or rich qualifiers. Input cache availability cannot repair target representability."
+  },
+  "local_asset_observation": {
+    "bytes": 7635,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/native-local-assets-observation.json",
+    "sha256": "c31bbe41ae26a08a95917e63e3b77671cdb764fc0760dd74ddf2679df76d64c4"
+  },
+  "local_assets_available": {
+    "384_all_nine_assets_sha_size_verified_read_only": true,
+    "384_snapshot": "/home/barberb/.cache/huggingface/hub/models--thenlper--gte-small/snapshots/17e1f347d17fe144873b1201da91788898c639cd",
+    "384_symlink_policy": "Pinned HF snapshot files resolve inside the same model cache; existing producer expressly admits these file symlinks after hashing. Do not apply native768 NOFOLLOW asset policy to384 without a new profile.",
+    "768_all_seven_assets_sha_size_verified_read_only": true,
+    "768_code_directory": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/code",
+    "768_manifest_known_existing": {
+      "bytes": 1470,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/configs/autoencoders/gte_multilingual_local_assets_v1.json",
+      "sha256": "8beb874aa7b06599346173fde12e95f9f926b3028942d5014cdd2f99c4385166"
+    },
+    "768_manifest_sparse_checkout_missing": true,
+    "768_model_directory": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/native768/assets/model",
+    "768_single_link_regular_non_symlink_assets": true,
+    "local_package_metadata": {
+      "safetensors": "0.7.0",
+      "sentence-transformers": "5.4.1",
+      "spacy": "3.8.14",
+      "tokenizers": "0.21.4",
+      "torch": "2.13.0",
+      "transformers": "4.52.1"
+    },
+    "runtime_compatibility_reexecuted": false
+  },
+  "main_finding": "Existing embedding producers admit arbitrary exact source text; the selected normative runtime and fresh-cache producers enforce a historical 48-paragraph/180-clause/216-vector assay. A new versioned source cache contract is required, and can initially use authenticated existing native384/native768 receipts without any encoder execution.",
+  "minimal_new_adapter_design": {
+    "closed_request_rows": [
+      "id",
+      "source_text",
+      "source"
+    ],
+    "counts": "Dynamic1..64 request rows;max8literal clauses per row;deduplicate numeric source production only with explicit aliases, retaining every physical request occurrence and ID.",
+    "implementation_assignment_from_root_received": true,
+    "integration": "Root owns a separate new runtime contract/source_packet override. Do not extend the old216 runtime or use its arbitrary=false contract name for new source inputs. Cache availability alone grants no checkpoint/teacher/default/semantic/proof/Lake authority.",
+    "native384_selection": "Reuse _native_index and require exact recorded SourceSpan for paragraph/clause, not just equal text. A physical clause origin must be parent artifact/doc/release plus derived absolute byte offsets.",
+    "native768_selection": "Use full bounded complete-loader record with exact source rows/tokens/forward geometry and implementation/asset manifests; independently resolver-verify every requested SourceSpan. Existing768encoder does not itself bind SourceSpan; retain the separate adapter-origin verification explicitly.",
+    "output": "Geometry-compatible rows{id,source_text,input} and contexts; per-paragraph/per-clause origin, SourceSpan and token binding evidence; exact source-request digest and total counts; complete/refused dispositions; all qualifications false; adapter encoder_executed=false and consistency_only/not_attestation.",
+    "proposed_owner": "arbitrary_native_source_cache.py",
+    "proposed_schema": "arbitrary-native-source-cache/v1",
+    "refusals": "Missing receipt, token>512, malformed/unknown fields, context>8, unsupported8, wrong origin/profile, mutated source/receipt, nonfinite/nonexactfloat32 or wrong native dimension refuse with explicit reasons. No zero/pad/truncate/normalization fallback.",
+    "source": "Canonical typed SourceSpan serialization with normalization identity, complete artifact/release/doc/language/citation and absolute byte selector; caller source resolver proves every requested byte occurrence.",
+    "supported_widths": [
+      384,
+      768
+    ],
+    "validator": "Strict duplicate-key/nonfinite JSON parser, closed nested objects/types, exact seals and input/receipt/artifact pins; rebuild from caller original requests and reverify native source matches rather than trusting cached teacher or a resealed mutation."
+  },
+  "pending_for_root": [
+    "Confirm proposed plan/validator API and new768 bounded-record envelope before implementation heavy work",
+    "Independently review new module and diagnostic-double tests; root runs focused checks with truthful mocked versus native evidence",
+    "Any actual new embedding production or numerical runtime replay remains a separate admitted phase",
+    "Fresh reviewed legal targets and codec coverage, unsupported refusal, genuine8D reconstruction, native lowering/Lake and full US Code coverage remain open"
+  ],
+  "resource_guidance": {
+    "cache_preparation_only": "Stdlib receipt/asset/source verification requires no neural tensors, native model imports, GPU or new cloud jobs. Caller must still bound receipt and artifact reads.",
+    "future_optional_fresh_production": "Run widths sequentially in dedicated offline owned child:CPU1,float32,batch4,actual512 token cap, source-only inputs, no targets, preserved RNG/model state and truthful per-forward token events. A4GiB memory reservation was used for previous384 native216 preparation; it is a conservative starting estimate for new owned production, not a measured768 peak or admission guarantee.",
+    "historical_resource_evidence": "Balanced384 reviewed216 vectors at12\u201397 tokens; native producer7.269s/driver7.687s/guardian45.440s. Historical resource review explicitly did not measure encoder peak RSS or continuous enforcement. New timings/resources cannot be inferred from these warm/uncontrolled short-span artifacts.",
+    "max_context": "8192 is an encoder profile ceiling, not permission or evidence for new512+ or full US Code spans, decoder output length, document coverage or legal admission. Reject overlength explicitly; any chunking/expanded context is a separate contract."
+  },
+  "retained_assay": {
+    "arbitrary_new_source_inputs_supported": false,
+    "existing_replay_scope": "Four states \u00d748 same-source archived predictions; exact parity on exposed inputs, not new source generalization or legal reconstruction.",
+    "normative_cache_widths": [
+      384,
+      768
+    ],
+    "old_files_unchanged_required": [
+      "fresh_scalar_source_inputs",
+      "fresh_scalar_source_inputs_single",
+      "training_paraphrase_source_inputs",
+      "normative_cached_legal_ir_runtime"
+    ],
+    "selected_recipes": [
+      "normative-wording-zero",
+      "normative-wording-ce"
+    ],
+    "shape": "48 paragraphs;12each of1/2/4/8 clauses;180 unique clauses;216 unique paragraph/clause encoder texts;batch4"
+  },
+  "review_actions": {
+    "Git_mutations": 0,
+    "HF_or_network_calls": 0,
+    "encoder_or_decoder_forwards": 0,
+    "existing_source_edits": 0,
+    "numerical_or_model_imports": 0,
+    "resource_leases": 0,
+    "tests": 0,
+    "training": 0
+  },
+  "schema": "legal-native-arbitrary-source-producer-review/v1",
+  "source_pins": {
+    "docs/autoencoders/evidence/balanced-wording-20261007/native-preparation-review.json": {
+      "bytes": 351478,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/evidence/balanced-wording-20261007/native-preparation-review.json",
+      "sha256": "85e7f4c8bf4cec3fa5707e8a41da36b5b2d54e968c52419a9dcbcbdf50e5df7c"
+    },
+    "docs/autoencoders/gte_multilingual_preparation.md": {
+      "bytes": 9757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/gte_multilingual_preparation.md",
+      "sha256": "d7281ebee1a31e59965e2e6a5e538c2a99231ce4ce5cb9d28644fccba52c7d96"
+    },
+    "docs/autoencoders/normative_cached_legal_ir_runtime.md": {
+      "bytes": 6916,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/normative_cached_legal_ir_runtime.md",
+      "sha256": "3b556f37bd184d61e4786fa914086ca45b7531f309b2b1c531d06cbc7ee23cc9"
+    },
+    "docs/autoencoders/normative_wording_training.md": {
+      "bytes": 13198,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/normative_wording_training.md",
+      "sha256": "ad19daea21c4bb2bd2ddef48c9c942a5f68edc00b40605553f89daf0ec0beb19"
+    },
+    "docs/autoencoders/retained_wording_checkpoint_availability_20261007.md": {
+      "bytes": 15608,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/docs/autoencoders/retained_wording_checkpoint_availability_20261007.md",
+      "sha256": "8de2a30d462efddc89c6503d16913bb9a25bddfe80ddf1059248a65adeb328ad"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py": {
+      "bytes": 14249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/clause_source_context.py",
+      "sha256": "583422dbb63cdba96182090f5f76ef74698a69ab84fd42dc9e53bc4e09cbf5f6"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py": {
+      "bytes": 11090,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_native_decoder_experiment.py",
+      "sha256": "477e09a731880cf4d93f322f81c3cd084f6d9be875eac5c3b912255cb0876874"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/fresh_scalar_source_inputs.py": {
+      "bytes": 24418,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/fresh_scalar_source_inputs.py",
+      "sha256": "7014e59ed0561718e082879ed1913d2442d7b4edeec59e26517aae6e1b847189"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/fresh_scalar_source_inputs_single.py": {
+      "bytes": 2342,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/fresh_scalar_source_inputs_single.py",
+      "sha256": "c6616a331f86692ecbc09a85adb4cabb87095e8d49e3bd8a2f2b362ebd3c6b31"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_384_package.py": {
+      "bytes": 15395,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_384_package.py",
+      "sha256": "06e85d277c606b168691543a2130635c9b18534917fd78114e5c8399d1f128ec"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py": {
+      "bytes": 28302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_cached_legal_ir_runtime.py",
+      "sha256": "017adb2cd955f84b049bb483100be5b8b3742bac1ddc0084a9d106c9a3d3da07"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py": {
+      "bytes": 9228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/normative_legal_ir_runtime.py",
+      "sha256": "98058fa6479a7be9a4ab599aeffaedef2be764314056d7504a35ca5bafff87d4"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_384.py": {
+      "bytes": 3468,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_384.py",
+      "sha256": "fb3a5aa8ec005e98a2c62dc1d7e3e807a75820fedc156a8080c1f18063d17da7"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_device_384.py": {
+      "bytes": 8359,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_device_384.py",
+      "sha256": "2c913a3448dad1c99a56d03e1cb06bd099f01a903bad2075d1933381824da836"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_device_768.py": {
+      "bytes": 24293,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_device_768.py",
+      "sha256": "5737f0863f72bd3383324db6862a45e45055a7c41bd02bf9d7063637faeea748"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py": {
+      "bytes": 9145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/training_paraphrase_source_inputs.py",
+      "sha256": "5c0d4571b87d4b3b82be3bae11ff08599f2a5d09c4465a8315641a05d1657649"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    }
+  },
+  "source_ref_provided_by_root": "28a4790ab6952321da0dcf5066e1015f097695d8",
+  "source_root": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets",
+  "status": "read_only_design_complete_implementation_authorized_separately",
+  "width_support": {
+    "384": {
+      "alternative": "SourceEmbeddingDeviceSession384 exists with actual token/device/frozen-tensor evidence but a distinct receipt profile; keep it out of this first CPU receipt-cache contract.",
+      "model": "thenlper/gte-small",
+      "model_weight_bytes": 66746168,
+      "native_token_ceiling": 512,
+      "producer": "autoencoder_embedding_runtime.produce_native_embedding_receipt",
+      "profile": "CPU float32, SentenceTransformer Transformer/mean Pooling/Normalize, right padding, L2, no truncation",
+      "receipt_reuse": "legal_native_conditioning._native_index validates full receipt/native producer/assets/source/token/vector identity without encoder forwards. Match the requested SourceSpan in addition to text hash; text-only match is insufficient for distinct physical occurrences.",
+      "revision": "17e1f347d17fe144873b1201da91788898c639cd",
+      "source_identity": "EmbeddingInput binds exact SourceSpan, title/section/citation/text and content-derived input ID. Receipt validates source artifact bytes and span through resolver; native_execution_profile rejects injected fixtures."
+    },
+    "768": {
+      "alternative": "Owned SourceEmbeddingDeviceSession768 has complete loading, CPU/CUDA precision identity and frozen tensor custody. Its receipt/profile differs; do not silently accept it as CPU historical production.",
+      "architecture": "NewForTokenClassification; load classifier.weight and classifier.bias alongside all encoder tensors; dense vectors use encoder hidden states, not classifier logits.",
+      "cache_evidence_required": "A dynamic fresh-bounded-native768-production/v1 record contains exact source_rows, token_rows, vectors, full forward observations, complete checkpoint loading, dense path verification, implementation and asset identities. dimension_source_inputs.validate_forward_observations already supports dynamic row counts. Bare gte-complete-native-embedding-production/v1 reports omit source_text/token IDs/full forward events and cannot satisfy this stronger cache provenance contract alone.",
+      "code_model": "Alibaba-NLP/new-impl",
+      "code_revision": "40ced75c3017eb27626c9d4ea981bde21a2662f4",
+      "complete_tensor_inventory": 138,
+      "first_new_cache_actual_token_ceiling": 512,
+      "incomplete_loader_limit": "Bare reference NewModel loader intentionally rejects published extra classifier tensors. Do not ignore unexpected keys or substitute weights.",
+      "model": "Alibaba-NLP/gte-multilingual-base",
+      "model_revision": "9bbca17d9273fd0d03d5725c7a4b0f6b45142062",
+      "model_weight_bytes": 610753338,
+      "producer": "source_embeddings_768_complete plus dimension_source_inputs bounded forward capture",
+      "profile": "CPU float32 eager attention, right padding, CLS/L2",
+      "underlying_token_ceiling": 8192
+    },
+    "8": {
+      "comment": "Deterministic frozen linguistic feature hashing with historical six-decimal rounding, not a genuine pretrained 8D semantic embedding or the learned 398MB sparse reconstruction teacher. Existing fresh-scalar assay supports this diagnostic lane; normative runtime excludes it. New native-semantic cache adapter should reject8 explicitly rather than fabricate vectors or relabel feature hashes.",
+      "existing_producer": "legal_native_conditioning.historical_features",
+      "learned_reconstruction_checkpoint_used": false,
+      "pretrained_semantic_encoder_used": false,
+      "representation": "historical_linguistic_features8 / legacy-linguistic-features-8d/v1",
+      "semantic_embedding": false
+    }
+  }
+}

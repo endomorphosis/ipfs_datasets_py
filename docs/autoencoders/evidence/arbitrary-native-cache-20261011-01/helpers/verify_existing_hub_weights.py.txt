@@ -1,0 +1,22 @@
+from pathlib import Path
+from hashlib import sha256,sha1
+from datetime import datetime,timezone
+import json,os
+from huggingface_hub import HfApi
+F=Path(__file__).resolve().parent
+plan=json.loads((F/'experiment-plan.json').read_bytes());repo='Publicus/legal-ir-autoencoder'
+info=HfApi().model_info(repo,files_metadata=True)
+states=[]
+for state in plan['decoder_states']:
+ p=state['checkpoint_pin'];b=Path(p['path']).read_bytes();assert len(b)==p['bytes'] and sha256(b).hexdigest()==p['sha256']
+ oid=sha1(('blob '+str(len(b))+'\0').encode()+b).hexdigest();matches=[]
+ for sibling in info.siblings:
+  lfs=sibling.lfs
+  if (lfs and lfs.sha256==p['sha256'] and lfs.size==len(b)) or (not lfs and sibling.blob_id==oid and sibling.size==len(b)):
+   matches.append({'path':sibling.rfilename,'blob_id':sibling.blob_id,'bytes':sibling.size,'lfs_sha256':lfs.sha256 if lfs else None,'url':'https://huggingface.co/'+repo+'/blob/'+info.sha+'/'+sibling.rfilename})
+ assert matches, 'selected weights absent from public Hub metadata'
+ states.append({'recipe':state['recipe'],'checkpoint':p,'git_blob_oid':oid,'matching_existing_hub_files':matches})
+v={'schema':'arbitrary-native-cache-existing-weight-hub-readback/v1','passed':True,'repo':repo,'revision':info.sha,'private':info.private,'observed_at_utc':datetime.now(timezone.utc).isoformat(),'metadata_files_examined':len(info.siblings),'states':states,'checkpoint_identity_verified_via':'published regular Git blob identities or full LFS SHA256/size','new_weights_created':False,'uploads':0,'downloads_of_weight_bodies':0,'numerical_replay_performed':False,'local_checkpoint_bytes_unchanged':True,'previous_Hub_identity_inventory_preservation_claimed':False}
+assert info.private is False
+with (F/'existing-weight-hub-readback.json').open('x') as f:json.dump(v,f,sort_keys=True,indent=2);f.write('\n');f.flush();os.fsync(f.fileno())
+print(json.dumps({'passed':True,'revision':info.sha,'selected_existing_weights':len(states),'matching_files':[len(s['matching_existing_hub_files']) for s in states],'uploads':0}))

@@ -1,0 +1,28 @@
+{
+  "created_at_utc": "2026-10-11T02:37:50.138870+00:00",
+  "execution_performed": false,
+  "findings": [
+    {
+      "area": "pure CID dependency custody",
+      "behavior_impact": "No model execution or semantic authority issue found; this finding concerns the completeness of postanalysis byte bindings.",
+      "issue": "Module __file__ inventory omits installed multiformats_config multicodec-table.json and multibase-table.json resources consumed during CanonicalRule.rule_cid canonical sorting.",
+      "requested_fix": "Authenticate both ordinary installed JSON resources before canonical contract use and include them in closing Inputs.finish(), or narrow the consumed-dependency-byte claim explicitly.",
+      "severity": "medium"
+    }
+  ],
+  "helper_pin": {
+    "bytes": 22504,
+    "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/analyze_native_pilot.py",
+    "sha256": "f34f6d33241e150bcc7273aa424428d6129183a80ac69261a92b6da411c56e44"
+  },
+  "passed": false,
+  "positive_observations": [
+    "Exact content-only _greedy token transport; no control stripping or candidate repair.",
+    "Original parsed candidate retained separately from normalized contract comparison.",
+    "Rule order and qualifier-array normalization compared separately.",
+    "Literal source offsets are diagnostic only; no source map, bridge admission or semantic/proof claims.",
+    "Network, process and numeric import guards remain active for a fresh interpreter."
+  ],
+  "schema": "native-pilot-diagnostic-helper-static-review/v1",
+  "scope": "Read-only source review before any helper execution; no project imports, numerical calls or independent qualification of reviewer-authored cache."
+}

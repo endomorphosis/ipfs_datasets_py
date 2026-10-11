@@ -1,0 +1,424 @@
+"""Pure, post-generation diagnostics for the eight-source frozen native384 pilot.
+
+Run in a fresh interpreter after reviewing this file. Only JSON, source bytes and
+the pinned CanonicalRoundTripIR contract are consumed. No decoder, encoder,
+compiler, teacher, reference target, proof checker or family bridge is invoked.
+Successful syntax checks never qualify a candidate's statutory meaning.
+"""
+from __future__ import annotations
+
+import argparse
+from hashlib import sha256
+import importlib
+from importlib.util import find_spec
+import json
+import os
+from pathlib import Path
+import sys
+from types import ModuleType
+
+
+SCHEMA = "arbitrary-native-pilot-post-generation-diagnostics/v1"
+MAX_FILE_BYTES = 32 * 1024 * 1024
+OWNER_PINS = {
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+        "bytes": 109257, "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"},
+    "ipfs_datasets_py/utils/cid_utils.py": {
+        "bytes": 4428, "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"},
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_distillation_experiment.py": {
+        "bytes": 37989, "sha256": "76252ad397492762d4fc41915afd1051a93a11b74994655326fe56fa722e3b61"},
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_numeric.py": {
+        "bytes": 15840, "sha256": "097719a4ba5d70f21572c741166d4e09962cc5c1e108964a88ee24b5c8879f30"},
+    "ipfs_datasets_py/logic/formalization/autoencoder/decoder_source_fidelity.py": {
+        "bytes": 17329, "sha256": "1eb1f116e74f4f35804b6398de9b9224da1fb7b50f9ef96a718ce2977f819bac"},
+}
+CID_TABLE_PINS = {
+    "multicodec-table.json": {
+        "bytes": 90766, "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"},
+    "multibase-table.json": {
+        "bytes": 3908, "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"},
+}
+DENIED_IMPORT_ROOTS = frozenset({
+    "torch", "tensorflow", "transformers", "sentence_transformers", "socket",
+    "subprocess", "requests", "urllib", "http", "ftplib", "huggingface_hub",
+})
+PRELOADED_STDLIB_ALLOWLIST = frozenset({"urllib", "urllib.parse"})
+AUTHORITY = dict(qualified=False, admitted=False, formalized=False,
+    semantic_accuracy_measured=False, source_semantics_verified=False,
+    legal_fidelity_qualified=False, proof_authority=False, Lake_executed=False,
+    family_bridge_admitted=False, decoder_predicted_facet_intervals_supplied=False,
+    decoder_predicted_trigger_supplied=False, decoder_predicted_interpretation_supplied=False,
+    training_executed=False, encoder_executed=False, decoder_executed=False,
+    teacher_or_reference_targets_accessed=False, checkpoint_selection_executed=False,
+    default_promotion=False)
+
+
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def strict_json(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            require(key not in result, "duplicate JSON key: " + key)
+            result[key] = value
+        return result
+
+    def constant(value):
+        raise ValueError("nonfinite JSON constant: " + value)
+
+    value = json.loads(raw, object_pairs_hook=pairs, parse_constant=constant)
+    # Also catches overflowed numeric literals and isolated Unicode surrogates.
+    json.dumps(value, allow_nan=False, ensure_ascii=False).encode("utf-8")
+    return value
+
+
+def digest(value, *, ensure_ascii=False):
+    return sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
+        ensure_ascii=ensure_ascii, allow_nan=False).encode("utf-8")).hexdigest()
+
+
+class Inputs:
+    """Capture exact consumed bytes, then verify every captured file again."""
+
+    def __init__(self):
+        self.before = {}
+
+    def raw(self, path, expected=None):
+        path = Path(path)
+        require(path.is_absolute() and path.is_file() and not path.is_symlink()
+            and path.resolve() == path, "canonical, ordinary absolute input file required")
+        with path.open("rb") as stream:
+            raw = stream.read(MAX_FILE_BYTES + 1)
+        require(len(raw) <= MAX_FILE_BYTES, "diagnostic input exceeds bounded file size")
+        receipt = dict(path=str(path), bytes=len(raw), sha256=sha256(raw).hexdigest())
+        if expected is not None:
+            require(type(expected) is dict and set(expected) in (
+                {"bytes", "sha256"}, {"path", "bytes", "sha256"}), "exact input pin required")
+            require(type(expected["bytes"]) is int and expected["bytes"] == len(raw)
+                and type(expected["sha256"]) is str and expected["sha256"] == receipt["sha256"]
+                and ("path" not in expected or expected["path"] == str(path)), "input byte pin differs")
+        previous = self.before.setdefault(str(path), receipt)
+        require(previous == receipt, "consumed input changed during analysis")
+        return raw
+
+    def read(self, path, expected=None):
+        return strict_json(self.raw(path, expected))
+
+    def finish(self):
+        before = dict(self.before)
+        for path, expected in before.items():
+            self.raw(path, expected)
+        require(before == self.before, "closing inventory differs")
+        return dict(before=before, after=dict(self.before), consumed_inputs_byte_exact=True,
+            all_plan_artifacts_rechecked=False,
+            full_third_party_import_graph_qualified=False,
+            note="Inventory covers consumed JSON, pinned CID tables, pure source owners and selected imported CID dependency files; encoder weights, donor and targets were not opened.")
+
+
+def fence(output, forbidden_paths, inputs):
+    require(not any(name.split(".", 1)[0] in DENIED_IMPORT_ROOTS
+        and name not in PRELOADED_STDLIB_ALLOWLIST for name in sys.modules),
+        "fresh interpreter required; a denied library is already loaded")
+    preloaded_scope = []
+    stdlib = Path(os.__file__).resolve().parent
+    for name in sorted(PRELOADED_STDLIB_ALLOWLIST.intersection(sys.modules)):
+        module = sys.modules[name]
+        expected = stdlib / "urllib" / ("__init__.py" if name == "urllib" else "parse.py")
+        require(Path(module.__file__).resolve() == expected,
+            "preloaded urllib exception must be the exact stdlib module")
+        inputs.raw(expected)
+        preloaded_scope.append(dict(module=name, path=str(expected),
+            reason="Harmless stdlib module already loaded by pathlib; no network module or call admitted."))
+    sys.dont_write_bytecode = True
+
+    class DenyImports:
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname.split(".", 1)[0] in DENIED_IMPORT_ROOTS:
+                raise ImportError("post-generation diagnostic denied import: " + fullname)
+            return None
+
+    sys.meta_path.insert(0, DenyImports())
+
+    def audit(event, values):
+        if event == "import" and values[0].split(".", 1)[0] in DENIED_IMPORT_ROOTS:
+            raise ImportError("post-generation diagnostic denied import: " + values[0])
+        if event.startswith("socket.") or event.startswith(("subprocess.", "os.exec", "os.spawn")) or event == "os.system":
+            raise PermissionError("post-generation diagnostic denied execution/network call")
+        if event == "open" and isinstance(values[0], (str, bytes)):
+            path = str(Path(os.fsdecode(values[0])).absolute())
+            require(path not in forbidden_paths, "reference/census parent access prohibited")
+            flags = values[2] if len(values) > 2 else 0
+            writing = type(flags) is int and bool(flags & (os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND))
+            if writing:
+                require(path == str(output), "diagnostic can only write its exclusive output")
+
+    sys.addaudithook(audit)
+    return preloaded_scope
+
+
+def contract_owner(root, inputs):
+    for relative, expected in OWNER_PINS.items():
+        inputs.raw(root / relative, expected)
+    require(not any(name == "ipfs_datasets_py" or name.startswith("ipfs_datasets_py.")
+        for name in sys.modules), "preloaded package namespaces prohibited")
+    # Avoid package __init__ files, which have broader optional runtime imports.
+    for name in ("ipfs_datasets_py", "ipfs_datasets_py.logic",
+                 "ipfs_datasets_py.logic.legal_ir", "ipfs_datasets_py.utils"):
+        directory = root.joinpath(*name.split("."))
+        require(directory.is_dir() and directory.resolve() == directory, "exact source namespace required")
+        module = ModuleType(name)
+        module.__path__ = [str(directory)]
+        module.__file__ = str(directory / "__init__.py")
+        sys.modules[name] = module
+    owner = importlib.import_module("ipfs_datasets_py.logic.legal_ir.canonical_contracts")
+    require(Path(owner.__file__).resolve() == root / "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+        "canonical contract namespace origin differs")
+    utility = sys.modules["ipfs_datasets_py.utils.cid_utils"]
+    require(Path(utility.__file__).resolve() == root / "ipfs_datasets_py/utils/cid_utils.py",
+        "CID utility namespace origin differs")
+    return owner
+
+
+def cid_data_resources(inputs):
+    # Discover the installed package without executing its __init__. Both CID
+    # tables must be bound before CanonicalRoundTripIR can sort rules by CID.
+    spec = find_spec("multiformats_config")
+    require(spec is not None and spec.origin is not None, "installed pure CID configuration required")
+    directory = Path(spec.origin).parent
+    require(directory.is_absolute() and directory.resolve() == directory,
+        "canonical installed CID resource directory required")
+    for name, expected in CID_TABLE_PINS.items():
+        inputs.raw(directory / name, expected)
+    return str(directory)
+
+
+def literal_diagnostics(parsed, source):
+    """Case-sensitive literal substring counts, never a predicted source map."""
+    if type(parsed) is not dict or type(parsed.get("rules")) is not list:
+        return []
+    rows = []
+    for index, rule in enumerate(parsed["rules"]):
+        if type(rule) is not dict:
+            continue
+        for facet in ("actor", "action", "object"):
+            atom = rule.get(facet)
+            if type(atom) is not str:
+                continue
+            offsets = []
+            # Blank object is an optional contract field, not a source occurrence.
+            if atom:
+                start = 0
+                while True:
+                    start = source.find(atom, start)
+                    if start < 0:
+                        break
+                    offsets.append(start)
+                    start += 1
+            rows.append(dict(rule_index=index, facet=facet, emitted_atom=atom,
+                blank_atom=not bool(atom), exact_case_sensitive_literal_count=len(offsets),
+                selected_source_character_start_offsets=offsets,
+                diagnostic_only=True, semantic_binding_inferred=False))
+    return rows
+
+
+def row_diagnostic(prediction, vocabulary, cap, source, owner):
+    require(type(prediction) is dict and set(prediction) == {
+        "id", "token_ids", "eos_reached", "generation_status"}, "closed raw prediction required")
+    tokens = prediction["token_ids"]
+    eos = prediction["eos_reached"]
+    status = prediction["generation_status"]
+    result = dict(id=prediction["id"], original_token_ids=tokens, original_generation_status=status,
+        eos_reached=eos, token_transport="content_only_greedy_v1",
+        control_tokens_removed=0, candidate_text=None, original_parsed_ir=None,
+        normalized_ir_for_comparison_only=None, errors=[], token_ids_valid=False,
+        eos_metadata_consistent=False, strict_json_valid=False, canonical_contract_valid=False,
+        canonical_rule_order_valid=None, canonical_qualifier_arrays_valid=None,
+        exact_canonical_payload_equal=None, complete_canonical_candidate=False,
+        lexical_source_diagnostics=[], family_bridge_admitted=False,
+        family_bridge_refusal_reason="No decoder-predicted facet intervals, trigger or interpretation were supplied.",
+        diagnostic_only=True, semantic_binding_inferred=False, qualified=False)
+    result["eos_metadata_consistent"] = type(eos) is bool and status in (
+        "eos", "output_limit", "invalid_special_token", "deadline") and ((status == "eos") == eos)
+    if not result["eos_metadata_consistent"]:
+        result["errors"].append("generation status contradicts explicit Boolean EOS receipt")
+    valid = type(tokens) is list and len(tokens) <= cap - 1 and all(
+        type(token) is int and 3 <= token < len(vocabulary) for token in tokens)
+    if valid and eos is True:
+        valid = len(tokens) + 2 <= cap
+    result["token_ids_valid"] = valid
+    if not valid:
+        result["errors"].append("token outside saved content vocabulary or complete BOS/EOS budget; no repair applied")
+        return result
+    text = "".join(vocabulary[token] for token in tokens)
+    result["candidate_text"] = text
+    try:
+        require(len(text.encode("utf-8")) <= 1048576, "candidate exceeds JSON byte bound")
+        parsed = strict_json(text)
+        result["original_parsed_ir"] = parsed
+        result["strict_json_valid"] = True
+    except (ValueError, TypeError, UnicodeError, RecursionError, OverflowError) as error:
+        result["errors"].append(str(error)[:512])
+        return result
+    result["lexical_source_diagnostics"] = literal_diagnostics(parsed, source)
+    try:
+        normalized = owner.CanonicalRoundTripIR.from_dict(parsed).to_dict()
+        normalized_in_original_order = [owner.CanonicalRule.from_dict(rule).to_dict()
+            for rule in parsed["rules"]]
+        result["canonical_contract_valid"] = True
+        result["normalized_ir_for_comparison_only"] = normalized
+        result["canonical_rule_order_valid"] = normalized_in_original_order == normalized["rules"]
+        result["canonical_qualifier_arrays_valid"] = all(
+            rule[facet] == canonical[facet]
+            for rule, canonical in zip(parsed["rules"], normalized_in_original_order)
+            for facet in ("conditions", "exceptions", "temporal"))
+        result["exact_canonical_payload_equal"] = parsed == normalized
+        result["complete_canonical_candidate"] = eos is True and result["eos_metadata_consistent"] and parsed == normalized
+    except (ValueError, TypeError, UnicodeError, RecursionError, OverflowError) as error:
+        result["errors"].append(str(error)[:512])
+    return result
+
+
+def analyze(plan_path, results_path, output_path):
+    inputs = Inputs()
+    plan_path, results_path, output_path = map(Path, (plan_path, results_path, output_path))
+    require(results_path.is_absolute() and results_path.is_dir() and results_path.resolve() == results_path,
+        "canonical absolute pilot results directory required")
+    require(output_path.is_absolute() and output_path.parent.resolve() == output_path.parent
+        and not output_path.exists() and not output_path.is_symlink(), "fresh absolute output required")
+    plan = inputs.read(plan_path)
+    require(plan["schema"] == "arbitrary-native-law-input-pilot-plan/v1" and plan["dimension"] == 384
+        and plan["source_count"] == 8 and plan["actual_optimizer_updates"] == 0
+        and plan["training_executed"] is False and plan["semantic_gold"] is False,
+        "frozen source-only native384 pilot plan required")
+    preloaded_stdlib_scope = fence(output_path, set(plan["forbidden_reference_paths"]), inputs)
+    inputs.raw(Path(__file__).resolve())
+    root = Path(plan["package_root"])
+    require(root.is_absolute() and root.resolve() == root, "canonical package source root required")
+    cid_resource_directory = cid_data_resources(inputs)
+    owner = contract_owner(root, inputs)
+    summary = inputs.read(results_path / "summary.json")
+    require(summary["schema"] == "arbitrary-native-law-input-pilot-results/v1"
+        and summary["status"] == "completed" and summary["source_count"] == 8
+        and summary["actual_optimizer_updates"] == 0 and summary["source_only"] is True
+        and summary["teacher_or_reference_targets_accessed"] is False
+        and summary["legal_fidelity_qualified"] is False and summary["proof_authority"] is False,
+        "completed, unqualified source-only pilot results required")
+    cache_path = results_path / "source-production/source-cache.json"
+    cache = inputs.read(cache_path, summary["source_cache"])
+    config = plan["source_configuration"]
+    requests = inputs.read(config["source_requests_pin"]["path"], config["source_requests_pin"])
+    require(type(requests) is list and len(requests) == 8 and cache["source_requests"] == requests
+        and cache["dimension"] == 384 and cache["status"] == "ready" and cache["complete"] is True,
+        "exact completed source cache/request join required")
+    require(cache["schema"] == "arbitrary-native-source-cache/v1"
+        and cache["cache_sha256"] == digest({key: value for key, value in cache.items() if key != "cache_sha256"},
+            ensure_ascii=True),
+        "source cache self-hash differs")
+    source_rows = {}
+    for request in requests:
+        require(type(request) is dict and set(request) == {"id", "source_text", "source"}
+            and type(request["id"]) is str and request["id"] not in source_rows
+            and type(request["source_text"]) is str and request["source_text"], "unique source request required")
+        span = request["source"]
+        source_pin = config["source_artifact_pins"][span["artifact"]["sha256"]]
+        document = inputs.raw(source_pin["path"], source_pin)
+        require(span["artifact"] == {key: source_pin[key] for key in ("bytes", "sha256")}
+            and span["normalization"] == "identity"
+            and type(span["byte_start"]) is int and type(span["byte_end"]) is int
+            and 0 <= span["byte_start"] < span["byte_end"] <= len(document)
+            and document[span["byte_start"]:span["byte_end"]].decode("utf-8") == request["source_text"],
+            "selected source differs from exact pinned physical bytes")
+        source_rows[request["id"]] = request
+    ids = [request["id"] for request in requests]
+    require([row["id"] for row in cache["rows"]] == ids and all(
+        row["source_text"] == source_rows[row["id"]]["source_text"] for row in cache["rows"]),
+        "cached source row identities/text differ")
+    states = plan["decoder_states"]
+    lanes = summary["frozen_decoder_lanes"]
+    require(type(states) is list and type(lanes) is list and len(states) == len(lanes) == 2
+        and [entry["recipe"] for entry in states] == [entry["recipe"] for entry in lanes]
+        and len({entry["recipe"] for entry in states}) == 2, "exact two frozen candidate lanes required")
+    reports = []
+    for state, lane in zip(states, lanes):
+        require(lane["selected_checkpoint"] == state["checkpoint_pin"], "lane frozen checkpoint differs")
+        saved = inputs.read(state["checkpoint_pin"]["path"], state["checkpoint_pin"])
+        codec = saved["codec"]
+        vocabulary = codec["target_vocabulary"]
+        require(type(codec) is dict and set(codec) == {"schema", "target_vocabulary"}
+            and codec["schema"] == "typed-json-lexical/v1" and type(vocabulary) is list
+            and len(vocabulary) == 32 and vocabulary[:3] == ["<pad>", "<bos>", "<eos>"]
+            and all(type(token) is str and token for token in vocabulary)
+            and len(set(vocabulary)) == 32, "actual saved normative32 codec required")
+        report_path = results_path / (state["recipe"] + "-candidates.json")
+        require(report_path.parent == results_path, "candidate filename escapes results directory")
+        report = inputs.read(report_path, lane["candidates"])
+        require(report["schema"] == "arbitrary-native-legal-ir-candidate-inference/v1"
+            and report["original_targets_accessed"] is False and not any(report["authority"].values()),
+            "unqualified source-only raw candidate report required")
+        raw = report["raw_candidate_report"]
+        require(raw["schema"] == "contextual-legal-ir-numeric-inference/v1" and raw["dimension"] == 384
+            and raw["codec_sha256"] == digest(codec) and raw["row_count"] == 8
+            and raw["weights_unchanged"] is True and raw["source_inputs_unchanged"] is True
+            and raw["ambient_rng_preserved"] is True
+            and raw["model_tensor_sha256"] == raw["model_tensor_sha256_before"]
+                == raw["model_tensor_sha256_after"] == saved["tensor_sha256"]
+                == lane["model_tensor_sha256"], "saved codec/candidate custody receipt differs")
+        require(raw["source_inputs_sha256"] == digest(dict(rows=cache["rows"], contexts=cache["source_contexts"])),
+            "raw candidate source packet differs from recorded cache")
+        require(type(raw["output_cap"]) is int and 4 <= raw["output_cap"] <= 512
+            and type(raw["predictions"]) is list and [row["id"] for row in raw["predictions"]] == ids,
+            "complete ordered raw candidate rows required")
+        rows = [row_diagnostic(row, vocabulary, raw["output_cap"],
+            source_rows[row["id"]]["source_text"], owner) for row in raw["predictions"]]
+        reports.append(dict(recipe=state["recipe"], checkpoint_pin=state["checkpoint_pin"],
+            codec=codec, codec_sha256=digest(codec), original_report_pin=lane["candidates"],
+            row_count=len(rows), rows=rows, counts={key: sum(row[key] is True for row in rows)
+                for key in ("eos_reached", "eos_metadata_consistent", "token_ids_valid", "strict_json_valid",
+                    "canonical_contract_valid", "canonical_rule_order_valid", "canonical_qualifier_arrays_valid",
+                    "exact_canonical_payload_equal", "complete_canonical_candidate")},
+            family_bridge_admitted=False, qualified=False))
+    # Capture any pure CID dependency files actually imported by the contract.
+    for name, module in list(sys.modules.items()):
+        if name.split(".", 1)[0] in {
+            "multiformats", "multiformats_config", "typing_validation", "typing_extensions", "bases"}:
+            path = getattr(module, "__file__", None)
+            if path and Path(path).is_file():
+                inputs.raw(Path(path).resolve())
+    require(sys.modules[owner.__name__] is owner and Path(owner.__file__).resolve()
+        == root / "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py", "canonical owner changed")
+    result = dict(schema=SCHEMA, status="completed", source_count=8, input_dimension=384,
+        diagnostic_source="existing raw candidate JSON; no regenerated outputs",
+        canonical_contract_interface=owner.CANONICAL_ROUNDTRIP_IR_INTERFACE,
+        cid_resource_directory=cid_resource_directory,
+        preloaded_stdlib_scope=preloaded_stdlib_scope,
+        token_transport_contract=dict(schema="content_only_greedy_v1", bos_in_saved_sequence=False,
+            eos_in_saved_sequence=False, terminal_eos_removal_applied=False,
+            explanation="Pinned _greedy uses BOS only as input and stops before appending every control token."),
+        source_join_scope="exact pinned selected physical source bytes and recorded cache text",
+        source_authority=False, official_current_law_verified=False, independent_semantic_gold=False,
+        lexical_scope="case-sensitive literal substring occurrences only; no word-boundary or legal-role inference",
+        canonical_normalization_overwrites_candidate=False, family_bridge_invoked=False,
+        family_bridge_refusal_reason="Absent decoder-predicted facet intervals, trigger and interpretation; literal matches confer no admission.",
+        lanes=reports, actual_optimizer_updates=0, qualified=False, proof_authority=False,
+        authority=dict(AUTHORITY),
+        input_byte_inventory=inputs.finish())
+    with output_path.open("x", encoding="utf-8") as stream:
+        json.dump(result, stream, ensure_ascii=True, sort_keys=True, allow_nan=False, indent=2)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+    return result
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--plan", required=True)
+    parser.add_argument("--results", required=True)
+    parser.add_argument("--output", required=True)
+    args = parser.parse_args()
+    result = analyze(args.plan, args.results, args.output)
+    print(json.dumps(dict(schema=result["schema"], status=result["status"],
+        source_count=result["source_count"], authority=result["authority"])), flush=True)

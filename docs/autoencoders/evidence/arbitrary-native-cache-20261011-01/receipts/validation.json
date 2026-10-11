@@ -1,0 +1,109 @@
+{
+  "Lake_executed": false,
+  "current_case_breakdown": {
+    "arbitrary_runtime": 32,
+    "normative_runtime": 31,
+    "preparation_cli": 30,
+    "retained_cache_runtime": 105,
+    "source_cache": 35
+  },
+  "current_sources": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 13334,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_legal_ir_runtime.py",
+      "sha256": "b450bec7518c3528a34c15c9119aefa791273176f871c27c9f4f77acd14df113"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py": {
+      "bytes": 16041,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/scripts/ops/legal_ir/prepare_arbitrary_native_legal_sources.py",
+      "sha256": "e2e87fe9e2d69a6d75c0ce61ec6141bc29f2d059d27b83139bd1df1817179378"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py": {
+      "bytes": 13044,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_legal_ir_runtime.py",
+      "sha256": "13a0eef50ca26dc4e5fa61f6bf83400b182a8b9153dd52f9d1a902c9015f4c60"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py": {
+      "bytes": 22672,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py",
+      "sha256": "1810e73e5751b0406a0ac9dfb67a631e7312354186832fb79934f99447c8d632"
+    },
+    "tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py": {
+      "bytes": 19509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets/tests/unit/logic/test_prepare_arbitrary_native_legal_sources.py",
+      "sha256": "e9c5ed0728e065c90438d9b203915ca22791432a31564ca4aab8c616ede5d18c"
+    }
+  },
+  "failed_initial_CLI_cases_preserved": 13,
+  "initial_failure_resolved": "resolver returned bytes instead of the existing verified path interface",
+  "legal_semantic_accuracy": null,
+  "native_768_numerical_execution": false,
+  "native_and_model_fixtures_explicit": true,
+  "numerical_models_or_training_executed_by_these_tests": false,
+  "passed": true,
+  "receipts": {
+    "adapter-tests-draft-01.xml": {
+      "errors": 0,
+      "failures": 0,
+      "pin": {
+        "bytes": 40686,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/adapter-tests-draft-01.xml",
+        "sha256": "c91fb58c8801060ecfc4c66f71dc38dccddba2a65a67921b287452d1f6ffc72a"
+      },
+      "skipped": 0,
+      "tests": 202
+    },
+    "corrected-adapter-tests.xml": {
+      "errors": 0,
+      "failures": 0,
+      "pin": {
+        "bytes": 11426,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/corrected-adapter-tests.xml",
+        "sha256": "a68107f1b51971564d87fc06d49bf14e1d86921e1ad72f5ef4576dc93491f5a9"
+      },
+      "skipped": 0,
+      "tests": 61
+    },
+    "preparation-cli-tests.xml": {
+      "errors": 0,
+      "failures": 13,
+      "pin": {
+        "bytes": 22387,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/preparation-cli-tests.xml",
+        "sha256": "822bc38905714b24ab48ac50b48e17c822c49112d32d6f0c101dc57f87161194"
+      },
+      "skipped": 0,
+      "tests": 29
+    },
+    "runtime-final-tests.xml": {
+      "errors": 0,
+      "failures": 0,
+      "pin": {
+        "bytes": 6042,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-final-tests.xml",
+        "sha256": "e808bdeb010781760df99a78340193e7ff24b3933403a42c0882b93da57e1953"
+      },
+      "skipped": 0,
+      "tests": 31
+    },
+    "runtime-frozen-tests.xml": {
+      "errors": 0,
+      "failures": 0,
+      "pin": {
+        "bytes": 6233,
+        "path": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/runtime-frozen-tests.xml",
+        "sha256": "fa954ca443d4c2242ae05146e83ddf092172baf40e8cedcf0f8df53fd4d313ac"
+      },
+      "skipped": 0,
+      "tests": 32
+    }
+  },
+  "runtime_test_reexecution_reason": "resolver boundary, contract identity and pre-helper origin review corrections",
+  "schema": "arbitrary-native-cache-validation/v1",
+  "unique_current_cases_passed": 233
+}
