@@ -1,0 +1,167 @@
+{
+  "all_six_declared_existing_owner_and_test_bytes_exact_base": true,
+  "authored_control_review": {
+    "authored_cases_are_not_passed_case_claim": true,
+    "case_count_matches_build_receipt": true,
+    "case_counts": {
+      "test_adjacent_editorial_prefix_does_not_overlap_selected_anchor": 1,
+      "test_anchors_on_explicitly_absent_facets_are_declared_inconsistencies": 4,
+      "test_changed_supplied_recording_is_refused_even_with_resealed_body": 4,
+      "test_complete_answers_can_remain_unresolved": 7,
+      "test_complete_consistency_never_becomes_target_eligibility": 1,
+      "test_context_and_alias_non_errors_are_not_inferred_as_contradictions": 5,
+      "test_contradictory_declared_normative_answers_are_separate_from_recording": 2,
+      "test_declared_eligibility_uncertainty_is_not_promoted": 3,
+      "test_declared_interval_roles_are_diagnostics_without_semantic_prohibition": 2,
+      "test_diagnostic_budget_refuses_instead_of_truncating": 2,
+      "test_disputed_item_retains_both_consistent_declarations_without_selecting_one": 1,
+      "test_empty_submissions_preserve_pending_physical_items_and_no_labels": 1,
+      "test_equal_declaration_agreement_has_no_authentication_effect": 1,
+      "test_explicit_attachment_conflicts_and_unresolved_scope_are_diagnosed": 2,
+      "test_mixed_definition_and_norm_cannot_also_declare_rules_explicitly_absent": 1,
+      "test_multiple_rules_preserve_order_and_shared_exact_mentions_without_flattening": 1,
+      "test_no_normative_rule_is_not_compatible_with_declared_normative_eligibility": 1,
+      "test_non_normative_or_unresolved_findings_keep_explicit_empty_rules": 4,
+      "test_nonempty_declared_facet_without_source_role_anchor_is_unresolved": 3,
+      "test_ordered_repeated_qualifiers_and_shared_attachments_are_lossless": 1,
+      "test_overlapping_contrary_role_declarations_are_preserved": 1,
+      "test_partial_keeps_null_distinct_from_explicit_absent_lists": 1,
+      "test_partial_with_contradictions_stays_partial_and_retains_diagnostics": 1,
+      "test_preflight_replay_refuses_status_pin_order_or_authority_tampering": 6,
+      "test_returned_data_is_detached_and_no_evidence_method_authenticates_reviews": 1,
+      "test_source_context_physical_and_submission_tamper_refused": 5,
+      "test_strict_parser_refuses_duplicates_scores_nonfinite_invalid_utf8_and_trailing_content": 6,
+      "test_supplied_recording_is_replayed_before_a_cached_pass_can_be_used": 1
+    },
+    "controls_are_synthetic_ordinary_tmp_artifact_review_declarations_not_real_statutory_reviews": true,
+    "meaningful_counterexamples": [
+      "Complete consistent declaration still has target eligibility/gold/proof/fit masks false/zero.",
+      "Null unanswered rules and explicit empty ambiguity stay distinct; partial contradiction keeps both missing fields and diagnostics.",
+      "Normative/not-normative, no-rule/eligible, definition-only/rules and mixed-definition-and-norm/empty-rules declarations diagnose without recorder edits.",
+      "Context-required with supplied declared sufficient context, external reference strings and symbolic aliases remain non-errors.",
+      "Disputed declarations and exact multiple agreement retain all meanings and authenticate no reviewer.",
+      "Repeated B,A,B qualifiers, shared anchors, affected-rule order and multiple rules survive without flattening.",
+      "Unicode source versus full-context coordinate shifts and adjacent/overlapping declared role intervals preserve explicit geometry.",
+      "Mutated context artifact, supplied recording fields and resealed preflight fields/authority/order are refused by full replay.",
+      "Parser/input tampering, total/per-declaration diagnostic budget refusal and detached output mutations are covered."
+    ],
+    "pending_runtime_validation": "Root must execute the inert controls under its reviewed harness; this static pass does not report a69-case runtime success.",
+    "static_parameter_expansions": 69,
+    "test_execution_performed_by_reviewer": false,
+    "test_functions": 28
+  },
+  "base": "4af461728329cdad4bfb910ab878d016ce279e54",
+  "bounded_behavior": {
+    "JSON_bytes": 8388608,
+    "JSON_depth": 24,
+    "JSON_nodes": 1000000,
+    "diagnostics_per_declaration": 1024,
+    "diagnostics_total": 4096,
+    "duplicate_keys_invalid_UTF8_nonfinite_float_scores_trailing_content_refused_through_existing_parser": true,
+    "ordinary_score_free_JSON_only": true,
+    "overflow_raises_without_truncating": true
+  },
+  "diagnostic_status_scope": {
+    "consistent_declared_normative": "Complete answered internally noncontradictory declaration; not interpretation completeness, legal meaning, identity, reviewer independence, target eligibility or proof.",
+    "inconsistent": "Explicit contradictory eligibility/definition/rule-presence/facet-presence/attachment-owner declarations only.",
+    "interval_category_does_not_force_status": "Editorial/undetermined overlap and contrary operative/editorial overlap remain exact caller-declared interval diagnostics; no general semantic prohibition inferred.",
+    "non_normative": "Complete explicit non-normative interpretation, without norm target generation.",
+    "partial": "Missing answers retained even when diagnostics exist.",
+    "unresolved": "Explicit ambiguous/needs-context/unsupported/undetermined answers, declared dependencies or missing per-facet source-anchor presence."
+  },
+  "findings": [],
+  "interval_and_coverage_review": {
+    "adjacent_half_open_intervals_do_not_overlap": true,
+    "all_scope_transport_requires_future_explicit_caller_AST_rule_occurrence_profile_joins": true,
+    "complete_context_boundaries_and_selector_validated_by_unchanged_recorder": true,
+    "coverage_diagnostic_is_at_least_one_anchor_per_nonempty_facet_only_not_exhaustive_occurrence_mapping": true,
+    "editorial_undetermined_roles_never_inferred_from_raw_law": true,
+    "explicit_owner_rule_outside_affected_rules_diagnosed_without_rewriting_attachment": true,
+    "multiple_rules_can_share_mentions_without_legacy_nonoverlap_claim": true,
+    "qualifier_anchor_counts_and_occurrence_counts_reported_without_assigning_aliases": true,
+    "selected_source_unicode_half_open_offsets_translated_by_original_selected_char_start_only": true,
+    "source_span_text_rechecked_against_exact_selected_source": true
+  },
+  "limitations": [
+    "Some defensive rule/cardinality diagnostics are unreachable after the current recorder has already rejected the inconsistent structural shape; this is not additional measured diagnostic coverage.",
+    "Consistent status can coexist with declared editorial/undetermined interval warnings. Every status is unqualified and no interval role is used as legal truth or admission.",
+    "Missing-anchor checks detect at least one source role anchor per nonempty facet, not one-to-one qualifier occurrence coverage, trigger-to-rule assignment, full semantic preservation or independent interpretation completeness.",
+    "Artifact replay before/after is an endpoint integrity fence, not an atomic snapshot or continuous custody guarantee; declaration, evidence bytes and agreement do not authenticate reviewer identity or meaning.",
+    "Statement-scope lowering remains intentionally deferred and flags false. Raw complete context is retained via the original packet/recorder profile; there is no trimming or substitution into a smaller scope profile.",
+    "No tests/imports/models/native compiler/network/resource work was performed. New source integrity and authored-control review are static; runtime and compiler qualification remain separate gates."
+  ],
+  "passed": true,
+  "preserved_old_owner_pins": [
+    {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 29993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+    },
+    {
+      "bytes": 4214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+    },
+    {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    },
+    {
+      "bytes": 33517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    }
+  ],
+  "reviewed_pins": [
+    {
+      "bytes": 15802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+      "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c"
+    },
+    {
+      "bytes": 31211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    },
+    {
+      "bytes": 7708,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/statutory-declaration-preflight-build-v01.json",
+      "sha256": "7590b92a847605f3277d992f7ac7d89ccda618de24c8b3520706cec361caff53"
+    }
+  ],
+  "reviewer": "/root/structured_training_design_20261011",
+  "schema": "statutory-declaration-preflight-independent-static-review/v1",
+  "scope": "Read-only source/test/build JSON/AST and baseline Git blob inspection. No test or fixture execution, module/model/backend import, compiler/network/resource operation, source edit or Git mutation. Only this fresh review receipt is written.",
+  "static_contract": {
+    "all_five_admission_masks_integer0_every_emitted_level": true,
+    "all_model_encoder_provider_prover_calls0_and_target_gold_training_pair_counts0": true,
+    "all_receipt_item_declaration_validation_authority_flags_false": true,
+    "closing_recording_source_context_physical_artifact_replay_repeated": true,
+    "consistent_declared_normative_is_mechanical_only_not_eligibility": true,
+    "every_received_declaration_retained_in_original_order": true,
+    "input_packet_and_submissions_detached_via_existing_bounded_strict_JSON": true,
+    "no_CanonicalRule_or_scope_normalization_or_deduplication": true,
+    "no_cross_reference_context_resolution_or_Boolean_scope_inference": true,
+    "no_modality_trigger_to_rule_binding_or_symbolic_alias_inferred": true,
+    "no_statement_scope_synthesis_or_formal_lowering": true,
+    "original_rules_qualifier_duplicates_anchor_attachment_order_and_literal_strings_preserved": true,
+    "packet_item_order_and_physical_identity_envelope_preserved": true,
+    "partial_null_answers_distinct_from_explicit_empty_lists": true,
+    "partial_status_precedence_preserves_detected_contradiction_diagnostics": true,
+    "recording_agreement_dispute_status_retained_without_selecting_or_authenticating_meaning": true,
+    "separate_additive_owner_unchanged_permissive_archival_recorder": true,
+    "supplied_recording_rebuilt_and_validated_before_any_fields_used": true,
+    "validate_preflight_regenerates_full_closed_receipt_even_when_attack_reseals_digest": true
+  }
+}

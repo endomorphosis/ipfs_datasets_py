@@ -1,0 +1,35 @@
+{
+  "count": 5,
+  "entries": {
+    "docs/autoencoders/legal_formal_output_20261011.md": {
+      "bytes": 8359,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/docs/autoencoders/legal_formal_output_20261011.md",
+      "sha256": "7db43f963c28536982ae17225a43261853a1c1499bc7359fe86e339b871e59db"
+    },
+    "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py": {
+      "bytes": 15802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_declaration_preflight.py",
+      "sha256": "fc860cc91f387f1b5094a0f843f0e2a23d42cf33a7312893a62a97e51a74bf5c"
+    },
+    "tests/unit/logic/legal_ir/test_saved_span_family_adapter.py": {
+      "bytes": 25441,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    },
+    "tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py": {
+      "bytes": 31211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_declaration_preflight.py",
+      "sha256": "17962b3ee01602fc30d33bd426eec253b3444cd9730c2d1706e743ade6795830"
+    }
+  },
+  "existing_owner_changes": false,
+  "findings": [],
+  "new_weight_files": false,
+  "passed": true,
+  "schema": "formal-output-owned-source-files/v1"
+}

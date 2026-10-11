@@ -1,0 +1,42 @@
+{
+  "checkpoint_canonical_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+  "full_report_rows_preserved": 96,
+  "latent_vectors_exported": false,
+  "new_model_calls": 0,
+  "parent_authored_export": {
+    "bytes": 16289807,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json",
+    "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+  },
+  "parent_saved_inference_report": {
+    "bytes": 874913,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+    "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+  },
+  "role": "Previously exposed synthetic engineering typecheck; not statute, independent holdout or semantic gold",
+  "rows": [
+    {
+      "id": "native-tuning-begonia-t0-q0-o",
+      "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355",
+      "source_text": "Begonia Authority shall inspect the certified begonia public register."
+    },
+    {
+      "id": "native-tuning-begonia-t0-q0-p",
+      "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7",
+      "source_text": "Begonia Authority may inspect the certified begonia public register."
+    },
+    {
+      "id": "native-tuning-begonia-t0-q0-f",
+      "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16",
+      "source_text": "Begonia Authority shall not inspect the certified begonia public register."
+    }
+  ],
+  "schema": "authored-development-source-only/v1",
+  "selected_original_positions": [
+    0,
+    1,
+    2
+  ],
+  "semantic_gold": false,
+  "target_labels_exported": false
+}

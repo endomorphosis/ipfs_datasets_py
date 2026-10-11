@@ -1,0 +1,571 @@
+{
+  "canonical_endpoint_custody": {
+    "HEAD_symbolic_and_index_bytes_exact_intake": true,
+    "endpoint_only_no_working_files_or_continuous_custody_claim": true,
+    "intake_pin": {
+      "bytes": 643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/canonical-intake.json",
+      "sha256": "302eb7af14e55cb2e2b7a28c70729aeec31b62d9caa7949f387604d6689b3e63"
+    },
+    "observed": {
+      "datasets": {
+        "head": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "index": {
+          "bytes": 3799757,
+          "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+          "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+        },
+        "symbolic_head": "refs/heads/main"
+      },
+      "root": {
+        "head": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+        "index": {
+          "bytes": 692628,
+          "path": "/home/barberb/lift_coding/.git/index",
+          "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+        },
+        "symbolic_head": "refs/heads/chore/fmt-check-main"
+      }
+    }
+  },
+  "development_source_transport": {
+    "actual_parent_archive_contains_weak_targets_vectors_but_exporter_uses_only_source_strings_andIDs": true,
+    "checkpoint_dimension384_latent_enabled_false_not_relabelled0D": true,
+    "checkpoint_pin": {
+      "bytes": 4117352,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json",
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    "cue_export_pin": {
+      "bytes": 1465,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-cue-declarations.json",
+      "sha256": "100531fadfae9431f2484fb882f0d723e12c44fd063dcf66cf55d84b4fe282ad"
+    },
+    "full_original_report96_preserved_and_pin_verified": true,
+    "new_model_calls": 0,
+    "no_weak_targets_or_latent_vectors_exported": true,
+    "original_historical_parent_sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb",
+    "original_report_target_access_false_no_new_prediction_or_update": true,
+    "same_existing_full_saved_report_scope_not_three_new_inferences": true,
+    "selected_exposed_synthetic_TUNE_not_statute_unseen_eval_or_gold": true,
+    "source_export_pin": {
+      "bytes": 1843,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-source-only.json",
+      "sha256": "b9cec5f2a8593f67f42218f93b9b8fb701cfd9569a8933ffdf8a522ec3756338"
+    },
+    "source_export_rows_only_id_source_text_and_SHA": true,
+    "three_original_saved_model_rows": [
+      {
+        "actual_saved_decoded_row": true,
+        "all_qualifiers_empty": true,
+        "explicit_development_cue": {
+          "canonical_value": "O",
+          "end_char": 23,
+          "source_text": "shall",
+          "start_char": 18
+        },
+        "full_source_characters": 70,
+        "id": "native-tuning-begonia-t0-q0-o",
+        "original_position": 0,
+        "source_only_input_disabled_latent": true,
+        "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355"
+      },
+      {
+        "actual_saved_decoded_row": true,
+        "all_qualifiers_empty": true,
+        "explicit_development_cue": {
+          "canonical_value": "P",
+          "end_char": 21,
+          "source_text": "may",
+          "start_char": 18
+        },
+        "full_source_characters": 68,
+        "id": "native-tuning-begonia-t0-q0-p",
+        "original_position": 1,
+        "source_only_input_disabled_latent": true,
+        "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7"
+      },
+      {
+        "actual_saved_decoded_row": true,
+        "all_qualifiers_empty": true,
+        "explicit_development_cue": {
+          "canonical_value": "F",
+          "end_char": 27,
+          "source_text": "shall not",
+          "start_char": 18
+        },
+        "full_source_characters": 74,
+        "id": "native-tuning-begonia-t0-q0-f",
+        "original_position": 2,
+        "source_only_input_disabled_latent": true,
+        "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16"
+      }
+    ]
+  },
+  "exporter_clarification": {
+    "AST_review_only_no_execution_by_reviewer": true,
+    "both_original_output_byte_bodies_remain_exact_initial_pins": true,
+    "corrected_active_canonical_value_comes_from_declared_constant": true,
+    "corrected_active_hardcodes_explicit_O_P_F_development_constants_and_asserts_saved_prediction_equals_declaration": true,
+    "corrected_active_pin": {
+      "bytes": 3625,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_development_inputs.py",
+      "sha256": "d83e6f4d2565670ddc2f687bd9d0f152212c7e62150896142300d91ad1ea7f53"
+    },
+    "draft_and_original_outputs_preserved": true,
+    "existing_output_verify_mode_refuses_any_different_bytes": true,
+    "fixed_owned_inputs_only_not_generic_hardened_intake_service": true,
+    "initial_draft_hardcoded_cue_intervals_but_canonical_value_derived_from_saved_prediction": true,
+    "initial_draft_pin": {
+      "bytes": 3431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_development_inputs_draft_v01.py",
+      "sha256": "65baef3fbf5bd4d58fb41ec1a1d7fd33ec633eb81869d1566026070f7efb0594"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "The32 selected saved remote head identities are verified against local immutable Git graphs; no fresh remote-state completeness or future-head claim is made. The five older recovery histories remain separately preserved and are not relabelled as merged into main.",
+    "Three source-only development cases are selected previously exposed synthetic TUNE predictions, not legal examples, a fresh quality benchmark, semantic gold or independently reviewed meanings.",
+    "Modality cue mappings are explicit caller development hypotheses. Byte/slice agreement, future native syntax acceptance or successful typechecking cannot authenticate legal semantics.",
+    "This pass covers intake/exporter/custody only. New module owners, inert controls and a resource-qualified native compiler protocol require their own subsequent reviews before execution.",
+    "Fixed-input exporter assert guards require the reviewed ordinary nonoptimized invocation; root reports its existing-output replay, but this reviewer only checks resulting bytes and source code."
+  ],
+  "main_progress": {
+    "bounded_selected_heads_only_not_global_branch_history_completeness": true,
+    "five_old_commit_objects_accessible": [
+      {
+        "commit_object_accessible": true,
+        "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+        "no_claim_merged_into_latest_main": true,
+        "repo": "source",
+        "row_exact_prior_review": true
+      },
+      {
+        "commit_object_accessible": true,
+        "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+        "no_claim_merged_into_latest_main": true,
+        "repo": "source",
+        "row_exact_prior_review": true
+      },
+      {
+        "commit_object_accessible": true,
+        "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+        "no_claim_merged_into_latest_main": true,
+        "repo": "root",
+        "row_exact_prior_review": true
+      },
+      {
+        "commit_object_accessible": true,
+        "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+        "no_claim_merged_into_latest_main": true,
+        "repo": "root",
+        "row_exact_prior_review": true
+      },
+      {
+        "commit_object_accessible": true,
+        "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+        "no_claim_merged_into_latest_main": true,
+        "repo": "root",
+        "row_exact_prior_review": true
+      }
+    ],
+    "five_old_recovery_history_rows_exact_prior_review": true,
+    "no_foreign_worktree_bytes_inspected_or_mutated": true,
+    "remote_inventory_saved_root_observation_no_live_remote_query": true,
+    "repositories": {
+      "root": {
+        "all_selected_branch_only_counts0": true,
+        "all_selected_saved_heads_ancestor_baseline": true,
+        "baseline": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6",
+        "prior_selected_represented": 9,
+        "selected_count": 10,
+        "selected_saved_head_rows": [
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+            "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+            "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+            "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+            "sha": "739e7088a203a4b307d96192e489a88dbf9177b1"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+            "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+            "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+            "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": true,
+            "previously_selected": false,
+            "ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+            "sha": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+            "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": true,
+            "previously_selected": true,
+            "ref": "refs/heads/main",
+            "sha": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6"
+          }
+        ],
+        "worktree_metadata_only_no_foreign_dirty_bytes_inspected": true
+      },
+      "source": {
+        "all_selected_branch_only_counts0": true,
+        "all_selected_saved_heads_ancestor_baseline": true,
+        "baseline": "4af461728329cdad4bfb910ab878d016ce279e54",
+        "prior_selected_represented": 21,
+        "selected_count": 22,
+        "selected_saved_head_rows": [
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+            "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+            "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+            "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+            "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+            "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+            "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+            "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+            "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+            "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+            "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+            "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+            "sha": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+            "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+            "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+            "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+            "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": true,
+            "previously_selected": false,
+            "ref": "refs/heads/codex/legal-structured-training-20261011-01",
+            "sha": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+            "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+            "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+            "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": false,
+            "previously_selected": true,
+            "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+            "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+          },
+          {
+            "branch_only_commits": 0,
+            "in_observed_main": true,
+            "new_or_changed_since_previous_audit": true,
+            "previously_selected": true,
+            "ref": "refs/heads/main",
+            "sha": "4af461728329cdad4bfb910ab878d016ce279e54"
+          }
+        ],
+        "worktree_metadata_only_no_foreign_dirty_bytes_inspected": true
+      }
+    }
+  },
+  "passed": true,
+  "reviewed_artifact_pins": [
+    {
+      "bytes": 48397,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/main-progress-review.json",
+      "sha256": "b0a3433e64ece7bad6ff7062979edf57d8e196f6d5d3754f89422ba0ded8cf4d"
+    },
+    {
+      "bytes": 85481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/main-progress-review.json",
+      "sha256": "7e3ddcf465a49e61f7fa341c1e1bc68ac9d6b3e1f2c9cc43c5c1605a678407ec"
+    },
+    {
+      "bytes": 1843,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-source-only.json",
+      "sha256": "b9cec5f2a8593f67f42218f93b9b8fb701cfd9569a8933ffdf8a522ec3756338"
+    },
+    {
+      "bytes": 1465,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-cue-declarations.json",
+      "sha256": "100531fadfae9431f2484fb882f0d723e12c44fd063dcf66cf55d84b4fe282ad"
+    },
+    {
+      "bytes": 3625,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_development_inputs.py",
+      "sha256": "d83e6f4d2565670ddc2f687bd9d0f152212c7e62150896142300d91ad1ea7f53"
+    },
+    {
+      "bytes": 3431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_development_inputs_draft_v01.py",
+      "sha256": "65baef3fbf5bd4d58fb41ec1a1d7fd33ec633eb81869d1566026070f7efb0594"
+    },
+    {
+      "bytes": 874913,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    },
+    {
+      "bytes": 16289807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json",
+      "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+    },
+    {
+      "bytes": 4117352,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json",
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    {
+      "bytes": 21931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json",
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    },
+    {
+      "bytes": 643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/canonical-intake.json",
+      "sha256": "302eb7af14e55cb2e2b7a28c70729aeec31b62d9caa7949f387604d6689b3e63"
+    }
+  ],
+  "reviewer": "/root/structured_training_design_20261011",
+  "schema": "legal-formal-output-intake-independent-review/v1",
+  "scope": "Read-only saved bytes/strict JSON/AST and local Git object/ancestry/canonical endpoint inspection. No exporter helper, tests, model/backend, compiler, network or resource operation executed; only this new review receipt is written.",
+  "statutory_authority": {
+    "admission_masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "all_masks_zero": true,
+    "development_cue_declarations_are_not_reviews_or_statutory_labels": true,
+    "eight_real_cases": 8,
+    "no_fake_reviewer_declaration_generated": true,
+    "pending_recording_pin": {
+      "bytes": 21931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json",
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    },
+    "semantic_gold": false,
+    "submissions": 0
+  },
+  "unchanged_tool_gate_owners": {
+    "actual_native_build_not_executed": true,
+    "all_four_existing_owner_files_byte_exact_prior_source_generation": true,
+    "existing_lowercase_legal_target": true,
+    "existing_native_gate_limits": {
+      "Lean_threads": 2,
+      "project_input_bytes_max": 8388608,
+      "resident_memory_bytes": 2147483648,
+      "timeout_seconds_max": 60,
+      "workspace_bytes_max": 134217728
+    },
+    "future_native_tool_run_separate_from_prior_model_training_process": true,
+    "no_global_old_claim_caps_changed_by_this_review": true,
+    "owner_pins": [
+      {
+        "bytes": 21178,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+        "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+      },
+      {
+        "bytes": 11880,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+        "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+      },
+      {
+        "bytes": 15230,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py",
+        "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+      },
+      {
+        "bytes": 78154,
+        "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py",
+        "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+      }
+    ]
+  }
+}

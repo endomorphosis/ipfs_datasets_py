@@ -1,0 +1,97 @@
+........................................................................ [ 17%]
+......F................................................................. [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+.........................................................ss              [100%]
+=================================== FAILURES ===================================
+___________ test_import_and_pure_transport_have_no_numerical_imports ___________
+
+    def test_import_and_pure_transport_have_no_numerical_imports():
+        root = Path(__file__).resolve().parents[4]
+        source, report, _ = case()
+        script = '''
+    import builtins, sys, json
+    original = builtins.__import__
+    def denied(name, *args, **kwargs):
+        if name.split('.')[0] in {'torch', 'numpy', 'tensorflow', 'jax', 'transformers'}:
+            raise AssertionError('numerical import: ' + name)
+        return original(name, *args, **kwargs)
+    builtins.__import__ = denied
+    from ipfs_datasets_py.logic.legal_ir import saved_span_family_adapter as a
+    assert a.parse_json_bytes(b'{"source_only":true}') == {'source_only': True}
+    '''
+        script += "source = json.loads(" + repr(json.dumps(source)) + ")\n"
+        script += "report = json.loads(" + repr(json.dumps(report)) + ")\n"
+        script += '''
+    packet = a.prepare_pending(source, report, expected_report_sha256=a.digest(report),
+        expected_checkpoint_sha256='a'*64, row_id=source['id'])
+    assert packet['model_executed'] is False
+    assert not ({'torch', 'numpy', 'tensorflow', 'jax', 'transformers'} & set(sys.modules))
+    '''
+        result = subprocess.run([sys.executable, "-c", script], cwd=root, text=True, capture_output=True)
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 14, in <module>
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py", line 450, in prepare_pending
+E             ir, geometry = _candidate_geometry(source["source_text"], selected, lane)
+E                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py", line 292, in _candidate_geometry
+E             bridge, _, joint = _owners()
+E                                ^^^^^^^^^
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py", line 146, in _owners
+E             return (importlib.import_module("ipfs_datasets_py.logic.autoformal.legal_source_family_bridge"),
+E                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+E             return _bootstrap._gcd_import(name[level:], package, level)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+E           File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+E           File "<frozen importlib._bootstrap>", line 1310, in _find_and_load_unlocked
+E           File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+E           File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+E           File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+E           File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+E           File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+E           File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+E           File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py", line 1017, in <module>
+E             SESSION = AutoformalSession()
+E                       ^^^^^^^^^^^^^^^^^^^
+E           File "<string>", line 8, in __init__
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py", line 96, in __post_init__
+E             require_workspace_logic_tree()
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py", line 41, in require_workspace_logic_tree
+E             module = importlib.import_module(name)
+E                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "/usr/lib/python3.12/importlib/__init__.py", line 90, in import_module
+E             return _bootstrap._gcd_import(name[level:], package, level)
+E                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+E           File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+E           File "<frozen importlib._bootstrap>", line 1310, in _find_and_load_unlocked
+E           File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+E           File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+E           File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+E           File "<frozen importlib._bootstrap>", line 1310, in _find_and_load_unlocked
+E           File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+E           File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+E           File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+E           File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+E           File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+E           File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+E           File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/deontic/__init__.py", line 5, in <module>
+E             from .converter import DeonticConverter
+E           File "<string>", line 7, in denied
+E           File "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/deontic/converter.py", line 10, in <module>
+E             from ipfs_datasets_py.utils import anyio_compat as asyncio
+E         ImportError: cannot import name 'anyio_compat' from 'ipfs_datasets_py.utils' (unknown location)
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/barberb/.local/bin/python', '-c', '\nimport builtins, sys, json\noriginal = builtins.__i...pat as asyncio\nImportError: cannot import name \'anyio_compat\' from \'ipfs_datasets_py.utils\' (unknown location)\n').returncode
+
+tests/unit/logic/legal_ir/test_saved_span_family_adapter.py:421: AssertionError
+=========================== short test summary info ============================
+FAILED tests/unit/logic/legal_ir/test_saved_span_family_adapter.py::test_import_and_pure_transport_have_no_numerical_imports
+1 failed, 416 passed, 2 skipped in 4.78s

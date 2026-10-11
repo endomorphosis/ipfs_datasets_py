@@ -1,0 +1,324 @@
+{
+  "Git_mutations": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-cue-declarations-v02.json": {
+      "bytes": 9753,
+      "sha256": "67b80ed4224b3d04f636d980dd66b323ca6c1786fc058407782b8f13a7170756"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-cue-declarations.json": {
+      "bytes": 1465,
+      "sha256": "100531fadfae9431f2484fb882f0d723e12c44fd063dcf66cf55d84b4fe282ad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-source-only-v02.json": {
+      "bytes": 4968,
+      "sha256": "34fe6b7255c89292c148e79070f657104ba8a7855f44d936168309246bd31e5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/authored-development-source-only.json": {
+      "bytes": 1843,
+      "sha256": "b9cec5f2a8593f67f42218f93b9b8fb701cfd9569a8933ffdf8a522ec3756338"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py": {
+      "bytes": 15230,
+      "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py": {
+      "bytes": 21178,
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py": {
+      "bytes": 11880,
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py": {
+      "bytes": 78154,
+      "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/intake-independent-review-v01.json": {
+      "bytes": 25477,
+      "sha256": "c22eb0d7f90956508091c1d4aae2cee7fa2cd580ee162ed23f1385ad246e1a99"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_development_inputs_v02.py": {
+      "bytes": 5558,
+      "sha256": "2aeaa94326d35b3eea9de0a2ba9bbee78c25b2f2405f40876fde287462173ef6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_formal_output_pilot.py": {
+      "bytes": 12110,
+      "sha256": "2f21d5f5b1a7e9c339b121fa1c00cc91b138ea4c31c284d1b9f42520160a3b32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_formal_output_pilot_draft_v01.py": {
+      "bytes": 12067,
+      "sha256": "1c5406afdf75b30ebedc13db3d93e08e7c06de63e4a7cee657be54882b95a968"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/prepare_formal_output_pilot_draft_v02.py": {
+      "bytes": 12072,
+      "sha256": "6483c2fc09caea602438ba980aa5065598695386ecea56204f72db0af673fdc6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/statutory-source-only-inputs.json": {
+      "bytes": 4311,
+      "sha256": "8e32b64579eb67b604d7ba7cd907d17da7c8934e354b0641cd344b6522049fc3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json": {
+      "bytes": 378311,
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json": {
+      "bytes": 16289807,
+      "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/exposed-law-source-only.json": {
+      "bytes": 99164,
+      "sha256": "04e485c0657c6a478ec0e40f29250cbc11dc5eba4494aee9055946092839b7c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-pending-recording.json": {
+      "bytes": 21931,
+      "sha256": "cfe0b3523df2665cf5747d7589ed7fdfcc0fae97b9af22271829348ac48a73aa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json": {
+      "bytes": 4117352,
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none-joint.json": {
+      "bytes": 103504,
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none.json": {
+      "bytes": 274731,
+      "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json": {
+      "bytes": 874913,
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    }
+  },
+  "compilers_executed": 0,
+  "created_at_utc": "2026-10-11T18:26:15.832900+00:00",
+  "development": {
+    "all12_sources_match_archived_TUNE": true,
+    "all_modalities_cues_predicates_and_outcomes_are_explicit_DEVELOPMENT_hypotheses": true,
+    "checkpoint_canonical_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+    "full96_saved_report_and_archived_source_pins_exact": true,
+    "independent_holdout": false,
+    "latent_enabled": false,
+    "new_model_calls": 0,
+    "predeclared_native_positions": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "predeclared_temporal_refusals": [
+      9,
+      10,
+      11
+    ],
+    "row_bindings": [
+      {
+        "hardcoded_cue": "shall",
+        "hardcoded_modality": "O",
+        "id": "native-tuning-begonia-t0-q0-o",
+        "position": 0,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "6759851f76e27286d24741c1154418d560168dcc47f04e86e2c3b64aab75d386",
+        "source_sha256": "30c0946dc33ab187558e54f8e4f739b229e6e5d4f0748faa627342949c3be355"
+      },
+      {
+        "hardcoded_cue": "may",
+        "hardcoded_modality": "P",
+        "id": "native-tuning-begonia-t0-q0-p",
+        "position": 1,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "330569999c67924deefb0b80fe47d0f38b1a1f6165f27930aebc82dacdf9e9d7",
+        "source_sha256": "8f5acc301fafca91d79b02be47a0de3e8b7d68d17150ecbfed2d39a7dc8bb2d7"
+      },
+      {
+        "hardcoded_cue": "shall not",
+        "hardcoded_modality": "F",
+        "id": "native-tuning-begonia-t0-q0-f",
+        "position": 2,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "361307a10a34c644f8e661ab1ffb3efaf1bc96b5590f4f20f9aa1d76e9f458f0",
+        "source_sha256": "1414a0b70ef4e358e9005ae59d42feedf49faed95c5ad6f5283165076aca8b16"
+      },
+      {
+        "hardcoded_cue": "must",
+        "hardcoded_modality": "O",
+        "id": "native-tuning-begonia-t1-q1-o",
+        "position": 3,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "300d79267ea8c8c2a99a5bae66264bbae8ce6b0f850abdf8fec3502340b0e04b",
+        "source_sha256": "9da87279919e2921bd635964fb4dd003b14fa280fd4f554d8cc5cffebb3c6631"
+      },
+      {
+        "hardcoded_cue": "is allowed to",
+        "hardcoded_modality": "P",
+        "id": "native-tuning-begonia-t1-q1-p",
+        "position": 4,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "9fb493f8322c44fb938bec73c351c7d24a846c15312ad123c79d84d10ea80c12",
+        "source_sha256": "60e77bb47616fc4936d65c4ccdd42ae55e1c69aa78e469649643573355cc7d3c"
+      },
+      {
+        "hardcoded_cue": "must not",
+        "hardcoded_modality": "F",
+        "id": "native-tuning-begonia-t1-q1-f",
+        "position": 5,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "e525704e201ee30d863d337b12d8c36d48dafb79d9a2bcafc9f22648a55d09c5",
+        "source_sha256": "bb4485e993340fe343cab09109faa836e7f6d693c8a9db3d5a76044e6a1fbb33"
+      },
+      {
+        "hardcoded_cue": "has a duty to",
+        "hardcoded_modality": "O",
+        "id": "native-tuning-begonia-t2-q2-o",
+        "position": 6,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "12ce66b0bbb6ebe903811cf836d1b4883830bd0dbc14b87060aa7bc4c12142ed",
+        "source_sha256": "0f8edb93f1b0846351fd7d83cb45fa76442283693cd66343a0475e639c1dcecc"
+      },
+      {
+        "hardcoded_cue": "has permission to",
+        "hardcoded_modality": "P",
+        "id": "native-tuning-begonia-t2-q2-p",
+        "position": 7,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "fbe198c2e43560d7a2da186334e5af4d159ee8555a5daf7dba6e17a438914bfa",
+        "source_sha256": "fdb7d17cd28d3fe8f59de48d1f243d490f7646dd01722ec9c71ddc2db22d1ef7"
+      },
+      {
+        "hardcoded_cue": "is forbidden to",
+        "hardcoded_modality": "F",
+        "id": "native-tuning-begonia-t2-q2-f",
+        "position": 8,
+        "predeclared_outcome": "native",
+        "saved_rule_content_sha256": "f263191cf87fb6c504831e0f924be39a92dc7bd8852cfc178f1f894d0b240394",
+        "source_sha256": "6ba094d954922feda51c0dd354262119d8fd7c128daf57fa0e47e5f0379ef34a"
+      },
+      {
+        "hardcoded_cue": "is required to",
+        "hardcoded_modality": "O",
+        "id": "native-tuning-begonia-t3-q3-o",
+        "position": 9,
+        "predeclared_outcome": "temporal_refused",
+        "saved_rule_content_sha256": "a101edf6641dfd4cc590a6af0ae9f026ebd4334053d1eb86305738f485b03e27",
+        "source_sha256": "0048ae32f9cf794aba213ceac09b0c02b7b9ca3c416c8a1f4a30b56a380724bf"
+      },
+      {
+        "hardcoded_cue": "is permitted to",
+        "hardcoded_modality": "P",
+        "id": "native-tuning-begonia-t3-q3-p",
+        "position": 10,
+        "predeclared_outcome": "temporal_refused",
+        "saved_rule_content_sha256": "8a9f68e46a470fbf2045d2223763cdfa1ba100b29a81dca844a8789e32c2edda",
+        "source_sha256": "14536fe598ce312f7550dc712f1eaf68fb960134e872cd4f4856bf352a25454f"
+      },
+      {
+        "hardcoded_cue": "is not permitted to",
+        "hardcoded_modality": "F",
+        "id": "native-tuning-begonia-t3-q3-f",
+        "position": 11,
+        "predeclared_outcome": "temporal_refused",
+        "saved_rule_content_sha256": "9f79b87abb35d861a24a8fcb0d5f6e4a7c78ccfd8ddfcbce896cc437b20a98c6",
+        "source_sha256": "9a70b63b8cb6382ebdcf15ca6b0a91e28fcdd4916da487531ad9de6fc7848dc0"
+      }
+    ],
+    "selected_saved_positions": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "semantic_gold": false,
+    "source_only_dimension": 384,
+    "targets_and_vectors_exported": false,
+    "training_or_evaluation_admission": false
+  },
+  "findings": [],
+  "helpers_executed": 0,
+  "limitations": [
+    "Exposed authored predictions and manual engineering hypotheses are not independent statutory labels or semantic accuracy.",
+    "No actual adapter/native preparation or lake build legal execution is qualified by this static review.",
+    "The original authored archive includes labels/vectors; new source-only fixtures copy only id/source_text/source_sha256, with cue declarations explicitly manual development hypotheses.",
+    "Fresh-process namespace/import guards do not qualify a complete dependency graph, ordinary package initialization or an arbitrary process with pre-cached ML modules."
+  ],
+  "models_executed": 0,
+  "network_calls": 0,
+  "opening_closing_artifact_pins_exact": true,
+  "original_exports": {
+    "all_three_opening_closing_bytes_exact": true,
+    "first_three_sources_and_original_cue_fields_preserved": true,
+    "statutory_source_export_matches_original_parent_pin": true,
+    "two_authored_pins_match_prior_intake_review": true,
+    "v02_helper_writes_only_two_fresh_v02_paths": true
+  },
+  "passed": true,
+  "planned_pilot_static_review": {
+    "actual_labels": 0,
+    "actual_native_preparation_or_build_not_executed_by_this_review": true,
+    "actual_review_items": 8,
+    "actual_submissions": 0,
+    "all12_requested_rows_preserved": true,
+    "all168_review_slots_blank": true,
+    "all_review_masks_zero": true,
+    "bootstrap_uses_explicit_namespaces_not_qualified_normal_package_initialization": true,
+    "existing_gate_owners_byte_exact_prior_intake": true,
+    "law_dispositions": 16,
+    "law_source_rows": 8,
+    "legacy_limits_unchanged": {
+      "Lean_threads": 2,
+      "max_input_bytes": 8388608,
+      "max_output_bytes": 262144,
+      "max_workspace_bytes": 134217728,
+      "sampled_tree_RSS_bytes": 2147483648,
+      "timeout_seconds": 60
+    },
+    "negative_controls": [
+      "wrong modality literal",
+      "cue/facet overlap",
+      "mutated output authoritative replay",
+      "four unsupported sealed families",
+      "missing qualifier expression",
+      "all-or-none unsupported batch",
+      "blank real declarations"
+    ],
+    "new_backend_imports_guarded": true,
+    "nine_native_requests_and_three_temporal_refusals_retained": true,
+    "original_joint_count": 6,
+    "original_raw_count": 1,
+    "real_native_declarations_remain_unfilled_and_expected_to_refuse": true,
+    "socket_and_process_audit_guard": true
+  },
+  "resolved_static_observations": [
+    {
+      "actual_saved_metadata_verified": true,
+      "fixed_path": "state['historical_parent']['base_checkpoint']['config']",
+      "issue": "Wrong historical config path would raise KeyError before preparation.",
+      "old_draft_preserved": true
+    },
+    {
+      "fixed_name": "changed_output_authoritative_replay",
+      "issue": "Native output has no body seal; the modified-output control exercises authoritative replay.",
+      "old_draft_preserved": true
+    }
+  ],
+  "resource_operations": 0,
+  "schema": "development-fixture-independent-review/v2",
+  "scope": "Independent static AST/source and saved-byte strict-JSON review. No helpers, adapters, parsers, models, compilers, tests, numerical backends, network/resources or Git mutations executed.",
+  "tests_run": 0
+}

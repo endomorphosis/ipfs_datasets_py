@@ -1,0 +1,516 @@
+{
+  "canonical_HEAD_or_index_changes": false,
+  "findings": [],
+  "models_or_tests_or_resource_claims_executed": false,
+  "passed": true,
+  "prior_distinct_old_recovery_histories_preserved": [
+    {
+      "changed_path_count": 4280,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "last_branch_only_commits": [
+        "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 2026-10-04T19:29:18+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "c028a2079a88720df8a50d2ccd2e479caa8bc379 2026-10-04T19:21:01+00:00 Integrate preserved source history with batched conflict resolution",
+        "eb6a73c0a5c1c37b3e037ab38d279e0594239d58 2026-10-04T19:21:00+00:00 Integrate preserved source history with batched conflict resolution",
+        "5a412a339b30303cac8df55a560af5d52d4e5fcb 2026-10-04T19:21:00+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 108,
+      "repo": "source",
+      "sample_relevant_paths": [
+        "archive/results/complete_pipeline_results/proof_details_z3.json",
+        "archive/results/local_proof_results/conversion_result.json",
+        "archive/results/local_proof_results/proof_result_z3.json",
+        "archive/results/local_proof_results/proofs/formula_3226fa1ad1de.smt2",
+        "archive/results/local_proof_results/proofs/formula_6c4a5125b4ca.smt2",
+        "archive/results/local_proof_results/proofs/formula_6d3542ddd431.smt2",
+        "archive/results/local_proof_results/simulated_extraction.json",
+        "docs/autoencoders/README.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_improvement_plan.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_plan.json",
+        "docs/autoencoders/gte_migration_preparation.md",
+        "docs/autoencoders/gte_multilingual_migration_plan.md",
+        "docs/autoencoders/gte_multilingual_migration_work_items.json",
+        "docs/autoencoders/ir_family_span_whole_input_guard_partial_followup_plan.json",
+        "docs/autoencoders/source_margin_training.md"
+      ]
+    },
+    {
+      "changed_path_count": 446,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "last_branch_only_commits": [
+        "23540627b1cf6515df0fd84c9417b4cbdb91234a 2026-10-04T20:02:03+00:00 Restore complete selected canonical source after main refresh",
+        "47413d75e8ab095ad7bd8c946ba231a91432b23b 2026-10-04T20:02:01+00:00 Merge commit 'aa586a9b91b583a2ac5d867bd107ba0c5a4762d5' into publication/main-refresh-20261004/datasets-01",
+        "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 2026-10-04T19:29:18+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "c028a2079a88720df8a50d2ccd2e479caa8bc379 2026-10-04T19:21:01+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 98,
+      "repo": "source",
+      "sample_relevant_paths": [
+        "docs/autoencoders/README.md",
+        "docs/autoencoders/alignment_binding_review_recording.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_improvement_plan.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_plan.json",
+        "docs/autoencoders/four_width_training.md",
+        "docs/autoencoders/gte_migration_preparation.md",
+        "docs/autoencoders/gte_multilingual_migration_plan.md",
+        "docs/autoencoders/gte_multilingual_migration_work_items.json",
+        "docs/autoencoders/ir_family_dimension_cuda_guard_followup_plan.json",
+        "docs/autoencoders/ir_family_dimension_guard_workload_followup_plan.json",
+        "docs/autoencoders/ir_family_formula_guard_coordinator_followup_plan.json",
+        "docs/autoencoders/ir_family_guard_cost_profiling_followup_plan.json",
+        "docs/autoencoders/ir_family_input_guard_candidate_followup_plan.json",
+        "docs/autoencoders/ir_family_lease_cadence_followup_plan.json",
+        "docs/autoencoders/ir_family_span_inference_candidates_followup_plan.json"
+      ]
+    },
+    {
+      "changed_path_count": 2945,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "last_branch_only_commits": [
+        "ce3e21da27d23bfa4ac5490be9a5cb44798945f2 2026-10-04T20:01:22+00:00 Integrate preserved source history with batched conflict resolution",
+        "f50b0c4981e51939a27b57d073d36dda8064af29 2026-10-04T20:01:20+00:00 Integrate preserved source history with batched conflict resolution",
+        "567cdb783414c42c53b400db4eef3929f6ad7378 2026-10-04T20:01:17+00:00 Integrate preserved source history with batched conflict resolution",
+        "ef9c8e4d94d9d427d1bd60168e9bd6d0a15cfe38 2026-10-04T20:00:54+00:00 Snapshot canonical source work for autoformalization publication"
+      ],
+      "relevant_changed_path_count": 65,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd-legal_ir_grammar_decoder.py",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/18dc019d86cb96d670dd583ad16f6930a3b8a2ffd49a587f40d1ef6cb105b497-action_contrastive_decoder_training.py",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/21f300fbc969c2b34be355b633c46a616d83d451207cc5f3bd56537d40bd0498-long_span_source_value_training.py"
+      ]
+    },
+    {
+      "changed_path_count": 2837,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "last_branch_only_commits": [
+        "57fd19895ce42ad68f87b3d7126fbf19da285bdb 2026-10-04T20:05:03+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "b420e317dd90a02e86cc4f60e0c9f563b4f51fd3 2026-10-04T20:04:24+00:00 Integrate preserved source history with batched conflict resolution",
+        "63e8d8b14301f788dacf83c7d5a705d920b953f9 2026-10-04T20:04:22+00:00 Integrate preserved source history with batched conflict resolution",
+        "bc64e1a2d3d3428ae3823fd4754d0051a61d485d 2026-10-04T18:17:26+00:00 Snapshot canonical source work for autoformalization publication"
+      ],
+      "relevant_changed_path_count": 44,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-commit.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-publication.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/legal-ir-autoencoder-commit.json"
+      ]
+    },
+    {
+      "changed_path_count": 2801,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "last_branch_only_commits": [
+        "9d1944b9a9fd95abbb6297b4c7d34a1312809f14 2026-10-04T20:19:03+00:00 Restore complete selected canonical source after main refresh",
+        "6c4c5fe37671807df2ec2e263596d9a42de92add 2026-10-04T20:19:03+00:00 Merge current published main into retained source history",
+        "57fd19895ce42ad68f87b3d7126fbf19da285bdb 2026-10-04T20:05:03+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "b420e317dd90a02e86cc4f60e0c9f563b4f51fd3 2026-10-04T20:04:24+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 31,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-commit.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-publication.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/legal-ir-autoencoder-commit.json"
+      ]
+    }
+  ],
+  "prior_review_pin": {
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/main-progress-review.json",
+    "sha256": "7e3ddcf465a49e61f7fa341c1e1bc68ac9d6b3e1f2c9cc43c5c1605a678407ec"
+  },
+  "repositories": {
+    "root": {
+      "baseline": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6",
+      "foreign_uncommitted_bytes_not_inspected": true,
+      "new_or_changed_remote_refs": [
+        "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+        "refs/heads/main"
+      ],
+      "prior_selected_represented": 9,
+      "remote_heads_observed": {
+        "refs/heads/agent/agent-supervisor-direct-objective-and-event-driven-planning-v1": "a6915c06bb8cc28d2bb3b167d8708561c69a108a",
+        "refs/heads/agent/autoencoder-progress-reconciliation-20261006": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "refs/heads/agent/dual-bank-wording-adapter-root-20261007": "30e61092341b47b4e49eb30df443fd607536333a",
+        "refs/heads/agent/parallel-content-sealing-proof-carrying-tdd-v1-g9": "b30b8b05e19c219249511db9e06ed3ab7ac4b1ad",
+        "refs/heads/agent/proof-carrying-context-engine-v0.1": "ed97ee2dd11e0409afaeeb539b645d7b718869af",
+        "refs/heads/agent/vericodegen-2026-lean_refactor_arena": "23bdc18f777f5ff673144b5eccbc58827b58d755",
+        "refs/heads/chore/fmt-check-main": "c260f562fcecd49093442cbe9a59337b75dbd218",
+        "refs/heads/codex/autoencoder-reconciliation-20261007-01": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "refs/heads/codex/doep-monitor-recovery": "0febcc082749dcf551ba49fe0ab320b1b078b5ab",
+        "refs/heads/codex/doep031-sealed-readmission": "7a1938ba75156f5fc768609c340eb67ec22df5aa",
+        "refs/heads/codex/legal-joint-readout-workspace-20261011-01": "739e7088a203a4b307d96192e489a88dbf9177b1",
+        "refs/heads/codex/legal-native-cache-workspace-20261011-01": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01": "00130686f43e35105e2ee98e5a36428f3aff3538",
+        "refs/heads/codex/legal-retention-objective-20261011-01": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "refs/heads/codex/legal-structured-training-workspace-20261011-01": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+        "refs/heads/codex/pctdd-g9-descendant-source": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e",
+        "refs/heads/codex/pctdd-validation-evidence-guard": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e",
+        "refs/heads/codex/supervisor-context-token-economy-root-20261006": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+        "refs/heads/codex/supervisor-lifecycle-root-20261005": "6089e1f163d68dd09b006e4b13b14c165ecc136d",
+        "refs/heads/codex/terminal-bench-readiness-root-20261005": "c317deb66a95a90f1204f4354cd5fa37698ebe6b",
+        "refs/heads/codex/terminal-codex-baseline-root-20261005": "9da9a77393ba5829bfaa6ba988dfd2bd042c4aa0",
+        "refs/heads/codex/terminal-context-dictionary-root-20261006": "cdb8a5201e57d50aa4a5ba589eed1c07151689f1",
+        "refs/heads/codex/terminal-context-pair-results-root-20261006": "b16464347c479f7a3cbda4c8e29dbaef90dda4fb",
+        "refs/heads/codex/terminal-eigenvalue-symbolic-diagnosis-root-20261005": "ac5e4793df10f9c33a854b459a370f6f52a02924",
+        "refs/heads/codex/terminal-eigenvalue-symbolic-trial-root-20261006": "1500a7c548f4a981af1b0d8a490744f8450d4529",
+        "refs/heads/codex/terminal-live-census-root-20261011": "df96e9144d91788ae91fd518ad0fd0a1f529e061",
+        "refs/heads/codex/terminal-planning-schema-root-20261006": "79f29121b12471d7e6226246f2cd2b74c918ab75",
+        "refs/heads/implementation/doep-030-b8d4ee0e8de3-attempt-1-1788101472": "fadf091facbf259fec0ff55af3d2104ed16f66df",
+        "refs/heads/implementation/doep-100-e348c8e778da-attempt-1-1789273504": "35e45b3e26acedc25b109667066460ec595775c4",
+        "refs/heads/implementation/ns-022-fd92ef2bddf6-attempt-1-1789307474": "5ac3983204fe92572b097ee45d8c16e86c6ff55d",
+        "refs/heads/main": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6",
+        "refs/heads/repair/doep-append-quarantine-parent-20260913": "973d41304bd8161710906c1e934c63b249bdcc5a",
+        "refs/heads/repair/doep-completed-projection-parent-20260913": "9cf8deb84204beb4e0b388194336f93718df33e2",
+        "refs/heads/repair/doep-empty-priority-parent-20260913": "dede193885407ece66e5b5fb5e42da9ac8deb6d0",
+        "refs/heads/repair/doep-exhausted-post-merge-parent-20260913": "355ce7a628ee013396f0e0f86333fe7fd2cc3383",
+        "refs/heads/repair/doep-readonly-queue-launch-parent-20260913": "2bef289426fa5f038ae630313db097efe3a78adc",
+        "refs/heads/repair/doep-readonly-queue-native-parent-base-20260913": "baeabe9911291c8a119dba6ab78cdc971e72635f",
+        "refs/heads/repair/pctdd-after-task008-native-base-20260913": "e9afd83fb3a55173c628a479c5a45dd897a6c23b",
+        "refs/heads/repair/pctdd-current-quarantine-owner-read-parent-20260913": "42578300ef9ccf87b6c21ff33dd4df467a1520d8",
+        "refs/heads/repair/pctdd-lifecycle-qualified-job24": "d60b5ff1f2f265c703ed022359059627caea827b",
+        "refs/heads/repair/pctdd-maintenance-after-task008-parent-20260913": "91453f7bbe024270831ac2e2d65f8f682fe554e8",
+        "refs/heads/repair/pctdd-operator-restart": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e",
+        "refs/heads/repair/pctdd-quarantine-read-parent-20260913": "283004348c4920d8d74252640d98565dbc71169e",
+        "refs/heads/repair/pctdd-quarantined-maintenance-parent-20260913": "ee3c1988d6115c5278566e4c4534b17f191af893",
+        "refs/heads/repair/pctdd-workspace-quarantine-parent-20260913": "48f56974d9548e1c382d37e3888869b49d831083"
+      },
+      "selected_head_ancestry": [
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+          "sha": "739e7088a203a4b307d96192e489a88dbf9177b1"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": true,
+          "previously_selected": false,
+          "ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+          "sha": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": true,
+          "previously_selected": true,
+          "ref": "refs/heads/main",
+          "sha": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6"
+        }
+      ],
+      "worktree_metadata": "worktree /home/barberb/lift_coding\nHEAD fe18069df4203da9bddfb77b1ed41748f4d5fb4d\nbranch refs/heads/chore/fmt-check-main\n\nworktree /home/barberb/.local/state/ipfs_accelerate_py/vericodegen-2026/neurosymbolic_supervision/worktrees/ns-022-fd92ef2bddf6-attempt-1-1789307474\nHEAD 5ac3983204fe92572b097ee45d8c16e86c6ff55d\nbranch refs/heads/implementation/ns-022-fd92ef2bddf6-attempt-1-1789307474\n\nworktree /home/barberb/lift_coding/.doep-handoff-fix.kDRwxP\nHEAD d6b999aa4cf942dd38f0fa8a3ce1fb69c374af20\ndetached\n\nworktree /home/barberb/lift_coding/.doep-monitor-recovery\nHEAD 0febcc082749dcf551ba49fe0ab320b1b078b5ab\nbranch refs/heads/codex/doep-monitor-recovery\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio\nHEAD a6915c06bb8cc28d2bb3b167d8708561c69a108a\nbranch refs/heads/agent/agent-supervisor-direct-objective-and-event-driven-planning-v1\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_1cf5611fbb87_27f5933ddbe0\nHEAD eeded153cac72007c5b8531cdfdc76915b2f487b\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_296543f524d3_18a4d9634159\nHEAD f13efefa9fdbc1e4e734d74efd45b819d78f7ccd\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_5c6df40ea9d3_07def83bd414\nHEAD 9b5636729fe2d8bfe345200089ea7c40fce2a05c\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_6b4c063bd5e3_bdd9b20cc1e1\nHEAD fadf091facbf259fec0ff55af3d2104ed16f66df\nbranch refs/heads/implementation/doep-030-b8d4ee0e8de3-attempt-1-1788101472\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_75ebbebc3af1_f5fe8f4bcba0\nHEAD de3230e2471b60e7f0c19f10bdcf58559345b2bd\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_8705e115b8b7_cd389b9e4703\nHEAD e046a592d70affb19ad31af3c03228be69eddd7f\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/agent-supervisor-direct-objective-and-event-driven-planning-v1/portfolio/data/agent_supervisor/agent_supervisor_direct_objective_event_driven_planning_v1_r5/worktrees/workspace_c93f1b172856_9a0f0fc2e387\nHEAD 35e45b3e26acedc25b109667066460ec595775c4\nbranch refs/heads/implementation/doep-100-e348c8e778da-attempt-1-1789273504\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-root-20261006\nHEAD 9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5\nbranch refs/heads/agent/autoencoder-progress-reconciliation-20261006\n\nworktree /home/barberb/lift_coding/.worktrees/doep031-sealed-readmission-portfolio\nHEAD 7a1938ba75156f5fc768609c340eb67ec22df5aa\nbranch refs/heads/codex/doep031-sealed-readmission\n\nworktree /home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007\nHEAD 3994f5c22517482b5d7c06cdeba61d9777c12b18\nbranch refs/heads/agent/dual-bank-wording-adapter-root-20261007\n\nworktree /home/barberb/lift_coding/.worktrees/ir-release-lift-20261002\nHEAD f55817cad023e657edb150201c01a750e6bef510\ndetached\nlocked Persistent recovery of interrupted proof-index integration\n\nworktree /home/barberb/lift_coding/.worktrees/parallel-content-sealing-proof-carrying-tdd-v1\nHEAD 85b19286106b02871ea17203f98e912434cd309a\nbranch refs/heads/agent/parallel-content-sealing-proof-carrying-tdd-v1\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-g9-descendant-source\nHEAD 96057eed0cde15ce46c2c229adc50597a4b185e1\nbranch refs/heads/codex/pctdd-g9-descendant-source\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-g9-orphan-recovery\nHEAD 4e2562338314599c09b4898c5154cfc70f140c5f\nbranch refs/heads/agent/parallel-content-sealing-proof-carrying-tdd-v1-g9\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-g9-reviewed-deploy\nHEAD 0dea857ab3f9a8508f09ab7a69f206d4cda2a142\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-incident-outer-client\nHEAD 956a21b608914976e2bc11667bda955d77641a03\ndetached\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-operator-restart\nHEAD ed4e3d72be3bfa70ba295613182717ac56c273c1\nbranch refs/heads/repair/pctdd-operator-restart\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/pctdd-validation-evidence-guard\nHEAD 48d47c102ce25eb2d6e76b99b2a3092ba0be1537\nbranch refs/heads/codex/pctdd-validation-evidence-guard\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/proof-carrying-context-engine-r6\nHEAD 520cbd15389981de72592480273275e111b01e1d\nbranch refs/heads/agent/proof-carrying-context-engine-v0.1\nlocked Preserve embedded submodule Git repositories and runtime recovery history\n\nworktree /home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02\nHEAD ce3e21da27d23bfa4ac5490be9a5cb44798945f2\nbranch refs/heads/publication/main-20261004/root-02\n\nworktree /home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03\nHEAD 57fd19895ce42ad68f87b3d7126fbf19da285bdb\nbranch refs/heads/publication/main-20261004/root-03\n\nworktree /home/barberb/lift_coding/.worktrees/supervisor-comparison-publication-20261011\nHEAD cddba3466eef19ef9f0c0b8e0fd11081b7327a8b\nbranch refs/heads/codex/supervisor-comparison-publication-20261011\nlocked Active supervisor source and qualification publication\n\nworktree /home/barberb/lift_coding/.worktrees/vericodegen-autoformalization-2026\nHEAD 091624a773179d24178d12bc1f410864885c10bf\nbranch refs/heads/agent/vericodegen-2026-autoformalization\n\nworktree /home/barberb/lift_coding/.worktrees/vericodegen-lean_refactor_arena-2026\nHEAD e881a47f7a447d7f07cd2077a209dce68a11149e\nbranch refs/heads/agent/vericodegen-2026-lean_refactor_arena\n\nworktree /home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/workspace\nHEAD aab99b3792e4d13572830f4aa91c7915092b23fe\nbranch refs/heads/codex/autoencoder-reconciliation-20261007-01\n\nworktree /home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree\nHEAD 9d1944b9a9fd95abbb6297b4c7d34a1312809f14\nbranch refs/heads/publication/main-refresh-20261004/root-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/workspace\nHEAD fb8176ab49e063f6d2446b74bbde0cc34e47b9ad\nbranch refs/heads/codex/legal-retention-objective-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/workspace\nHEAD 0213bb5e0a2d5a736e9555fb9112411d6a1313d6\nbranch refs/heads/codex/legal-formal-output-workspace-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace\nHEAD 739e7088a203a4b307d96192e489a88dbf9177b1\nbranch refs/heads/codex/legal-joint-readout-workspace-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/workspace\nHEAD d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9\nbranch refs/heads/codex/legal-native-cache-workspace-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/workspace\nHEAD 00130686f43e35105e2ee98e5a36428f3aff3538\nbranch refs/heads/codex/legal-open-vocabulary-workspace-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/workspace\nHEAD fbb194215f19763cf88082bc6ed30eb4bccbbf7f\nbranch refs/heads/codex/legal-structured-training-workspace-20261011-01\n\nworktree /home/barberb/lift_coding_worktrees/terminal-live-census-root-20261011\nHEAD 33a27b1a6196c6b50849a59e8939698803c515d8\nbranch refs/heads/codex/terminal-live-census-root-20261011\n\nworktree /tmp/ir-release-lift-rpi-20261002\nHEAD 275873929482a36a52891e9aa8ae83f242c92a21\ndetached\nlocked Active repository proof-index release; preserve working tree"
+    },
+    "source": {
+      "baseline": "4af461728329cdad4bfb910ab878d016ce279e54",
+      "foreign_uncommitted_bytes_not_inspected": true,
+      "new_or_changed_remote_refs": [
+        "refs/heads/codex/legal-structured-training-20261011-01",
+        "refs/heads/main"
+      ],
+      "prior_selected_represented": 21,
+      "remote_heads_observed": {
+        "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+        "refs/heads/agent/contextual-legal-runtime-20261006": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+        "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+        "refs/heads/agent/normative-cache-input-datasets-20261007": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+        "refs/heads/agent/normative-decoder-runtime-datasets-20261007": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+        "refs/heads/codex/autoencoder-owner-integration-20261007-01": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+        "refs/heads/codex/ir-publication-main-integration-20261004": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+        "refs/heads/codex/legal-cross-agent-guards-20261006": "575a129f19068d58d66cc8119e85c3d23faa560a",
+        "refs/heads/codex/legal-decoder-followup-20261006-01": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+        "refs/heads/codex/legal-decoder-progress-20261011-01": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "refs/heads/codex/legal-grouped-integration-20261006-02": "004887f6250b083e0b095d5ac7563bc5bb792491",
+        "refs/heads/codex/legal-joint-readout-20261011-01": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+        "refs/heads/codex/legal-native-cache-20261011-01": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "refs/heads/codex/legal-open-vocabulary-20261011-01": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+        "refs/heads/codex/legal-original-text-roundtrip-retained-20261004": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "refs/heads/codex/legal-scope-span-training-20261007-01": "1530efd07032bac88229c6c97ca5994d498e6216",
+        "refs/heads/codex/legal-structured-training-20261011-01": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+        "refs/heads/codex/legal-support-action-model-20261007-01": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+        "refs/heads/codex/legal-support-gate-model-20261007-01": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+        "refs/heads/codex/legal-trigger-readout-model-20261007-01": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+        "refs/heads/codex/source-v2-warm-start-20261004": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+        "refs/heads/main": "4af461728329cdad4bfb910ab878d016ce279e54",
+        "refs/heads/recovery/eaaef-023-hidden-worktree": "b8002a60177f3196d32fe7a7990d57899accad75",
+        "refs/heads/recovery/eaaef-094-child-merge-20260825": "c30ccbec997868b061c4cadac38d30468c46ea2d",
+        "refs/heads/recovery/eaaef-datasets-run-v14-aggregate": "f199a61aa431fcbca3aecff3f5749db6bfa76b54",
+        "refs/heads/recovery/plat2-060-session-20260728": "cf056bd4a19402bad0eda5931d2924901d7eae5c"
+      },
+      "selected_head_ancestry": [
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+          "sha": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": true,
+          "previously_selected": false,
+          "ref": "refs/heads/codex/legal-structured-training-20261011-01",
+          "sha": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": false,
+          "previously_selected": true,
+          "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_observed_main": true,
+          "new_or_changed_since_previous_audit": true,
+          "previously_selected": true,
+          "ref": "refs/heads/main",
+          "sha": "4af461728329cdad4bfb910ab878d016ce279e54"
+        }
+      ],
+      "worktree_metadata": "worktree /home/barberb/lift_coding/.git/modules/external/ipfs_datasets\nHEAD d5238def256d1c352793ee7d977e6b17b6d8cbee\nbranch refs/heads/main\n\nworktree /home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets\nHEAD 28c6bdb833a9e1309db4b01018e588aa427a05f4\ndetached\n\nworktree /home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003\nHEAD 64bc5734dc82db72e955f2e809b770127e9b6cfc\nbranch refs/heads/codex/alignment-decoder-768-20261003\nlocked Persistent autoformalization decoder study source references\n\nworktree /home/barberb/lift_coding/.worktrees/codebase-numerical-replay-20261003\nHEAD 7732a5808828083afb1cd19d126d987991136375\nbranch refs/heads/codex/codebase-numerical-replay-20261003\n\nworktree /home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-datasets-20261007\nHEAD 271ad796288e17039f036af6a0d003a4628da6ed\ndetached\nlocked Frozen retained decoder donor replay source; preserve exact 271ad796 and original asset bindings; ignored-payload recovery exception recorded\n\nworktree /home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002\nHEAD 3315224dfd184e24ea71bad2cb137509450deb88\ndetached\nlocked Persistent recovery of interrupted proof-index integration\n\nworktree /home/barberb/lift_coding/.worktrees/legal-original-text-roundtrip-retained-20261004\nHEAD 2b87326cb73f4f09d12aff3ccb68e0a6142a686c\nbranch refs/heads/codex/legal-original-text-roundtrip-retained-20261004\nlocked Active retained Legal384 reconstruction scorer implementation and regression; preserve until explicit root completion\n\nworktree /home/barberb/lift_coding/.worktrees/numerical-assertion-contracts-20261011\nHEAD 7286ee17f300a7d90741eb19900dd36939eb40b3\nbranch refs/heads/codex/numerical-assertion-contracts-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/numerical-structural-ir-20261011\nHEAD db432c5a93a207436f9a4279d888fddee931e390\nbranch refs/heads/codex/numerical-structural-ir-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/numerical-value-contracts-20261011\nHEAD fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52\nbranch refs/heads/codex/numerical-value-contracts-20261011\nlocked Active supervisor qualification and retained source provenance\n\nworktree /home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets\nHEAD 5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801\nbranch refs/heads/publication/main-20261004/datasets\n\nworktree /home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007\nHEAD 90c1bb382cdb66f021d32c7671943ec4c1e7eeb4\nbranch refs/heads/agent/retained-wording-checkpoint-integration-datasets-20261007\n\nworktree /home/barberb/lift_coding/.worktrees/source-unit-numerical-links-20261011\nHEAD cdae06198a229760ca139d48f9e311e80d0df8c6\nbranch refs/heads/codex/source-unit-numerical-links-20261011\nlocked Active supervisor qualification and retained source provenance\n\nworktree /home/barberb/lift_coding/.worktrees/source-v2-warm-start-20261004\nHEAD d1643c2c621f45f0ca0080e017fe6717b093e478\nbranch refs/heads/codex/source-v2-warm-start-20261004\nlocked Active saved-weight continuation implementation and review; preserve exact retained inputs\n\nworktree /home/barberb/lift_coding/.worktrees/source384-unicode-comments-20261011\nHEAD 5d5769f0b939676ef8c3f1221338a73272d6a9f8\nbranch refs/heads/codex/source384-unicode-comments-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011\nHEAD 6ff96661770c72b3a30da25dc8e527d9b6f176fc\nbranch refs/heads/agent/uscode-archive-reconciliation-datasets-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011\nHEAD a75424d120e75e6494cda7466e52797bb8129ea4\nbranch refs/heads/agent/uscode-archive-resume-datasets-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011\nHEAD 03d0dac7397bea25b3c7363ff07a7299df3dd4ad\nbranch refs/heads/agent/uscode-identity-recovery-20261011\nlocked Pending US Code identity diagnostic execution source; exact 03d0dac referenced by admitted future command; preserve until durable reviewed replacement\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007\nHEAD 569e256d8c653a243b65922603f1d7d1344e7204\nbranch refs/heads/agent/uscode-span-lossless-datasets-20261007\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011\nHEAD 6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9\nbranch refs/heads/agent/uscode-span-pages-datasets-20261011\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007\nHEAD 1c065689c9c9f129cfbb480535411b3df4b4a5c9\nbranch refs/heads/agent/uscode-span-paired-feed-datasets-20261007\n\nworktree /home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007\nHEAD 21987bb5ebc94f5cc1d316b0521b8793e8610be4\nbranch refs/heads/agent/uscode-span-source-census-datasets-20261007\n\nworktree /home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree\nHEAD 23540627b1cf6515df0fd84c9417b4cbdb91234a\nbranch refs/heads/publication/main-refresh-20261004/datasets-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets\nHEAD b4002de1e73d295e222cd7258bd07e4784a6b928\nbranch refs/heads/codex/legal-decoder-progress-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets\nHEAD 4af461728329cdad4bfb910ab878d016ce279e54\nbranch refs/heads/codex/legal-formal-output-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets\nHEAD 146e4c88fea6d0a9ab671af00e1596a9a60ea784\nbranch refs/heads/codex/legal-joint-readout-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets\nHEAD f3901341cdde9b4485315327d5ef06abd1485b11\nbranch refs/heads/codex/legal-native-cache-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets\nHEAD fe00dd1d64d0e26e0b396e40cadd094d544efd0c\nbranch refs/heads/codex/legal-open-vocabulary-20261011-01\n\nworktree /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets\nHEAD 7c90b27d9fd193e768e8ecdca0bb5055145f1b78\nbranch refs/heads/codex/legal-structured-training-20261011-01\n\nworktree /home/barberb/lift_coding_worktrees/indexed-worker-context-datasets-20261011\nHEAD d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234\ndetached\n\nworktree /tmp/ir-release-datasets-20261001\nHEAD bde8a6af7dc1cb249c76ad777c86a8e79854dca8\ndetached\nlocked Active dirty-source staging implementation and qualification; preserve working tree"
+    }
+  },
+  "schema": "legal-formal-output-main-progress-review/v1",
+  "scope": "Prior selected heads plus new/changed matching autoformalization remote branches; preserve prior distinct recovery histories without wholesale merge"
+}

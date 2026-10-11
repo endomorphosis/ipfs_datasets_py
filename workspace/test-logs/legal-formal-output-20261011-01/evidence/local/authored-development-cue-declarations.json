@@ -1,0 +1,48 @@
+{
+  "reviewer_authentication": false,
+  "role": "Caller-supplied interpretation hypothesis only",
+  "rows": [
+    {
+      "end_char": 70,
+      "id": "native-tuning-begonia-t0-q0-o",
+      "modality_span": {
+        "canonical_value": "O",
+        "end_char": 23,
+        "source_text": "shall",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-o",
+      "scope": "explicit DEVELOPMENT caller declaration, not reviewed legal meaning",
+      "start_char": 0
+    },
+    {
+      "end_char": 68,
+      "id": "native-tuning-begonia-t0-q0-p",
+      "modality_span": {
+        "canonical_value": "P",
+        "end_char": 21,
+        "source_text": "may",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-p",
+      "scope": "explicit DEVELOPMENT caller declaration, not reviewed legal meaning",
+      "start_char": 0
+    },
+    {
+      "end_char": 74,
+      "id": "native-tuning-begonia-t0-q0-f",
+      "modality_span": {
+        "canonical_value": "F",
+        "end_char": 27,
+        "source_text": "shall not",
+        "start_char": 18
+      },
+      "occurrence_id": "development-native-tuning-begonia-t0-q0-f",
+      "scope": "explicit DEVELOPMENT caller declaration, not reviewed legal meaning",
+      "start_char": 0
+    }
+  ],
+  "schema": "explicit-development-cue-declarations/v1",
+  "source_semantics_verified": false,
+  "training_or_evaluation_admission": false
+}

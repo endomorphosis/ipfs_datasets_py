@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+_ ERROR collecting artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py _
+ImportError while importing test module '/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py:14: in <module>
+    from tests.unit.logic.autoformal.test_legal_source_family_lake import request
+E   ModuleNotFoundError: No module named 'tests.unit.logic.autoformal'
+=========================== short test summary info ============================
+ERROR tests/unit/logic/autoformal/test_legal_source_family_bridge_independent.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.34s

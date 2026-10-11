@@ -1,0 +1,312 @@
+{
+  "ipfs_datasets_py.logic": {
+    "bytes": 4434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/__init__.py",
+    "sha256": "f25a9702ddc282092dbae1bc1731afdcc35576c10745487dccedaa531ccc9e79"
+  },
+  "ipfs_datasets_py.logic.CEC": {
+    "bytes": 3407,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/__init__.py",
+    "sha256": "8f4f1468b80c29eb7f6af4c02907adccc6bad5df1c7f22de5be7731a52b04b6b"
+  },
+  "ipfs_datasets_py.logic.CEC.native": {
+    "bytes": 7228,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/__init__.py",
+    "sha256": "7c467c25a9abdc899a46266ed21582443dbd412fb07acf129d5fb34a90be9dc6"
+  },
+  "ipfs_datasets_py.logic.CEC.native.dcec_cleaning": {
+    "bytes": 9131,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py",
+    "sha256": "06517ecd30e4889d2a54db6732279e61a53945906860ef66378b5d707cca04b0"
+  },
+  "ipfs_datasets_py.logic.CEC.native.dcec_core": {
+    "bytes": 57189,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_core.py",
+    "sha256": "bb977f411605fc1f0715ed23c988102d55fa012029053c21c8fc5b14aea17e14"
+  },
+  "ipfs_datasets_py.logic.CEC.native.dcec_integration": {
+    "bytes": 18642,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_integration.py",
+    "sha256": "f039af934dba224d6c4984e8840fd8a4de00fe5e69837b0678d1d670dc26ac82"
+  },
+  "ipfs_datasets_py.logic.CEC.native.dcec_parsing": {
+    "bytes": 14204,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_parsing.py",
+    "sha256": "2756e3c94acf902579bfc54d469e01ddd25b72f53d177b88921829d71df7da70"
+  },
+  "ipfs_datasets_py.logic.CEC.native.dcec_prototypes": {
+    "bytes": 15038,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/dcec_prototypes.py",
+    "sha256": "0e0b231ed68c39054cfd2fd674780cb736fd258cde7570881cb3a41cb5d2680e"
+  },
+  "ipfs_datasets_py.logic.CEC.native.exceptions": {
+    "bytes": 10095,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/CEC/native/exceptions.py",
+    "sha256": "cbbbafacf70d1c7355d7c930f48c5f71fc711765aa4789a817e5c229c8e60622"
+  },
+  "ipfs_datasets_py.logic.TDFOL": {
+    "bytes": 11004,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/__init__.py",
+    "sha256": "42c252ba4fb85301b649bc3afe497a2799d27460b9556e57c7398b5441ba13e8"
+  },
+  "ipfs_datasets_py.logic.TDFOL.compiler_repairs": {
+    "bytes": 3636,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/compiler_repairs.py",
+    "sha256": "c0306a55184bc6baabf7528bf7a255604ff8c49d2c510afde13eae2e8108ff88"
+  },
+  "ipfs_datasets_py.logic.TDFOL.tdfol_core": {
+    "bytes": 28721,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_core.py",
+    "sha256": "67be350d1fb0422a64ab040349b2d51c4008fbeeb8b59a99b8901d681d7d71c7"
+  },
+  "ipfs_datasets_py.logic.TDFOL.tdfol_parser": {
+    "bytes": 29788,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/TDFOL/tdfol_parser.py",
+    "sha256": "8e1f8885be6dc2a7d692ecdf0364ccc4d01692c38c81137775d9d222d8b8d9d3"
+  },
+  "ipfs_datasets_py.logic.autoformal": {
+    "bytes": 52609,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/__init__.py",
+    "sha256": "9fe9ca06f142b1af8a2bd5d5a89bd38ac79c1ac7f01a476a63160bb8c5b7bd03"
+  },
+  "ipfs_datasets_py.logic.autoformal.family_qualification": {
+    "bytes": 37698,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/family_qualification.py",
+    "sha256": "4db56c904cce8a030e5889b5d14687f01e9348842093480dd699649ad96dc1a8"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_canonical_calendar": {
+    "bytes": 16905,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+    "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_canonical_qualified": {
+    "bytes": 19295,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+    "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_family_routes": {
+    "bytes": 7838,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+    "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_pilot_lake": {
+    "bytes": 15230,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_pilot_lake.py",
+    "sha256": "a97d3392af57631fa3105947ab5df3bb8380fe46e45fef556210b8318aff6b6a"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_source_family_bridge": {
+    "bytes": 21178,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+    "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+  },
+  "ipfs_datasets_py.logic.autoformal.legal_source_family_lake": {
+    "bytes": 11880,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+    "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+  },
+  "ipfs_datasets_py.logic.autoformal.tree_pin": {
+    "bytes": 1948,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/tree_pin.py",
+    "sha256": "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+  },
+  "ipfs_datasets_py.logic.backends.process": {
+    "bytes": 78154,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/process.py",
+    "sha256": "39774ae277fbac649d9bec2ddd4f112c18c8a5617b105578847f42ac29d583f2"
+  },
+  "ipfs_datasets_py.logic.backends.results": {
+    "bytes": 27160,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/backends/results.py",
+    "sha256": "afda793472d3a6ba13f20bee13a992bfce68177388bdf338548157a5aa201458"
+  },
+  "ipfs_datasets_py.logic.families.models": {
+    "bytes": 36277,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/families/models.py",
+    "sha256": "1a92305ef498812e3757147179907d4ddf4a4518371034fc2363922d5d5fed3f"
+  },
+  "ipfs_datasets_py.logic.families.registry": {
+    "bytes": 51399,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/families/registry.py",
+    "sha256": "669c4d90dbbac1014bd3dced401027be0391d304477b904f9da04d5a2d6c0450"
+  },
+  "ipfs_datasets_py.logic.formalization": {
+    "bytes": 2073,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/__init__.py",
+    "sha256": "91c60c1dfbf9038b8271ae6b1495dbbaf0be8d6ce438524c33f4f7a586f17266"
+  },
+  "ipfs_datasets_py.logic.formalization.autoencoder": {
+    "bytes": 97,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/__init__.py",
+    "sha256": "82206d6ca08b8626b2afd37534679ac3ea001005f934ed211aa0f1f4eb81f073"
+  },
+  "ipfs_datasets_py.logic.formalization.autoencoder.native_family_lean_emitters": {
+    "bytes": 29000,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_family_lean_emitters.py",
+    "sha256": "6da3dc9981ad7eb805894be5a0822f1ae2cae3572b80d73a7eb691250fe5c1fe"
+  },
+  "ipfs_datasets_py.logic.formalization.autoencoder.native_legal_qualified_lean": {
+    "bytes": 16858,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+    "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+  },
+  "ipfs_datasets_py.logic.formalization.autoencoder.native_qualified_lean": {
+    "bytes": 18936,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+    "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408"
+  },
+  "ipfs_datasets_py.logic.intent_ir": {
+    "bytes": 2386,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/__init__.py",
+    "sha256": "acf68a7215af95b4a7d4e4dc883cb7577e2129e7bbadf49c1fc2c404848bc641"
+  },
+  "ipfs_datasets_py.logic.intent_ir.autoencoder": {
+    "bytes": 1006,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/autoencoder.py",
+    "sha256": "ff944970bd24db83b6851fe4b84db62fe00128ed6ee0019c17cd941f2feb2e91"
+  },
+  "ipfs_datasets_py.logic.intent_ir.canonicalize": {
+    "bytes": 1495,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/canonicalize.py",
+    "sha256": "3609047cc8c99437d77461b4f7ea0e05d193a31bf0d20a7e80b7b0c10a8cff87"
+  },
+  "ipfs_datasets_py.logic.intent_ir.decoder": {
+    "bytes": 24220,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/decoder.py",
+    "sha256": "7bab5781c07e00b54b0283d3a2962926f75935caedc80eceb23264cb388be257"
+  },
+  "ipfs_datasets_py.logic.intent_ir.formalize.modal_projections": {
+    "bytes": 22238,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/formalize/modal_projections.py",
+    "sha256": "7337b9266ed4f171ec7ee763828f8b637bf57930d8b89fa0d47139650996a14d"
+  },
+  "ipfs_datasets_py.logic.intent_ir.protocols": {
+    "bytes": 1693,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/protocols.py",
+    "sha256": "adb0ae8eaf2e55bf587ac76baa90d8303b61e0df246c03c30b56cb31a9643780"
+  },
+  "ipfs_datasets_py.logic.intent_ir.schema": {
+    "bytes": 27163,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/intent_ir/schema.py",
+    "sha256": "93d38e4724c5f34aab7f39f050742e98ef0c8d80e2ff70459d2401541505fc56"
+  },
+  "ipfs_datasets_py.logic.ir_core": {
+    "bytes": 6942,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/__init__.py",
+    "sha256": "4c0070482e009dd7cb9875e91124d48683da37d53f691cccb306ec50f23c946c"
+  },
+  "ipfs_datasets_py.logic.ir_core.canonical": {
+    "bytes": 14098,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/canonical.py",
+    "sha256": "339b5778581c19525a7685edf432aaf124cd12e02d37cd0eca88cb25ab86c0d0"
+  },
+  "ipfs_datasets_py.logic.ir_core.claims": {
+    "bytes": 16176,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/claims.py",
+    "sha256": "282cdd3a6ba18a90079886337d360bae44da172748faa3ad2715d2071070de3b"
+  },
+  "ipfs_datasets_py.logic.ir_core.protocols": {
+    "bytes": 57414,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/protocols.py",
+    "sha256": "b452a7095a2524f0ea3f4e4f3a395643d3257cd6f42e3c77f8e1817df62f6fed"
+  },
+  "ipfs_datasets_py.logic.ir_core.provenance": {
+    "bytes": 31891,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/provenance.py",
+    "sha256": "16eaf7c258550e5625bc19e6e7468c94133aedd1e85e64075f057ab4e52c3efe"
+  },
+  "ipfs_datasets_py.logic.ir_core.schema_registry": {
+    "bytes": 31823,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/ir_core/schema_registry.py",
+    "sha256": "1b214ea190a41c6a451377a03bc71ea84f6703314293ef78c5f269082eee4fbe"
+  },
+  "ipfs_datasets_py.logic.legal_ir": {
+    "bytes": 2708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/__init__.py",
+    "sha256": "53ce51e56a292ea3210010fa17b352e9d40eb5b59cf15c5e732147000b40fee1"
+  },
+  "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+    "bytes": 109257,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+    "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+  },
+  "ipfs_datasets_py.logic.legal_ir.joint_span_selection": {
+    "bytes": 16730,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+    "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+  },
+  "ipfs_datasets_py.logic.legal_ir.statutory_review_recording": {
+    "bytes": 34663,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+    "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+  },
+  "ipfs_datasets_py.logic.legal_ir.statutory_source_review": {
+    "bytes": 42670,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+    "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+  },
+  "ipfs_datasets_py.logic.legal_ir.typed_adapter": {
+    "bytes": 66185,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+    "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer": {
+    "bytes": 69336,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+    "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest": {
+    "bytes": 27947,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+    "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool": {
+    "bytes": 7896,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+    "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker": {
+    "bytes": 100140,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+    "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+    "bytes": 14622,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+    "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+    "bytes": 42137,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+    "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+    "bytes": 146870,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+    "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+    "bytes": 35294,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+    "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer": {
+    "bytes": 21228,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+    "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+  },
+  "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+    "bytes": 38995,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+    "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+  },
+  "ipfs_datasets_py.utils": {
+    "bytes": 175,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/__init__.py",
+    "sha256": "78f4cd7f8e14b4fff482c0c91ada5c49f8b9edf707bffd9cd58840b5503e66c2"
+  },
+  "ipfs_datasets_py.utils.cid_utils": {
+    "bytes": 4428,
+    "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+    "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+  }
+}

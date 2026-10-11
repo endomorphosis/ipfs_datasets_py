@@ -1,0 +1,45 @@
+{
+  "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+  "interpretation": {
+    "activation_scope": null,
+    "candidate_sha256": "bc0af2da184739c18d96bcf0454e6e6e987841b80bb6f30c4e040c2aec26c06a",
+    "canonical_ir_sha256": "76ccfeae58f75be0c778ea3e4b83dfc8ab3cdb5673a881ef57c9c6f424f3aa47",
+    "declaration_scope": "caller_supplied_interpretation_not_source_translation",
+    "exception_scope": null,
+    "modal_context": null,
+    "profile": "ground-null-context/v1",
+    "rules": [
+      {
+        "conditions": [
+          {
+            "expression": null,
+            "literal": "The word \"county\" includes a parish"
+          }
+        ],
+        "exceptions": [
+          {
+            "expression": null,
+            "literal": "the United States"
+          }
+        ],
+        "rule_index": 0
+      }
+    ],
+    "schema": "legal-source-family-interpretation/v1",
+    "source_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+  },
+  "occurrence": {
+    "end_char": null,
+    "modality_anchor": {
+      "canonical_value": "P",
+      "end_char": null,
+      "source_text": null,
+      "start_char": null
+    },
+    "occurrence_id": null,
+    "source_text": null,
+    "start_char": null
+  },
+  "packet_sha256": "d9d7ed72dfc23bccb4350f88632ec2c7c78e6cb8d67de62bfadd6e0553e9c4b6",
+  "schema": "saved-span-family-declaration/v1"
+}

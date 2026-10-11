@@ -1,0 +1,301 @@
+{
+  "api": {
+    "declaration_skeleton": "Unfilled calleroccurrence/cue/scopes/typedqualifierexpression placeholders",
+    "prepare_family": "Explicit complete callerdeclaration, exactpacketSHA, sealedfamily deontic only; existing native AST/parser roundtrip/generated Lean and unchanged canonicalIR",
+    "prepare_pending": "Fullsource+rawreport, contentreportSHA, externalcheckpointSHA, selectedrowID; optional fullpairedjointreport/contentSHA",
+    "validate_family": "Regenerate exactnativeoutput including AST/interpretation/sourcebindings/Lean",
+    "validate_pending": "Closed packet contentSHA plus authoritative wholepacket regeneration"
+  },
+  "authored_literal_cases": 79,
+  "build_pin_transcription_note": "Root freeze message had stray trailing0444; reviewer measured and bound correct64hex digest5bc2046d9e55b3bd479e17b8e646ed0d2bf15b9f61b5f35158f9c7cd9e06bfbc.",
+  "created_at_utc": "2026-10-11T18:18:58.323301+00:00",
+  "findings": [],
+  "limitations": [
+    "Artifact consistency is not report/model/decoder/weight/source/reviewer authentication or legaltruth. External originalfilepins and priorcheckpointcustody required; callerprovidedSHA alone authenticates nothing.",
+    "Every original rowmetadata binding checked and fullreport retained, but sourcetext and savedhead/jointdecision replay apply only to selectedrow. One request does not replay all96 unknownsourcebodies.",
+    "ScoresNone TUNEreport permits source/geometry/modality diagnostic consistency only; absentpresence/pointerheads cannot be reconstructed/authenticated. saved_head_replay_performedfalse is preserved.",
+    "Joint envelope has no owncheckpoint/control fields; deterministic equalheads/results do not provehistoricalfileorigin. Externalraw/joint artifactpairing required.",
+    "Optionalphysical/context coordinates are callerdeclared lengths, not sourcearchive/fullcontext custody. Resultbinds pendingpacket, not contextresolution.",
+    "Calleroccurrence may be source subinterval containing all learnedfacets+cue; no exhaustive statutecoverage or legallycorrectattachment claim.",
+    "One rule, at most one copiedqualifier per facet, groundnullcontext only. No broaderTDFOL/DCEC/temporal/event/deadline or8D/768D promotion.",
+    "GeneratedLean is prepared only; nativeparse/fullAST inversion and actual build distinct. No lake execution, kernel/proof authority or semanticgold/admission.",
+    "79 authored cases staticallyreviewed, not executed by this reviewer. Rootreports actualinert outcomes/harnesschanges separately.",
+    "Endpointbytes verified, not continuous/atomic foreignsource custody."
+  ],
+  "meaningful_test_control_groups": [
+    "6 O/P/Fxcapture native spines+authorityfalse+inputimmutability.",
+    "Full96report selectsposition95 and alteredunselectedID changeswholecontenthash.",
+    "Unicodechar/UTF8 and declaredphysicalcoordinates separate; repeatedactor/objectsurfaces retain distinct actualoffsets.",
+    "Blankcue/occurrence/scope refuses; absentobject produces unary atom; punctuationcue intentionally remains uninterpreted callerhypothesis.",
+    "Temporal facet refuses and preservesreport; completeconditionexpression creates implication outside norm.",
+    "20raw mutations: duplicate/order/boolean/extras/target/checkpoint/lineage/source/latent/donor/capture/forwardcount/objective/progress/display/formalpayload/authority/geometry/tokens/presence.",
+    "10declaration mutations: cueempty/overlap/value, booleanoffset, truncated/wrongtext/id/packet, guessedcontext and extra goldfield.",
+    "7unsupportedsealedfamily/parser/operation labels refused.",
+    "Refusedrawoverlap parent preserved while separatejointselected;8 jointmutations: ID/IR/score/search/policy/coverage/extrafield/nocapture.",
+    "6pending+5native substitutions rejected by regenerated output despite repairedpublicdigests.",
+    "FilesHA/contentSHA distinction; duplicate/NaN/Infinity/1e999/invalidUTF8;6source/physical mutations and distinctpacket/report budget.",
+    "Fresh childPython numericimport denial exercises pure pending path; root harness must allow only declared inertchild or record harnessrefusal."
+  ],
+  "next_separate_review": "Preparationhelper/bootstrap and native executionprotocol need exactfrozen review; this receipt is not an execution outcome.",
+  "passed": true,
+  "review_execution": {
+    "compiler_executed": false,
+    "model_forwards": 0,
+    "model_or_numerical_backend_imports": false,
+    "network_executed": false,
+    "optimizer_updates": 0,
+    "owner_modules_imported": false,
+    "read_only_git_and_stdlib_saved_json": true,
+    "resource_claims_or_mutations": false,
+    "source_or_git_mutations": false,
+    "tests_executed": false
+  },
+  "reviewed_pins": {
+    "build_receipt": {
+      "bytes": 6531,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/saved-span-family-adapter-build-v01.json",
+      "sha256": "5bc2046d9e55b3bd479e17b8e646ed0d2bf15b9f61b5f35158f9c7cd9e06bfbc"
+    },
+    "source": {
+      "bytes": 36925,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "tests": {
+      "bytes": 25441,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/tests/unit/logic/legal_ir/test_saved_span_family_adapter.py",
+      "sha256": "a42d862008f3ad6e6cc13b9a6aa21bd273a78677abc26bd9d920c13b809a9451"
+    }
+  },
+  "reviewer_task": "/root/structured_training_design_20261011",
+  "saved_report_scope_pins": [
+    {
+      "bytes": 874913,
+      "canonical_content_bytes": 481668,
+      "canonical_content_sha256_ensure_ascii_false": "3ef63e3d494b1bc8e52e1842a523283955a96a1eaa1cd440a037164bf15f1ad4",
+      "checkpoint_owner_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+      "control": "none",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+      "row_count": 96,
+      "same_forward_scores": false,
+      "schema": "objective-resumed-source-span-inference/v1",
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    },
+    {
+      "bytes": 274731,
+      "canonical_content_bytes": 143950,
+      "canonical_content_sha256_ensure_ascii_false": "67e41c50af80b7c97d83b5dc803bba86ae25fa7ea22399dd658f0a645e7bc724",
+      "checkpoint_owner_sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630",
+      "control": "none",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none.json",
+      "row_count": 8,
+      "same_forward_scores": true,
+      "schema": "objective-resumed-source-span-inference/v1",
+      "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+    },
+    {
+      "bytes": 103504,
+      "canonical_content_bytes": 65032,
+      "canonical_content_sha256_ensure_ascii_false": "beff34f5be259b01dfdad6b66e8361ea0fd8140f60e84113ee49d4c06d5e6416",
+      "checkpoint_owner_sha256": null,
+      "control": null,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none-joint.json",
+      "row_count": 8,
+      "same_forward_scores": null,
+      "schema": "structured-span-exposed-law-joint-diagnostic/v1",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    }
+  ],
+  "schema": "saved-span-family-adapter-independent-static-review/v1",
+  "scope": "Frozen adapter/test/build receipt plus retained reuse owner and actual saved-report byte metadata. Static source/AST/Git/stdlb reads only; no runtime/model/nativecompiler success asserted.",
+  "static_checks": [
+    {
+      "check": "digest_scope_distinction",
+      "evidence": "Module digest is UTF8 sorted compact ensure_ascii=False canonical content, never pretty-file SHA. Expected checkpoint identity is externally supplied in original checkpoint owner convention; adapter does not recompute checkpoint identity, restore state or authenticate provenance.",
+      "passed": true
+    },
+    {
+      "check": "closed_full_report_transport",
+      "evidence": "Raw schema/lineage/objective/progress and false runtime/authority/target assertions checked across every row; unique IDs, exact positions, row/decoder source+latent hashes, donor/control joins and declared forward count. Original full96 report and refusals detached without truncation.",
+      "passed": true
+    },
+    {
+      "check": "selected_source_and_geometry",
+      "evidence": "Selected exactID+fullsourceSHA join. Retained full tokenization matches six facet exact token/character slices, original one-rule canonicalIR, requiredactor/action, nullabsentfields, exactqualifierlists and no copied-token overlap. UTF8 offsets derived from sourcecharacters; repeated surfaces never located by first-text lookup.",
+      "passed": true
+    },
+    {
+      "check": "saved_head_and_joint_replay",
+      "evidence": "Selected captured heads validated as exact float32 values and exact complete tokenization, then greedy status/reason/canonicalIR/partialfacets/headvalues/margins/geometry replay. Joint requires captured same-forward scores, complete ordered paired envelope, matching source/profile and false authority; selected result regenerated byte-exact at fixedtopK/searchbudget. Separate lane, never rawrepair.",
+      "passed": true
+    },
+    {
+      "check": "binding_and_resealing",
+      "evidence": "CandidateID includes sourceID/checkpoint/control/lane; binding retains position/row/selected/fullreport digests. validate_pending and validate_family regenerate all derived fields, so repaired public digests do not bless changed geometry/IR/declaration/AST/Lean/authority.",
+      "passed": true
+    },
+    {
+      "check": "caller_declaration_boundary",
+      "evidence": "Occurrence/cue interval and literal must be explicitly filled, fit calleroccurrence, equal learned canonicalmodality and avoid learnedfacetoverlap. Every learnedfacet fits occurrence. Existing bridge validates complete typedqualifierexpressions and activation/exceptionscopes. No regexcueguess/textsearch/normalization/repair/contextcompletion.",
+      "passed": true
+    },
+    {
+      "check": "family_profile_boundary",
+      "evidence": "Only sealeddeontic route with emptyprofile joins existing deontic_fol ground-null-context parser. TDFOL registeredtemporal_first_order mismatch, DCEC/event_calculus compositiongap, parser aliases and operationlabels refused. Temporal facets and recognizedtemporalliterals hidden in conditions/exceptions refused by unchanged bridge without dropping facet.",
+      "passed": true
+    },
+    {
+      "check": "authority_and_admission",
+      "evidence": "All pending/native FALSEfields remain false: qualified/admitted/formalized/proof/source_semantics/reviewer/semantic_gold/training/model/encoder/Lake/family/context/target. native_syntax_checked and lean_source_prepared are narrow mechanical facts. No targets/masks/admission/build/proof/fidelity promoted.",
+      "passed": true
+    },
+    {
+      "check": "bounds_and_strict_transport",
+      "evidence": "16MiB percanonicalreport,32MiB canonicalpacket,32KiB sourceUTF8,1..128 reportrows; retainedtokenizer refuses >16384characters/>256tokens/>2048tokenbytes. No truncation. Existingjoint topK<=16/searchnodes<=50000. Byteparser rejects duplicate/nonfinite constants/invalidUTF8 and overflow-to-Infinity via finiteJSONserializer.",
+      "passed": true
+    },
+    {
+      "check": "lazy_pure_imports",
+      "evidence": "Top-level stdlib imports only. _owners imports existing pure bridge/typedadapter/selector and tokenizer/codec paths without modelconstruction. Source contains no explicit open/read/state restore/model/forward/fit/backend subprocess calls.",
+      "passed": true
+    },
+    {
+      "check": "unchanged_reuse_owner_custody",
+      "evidence": "All six build-listed reuse owners match finalfilepins and committed4af baseline Git objectbytes.",
+      "passed": true
+    },
+    {
+      "check": "meaningful_authored_controls",
+      "evidence": "Independent AST count19functions/79literalparametercases; native spine/falseauthority, exactsecondoccurrence, Unicodeoffsets, unaryabsentobject, meaninglesspunctuationcue showing no semantic heuristic, explicitqualifierguard, refusedraw+separatejoint, mutation/resealing/parser/budget controls statically reviewed. No runtime claims.",
+      "passed": true
+    }
+  ],
+  "test_functions": 19,
+  "test_inventory": [
+    {
+      "function": "test_declared_saved_proposal_emits_real_native_spine_without_authority",
+      "literal_parameter_case_count": 6
+    },
+    {
+      "function": "test_full_96_row_report_is_bound_without_truncation_or_source_aliasing",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_unicode_geometry_and_declared_physical_identity_do_not_imply_context_custody",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_repeated_surface_preserves_actual_occurrence_not_first_text_match",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_pending_declarations_leave_cue_and_meaning_unassigned",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_no_object_is_unary_and_no_modality_surface_meaning_is_inferred",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_temporal_profile_is_refused_without_dropping_the_copied_facet",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_qualifier_expression_requires_explicit_declaration_and_preserves_scope",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_malformed_or_inconsistent_raw_transport_is_rejected_even_with_repaired_digest",
+      "literal_parameter_case_count": 20
+    },
+    {
+      "function": "test_caller_declaration_cannot_invent_or_cross_attach_bindings",
+      "literal_parameter_case_count": 10
+    },
+    {
+      "function": "test_family_labels_cannot_invent_unsupported_profile_or_composition",
+      "literal_parameter_case_count": 7
+    },
+    {
+      "function": "test_joint_replay_preserves_separate_readout_and_refused_raw_parent",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_joint_attachment_requires_exact_saved_score_replay",
+      "literal_parameter_case_count": 8
+    },
+    {
+      "function": "test_pending_replay_rejects_derived_tampering_with_repaired_digest",
+      "literal_parameter_case_count": 6
+    },
+    {
+      "function": "test_native_output_replay_rejects_substitution",
+      "literal_parameter_case_count": 5
+    },
+    {
+      "function": "test_strict_transport_distinguishes_file_sha_and_supports_packet_bound",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_source_and_declared_physical_aliases_fail_closed",
+      "literal_parameter_case_count": 6
+    },
+    {
+      "function": "test_report_and_packet_limits_are_separate",
+      "literal_parameter_case_count": 1
+    },
+    {
+      "function": "test_import_and_pure_transport_have_no_numerical_imports",
+      "literal_parameter_case_count": 1
+    }
+  ],
+  "tests_executed_by_reviewer": 0,
+  "top_level_imports": [
+    "__future__",
+    "copy",
+    "hashlib",
+    "importlib",
+    "json",
+    "math",
+    "re"
+  ],
+  "unchanged_reuse_baseline": "4af461728329cdad4bfb910ab878d016ce279e54",
+  "unchanged_reuse_owner_pins": [
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 7838,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_family_routes.py",
+      "sha256": "5e997e84596c1875d0140573b33a08ff9c12902b003ed3669e1f7bf51aee7c2d"
+    },
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 21178,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212"
+    },
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 11880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/autoformal/legal_source_family_lake.py",
+      "sha256": "8658477c4ec1c7f76c2def3ca226eab7600d0d380a3ef873434ba8c6464a8c94"
+    },
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 66185,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/typed_adapter.py",
+      "sha256": "80204883247be10831b6d2c3f831336a80bab2a00f427f6dc35f363edd96fbb2"
+    },
+    {
+      "baseline_git_object_bytes_match": true,
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-formal-output-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  ]
+}
