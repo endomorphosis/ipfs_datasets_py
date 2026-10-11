@@ -140,3 +140,92 @@ def test_malformed_candidates_fail_open(value):
 def test_source_resource_bound():
     report = binding.qualify_source_candidate("x" * (binding.MAX_SOURCE_BYTES + 1), candidate())
     assert report["reason"] == "source_size_bound"
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
+@pytest.mark.parametrize("temporary", [False, True])
+def test_unicode_comments_preserve_independent_exact_byte_spans(newline, temporary):
+    # U+2028 stays inside the comment: Python does not recognize it as a line
+    # ending. Astral and multibyte text exercise byte vs character coordinates.
+    text = "# café λ 😀\u2028still the same comment\n" + source(temporary=temporary)
+    text = text.replace(":\n", ":  # entrée\n").replace(
+        "capacity < threshold\n", "capacity < threshold  # résultat ≥ 0\n")
+    text = text.replace("\n", newline)
+    raw = text.encode("utf-8")
+    report = binding.qualify_source_candidate(text, candidate())
+    assert report["qualified"], report
+    program = ProgramIR.from_dict(report["projections"][0]["native_document"])
+    spans = {row.span_id: row for row in program.spans}
+    expressions = {row.expression_id: row for row in program.expressions}
+    references = report["source_binding"]["expression_references"]
+    expected_start = raw.index(b"capacity < threshold")
+    for key, expected_bytes, start in [
+        ("expr:result", b"capacity < threshold", expected_start),
+        ("expr:capacity", b"capacity", expected_start),
+        ("expr:threshold", b"threshold", expected_start + len(b"capacity < ")),
+    ]:
+        span, = (spans[key] for key in expressions[references[key]].span_ids)
+        assert (span.start_byte, span.end_byte) == (start, start + len(expected_bytes))
+        assert raw[span.start_byte:span.end_byte] == expected_bytes
+    for command in program.commands:
+        expected_bytes = (b"temporary = capacity < threshold" if command.kind.value == "assign"
+                          else b"return temporary" if temporary else b"return capacity < threshold")
+        span, = (spans[key] for key in command.span_ids)
+        start = raw.index(expected_bytes)
+        assert (span.start_byte, span.end_byte) == (start, start + len(expected_bytes))
+        assert raw[span.start_byte:span.end_byte] == expected_bytes
+    assert report["source_sha256"] == hashlib.sha256(raw).hexdigest()
+    for span in report["source_binding"]["spans"]:
+        expected = raw[span["start_byte"]:span["end_byte"]]
+        assert span["sha256"] == hashlib.sha256(expected).hexdigest()
+    assert binding.verify_source_qualification(report, text, candidate()) == report
+    assert all(report[key] is False for key in binding._AUTHORITY)
+    with pytest.raises(ValueError, match="exact replay"):
+        binding.verify_source_qualification(report, text.replace("café", "cafe"), candidate())
+
+
+def test_comment_inside_multiline_expression_does_not_change_grammar():
+    text = source().replace("capacity < threshold", "(capacity  # λ\n        < threshold)")
+    report = binding.qualify_source_candidate(text, candidate())
+    assert report["qualified"], report
+    program = ProgramIR.from_dict(report["projections"][0]["native_document"])
+    key = report["source_binding"]["expression_references"]["expr:result"]
+    expression = next(row for row in program.expressions if row.expression_id == key)
+    span = next(row for row in program.spans if row.span_id == expression.span_ids[0])
+    raw = text.encode("utf-8")
+    assert raw[span.start_byte:span.end_byte] == b"capacity  # \xce\xbb\n        < threshold"
+
+
+@pytest.mark.parametrize("text", [
+    source().replace("assess", "ａｓｓｅｓｓ"),  # Python NFKC normalizes to ASCII.
+    source().replace("capacity", "ｃａｐａｃｉｔｙ"),
+    source().replace("threshold", "seuilé"),
+    source().replace("< threshold", "<\u00a0threshold"),
+    source().replace("return capacity < threshold", 'return "# λ"'),
+    source().replace("return capacity < threshold", 'return """# λ\n# still a string"""'),
+    source() + "# forbidden control \x00\n",
+    source() + "# forbidden control \x0c\n",
+    source() + "# forbidden control \x7f\n",
+])
+def test_unicode_is_permitted_only_in_comments(text):
+    report = binding.qualify_source_candidate(text, candidate())
+    assert report["status"] == "unsupported" and report["reason"] == "source_encoding_unsupported"
+    assert not report["qualified"] and not report["projections"]
+
+
+def test_native_character_offset_drift_is_rejected_for_unicode_comment(monkeypatch):
+    from dataclasses import replace
+    native = binding.adapt_source_to_software_verification
+
+    def incorrect_character_offsets(*args, **kwargs):
+        result = native(*args, **kwargs)
+        # The prefix has one extra UTF-8 byte. Recreate the old character-offset
+        # error in the native adapter; the independent AST binding must abstain.
+        spans = tuple(replace(span, start_byte=span.start_byte - 1, end_byte=span.end_byte - 1)
+                      for span in result.program.spans)
+        return replace(result, program=replace(result.program, spans=spans, program_id=""))
+
+    monkeypatch.setattr(binding, "adapt_source_to_software_verification", incorrect_character_offsets)
+    report = binding.qualify_source_candidate("# é\n" + source(), candidate())
+    assert report["status"] == "unsupported" and report["reason"] == "native_source_span_changed"
+    assert not report["qualified"] and not report["projections"]
