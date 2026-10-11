@@ -142,3 +142,16 @@ source-cache comparison. All 41 new files were downloaded and byte verified;
 all 3,167 previous file metadata identities were preserved at immutable
 revisions. Downloaded numerical replay was not performed. The source evidence
 keeps the publication receipts rather than checkpoint bytes.
+
+## Portable test revalidation
+
+After the frozen comparison, the constant/recipe test was changed to require the
+committed review receipt. Its previous optional lookup in the local experiment
+directory silently skipped receipt assertions when that file was absent. The
+original test bytes remain in `portability-extension`, with their admitted SHA
+and original-path mapping; historical protocol and test receipts still describe
+that original body. All 146 other admitted artifact bindings remain unchanged
+at the post-correction endpoint. The corrected suite passes all 294 inert tests
+from the isolated repository root. Both incorrect test invocations and the
+passing run are retained separately. Decoder runtime and model bytes did not
+change, and the frozen numerical comparison was not repeated.

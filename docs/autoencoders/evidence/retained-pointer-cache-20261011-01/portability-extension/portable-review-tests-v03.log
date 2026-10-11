@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 294 items
+
+tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py . [  0%]
+........................................................................ [ 24%]
+.....                                                                    [ 26%]
+tests/unit/logic/formalization/autoencoder/test_arbitrary_native_source_cache.py . [ 26%]
+..................................                                       [ 38%]
+tests/unit/logic/legal_ir/test_canonical_span_decoder.py ............... [ 43%]
+........................................................................ [ 68%]
+....................                                                     [ 74%]
+tests/unit/logic/legal_ir/test_canonical_decoder_preflight.py .......... [ 78%]
+................................................................         [100%]
+
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v03.xml -
+============================= 294 passed in 2.18s ==============================

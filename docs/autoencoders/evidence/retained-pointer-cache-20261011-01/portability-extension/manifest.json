@@ -1,0 +1,124 @@
+{
+  "current_test": {
+    "bytes": 29800,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_arbitrary_native_span_runtime.py",
+    "sha256": "ad8fe94df233b9a112e5a525b3909efecaf7d8f55af3ec99e7df820f468410dc"
+  },
+  "files": {
+    "portable-review-custody.json": {
+      "origin": {
+        "bytes": 1896,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-custody.json",
+        "sha256": "66ebd39a8e3240cf50d3d93f885ab8fcf3ca3ca5aaacfd5b56d06e8a0a2a2f31"
+      },
+      "retained": {
+        "bytes": 1896,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-custody.json",
+        "sha256": "66ebd39a8e3240cf50d3d93f885ab8fcf3ca3ca5aaacfd5b56d06e8a0a2a2f31"
+      }
+    },
+    "portable-review-tests-v02.log": {
+      "origin": {
+        "bytes": 2643,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v02.log",
+        "sha256": "2fab084e899df14a8ba3035d8b977e3490ad66d6d5c90a4aea261b734732e3d2"
+      },
+      "retained": {
+        "bytes": 2643,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests-v02.log",
+        "sha256": "2fab084e899df14a8ba3035d8b977e3490ad66d6d5c90a4aea261b734732e3d2"
+      }
+    },
+    "portable-review-tests-v02.xml": {
+      "origin": {
+        "bytes": 124603,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v02.xml",
+        "sha256": "45c55c95e2e80de8dad2bfc4db7fca5d669e222a23b5a8778a94dbad5690ad3e"
+      },
+      "retained": {
+        "bytes": 124603,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests-v02.xml",
+        "sha256": "45c55c95e2e80de8dad2bfc4db7fca5d669e222a23b5a8778a94dbad5690ad3e"
+      }
+    },
+    "portable-review-tests-v03.log": {
+      "origin": {
+        "bytes": 1478,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v03.log",
+        "sha256": "40c21af839e24b87c57d64d0ab4b29cf1837ce979a05bfc207fe360c4839fc99"
+      },
+      "retained": {
+        "bytes": 1478,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests-v03.log",
+        "sha256": "40c21af839e24b87c57d64d0ab4b29cf1837ce979a05bfc207fe360c4839fc99"
+      }
+    },
+    "portable-review-tests-v03.xml": {
+      "origin": {
+        "bytes": 123337,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests-v03.xml",
+        "sha256": "74513c44bbc5665f24b65d12caa53d4187bf203caaeb6346e9de59e5cd664430"
+      },
+      "retained": {
+        "bytes": 123337,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests-v03.xml",
+        "sha256": "74513c44bbc5665f24b65d12caa53d4187bf203caaeb6346e9de59e5cd664430"
+      }
+    },
+    "portable-review-tests.log": {
+      "origin": {
+        "bytes": 774,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests.log",
+        "sha256": "97cdbc0e9862e95631a9883d8513960ce476a952dfe181bcb867ba3281969c3e"
+      },
+      "retained": {
+        "bytes": 774,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests.log",
+        "sha256": "97cdbc0e9862e95631a9883d8513960ce476a952dfe181bcb867ba3281969c3e"
+      }
+    },
+    "portable-review-tests.xml": {
+      "origin": {
+        "bytes": 236,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-tests.xml",
+        "sha256": "5ecb2a60a8a5cd0c82b67359a1d047c6aec31ffc0b54cf8d5c080c94e4cd7ead"
+      },
+      "retained": {
+        "bytes": 236,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-tests.xml",
+        "sha256": "5ecb2a60a8a5cd0c82b67359a1d047c6aec31ffc0b54cf8d5c080c94e4cd7ead"
+      }
+    },
+    "portable-review-validation-v03.json": {
+      "origin": {
+        "bytes": 2321,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/portable-review-validation-v03.json",
+        "sha256": "d7bf7f51c44c6548fbb93bffe9779187874a632f34f8637f3b158ecda3a37fe7"
+      },
+      "retained": {
+        "bytes": 2321,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/portable-review-validation-v03.json",
+        "sha256": "d7bf7f51c44c6548fbb93bffe9779187874a632f34f8637f3b158ecda3a37fe7"
+      }
+    },
+    "test_arbitrary_native_span_runtime-before-portable-review.py": {
+      "origin": {
+        "bytes": 29742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/test_arbitrary_native_span_runtime-before-portable-review.py",
+        "sha256": "2c61e0473e8e7e46627655e41e7150694040e019ed50f352a056fac5ba460f2f"
+      },
+      "retained": {
+        "bytes": 29742,
+        "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/portability-extension/test_arbitrary_native_span_runtime-before-portable-review.py",
+        "sha256": "2c61e0473e8e7e46627655e41e7150694040e019ed50f352a056fac5ba460f2f"
+      }
+    }
+  },
+  "original_manifest_unchanged": {
+    "bytes": 97973,
+    "path": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets/docs/autoencoders/evidence/retained-pointer-cache-20261011-01/manifest.json",
+    "sha256": "d9ee4e054f3632069b85d8e85a1bc565b4a957b4d2ea2d1cad000b2d7a4e21af"
+  },
+  "schema": "retained-pointer-portability-extension/v1",
+  "scope": "Append-only extension. Preserve pre-correction test exactly, retain both invocation failures and passing current test-only revalidation. Original admitted test path deliberately changed after frozenrun, originalbytes retained; no new model/encoder/optimizer or semantic claims."
+}

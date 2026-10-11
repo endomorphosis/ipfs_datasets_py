@@ -49,17 +49,18 @@ def test_concrete_constants_match_independent_literals_and_reviewed_receipt():
     assert runtime.MODEL == MODEL and runtime.EXECUTION == EXECUTION
     assert runtime.OLD_ENCODER_SHA256 == OLD_ENCODER and runtime.NEW_ENCODER_SHA256 == NEW_ENCODER
     assert runtime.ASSETS_SHA256 == "def8d7e04c05560b1d0dd1fa9317be7a59a1ba8399ca725be0ac807a9a264edc"
-    # Optional retained review is a local artifact, not a network dependency.
-    review = Path(__file__).resolve().parents[6] / "raw384-equivalence.json"
-    if review.is_file():
-        reference = pin(review)
-        assert reference["sha256"] == runtime.EQUIVALENCE_SHA256 and reference["bytes"] == runtime.EQUIVALENCE_BYTES
-        value = json.loads(review.read_bytes())
-        assert value["historical_context_contract"] == runtime.HISTORICAL_CONTEXT
-        assert value["model"] == runtime.MODEL and value["execution_common"] == runtime.EXECUTION
-        assert value["model_assets_sha256"] == runtime.ASSETS_SHA256
-        assert value["historical_encoder_code_sha256"] == runtime.OLD_ENCODER_SHA256
-        assert value["current_encoder_code_sha256"] == runtime.NEW_ENCODER_SHA256
+    # The committed receipt must be checked in every checkout, without network.
+    review = (Path(__file__).resolve().parents[5] / "docs/autoencoders/evidence"
+        / "retained-pointer-cache-20261011-01/receipts/raw384-equivalence.json")
+    assert review.is_file()
+    reference = pin(review)
+    assert reference["sha256"] == runtime.EQUIVALENCE_SHA256 and reference["bytes"] == runtime.EQUIVALENCE_BYTES
+    value = json.loads(review.read_bytes())
+    assert value["historical_context_contract"] == runtime.HISTORICAL_CONTEXT
+    assert value["model"] == runtime.MODEL and value["execution_common"] == runtime.EXECUTION
+    assert value["model_assets_sha256"] == runtime.ASSETS_SHA256
+    assert value["historical_encoder_code_sha256"] == runtime.OLD_ENCODER_SHA256
+    assert value["current_encoder_code_sha256"] == runtime.NEW_ENCODER_SHA256
 
 
 @pytest.fixture
