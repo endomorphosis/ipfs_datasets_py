@@ -32,6 +32,15 @@ refuse without publishing results or modifying the old database. Resource
 admission and independent result review belong to the supervising guardian;
 the DuckDB setting does not cap the whole Python process.
 
+Archive projection, classification and unresolved identities use temporary
+views. Disposition counts retain the original precedence: exact match, hash
+mismatch, legal-ID mismatch, then unresolved. The unresolved view admits only
+archive IDs absent from retained occurrences. A three-column status table
+contains at most the retained target IDs and two match booleans, aggregated
+through one ID join. This avoids duplicate full-archive string tables and
+simultaneous correlated marker joins within the same 256 MB/no-spill bound; the original failed
+guarded attempt remains separate evidence, not a successful result.
+
 The report records elapsed time from call entry through report creation, with
 final custody fences and publication excluded. `RUSAGE_SELF.ru_maxrss` is the
 process-lifetime high-water observed then; Linux reports KiB, also converted to

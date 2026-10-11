@@ -229,7 +229,10 @@ def _load_retained(db, manifest, report, max_rows):
 def _load_archive(db, path, report, max_rows):
     count = db.execute("SELECT count(*) FROM read_parquet(?)", [str(path)]).fetchone()[0]
     _require(count <= max_rows, "archive row bound exceeded")
-    db.execute("CREATE TEMP TABLE ledger AS SELECT record_kind,dataset_id,source_span_id,source_sha256,legal_id FROM read_parquet(?)", [str(path)])
+    # Keep the pinned metadata projection lazy. Materializing ledger, classified
+    # and unresolved duplicated hundreds of thousands of long identity strings
+    # and exceeded the unchanged 256 MB/no-spill budget on the real archive.
+    db.execute("CREATE TEMP VIEW ledger AS SELECT record_kind,dataset_id,source_span_id,source_sha256,legal_id FROM read_parquet("+_sql_path(path)+")")
     _require(count == report.get("ledger_row_count"), "archive physical row count differs")
     datasets = {r[0] for r in db.execute("SELECT DISTINCT dataset_id FROM ledger WHERE record_kind='meta'").fetchall()}
     _require(bool(datasets) and datasets.issubset(archive.intake._DATASETS), "archive source dataset metadata differs")
@@ -242,13 +245,27 @@ def _load_archive(db, path, report, max_rows):
     span_count = db.execute("SELECT count(*) FROM ledger WHERE record_kind='span'").fetchone()[0]
     _require(span_count == report.get("archived_span_record_count") == report.get("distinct_archived_span_id_count"), "archive distinct/physical counts differ")
     _require(not db.execute("SELECT count(*) FROM retained r WHERE NOT EXISTS (SELECT 1 FROM ledger l WHERE l.record_kind='span' AND l.source_span_id=r.source_span_id)").fetchone()[0], "retained target outside archive")
-    db.execute("CREATE TEMP TABLE classified AS SELECT l.*,CASE WHEN record_kind<>'span' THEN 'excluded_nonspan' "
-        "WHEN EXISTS (SELECT 1 FROM retained r WHERE r.source_span_id=l.source_span_id AND r.source_sha256=l.source_sha256 AND r.legal_id=l.legal_id) THEN 'matched' "
-        "WHEN EXISTS (SELECT 1 FROM retained r WHERE r.source_span_id=l.source_span_id AND r.source_sha256<>l.source_sha256) THEN 'source_hash_mismatch' "
-        "WHEN EXISTS (SELECT 1 FROM retained r WHERE r.source_span_id=l.source_span_id) THEN 'legal_id_mismatch' ELSE 'unresolved_source' END AS disposition FROM ledger l")
+    # Three simultaneous correlated EXISTS marker joins also exceeded the cap
+    # even with lazy archive views. Aggregate one ID join into a compact table
+    # bounded by distinct retained target IDs, preserving exact-match priority
+    # when multiple physical occurrences carry different hash/legal bindings.
+    db.execute("CREATE TEMP TABLE retained_archive_status AS SELECT l.source_span_id,"
+        "bool_or(r.source_sha256=l.source_sha256 AND r.legal_id=l.legal_id) AS exact_match,"
+        "bool_or(r.source_sha256<>l.source_sha256) AS different_hash "
+        "FROM ledger l JOIN retained r ON r.source_span_id=l.source_span_id WHERE l.record_kind='span' GROUP BY l.source_span_id")
+    _require(db.execute("SELECT count(*) FROM retained_archive_status").fetchone()[0]
+             <= db.execute("SELECT count(*) FROM retained").fetchone()[0], "compact archive status exceeds retained bound")
+    db.execute("CREATE TEMP VIEW classified AS SELECT l.source_span_id,CASE WHEN record_kind<>'span' THEN 'excluded_nonspan' "
+        "WHEN s.exact_match THEN 'matched' WHEN s.different_hash THEN 'source_hash_mismatch' "
+        "WHEN s.source_span_id IS NOT NULL THEN 'legal_id_mismatch' ELSE 'unresolved_source' END AS disposition "
+        "FROM ledger l LEFT JOIN retained_archive_status s ON s.source_span_id=l.source_span_id")
     counts = dict(db.execute("SELECT disposition,count(*) FROM classified GROUP BY 1").fetchall())
     _require(counts == report.get("ledger_disposition_counts"), "archive dispositions differ")
-    db.execute("CREATE TEMP TABLE unresolved AS SELECT * FROM classified WHERE disposition='unresolved_source'")
+    # The CASE's unresolved branch means no retained occurrence has this ID;
+    # an anti-join uses only the compact status IDs in later matches.
+    # Hash/legal mismatches remain classified above and cannot enter this view.
+    db.execute("CREATE TEMP VIEW unresolved AS SELECT l.source_span_id,l.source_sha256,l.legal_id FROM ledger l "
+        "WHERE record_kind='span' AND NOT EXISTS (SELECT 1 FROM retained_archive_status s WHERE s.source_span_id=l.source_span_id)")
     return span_count, counts.get("unresolved_source", 0)
 
 
