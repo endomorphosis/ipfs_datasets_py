@@ -304,3 +304,65 @@ def test_parent_or_lock_alias_change_refuses(tmp_path,target):
         path.rename(moved)
         path.symlink_to(moved,target_is_directory=target!="lock")
     refuse(ctx,"canonical",_before_publish=alias)
+
+
+def test_archive_views_preserve_disposition_precedence(tmp_path):
+    path=tmp_path/"identities.parquet"
+    ids=["uscode-span-"+f"{n:064x}" for n in range(4)]
+    hashes=[f"{n+10:064x}" for n in range(4)]
+    ledger=[dict(record_kind="span",dataset_id="justicedao/ipfs_uscode",source_span_id=sid,
+        source_sha256=hashes[n],legal_id=f"usc:us:1:{n}") for n,sid in enumerate(ids)]
+    ledger.append(dict(record_kind="meta",dataset_id="justicedao/ipfs_uscode",source_span_id="",source_sha256="",legal_id=""))
+    pq.write_table(pa.Table.from_pylist(ledger),path)
+    db=duckdb.connect(":memory:",config={"memory_limit":"256MB","threads":1,"temp_directory":""})
+    try:
+        db.execute("CREATE TEMP TABLE retained(source_span_id VARCHAR,source_sha256 VARCHAR,legal_id VARCHAR)")
+        db.executemany("INSERT INTO retained VALUES (?,?,?)",[
+            (ids[0],hashes[0],"usc:us:1:0"),(ids[0],"f"*64,"different"),
+            (ids[1],hashes[1],"different"),(ids[2],"e"*64,"usc:us:1:2")])
+        counts=dict(matched=1,legal_id_mismatch=1,source_hash_mismatch=1,unresolved_source=1,excluded_nonspan=1)
+        report=dict(ledger_row_count=5,archived_span_record_count=4,distinct_archived_span_id_count=4,ledger_disposition_counts=counts)
+        assert recovery._load_archive(db,path,report,500000)==(4,1)
+        assert dict(db.execute("SELECT source_span_id,disposition FROM classified WHERE disposition<>'excluded_nonspan'").fetchall())==dict(zip(ids,["matched","legal_id_mismatch","source_hash_mismatch","unresolved_source"]))
+        assert db.execute("SELECT * FROM unresolved").fetchall()==[(ids[3],hashes[3],"usc:us:1:3")]
+        assert {r[0] for r in db.execute("SELECT view_name FROM duckdb_views() WHERE temporary AND view_name IN ('ledger','classified','unresolved')").fetchall()}=={"ledger","classified","unresolved"}
+        assert not db.execute("SELECT count(*) FROM duckdb_tables() WHERE table_name IN ('ledger','classified','unresolved')").fetchone()[0]
+        assert db.execute("SELECT count(*) FROM retained_archive_status").fetchone()[0]==3
+        assert len(db.execute("SELECT * FROM retained_archive_status LIMIT 0").description)==3
+    finally:
+        db.close()
+
+
+def test_complete_archive_cardinality_classifies_at_unchanged_cap(tmp_path):
+    """Synthetic identity metadata, never real laws/archive/model inputs."""
+    path=tmp_path/"synthetic-443905-identities.parquet"
+    db=duckdb.connect(":memory:",config={"memory_limit":"256MB","threads":1,"temp_directory":""})
+    try:
+        db.execute("COPY (SELECT 'span' AS record_kind,'justicedao/ipfs_uscode' AS dataset_id,"
+            "'uscode-span-'||sha256('synthetic-id-'||i) AS source_span_id,"
+            "sha256('synthetic-text-'||i) AS source_sha256,'usc:us:1:'||sha256('synthetic-section-'||i) AS legal_id FROM range(443904) t(i) "
+            "UNION ALL SELECT 'meta','justicedao/ipfs_uscode','','','') TO "+recovery._sql_path(path)+" (FORMAT PARQUET,COMPRESSION ZSTD)")
+        # Keep the original retained-width shape resident while classification
+        # runs, including distinct occurrence, identity and context strings.
+        db.execute("CREATE TEMP TABLE retained AS SELECT unhex(sha256('physical-'||legal_id)) AS occurrence_id,"
+            "source_span_id,source_sha256,legal_id,'bafy-synthetic-'||sha256(legal_id) AS entry_cid,'1' AS title,"
+            "split_part(legal_id,':',4) AS section,'1 U.S.C. '||split_part(legal_id,':',4) AS citation,"
+            "row_number() OVER ()-1 AS source_section_offset,0::BIGINT AS historical_document_batch_index,"
+            "0::BIGINT AS historical_span_ordinal,64::BIGINT AS utf8_bytes,64::BIGINT AS unicode_characters,"
+            "NULL::BIGINT AS token_count,'le_512' AS byte_cohort,'unmeasured' AS token_cohort,"
+            "'matched' AS source_join_disposition,0::BIGINT AS source_section_span_ordinal,"
+            "'normalized_source_text' AS source_text_origin,TRUE AS raw_source_text_present "
+            "FROM read_parquet("+recovery._sql_path(path)+") WHERE record_kind='span' LIMIT 64969")
+        counts=dict(matched=64969,unresolved_source=378935,excluded_nonspan=1)
+        report=dict(ledger_row_count=443905,archived_span_record_count=443904,
+            distinct_archived_span_id_count=443904,ledger_disposition_counts=counts)
+        assert recovery._load_archive(db,path,report,500000)==(443904,378935)
+        assert db.execute("SELECT count(*) FROM unresolved").fetchone()[0]==378935
+        assert db.execute("SELECT current_setting('memory_limit'),current_setting('threads'),current_setting('temp_directory')").fetchone()==('244.1 MiB',1,'')
+        assert not db.execute("SELECT count(*) FROM duckdb_tables() WHERE table_name IN ('ledger','classified','unresolved')").fetchone()[0]
+        assert db.execute("SELECT count(*) FROM retained_archive_status").fetchone()[0]==64969
+        assert len(db.execute("SELECT * FROM retained_archive_status LIMIT 0").description)==3
+        assert not list(tmp_path.glob("*.tmp"))
+    finally:
+        db.close()
+        path.unlink(missing_ok=True)
