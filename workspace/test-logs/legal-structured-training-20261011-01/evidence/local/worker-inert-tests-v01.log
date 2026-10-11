@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 88 items
+
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py . [  1%]
+.................................................................F...... [ 82%]
+...............                                                          [100%]
+
+=================================== FAILURES ===================================
+______ test_deadline_between_fake_batches_preserves_the_committed_prefix _______
+artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py:729: in test_deadline_between_fake_batches_preserves_the_committed_prefix
+    assert report["actual_new_updates"] == 1 and report["requested_new_updates"] == 2
+E   assert (2 == 1)
+- generated xml file: /home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/worker-inert-tests-v01.xml -
+=========================== short test summary info ============================
+FAILED artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py::test_deadline_between_fake_batches_preserves_the_committed_prefix
+======================== 1 failed, 87 passed in 28.76s =========================

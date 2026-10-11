@@ -1,0 +1,1693 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/prepared/corpus.json": {
+      "bytes": 13896443,
+      "sha256": "1480f42e29fd75ee4f78229533d727508441a2c15ed7f20aac815d66e0dce182"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/contexts-raw384.json": {
+      "bytes": 22749677,
+      "sha256": "5193b70f4e6794761ae680f94c03f0742fb3d44ed31c7d1f68ddcf04eb573e56"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/corpus-manifest.json": {
+      "bytes": 58282,
+      "sha256": "4d2a13686e77e65b858a45b091658407d52bfc305a67220f641f3b39911fcd35"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/train-inputs.json": {
+      "bytes": 508927,
+      "sha256": "61e189b6a4e623184a4132694a86316a61aa3e9da7294632a5534e857f5f5f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus/train-references.json": {
+      "bytes": 1136345,
+      "sha256": "51a565a1edcaade3e4aa29f80e0e173a7a280f2384bf8f9efe2862f167f37634"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/final-integration-independent-review.json": {
+      "bytes": 110640,
+      "sha256": "2b80d2eeb32792f7112d4e7c971e41cde4ddf1d120f54df6ae7199b881ec9133"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/resource-compatibility.json": {
+      "bytes": 6800,
+      "sha256": "24c7e4441a05b2147820f539d9e9aa95a6e6a5313bb4e6f982e8bb3c71ba6110"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/result-resource-independent-review-v01.json": {
+      "bytes": 63226,
+      "sha256": "568e42f2b170a58fb45bd41cbc0452d5a190dc9d1c1ef271e1a702600e6b5db3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/retained-owner-pins.json": {
+      "bytes": 8453,
+      "sha256": "6d085ce4358f0ecce89cc38ae41142bf73b9d4ac4c0497c7ff25ac97eb5aa7e0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/source-staged-publication-review-v01.json": {
+      "bytes": 188162,
+      "sha256": "ce443a08e00da7ad61fd6fc4d98d5c11c793b7ab20fbc844377f0729cce83f49"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-review-independent-v01.json": {
+      "bytes": 13347,
+      "sha256": "393ffc9cd61f76c189a5c86ea102ad676e2dfa72224c8961f266b43c51d41273"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json": {
+      "bytes": 378311,
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-template.json": {
+      "bytes": 23766,
+      "sha256": "e93b0e3219f569f0cc799b981204e64849aa6eff58f52aac5307f771c3782f2c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-validation.json": {
+      "bytes": 1469,
+      "sha256": "f6dd74e713fcf030081169615e84a010e14c6c00d6ad62427c9951a431ac647c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json": {
+      "bytes": 4060,
+      "sha256": "79fcee138e95e00230a3ef75e285d12ea95695a272092213eac829211b6bb8e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/source-target-data-review.json": {
+      "bytes": 26803,
+      "sha256": "a512c048603177817f8c438f299ca8536566716ab612e88d61892fd986170eec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/canonical-intake.json": {
+      "bytes": 643,
+      "sha256": "302eb7af14e55cb2e2b7a28c70729aeec31b62d9caa7949f387604d6689b3e63"
+    }
+  },
+  "canonical_custody": {
+    "root": {
+      "default_main_matches_this_audit_start": true,
+      "default_origin_main": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "head_commit": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "head_file_text": "ref: refs/heads/chore/fmt-check-main\n",
+      "head_index_match_prior_intake_and_this_audit_start": true,
+      "index": {
+        "bytes": 692628,
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      }
+    },
+    "source": {
+      "default_main_matches_this_audit_start": true,
+      "default_origin_main": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "head_commit": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "head_file_text": "ref: refs/heads/main\n",
+      "head_index_match_prior_intake_and_this_audit_start": true,
+      "index": {
+        "bytes": 3799757,
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      }
+    }
+  },
+  "created_at_utc": "2026-10-11T08:11:41.533724+00:00",
+  "dated_resource_evidence": {
+    "admission_guaranteed": false,
+    "current_capacity_established": false,
+    "next_gate": "Recheck admission with unchanged guardian/owner at actual launch; a current rejection is not authorization to raise caps, delete/release foreign resources or retry blindly. Dated endpoint metadata cannot establish free current capacity.",
+    "observed_at_utc": "2026-10-11 06:43:53 UTC",
+    "previous_sampled_peak_RSS_bytes": 681361408,
+    "previous_successful_envelope": {
+      "RAM_MB": 1536,
+      "children": 1,
+      "cpu_slots": 2,
+      "storage_bytes": 200000000,
+      "wall_seconds": 300
+    },
+    "saved_final_accounted_bytes": 143726795982,
+    "saved_outstanding_full_reservations_bytes": 48181777216,
+    "saved_storage_limit_bytes": 145000000000,
+    "saved_totals": {
+      "RAM_MB": 9830,
+      "child_slots": 4,
+      "cpu_slots": 4,
+      "validation_cpu_reservation": 1
+    },
+    "source_review": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/result-resource-independent-review-v01.json"
+  },
+  "distinct_old_publication_lineages": [
+    {
+      "changed_path_count": 4280,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "last_branch_only_commits": [
+        "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 2026-10-04T19:29:18+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "c028a2079a88720df8a50d2ccd2e479caa8bc379 2026-10-04T19:21:01+00:00 Integrate preserved source history with batched conflict resolution",
+        "eb6a73c0a5c1c37b3e037ab38d279e0594239d58 2026-10-04T19:21:00+00:00 Integrate preserved source history with batched conflict resolution",
+        "5a412a339b30303cac8df55a560af5d52d4e5fcb 2026-10-04T19:21:00+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 108,
+      "repo": "source",
+      "sample_relevant_paths": [
+        "archive/results/complete_pipeline_results/proof_details_z3.json",
+        "archive/results/local_proof_results/conversion_result.json",
+        "archive/results/local_proof_results/proof_result_z3.json",
+        "archive/results/local_proof_results/proofs/formula_3226fa1ad1de.smt2",
+        "archive/results/local_proof_results/proofs/formula_6c4a5125b4ca.smt2",
+        "archive/results/local_proof_results/proofs/formula_6d3542ddd431.smt2",
+        "archive/results/local_proof_results/simulated_extraction.json",
+        "docs/autoencoders/README.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_improvement_plan.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_plan.json",
+        "docs/autoencoders/gte_migration_preparation.md",
+        "docs/autoencoders/gte_multilingual_migration_plan.md",
+        "docs/autoencoders/gte_multilingual_migration_work_items.json",
+        "docs/autoencoders/ir_family_span_whole_input_guard_partial_followup_plan.json",
+        "docs/autoencoders/source_margin_training.md"
+      ]
+    },
+    {
+      "changed_path_count": 446,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "last_branch_only_commits": [
+        "23540627b1cf6515df0fd84c9417b4cbdb91234a 2026-10-04T20:02:03+00:00 Restore complete selected canonical source after main refresh",
+        "47413d75e8ab095ad7bd8c946ba231a91432b23b 2026-10-04T20:02:01+00:00 Merge commit 'aa586a9b91b583a2ac5d867bd107ba0c5a4762d5' into publication/main-refresh-20261004/datasets-01",
+        "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801 2026-10-04T19:29:18+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "c028a2079a88720df8a50d2ccd2e479caa8bc379 2026-10-04T19:21:01+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 98,
+      "repo": "source",
+      "sample_relevant_paths": [
+        "docs/autoencoders/README.md",
+        "docs/autoencoders/alignment_binding_review_recording.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_improvement_plan.md",
+        "docs/autoencoders/codebase_ir_repository_pipeline_plan.json",
+        "docs/autoencoders/four_width_training.md",
+        "docs/autoencoders/gte_migration_preparation.md",
+        "docs/autoencoders/gte_multilingual_migration_plan.md",
+        "docs/autoencoders/gte_multilingual_migration_work_items.json",
+        "docs/autoencoders/ir_family_dimension_cuda_guard_followup_plan.json",
+        "docs/autoencoders/ir_family_dimension_guard_workload_followup_plan.json",
+        "docs/autoencoders/ir_family_formula_guard_coordinator_followup_plan.json",
+        "docs/autoencoders/ir_family_guard_cost_profiling_followup_plan.json",
+        "docs/autoencoders/ir_family_input_guard_candidate_followup_plan.json",
+        "docs/autoencoders/ir_family_lease_cadence_followup_plan.json",
+        "docs/autoencoders/ir_family_span_inference_candidates_followup_plan.json"
+      ]
+    },
+    {
+      "changed_path_count": 2945,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "last_branch_only_commits": [
+        "ce3e21da27d23bfa4ac5490be9a5cb44798945f2 2026-10-04T20:01:22+00:00 Integrate preserved source history with batched conflict resolution",
+        "f50b0c4981e51939a27b57d073d36dda8064af29 2026-10-04T20:01:20+00:00 Integrate preserved source history with batched conflict resolution",
+        "567cdb783414c42c53b400db4eef3929f6ad7378 2026-10-04T20:01:17+00:00 Integrate preserved source history with batched conflict resolution",
+        "ef9c8e4d94d9d427d1bd60168e9bd6d0a15cfe38 2026-10-04T20:00:54+00:00 Snapshot canonical source work for autoformalization publication"
+      ],
+      "relevant_changed_path_count": 65,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd-legal_ir_grammar_decoder.py",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/18dc019d86cb96d670dd583ad16f6930a3b8a2ffd49a587f40d1ef6cb105b497-action_contrastive_decoder_training.py",
+        "artifacts/autoformalization-publication-20261004/huggingface/additional-decoder-cutoff-v1/source-capsule/21f300fbc969c2b34be355b633c46a616d83d451207cc5f3bd56537d40bd0498-long_span_source_value_training.py"
+      ]
+    },
+    {
+      "changed_path_count": 2837,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "last_branch_only_commits": [
+        "57fd19895ce42ad68f87b3d7126fbf19da285bdb 2026-10-04T20:05:03+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "b420e317dd90a02e86cc4f60e0c9f563b4f51fd3 2026-10-04T20:04:24+00:00 Integrate preserved source history with batched conflict resolution",
+        "63e8d8b14301f788dacf83c7d5a705d920b953f9 2026-10-04T20:04:22+00:00 Integrate preserved source history with batched conflict resolution",
+        "bc64e1a2d3d3428ae3823fd4754d0051a61d485d 2026-10-04T18:17:26+00:00 Snapshot canonical source work for autoformalization publication"
+      ],
+      "relevant_changed_path_count": 44,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-commit.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-publication.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/legal-ir-autoencoder-commit.json"
+      ]
+    },
+    {
+      "changed_path_count": 2801,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "last_branch_only_commits": [
+        "9d1944b9a9fd95abbb6297b4c7d34a1312809f14 2026-10-04T20:19:03+00:00 Restore complete selected canonical source after main refresh",
+        "6c4c5fe37671807df2ec2e263596d9a42de92add 2026-10-04T20:19:03+00:00 Merge current published main into retained source history",
+        "57fd19895ce42ad68f87b3d7126fbf19da285bdb 2026-10-04T20:05:03+00:00 Restore complete pinned canonical source tree after archival history integration",
+        "b420e317dd90a02e86cc4f60e0c9f563b4f51fd3 2026-10-04T20:04:24+00:00 Integrate preserved source history with batched conflict resolution"
+      ],
+      "relevant_changed_path_count": 31,
+      "repo": "root",
+      "sample_relevant_paths": [
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1729-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1730-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-anchor-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-final-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-01/seed1731-source-initial-training-report.json",
+        "artifacts/autoformalization-alignment-20261003/typed-anchor-decoder-recovery-01/seed1731-anchor-final-training-report.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-commit.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/intent-ir-autoencoder-publication.json",
+        "artifacts/autoformalization-publication-20261004/huggingface/legal-ir-autoencoder-commit.json"
+      ]
+    }
+  ],
+  "execution": {
+    "canonical_head_index_mutation": false,
+    "default_tracking_ref_mutation_by_audit_fetch": false,
+    "foreign_checkout_index_worktree_mutation": false,
+    "models_imported_or_executed": false,
+    "numeric_payload_review_limit": "No checkpoint/tensor execution. Delegated context metadata inspection masked arrays to counts before parsing; an initial short prefix inadvertently exposed a few context vector values and was stopped. No vector calculation or model use followed.",
+    "numerical_tests_or_fits": false,
+    "resource_producer_calls_claims_or_cleanup": false,
+    "source_edits": false
+  },
+  "fetch_contract": {
+    "commands": {
+      "root": "git -c http.version=HTTP/1.1 fetch --refmap= --no-tags --no-write-fetch-head --no-auto-maintenance --recurse-submodules=no origin '+9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5:refs/remotes/legal-structured-training-20261011-01/agent/autoencoder-progress-reconciliation-20261006' '+30e61092341b47b4e49eb30df443fd607536333a:refs/remotes/legal-structured-training-20261011-01/agent/dual-bank-wording-adapter-root-20261007' '+aab99b3792e4d13572830f4aa91c7915092b23fe:refs/remotes/legal-structured-training-20261011-01/codex/autoencoder-reconciliation-20261007-01' '+739e7088a203a4b307d96192e489a88dbf9177b1:refs/remotes/legal-structured-training-20261011-01/codex/legal-joint-readout-workspace-20261011-01' '+d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9:refs/remotes/legal-structured-training-20261011-01/codex/legal-native-cache-workspace-20261011-01' '+00130686f43e35105e2ee98e5a36428f3aff3538:refs/remotes/legal-structured-training-20261011-01/codex/legal-open-vocabulary-workspace-20261011-01' '+fb8176ab49e063f6d2446b74bbde0cc34e47b9ad:refs/remotes/legal-structured-training-20261011-01/codex/legal-retention-objective-20261011-01' '+3b0162bebe0b7a09727081cb8c5f5c15378caba1:refs/remotes/legal-structured-training-20261011-01/codex/supervisor-context-token-economy-root-20261006' '+a3cea4aa2d9317ed2631392545aeb2df1d8ceb49:refs/remotes/legal-structured-training-20261011-01/main'",
+      "source": "git -c http.version=HTTP/1.1 fetch --refmap= --no-tags --no-write-fetch-head --no-auto-maintenance --recurse-submodules=no origin '+a3f16f2870a80a7e985b35bed3334512c47d9dc3:refs/remotes/legal-structured-training-20261011-01/agent/autoencoder-progress-reconciliation-datasets-20261006' '+39f25777d557df1c51b8f98ed0dcd084c35d4d6d:refs/remotes/legal-structured-training-20261011-01/agent/contextual-legal-runtime-20261006' '+aed87b0d980422c2ca9efaa26cf92df30c51d768:refs/remotes/legal-structured-training-20261011-01/agent/dual-bank-wording-adapter-datasets-20261007' '+c4382ae53ab9497245fccdf85855f0e314711fbc:refs/remotes/legal-structured-training-20261011-01/agent/normative-cache-input-datasets-20261007' '+6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff:refs/remotes/legal-structured-training-20261011-01/agent/normative-decoder-runtime-datasets-20261007' '+53e87779a527349b65875cb20b59ca9eb48ed70c:refs/remotes/legal-structured-training-20261011-01/codex/autoencoder-owner-integration-20261007-01' '+f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b:refs/remotes/legal-structured-training-20261011-01/codex/ir-publication-main-integration-20261004' '+575a129f19068d58d66cc8119e85c3d23faa560a:refs/remotes/legal-structured-training-20261011-01/codex/legal-cross-agent-guards-20261006' '+0f733b621335a3fb95e3f8855f2100cd95ba01b5:refs/remotes/legal-structured-training-20261011-01/codex/legal-decoder-followup-20261006-01' '+b4002de1e73d295e222cd7258bd07e4784a6b928:refs/remotes/legal-structured-training-20261011-01/codex/legal-decoder-progress-20261011-01' '+004887f6250b083e0b095d5ac7563bc5bb792491:refs/remotes/legal-structured-training-20261011-01/codex/legal-grouped-integration-20261006-02' '+146e4c88fea6d0a9ab671af00e1596a9a60ea784:refs/remotes/legal-structured-training-20261011-01/codex/legal-joint-readout-20261011-01' '+f3901341cdde9b4485315327d5ef06abd1485b11:refs/remotes/legal-structured-training-20261011-01/codex/legal-native-cache-20261011-01' '+fe00dd1d64d0e26e0b396e40cadd094d544efd0c:refs/remotes/legal-structured-training-20261011-01/codex/legal-open-vocabulary-20261011-01' '+2b87326cb73f4f09d12aff3ccb68e0a6142a686c:refs/remotes/legal-structured-training-20261011-01/codex/legal-original-text-roundtrip-retained-20261004' '+1530efd07032bac88229c6c97ca5994d498e6216:refs/remotes/legal-structured-training-20261011-01/codex/legal-scope-span-training-20261007-01' '+7b93b2d97a8985b3f2db29963bd0979749f66163:refs/remotes/legal-structured-training-20261011-01/codex/legal-support-action-model-20261007-01' '+8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6:refs/remotes/legal-structured-training-20261011-01/codex/legal-support-gate-model-20261007-01' '+e35aef47ef6d67f7d07793be487e2be04ec6c7d6:refs/remotes/legal-structured-training-20261011-01/codex/legal-trigger-readout-model-20261007-01' '+d1643c2c621f45f0ca0080e017fe6717b093e478:refs/remotes/legal-structured-training-20261011-01/codex/source-v2-warm-start-20261004' '+cdae06198a229760ca139d48f9e311e80d0df8c6:refs/remotes/legal-structured-training-20261011-01/main'"
+    },
+    "flags": [
+      "--refmap=",
+      "--no-tags",
+      "--no-write-fetch-head",
+      "--no-auto-maintenance",
+      "--recurse-submodules=no"
+    ],
+    "namespace": "refs/remotes/legal-structured-training-20261011-01/*",
+    "repositories_used": [
+      "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets",
+      "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace"
+    ],
+    "root_returncode": 0,
+    "source_returncode": 0
+  },
+  "findings": [],
+  "heads": {
+    "root": {
+      "commits_since_base": 1,
+      "observed_main": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "published_base": "640dd608c397897053688585c03b4938674f4523",
+      "published_base_is_ancestor": true
+    },
+    "source": {
+      "commits_since_base": 3,
+      "observed_main": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "published_base": "61515a171c4c19fd5d977c5e5e1263a8c172c82c",
+      "published_base_is_ancestor": true
+    }
+  },
+  "intended_authored_structured_fit_inventory": {
+    "context_dimension": 384,
+    "context_fields": [
+      "id",
+      "source_sha256",
+      "context",
+      "context_sha256",
+      "native_stage_receipt"
+    ],
+    "context_source_id_joins": "Delegated saved-metadata inspection confirms exact train/tuning ID and source hash joins. No native producer or model execution.",
+    "contexts": "run-01/contexts-raw384.json",
+    "corpus": "prepared/corpus.json",
+    "exposure": "Train/tuning/template structures already exposed in retained continuation. Tuning supports engineering selection, not fresh semantic confirmation. Challenge/OOV are not reassigned as TRAIN.",
+    "identity_barrier": "Keep raw384 frozen native paragraph contexts separate from core384/trained384/768D/8D and from the unrelated retention corpus.",
+    "optional_conditions_exceptions_temporal_each_populated_fraction": "1/2 each split",
+    "origin": "authored_synthetic_not_legal_authority",
+    "root": "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002",
+    "rule_count_per_row": 1,
+    "source_target_fields": [
+      "id",
+      "family_group",
+      "source_text",
+      "source_sha256",
+      "canonical_ir.rules",
+      "canonical_target_sha256",
+      "source_spans",
+      "provenance",
+      "template_id",
+      "qualifier_pattern"
+    ],
+    "target_authority": "Authored construction targets, not independently reviewed law; masks and semantics remain unqualified.",
+    "train_added_rows": 384,
+    "train_modalities": {
+      "F": 384,
+      "O": 384,
+      "P": 384
+    },
+    "train_prior_rows_reused": 768,
+    "train_rows": 1152,
+    "tuning_modalities": {
+      "F": 32,
+      "O": 32,
+      "P": 32
+    },
+    "tuning_rows": 96
+  },
+  "lineage_interpretation": {
+    "all_selected_remote_heads_already_ancestors": true,
+    "distinct_lineages": "The five nonancestor publication/recovery lineages have latest unique commits dated2026-10-04; counts are Git history differences, not newly qualified implementations or pending training results. Preserve them; do not import their large historical snapshots wholesale.",
+    "local_legal_uscode_numerical_worktrees": "All inventoried relevant current committed HEADs are already ancestors except two old source and three old root publication/recovery lineages. The271ad796 locked retained donor source is also already in source main.",
+    "other_remote_heads": "Observed but excluded from the bounded autoencoder/legal branch ancestry qualification.",
+    "selected_remote_root_heads": 9,
+    "selected_remote_source_heads": 21,
+    "uncommitted_work": "Not inspected; no conclusion that another agent has no ongoing uncommitted work."
+  },
+  "new_main_path_pins": {
+    "artifacts/supervisor-numerical-training-20261011/cold-replay.json": {
+      "bytes": 468,
+      "git_blob": "d914663c35a634009d080ba68d0c861b1f19abfe",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "e9c8bc4f76920ad6b6652d2e300271766e561e0374a145236a421e957d2f04e0",
+      "status": "A"
+    },
+    "artifacts/supervisor-numerical-training-20261011/hub-additive-check.json": {
+      "bytes": 1834,
+      "git_blob": "8db833971c4f32c8feee15db5d8d9a7fd6f5ae02",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "e59fd676eaf760711aed0f25e51be4fcef39fde80be4a57ba38b75202c26df26",
+      "status": "A"
+    },
+    "artifacts/supervisor-numerical-training-20261011/profile-tests.json": {
+      "bytes": 3351,
+      "git_blob": "b073736cbd598968b9494abb04b76339fb427a23",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "66509188c8baf98433db552290e1b33b836ff6bdee3808b4ab027451aa2be54c",
+      "status": "A"
+    },
+    "artifacts/supervisor-numerical-training-20261011/publication.json": {
+      "bytes": 3507,
+      "git_blob": "83525dedfb6be303ee86846daa229afb35904fd0",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "58ad67081a4591fede2cb621a2fd5f1e5a37bd70b818171be0e059f9da8f713e",
+      "status": "A"
+    },
+    "artifacts/supervisor-numerical-training-20261011/release-manifest.json": {
+      "bytes": 7834,
+      "git_blob": "e9a711ef2396ee7baa8e3080ab63fe8a1dae2868",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "65980daba116f496019a8004a5980cf365761510dd143879106bd66775be6574",
+      "status": "A"
+    },
+    "artifacts/supervisor-numerical-training-20261011/release-provenance-review.json": {
+      "bytes": 4604,
+      "git_blob": "3df81a9a769c8d11d4fa66b5ad4e6ebcc03a7df6",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "sha256": "032d78186669eb76293a6cf7da6ec86b1a8f82edbe15c63a18844172bf1aa077",
+      "status": "A"
+    },
+    "docs/autoencoder_ownership.md": {
+      "bytes": 10558,
+      "git_blob": "38747598b14c18a74775f28e4078a0d0257e87f5",
+      "repository": "source",
+      "revision": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "sha256": "631bfd60221002fb39499f3710f5c5e4212aa47f829b7f6ebaaffce6c123b859",
+      "status": "M"
+    },
+    "external/ipfs_accelerate": {
+      "gitlink": "088dc16b9f3e6553d6de0a5e80ffbca865e32374",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "status": "M"
+    },
+    "external/ipfs_datasets": {
+      "gitlink": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "repository": "root",
+      "revision": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+      "status": "M"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/numerical_selection_384.py": {
+      "bytes": 23124,
+      "git_blob": "3e978d23062327161508db3ed9a63bca20d62a2c",
+      "repository": "source",
+      "revision": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "sha256": "54a5a95769f7ee205226daf03b48f4698acb4c79dbe4c9f667e5a875f77e5855",
+      "status": "A"
+    },
+    "tests/unit/logic/formalization/autoencoder/test_numerical_selection_384.py": {
+      "bytes": 14416,
+      "git_blob": "8d2f53ee69a58ed2f5f0bac77c6ccfee45a02396",
+      "repository": "source",
+      "revision": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "sha256": "3aaf70d39059e8655610ef9f6c6accfb636e549bbb24347296b1e516d12023dd",
+      "status": "A"
+    }
+  },
+  "next_useful_bounded_gates": [
+    "Create a distinct outer checkpoint/objective lineage for structured-span continuation; preserve exact parent model/Adam/counters and source inputs while separating inherited400 from newsteps0.",
+    "Treat supervised canonical/source span labels as authored construction labels only; reserve eight exposed statute rows for unqualified diagnostics/blank review development.",
+    "Add physical/context-bound review submissions and explicit representability/adjudication/authority stages as separate workflows; no submitted targets or semantic eligibility inferred from blank packets.",
+    "Use paired ordered TRAIN schedules and frozen tuning-only selection with explicit resource-admitted deadline/truncation receipts; no new heldout claim from already exposed tuning/final data.",
+    "Preserve cdae numerical CALL publication and root a3cea gitlinks on normal merges; avoid duplicating already merged legal/USCode implementations or importing old divergent recovery snapshots."
+  ],
+  "numerical_selection_static_review": {
+    "corpus_contract": "Closed caller-declared independently_authored train/validation/holdout rows; replay sealed corpus, source/alpha-clone/group split barriers, holdout vectors excluded from train call. Authorship declaration and embedding vector do not authenticate origin/native provenance.",
+    "profile": "numpy-unary-selection-384@1",
+    "purpose": "Separate Security ProgramExpression learned ridge head over unchanged inherited trained Legal384 residual projection; no widening or replacement of retained statutory/span decoders.",
+    "qualification": "Static API/source and committed receipt inspection only. Saved published metrics are primary observations reused, not independently recomputed. Weak cyclic shuffle is explicitly disclosed; not legal-semantic evidence or whole-function NumPy proof.",
+    "saved_receipt_observations": {
+      "authored_modules": 72,
+      "cyclic_shuffle": 17,
+      "default_or_supervisor_profile_promotion": false,
+      "holdout_total": 24,
+      "hub_repository": "Publicus/security-ir-autoencoder",
+      "hub_revision": "38666f43e998d55b5f4259e354286f5929027ba1",
+      "lake_definition_modules_compiled": 4,
+      "lexical_variants_reused": true,
+      "new_benchmark_score": null,
+      "normal_holdout_source_aligned": 17,
+      "post_hoc_opposite_callee": 1,
+      "semantic_groups_per_split": 4,
+      "source_obligations_discharged": 0,
+      "split_arity": [
+        2,
+        3,
+        4
+      ],
+      "split_rows": [
+        24,
+        24,
+        24
+      ],
+      "zero_head": 6,
+      "zero_projection": 8
+    },
+    "source_bytes": 23124,
+    "source_contract": "One exact UTF8 Python module with imports and one plain1to4parameter function returning one imported NumPy argmax/argmin applied to one positional parameter; no nested calls/keywords/rebindings/multifunction support. Whole module text carries import context.",
+    "source_sha256": "54a5a95769f7ee205226daf03b48f4698acb4c79dbe4c9f667e5a875f77e5855",
+    "target_contract": "Deterministic source-replay canonical CALL checking target/callee+parameter position. Inference retains the learned candidate then checks exact source replay; no candidate repair, source execution, discharged obligation or proof authority.",
+    "use_for_current_task": "Preserve the new module/docs/tests during normal integration. Reuse its explicit distinct profile/parent custody idea; its CALL labels, embedding profile and ridge objective are unrelated to the proposed legal structured span loss."
+  },
+  "passed": true,
+  "physical_statutory_review_status": {
+    "all_admission_masks": 0,
+    "api_limit": "Published owner makes/validates blank physical-context packets and assesses caller-declared reviewed-proposal interval geometry only. No authenticated review recorder/adjudication/admission exists in this owner. New recorder work is not yet in the observed main objects.",
+    "exposure": "All eight already had frozen normative/native/pointer/joint diagnostics. Context bytes and physical coordinates are provenance, not semantic truth, global novelty or unexposed evaluation.",
+    "full_context_UTF8_bytes": 148931,
+    "implementation_unchanged": true,
+    "independent_existing_review": "statutory-review-independent-v01.json393ffc9cd61f76c189a5c86ea102ad676e2dfa72224c8961f266b43c51d41273",
+    "literal_lexical_tokens": 397,
+    "module_sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938",
+    "old_authored_workflow_limit": "canonical_binding_review_workflow and canonical_label_evidence_intake_workflow bind authoredv1 items with empty none_required context; they cannot alias physical-context statute packet rows.",
+    "physical_occurrences": 8,
+    "reviewed_gold": 0,
+    "selected_UTF8_bytes": 2070,
+    "self_qualification": false,
+    "submitted_reviews_observed": 0,
+    "targets": null
+  },
+  "public_reference_dataset": {
+    "README_card_present_at_pinned_revision": false,
+    "all_admitted_formalized_false": true,
+    "inventory_documents": 537665,
+    "inventory_spans": 6524705,
+    "manifest_rows": 51,
+    "metadata_manifest_bytes": 3113,
+    "metadata_manifest_sha256": "f3a8046d621a3c173d1a01cb129b90d1355733c149229a1f9aa8d62dd991f6d2",
+    "observation": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/open-us-law-reference-observation.json",
+    "pending": 6524705,
+    "primary_complete_successful_verification": "bounded51-row Viewer HTTPS/JSON plus opaque pinned metadata-file SHA256; no Arrow import in retained generation",
+    "repository": "justicedao/open-us-law-span-cache",
+    "revision": "3bdc4d526ec7d83f870c9f481c9c80f43c20adf7",
+    "role": "jurisdiction inventory reference, not training data or reviewed semantic gold",
+    "sealed": 0,
+    "source_text_targets_IR_embeddings_or_reviews": false
+  },
+  "published_ownership_preservation": {
+    "root": {
+      "all_exact": true,
+      "changed_paths": [],
+      "count": 129
+    },
+    "source": {
+      "all_exact": true,
+      "changed_paths": [],
+      "count": 135
+    }
+  },
+  "relevant_remote_and_local_ancestry": {
+    "root": {
+      "local_relevant": [
+        {
+          "HEAD": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "branch": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "worktree": "/home/barberb/lift_coding/.worktrees/autoencoder-progress-reconciliation-root-20261006"
+        },
+        {
+          "HEAD": "fb502b6fae1515660a37a38a42d33c1752c79155",
+          "branch": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "fb502b6fae1515660a37a38a42d33c1752c79155",
+          "worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-root-20261007"
+        },
+        {
+          "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "branch_only_commits": 5,
+          "in_main": false,
+          "merge_base": "cc5d5bf9fa40bd9a8834d8fb61a03a4724033297",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+        },
+        {
+          "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "branch_only_commits": 4,
+          "in_main": false,
+          "merge_base": "1be6270220cba85d09a64556b30f47916efa2982",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+        },
+        {
+          "HEAD": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+          "branch": "refs/heads/codex/supervisor-comparison-publication-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active supervisor source and qualification publication",
+          "merge_base": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+          "worktree": "/home/barberb/lift_coding/.worktrees/supervisor-comparison-publication-20261011"
+        },
+        {
+          "HEAD": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "branch": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoencoder-reconciliation-20261007-01/workspace"
+        },
+        {
+          "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "branch_only_commits": 6,
+          "in_main": false,
+          "merge_base": "e8994ea6003fdd1f1fe061550bb190c70ba011dc",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        },
+        {
+          "HEAD": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "branch": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/workspace"
+        },
+        {
+          "HEAD": "739e7088a203a4b307d96192e489a88dbf9177b1",
+          "branch": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "739e7088a203a4b307d96192e489a88dbf9177b1",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/workspace"
+        },
+        {
+          "HEAD": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "branch": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/workspace"
+        },
+        {
+          "HEAD": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "branch": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/workspace"
+        },
+        {
+          "HEAD": "33a27b1a6196c6b50849a59e8939698803c515d8",
+          "branch": "refs/heads/codex/terminal-live-census-root-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "33a27b1a6196c6b50849a59e8939698803c515d8",
+          "worktree": "/home/barberb/lift_coding_worktrees/terminal-live-census-root-20261011"
+        }
+      ],
+      "remote_selected": [
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "30e61092341b47b4e49eb30df443fd607536333a",
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+          "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "739e7088a203a4b307d96192e489a88dbf9177b1",
+          "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+          "sha": "739e7088a203a4b307d96192e489a88dbf9177b1"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+          "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "00130686f43e35105e2ee98e5a36428f3aff3538",
+          "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+          "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "3b0162bebe0b7a09727081cb8c5f5c15378caba1",
+          "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+          "ref": "refs/heads/main",
+          "sha": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49"
+        }
+      ]
+    },
+    "source": {
+      "local_relevant": [
+        {
+          "HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+          "branch": "refs/heads/main",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+          "worktree": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets"
+        },
+        {
+          "HEAD": "28c6bdb833a9e1309db4b01018e588aa427a05f4",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "28c6bdb833a9e1309db4b01018e588aa427a05f4",
+          "worktree": "/home/barberb/lift_coding/.decoder-release-validation/20260930T233813Z-c2a7a95f/external/ipfs_datasets"
+        },
+        {
+          "HEAD": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "branch": "refs/heads/codex/alignment-decoder-768-20261003",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Persistent autoformalization decoder study source references",
+          "merge_base": "64bc5734dc82db72e955f2e809b770127e9b6cfc",
+          "worktree": "/home/barberb/lift_coding/.worktrees/alignment-decoder-768-20261003"
+        },
+        {
+          "HEAD": "7732a5808828083afb1cd19d126d987991136375",
+          "branch": "refs/heads/codex/codebase-numerical-replay-20261003",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "7732a5808828083afb1cd19d126d987991136375",
+          "worktree": "/home/barberb/lift_coding/.worktrees/codebase-numerical-replay-20261003"
+        },
+        {
+          "HEAD": "271ad796288e17039f036af6a0d003a4628da6ed",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Frozen retained decoder donor replay source; preserve exact 271ad796 and original asset bindings; ignored-payload recovery exception recorded",
+          "merge_base": "271ad796288e17039f036af6a0d003a4628da6ed",
+          "worktree": "/home/barberb/lift_coding/.worktrees/dual-bank-wording-adapter-datasets-20261007"
+        },
+        {
+          "HEAD": "3315224dfd184e24ea71bad2cb137509450deb88",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Persistent recovery of interrupted proof-index integration",
+          "merge_base": "3315224dfd184e24ea71bad2cb137509450deb88",
+          "worktree": "/home/barberb/lift_coding/.worktrees/ir-release-datasets-20261002"
+        },
+        {
+          "HEAD": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "branch": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active retained Legal384 reconstruction scorer implementation and regression; preserve until explicit root completion",
+          "merge_base": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "worktree": "/home/barberb/lift_coding/.worktrees/legal-original-text-roundtrip-retained-20261004"
+        },
+        {
+          "HEAD": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+          "branch": "refs/heads/codex/numerical-assertion-contracts-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "7286ee17f300a7d90741eb19900dd36939eb40b3",
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-assertion-contracts-20261011"
+        },
+        {
+          "HEAD": "db432c5a93a207436f9a4279d888fddee931e390",
+          "branch": "refs/heads/codex/numerical-structural-ir-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "db432c5a93a207436f9a4279d888fddee931e390",
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-structural-ir-20261011"
+        },
+        {
+          "HEAD": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+          "branch": "refs/heads/codex/numerical-value-contracts-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active supervisor qualification and retained source provenance",
+          "merge_base": "fecc4ecbf2b6a2c7453af7d2f0d749e2b7d9bc52",
+          "worktree": "/home/barberb/lift_coding/.worktrees/numerical-value-contracts-20261011"
+        },
+        {
+          "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "branch_only_commits": 48,
+          "in_main": false,
+          "merge_base": "d2e43dd82d98903f539aed5f9b3b1b2b2480efa4",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+        },
+        {
+          "HEAD": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "branch": "refs/heads/agent/retained-wording-checkpoint-integration-datasets-20261007",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "90c1bb382cdb66f021d32c7671943ec4c1e7eeb4",
+          "worktree": "/home/barberb/lift_coding/.worktrees/retained-wording-checkpoint-integration-datasets-20261007"
+        },
+        {
+          "HEAD": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+          "branch": "refs/heads/codex/source-unit-numerical-links-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active supervisor qualification and retained source provenance",
+          "merge_base": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+          "worktree": "/home/barberb/lift_coding/.worktrees/source-unit-numerical-links-20261011"
+        },
+        {
+          "HEAD": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "branch": "refs/heads/codex/source-v2-warm-start-20261004",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active saved-weight continuation implementation and review; preserve exact retained inputs",
+          "merge_base": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "worktree": "/home/barberb/lift_coding/.worktrees/source-v2-warm-start-20261004"
+        },
+        {
+          "HEAD": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+          "branch": "refs/heads/codex/source384-unicode-comments-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "5d5769f0b939676ef8c3f1221338a73272d6a9f8",
+          "worktree": "/home/barberb/lift_coding/.worktrees/source384-unicode-comments-20261011"
+        },
+        {
+          "HEAD": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+          "branch": "refs/heads/agent/uscode-archive-reconciliation-datasets-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "6ff96661770c72b3a30da25dc8e527d9b6f176fc",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-archive-reconciliation-datasets-20261011"
+        },
+        {
+          "HEAD": "a75424d120e75e6494cda7466e52797bb8129ea4",
+          "branch": "refs/heads/agent/uscode-archive-resume-datasets-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "a75424d120e75e6494cda7466e52797bb8129ea4",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-archive-resume-datasets-20261011"
+        },
+        {
+          "HEAD": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+          "branch": "refs/heads/agent/uscode-identity-recovery-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Pending US Code identity diagnostic execution source; exact 03d0dac referenced by admitted future command; preserve until durable reviewed replacement",
+          "merge_base": "03d0dac7397bea25b3c7363ff07a7299df3dd4ad",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-identity-recovery-datasets-20261011"
+        },
+        {
+          "HEAD": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "branch": "refs/heads/agent/uscode-span-lossless-datasets-20261007",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "569e256d8c653a243b65922603f1d7d1344e7204",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-lossless-datasets-20261007"
+        },
+        {
+          "HEAD": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "branch": "refs/heads/agent/uscode-span-pages-datasets-20261011",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "6b29a0c546086a94b67fef8a93ac0f6b8f84bfa9",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-pages-datasets-20261011"
+        },
+        {
+          "HEAD": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "branch": "refs/heads/agent/uscode-span-paired-feed-datasets-20261007",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "1c065689c9c9f129cfbb480535411b3df4b4a5c9",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-paired-feed-datasets-20261007"
+        },
+        {
+          "HEAD": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "branch": "refs/heads/agent/uscode-span-source-census-datasets-20261007",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "21987bb5ebc94f5cc1d316b0521b8793e8610be4",
+          "worktree": "/home/barberb/lift_coding/.worktrees/uscode-span-source-census-datasets-20261007"
+        },
+        {
+          "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "branch_only_commits": 50,
+          "in_main": false,
+          "merge_base": "aa586a9b91b583a2ac5d867bd107ba0c5a4762d5",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        },
+        {
+          "HEAD": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "branch": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/datasets"
+        },
+        {
+          "HEAD": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+          "branch": "refs/heads/codex/legal-joint-readout-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/datasets"
+        },
+        {
+          "HEAD": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "branch": "refs/heads/codex/legal-native-cache-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/datasets"
+        },
+        {
+          "HEAD": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "branch": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "worktree": "/home/barberb/lift_coding/artifacts/legal-open-vocabulary-20261011-01/datasets"
+        },
+        {
+          "HEAD": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "d24e15ee73659a5d4cff20e8f1cbf1c5ab92a234",
+          "worktree": "/home/barberb/lift_coding_worktrees/indexed-worker-context-datasets-20261011"
+        },
+        {
+          "HEAD": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8",
+          "branch_only_commits": 0,
+          "in_main": true,
+          "locked": "Active dirty-source staging implementation and qualification; preserve working tree",
+          "merge_base": "bde8a6af7dc1cb249c76ad777c86a8e79854dca8",
+          "worktree": "/tmp/ir-release-datasets-20261001"
+        }
+      ],
+      "remote_selected": [
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "a3f16f2870a80a7e985b35bed3334512c47d9dc3",
+          "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d",
+          "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "aed87b0d980422c2ca9efaa26cf92df30c51d768",
+          "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "c4382ae53ab9497245fccdf85855f0e314711fbc",
+          "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff",
+          "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "53e87779a527349b65875cb20b59ca9eb48ed70c",
+          "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b",
+          "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "575a129f19068d58d66cc8119e85c3d23faa560a",
+          "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "0f733b621335a3fb95e3f8855f2100cd95ba01b5",
+          "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+          "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "004887f6250b083e0b095d5ac7563bc5bb792491",
+          "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+          "ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+          "sha": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "f3901341cdde9b4485315327d5ef06abd1485b11",
+          "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+          "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+          "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "1530efd07032bac88229c6c97ca5994d498e6216",
+          "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "7b93b2d97a8985b3f2db29963bd0979749f66163",
+          "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6",
+          "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6",
+          "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+          "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "branch_only_commits": 0,
+          "in_main": true,
+          "merge_base": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+          "ref": "refs/heads/main",
+          "sha": "cdae06198a229760ca139d48f9e311e80d0df8c6"
+        }
+      ]
+    }
+  },
+  "remote_heads_observed": {
+    "root": [
+      {
+        "ref": "refs/heads/agent/agent-supervisor-direct-objective-and-event-driven-planning-v1",
+        "sha": "a6915c06bb8cc28d2bb3b167d8708561c69a108a"
+      },
+      {
+        "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+        "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+      },
+      {
+        "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+        "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+      },
+      {
+        "ref": "refs/heads/agent/parallel-content-sealing-proof-carrying-tdd-v1-g9",
+        "sha": "b30b8b05e19c219249511db9e06ed3ab7ac4b1ad"
+      },
+      {
+        "ref": "refs/heads/agent/proof-carrying-context-engine-v0.1",
+        "sha": "ed97ee2dd11e0409afaeeb539b645d7b718869af"
+      },
+      {
+        "ref": "refs/heads/agent/vericodegen-2026-lean_refactor_arena",
+        "sha": "23bdc18f777f5ff673144b5eccbc58827b58d755"
+      },
+      {
+        "ref": "refs/heads/chore/fmt-check-main",
+        "sha": "c260f562fcecd49093442cbe9a59337b75dbd218"
+      },
+      {
+        "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+        "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+      },
+      {
+        "ref": "refs/heads/codex/doep-monitor-recovery",
+        "sha": "0febcc082749dcf551ba49fe0ab320b1b078b5ab"
+      },
+      {
+        "ref": "refs/heads/codex/doep031-sealed-readmission",
+        "sha": "7a1938ba75156f5fc768609c340eb67ec22df5aa"
+      },
+      {
+        "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+        "sha": "739e7088a203a4b307d96192e489a88dbf9177b1"
+      },
+      {
+        "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+        "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+      },
+      {
+        "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+        "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+      },
+      {
+        "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+        "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+      },
+      {
+        "ref": "refs/heads/codex/pctdd-g9-descendant-source",
+        "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+      },
+      {
+        "ref": "refs/heads/codex/pctdd-validation-evidence-guard",
+        "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+      },
+      {
+        "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+        "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+      },
+      {
+        "ref": "refs/heads/codex/supervisor-lifecycle-root-20261005",
+        "sha": "6089e1f163d68dd09b006e4b13b14c165ecc136d"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-bench-readiness-root-20261005",
+        "sha": "c317deb66a95a90f1204f4354cd5fa37698ebe6b"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-codex-baseline-root-20261005",
+        "sha": "9da9a77393ba5829bfaa6ba988dfd2bd042c4aa0"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-context-dictionary-root-20261006",
+        "sha": "cdb8a5201e57d50aa4a5ba589eed1c07151689f1"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-context-pair-results-root-20261006",
+        "sha": "b16464347c479f7a3cbda4c8e29dbaef90dda4fb"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-eigenvalue-symbolic-diagnosis-root-20261005",
+        "sha": "ac5e4793df10f9c33a854b459a370f6f52a02924"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-eigenvalue-symbolic-trial-root-20261006",
+        "sha": "1500a7c548f4a981af1b0d8a490744f8450d4529"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-live-census-root-20261011",
+        "sha": "df96e9144d91788ae91fd518ad0fd0a1f529e061"
+      },
+      {
+        "ref": "refs/heads/codex/terminal-planning-schema-root-20261006",
+        "sha": "79f29121b12471d7e6226246f2cd2b74c918ab75"
+      },
+      {
+        "ref": "refs/heads/implementation/doep-030-b8d4ee0e8de3-attempt-1-1788101472",
+        "sha": "fadf091facbf259fec0ff55af3d2104ed16f66df"
+      },
+      {
+        "ref": "refs/heads/implementation/doep-100-e348c8e778da-attempt-1-1789273504",
+        "sha": "35e45b3e26acedc25b109667066460ec595775c4"
+      },
+      {
+        "ref": "refs/heads/implementation/ns-022-fd92ef2bddf6-attempt-1-1789307474",
+        "sha": "5ac3983204fe92572b097ee45d8c16e86c6ff55d"
+      },
+      {
+        "ref": "refs/heads/main",
+        "sha": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49"
+      },
+      {
+        "ref": "refs/heads/repair/doep-append-quarantine-parent-20260913",
+        "sha": "973d41304bd8161710906c1e934c63b249bdcc5a"
+      },
+      {
+        "ref": "refs/heads/repair/doep-completed-projection-parent-20260913",
+        "sha": "9cf8deb84204beb4e0b388194336f93718df33e2"
+      },
+      {
+        "ref": "refs/heads/repair/doep-empty-priority-parent-20260913",
+        "sha": "dede193885407ece66e5b5fb5e42da9ac8deb6d0"
+      },
+      {
+        "ref": "refs/heads/repair/doep-exhausted-post-merge-parent-20260913",
+        "sha": "355ce7a628ee013396f0e0f86333fe7fd2cc3383"
+      },
+      {
+        "ref": "refs/heads/repair/doep-readonly-queue-launch-parent-20260913",
+        "sha": "2bef289426fa5f038ae630313db097efe3a78adc"
+      },
+      {
+        "ref": "refs/heads/repair/doep-readonly-queue-native-parent-base-20260913",
+        "sha": "baeabe9911291c8a119dba6ab78cdc971e72635f"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-after-task008-native-base-20260913",
+        "sha": "e9afd83fb3a55173c628a479c5a45dd897a6c23b"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-current-quarantine-owner-read-parent-20260913",
+        "sha": "42578300ef9ccf87b6c21ff33dd4df467a1520d8"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-lifecycle-qualified-job24",
+        "sha": "d60b5ff1f2f265c703ed022359059627caea827b"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-maintenance-after-task008-parent-20260913",
+        "sha": "91453f7bbe024270831ac2e2d65f8f682fe554e8"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-operator-restart",
+        "sha": "7fe11f6fd883a9303ef89f4cd0c0210b722b173e"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-quarantine-read-parent-20260913",
+        "sha": "283004348c4920d8d74252640d98565dbc71169e"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-quarantined-maintenance-parent-20260913",
+        "sha": "ee3c1988d6115c5278566e4c4534b17f191af893"
+      },
+      {
+        "ref": "refs/heads/repair/pctdd-workspace-quarantine-parent-20260913",
+        "sha": "48f56974d9548e1c382d37e3888869b49d831083"
+      }
+    ],
+    "source": [
+      {
+        "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+      },
+      {
+        "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+        "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+      },
+      {
+        "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+        "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+      },
+      {
+        "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+        "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+      },
+      {
+        "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+        "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+      },
+      {
+        "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+        "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+      },
+      {
+        "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+        "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+      },
+      {
+        "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+        "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+      },
+      {
+        "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+        "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+      },
+      {
+        "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+        "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+      },
+      {
+        "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+        "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+      },
+      {
+        "ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+        "sha": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+      },
+      {
+        "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+        "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+      },
+      {
+        "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+        "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+      },
+      {
+        "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+        "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+      },
+      {
+        "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+        "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+      },
+      {
+        "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+        "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+      },
+      {
+        "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+        "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+      },
+      {
+        "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+        "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+      },
+      {
+        "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+        "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+      },
+      {
+        "ref": "refs/heads/main",
+        "sha": "cdae06198a229760ca139d48f9e311e80d0df8c6"
+      },
+      {
+        "ref": "refs/heads/recovery/eaaef-023-hidden-worktree",
+        "sha": "b8002a60177f3196d32fe7a7990d57899accad75"
+      },
+      {
+        "ref": "refs/heads/recovery/eaaef-094-child-merge-20260825",
+        "sha": "c30ccbec997868b061c4cadac38d30468c46ea2d"
+      },
+      {
+        "ref": "refs/heads/recovery/eaaef-datasets-run-v14-aggregate",
+        "sha": "f199a61aa431fcbca3aecff3f5749db6bfa76b54"
+      },
+      {
+        "ref": "refs/heads/recovery/plat2-060-session-20260728",
+        "sha": "cf056bd4a19402bad0eda5931d2924901d7eae5c"
+      }
+    ]
+  },
+  "retained_owner_changed_count": 0,
+  "retained_owner_checks": {
+    "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache": {
+      "actual": {
+        "bytes": 29148,
+        "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+      },
+      "expected": {
+        "bytes": 29148,
+        "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime": {
+      "actual": {
+        "bytes": 28040,
+        "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+      },
+      "expected": {
+        "bytes": 28040,
+        "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_runtime": {
+      "actual": {
+        "bytes": 37249,
+        "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+      },
+      "expected": {
+        "bytes": 37249,
+        "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs": {
+      "actual": {
+        "bytes": 28444,
+        "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+      },
+      "expected": {
+        "bytes": 28444,
+        "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.gte_multilingual_profile": {
+      "actual": {
+        "bytes": 15959,
+        "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+      },
+      "expected": {
+        "bytes": 15959,
+        "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.legal_native_conditioning": {
+      "actual": {
+        "bytes": 24439,
+        "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+      },
+      "expected": {
+        "bytes": 24439,
+        "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768": {
+      "actual": {
+        "bytes": 13375,
+        "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+      },
+      "expected": {
+        "bytes": 13375,
+        "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768_complete": {
+      "actual": {
+        "bytes": 9556,
+        "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+      },
+      "expected": {
+        "bytes": 9556,
+        "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+      },
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "actual": {
+        "bytes": 109257,
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "expected": {
+        "bytes": 109257,
+        "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+      },
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_decoder_preflight": {
+      "actual": {
+        "bytes": 9794,
+        "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+      },
+      "expected": {
+        "bytes": 9794,
+        "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+      },
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_source_guards": {
+      "actual": {
+        "bytes": 6017,
+        "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+      },
+      "expected": {
+        "bytes": 6017,
+        "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+      },
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_span_decoder": {
+      "actual": {
+        "bytes": 21764,
+        "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+      },
+      "expected": {
+        "bytes": 21764,
+        "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+      },
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest": {
+      "actual": {
+        "bytes": 27947,
+        "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+      },
+      "expected": {
+        "bytes": 27947,
+        "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production": {
+      "actual": {
+        "bytes": 26219,
+        "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+      },
+      "expected": {
+        "bytes": 26219,
+        "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime": {
+      "actual": {
+        "bytes": 19364,
+        "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+      },
+      "expected": {
+        "bytes": 19364,
+        "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool": {
+      "actual": {
+        "bytes": 7896,
+        "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+      },
+      "expected": {
+        "bytes": 7896,
+        "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker": {
+      "actual": {
+        "bytes": 100140,
+        "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+      },
+      "expected": {
+        "bytes": 100140,
+        "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "actual": {
+        "bytes": 14622,
+        "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+      },
+      "expected": {
+        "bytes": 14622,
+        "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "actual": {
+        "bytes": 42137,
+        "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+      },
+      "expected": {
+        "bytes": 42137,
+        "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "actual": {
+        "bytes": 146870,
+        "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+      },
+      "expected": {
+        "bytes": 146870,
+        "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation": {
+      "actual": {
+        "bytes": 14165,
+        "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+      },
+      "expected": {
+        "bytes": 14165,
+        "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "actual": {
+        "bytes": 35294,
+        "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+      },
+      "expected": {
+        "bytes": 35294,
+        "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer": {
+      "actual": {
+        "bytes": 21228,
+        "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+      },
+      "expected": {
+        "bytes": 21228,
+        "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+      },
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "unchanged": true
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "actual": {
+        "bytes": 4428,
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "expected": {
+        "bytes": 4428,
+        "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+      },
+      "path": "ipfs_datasets_py/utils/cid_utils.py",
+      "unchanged": true
+    }
+  },
+  "retained_owner_count": 24,
+  "schema": "legal-structured-training-main-progress-review/v1",
+  "scope": "Read-only fixed Git object/source-code and inherited saved-artifact metadata audit; authorized fetches only in dedicated audit refs. This does not approve a fit, establish current resource availability, authenticate statutory review or verify new numerical results by execution.",
+  "separate_support_retention_inventory": {
+    "admission_masks": 0,
+    "all_splits_exposed": true,
+    "directory": "/home/barberb/lift_coding/artifacts/legal-decoder-progress-20261011-01/corpus",
+    "earlier_numerical_targets": "Support booleans only, with optional online frozen-parent retention teacher. Authored span fields were construction/scoring references, not that fit loss.",
+    "final_rows": 128,
+    "positive_construction_rows": 512,
+    "role": "Different class-gating corpus, optional authored diagnostic inventory only; not the parent-selected span-reference training pool and no alias.",
+    "selection_rows": 128,
+    "semantic_gold": false,
+    "train_rows": 1024,
+    "unsupported_mutations": 512
+  },
+  "version": 1
+}

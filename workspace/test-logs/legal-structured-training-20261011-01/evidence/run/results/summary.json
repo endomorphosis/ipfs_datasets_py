@@ -1,0 +1,537 @@
+{
+  "Lake_executed": false,
+  "actual_encoder_calls": 0,
+  "actual_new_updates": 128,
+  "arms": [
+    {
+      "checkpoint": {
+        "bytes": 4683861,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-checkpoint.json",
+        "sha256": "ae8d75a8a3b616d571875f295232c062572f9d66c62180946fe5c52eff3f3a07"
+      },
+      "law_controls": [
+        {
+          "control": "none",
+          "joint": {
+            "bytes": 103595,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none-joint.json",
+            "sha256": "a15400d1808e66d0bde047f25e0025f315995d72edb0601408709177ba29fc4a"
+          },
+          "raw_inference": {
+            "bytes": 274626,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none.json",
+            "sha256": "c59bfd3b8046312313a88b2ce197713a819ba98529c621015b082a562564284f"
+          }
+        },
+        {
+          "control": "zero",
+          "joint": {
+            "bytes": 103564,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero-joint.json",
+            "sha256": "4daf94ba12ce45f692fc9e424faddabf764768a26f59698e85a8852bc9438a23"
+          },
+          "raw_inference": {
+            "bytes": 274861,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero.json",
+            "sha256": "4945aa07b8f7903e87228654b59a97474241212773250b35a5134542043bdc60"
+          }
+        },
+        {
+          "control": "disabled",
+          "joint": {
+            "bytes": 103565,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled-joint.json",
+            "sha256": "84daff6ee3aff19cf3b3ae41e32b60199b4979f5862149c3df4f99f81f075ef5"
+          },
+          "raw_inference": {
+            "bytes": 274904,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled.json",
+            "sha256": "5cdb36b06b21cb1e6effa24eda0e1f72f15ac4b600f5b2ec1e679a38ced36e3f"
+          }
+        },
+        {
+          "control": "rotate",
+          "joint": {
+            "bytes": 103639,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate-joint.json",
+            "sha256": "a1da80e8e43d86dd45b64e4711631476009b325306c505ac6c39a3e2539e4c8d"
+          },
+          "raw_inference": {
+            "bytes": 274646,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate.json",
+            "sha256": "bdb374f5299108f1dc50256566da34a39418462878755e46211c7b41d1ab3a32"
+          }
+        }
+      ],
+      "name": "raw384-1729-ce0",
+      "training": {
+        "bytes": 24438,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-training.json",
+        "sha256": "75e52dcbdb023639d533d57d22b0e62034780384855c7cd45d014c401b4746aa"
+      },
+      "tuning_diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.007680515001993626,
+          "overlap": 0.0011235665453480396,
+          "structure": 0.0011056841858596473,
+          "total": 0.007791083420579592,
+          "validity": 0.001087801826371255,
+          "weighted_structure": 0.00011056841858596477
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "tuning_greedy": {
+        "bytes": 874809,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-tuning-greedy.json",
+        "sha256": "d50e623f26d80b80be9170dbe507d352941f55700dac2b8ec34b1c3fade3bd22"
+      }
+    },
+    {
+      "checkpoint": {
+        "bytes": 4683773,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-checkpoint.json",
+        "sha256": "2fec93aa0efdbd56886ff9f5f62100f97727f6ab386fa093c5f535450cf8fd47"
+      },
+      "law_controls": [
+        {
+          "control": "none",
+          "joint": {
+            "bytes": 103593,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none-joint.json",
+            "sha256": "cdb34a09dfc0880cf030fddb5833c95af1ae7c6d362483f3344be9e9fa4dae9c"
+          },
+          "raw_inference": {
+            "bytes": 274614,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none.json",
+            "sha256": "6399be33c615d0e413f499a45335ca813b9a48d3150725c0a6618bac526f66b8"
+          }
+        },
+        {
+          "control": "zero",
+          "joint": {
+            "bytes": 103556,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero-joint.json",
+            "sha256": "913ff16dece75e7b90aefc0b0aaca1c83cdad5d2c445d6987d80764fda139d55"
+          },
+          "raw_inference": {
+            "bytes": 274856,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero.json",
+            "sha256": "ca72820a4a00386504d97b4590a92b42d8a2e193f566141998dfea8abf3c8b8e"
+          }
+        },
+        {
+          "control": "disabled",
+          "joint": {
+            "bytes": 103596,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled-joint.json",
+            "sha256": "cd40feef2354e2230bbcde1bd98fd84a135a10e4322b0be708ae7a66fcd1dc57"
+          },
+          "raw_inference": {
+            "bytes": 274957,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled.json",
+            "sha256": "baa4d848c2b15b2a34ba45f9dce787ccc4df5ca70589b05463f9bf61dd67f316"
+          }
+        },
+        {
+          "control": "rotate",
+          "joint": {
+            "bytes": 103622,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate-joint.json",
+            "sha256": "ed12ecf85a5f2657424f512e1caedcb61789477cb9b08b23d9d661a9ff43d7f4"
+          },
+          "raw_inference": {
+            "bytes": 274656,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate.json",
+            "sha256": "5d78989b03fe79a4ee56a4c5ef0efe383a52a9a2ac97f6b1b9806584f0b617d7"
+          }
+        }
+      ],
+      "name": "raw384-1729-probability01",
+      "training": {
+        "bytes": 26802,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-training.json",
+        "sha256": "1a8d5611fec04fc83eac81891cf385016a07bd0f4de46936c08df7f6eb99d920"
+      },
+      "tuning_diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.007664880104130134,
+          "overlap": 0.0011203142945976408,
+          "structure": 0.0010981874518036876,
+          "total": 0.007774698849310503,
+          "validity": 0.0010760606090097341,
+          "weighted_structure": 0.00010981874518036873
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "tuning_greedy": {
+        "bytes": 874835,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-tuning-greedy.json",
+        "sha256": "79b16f4c519f219c8aa4d832882920b7af0b36af88d23f82d6aa12dc0d537637"
+      }
+    },
+    {
+      "checkpoint": {
+        "bytes": 4117352,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json",
+        "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+      },
+      "law_controls": [
+        {
+          "control": "none",
+          "joint": {
+            "bytes": 103504,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none-joint.json",
+            "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+          },
+          "raw_inference": {
+            "bytes": 274731,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none.json",
+            "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+          }
+        },
+        {
+          "control": "zero",
+          "joint": {
+            "bytes": 103504,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero-joint.json",
+            "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+          },
+          "raw_inference": {
+            "bytes": 274731,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero.json",
+            "sha256": "5b2358e24625df54614115877c57ea7dc64f52ac4c5ab453b141598e4d060e19"
+          }
+        },
+        {
+          "control": "disabled",
+          "joint": {
+            "bytes": 103504,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled-joint.json",
+            "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+          },
+          "raw_inference": {
+            "bytes": 274735,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled.json",
+            "sha256": "6acc8ab73ff5dfbf16c66af155a8d3a2406d6c6250d878e635b7969e867811e1"
+          }
+        },
+        {
+          "control": "rotate",
+          "joint": {
+            "bytes": 103504,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate-joint.json",
+            "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+          },
+          "raw_inference": {
+            "bytes": 274733,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate.json",
+            "sha256": "45effa14d87f048193b034b259d357d5211480ff5e40d953bc0b97a5452cfda0"
+          }
+        }
+      ],
+      "name": "source_only-1729-ce0",
+      "training": {
+        "bytes": 24312,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-training.json",
+        "sha256": "1e039f32b402306cb9dba136d1635dd7bfd759dce66e42544c8630b9a37ea26a"
+      },
+      "tuning_diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.009787940216483548,
+          "overlap": 0.0016551186691619137,
+          "structure": 0.0015869766935090411,
+          "total": 0.009946637885834454,
+          "validity": 0.0015188347178561685,
+          "weighted_structure": 0.00015869766935090412
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "tuning_greedy": {
+        "bytes": 874913,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+        "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+      }
+    },
+    {
+      "checkpoint": {
+        "bytes": 4117258,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-checkpoint.json",
+        "sha256": "bb4e67a247f681e9aee2a763fad7a2501c758d1a0978fd782665e91b04c9c348"
+      },
+      "law_controls": [
+        {
+          "control": "none",
+          "joint": {
+            "bytes": 103514,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none-joint.json",
+            "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+          },
+          "raw_inference": {
+            "bytes": 274835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none.json",
+            "sha256": "47c5239332357c97b0efcbeba8e55bcff2ffabe346ff012ef44c746e1f88d68d"
+          }
+        },
+        {
+          "control": "zero",
+          "joint": {
+            "bytes": 103514,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero-joint.json",
+            "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+          },
+          "raw_inference": {
+            "bytes": 274835,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero.json",
+            "sha256": "cc6111159e3db471c98c1e73e83f765bd25f6726ee34d704077a46525b30201d"
+          }
+        },
+        {
+          "control": "disabled",
+          "joint": {
+            "bytes": 103514,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled-joint.json",
+            "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+          },
+          "raw_inference": {
+            "bytes": 274839,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled.json",
+            "sha256": "80b2d67e703322a39231e89df69aaa45823e1b20b6650eab9d98a039a23ea96a"
+          }
+        },
+        {
+          "control": "rotate",
+          "joint": {
+            "bytes": 103514,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate-joint.json",
+            "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+          },
+          "raw_inference": {
+            "bytes": 274837,
+            "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate.json",
+            "sha256": "bc78ff4f294e3b4ab1b484c8c93425103daaa60cb7af6536ba213ef46979936d"
+          }
+        }
+      ],
+      "name": "source_only-1729-probability01",
+      "training": {
+        "bytes": 26641,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-training.json",
+        "sha256": "cd290e0f3da334eccbd93ca5afa02d0f00bcc61217d85307cdc5ae4559cca014"
+      },
+      "tuning_diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.009756693616509438,
+          "overlap": 0.00164092857168029,
+          "structure": 0.0015686868388209794,
+          "total": 0.009913562300391535,
+          "validity": 0.0014964451059616699,
+          "weighted_structure": 0.000156868683882098
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "tuning_greedy": {
+        "bytes": 874890,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-tuning-greedy.json",
+        "sha256": "df000aa63f20bd9f19ae805734c1770b336f248d8f00d8fd9a44e3067b3355d5"
+      }
+    }
+  ],
+  "authored_tuning_previously_exposed": true,
+  "baseline_tuning": [
+    {
+      "authored_greedy": {
+        "bytes": 874779,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-baseline-tuning-greedy.json",
+        "sha256": "83ce49feaae1952ff0b8faabe98a7b6fbbb7799e94d3ece9d808d53577f8752f"
+      },
+      "diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.00810092780739069,
+          "overlap": 0.0010369630994453234,
+          "structure": 0.001061787202675404,
+          "total": 0.00820710652765823,
+          "validity": 0.0010866113059054842,
+          "weighted_structure": 0.00010617872026754039
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "name": "raw384-1729"
+    },
+    {
+      "authored_greedy": {
+        "bytes": 874857,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-baseline-tuning-greedy.json",
+        "sha256": "7222e3bcbb19225662769ddb4237e17ca2f6fe60a658eaffb659f54b7399636a"
+      },
+      "diagnostic": {
+        "diagnostic_structure_weight": 0.1,
+        "exact_canonical_ir": 96,
+        "expected_exact_ceiling": 96,
+        "greedy_inference_target_access": false,
+        "losses": {
+          "ce": 0.01039989193668589,
+          "overlap": 0.0015642964702160948,
+          "structure": 0.0015523682448019972,
+          "total": 0.010555128761166087,
+          "validity": 0.0015404400193878992,
+          "weighted_structure": 0.0001552368244801997
+        },
+        "qualified": false,
+        "rows": 96,
+        "schema": "authored-tuning-common-objective-diagnostic/v1",
+        "semantic_accuracy": null,
+        "source_semantics_verified": false,
+        "teacher_forcing_for_loss": true,
+        "training_executed": false,
+        "used_for_selection": false
+      },
+      "name": "source_only-1729"
+    }
+  ],
+  "checkpoint_selection_executed": false,
+  "closing_imported_owners": [
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+    "ipfs_datasets_py.utils.cid_utils",
+    "ipfs_datasets_py.logic.formalization.autoencoder.structured_span_continuation",
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection",
+    "ipfs_datasets_py.logic.legal_ir.structured_span_objective"
+  ],
+  "ctypes_dl_resolution": {
+    "profile": {
+      "ctypes_util_pin": {
+        "bytes": 14584,
+        "path": "/usr/lib/python3.12/ctypes/util.py",
+        "sha256": "9cddec0d3640c812f023cf850107e38705a040fb22213181a8cd30cdd49ea0d1"
+      },
+      "cuda_pathfinder_pin": {
+        "bytes": 7953,
+        "path": "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py",
+        "sha256": "c83cfcc0d33e14cda10ec533a21a6443db36bb032d3bf5216f109e8811ac74e9"
+      },
+      "library_pin": {
+        "bytes": 67440,
+        "path": "/usr/lib/aarch64-linux-gnu/libdl.so.2",
+        "sha256": "97387fb55ccfc0cc109dfe99b81de2b7bbaac723d1c215107dc69a068c4b1fae"
+      },
+      "requested_library": "dl",
+      "schema": "pinned-libdl-resolution/v1",
+      "subprocess_fallback_allowed": false,
+      "unlisted_library_names_allowed": false
+    },
+    "queries": [
+      "dl"
+    ],
+    "subprocess_fallback_executed": false
+  },
+  "default_promotion": false,
+  "eight_dimensional_trained": false,
+  "elapsed_seconds": 33.89952664996963,
+  "equal_batch_schedule": true,
+  "equal_step_count": 32,
+  "full_third_party_import_graph_qualified": false,
+  "independent_semantic_holdout": false,
+  "law_previously_exposed": true,
+  "legal_fidelity_qualified": false,
+  "listed_imported_owner_origins_checked_at_entry_and_exit": true,
+  "logic_family_scope": "one flat copied-span O/P/F deontic rule; broader families unqualified",
+  "opening_imported_owners": [
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+    "ipfs_datasets_py.utils.cid_utils",
+    "ipfs_datasets_py.logic.formalization.autoencoder.structured_span_continuation",
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection",
+    "ipfs_datasets_py.logic.legal_ir.structured_span_objective"
+  ],
+  "original_artifacts_byte_exact": true,
+  "resource_scope": "historical guardian unchanged: 2CPU/1536MiB/1child/200MB/300s",
+  "retained_owner_files_not_imported": [
+    "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache",
+    "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+    "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_runtime",
+    "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs",
+    "ipfs_datasets_py.logic.formalization.autoencoder.gte_multilingual_profile",
+    "ipfs_datasets_py.logic.formalization.autoencoder.legal_native_conditioning",
+    "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768",
+    "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768_complete",
+    "ipfs_datasets_py.logic.legal_ir.canonical_decoder_preflight",
+    "ipfs_datasets_py.logic.legal_ir.canonical_source_guards",
+    "ipfs_datasets_py.logic.legal_ir.canonical_span_decoder",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer"
+  ],
+  "schema": "structured-span-four-arm-results/v1",
+  "semantic_accuracy": null,
+  "seven_sixty_eight_trained": false,
+  "source_semantics_verified": false,
+  "status": "completed",
+  "trained_dimensions": [
+    384
+  ]
+}

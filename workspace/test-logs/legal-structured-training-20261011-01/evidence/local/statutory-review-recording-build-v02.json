@@ -1,0 +1,187 @@
+{
+  "actual_USCode_review_submissions_created": 0,
+  "actual_USCode_targets_created": 0,
+  "adjudication_scope": "explicit_caller_declarations_with_exact_recording_and_complete_declaration_references_not_actual_independent_completion",
+  "agreement_scope": "exact_filled_declared_interpretation_context_questions_not_semantic_equivalence_or_fidelity",
+  "all_admission_masks_remain_zero": true,
+  "all_semantic_and_authority_flags_remain_false": true,
+  "api_guide": {
+    "bytes": 5746,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-recording-api.md",
+    "sha256": "d3df27ebc303548ca912be290e5e4644dbd2b51e338b8f7b44c839f1288956fb"
+  },
+  "ast_syntax_parsed": true,
+  "authored_test_cases_static_count": 85,
+  "authored_test_functions": 26,
+  "correction": "Adjudicator declared-ID separation now includes every non-null recorded reviewer ID, including partial submissions. This does not authenticate identity or independence.",
+  "created_at_utc": "2026-10-11T08:23:36Z",
+  "encoder_calls": 0,
+  "evidence_scope": "exact_resolved_bytes_and_opening_closing_checks_not_document_contents_identity_independence_or_source_truth",
+  "example_functions": [
+    "make_fixture",
+    "submitted",
+    "adjudication",
+    "with_qualifier"
+  ],
+  "example_scope": "purely_synthetic_declaration_fixtures_authored_in_new_tests_not_executed_and_not_human_annotations",
+  "file_workflow_implemented": false,
+  "geometry_scope": "one_explicit_complete_normative_declaration_to_unchanged_flat_copied_profile_not_target_admission",
+  "human_reviews_authenticated": 0,
+  "model_calls": 0,
+  "network_calls": 0,
+  "new_source": {
+    "bytes": 34663,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+    "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+  },
+  "new_tests": {
+    "bytes": 33517,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+    "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+  },
+  "previous_build_receipt_sha256": "4fc35bd3debdb8bf49138347c0b71defceb51a891ddebd075f5c42a4c7de7610",
+  "previous_independent_review_failure_preserved_by_root": true,
+  "public_api": {
+    "assess_declaration_geometry": "packet, reviewed_submissions, *, submission_index, item_id, expected_packet_sha256, artifact_resolver",
+    "digest": "value",
+    "parse_json_bytes": "raw",
+    "record_adjudications": "packet, reviewed_submissions, declaration_package, *, expected_packet_sha256, artifact_resolver",
+    "record_reviews": "packet, reviewed_submissions, *, expected_packet_sha256, artifact_resolver",
+    "submission_guide": "packet, *, expected_packet_sha256, artifact_resolver",
+    "validate_adjudication_recording": "receipt, packet, reviewed_submissions, declaration_package, *, expected_packet_sha256, artifact_resolver",
+    "validate_recording": "receipt, packet, reviewed_submissions, *, expected_packet_sha256, artifact_resolver"
+  },
+  "resource_admissions": 0,
+  "retained_previous_source": {
+    "bytes": 34602,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-recording-source-draft-v01.py",
+    "sha256": "c02a2e6d16eb3309fdfec11e2eda9ce48fa0a19628b2abc9cb676ec4b4d57014"
+  },
+  "retained_previous_tests": {
+    "bytes": 32835,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-recording-tests-draft-v01.py",
+    "sha256": "81dacd448efddbfc5c861d2b7d84016b676ab5dd1466a14ec902f71300e34bed"
+  },
+  "reuses_existing_authored_or_alignment_schema_as_alias": false,
+  "schema": "statutory-review-recording-source-build/v1",
+  "source_module_imports_run": 0,
+  "status": "source_frozen_for_root_inert_validation_not_executed",
+  "submissions_generated_by_API": false,
+  "supersedes_drafts": true,
+  "test_inventory": [
+    {
+      "authored_cases": 1,
+      "name": "test_zero_submissions_preserve_all_physical_context_inputs_and_blank_answers"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_guide_is_a_distinct_detached_blank_submission_boundary"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_partial_and_complete_declarations_keep_absent_distinct_from_unanswered"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_recording_is_detached_and_replay_refuses_authority_or_payload_changes"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_exact_agreement_excludes_declared_identity_time_notes_and_evidence"
+    },
+    {
+      "authored_cases": 8,
+      "name": "test_interpretation_and_context_disagreement_are_preserved_without_resolution"
+    },
+    {
+      "authored_cases": 4,
+      "name": "test_complete_non_normative_declarations_need_explicit_absent_rules"
+    },
+    {
+      "authored_cases": 11,
+      "name": "test_closed_submission_profile_and_immutable_envelope_reject_tampering"
+    },
+    {
+      "authored_cases": 4,
+      "name": "test_duplicate_ids_payloads_reviewers_and_items_refused"
+    },
+    {
+      "authored_cases": 16,
+      "name": "test_typed_calendar_rules_anchors_context_and_exposure_refuse_invalid_shapes"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_selected_character_coordinates_remain_distinct_from_full_context_and_utf8_bytes"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_multirule_overlapping_and_repeated_anchors_record_without_flattening"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_qualifier_rule_anchor_and_scope_references_are_preserved"
+    },
+    {
+      "authored_cases": 6,
+      "name": "test_qualifier_reference_scope_mismatch_refused"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_evidence_bytes_verified_without_authenticating_identities_or_contents"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_evidence_mutation_at_closing_boundary_refused"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_changed_packet_or_raw_context_refused_before_review_recording"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_packet_body_seal_is_not_the_full_packet_binding"
+    },
+    {
+      "authored_cases": 5,
+      "name": "test_parser_rejects_duplicate_keys_nonfinite_invalid_utf8_and_trailing_bytes"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_submission_count_and_json_byte_budgets_refused_before_unbounded_work"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_adjudication_declarations_bind_exact_generation_and_stay_pending"
+    },
+    {
+      "authored_cases": 9,
+      "name": "test_adjudication_generation_refs_roles_cardinality_and_authority_tamper_refused"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_distinct_declared_alternatives_do_not_resolve_a_dispute_or_admit_targets"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_omitting_a_review_reference_does_not_hide_a_declared_adjudicator_overlap"
+    },
+    {
+      "authored_cases": 1,
+      "name": "test_partial_declared_reviewer_cannot_adjudicate_another_review_on_the_same_item"
+    },
+    {
+      "authored_cases": 5,
+      "name": "test_geometry_is_explicit_separate_and_refuses_unbound_or_incomplete_declarations"
+    }
+  ],
+  "tests_run": 0,
+  "training_calls": 0,
+  "unchanged_packet_owner": {
+    "bytes": 42670,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+    "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+  },
+  "unchanged_packet_owner_matches_previous": true,
+  "version": "v02",
+  "worktree_base_commit": "cdae06198a229760ca139d48f9e311e80d0df8c6"
+}

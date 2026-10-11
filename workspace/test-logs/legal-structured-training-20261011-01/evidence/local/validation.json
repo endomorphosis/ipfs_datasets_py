@@ -1,0 +1,84 @@
+{
+  "encoder_execution": false,
+  "findings": [],
+  "full_suite_cases": 687,
+  "full_suite_failures": 1,
+  "full_suite_passed": 686,
+  "harness": {
+    "bytes": 1525,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_inert_tests.py",
+    "sha256": "6893e3554ee0d6a8ef9ab1a1e23f94fb94a9041fab4a0fc94bc3d94d8f8ab50b"
+  },
+  "initial_worker_fake_clock_failure": "fixed test-only in v02; all88 worker cases pass in full suite",
+  "logs": [
+    {
+      "bytes": 4355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/final-inert-tests.log",
+      "sha256": "f729e7abb7f7d1ba5790b2250ae73950a3f1d305c0eaf245110aa246fb5da9aa"
+    },
+    {
+      "bytes": 218075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/final-inert-tests.xml",
+      "sha256": "4b528e94900dbc6221a3b8514c1d25a4c56a2f25ecdd230d6063371b42a52690"
+    },
+    {
+      "bytes": 743,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/subprocess-import-recheck.log",
+      "sha256": "d720647d82462596301fbe94befbcbeb096ff115d8bb4a37a4d3c26a07d91d51"
+    },
+    {
+      "bytes": 407,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/subprocess-import-recheck.xml",
+      "sha256": "0445e9a83b001cdf75d668f129ee0d36fc6cfcccadeb67b68a04bba4f49da1d4"
+    },
+    {
+      "bytes": 1739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/worker-inert-tests-v01.log",
+      "sha256": "067b9985485d10659f63bb433ef3468f22eefa72081c3de87980da5287c3a87a"
+    },
+    {
+      "bytes": 17943,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/worker-inert-tests-v01.xml",
+      "sha256": "e45876f66b4736d4bcb48ad8ede91b6d650877e5b2f349f8bf1f0723dc2d3796"
+    }
+  ],
+  "numerical_model_execution": false,
+  "passed": true,
+  "resolution": "run pre-existing subprocess import test from its required isolated package cwd; no source changes",
+  "resolved_subprocess_case": "test_import_and_source_preflight_do_not_load_a_numeric_backend",
+  "schema": "structured-training-inert-validation/v1",
+  "source_and_test_pins": [
+    {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    },
+    {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    {
+      "bytes": 11648,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_structured_span_objective.py",
+      "sha256": "c4780f0d971fbc9af70e8e442ba6064ff711d5b76eee15e16c728dc03bb852e5"
+    },
+    {
+      "bytes": 33517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "abdef38a7467e2eb4b83ba6e6c8b0299fece74f7c6740432eb17a26d0f57a328"
+    },
+    {
+      "bytes": 43889,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/formalization/autoencoder/test_structured_span_continuation.py",
+      "sha256": "ffd2b8b89c27dd5e657f8bfa0df705c271d72e66dcb0c5c3c13c6999c4c6882f"
+    }
+  ],
+  "training_execution": false,
+  "unique_cases_passed": 687
+}

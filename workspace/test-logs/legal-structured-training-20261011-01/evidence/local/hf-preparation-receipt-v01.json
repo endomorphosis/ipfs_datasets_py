@@ -1,0 +1,1090 @@
+{
+  "Hub_operation_performed": false,
+  "Lake_qualified": false,
+  "all_opening_closing_input_pins_exact": true,
+  "arm_observations": [
+    {
+      "greedy": 1,
+      "joint": 6,
+      "name": "raw384-1729-ce0",
+      "tuning": 96,
+      "weight": 0.0
+    },
+    {
+      "greedy": 1,
+      "joint": 6,
+      "name": "raw384-1729-probability01",
+      "tuning": 96,
+      "weight": 0.1
+    },
+    {
+      "greedy": 1,
+      "joint": 6,
+      "name": "source_only-1729-ce0",
+      "tuning": 96,
+      "weight": 0.0
+    },
+    {
+      "greedy": 1,
+      "joint": 6,
+      "name": "source_only-1729-probability01",
+      "tuning": 96,
+      "weight": 0.1
+    }
+  ],
+  "authored_only_export_included": true,
+  "complete_upload_bytes": 47834763,
+  "complete_upload_file_count": 103,
+  "complete_upload_files": {
+    "releases/20261011-structured-span-probability-v1/README.md": {
+      "bytes": 7438,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/README.md",
+      "sha256": "3815554164bd66834c6258df85c7a5505417449fbce257c1cd30d215587cf037"
+    },
+    "releases/20261011-structured-span-probability-v1/data/authored-export-receipt.json": {
+      "bytes": 448712,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/data/authored-export-receipt.json",
+      "sha256": "ef2d312231c0a4f2fef455fcd532c96df4b093e53aa31af881e42b0ccb1cf4d8"
+    },
+    "releases/20261011-structured-span-probability-v1/data/authored-train-tune-only.json": {
+      "bytes": 16289807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/data/authored-train-tune-only.json",
+      "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+    },
+    "releases/20261011-structured-span-probability-v1/data/exposed-law-source-only.json": {
+      "bytes": 99164,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/data/exposed-law-source-only.json",
+      "sha256": "04e485c0657c6a478ec0e40f29250cbc11dc5eba4494aee9055946092839b7c0"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/all-arm-plans-before-opening.json": {
+      "bytes": 71757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/all-arm-plans-before-opening.json",
+      "sha256": "21656430a4159ac85868309e6f03a68ec3833e3e42027d9ec7ef81e977f1c0f8"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/analyzer-outcomes.json": {
+      "bytes": 540960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/analyzer-outcomes.json",
+      "sha256": "cd94713d9bd61dde91176aaa3e41a40391462d296b016067defaad9444c27488"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/experiment-plan.json": {
+      "bytes": 39431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/experiment-plan.json",
+      "sha256": "5c582929818a729821ee566fd2a0c2b844fa6553d9c22d03c4e5aad15eb0bd56"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/inert-validation.json": {
+      "bytes": 4019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/inert-validation.json",
+      "sha256": "f9fca375174e752316c7064b80abe2992c7e38a313acdf30c80a2ad5b3ced3fc"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/numerical-probes.json": {
+      "bytes": 538,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/numerical-probes.json",
+      "sha256": "0d3bc9e9077cce2d3cc1f6b0d6638a3788c8fc47de6c73ea6120dd30a1b2417e"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/results-resource-review.json": {
+      "bytes": 115065,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/results-resource-review.json",
+      "sha256": "d93542bbee8e017f38247a7f20e758d4c5d6ed36b7e6524019e15cf8ce57a7b4"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/reviews/00-protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json": {
+      "bytes": 37552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/reviews/00-protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+      "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/reviews/01-structured-objective-independent-review-v01.json": {
+      "bytes": 5750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/reviews/01-structured-objective-independent-review-v01.json",
+      "sha256": "449f5771df6c3833e6746fe1c2c284808600a6883042c925487ede5291bb4289"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/reviews/02-structured-worker-independent-review-v02.json": {
+      "bytes": 11520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/reviews/02-structured-worker-independent-review-v02.json",
+      "sha256": "d686c8a3b401d192106924f3aabe24d448183d71fdb5908d676ffa56b443b695"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/reviews/03-statutory-recorder-independent-review-v02.json": {
+      "bytes": 9308,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/reviews/03-statutory-recorder-independent-review-v02.json",
+      "sha256": "8c812487102ebc36b17d4778b99eb57616d81c20bb54ca86a8b6e2eedb2d2769"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/reviews/04-source-guide-result-independent-review-v02.json": {
+      "bytes": 8294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/reviews/04-source-guide-result-independent-review-v02.json",
+      "sha256": "fa5a70cba1b0044f2eb0ccad0db1c75808d73917fab753065030f932c4b4efb3"
+    },
+    "releases/20261011-structured-span-probability-v1/evidence/saved-summary.json": {
+      "bytes": 27850,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/evidence/saved-summary.json",
+      "sha256": "f2b1ee784cc3ad5a9aadaaaeeea1f408f568b0c3147e6e9b2bdc7bd3770bd765"
+    },
+    "releases/20261011-structured-span-probability-v1/guide.md": {
+      "bytes": 21569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/guide.md",
+      "sha256": "9f24eecdc675c28d33e44c7c5657773ba3e03f3c17bb00a4089047fe3f37a4ce"
+    },
+    "releases/20261011-structured-span-probability-v1/recipe/prepare_structured_hf_release.py": {
+      "bytes": 33979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/recipe/prepare_structured_hf_release.py",
+      "sha256": "f7608f21fd0313f1b3a632b4af331bb9c275c5c210f26e98e6f54780cb9f8334"
+    },
+    "releases/20261011-structured-span-probability-v1/recipe/prepare_structured_span_pilot.py": {
+      "bytes": 11166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/recipe/prepare_structured_span_pilot.py",
+      "sha256": "0f4f4c3640cf54cf9707a7f98ee93ae9f6b04dff9378ad2a0d40dd89718eb086"
+    },
+    "releases/20261011-structured-span-probability-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261011-structured-span-probability-v1/recipe/run_structured_span_pilot.py": {
+      "bytes": 15910,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/recipe/run_structured_span_pilot.py",
+      "sha256": "4fe77c839026ade55a9a1eaaaee1f7be1ca1e326396b2ebf3ec64e5d875f0f24"
+    },
+    "releases/20261011-structured-span-probability-v1/recipe/saved-results-analyzer.py": {
+      "bytes": 43530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/recipe/saved-results-analyzer.py",
+      "sha256": "ccebe6890fc6fe4f6a19c17ba181f1e027313e6e3d6689efea5bc5594156926c"
+    },
+    "releases/20261011-structured-span-probability-v1/release-manifest.json": {
+      "bytes": 59888,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/release-manifest.json",
+      "sha256": "682db427a4e281fadc26ba3df1c032081a7e141cb40ec4d24d6525c45d64fe0c"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/baseline-common-tuning.json": {
+      "bytes": 2302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/baseline-common-tuning.json",
+      "sha256": "98e2ba71a3a872bf3d03059cc9181919ee540e2e0fd4b363ec574ebecc5a5591"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/baselines/raw384-1729-tuning-greedy.json": {
+      "bytes": 874779,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/baselines/raw384-1729-tuning-greedy.json",
+      "sha256": "83ce49feaae1952ff0b8faabe98a7b6fbbb7799e94d3ece9d808d53577f8752f"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/baselines/source_only-1729-tuning-greedy.json": {
+      "bytes": 874857,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/baselines/source_only-1729-tuning-greedy.json",
+      "sha256": "7222e3bcbb19225662769ddb4237e17ca2f6fe60a658eaffb659f54b7399636a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/common-tuning-loss.json": {
+      "bytes": 657,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/common-tuning-loss.json",
+      "sha256": "fe7239b4e6531c91ba940b484a3798b4483dce07304d8d6401856898ea3e8995"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-disabled-joint.json": {
+      "bytes": 103565,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-disabled-joint.json",
+      "sha256": "84daff6ee3aff19cf3b3ae41e32b60199b4979f5862149c3df4f99f81f075ef5"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-disabled-raw.json": {
+      "bytes": 274904,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-disabled-raw.json",
+      "sha256": "5cdb36b06b21cb1e6effa24eda0e1f72f15ac4b600f5b2ec1e679a38ced36e3f"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-none-joint.json": {
+      "bytes": 103595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-none-joint.json",
+      "sha256": "a15400d1808e66d0bde047f25e0025f315995d72edb0601408709177ba29fc4a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-none-raw.json": {
+      "bytes": 274626,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-none-raw.json",
+      "sha256": "c59bfd3b8046312313a88b2ce197713a819ba98529c621015b082a562564284f"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-rotate-joint.json": {
+      "bytes": 103639,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-rotate-joint.json",
+      "sha256": "a1da80e8e43d86dd45b64e4711631476009b325306c505ac6c39a3e2539e4c8d"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-rotate-raw.json": {
+      "bytes": 274646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-rotate-raw.json",
+      "sha256": "bdb374f5299108f1dc50256566da34a39418462878755e46211c7b41d1ab3a32"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-zero-joint.json": {
+      "bytes": 103564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-zero-joint.json",
+      "sha256": "4daf94ba12ce45f692fc9e424faddabf764768a26f59698e85a8852bc9438a23"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-zero-raw.json": {
+      "bytes": 274861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/law-zero-raw.json",
+      "sha256": "4945aa07b8f7903e87228654b59a97474241212773250b35a5134542043bdc60"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/training.json": {
+      "bytes": 24438,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/training.json",
+      "sha256": "75e52dcbdb023639d533d57d22b0e62034780384855c7cd45d014c401b4746aa"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/tuning-greedy.json": {
+      "bytes": 874809,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-ce0/tuning-greedy.json",
+      "sha256": "d50e623f26d80b80be9170dbe507d352941f55700dac2b8ec34b1c3fade3bd22"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/common-tuning-loss.json": {
+      "bytes": 658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/common-tuning-loss.json",
+      "sha256": "d2db42eaabb9ef7d4d7bc5c1b8dde2bea286baa818bef0f1305af50f6307130f"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-disabled-joint.json": {
+      "bytes": 103596,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-disabled-joint.json",
+      "sha256": "cd40feef2354e2230bbcde1bd98fd84a135a10e4322b0be708ae7a66fcd1dc57"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-disabled-raw.json": {
+      "bytes": 274957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-disabled-raw.json",
+      "sha256": "baa4d848c2b15b2a34ba45f9dce787ccc4df5ca70589b05463f9bf61dd67f316"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-none-joint.json": {
+      "bytes": 103593,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-none-joint.json",
+      "sha256": "cdb34a09dfc0880cf030fddb5833c95af1ae7c6d362483f3344be9e9fa4dae9c"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-none-raw.json": {
+      "bytes": 274614,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-none-raw.json",
+      "sha256": "6399be33c615d0e413f499a45335ca813b9a48d3150725c0a6618bac526f66b8"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-rotate-joint.json": {
+      "bytes": 103622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-rotate-joint.json",
+      "sha256": "ed12ecf85a5f2657424f512e1caedcb61789477cb9b08b23d9d661a9ff43d7f4"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-rotate-raw.json": {
+      "bytes": 274656,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-rotate-raw.json",
+      "sha256": "5d78989b03fe79a4ee56a4c5ef0efe383a52a9a2ac97f6b1b9806584f0b617d7"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-zero-joint.json": {
+      "bytes": 103556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-zero-joint.json",
+      "sha256": "913ff16dece75e7b90aefc0b0aaca1c83cdad5d2c445d6987d80764fda139d55"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-zero-raw.json": {
+      "bytes": 274856,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/law-zero-raw.json",
+      "sha256": "ca72820a4a00386504d97b4590a92b42d8a2e193f566141998dfea8abf3c8b8e"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/training.json": {
+      "bytes": 26802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/training.json",
+      "sha256": "1a8d5611fec04fc83eac81891cf385016a07bd0f4de46936c08df7f6eb99d920"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/tuning-greedy.json": {
+      "bytes": 874835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/raw384-1729-probability01/tuning-greedy.json",
+      "sha256": "79b16f4c519f219c8aa4d832882920b7af0b36af88d23f82d6aa12dc0d537637"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/common-tuning-loss.json": {
+      "bytes": 658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/common-tuning-loss.json",
+      "sha256": "e6319b308295dad03834110c6042ab5a5fc5a31581dcfcc51fe4483ff090fa4c"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-disabled-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-disabled-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-disabled-raw.json": {
+      "bytes": 274735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-disabled-raw.json",
+      "sha256": "6acc8ab73ff5dfbf16c66af155a8d3a2406d6c6250d878e635b7969e867811e1"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-none-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-none-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-none-raw.json": {
+      "bytes": 274731,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-none-raw.json",
+      "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-rotate-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-rotate-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-rotate-raw.json": {
+      "bytes": 274733,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-rotate-raw.json",
+      "sha256": "45effa14d87f048193b034b259d357d5211480ff5e40d953bc0b97a5452cfda0"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-zero-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-zero-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-zero-raw.json": {
+      "bytes": 274731,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/law-zero-raw.json",
+      "sha256": "5b2358e24625df54614115877c57ea7dc64f52ac4c5ab453b141598e4d060e19"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/training.json": {
+      "bytes": 24312,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/training.json",
+      "sha256": "1e039f32b402306cb9dba136d1635dd7bfd759dce66e42544c8630b9a37ea26a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/tuning-greedy.json": {
+      "bytes": 874913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-ce0/tuning-greedy.json",
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/common-tuning-loss.json": {
+      "bytes": 654,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/common-tuning-loss.json",
+      "sha256": "2f580460368467e2fba4b777f4a22681e158df0ff6d778ba953b0f00e52bc33b"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-disabled-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-disabled-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-disabled-raw.json": {
+      "bytes": 274839,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-disabled-raw.json",
+      "sha256": "80b2d67e703322a39231e89df69aaa45823e1b20b6650eab9d98a039a23ea96a"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-none-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-none-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-none-raw.json": {
+      "bytes": 274835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-none-raw.json",
+      "sha256": "47c5239332357c97b0efcbeba8e55bcff2ffabe346ff012ef44c746e1f88d68d"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-rotate-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-rotate-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-rotate-raw.json": {
+      "bytes": 274837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-rotate-raw.json",
+      "sha256": "bc78ff4f294e3b4ab1b484c8c93425103daaa60cb7af6536ba213ef46979936d"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-zero-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-zero-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-zero-raw.json": {
+      "bytes": 274835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/law-zero-raw.json",
+      "sha256": "cc6111159e3db471c98c1e73e83f765bd25f6726ee34d704077a46525b30201d"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/training.json": {
+      "bytes": 26641,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/training.json",
+      "sha256": "cd290e0f3da334eccbd93ca5afa02d0f00bcc61217d85307cdc5ae4559cca014"
+    },
+    "releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/tuning-greedy.json": {
+      "bytes": 874890,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/reports/source_only-1729-probability01/tuning-greedy.json",
+      "sha256": "df000aa63f20bd9f19ae805734c1770b336f248d8f00d8fd9a44e3067b3355d5"
+    },
+    "releases/20261011-structured-span-probability-v1/source-owner-pins.json": {
+      "bytes": 7565,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source-owner-pins.json",
+      "sha256": "9cd8b59daf248a4ac81d18af622da524df4720f1a19f03f71d493764f7e90efe"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py": {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/source/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "releases/20261011-structured-span-probability-v1/states/raw384-1729-ce0/checkpoint.json": {
+      "bytes": 4683861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/states/raw384-1729-ce0/checkpoint.json",
+      "sha256": "ae8d75a8a3b616d571875f295232c062572f9d66c62180946fe5c52eff3f3a07"
+    },
+    "releases/20261011-structured-span-probability-v1/states/raw384-1729-probability01/checkpoint.json": {
+      "bytes": 4683773,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/states/raw384-1729-probability01/checkpoint.json",
+      "sha256": "2fec93aa0efdbd56886ff9f5f62100f97727f6ab386fa093c5f535450cf8fd47"
+    },
+    "releases/20261011-structured-span-probability-v1/states/source_only-1729-ce0/checkpoint.json": {
+      "bytes": 4117352,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/states/source_only-1729-ce0/checkpoint.json",
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    "releases/20261011-structured-span-probability-v1/states/source_only-1729-probability01/checkpoint.json": {
+      "bytes": 4117258,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/states/source_only-1729-probability01/checkpoint.json",
+      "sha256": "bb4e67a247f681e9aee2a763fad7a2501c758d1a0978fd782665e91b04c9c348"
+    }
+  },
+  "current_review_pins": [
+    {
+      "bytes": 37552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+      "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+    },
+    {
+      "bytes": 5750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-objective-independent-review-v01.json",
+      "sha256": "449f5771df6c3833e6746fe1c2c284808600a6883042c925487ede5291bb4289"
+    },
+    {
+      "bytes": 11520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-worker-independent-review-v02.json",
+      "sha256": "d686c8a3b401d192106924f3aabe24d448183d71fdb5908d676ffa56b443b695"
+    },
+    {
+      "bytes": 9308,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-recorder-independent-review-v02.json",
+      "sha256": "8c812487102ebc36b17d4778b99eb57616d81c20bb54ca86a8b6e2eedb2d2769"
+    },
+    {
+      "bytes": 8294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-guide-result-independent-review-v02.json",
+      "sha256": "fa5a70cba1b0044f2eb0ccad0db1c75808d73917fab753065030f932c4b4efb3"
+    }
+  ],
+  "default_promotion": false,
+  "expected_parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "four_new_custom_JSON_states": true,
+  "historical_parent_states_preserved_inside_new_checkpoints": true,
+  "input_files": {
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/raw384-equivalence.json": {
+      "bytes": 10795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/raw384-equivalence.json",
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/analyze_structured_span_results.py": {
+      "bytes": 43530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/analyze_structured_span_results.py",
+      "sha256": "ccebe6890fc6fe4f6a19c17ba181f1e027313e6e3d6689efea5bc5594156926c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-export-receipt.json": {
+      "bytes": 448712,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-export-receipt.json",
+      "sha256": "ef2d312231c0a4f2fef455fcd532c96df4b093e53aa31af881e42b0ccb1cf4d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json": {
+      "bytes": 16289807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json",
+      "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/docs/autoencoders/legal_structured_training_20261011.md": {
+      "bytes": 21569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/docs/autoencoders/legal_structured_training_20261011.md",
+      "sha256": "9f24eecdc675c28d33e44c7c5657773ba3e03f3c17bb00a4089047fe3f37a4ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py": {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py": {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/experiment-plan-v05.json": {
+      "bytes": 39431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/experiment-plan-v05.json",
+      "sha256": "5c582929818a729821ee566fd2a0c2b844fa6553d9c22d03c4e5aad15eb0bd56"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/exposed-law-source-only.json": {
+      "bytes": 99164,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/exposed-law-source-only.json",
+      "sha256": "04e485c0657c6a478ec0e40f29250cbc11dc5eba4494aee9055946092839b7c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py": {
+      "bytes": 33979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py",
+      "sha256": "f7608f21fd0313f1b3a632b4af331bb9c275c5c210f26e98e6f54780cb9f8334"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_span_pilot.py": {
+      "bytes": 11166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_span_pilot.py",
+      "sha256": "0f4f4c3640cf54cf9707a7f98ee93ae9f6b04dff9378ad2a0d40dd89718eb086"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json": {
+      "bytes": 37552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+      "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/result-resource-independent-review-v01.json": {
+      "bytes": 115065,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/result-resource-independent-review-v01.json",
+      "sha256": "d93542bbee8e017f38247a7f20e758d4c5d6ed36b7e6524019e15cf8ce57a7b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_structured_span_pilot.py": {
+      "bytes": 15910,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/run_structured_span_pilot.py",
+      "sha256": "4fe77c839026ade55a9a1eaaaee1f7be1ca1e326396b2ebf3ec64e5d875f0f24"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-guide-result-independent-review-v02.json": {
+      "bytes": 8294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-guide-result-independent-review-v02.json",
+      "sha256": "fa5a70cba1b0044f2eb0ccad0db1c75808d73917fab753065030f932c4b4efb3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-recorder-independent-review-v02.json": {
+      "bytes": 9308,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-recorder-independent-review-v02.json",
+      "sha256": "8c812487102ebc36b17d4778b99eb57616d81c20bb54ca86a8b6e2eedb2d2769"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-comparison-diagnostics.json": {
+      "bytes": 540960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-comparison-diagnostics.json",
+      "sha256": "cd94713d9bd61dde91176aaa3e41a40391462d296b016067defaad9444c27488"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-objective-independent-review-v01.json": {
+      "bytes": 5750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-objective-independent-review-v01.json",
+      "sha256": "449f5771df6c3833e6746fe1c2c284808600a6883042c925487ede5291bb4289"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-worker-independent-review-v02.json": {
+      "bytes": 11520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-worker-independent-review-v02.json",
+      "sha256": "d686c8a3b401d192106924f3aabe24d448183d71fdb5908d676ffa56b443b695"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/validation.json": {
+      "bytes": 4019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/validation.json",
+      "sha256": "f9fca375174e752316c7064b80abe2992c7e38a313acdf30c80a2ad5b3ced3fc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/all-arm-plans-before-opening.json": {
+      "bytes": 71757,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/all-arm-plans-before-opening.json",
+      "sha256": "21656430a4159ac85868309e6f03a68ec3833e3e42027d9ec7ef81e977f1c0f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/baseline-tuning.json": {
+      "bytes": 2302,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/baseline-tuning.json",
+      "sha256": "98e2ba71a3a872bf3d03059cc9181919ee540e2e0fd4b363ec574ebecc5a5591"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/numerical-probes.json": {
+      "bytes": 538,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/numerical-probes.json",
+      "sha256": "0d3bc9e9077cce2d3cc1f6b0d6638a3788c8fc47de6c73ea6120dd30a1b2417e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-baseline-tuning-greedy.json": {
+      "bytes": 874779,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-baseline-tuning-greedy.json",
+      "sha256": "83ce49feaae1952ff0b8faabe98a7b6fbbb7799e94d3ece9d808d53577f8752f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-checkpoint.json": {
+      "bytes": 4683861,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-checkpoint.json",
+      "sha256": "ae8d75a8a3b616d571875f295232c062572f9d66c62180946fe5c52eff3f3a07"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled-joint.json": {
+      "bytes": 103565,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled-joint.json",
+      "sha256": "84daff6ee3aff19cf3b3ae41e32b60199b4979f5862149c3df4f99f81f075ef5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled.json": {
+      "bytes": 274904,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-disabled.json",
+      "sha256": "5cdb36b06b21cb1e6effa24eda0e1f72f15ac4b600f5b2ec1e679a38ced36e3f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none-joint.json": {
+      "bytes": 103595,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none-joint.json",
+      "sha256": "a15400d1808e66d0bde047f25e0025f315995d72edb0601408709177ba29fc4a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none.json": {
+      "bytes": 274626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-none.json",
+      "sha256": "c59bfd3b8046312313a88b2ce197713a819ba98529c621015b082a562564284f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate-joint.json": {
+      "bytes": 103639,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate-joint.json",
+      "sha256": "a1da80e8e43d86dd45b64e4711631476009b325306c505ac6c39a3e2539e4c8d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate.json": {
+      "bytes": 274646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-rotate.json",
+      "sha256": "bdb374f5299108f1dc50256566da34a39418462878755e46211c7b41d1ab3a32"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero-joint.json": {
+      "bytes": 103564,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero-joint.json",
+      "sha256": "4daf94ba12ce45f692fc9e424faddabf764768a26f59698e85a8852bc9438a23"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero.json": {
+      "bytes": 274861,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-law-zero.json",
+      "sha256": "4945aa07b8f7903e87228654b59a97474241212773250b35a5134542043bdc60"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-training.json": {
+      "bytes": 24438,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-training.json",
+      "sha256": "75e52dcbdb023639d533d57d22b0e62034780384855c7cd45d014c401b4746aa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-tuning-greedy.json": {
+      "bytes": 874809,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-tuning-greedy.json",
+      "sha256": "d50e623f26d80b80be9170dbe507d352941f55700dac2b8ec34b1c3fade3bd22"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-checkpoint.json": {
+      "bytes": 4683773,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-checkpoint.json",
+      "sha256": "2fec93aa0efdbd56886ff9f5f62100f97727f6ab386fa093c5f535450cf8fd47"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled-joint.json": {
+      "bytes": 103596,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled-joint.json",
+      "sha256": "cd40feef2354e2230bbcde1bd98fd84a135a10e4322b0be708ae7a66fcd1dc57"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled.json": {
+      "bytes": 274957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-disabled.json",
+      "sha256": "baa4d848c2b15b2a34ba45f9dce787ccc4df5ca70589b05463f9bf61dd67f316"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none-joint.json": {
+      "bytes": 103593,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none-joint.json",
+      "sha256": "cdb34a09dfc0880cf030fddb5833c95af1ae7c6d362483f3344be9e9fa4dae9c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none.json": {
+      "bytes": 274614,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-none.json",
+      "sha256": "6399be33c615d0e413f499a45335ca813b9a48d3150725c0a6618bac526f66b8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate-joint.json": {
+      "bytes": 103622,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate-joint.json",
+      "sha256": "ed12ecf85a5f2657424f512e1caedcb61789477cb9b08b23d9d661a9ff43d7f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate.json": {
+      "bytes": 274656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-rotate.json",
+      "sha256": "5d78989b03fe79a4ee56a4c5ef0efe383a52a9a2ac97f6b1b9806584f0b617d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero-joint.json": {
+      "bytes": 103556,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero-joint.json",
+      "sha256": "913ff16dece75e7b90aefc0b0aaca1c83cdad5d2c445d6987d80764fda139d55"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero.json": {
+      "bytes": 274856,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-law-zero.json",
+      "sha256": "ca72820a4a00386504d97b4590a92b42d8a2e193f566141998dfea8abf3c8b8e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-training.json": {
+      "bytes": 26802,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-training.json",
+      "sha256": "1a8d5611fec04fc83eac81891cf385016a07bd0f4de46936c08df7f6eb99d920"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-tuning-greedy.json": {
+      "bytes": 874835,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-probability01-tuning-greedy.json",
+      "sha256": "79b16f4c519f219c8aa4d832882920b7af0b36af88d23f82d6aa12dc0d537637"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-baseline-tuning-greedy.json": {
+      "bytes": 874857,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-baseline-tuning-greedy.json",
+      "sha256": "7222e3bcbb19225662769ddb4237e17ca2f6fe60a658eaffb659f54b7399636a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json": {
+      "bytes": 4117352,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-checkpoint.json",
+      "sha256": "89ba30be1de11b6f9f52263138a41cbc286a1c9bd48981801ab54ff7b11a9630"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled.json": {
+      "bytes": 274735,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-disabled.json",
+      "sha256": "6acc8ab73ff5dfbf16c66af155a8d3a2406d6c6250d878e635b7969e867811e1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none.json": {
+      "bytes": 274731,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-none.json",
+      "sha256": "b9ec06cb84136161a167b243775f5428f607cbb7d770a4c53a4cf59da88ae710"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate.json": {
+      "bytes": 274733,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-rotate.json",
+      "sha256": "45effa14d87f048193b034b259d357d5211480ff5e40d953bc0b97a5452cfda0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero-joint.json": {
+      "bytes": 103504,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero-joint.json",
+      "sha256": "7ee549b131396a70dedcda7550e3ed5a3e32d6910c3118940a82dcf53847599a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero.json": {
+      "bytes": 274731,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-law-zero.json",
+      "sha256": "5b2358e24625df54614115877c57ea7dc64f52ac4c5ab453b141598e4d060e19"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-training.json": {
+      "bytes": 24312,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-training.json",
+      "sha256": "1e039f32b402306cb9dba136d1635dd7bfd759dce66e42544c8630b9a37ea26a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json": {
+      "bytes": 874913,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-tuning-greedy.json",
+      "sha256": "5a127645d451907b79a7cdca4ab64f61f4c0f0ec181ea31e1e101a4aa97907d8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-checkpoint.json": {
+      "bytes": 4117258,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-checkpoint.json",
+      "sha256": "bb4e67a247f681e9aee2a763fad7a2501c758d1a0978fd782665e91b04c9c348"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled.json": {
+      "bytes": 274839,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-disabled.json",
+      "sha256": "80b2d67e703322a39231e89df69aaa45823e1b20b6650eab9d98a039a23ea96a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none.json": {
+      "bytes": 274835,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-none.json",
+      "sha256": "47c5239332357c97b0efcbeba8e55bcff2ffabe346ff012ef44c746e1f88d68d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate.json": {
+      "bytes": 274837,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-rotate.json",
+      "sha256": "bc78ff4f294e3b4ab1b484c8c93425103daaa60cb7af6536ba213ef46979936d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero-joint.json": {
+      "bytes": 103514,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero-joint.json",
+      "sha256": "1b63fbff152ed5fa1c53d07f0c589e13a7460a183e95845af56041736cce62a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero.json": {
+      "bytes": 274835,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-law-zero.json",
+      "sha256": "cc6111159e3db471c98c1e73e83f765bd25f6726ee34d704077a46525b30201d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-training.json": {
+      "bytes": 26641,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-training.json",
+      "sha256": "cd290e0f3da334eccbd93ca5afa02d0f00bcc61217d85307cdc5ae4559cca014"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-tuning-greedy.json": {
+      "bytes": 874890,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-probability01-tuning-greedy.json",
+      "sha256": "df000aa63f20bd9f19ae805734c1770b336f248d8f00d8fd9a44e3067b3355d5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/summary.json": {
+      "bytes": 27850,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/summary.json",
+      "sha256": "f2b1ee784cc3ad5a9aadaaaeeea1f408f568b0c3147e6e9b2bdc7bd3770bd765"
+    }
+  },
+  "legal_accuracy": null,
+  "model_imported": false,
+  "model_replayed": false,
+  "network_accessed": false,
+  "old_file_deletion_planned": false,
+  "old_standalone_state_files_added": false,
+  "publication_requirement": "Root independent prepared-tree review then previously authorized parent_commit compare-and-swap upload",
+  "raw_and_joint_reports_separate": true,
+  "release_manifest": {
+    "bytes": 59888,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload/releases/20261011-structured-span-probability-v1/release-manifest.json",
+    "sha256": "682db427a4e281fadc26ba3df1c032081a7e141cb40ec4d24d6525c45d64fe0c"
+  },
+  "release_prefix": "releases/20261011-structured-span-probability-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "root_model_card_change_planned": false,
+  "schema": "structured-span-hf-preparation-receipt/v1",
+  "semantic_gold": false,
+  "source_owner_count": 27,
+  "status": "prepared_not_published",
+  "training_executed_by_helper": false,
+  "upload_root": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-upload"
+}

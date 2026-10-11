@@ -1,0 +1,43 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-before-file-identities.local.json": {
+      "bytes": 996557,
+      "sha256": "58e84a87108597a21a288276a19fe16cb4b829a420f43103c04dee0e96b901d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/hf-preparation-receipt-v01.json": {
+      "bytes": 93298,
+      "sha256": "19182d8fcb1310fa3efbeba07734f2ace7add6503ede95b60c726d669325208c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/publish_structured_hf_release.py": {
+      "bytes": 5637,
+      "sha256": "e973fbe96d932a909dc1aab366a78c235abff716f7951d50c1497e3468693f00"
+    }
+  },
+  "created_at_utc": "2026-10-11T08:58:41.508763+00:00",
+  "findings": [
+    {
+      "code": "unstructured-review-binding",
+      "detail": "passed/findings plus SHA substring occurrence does not require the prepared-tree review schema, reviewed artifact paths/bytes, or an exact artifact pin map. A JSON containing unrelated hash strings would satisfy the gate. Baseline snapshot also has no explicit exact review binding or3208 count check.",
+      "location": "publish_structured_hf_release.py review_raw string-membership gate",
+      "required_fix": "Use actual prepared-tree review schema and exact {bytes,sha256} or {path,bytes,sha256} artifact bindings for preparation receipt, all103 payload paths and frozen3208-file baseline identity snapshot; validate repo/revision/count and upload root/prefix metadata.",
+      "severity": "pre-upload-blocker"
+    }
+  ],
+  "limitations": [
+    "API/CLI behavior not executed by reviewer",
+    "No independent imported SDK graph or hard runtime filesystem isolation qualification",
+    "Local hash checks detect changed bytes; they are not a kernel enforced immutable filesystem"
+  ],
+  "passed": false,
+  "schema": "structured-span-hf-publisher-independent-review/v1",
+  "scope": "Static source review only; no publisher execution, network/model/tests/resources. Actual prepared-tree content qualification is a separate independent review pending.",
+  "static_qualified_controls": [
+    "Receipt asserts fixedrepo Publicus/legal-ir-autoencoder/newprefix and parent8279ea69452c0c72560211a1eda505ff1b1b5713",
+    "Exact103files/47834763B closed tree with no symlinks and filehashes before mutation",
+    "Fresh live parent revision plus all saved baseline Git/LFS identities; prefix must not exist",
+    "Only CommitOperationAdd below newprefix with parent_commit CAS, no delete/default/card mutation",
+    "Immutable created revision readback checks all old identities and exact set of103 additions",
+    "hf CLI downloads newprefix at exact created revision; everyfile byte/SHA equals pinnedlocal preparedfile, localfiles rehashedagain",
+    "Exclusive durable receipt names; commit receipt retained if later verification fails; no automatic retries"
+  ]
+}

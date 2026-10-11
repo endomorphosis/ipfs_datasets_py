@@ -1,0 +1,58 @@
+{
+  "AST_parsed_without_execution": true,
+  "CLI": {
+    "default_output": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-comparison-diagnostics.json",
+    "optional": [
+      "--output"
+    ],
+    "required": [
+      "--plan",
+      "--plan-sha256",
+      "--summary",
+      "--summary-sha256"
+    ]
+  },
+  "actual_output_created_by_author": false,
+  "analyzer": {
+    "bytes": 43530,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/analyze_structured_span_results.py",
+    "sha256": "ccebe6890fc6fe4f6a19c17ba181f1e027313e6e3d6689efea5bc5594156926c"
+  },
+  "checking_scope": [
+    "Exact externally selected plan/summary bytes; all plan artifact pins and all result file pins opening/closing, with strict JSON duplicate-key/nonfinite refusal.",
+    "Distinct checkpoint schema/lineage, canonical saved digest, exact embedded historical parent, current objective and numerical-owner implementation pins.",
+    "Parent full Adam400/epoch4/cursor192; final inherited400/new32/absolute432/epoch4/cursor576; all23 parameter moments step432 and shapes finite against their parents.",
+    "Actual changed parameter names/model hashes, full moment hashes and exact prepared/independently reconstructed deterministic TRAIN-only32x12 schedules,128 updates.",
+    "Baseline2 and postfit4 common-.1 diagnostic losses and96 exact authored TUNE matches independently compared to saved export.",
+    "All16 raw/joint law controls,128 repeated source dispositions; full score/source/control donor joins, exact copied character/UTF8/token interval geometry and fixed modality/presence.",
+    "Between-objective and within-state latent-control saved score/IR/disposition differences, without selecting states or asserting semantic accuracy."
+  ],
+  "created_at_utc": "2026-10-11T08:43:26Z",
+  "helper_executed": false,
+  "imports": [
+    "from __future__ import annotations",
+    "import argparse",
+    "from collections import Counter",
+    "import hashlib",
+    "import json",
+    "import math",
+    "import os",
+    "from pathlib import Path",
+    "import random",
+    "import re",
+    "import stat"
+  ],
+  "limitations": [
+    "Saved-file checks cannot authenticate continuous numerical execution, finite gradients beyond saved probe claims or resource peaks.",
+    "Authored target exact matches and copied source geometry are not real-law semantic gold."
+  ],
+  "model_selection_executed": false,
+  "network_calls": 0,
+  "numerical_or_model_imports": 0,
+  "resource_admissions": 0,
+  "saved_result_metadata_inspected_without_backend_import": true,
+  "schema": "saved-structured-span-analyzer-author-build/v1",
+  "semantic_accuracy_claimed": false,
+  "source_numerical_edits": 0,
+  "tests_run": 0
+}

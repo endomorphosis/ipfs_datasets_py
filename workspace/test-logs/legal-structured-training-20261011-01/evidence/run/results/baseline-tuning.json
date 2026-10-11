@@ -1,0 +1,62 @@
+[
+  {
+    "authored_greedy": {
+      "bytes": 874779,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/raw384-1729-ce0-baseline-tuning-greedy.json",
+      "sha256": "83ce49feaae1952ff0b8faabe98a7b6fbbb7799e94d3ece9d808d53577f8752f"
+    },
+    "diagnostic": {
+      "diagnostic_structure_weight": 0.1,
+      "exact_canonical_ir": 96,
+      "expected_exact_ceiling": 96,
+      "greedy_inference_target_access": false,
+      "losses": {
+        "ce": 0.00810092780739069,
+        "overlap": 0.0010369630994453234,
+        "structure": 0.001061787202675404,
+        "total": 0.00820710652765823,
+        "validity": 0.0010866113059054842,
+        "weighted_structure": 0.00010617872026754039
+      },
+      "qualified": false,
+      "rows": 96,
+      "schema": "authored-tuning-common-objective-diagnostic/v1",
+      "semantic_accuracy": null,
+      "source_semantics_verified": false,
+      "teacher_forcing_for_loss": true,
+      "training_executed": false,
+      "used_for_selection": false
+    },
+    "name": "raw384-1729"
+  },
+  {
+    "authored_greedy": {
+      "bytes": 874857,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/source_only-1729-ce0-baseline-tuning-greedy.json",
+      "sha256": "7222e3bcbb19225662769ddb4237e17ca2f6fe60a658eaffb659f54b7399636a"
+    },
+    "diagnostic": {
+      "diagnostic_structure_weight": 0.1,
+      "exact_canonical_ir": 96,
+      "expected_exact_ceiling": 96,
+      "greedy_inference_target_access": false,
+      "losses": {
+        "ce": 0.01039989193668589,
+        "overlap": 0.0015642964702160948,
+        "structure": 0.0015523682448019972,
+        "total": 0.010555128761166087,
+        "validity": 0.0015404400193878992,
+        "weighted_structure": 0.0001552368244801997
+      },
+      "qualified": false,
+      "rows": 96,
+      "schema": "authored-tuning-common-objective-diagnostic/v1",
+      "semantic_accuracy": null,
+      "source_semantics_verified": false,
+      "teacher_forcing_for_loss": true,
+      "training_executed": false,
+      "used_for_selection": false
+    },
+    "name": "source_only-1729"
+  }
+]

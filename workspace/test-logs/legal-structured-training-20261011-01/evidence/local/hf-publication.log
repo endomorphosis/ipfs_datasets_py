@@ -1,0 +1,40 @@
+Processing Files (0 / 0)      : |          |  0.00B /  0.00B            
+New Data Upload               : |          |  0.00B /  0.00B            [A
+
+  ...ored-train-tune-only.json:   6%|▌         |  948kB / 16.3MB            [A[A
+
+  ...ored-train-tune-only.json:   6%|▌         |  948kB / 16.3MB            [A[AProcessing Files (0 / 1)      :   6%|▌         |  948kB / 16.3MB, 1.58MB/s  
+New Data Upload               :   6%|▌         |  948kB / 16.3MB, 1.58MB/s  [A
+
+  ...ored-train-tune-only.json:  41%|████      | 6.63MB / 16.3MB            [A[AProcessing Files (0 / 1)      :  41%|████      | 6.63MB / 16.3MB, 8.29MB/s  
+New Data Upload               :  41%|████      | 6.63MB / 16.3MB, 8.29MB/s  [A
+
+  ...ored-train-tune-only.json:  70%|██████▉   | 11.4MB / 16.3MB            [A[AProcessing Files (0 / 1)      :  70%|██████▉   | 11.4MB / 16.3MB, 11.4MB/s  
+New Data Upload               :  70%|██████▉   | 11.4MB / 16.3MB, 11.4MB/s  [A
+
+  ...ored-train-tune-only.json:  87%|████████▋ | 14.2MB / 16.3MB            [A[AProcessing Files (0 / 1)      :  87%|████████▋ | 14.2MB / 16.3MB, 11.8MB/s  
+New Data Upload               :  87%|████████▋ | 14.2MB / 16.3MB, 11.8MB/s  [A
+
+  ...ored-train-tune-only.json:  99%|█████████▉| 16.1MB / 16.3MB            [A[AProcessing Files (0 / 1)      :  99%|█████████▉| 16.1MB / 16.3MB, 11.5MB/s  
+New Data Upload               :  99%|█████████▉| 16.1MB / 16.3MB, 11.5MB/s  [A
+
+  ...ored-train-tune-only.json:  99%|█████████▉| 16.1MB / 16.3MB            [A[A
+
+  ...ored-train-tune-only.json: 100%|██████████| 16.3MB / 16.3MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 16.3MB / 16.3MB, 9.05MB/s  
+New Data Upload               : 100%|██████████| 16.3MB / 16.3MB, 9.05MB/s  [A
+
+  ...ored-train-tune-only.json: 100%|██████████| 16.3MB / 16.3MB            [A[A
+
+  ...ored-train-tune-only.json: 100%|██████████| 16.3MB / 16.3MB            [A[A
+
+  ...ored-train-tune-only.json: 100%|██████████| 16.3MB / 16.3MB            [A[AProcessing Files (1 / 1)      : 100%|██████████| 16.3MB / 16.3MB, 7.41MB/s  
+New Data Upload               : 100%|██████████| 16.3MB / 16.3MB, 7.41MB/s  
+  ...ored-train-tune-only.json: 100%|██████████| 16.3MB / 16.3MB            
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/publish_structured_hf_release.py", line 91, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/publish_structured_hf_release.py", line 71, in main
+    assert all(actual.get(name)==value for name,value in baseline['files'].items())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

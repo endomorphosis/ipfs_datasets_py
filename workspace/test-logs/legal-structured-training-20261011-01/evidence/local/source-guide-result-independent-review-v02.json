@@ -1,0 +1,164 @@
+{
+  "XML_history_replayed": {
+    "full_failed_cases": [
+      [
+        "tests.unit.logic.legal_ir.test_canonical_span_decoder",
+        "test_import_and_source_preflight_do_not_load_a_numeric_backend"
+      ]
+    ],
+    "full_passed": 686,
+    "full_unique_cases": 687,
+    "original_full_XML_not_relabelled_passed": true,
+    "recheck_cases_are_same_full_case": true,
+    "recheck_failed_cases": [],
+    "recheck_unique_cases": 1,
+    "union_unique_cases": 687
+  },
+  "actual_results_checked": {
+    "actual_new_updates": 128,
+    "all16_law_lanes_raw1_joint6": true,
+    "all_arm_progress_Adam400_new32_absolute432_epoch4_cursor576": true,
+    "all_baseline_and_postfit_authored_exact_counts96": true,
+    "all_equal_step_structured_common_losses_below_CE": true,
+    "arms": 4,
+    "no_selection_default_Lean_family_promotion": true,
+    "no_semantic_accuracy_or_gain": true,
+    "overlap_above_parent_in_both_structured_arms": true,
+    "requested_law_dispositions128_are_repeated8_sources": true
+  },
+  "created_at_utc": "2026-10-11T08:50:40Z",
+  "current_new_source_owner_pins": [
+    {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    {
+      "bytes": 34663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "f5ec3c27f028829761c96a9c87a9a8123c404eb16f89d8b843a35bcac25ae42c"
+    }
+  ],
+  "findings": [],
+  "inputs": [
+    {
+      "bytes": 21569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/docs/autoencoders/legal_structured_training_20261011.md",
+      "sha256": "9f24eecdc675c28d33e44c7c5657773ba3e03f3c17bb00a4089047fe3f37a4ce"
+    },
+    {
+      "bytes": 18549,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-guide-draft-v01.md",
+      "sha256": "b3522d8bf37534168b47edc0dec6d99b2d0671561c31b92eb890fbad83bd9bf5"
+    },
+    {
+      "bytes": 33979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py",
+      "sha256": "f7608f21fd0313f1b3a632b4af331bb9c275c5c210f26e98e6f54780cb9f8334"
+    },
+    {
+      "bytes": 4019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/validation.json",
+      "sha256": "f9fca375174e752316c7064b80abe2992c7e38a313acdf30c80a2ad5b3ced3fc"
+    },
+    {
+      "bytes": 218075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/final-inert-tests.xml",
+      "sha256": "4b528e94900dbc6221a3b8514c1d25a4c56a2f25ecdd230d6063371b42a52690"
+    },
+    {
+      "bytes": 407,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/subprocess-import-recheck.xml",
+      "sha256": "0445e9a83b001cdf75d668f129ee0d36fc6cfcccadeb67b68a04bba4f49da1d4"
+    },
+    {
+      "bytes": 540960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-comparison-diagnostics.json",
+      "sha256": "cd94713d9bd61dde91176aaa3e41a40391462d296b016067defaad9444c27488"
+    },
+    {
+      "bytes": 3495,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/resource-endpoint-preservation.json",
+      "sha256": "fc2f9ebd7016d1920504b1b7af235c329101f8e6fff36979b1c4cfae53d235f3"
+    },
+    {
+      "bytes": 592,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/pre-admission-review-custody.json",
+      "sha256": "689cd83e56b9805f98ad436f1a1ac2cfc5ca0ffdea12708d2c34fb9ec2907d7b"
+    },
+    {
+      "bytes": 681,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/post-admission-review-custody.json",
+      "sha256": "ebebb73b9cc2c2087a84d3de1114d4003ebcb93334aa765266809070f79de9d0"
+    },
+    {
+      "bytes": 39431,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/experiment-plan-v05.json",
+      "sha256": "5c582929818a729821ee566fd2a0c2b844fa6553d9c22d03c4e5aad15eb0bd56"
+    },
+    {
+      "bytes": 37552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+      "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+    },
+    {
+      "bytes": 27850,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/summary.json",
+      "sha256": "f2b1ee784cc3ad5a9aadaaaeeea1f408f568b0c3147e6e9b2bdc7bd3770bd765"
+    },
+    {
+      "bytes": 538,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01/results/numerical-probes.json",
+      "sha256": "0d3bc9e9077cce2d3cc1f6b0d6638a3788c8fc47de6c73ea6120dd30a1b2417e"
+    }
+  ],
+  "integration": {
+    "actual_final_merge_parent_and_other_gitlinks_require_root_final_audit": true,
+    "intake_ancestry_language_preserves1282_548_and_older_distinct_histories": true,
+    "root_intake_main": "a3cea4aa2d9317ed2631392545aeb2df1d8ceb49",
+    "root_worktree_now": "cddba3466eef19ef9f0c0b8e0fd11081b7327a8b",
+    "source_intake_main": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+    "source_main_remains_cdae_and_root_fastforward_cdd_is_newer_intake_successor": true
+  },
+  "model_or_numerical_imports": 0,
+  "network_calls": 0,
+  "passed": true,
+  "planned_publication_design": {
+    "27_selected_source_snapshots_not_full_wheel_or_full_import_graph": true,
+    "actual_prepared_tree_pending_independent_closure_review": true,
+    "actual_prepared_tree_upload_and_remote_inventory_not_qualified_by_this_review": true,
+    "custom_four_checkpoint_schema_kept": true,
+    "downloaded_numerical_replay_unperformed": true,
+    "exact_payload_manifest_excludes_itself_external_receipt_closes_tree": true,
+    "old_standalone_weights_not_overwritten_or_deleted": true,
+    "reviewed_code_only_prepared_tree_not_yet_reviewed": true,
+    "root_model_card_not_changed": true,
+    "root_parent_commit_compare_and_swap_and_independent_tree_review_still_required": true,
+    "target_free_new_states_checked_separate_authored_train_tune_export": true,
+    "test_history_wording_corrected": true
+  },
+  "prior_review": {
+    "bytes": 7849,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/source-guide-result-independent-review-v01.json",
+    "sha256": "13f8b1b0976735a297015f973e5f9d6e9e87fc278181f8cfabc80cbd2c2b179a"
+  },
+  "resolution": {
+    "HF_preparer_old_documentation_drafts_remain_separate_from_current_source": true,
+    "documentation_v01_observation_pin_timing": "Root corrected the guide after this reviewer initial text read but before v01 closing file-pin capture. v01 therefore pins corrected guide bytes while retaining the finding against the earlier observed wording. This v02 independently reads and pins the corrected guide/template; v01 is preserved unchanged.",
+    "earlier_worker_fake_clock_failure_test_only_fix_and_all88_full_suite_passes_explicit": true,
+    "guide_and_generated_HF_README_now_preserve_full686_pass_one_cwd_failure_and_separate_successful_recheck": true,
+    "no_full687_pass_rerun_claim": true,
+    "numeric_protocol_plan_sources_not_changed_by_documentation_resolution": true
+  },
+  "resource_operations": 0,
+  "schema": "structured-span-source-guide-result-independent-review/v1",
+  "scope": "independent_saved_JSON_XML_and_source_documentation_review_no_models_tests_network_or_resource_operations",
+  "source_edits": 0,
+  "tests_run": 0,
+  "version": "v02"
+}

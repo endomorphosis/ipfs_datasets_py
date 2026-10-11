@@ -1,0 +1,484 @@
+{
+  "Lake_qualified": false,
+  "accepted": false,
+  "actual_training_or_evaluation_admission": false,
+  "admission_masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "admitted": false,
+  "completed_declarations": 0,
+  "completed_submissions_generated": false,
+  "content_sha256": "a6352eabd5ac5f68b117222c39949bea1870e8202772ef495d4f58803626dd6f",
+  "encoder_executed": false,
+  "evidence_contents_interpreted": false,
+  "family_bridge_admitted": false,
+  "file_bytes_verified_by_dictionary_api": false,
+  "fresh_holdout_qualified": false,
+  "global_unseen_verified": false,
+  "human_review_authenticated": false,
+  "independent_adjudication_completed": false,
+  "independent_review_completed": false,
+  "instructions": {
+    "agreement": "Only exact complete interpretation/context declarations agree. Agreement does not establish identity, independence or meaning.",
+    "coordinates": "Role/trigger anchors use selected-source Unicode characters; section boundary anchors use complete-section Unicode characters and the exact context artifact.",
+    "evidence": "Evidence references identify checked bytes, without authenticating a reviewer or source authority. Do not assert admission flags.",
+    "null": "Null is unanswered. Empty lists and strings where allowed express a declared absence.",
+    "task": "Read the selected source and complete raw section. Supply your own source/context declarations in a separate submission."
+  },
+  "items": [
+    {
+      "context_artifact": {
+        "bytes": 2312,
+        "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "b6f152fb54f99a7af3d5d77fa8350f27caa56ac6316d930c4894e51aa30554b5",
+      "item_id": "statutory-physical-review-0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "physical_identity_sha256": "0e3ca72a94c73d6b31681726272e97fc9ee46673f519fffed12bc7c5de89a1a5",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        377,
+        721
+      ],
+      "source_text_sha256": "6c4bc3361502e39bf1ec97e3cc9b74133e5a16fc86aca84ad1dc9b4d551b0cfa"
+    },
+    {
+      "context_artifact": {
+        "bytes": 9770,
+        "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "a1a893f77bd8f70a81f0f0f2b288b5cacff5d6405020401d376caad75cacf23f",
+      "item_id": "statutory-physical-review-176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "physical_identity_sha256": "176624b51b5ccc02555ff457565b9944a005f9cdb47282a90e7a28c6d1452390",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        1055,
+        1329
+      ],
+      "source_text_sha256": "a4ec27dffcb56dd9313bf8ad95166ab15222a5bd835a8be1f2fe7990a4c859d9"
+    },
+    {
+      "context_artifact": {
+        "bytes": 7137,
+        "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "83e8a6a29b17f10bbf74539bc02c26d09deddfc92771015e2e4b527e5e7dfc08",
+      "item_id": "statutory-physical-review-637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "physical_identity_sha256": "637fdde356a0f599b3d5278b1c56c2cd2cdf1fc5c90428c694da9b979d465308",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        382,
+        735
+      ],
+      "source_text_sha256": "13210bdb92f29d6ee3ac99b44aeaef39e42236551974472be6db7878506d6dbb"
+    },
+    {
+      "context_artifact": {
+        "bytes": 6364,
+        "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "c66b66b21cbf39bf340320d74d2f2797c547487958048163567b19203ecb7569",
+      "item_id": "statutory-physical-review-65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "physical_identity_sha256": "65dca90df87b9af9f76c6e17d2edc8132855bf01c6a80bca4260341643842740",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        337,
+        699
+      ],
+      "source_text_sha256": "183139913c3becd29990e975a9f27857b640ba2a172e2ea8a249d19d865e6a6c"
+    },
+    {
+      "context_artifact": {
+        "bytes": 72690,
+        "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "5ffbcb76974254022bd36891fb31e8fab8b8b4f86e851108faeda3025316aa7a",
+      "item_id": "statutory-physical-review-8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "physical_identity_sha256": "8114cc29dff226d89a89e2b6d3ad5b2ae49323cd5f23141c3790b2f062baa1a3",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        7185,
+        7252
+      ],
+      "source_text_sha256": "bfb14f4b0d40488c6c0a4d484a4052f2372ccff26c97c0f63e3ba5d68046e8e1"
+    },
+    {
+      "context_artifact": {
+        "bytes": 21457,
+        "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "3326c405aea523b411d61ee5222bdf628e464ab0a76da500bb2e3d8fd0d29f1a",
+      "item_id": "statutory-physical-review-925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "physical_identity_sha256": "925efd32547dc4557c22233ae1f6c1b1deca45ac27b120370ef50170a6c62dcc",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        1655,
+        1880
+      ],
+      "source_text_sha256": "8f70ec9e4a36ad671e6013031b6fb41e1d16fbc5c8a95bfedccbc5c72d8b376c"
+    },
+    {
+      "context_artifact": {
+        "bytes": 28742,
+        "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "3022b742ea281124597b0fc753eb3dc077e523a1feedd00b14a73f0c7e9eccf8",
+      "item_id": "statutory-physical-review-9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "physical_identity_sha256": "9c41ec06b41bb8276ee2dba34618942840efe01e7f04156c8996d8c5fe371830",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        838,
+        1118
+      ],
+      "source_text_sha256": "c71a3999e2ddaa5782b0caf55a687197730a15235105a4a3ac99a3df738cb2f6"
+    },
+    {
+      "context_artifact": {
+        "bytes": 459,
+        "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+      },
+      "context_review": {
+        "context_required_for_interpretation": null,
+        "context_sufficiency": null,
+        "cross_references": null,
+        "governing_definitions": null,
+        "operative_versus_editorial_boundaries": null,
+        "source_authority_or_currentness_evidence": null,
+        "unresolved_dependencies": null
+      },
+      "evidence": {
+        "identity_evidence": null,
+        "independence_evidence": null,
+        "review_process_evidence": null
+      },
+      "exposure_declaration": {
+        "candidate_or_reference_exposed": null,
+        "organizer_metadata_exposed": null,
+        "other_exposure": null
+      },
+      "input_sha256": "02f0a51fce8d3c9ca8a3f55050a6fb23d1c73e3c84a6b934a5aa7d54b2fb9e7b",
+      "item_id": "statutory-physical-review-fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "physical_identity_sha256": "fde90b831664ca5d3d9826405b0f2659c2bb0a98ef58d03bc0127e834cde186b",
+      "review": {
+        "ambiguity": null,
+        "definition_status": null,
+        "freeform_qualifier_scope": null,
+        "interpretation_status": null,
+        "multi_rule_status": null,
+        "normative_eligibility": null,
+        "normative_rules": null,
+        "notes": null,
+        "qualifier_attachments": null,
+        "reviewed_at_utc": null,
+        "reviewer_id": null,
+        "source_role_anchors": null,
+        "trigger": null,
+        "unsupported_meaning": null
+      },
+      "selected_context_char_offsets": [
+        255,
+        418
+      ],
+      "source_text_sha256": "e4442414660acd641bc79ecf79b86026150e3769a34e3cb3c9a90e2668fe74a4"
+    }
+  ],
+  "model_executed": false,
+  "official_current_law_authenticated": false,
+  "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+  "packet_validation": {
+    "Lake_qualified": false,
+    "accepted": false,
+    "actual_training_or_evaluation_admission": false,
+    "admission_masks": {
+      "contrastive_supervision": 0,
+      "fidelity_evaluation": 0,
+      "proof_supervision": 0,
+      "strong_semantic_fit": 0,
+      "weak_decoder_fit": 0
+    },
+    "admitted": false,
+    "complete_context_bytes": 148931,
+    "encoder_executed": false,
+    "exposure_evidence_bodies_opened": false,
+    "family_bridge_admitted": false,
+    "fresh_holdout_qualified": false,
+    "global_unseen_verified": false,
+    "human_labels": 0,
+    "independent_review_completed": false,
+    "item_count": 8,
+    "local_source_bytes_and_selectors_verified": true,
+    "model_executed": false,
+    "official_current_law_authenticated": false,
+    "origin_provenance_records_replayed": true,
+    "original_export_bytes_reverified": false,
+    "packet_content_sha256": "2c52ca09ae2178f61e95b39c272da95cffaaa1e9f76cf9e917629f7b265b6b5e",
+    "packet_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+    "proof_authority": false,
+    "qualified": false,
+    "reviewer_identity_authenticated": false,
+    "reviewer_independence_authenticated": false,
+    "schema": "statutory-physical-source-context-review-validation/v1",
+    "selected_source_bytes": 2070,
+    "semantic_gold": false,
+    "source_authority_authenticated": false,
+    "source_semantics_verified": false,
+    "status": "validated_blank_physical_source_context_only",
+    "training_executed": false,
+    "training_qualified": false
+  },
+  "proof_authority": false,
+  "qualified": false,
+  "reviewer_blindness_verified": false,
+  "reviewer_identity_authenticated": false,
+  "reviewer_independence_authenticated": false,
+  "schema": "statutory-source-context-review-submission-guide/v1",
+  "semantic_gold": false,
+  "signature_verification_executed": false,
+  "source_authority_authenticated": false,
+  "source_semantics_verified": false,
+  "submission_schema": "statutory-source-context-review-submission/v1",
+  "target_created": false,
+  "training_executed": false,
+  "training_qualified": false
+}

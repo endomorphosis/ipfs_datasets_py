@@ -1,0 +1,58 @@
+[
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 17738,
+    "attempt_limit_bytes": 200000000,
+    "charged_bytes": 144282319676,
+    "checked_at": 1791707859.4644525,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 11874304
+    },
+    "inventory": {
+      "apparent_bytes": 95900542460,
+      "entry_count": 1362234,
+      "special_file_count": 6,
+      "symlink_count": 750
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 231684087808,
+    "observed_apparent_bytes": 95900542460,
+    "outstanding_full_reservations_bytes": 48381777216,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 17738
+  },
+  {
+    "additional_requested_bytes": 0,
+    "attempt_bytes": 8992703,
+    "attempt_limit_bytes": 200000000,
+    "charged_bytes": 144509779433,
+    "checked_at": 1791707894.5821655,
+    "external_charged_bytes": 0,
+    "group_rss": {
+      "available": true,
+      "live_processes": 1,
+      "rss_bytes": 754814976
+    },
+    "inventory": {
+      "apparent_bytes": 96128002217,
+      "entry_count": 1364297,
+      "special_file_count": 6,
+      "symlink_count": 753
+    },
+    "limit_bytes": 145000000000,
+    "memory_limit_bytes": 1610612736,
+    "minimum_filesystem_free_bytes": 230967164928,
+    "observed_apparent_bytes": 96128002217,
+    "outstanding_full_reservations_bytes": 48381777216,
+    "process_slot_estimate_exceeded": false,
+    "reserved_child_process_slots": 1,
+    "scope": "named_roots_only_apparent_bytes",
+    "total_attempt_charged_bytes": 8992703
+  }
+]

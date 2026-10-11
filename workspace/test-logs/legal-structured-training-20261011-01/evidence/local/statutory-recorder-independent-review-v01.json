@@ -1,0 +1,85 @@
+{
+  "AST_parsed": true,
+  "Torch_imported": false,
+  "artifacts": {
+    "original_blank_packet": {
+      "bytes": 378311,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+      "sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06"
+    },
+    "original_blank_template": {
+      "bytes": 23766,
+      "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-template.json",
+      "sha256": "e93b0e3219f569f0cc799b981204e64849aa6eff58f52aac5307f771c3782f2c"
+    },
+    "recorder": {
+      "bytes": 34602,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "sha256": "c02a2e6d16eb3309fdfec11e2eda9ce48fa0a19628b2abc9cb676ec4b4d57014"
+    },
+    "tests": {
+      "bytes": 32835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/tests/unit/logic/legal_ir/test_statutory_review_recording.py",
+      "sha256": "81dacd448efddbfc5c861d2b7d84016b676ab5dd1466a14ec902f71300e34bed"
+    },
+    "unchanged_packet_owner": {
+      "bytes": 42670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938"
+    }
+  },
+  "checked": {
+    "adjudication_refs": "Exact packet+recording generation, complete declaration SHA refs, no duplicates, accepted subset/cardinality, distinct alternatives, no unresolved acceptance; external adjudication remains pending. Partial-reviewer role gap recorded separately.",
+    "agreement": "Only complete exact declared meaning signatures; excludes reviewer ID/time/free notes/source-authority evidence refs; partial declarations retained and not admitted or given complete signatures.",
+    "all_masks_zero": "Uses unchanged owner _masks; no path writes nonzero masks, targets or admission flags. Full receipt replay rejects changes even after a body re-seal.",
+    "backend_network_model_calls_absent": true,
+    "blank_parent_exact_canonical_pin_and_reconstruction": true,
+    "declaration_not_authentication": "Read evidence pins and closing bytes; identity/independence/source authority/currentness/reviewer blindness/actual adjudication all false; no evidence content interpretation or signature verification.",
+    "dictionary_snapshot_no_argument_mutation": true,
+    "distinct_profile": true,
+    "duplicates": "Reject duplicate submission IDs, renamed-identical complete payload bodies, duplicate item per submission, repeated non-null declared reviewer/item IDs, anchor IDs and qualifier attachment IDs/refs.",
+    "geometry_separate": "Explicit chosen complete normative declaration and evidence; interval geometry only via unchanged packet owner, no flat target construction or semantic admission.",
+    "non_normative_absent_rules": "Filled non-normative interpretation requires []; normative requires nonempty rules; independent normative eligibility/definition choices are preserved even if contradictory for later adjudication.",
+    "partial_null_vs_explicit_absence": "Missing_fields include only None review/context questions; explicit []/empty allowed strings are filled declared absence; no null-to-empty conversion. Evidence/exposure can remain unanswered because completeness means filled annotation slots, never authentication.",
+    "source_owner_unchanged": true,
+    "source_physical_context_envelope_joins": true,
+    "unicode_coordinates": "Source-role/trigger coordinates use selected-source Unicode; section-boundary coordinates use full raw-section Unicode plus exact artifact. Literal selectors checked."
+  },
+  "findings": [
+    {
+      "description": "Declared adjudicator overlap is checked only against complete review declarations. A non-null reviewer_id in a partial declaration for the same item is absent from that set and can be submitted as adjudicator on another complete declaration.",
+      "id": "partial-reviewer-adjudicator-role-overlap",
+      "impact": "Does not authenticate, resolve or admit any label because all flags/masks stay false/zero, but weakens declared-role separation and conflicts with the recorded-reviewer-ID rejection wording.",
+      "line": 480,
+      "owner": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+      "required_correction": "Consider every non-null recorded reviewer_id for the physical item; add an inert test combining a complete first review with a named partial second review and naming that second reviewer as adjudicator.",
+      "runtime_probe_performed": false,
+      "severity": "medium",
+      "status": "sent_to_author_for_fix"
+    }
+  ],
+  "fit_executed": false,
+  "limitations": [
+    "Static review only; inert tests not executed by reviewer.",
+    "Caller-supplied reviewer/adjudicator IDs and timestamps are declarations; no authentication or independence proof.",
+    "Raw archival views/provenance revalidation does not reopen original374MBexport or establish official current law.",
+    "Geometry applies to supplied literal anchor intervals; declared normalized/paraphrased rule atom text is not equated with anchor surfaces, nor is role semantics reviewed.",
+    "Completeness refers to filled review/context slots; identity/process/exposure evidence may still be absent, and all masks remain0.",
+    "Exact agreement is conservative and includes ordered anchor/attachment metadata; it is not semantic equivalence.",
+    "Dictionary API cannot verify original submission file bytes or recover duplicate keys discarded before invocation; strict parse_json_bytes is supplied for file callers.",
+    "Resolver behavior and original producer computation are not cryptographically attested."
+  ],
+  "method": "Read complete recorder and inert tests, compare delegated packet/geometry contracts and closed constants; AST parsing only. No subject import or tests.",
+  "model_executed": false,
+  "network_accessed": false,
+  "passed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "resource_acquired": false,
+  "schema": "statutory-recorder-independent-static-review/v1",
+  "semantic_gold": false,
+  "source_edited": false,
+  "subject_imported": false,
+  "test_function_count": 25,
+  "tests_executed": false
+}

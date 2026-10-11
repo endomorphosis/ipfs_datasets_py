@@ -1,0 +1,72 @@
+{
+  "AST_parsed": true,
+  "CLI_optional": [
+    "--analysis-receipt",
+    "--output(defaultF/hf-upload)",
+    "--receipt(defaultF/hf-preparation-receipt-v01.json)"
+  ],
+  "CLI_required": [
+    "--plan",
+    "--summary",
+    "--outcomes",
+    "--analysis-source",
+    "--validation",
+    "--resource-review",
+    "--source-guide",
+    "--review repeated at least3currentpassedreviews"
+  ],
+  "Hub_operation_performed": false,
+  "README_scope": "actualsavedcounts only, authoredexposednotlegalgold, customloadernamespacebootstrapexample, retainedTorchruntime/dependencies/importgraphlimits, no8D768/lake/family/semanticpromotion",
+  "artifact_scope": "exactsummary/plan/rawreports+jointsseparately/training+tuninggreedy/commonlossexplicitsummaryprojections/probes+preopeningplans+baseline+recipe+analysis/currentreview+validation+resource; 1152/96TRAIN/TUNEonly authoredexport and8exposedlawsourcecachedinputs",
+  "byte_integrity": "strictduplicate-keyfiniteJSON, ordinarycanonicalabsoluteinputfiles, O_NOFOLLOW/fstat/open-closepins, exclusivefreshoutputcopies +exactreadback +closedtreeinventory",
+  "checkpoint_scope": "4complete32-new-step customJSONstates, exact400+32Adam432/epoch4/cursor576, complete23parameterMoments, external orderedauthoredmanifests, no exampletext/targets insidecheckpoints",
+  "destination": "Publicus/legal-ir-autoencoder/releases/20261011-structured-span-probability-v1",
+  "expected_parent_revision": "8279ea69452c0c72560211a1eda505ff1b1b5713",
+  "helper": {
+    "bytes": 33418,
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/prepare_structured_hf_release.py",
+    "sha256": "e86d58ce971ffea1d486a0e2b00b048c5aa57437b5eb41d1028490c00a5f4652"
+  },
+  "helper_executed": false,
+  "imports": [
+    "__future__",
+    "argparse",
+    "hashlib",
+    "json",
+    "os",
+    "pathlib",
+    "re",
+    "stat"
+  ],
+  "loss_scope": "CE +weight*(validity+overlap)/2, weights0/.1; commonTUNEdiagnosticweight.1forall arms",
+  "manifest_scope": "allpayloadfilesexceptmanifestitself; externalpreparationreceipt includesmanifest andallcompleteuploadtreefiles; no circular selfhash",
+  "max_file_bytes": 134217728,
+  "max_files": 160,
+  "max_payload_bytes": 200000000,
+  "models_imported_or_executed": false,
+  "network_accessed": false,
+  "numeric_network_Hub_subprocess_imports_absent": true,
+  "proof_authority": false,
+  "publication_scope": "preparationonly; no upload ornetwork; no olddeletes/modelcard/defaultedits; rootcompareandswapafterindependenttree review",
+  "qualified": false,
+  "resource_acquired": false,
+  "schema": "structured-hf-release-preparer-author-build/v1",
+  "semantic_gold": false,
+  "source_scope": "24retainedowners+3objective/worker/joint exactplanbytepins; no eagerpackageinit or models",
+  "status": "authored_frozen_for_independent_static_review_root_execution_not_run",
+  "string_format_fields_statically_parsed": [
+    "name",
+    "weight",
+    "tuning",
+    "greedy",
+    "joint",
+    "",
+    "",
+    "tests",
+    "repository",
+    "prefix",
+    "parent",
+    "plan_sha"
+  ],
+  "tests_executed": false
+}

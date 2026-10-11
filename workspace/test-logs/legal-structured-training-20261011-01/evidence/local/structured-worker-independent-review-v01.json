@@ -1,0 +1,107 @@
+{
+  "AST_parsed": true,
+  "NumPy_imported": false,
+  "Torch_imported": false,
+  "artifacts": {
+    "build_receipt_v01": {
+      "bytes": 9568,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-span-continuation-build-v01.json",
+      "sha256": "4f5fca019328e5a6919e4a5c1368b0c200ace33bdbcdbf7cdf2773bc7d54d8e6"
+    },
+    "legacy_span": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "legacy_warm": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "objective": {
+      "bytes": 17622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/legal_ir/structured_span_objective.py",
+      "sha256": "68a459fe5271248ee478ae05767396842c1e1b83e33971b980c77b1afd3f8c84"
+    },
+    "retained_source_draft_v01": {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-span-continuation-source-draft-v01.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    },
+    "reviewed_tests_draft_v01": {
+      "bytes": 43569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-span-continuation-tests-draft-v01.py",
+      "sha256": "a08ea3b08050bbca883ef10fef9eb57e971cd10c8524a8648c40bda2c1fa156b"
+    },
+    "root_inert_test_log_v01": {
+      "bytes": 1739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/worker-inert-tests-v01.log",
+      "sha256": "067b9985485d10659f63bb433ef3468f22eefa72081c3de87980da5287c3a87a"
+    },
+    "root_inert_test_xml_v01": {
+      "bytes": 17943,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/worker-inert-tests-v01.xml",
+      "sha256": "e45876f66b4736d4bcb48ad8ede91b6d650877e5b2f349f8bf1f0723dc2d3796"
+    },
+    "worker": {
+      "bytes": 35564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/structured_span_continuation.py",
+      "sha256": "bbc54ccbc783d2ee1111c43864aafa8be176de3cc36149eb37871b1fac28e5b9"
+    }
+  },
+  "checked": {
+    "authority": "All existing FALSEflags remainfalse, legal_accuracyNone, family/Lake/defaultpromotionnotclaimed. Exact training manifests make injecting maskedreal8 intoTRAIN impossible without rejected hash drift.",
+    "canonical_vs_file_hash": "prepare_checkpoint expected_parent_sha256 is canonical digest(parent), split hashes canonical manifests; load_checkpoint expected_sha256 checks exact file bytes. Original parent file/path custody intentionally delegated to rootplan.",
+    "counters": "Momentstep equals absolute400+new; new0..32; absoluteepoch/cursor identity enforced. e4/c192->e4/c576 after32steps.",
+    "exact_parent": "Hash-pinned warm schema/flags/implementation/initialization/source parent/initial boundary/context contract; retained base400/e4/c192 and1152/96 manifests required; complete source restore additionally validated on numerical open.",
+    "fit": "One real model forward per training batch; objective consumes that output; finite scalar losses/grads/clippednorm5/updatedparameters/moments checked; all parameters participate; no old loss monkeypatch. Exact completed batches+percomponent scalars returned.",
+    "inference_custody": "Before/after exact model+Adam pack andambientRNGcheck; new outer checkpoint/objective/progress reported withold greedy row nested as diagnostic. Source tokens may abstain beforeforward; requested denominator preserved.",
+    "initial_state": "Deep-copy all23 parent model tensors and complete Adam moments; zero newsteps state must equal parent model+optimizer; initial digests checked on validation. No fresh numerical optimizer lineage claimed.",
+    "new_authoritative_lineage": "New outer schema/objective/initialization; current state has only model_state+optimizer_state, no legacy schema. Historical exact parent retained. Private old topology view scoped as constructor adapter only; never exposed as serialized newstate legacycheckpoint.",
+    "paired_schedule": "Same original ordered TRAINmanifest and seed1729+epoch4; next32 batches from shuffledindices192:576;12rows/batch; no tune/real8 used forupdates orweightselection inworker.",
+    "score_capture": "Unmodified top-level hooks required, finiteB1geometry, returnNone; finally removes hook on all three tested failure shapes; labels absent from inference.",
+    "source_and_moments": "_restore_current verifies parent with original strict numerical validator, restores private exact current topology view and compares repacked model+Adam JSON to currentstate. Root must execute this only under guardian.",
+    "source_only_inference": "Closed id/source_text/latent rows forbid targets/reference fields; controlnone/zero/disabled/rotate closed; perrow originalgreedy decode andtemporarysameforward hookcaptured full f32 CPU scores; no secondforward ornativeencoder.",
+    "tests": "Synthetic1152/96 records, sentinel23 tensors/Adam and fakeTorchmodel/optimizer doubles; importfences; actual legacyclosedfield guard extractedAST without numerical import. Modelmath and gradients intentionally unqualified.",
+    "tuning": "Explicit separate authored TUNE loss batches; no optimizer.step; partial deadlines return actual rows and None when unmeasured; labeled engineering only."
+  },
+  "findings": [
+    {
+      "description": "The v01 fake clock sequence[0,0,0,2,2] supplies start0, firstbatchcheck0 and secondbatchcheck0, so two requested updates execute. The fixture asserts one update.",
+      "id": "fake-clock-prefix-fixture",
+      "line": 725,
+      "owner": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/structured-span-continuation-tests-draft-v01.py",
+      "required_correction": "Advance the clock during first synthetic optimizer.step so next batch sees expireddeadline independently of clock-call count.",
+      "root_observation": "Root archived87passed/1failed inert tests in v01 log/XML; reviewer ran no tests.",
+      "runtime_source_change_required": false,
+      "severity": "test"
+    }
+  ],
+  "fit_executed": false,
+  "limitations": [
+    "Reviewer ran no tests, numerical import/restore/forward/gradient/update/network/resource work. Root inert observedresults do not establish numerical correctness.",
+    "Torch shapes and complete legacy configuration/source-parent validity are explicitly deferred from inert metadata validation to numerical open; pure validators do not attest topology dimensions.",
+    "The old base constructor loss/fromscratch strings persist only in embedded historical parent and private adapter; consumers must use authoritative new outer lineage.",
+    "Original parent file bytes/path, native cached vector/source provenance, all24source closure pins and scheduler/resource custody require root plan/guardian.",
+    "CE0 intentionally skips structured computation and emits structural placeholder zeros; zero CE0 validity/overlap must not be compared as measured improvements.",
+    "Softdeadline returns committed complete batch prefix. Unexpected exceptions inside a multistep call propagate without returning packed partial model/checkpoint/report; retained completed arms remain valid, incomplete failed arm actualupdates cannot be inferred as0.",
+    "Inference exceptions remove temporary capturehooks/RNGscope but do not return local partial raw/score rows; root must retain all alreadycompleted reports and failure facts without manufacturing missing rows.",
+    "Current Adam state is stored in f32 JSON representation and exact restore is asserted; full thirdparty/backend/version equivalence remains runtime-dependent.",
+    "Saved raw/typed syntax and overlap probability reductions are not role semantic fidelity, statutory legalaccuracy, new independent holdout evidence or Leanbuild.",
+    "Single seed and fixed32newsteps, previously exposed authored train/tune, already96/96tune accuracyceiling; broadergeneralization remainsunverified."
+  ],
+  "method": "Read full worker and inert doubles/tests; inspect unchanged retained restore, schedule, Adam pack, checkpoint and greedy APIs; static AST only. Objective author reviewing separate worker; this is not an independent re-review of own objective implementation.",
+  "model_executed": false,
+  "network_accessed": false,
+  "passed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "resource_acquired": false,
+  "schema": "structured-span-worker-independent-static-review/v1",
+  "semantic_gold": false,
+  "source_contract_passed": true,
+  "source_edited": false,
+  "subject_imported": false,
+  "test_function_count": 25,
+  "tests_executed_by_reviewer": false
+}

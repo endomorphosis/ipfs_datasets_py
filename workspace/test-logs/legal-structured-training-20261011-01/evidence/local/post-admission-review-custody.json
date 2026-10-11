@@ -1,0 +1,12 @@
+{
+  "all131bindings_exact": true,
+  "bytes": 37552,
+  "ledger_after_count": 511,
+  "ledger_after_sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1",
+  "ledger_before_count": 510,
+  "mode": "0444",
+  "old_endpoint_bodies_equal": true,
+  "review_file": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/protocol-review-114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366.json",
+  "run_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/structured-probability-20261011-01",
+  "sha256": "114cd510f0f44d850617b22a86335a719efff52fe384f11392c63df19e1f2366"
+}

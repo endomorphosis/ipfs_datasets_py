@@ -1,0 +1,215 @@
+{
+  "actual_training_or_evaluation_admission": false,
+  "compatibility": {
+    "alignment_review_provenance": {
+      "drop_in_compatible": false,
+      "real_statutory_human_authentication_available": false,
+      "reason": "Alignment declaration/handoff endpoints and synthetic/unavailable registries do not establish real statutory identity or independence.",
+      "reusable_patterns": [
+        "domain_separated_signing_bytes",
+        "externally_pinned_registry_policy_generations",
+        "signature_math_distinct_from_identity_fidelity_and_admission"
+      ],
+      "supported_existing_modes": [
+        "unavailable_verification/v1",
+        "synthetic_signature_engineering_only/v1"
+      ]
+    },
+    "authored_binding_v1": {
+      "compatible": false,
+      "reason": "Exact empty none_required context and authored input-derived identities; statutory complete raw-section physical packet has distinct schema and identity."
+    },
+    "canonical_label_evidence_intake": {
+      "drop_in_compatible": false,
+      "reason": "Its recorder and input IDs are authored-binding v1.",
+      "reusable_patterns": [
+        "external_expected_file_and_content_bindings",
+        "externally_selected_process",
+        "exact_declaration_reference_joins",
+        "adjudication_decision_cardinality",
+        "all_admission_pending"
+      ]
+    },
+    "official_HTML_profile": {
+      "compatible": false,
+      "reason": "Raw archived section-view physical selector provenance is not official HTML context/current-law authentication."
+    }
+  },
+  "created_at_utc": "2026-10-11T08:05:11Z",
+  "current_main_search_scope": "legal_ir_Git_tree_and_statutory_recording_submission_adjudication_schema_symbol_search_in_legal_ir_code_legal_ops_and_legal_ir_tests",
+  "current_main_statutory_recording_found": false,
+  "design": {
+    "bytes": 7910,
+    "file_sha256": "661c28579a9a655a1cfeb34e154d388b7cafb7c815e22c7fbc3670e8c9ef0748",
+    "path": "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/statutory-review-recording-design.md"
+  },
+  "human_labels_created": 0,
+  "independent_adjudication_completed": false,
+  "locally_observed_origin_main": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+  "masks": {
+    "contrastive_supervision": 0,
+    "fidelity_evaluation": 0,
+    "proof_supervision": 0,
+    "strong_semantic_fit": 0,
+    "weak_decoder_fit": 0
+  },
+  "model_imports": 0,
+  "network_calls": 0,
+  "packet": {
+    "all_item_admission_masks_zero": true,
+    "all_review_and_context_answers_null": true,
+    "all_top_admission_masks_zero": true,
+    "bytes": 378311,
+    "complete_context_bytes": 148931,
+    "embedded_body_content_sha256": "2c52ca09ae2178f61e95b39c272da95cffaaa1e9f76cf9e917629f7b265b6b5e",
+    "embedded_body_digest_matches": true,
+    "file_sha256": "bf42fb6a854d0a5b8f77e09b1bfd6e1fad4a6bf47323dd246826774b9bf6dc06",
+    "full_canonical_content_sha256": "73fbfd8731ea3b11ec8a49a4f8b21ba2f80a0f34009d744c301540417d559054",
+    "human_labels": 0,
+    "items": 8,
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-packet.json",
+    "review_and_context_slot_count": 168,
+    "review_submissions": 0,
+    "reviews_authenticated": 0,
+    "schema": "statutory-physical-source-context-review-packet/v1",
+    "selected_source_bytes": 2070
+  },
+  "qualified": false,
+  "read_source_owners": [
+    {
+      "bytes": 42670,
+      "commit": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "functions": [
+        "_require",
+        "_closed",
+        "_ordinary",
+        "_wire",
+        "digest",
+        "_parse",
+        "_text",
+        "_sha",
+        "_integer",
+        "_artifact",
+        "_identity",
+        "_read",
+        "_source",
+        "_lexical",
+        "_origin",
+        "_exposure",
+        "_false",
+        "_masks",
+        "_instructions",
+        "create_blank_packet",
+        "validate_blank_packet",
+        "review_template",
+        "assess_representability"
+      ],
+      "git_blob": "ad5b688e386995a287a2170e6fd9e8f4256f7405",
+      "path": "ipfs_datasets_py/logic/legal_ir/statutory_source_review.py",
+      "sha256": "830ab0c5830c8f60cf2d489233326142005c7b8c8b12dc4c2e2a0ccbc02c9938",
+      "source": "git_object"
+    },
+    {
+      "bytes": 21097,
+      "commit": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "functions": [
+        "_require",
+        "_ordinary",
+        "_raw",
+        "_digest",
+        "_closed",
+        "_text",
+        "_sha",
+        "_packet",
+        "validate_blank_packet",
+        "_helpers",
+        "_payload",
+        "record_reviews",
+        "validate_recording",
+        "submission_guide"
+      ],
+      "git_blob": "376b9093756e66a2e0fcd7a201278b00b0662b52",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_binding_review.py",
+      "sha256": "658bce8569101e36852702ceb53f1bc0ab61d6a00ed071e73d7044f39765d59d",
+      "source": "git_object"
+    },
+    {
+      "bytes": 19777,
+      "commit": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "functions": [
+        "_require",
+        "_closed",
+        "_text",
+        "_strings",
+        "_timestamp",
+        "_binding",
+        "_content_binding",
+        "_declaration",
+        "_provenance",
+        "_interpretation",
+        "_adjudication",
+        "validate_label_evidence_intake"
+      ],
+      "git_blob": "b156fc85b895122548f6a3fedfa0039a6c1e8f0c",
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_label_evidence_intake.py",
+      "sha256": "c78aae8affd9e897f8dbbe7283c91855666d9fc6651fec193753435d6356f58a",
+      "source": "git_object"
+    },
+    {
+      "bytes": 25216,
+      "commit": "cdae06198a229760ca139d48f9e311e80d0df8c6",
+      "functions": [
+        "_bounded",
+        "_seal",
+        "_detach",
+        "_time",
+        "_hex",
+        "_generation",
+        "_scope",
+        "_registry",
+        "_policy",
+        "_endpoint",
+        "_attestations",
+        "_association",
+        "provenance_signing_bytes",
+        "_verify_signature",
+        "_parents",
+        "_slots",
+        "verify_train_review_provenance",
+        "validate_train_review_provenance",
+        "prepare_unavailable_review_provenance"
+      ],
+      "git_blob": "aa5f89794ce191228ddfd5798c894f39414d0ef3",
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/alignment_review_provenance.py",
+      "sha256": "f666f3e5b1be498687662c0b9cfae2d8befe319c58625259ed7e1d360d65f222",
+      "source": "git_object"
+    }
+  ],
+  "recommended_api": [
+    "submission_guide",
+    "record_reviews",
+    "validate_recording"
+  ],
+  "recommended_new_owner": "ipfs_datasets_py/logic/legal_ir/statutory_review_recording.py",
+  "recommended_submission_schema": "statutory-source-context-review-submission/v1",
+  "remote_fetch_performed": false,
+  "remote_later_commits_or_unpushed_worktrees_covered": false,
+  "resource_admissions": 0,
+  "review_submissions_created": 0,
+  "reviewer_identity_authenticated": false,
+  "reviewer_independence_authenticated": false,
+  "schema": "statutory-review-recording-static-design/v1",
+  "scope": "read_only_source_and_Git_object_compatibility_design_no_execution_qualification",
+  "semantic_gold_created": false,
+  "source_edits": 0,
+  "source_repo": "/home/barberb/lift_coding/external/ipfs_datasets",
+  "template": {
+    "bytes": 23766,
+    "file_sha256": "e93b0e3219f569f0cc799b981204e64849aa6eff58f52aac5307f771c3782f2c",
+    "path": "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/statutory-source-review-template.json",
+    "schema": "statutory-physical-source-context-review-template/v1",
+    "submission_recording_supported": false
+  },
+  "tests_run": 0,
+  "training_calls": 0
+}
