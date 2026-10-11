@@ -226,9 +226,10 @@ def load_source_unit_inference(index,registry,artifact,*,expected_head,version_i
 
 def infer_shared_parent_units(index,repository,*,expected_head,registry,version_id,paths,embedding_snapshot,
         max_functions=1024,max_selected_units=128,scheduler=None,parent_lease=None,cancel_event=None,
-        timeout_seconds=180.,memory_mb=4096):
+        timeout_seconds=180.,memory_mb=4096,budget_profile=None):
     """Execute/replay pinned-parent unit inference under live source/model fences."""
-    shared._owners(index,registry);shared._limits(timeout_seconds,memory_mb,'source-unit-inference')
+    shared._limits(timeout_seconds,memory_mb,'source-unit-inference',budget_profile=budget_profile)
+    shared._owners(index,registry)
     deadline=time.monotonic()+timeout_seconds
     with acquire_codebase_resources(scheduler=scheduler,parent_lease=parent_lease,cancel_event=cancel_event,
             timeout_seconds=codebase_admission_timeout(remaining_seconds=max(0.,deadline-time.monotonic())),memory_mb=memory_mb) as lease:

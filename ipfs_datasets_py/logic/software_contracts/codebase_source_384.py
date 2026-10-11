@@ -299,9 +299,15 @@ def _worker(payload, *, lease, signal, timeout, memory_mb):
         memory_enforcement="sampled_process_tree_RSS_may_overshoot", device="cpu", provider_calls=0)
 
 
-def _limits(timeout_seconds, memory_mb, operation_id):
+FORMALIZATION_BUDGET_PROFILE = "source384-5cpu-20gib-formalization@1"
+
+
+def _limits(timeout_seconds, memory_mb, operation_id, *, budget_profile=None):
+    _require(budget_profile is None or (type(budget_profile) is str
+        and budget_profile == FORMALIZATION_BUDGET_PROFILE), "explicit source384 budget profile required")
+    maximum = 3600 if budget_profile is not None else 600
     _require(type(timeout_seconds) in (int, float) and math.isfinite(timeout_seconds)
-        and 0 < timeout_seconds <= 600, "bounded positive deadline required")
+        and 0 < timeout_seconds <= maximum, "bounded positive deadline required")
     _require(type(memory_mb) is int and 1024 <= memory_mb <= 16384, "bounded numerical memory reservation required")
     _require(type(operation_id) is str and re.fullmatch(r"[A-Za-z0-9_.:-]{1,96}", operation_id),
              "bounded operation ID required")
