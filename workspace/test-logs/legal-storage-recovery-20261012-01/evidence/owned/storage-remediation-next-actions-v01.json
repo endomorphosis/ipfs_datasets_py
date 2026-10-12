@@ -1,0 +1,345 @@
+{
+  "schema": "legal-storage-remediation-next-actions/v1",
+  "observed_at_utc": "2026-10-12T03:23:04Z",
+  "artifacts": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-postclosure-independent-review-v01.json",
+      "bytes": 42177,
+      "sha256": "b98214491b7924ef0e1f17627a29592b077e7f0122be621ad72cecb226635e21"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v02.json",
+      "bytes": 197078,
+      "sha256": "50aed05e9a5823f1be25c4bb72785b236b5d352287d4beb011a6c34c22ad1b97"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/scan_storage_metadata_v02.py",
+      "bytes": 6654,
+      "sha256": "15312809458f5d37a7a009114038a5024e21a2d0077dc7688f9a6a5a3f01177a"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/metadata-census-execution-v02.log",
+      "bytes": 845,
+      "sha256": "9a5506e9efdf89454fa9ea409395dc29d300713552bf35408a8ffc28422ce698"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-capacity-intake-v01.json",
+      "bytes": 9440,
+      "sha256": "17b9a4ca81610a650dae1e63d32b2a8d13bd3b75a6f4f04769f08a0911855d29"
+    }
+  ],
+  "scope": "postclosure actual proof plus fresh independent read-only metadata census; future cleanup candidates are unapproved",
+  "own_recovery": {
+    "completed": true,
+    "exact_claim": "0350dfb651f943178d7b1cbc2113443e",
+    "released_full_claim_bytes": 200000000,
+    "retained_records": 101,
+    "released_records": 412,
+    "foreign_records_changed": 0,
+    "artifacts_deleted": 0,
+    "cap_changed": false,
+    "training_admitted": false,
+    "raw_current_ledger": {
+      "bytes": 6142162,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+      "sha256": "1f93e0ca70ea6199f16d58834e30d60d127f9891e380454e470df352720bb824"
+    },
+    "private_full_ledger_publication_permitted": false
+  },
+  "fresh_asynchronous_explanatory_capacity": {
+    "apparent_named_root_bytes": 95290724941,
+    "outstanding_full_reservation_bytes": 48181777216,
+    "charged_bytes": 143472502157,
+    "cap_bytes": 145000000000,
+    "headroom_bytes": 1527497843,
+    "additional_training_request_bytes": 200000000,
+    "headroom_after_hypothetical_request_bytes": 1327497843,
+    "extra_relief_to_leave_5GB_after_hypothetical_request_bytes": 3672502157,
+    "extra_relief_to_leave_10GB_after_hypothetical_request_bytes": 8672502157,
+    "not_authoritative_training_admission": true,
+    "not_persistent_headroom_guarantee": true
+  },
+  "root_metadata": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "apparent_bytes": 89545030127,
+      "entry_count": 1348374,
+      "largest_subtrees": [
+        {
+          "relative_path": "federal-corpus-audits",
+          "apparent_bytes": 20812317200,
+          "regular_files": 177404,
+          "symlinks": 537,
+          "hardlinked_path_count": 8,
+          "hardlinked_path_bytes": 5024
+        },
+        {
+          "relative_path": "ui-event-validation-resume-20261002",
+          "apparent_bytes": 6876884894,
+          "regular_files": 122888,
+          "symlinks": 15,
+          "hardlinked_path_count": 122575,
+          "hardlinked_path_bytes": 6843480655
+        },
+        {
+          "relative_path": "native-dcec-ui-20261002",
+          "apparent_bytes": 6832874661,
+          "regular_files": 122701,
+          "symlinks": 15,
+          "hardlinked_path_count": 122365,
+          "hardlinked_path_bytes": 6732650509
+        },
+        {
+          "relative_path": "source-conditioning-development-20261002",
+          "apparent_bytes": 4167389909,
+          "regular_files": 73797,
+          "symlinks": 9,
+          "hardlinked_path_count": 73639,
+          "hardlinked_path_bytes": 4123467884
+        },
+        {
+          "relative_path": "intent-ui-gap-repair-20261002",
+          "apparent_bytes": 4052925689,
+          "regular_files": 73423,
+          "symlinks": 9,
+          "hardlinked_path_count": 73250,
+          "hardlinked_path_bytes": 4003553195
+        },
+        {
+          "relative_path": "intent-ui-coverage-20261002",
+          "apparent_bytes": 4022542368,
+          "regular_files": 73465,
+          "symlinks": 9,
+          "hardlinked_path_count": 73072,
+          "hardlinked_path_bytes": 3931223717
+        },
+        {
+          "relative_path": "source384-fidelity-20261001",
+          "apparent_bytes": 2652720671,
+          "regular_files": 48960,
+          "symlinks": 7,
+          "hardlinked_path_count": 48619,
+          "hardlinked_path_bytes": 2560387680
+        },
+        {
+          "relative_path": "decoder-source-margin-20261004",
+          "apparent_bytes": 2251433883,
+          "regular_files": 849,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        }
+      ]
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "apparent_bytes": 237099227,
+      "entry_count": 122,
+      "largest_subtrees": [
+        {
+          "relative_path": "(root files)",
+          "apparent_bytes": 192822384,
+          "regular_files": 34,
+          "symlinks": 0,
+          "hardlinked_path_count": 12,
+          "hardlinked_path_bytes": 104134730
+        },
+        {
+          "relative_path": "uscode-formal-20260927",
+          "apparent_bytes": 44276376,
+          "regular_files": 82,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "constitution-router-proposal",
+          "apparent_bytes": 467,
+          "regular_files": 2,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        }
+      ]
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "apparent_bytes": 4724077957,
+      "entry_count": 5554,
+      "largest_subtrees": [
+        {
+          "relative_path": "decoder-source-margin-20261004",
+          "apparent_bytes": 542005508,
+          "regular_files": 10,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-generated-field-training-r2-20261003",
+          "apparent_bytes": 411371928,
+          "regular_files": 9,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-action-consistency-20261003",
+          "apparent_bytes": 396547886,
+          "regular_files": 10,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-action-binding-20261003",
+          "apparent_bytes": 279116366,
+          "regular_files": 15,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-context-boundary-training-20261003",
+          "apparent_bytes": 242872929,
+          "regular_files": 9,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-modality-gap-r2-20261004",
+          "apparent_bytes": 230737531,
+          "regular_files": 70,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-source-head-lr-20261003",
+          "apparent_bytes": 191453121,
+          "regular_files": 7,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "decoder-continuation-native4096-20261004",
+          "apparent_bytes": 187454207,
+          "regular_files": 8,
+          "symlinks": 0,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        }
+      ]
+    },
+    {
+      "path": "/tmp/pytest-of-barberb",
+      "apparent_bytes": 784517630,
+      "entry_count": 3902,
+      "largest_subtrees": [
+        {
+          "relative_path": "pytest-187",
+          "apparent_bytes": 537147616,
+          "regular_files": 697,
+          "symlinks": 37,
+          "hardlinked_path_count": 2,
+          "hardlinked_path_bytes": 122
+        },
+        {
+          "relative_path": "pytest-186",
+          "apparent_bytes": 246407959,
+          "regular_files": 1539,
+          "symlinks": 12,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "pytest-185",
+          "apparent_bytes": 962022,
+          "regular_files": 66,
+          "symlinks": 17,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        },
+        {
+          "relative_path": "(root files)",
+          "apparent_bytes": 33,
+          "regular_files": 0,
+          "symlinks": 1,
+          "hardlinked_path_count": 0,
+          "hardlinked_path_bytes": 0
+        }
+      ]
+    }
+  ],
+  "hardlink_alias_accounting": {
+    "extra_apparent_bytes_from_alias_pathnames": 31552270444,
+    "pathnames_charged_individually": true,
+    "ordinary_du_is_not_cap_accounting": true,
+    "removing_one_alias_may_not_release_physical_file_blocks": true
+  },
+  "measured_churn": {
+    "administrative_pre_over_cap_bytes": 3650554404,
+    "administrative_projection_over_cap_bytes": 3783748326,
+    "projection_to_actual_observed_change_bytes": -5309770132,
+    "this_global_change_not_attributed_to_own200M_closeout": true,
+    "initial_to_fresh_pytest_apparent_change_bytes": -1620883949
+  },
+  "recommended_concrete_sequence": [
+    {
+      "step": 1,
+      "action": "Publish the reviewed source/API/test fix and exact bounded successful own-closeout evidence; keep all .local ledger bodies private.",
+      "done_runtime": true,
+      "permission_inferred_for_foreign_records": false
+    },
+    {
+      "step": 2,
+      "action": "Choose at least one4-7GB completed historical source-capture owner for explicit retention/dependency review. Start with ui-event-validation-resume-20261002 and native-dcec-ui-20261002, whose source/validation snapshots account for6.88GB and6.83GB; they remain untouched.",
+      "required_checks": [
+        "exact originating attempt/owner and durable outputs",
+        "every frozen guardian/release/test/replay reference to paths",
+        "content identities and reconstructable archive coverage including non-Git weights/proof keys/evidence",
+        "no live owner/group/open-file dependency",
+        "concrete independent archive/removal protocol if later authorized"
+      ],
+      "deletion_or_release_approved": false
+    },
+    {
+      "step": 3,
+      "action": "Use coordinated writers and reviewed completed-claim closeouts or dependency-safe archival to create5-10GB of growth buffer under the existing145GB cap before requesting another200MB training attempt.",
+      "5GB_extra_relief_bytes": 3672502157,
+      "10GB_extra_relief_bytes": 8672502157,
+      "buffer_is_conservative_engineering_choice_not_guarantee": true
+    },
+    {
+      "step": 4,
+      "action": "Prevent new duplicated full-repository captures: retain the smallest reviewed immutable source/data/runtime closure, one content copy plus explicit provenance manifests.",
+      "existing_frozen_captures_can_be_rewritten": false,
+      "hardlinks_reduce_apparent_charge": false
+    },
+    {
+      "step": 5,
+      "action": "After concrete legitimate recovery, rerun actual owner census and refresh the exact training guardian review/volatile ledger bindings.",
+      "automatic_retry_approved": false,
+      "cap_raise_approved": false
+    }
+  ],
+  "reviewer_actions": {
+    "live_api_calls": 0,
+    "ledger_lock_acquisitions": 0,
+    "claim_changes": 0,
+    "artifact_deletions": 0,
+    "artifact_moves": 0,
+    "model_calls": 0,
+    "compiler_calls": 0
+  },
+  "limits": [
+    "Fresh metadata census excludes directory sizes, charges regular/symlink/special lstat bytes per path, follows no symlinks and scanned1,357,952 entries with no disappearances/errors.",
+    "Metadata and current ledger are sequential snapshots; the original owner must make actual final admission independently.",
+    "Actual recovery handled above-cap pre/projection observations while preserving145GB cap, full foreign claim bodies and outputs.",
+    "Physical filesystem space remains ample; current issue is the cooperative logical budget and rapid unrelated pathname churn.",
+    "Candidate sizes do not establish safe deletion, historical-claim release eligibility, archive equivalence or owner authority.",
+    "No foreign/bulk release, old-source mutation, deletion or cap increase is approved by this report."
+  ]
+}

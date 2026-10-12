@@ -1,0 +1,44 @@
+F
+=================================== FAILURES ===================================
+___ test_recovery_releases_only_exact_dead_retained_claim_and_keeps_outputs ____
+
+setup = (<function setup.<locals>.factory at 0xe25712507d80>, [PosixPath('/home/barberb/lift_coding/artifacts/legal-storage-re...fs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler.GlobalResourceScheduler object at 0xe257131378f0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0xe25713137800>
+
+    def test_recovery_releases_only_exact_dead_retained_claim_and_keeps_outputs(setup, monkeypatch):
+>       ledger, args, before = retained(setup, monkeypatch)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py:17: in retained
+    with factory() as owner:
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py:687: in __exit__
+    self._lease.release()
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:850: in release
+    released = self._scheduler.release(self.lease_id, self.lease_key)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:2011: in release
+    self._recover_stale_locked(state, time.time())
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:1078: in _recover_stale_locked
+    owner_dead = not _owner_alive_once(record, owner_observations, current_boot=current_boot)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:702: in _owner_alive_once
+    observations[identity] = not different_boot and _owner_is_alive(*identity[:2])
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py:652: in _owner_is_alive
+    os.kill(pid, 0)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+event = 'os.kill', args = (2649956, 0)
+
+    def audit(event, args):
+        if event.startswith(("socket.", "subprocess.", "os.exec", "os.spawn")) or event in {"os.system", "os.fork", "os.posix_spawn", "os.kill", "os.killpg"}:
+>           raise AssertionError("Network/process/signals forbidden in resource fixtures")
+E           AssertionError: Network/process/signals forbidden in resource fixtures
+
+inert_resource_tests.py:29: AssertionError
+=========================== short test summary info ============================
+FAILED datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py::test_recovery_releases_only_exact_dead_retained_claim_and_keeps_outputs
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.33s

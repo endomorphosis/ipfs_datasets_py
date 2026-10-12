@@ -1,0 +1,57 @@
+{
+  "artifacts": {
+    "administrative-storage-closeout-implementation-handoff-v01.json": {
+      "bytes": 6728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-implementation-handoff-v01.json",
+      "sha256": "9c32e55d84822770727afc614fdd0c44e3b41c06d0a7cdb3fe59f58b19c6739f"
+    },
+    "inert_resource_tests.py": {
+      "bytes": 2372,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests.py",
+      "sha256": "50713263e6d27877f3e5529b3817f045ad0222866ceb0a0becf0bf5c3e01c589"
+    },
+    "owner-regression-tests-v01.log": {
+      "bytes": 113,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owner-regression-tests-v01.log",
+      "sha256": "0079f1c90aa7ef51a74192bf06786fa80a8a9355a1dbb51231c5fd1b48584908"
+    },
+    "owner-regression-tests-v01.xml": {
+      "bytes": 1727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owner-regression-tests-v01.xml",
+      "sha256": "314a3e54c766d9ac77655c50bf70c3f7bc7167fa2d92ac41d9d2098e66b2280d"
+    },
+    "recovery-tests-v05.log": {
+      "bytes": 99,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.log",
+      "sha256": "ac1d2d7b7434ed7d961c9b7ff3f0f8511e6745cf5e32a658c334928827407aa8"
+    },
+    "recovery-tests-v05.xml": {
+      "bytes": 14458,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.xml",
+      "sha256": "cb07ae01891a5f5b8af00fc61996139d505bce3219205347a166168a85c888ce"
+    }
+  },
+  "baseline_unmodified_owner_tests": [
+    "Three legacy production/migration test constants expect 140GB while currentmain sourcepolicy is145GB; full owner suite not qualified by this selection"
+  ],
+  "compiler_executed": false,
+  "current_distinct_passed": 76,
+  "findings": [],
+  "fixture_ledgers_and_schedulers_only": true,
+  "harness_failure_history": [
+    "v01 startup globaltemporarypath refused",
+    "v02 startup defaultlog /dev/null refused",
+    "v03 fixture signal0 refused and shutdown cachepath refused",
+    "v04 firstfixture signal0 refusal confirmed"
+  ],
+  "host_ledger_API_executed": false,
+  "host_ledger_mutated": false,
+  "network_process_signals_denied": true,
+  "numerical_imports_denied": true,
+  "only_current_test_PID_signal0_allowed": true,
+  "passed": true,
+  "pytest_plugins_and_conftest_startup_qualified": false,
+  "recovery_passed": 68,
+  "schema": "administrative-storage-closeout-inert-test-observation/v1",
+  "unchanged_owner_regressions_passed": 8
+}

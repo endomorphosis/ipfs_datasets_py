@@ -1,0 +1,29 @@
+{
+  "output": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v02.json",
+  "bytes": 197078,
+  "sha256": "50aed05e9a5823f1be25c4bb72785b236b5d352287d4beb011a6c34c22ad1b97",
+  "total_apparent_bytes": 95290724941,
+  "entries": 1357952,
+  "elapsed_seconds": 46.802056312561035,
+  "disappeared_entries": 0,
+  "errors": [],
+  "root_totals": [
+    [
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      89545030127
+    ],
+    [
+      "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      237099227
+    ],
+    [
+      "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      4724077957
+    ],
+    [
+      "/tmp/pytest-of-barberb",
+      784517630
+    ]
+  ],
+  "extra_hardlink_pathname_bytes": 31552270444
+}

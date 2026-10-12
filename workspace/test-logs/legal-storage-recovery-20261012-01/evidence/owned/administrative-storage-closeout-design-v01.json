@@ -1,0 +1,105 @@
+{
+  "accounting": {
+    "actual_postwrite": "Independent closure wrapper/audit must verify actual ledger readback, cap/roots/foreign body preservation, owner/group absence, attempt hashes, and a real postwrite census. Store that observation outside the ledger to avoid ledger-size recursion.",
+    "additional_requested_bytes": 0,
+    "administrative_overage_behavior": "Record both cap overage and physical-free shortfall; these do not authorize new work and do not prevent a durable dead-owner claim from being removed. Atomic write can still fail normally on actual IO exhaustion.",
+    "cap_enforced_by_admission_unchanged": true,
+    "formula": "observed_apparent_bytes + sum(full storage_bytes for every non-released record) + additional_requested_bytes",
+    "global_churn": "Both global scans use existing finite named-root inventory semantics. Changed unrelated apparent bytes are reported rather than assumed equal; the outstanding-reservation delta must be exactly the selected original full claim.",
+    "post_projection": "Embedded final_accounting is explicitly prewrite released-record projection from a fresh scan, not actual postwrite observation."
+  },
+  "administrative_predicates": [
+    "Exact expected retained record digest and reservation ID; roots/schema/cap authenticated through existing _read.",
+    "Attempt under an exact named root with unchanged directory device/inode and unaliased regular artifacts.",
+    "Absent original owner PID; all current and prior recorded process groups dead, including PID reuse refusal.",
+    "No external charges; explicit artifacts_durable=True; exact nonempty artifact hashes fsynced and directory fsynced.",
+    "Attempt inventory byte total no larger than original reservation.",
+    "Existing owner lock and atomic fsynced writer; no original PID adoption, lease acquisition, extra requested bytes, new reservation or output deletion.",
+    "Foreign record digest captured before administrative scans and preserved in the planned ledger.",
+    "Fresh full-claim census followed by a second fresh census on a deep-copy where only selected status is released; full original claim remains present in first census.",
+    "Recheck dead owner/groups, named roots, exact attempt identity and durable inventory after each census and before write.",
+    "Preserve the entire limit/schema/roots and each foreign record body; only existing closeout fields and v2 explicit-reconciliation evidence on selected record change.",
+    "One atomic ledger write; uncertainty after replace is reported without automatic rollback or overwriting new state."
+  ],
+  "applicable_agents_md": [],
+  "authority_and_scope": {
+    "bulk_delete": false,
+    "cap_increase": false,
+    "foreign_cleanup": false,
+    "foreign_record_release": false,
+    "hardlink_deduplication": false,
+    "live_application": "Requires a fresh concrete protocol and independent review for the exact own 0350 retained claim, then actual postwrite audit. This design report does not itself authorize live application.",
+    "safe_source_work": "The user asks to figure out storage remediation and continue. A reversible additive administrative API fix plus meaningful tests in an isolated worktree is within that scope.",
+    "training_admission": false
+  },
+  "baseline_test_gap": {
+    "file": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+    "finding": "Three existing production/cap-migration test cases still use a 140 GB expected constant although source current main is 145 GB. Do not disguise this baseline mismatch; recovery fixtures patch a test-local 100000 byte cap.",
+    "resource_owner_changes_proposed": false
+  },
+  "created_at_utc": "2026-10-12T02:56:04.883662+00:00",
+  "finding": {
+    "cap_bytes": 145000000000,
+    "deadlock": "Existing recovery calls _account while the full retained claim is charged. _account refuses charged_bytes above the existing limit even when owner and child groups are dead and all artifacts are durable. One such claim can therefore prevent its own explicit closeout.",
+    "existing_default_preserved": true,
+    "independent_from_new_admission": true,
+    "pathname_apparent_accounting_preserved": true
+  },
+  "live_ledger_mutated": false,
+  "live_lock_acquired": false,
+  "models_or_compiler_started": false,
+  "proposed_api": {
+    "administrative_path": "Use a recovery-local non-admitting census; no modification to DaemonResourceReservation._account, __enter__, check_usage, release, finalize, scheduler or cap.",
+    "default": "require_capacity",
+    "default_path": "Keep existing _account call, capacity cutoff, v1 receipt and release behavior.",
+    "explicit_administrative_value": "administrative_closeout",
+    "function": "reconcile_retained_reservation",
+    "invalid_values": "Reject non-str and unknown values before constructing helper or opening the live lock.",
+    "parameter": "capacity_policy"
+  },
+  "read_only_source_inspection": true,
+  "schema": "administrative-retained-storage-closeout-design/v1",
+  "source_artifacts": {
+    "docs/autoencoders/operations_and_troubleshooting.md": {
+      "bytes": 15617,
+      "git_revision": "050e08d67db70817903dce750ee76b6ba839c41e",
+      "sha256": "172adbd487e00a31d0d690a211fe9df100941afb2ccaa82db8d923fa682673bd"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "git_revision": "050e08d67db70817903dce750ee76b6ba839c41e",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+      "bytes": 6230,
+      "git_revision": "050e08d67db70817903dce750ee76b6ba839c41e",
+      "sha256": "5d36b28b4bda7cba91fbbe146cf2e3752f06f3e3adb6c92772788466ef701aa7"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "bytes": 41249,
+      "git_revision": "050e08d67db70817903dce750ee76b6ba839c41e",
+      "sha256": "6beda84236c405f8c75601d39d64e5a0a1b86c4e4afca6f340d1ca92f45f6d64"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+      "bytes": 5381,
+      "git_revision": "050e08d67db70817903dce750ee76b6ba839c41e",
+      "sha256": "48be436db65274841556333032b73a9b8e231a6f44ed8ea2b07f6966bafc0319"
+    }
+  },
+  "source_main": "050e08d67db70817903dce750ee76b6ba839c41e",
+  "validation_cases": [
+    "Default recovery refuses an over-cap pre-census even when hypothetical release would fit.",
+    "Explicit administrative closeout succeeds with pre and projected post both over cap, preserving outputs and all foreign records.",
+    "Pre over cap/projected post fits, equality at cap, and under-cap explicit mode report accurate capacity flags.",
+    "Insufficient physical free remains reported; admin closeout never implies filesystem allocation or lease authority.",
+    "New __enter__ remains capacity-refused after admin closeout if post state exceeds cap; no new ledger record or scheduler lease.",
+    "No _account relaxation; no scheduler acquire or owner __enter__ within recovery.",
+    "All existing ambiguity tests run also through explicit policy: live/reused owner, current/prior group, wrong record/artifact/root inode/status/external charge/no assertion.",
+    "Attempt mutation during either census, added/removed inventory, and root identity changes refuse without ledger write.",
+    "Foreign record mutation injected during an admin census refuses without write.",
+    "Attempt exceeds original reservation refuses, including when above-cap admin mode was requested.",
+    "Unknown/non-str policy refuses without lock, ledger or helper mutation.",
+    "Changed global observed bytes are represented by separate fresh scans and correct full-claim delta; no false fixed-observed claim.",
+    "Atomic writer failure preserves primary exception; wrapper must distinguish before/after-write uncertainty without automatic rollback."
+  ]
+}

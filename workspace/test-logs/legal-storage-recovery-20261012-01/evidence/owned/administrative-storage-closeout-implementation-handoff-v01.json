@@ -1,0 +1,106 @@
+{
+  "api": {
+    "administrative_helper": "_administrative_census",
+    "administrative_receipt_extra_keys": [
+      "capacity_policy",
+      "cap_changed",
+      "final_accounting_is_prewrite_projection",
+      "actual_postwrite_census_required",
+      "fresh_global_inventory_count",
+      "new_reservation_created",
+      "new_resource_lease_acquired"
+    ],
+    "administrative_receipt_schema": "explicit-retained-reservation-reconciliation/v2",
+    "administrative_snapshot_extra_keys": [
+      "over_limit_bytes",
+      "filesystem_free_shortfall_bytes",
+      "capacity_satisfied"
+    ],
+    "capacity_policy_default": "require_capacity",
+    "default_receipt_schema": "explicit-retained-reservation-reconciliation/v1",
+    "explicit_administrative_policy": "administrative_closeout",
+    "function": "reconcile_retained_reservation",
+    "strict_policy_string_validation": true
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+      "ast_valid": true,
+      "bytes": 10852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+      "ast_valid": true,
+      "bytes": 23019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+      "sha256": "76380d972134f154d7f1c4473dca121d9e0b0f754988767dc3323821355a8f84"
+    }
+  },
+  "baseline_test_mismatch": "Unchanged current-main owner test still expects140 GB in three tests, source constant is145 GB. Recovery fixtures use a test-local100000 byte cap; owner test code was not changed.",
+  "changed_source_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py"
+  ],
+  "created_at_utc": "2026-10-12T03:04:09.958469+00:00",
+  "files_frozen": true,
+  "live_ledger_mutated": false,
+  "live_locks_acquired": false,
+  "negative_controls": [
+    "Default pre-cap refusal even if post projection fits.",
+    "Admin pre/post both over cap retains all foreign bodies, outputs, cap, scheduler and record set.",
+    "Admission still refuses above cap after administrative release.",
+    "Real named-root tiny-file scans cover below/equal/above cap and unrelated observed growth.",
+    "Reported physical-free shortfall grants no lease or new bytes.",
+    "Both policies retain ambiguity and alias refusal cases; unsupported policy values rejected before FS access.",
+    "Attempt/foreign/projected-selected/original-selected/root mutation during either census refuses before write.",
+    "Owner/current/prior groups becoming live after either census refuses before write.",
+    "Oversize own durable attempt refuses in either policy.",
+    "Atomic writer failure before/after replace propagates primary error without retry or rollback."
+  ],
+  "pending": [
+    "Root inert fixture test execution; independent frozen source/test review.",
+    "Concrete exact own0350 protocol/applicator review; no live cleanup authorization is carried by this handoff.",
+    "Actual postwrite independent closure and fresh accounting/admission observations after any applied cleanup."
+  ],
+  "safeguards": [
+    "Existing _account/admission/ordinary release, cap145 GB, inventory pathname counting and scheduler authority unchanged.",
+    "Full first census keeps exact retained record/full claim; selected identity/digest checked again after each scan.",
+    "Second actual scan uses a deep-copy with only selected status released; selected projected and foreign original/copied bodies remain pinned.",
+    "Foreign body hash captured before first administrative census; own original retained record is bound until intentional final update.",
+    "Dead original owner and current/prior groups checked before and after each global census.",
+    "Exact durable attempt and root identity checked before and after censuses, helper roots verified before final existing atomic writer.",
+    "Final embedded accounting explicitly a prewrite projection; actual postwrite census required externally.",
+    "Zero extra requested bytes, no reservation entry, scheduler acquire, model/compiler, output removal or foreign closeout.",
+    "No automatic rollback/retry if atomic writer fails after replacing file."
+  ],
+  "scheduler_model_compiler_started": false,
+  "schema": "administrative-storage-closeout-implementation-handoff/v1",
+  "source_main": "050e08d67db70817903dce750ee76b6ba839c41e",
+  "tests_executed_by_implementation_agent": false,
+  "unchanged_owners_and_owner_test": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "matches_main": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "matches_main": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "matches_main": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "bytes": 41249,
+      "matches_main": true,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "6beda84236c405f8c75601d39d64e5a0a1b86c4e4afca6f340d1ca92f45f6d64"
+    }
+  }
+}

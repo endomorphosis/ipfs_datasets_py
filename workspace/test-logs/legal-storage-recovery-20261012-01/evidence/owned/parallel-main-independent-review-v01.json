@@ -1,0 +1,1337 @@
+{
+  "absent_prior_selected_ref_names_with_retained_ancestral_objects": [
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+      "repo": "root",
+      "selected_commit": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+      "repo": "source",
+      "selected_commit": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+      "repo": "source",
+      "selected_commit": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+      "repo": "source",
+      "selected_commit": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+      "repo": "source",
+      "selected_commit": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+      "repo": "source",
+      "selected_commit": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+      "repo": "source",
+      "selected_commit": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+      "repo": "source",
+      "selected_commit": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+      "repo": "source",
+      "selected_commit": "575a129f19068d58d66cc8119e85c3d23faa560a"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+      "repo": "source",
+      "selected_commit": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+      "repo": "source",
+      "selected_commit": "004887f6250b083e0b095d5ac7563bc5bb792491"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+      "repo": "source",
+      "selected_commit": "1530efd07032bac88229c6c97ca5994d498e6216"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+      "repo": "source",
+      "selected_commit": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+      "repo": "source",
+      "selected_commit": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+    },
+    {
+      "commit_retained_and_ancestral": true,
+      "prior_ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+      "repo": "source",
+      "selected_commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+    }
+  ],
+  "accelerator_baseline7a00_and_earlier58_ancestral": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/canonical-intake-v01.json": {
+      "bytes": 641,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/canonical-intake-v01.json",
+      "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-documentation-independent-review-v01.json": {
+      "bytes": 11571,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-documentation-independent-review-v01.json",
+      "sha256": "9da549650f21062ba784a370b3f3e59bbf9e66ea9246f3c73cbb40869eb70458"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/final-integration-independent-review-v01.json": {
+      "bytes": 22762,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/final-integration-independent-review-v01.json",
+      "sha256": "9653e0c097163109a1f2c11db0d41c52935aae0aa7c659a0671d0f11c391b6bd"
+    }
+  },
+  "canonical_preserved_endpoints": {
+    "root": {
+      "HEAD": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "HEAD_ancestor_of_current_main": true,
+      "index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "matches_exact_intake": true,
+      "symbolic_HEAD": "refs/heads/chore/fmt-check-main"
+    },
+    "source": {
+      "HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "HEAD_ancestor_of_current_main": true,
+      "index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "matches_exact_intake": true,
+      "symbolic_HEAD": "refs/heads/main"
+    }
+  },
+  "changed_gitlinks": {
+    "external/ipfs_accelerate": {
+      "after": "1f6d998a92db4024f35b57bbdb183a6626a7fa31",
+      "before": "7a00a0875b3d887183f77d2db5b819e7db7fd96d"
+    }
+  },
+  "changed_paths": [
+    {
+      "after": {
+        "bytes": 78,
+        "mode": "100644",
+        "oid": "d39497f82ed87f6ecae54cf65957c876691297b7",
+        "sha256": "b5b6b085ad7ce5c770316efa43be2b1bba983341c385c922836176ae430fbf06",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/.gitattributes",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2805,
+        "mode": "100644",
+        "oid": "0202cdd4711b3fbf7a2d1e5cda105c318d23a56b",
+        "sha256": "932a12e71c8bb0baad9f01e110d21330a255f27d396569e967f8d1b83d33c101",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/commands.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2897,
+        "mode": "100644",
+        "oid": "1c068a6c15df516f9bac0e328cec7b06b666e240",
+        "sha256": "a0e0e2c7cdcd6c669a94435c1aa0dd62fa7b09ecf2bcb6a6cf29805d9670eb30",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/docs-gates.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 136,
+        "mode": "100644",
+        "oid": "86454be355fb8d93649ba4627d071dede5965655",
+        "sha256": "84d74d6d5688b21f8a3d22e1a26e747d5f78714820c8bdba9132ca4bb9564f82",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/docs-parent-links.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 789,
+        "mode": "100644",
+        "oid": "6cdbbbf8dedf4be22998109921435754fc462f4b",
+        "sha256": "b1e33f614e8df233f470276dc85733a37b26db43ea18ccf7c7114d293634ec3a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/github-docs-annotations.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 935,
+        "mode": "100644",
+        "oid": "9ec362ee65f9e76df3e1b0578b61de66580fb13f",
+        "sha256": "4b1ee4231b427a45d2852892a0987bda5b86bdfc06604b266d07a3efe9a1d83e",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/github-docs-jobs.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 211,
+        "mode": "100644",
+        "oid": "fe8d9a66cef8a31ffd3b3be657a7c74098df5ab4",
+        "sha256": "e3817cecfee0619398992c0e1cfe79310a8187214b64750102527988668a8dee",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/github-docs-runs.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3643,
+        "mode": "100644",
+        "oid": "a61a45760c04399c318fc94e198c82079dfcc647",
+        "sha256": "56e7f40c1649c4ade9ce779aa2eabdf41b7eed1e4eb68a86a224de371416cccd",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/inventory-test-nodeids.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 11979,
+        "mode": "100644",
+        "oid": "69d42d218bf9ef5ac3ab2a6513fd23ea8596d8b5",
+        "sha256": "0399ff3edd6154e2ff02c223d18496d06d97a4e1273c4abfbede21259cd1e720",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/numerical-readiness-source-audit.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 8822,
+        "mode": "100644",
+        "oid": "94b41ac69e32a10f9c21155304c545d9243f066b",
+        "sha256": "40ba56c5d9993e64988a36225365052f0af1ba14125a4aa987e229ba9a9091e2",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/qualification.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 9123,
+        "mode": "100644",
+        "oid": "98d6cc952db375b05f2426e3e3d63c41967d8a72",
+        "sha256": "18bc60420476a48836919dd8e9faed8d3a446b43c0f66e98337e5a1855f87008",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/source-manifest.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2591,
+        "mode": "100644",
+        "oid": "871ba6c731fec2e82e0fe907a582888324d9b7c0",
+        "sha256": "8ce990113c1ea74b1413ac0139712d50d28313d9c40101f484ce192668dbc17c",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-bridge-regression.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3620,
+        "mode": "100644",
+        "oid": "b7b4baa532ab2754e5005e4f112bfe3f713d1c74",
+        "sha256": "f97049b6529657a742ae32ba62d753fa51e9f2d9b5f45edef9b7dbd4d23431d3",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-census-and-archive.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2616,
+        "mode": "100644",
+        "oid": "f76770ca1f82aac8b5e41c8641f929be0e2dea23",
+        "sha256": "f1115a4dcbb2a45c497a3ff61efc8e1f308401b8a24cec8e91713037bc45ac76",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group1.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2694,
+        "mode": "100644",
+        "oid": "86aec902f28d5bcefafb5801cdc11c8ef9d31779",
+        "sha256": "5ca6047737f6f88ee4f34d772460195ce01d0c21e81a2ff08133e2aeee7f020b",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group2.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2628,
+        "mode": "100644",
+        "oid": "2cdb033ab0fd65da1cf94d00de974d664769207f",
+        "sha256": "c55108fea71d904537fad8353dee1bcada98a56ea8fd6603174f91e90f0ed35c",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group3.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1461,
+        "mode": "100644",
+        "oid": "f163742a241994dfe3bfe25278ac9de67e99053b",
+        "sha256": "1325a10bd21c1367a01a21ed6282f77cf1fc95a9db4edc354079709c9a377ee2",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-real.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1537,
+        "mode": "100644",
+        "oid": "ada1cbbdfe35a5ac73e0e21a64e153cb742e1a1c",
+        "sha256": "3fdb7369f3b6a736e11531ab82d0afd20dba265b3bc3de6145fb9829ce8cd38a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/tests-terminal-regression.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 92,
+        "mode": "100644",
+        "oid": "42031a90fe1fb3386335228db60fc890f0b9ac5e",
+        "sha256": "bfc5b95f321f600cd4611d2a6907fcb392577cd719a8312008e6c327ccdc65f8",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/.gitattributes",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 8344,
+        "mode": "100644",
+        "oid": "e0ebf187bb177f405ccb9c91cf6d71edf5ac74a6",
+        "sha256": "c7bfd2ff2ad5a881edb0927f064dde3e691bbcaf014287f066eda91a2ac60b17",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/commands.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 748,
+        "mode": "100644",
+        "oid": "f1d726221df3ebee4224636ffc4acb1015d00d98",
+        "sha256": "ca77a0607e8a867bf3af547bec8d73b88dc03f7e846debd677b00fe172118d28",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/docs-gates.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 755,
+        "mode": "100644",
+        "oid": "489900f0513f1a5f309f85f97b1d4e12e39a205c",
+        "sha256": "058ab45d55e5892c4eb6e644f92cebf8289a4640f22b7a3534a8dc9c44f0558a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/docs-merged-gates.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 145,
+        "mode": "100644",
+        "oid": "b8988b6c6fd18cdc0619043d53edf5eac58856e2",
+        "sha256": "dee4829c368b787b0bb494350761cf8199deeae046cdd885f795b64f8737629f",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/docs-parent-final-links.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 789,
+        "mode": "100644",
+        "oid": "4249663abce75be310e4483434d2f8644c84747e",
+        "sha256": "bec2aa87d9e7c726ea16dd1a8e1f1338a76c8a23de70f46e6801ebd14085548f",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-annotations.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 935,
+        "mode": "100644",
+        "oid": "acad1e2b87842387a95558182daebe8f5c2c6a49",
+        "sha256": "41134dc663d41a4ec35a3c2e9f98229aa3cdb2792f199ebb85e10c27120edb3a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-jobs.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 211,
+        "mode": "100644",
+        "oid": "2f0f64efceb974936c32dd3fd989bbcd571a09af",
+        "sha256": "4823bebed8d3c6f7169d46dae6b3d30e9c4de42a8c63f0b4bdbbf4a3eeb0f8de",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-runs.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 13876,
+        "mode": "100644",
+        "oid": "cebd12edfc6e6cfc01c14b45b01d12ab766ec8ac",
+        "sha256": "e39fae54ea6ad5f955919c8ff5313d1c6f1e3035cad62b0ee9c5f1700903be81",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/qualification.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 9293,
+        "mode": "100644",
+        "oid": "905cce7ef9e74bd5d15f1c3bfca7d29c1250697e",
+        "sha256": "d833ba7f6f0baa76d26c336a21adb35e23b6d99a5aa09d39b8611d28efc1237b",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/source-manifest.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 5658,
+        "mode": "100644",
+        "oid": "10304c6b5a66ade81ac1d2689104a1a4cdc530d3",
+        "sha256": "a7270773d9f76cf1aaa44b1eb6a4ad8c312124c5813faa4a4965a320f10ac9db",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/terminal-test-nodeids.json",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1820,
+        "mode": "100644",
+        "oid": "889efddea5d588b84a10bf6d0e2aa5972e1cf039",
+        "sha256": "cd21d58dac22c2939f3cf32588873bba59748e6c81dc8727c455cedbf7a866c0",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-current-datasets-native.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1537,
+        "mode": "100644",
+        "oid": "70009bb11e690b756ba459e800ff4dcfc292cc9c",
+        "sha256": "a21431cd080e8f7cea18da46eeb1d041d1fe79b147356f6e1e47d98fe94230fa",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-current-datasets-terminal.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3445,
+        "mode": "100644",
+        "oid": "ab2292636f95967b8359bb36556fd53e69f9d0f8",
+        "sha256": "8e66a7c0381ec5c3fefe79ae1a25503975592fbd3bf10a8e2a8af15f66c952bb",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-census-and-archive.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 368194,
+        "mode": "100644",
+        "oid": "f67be5dd1c6fc12ed4dd7a336d1e1ab439232ea0",
+        "sha256": "d70af12669f903f3e4535eb58c64fe0baf586d8f1f84829dc52ed8ff71986222",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-terminal-host.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 387245,
+        "mode": "100644",
+        "oid": "90540ed1daccb20a1ab513b27c1a04e943ab02bc",
+        "sha256": "0fb0b096b3fc83e8a58a27be3307dfbaf2841b7ecc2acfe6dfbefec7be666514",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-terminal-lifecycle.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3518,
+        "mode": "100644",
+        "oid": "e6857d5d1924e1a23e4caa8c42e5caeeef12389a",
+        "sha256": "944502791798bd14f46192e2f436ff77e01b70a66f791edd4fca60d4cc117279",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-census-and-archive.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1820,
+        "mode": "100644",
+        "oid": "6f565ab30d8d6eef0352fb0e0162e4995c30ce03",
+        "sha256": "7b08349bae5e5e2d8df07dfdd9f7be2460155d7522e0acf09d04059f87afd7c5",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-native.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 302574,
+        "mode": "100644",
+        "oid": "c71aeb3334dd9b2e583e52843d082c0779013294",
+        "sha256": "6c0aa037076feb6304937ff623029e35df2d7d3c873f9f16ffed0bd3585912e6",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group1.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 7934,
+        "mode": "100644",
+        "oid": "061f7cbf7e7e102878431bf46151cb2afa8b6d7f",
+        "sha256": "65640b7c3344e3def205e8905b6e334da478d3eb6d481276ed04e0198439c601",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group1.xml",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 478328,
+        "mode": "100644",
+        "oid": "b06c460d66407bac59041555bd560336b81846d6",
+        "sha256": "3d998530e62eec46e1068dfc1c47551bc39c1d14faff6d609ebc21e132c20d0a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group2.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 7639,
+        "mode": "100644",
+        "oid": "3ae0463d13307b27fb66497651a623ea27fcd464",
+        "sha256": "742d606b992a581db6df624f639a57db9dbcab9ec44b8a625c6e7d30bc49b43d",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group2.xml",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2591,
+        "mode": "100644",
+        "oid": "3156eb8d540a0c0bea332b2a570dffcef1597e98",
+        "sha256": "3975d8f7b679b706e55109d8375f2f2f4a579accd447cb66743148a0ec02a42a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-native-bridge-regression.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1891,
+        "mode": "100644",
+        "oid": "1ca861f3481c08ac0781439353dad1a0f66cfdb7",
+        "sha256": "bcda2a951fd6d361c7e00183023126a374060f1cebc3ca1f8f74847101232e29",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-new-census-finalguard.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 2705,
+        "mode": "100644",
+        "oid": "0add5805538fa3e357fb87be0124a4c58a8abc49",
+        "sha256": "d94136b1ed4a584efb62a5ed556d9400ba747bf48332d0c268a57e5432cf5dce",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-new-census.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1480,
+        "mode": "100644",
+        "oid": "efe0bad04b640f292df81027fd498072e77259d8",
+        "sha256": "f90cc0b6e91d19ecff0c94edf5c85ee04980b728e6dbf47b00c93ea7b6d7b9f2",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group1.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1484,
+        "mode": "100644",
+        "oid": "8677f8adc27829a081674716c538037eb8e6bc25",
+        "sha256": "12c0f0d7c28d4ec052572165064f4cf8a1029168e0151e0b054d3c1c4a9e42e4",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group2.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1520,
+        "mode": "100644",
+        "oid": "c097c8cc0ac9b0173f5bbaa3a7397bcc53d57cf0",
+        "sha256": "5d77ba829c77d5f164a25f468f185a59c78fc8bd2a1ae1a9b63e47aefbd50e70",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group3.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3136,
+        "mode": "100644",
+        "oid": "8851772f5750d80761d75fcce4113e2e646d8310",
+        "sha256": "22bdd38f86aad39a2ef5ef45b607403ba8b80227a7c689b35f2773bf6e75d32b",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group1.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3106,
+        "mode": "100644",
+        "oid": "f3dc63232b0a9f1844ae68169322f71db5089a8b",
+        "sha256": "4a749ea008b289357ef652d44d831c842c968b8e54e0023fc7818916a0bdf56c",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group2.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 3162,
+        "mode": "100644",
+        "oid": "a5adf7b31023ae300e099f0d315a9f577425174a",
+        "sha256": "4e742bc165f3f7f731b251c86f46304c0216c23ffa0cc47dfb7e43f14ed66c34",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group3.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1951,
+        "mode": "100644",
+        "oid": "3ba85cc3320b7bd733930a55f0812eb75ded0df7",
+        "sha256": "188299b742a1b728dce04f395846d7805e77c5adfcb889a171aff43b616b0437",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-merged-group1.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1951,
+        "mode": "100644",
+        "oid": "e056e72417b473399d83acfb66f9c4635d7b557f",
+        "sha256": "6177811aecabf3922ee1053c1698db2ad99e0e6c62e79fd2317467df8ac19431",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-merged-group2.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 1556,
+        "mode": "100644",
+        "oid": "6035ab566adfbc063b946ea6979c4f522017acf9",
+        "sha256": "cdbd1924e3e9e6d8f611d55961044c418c3a48d387462cf9898103d8222e3c1a",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-positive-initial.log",
+      "status": "A"
+    },
+    {
+      "after": {
+        "mode": "160000",
+        "oid": "1f6d998a92db4024f35b57bbdb183a6626a7fa31",
+        "type": "commit"
+      },
+      "before": {
+        "mode": "160000",
+        "oid": "7a00a0875b3d887183f77d2db5b819e7db7fd96d",
+        "type": "commit"
+      },
+      "path": "external/ipfs_accelerate",
+      "status": "M"
+    },
+    {
+      "after": {
+        "bytes": 8963,
+        "mode": "100644",
+        "oid": "862cd499c02c23f81c605e057d41520fe52aecae",
+        "sha256": "ff9d15b2e94016b53d5eb0a6fd626b2bf0d2f65c5ec6d2f2c591c04bfda9ab28",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "implementation_plan/docs/83-supervisor-terminal-header-admissions-2026-10-12.md",
+      "status": "A"
+    },
+    {
+      "after": {
+        "bytes": 7885,
+        "mode": "100644",
+        "oid": "bc57d3411e99a21ce83030e7a09779012da940d9",
+        "sha256": "7ad1c7dc3dcd529ad5caa48b187787798787c970797ed26308f899bb3d14e9dc",
+        "type": "blob"
+      },
+      "before": null,
+      "path": "implementation_plan/docs/84-supervisor-header-proof-inventory-2026-10-12.md",
+      "status": "A"
+    }
+  ],
+  "changed_regular_blobs": 54,
+  "distinct_recoveries": [
+    {
+      "branch_only_commits": 48,
+      "commit_retained": true,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "outside_current_main_ancestry": true,
+      "refs": [
+        {
+          "observed": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "ref": "refs/heads/publication/main-20261004/datasets"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+        }
+      ],
+      "repo": "source"
+    },
+    {
+      "branch_only_commits": 50,
+      "commit_retained": true,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "outside_current_main_ancestry": true,
+      "refs": [
+        {
+          "observed": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "ref": "refs/heads/publication/main-refresh-20261004/datasets-01"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        }
+      ],
+      "repo": "source"
+    },
+    {
+      "branch_only_commits": 5,
+      "commit_retained": true,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "outside_current_main_ancestry": true,
+      "refs": [
+        {
+          "observed": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "ref": "refs/heads/publication/main-20261004/root-02"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+        }
+      ],
+      "repo": "root"
+    },
+    {
+      "branch_only_commits": 4,
+      "commit_retained": true,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "outside_current_main_ancestry": true,
+      "refs": [
+        {
+          "observed": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "ref": "refs/heads/publication/main-20261004/root-03"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+        }
+      ],
+      "repo": "root"
+    },
+    {
+      "branch_only_commits": 6,
+      "commit_retained": true,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "outside_current_main_ancestry": true,
+      "refs": [
+        {
+          "observed": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "ref": "refs/heads/publication/main-refresh-20261004/root-01"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        }
+      ],
+      "repo": "root"
+    }
+  ],
+  "findings": [],
+  "future_integration_constraints": [
+    "Start fresh root publication from8a0c62ee80eee1358a7e7c293d154002af55c044 or a subsequently reviewed descendant, preserving all54 added parallel blobs byte-for-byte and current accelerator1f6d link.",
+    "Preserve all9 current gitlinks except external/ipfs_datasets may advance only to actual reviewed source-main merge for this storage contribution.",
+    "Use a new doc85 storage filename; do not overwrite the parallel Terminal83/proof inventory84 docs or their directory-local .gitattributes/evidence.",
+    "Retain all32 selected commit objects/ancestry and prior temporal-binding source6b04/050e and root72b5/31950 contributions.",
+    "Preserve all5 distinct recovery refs/worktrees and branch-only counts48,50,5,4,6; do not represent those endpoints as merged.",
+    "Keep canonical raw HEAD/symbolic HEAD and both index byte identities unchanged.",
+    "Refresh own main refs before final publication and review any additional parallel changes; bounded endpoint equality is not continuous custody."
+  ],
+  "limitations": [
+    "The two parallel rounds255 and144 test populations are reported historical qualification metadata; this reviewer did not execute or combine them with current storage tests.",
+    "This root object review does not establish numerical proof, live task acceptance, legal fidelity, decoder weights/training or HF publication. Parallel guides explicitly preserve those limitations.",
+    "Current own-source implementation approval remains separate independent7c12 review; this reviewer authored that implementation and does not self-approve it here.",
+    "One or more old selected branch names may have been removed by their owner after merge; all32 pinned commits remain retained and ancestral. Selected-history preservation applies to those objects, not recreation of removed refs.",
+    "Recovery worktrees retain unmerged distinct progress; preservation does not imply integration into main.",
+    "No raw ledger backups, foreign claim bodies, checkpoint payloads, actual compiler/model runs or remote publication occur in this review."
+  ],
+  "observed_at_utc": "2026-10-12T03:39:42.156019+00:00",
+  "passed": true,
+  "prior_own_contributions_retained": {
+    "root": {
+      "actual_contribution_head": {
+        "commit": "72b5da10319c02e7da84ecea65c6e34583b0e03d",
+        "retained_and_ancestral": true
+      },
+      "actual_first_parent": {
+        "commit": "2df573af49b14db42948dd382f9f377e1e116754",
+        "retained_and_ancestral": true
+      },
+      "actual_merge": {
+        "commit": "31950f236a8c3c1156a8efd5e5a71f592152ef94",
+        "retained_and_ancestral": true
+      }
+    },
+    "source": {
+      "actual_contribution_head": {
+        "commit": "6b04a8a8551a95ab5fe82d4fe21af5a42375f625",
+        "retained_and_ancestral": true
+      },
+      "actual_first_parent": {
+        "commit": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3",
+        "retained_and_ancestral": true
+      },
+      "actual_merge": {
+        "commit": "050e08d67db70817903dce750ee76b6ba839c41e",
+        "retained_and_ancestral": true
+      }
+    }
+  },
+  "qualification_metadata_checks": [
+    {
+      "CI_pass_inferred": false,
+      "counts_sum_correct": true,
+      "declared_logs_and_CI_payload_hashes_match_actual_Git_blobs": true,
+      "gitattributes_scope": "directory-local raw-log whitespace attribute; global policy unchanged",
+      "path": "artifacts/supervisor-terminal-header-admissions-20261012/qualification.json",
+      "reported_CI_status": "not_started",
+      "reported_distinct_tests": 255,
+      "tests_reexecuted_by_this_reviewer": false,
+      "verified_paths": [
+        "artifacts/supervisor-terminal-header-admissions-20261012/docs-gates.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/docs-merged-gates.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/docs-parent-final-links.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-current-datasets-native.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-current-datasets-terminal.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-census-and-archive.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-terminal-host.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-existing-terminal-lifecycle.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-census-and-archive.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-native.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group1.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-merged-terminal-lifecycle-group2.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-native-bridge-regression.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-new-census-finalguard.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-new-census.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group1.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group2.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-final-restoration-group3.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group1.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group2.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-group3.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-merged-group1.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-bound-merged-group2.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/tests-terminal-positive-initial.log",
+        "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-annotations.json",
+        "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-jobs.json",
+        "artifacts/supervisor-terminal-header-admissions-20261012/github-docs-runs.json"
+      ]
+    },
+    {
+      "CI_pass_inferred": false,
+      "counts_sum_correct": true,
+      "declared_logs_and_CI_payload_hashes_match_actual_Git_blobs": true,
+      "gitattributes_scope": "directory-local raw-log whitespace attribute; global policy unchanged",
+      "path": "artifacts/supervisor-header-proof-inventory-20261012/qualification.json",
+      "reported_CI_status": "not_started",
+      "reported_distinct_tests": 144,
+      "tests_reexecuted_by_this_reviewer": false,
+      "verified_paths": [
+        "artifacts/supervisor-header-proof-inventory-20261012/docs-gates.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/docs-parent-links.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-bridge-regression.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-census-and-archive.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group1.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group2.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-authored-group3.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-inventory-real.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/tests-terminal-regression.log",
+        "artifacts/supervisor-header-proof-inventory-20261012/github-docs-annotations.json",
+        "artifacts/supervisor-header-proof-inventory-20261012/github-docs-jobs.json",
+        "artifacts/supervisor-header-proof-inventory-20261012/github-docs-runs.json"
+      ]
+    }
+  ],
+  "root_before": "31950f236a8c3c1156a8efd5e5a71f592152ef94",
+  "root_gitlinks_before": {
+    "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+    "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+    "external/ipfs_accelerate": "7a00a0875b3d887183f77d2db5b819e7db7fd96d",
+    "external/ipfs_datasets": "050e08d67db70817903dce750ee76b6ba839c41e",
+    "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+    "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+    "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+    "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+    "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+  },
+  "root_gitlinks_latest": {
+    "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+    "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+    "external/ipfs_accelerate": "1f6d998a92db4024f35b57bbdb183a6626a7fa31",
+    "external/ipfs_datasets": "050e08d67db70817903dce750ee76b6ba839c41e",
+    "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+    "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+    "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+    "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+    "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+  },
+  "root_latest": "8a0c62ee80eee1358a7e7c293d154002af55c044",
+  "root_parallel_commits": [
+    {
+      "commit": "ea85e32c47c66f2672b772612a5a1dc7f7099a74",
+      "parents": [
+        "31950f236a8c3c1156a8efd5e5a71f592152ef94"
+      ],
+      "subject": "Integrate current Terminal header proof admissions and qualification"
+    },
+    {
+      "commit": "8a0c62ee80eee1358a7e7c293d154002af55c044",
+      "parents": [
+        "ea85e32c47c66f2672b772612a5a1dc7f7099a74"
+      ],
+      "subject": "Integrate sealed proof inventories and numerical admission plan"
+    }
+  ],
+  "schema": "legal-storage-parallel-main-independent-review/v1",
+  "scope": {
+    "canonical_indices_or_HEADs_mutated": false,
+    "live_ledger_API_or_locks": false,
+    "models_tests_compiler_executed": false,
+    "own_source_implementation_approved_here": false,
+    "publication_approved": false,
+    "read_only_Git_objects_and_ref_metadata": true
+  },
+  "selected_history_retention": {
+    "root": [
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+        "selected_commit": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "3762db604ceb0d2cc6b80dd52a94c3c5e7d225a4",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+        "selected_commit": "30e61092341b47b4e49eb30df443fd607536333a"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+        "selected_commit": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "739e7088a203a4b307d96192e489a88dbf9177b1",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+        "selected_commit": "739e7088a203a4b307d96192e489a88dbf9177b1"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+        "selected_commit": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "00130686f43e35105e2ee98e5a36428f3aff3538",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+        "selected_commit": "00130686f43e35105e2ee98e5a36428f3aff3538"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+        "selected_commit": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+        "selected_commit": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+        "selected_commit": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "2fa137229c84f48dd93dccf88f09f9b572c71ea1",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/main",
+        "selected_commit": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6"
+      }
+    ],
+    "source": [
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "selected_commit": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+        "selected_commit": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+        "selected_commit": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+        "selected_commit": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+        "selected_commit": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+        "selected_commit": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+        "selected_commit": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+        "selected_commit": "575a129f19068d58d66cc8119e85c3d23faa560a"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+        "selected_commit": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "b4002de1e73d295e222cd7258bd07e4784a6b928",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+        "selected_commit": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+        "selected_commit": "004887f6250b083e0b095d5ac7563bc5bb792491"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "146e4c88fea6d0a9ab671af00e1596a9a60ea784",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+        "selected_commit": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "f3901341cdde9b4485315327d5ef06abd1485b11",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-native-cache-20261011-01",
+        "selected_commit": "f3901341cdde9b4485315327d5ef06abd1485b11"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+        "selected_commit": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+        "selected_commit": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+        "selected_commit": "1530efd07032bac88229c6c97ca5994d498e6216"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/legal-structured-training-20261011-01",
+        "selected_commit": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+        "selected_commit": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+        "selected_commit": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": null,
+        "current_ref_present": false,
+        "prior_ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+        "selected_commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "d1643c2c621f45f0ca0080e017fe6717b093e478",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/codex/source-v2-warm-start-20261004",
+        "selected_commit": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+      },
+      {
+        "ancestor_of_current_main": true,
+        "commit_retained": true,
+        "current_ref_observation": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "current_ref_present": true,
+        "prior_ref": "refs/heads/main",
+        "selected_commit": "4af461728329cdad4bfb910ab878d016ce279e54"
+      }
+    ]
+  },
+  "selected_objects_total": 32,
+  "source_latest": "050e08d67db70817903dce750ee76b6ba839c41e"
+}
