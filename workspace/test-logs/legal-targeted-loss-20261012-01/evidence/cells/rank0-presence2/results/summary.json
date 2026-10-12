@@ -1,0 +1,1362 @@
+{
+  "Lake_executed": false,
+  "actual_encoder_calls": 0,
+  "actual_new_updates": 32,
+  "admitted": false,
+  "attempt_name": "targeted-loss-20261012-rank0-presence2-01",
+  "baseline_model_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+  "baseline_optimizer_steps": 0,
+  "baseline_panels": [
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 1459768,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_tune-joint.json",
+        "sha256": "81003b31546b12904abd600d1ff4c3ca5b4d7f1e60f17d86bc7074718098bf87"
+      },
+      "name": "old_tune",
+      "raw": {
+        "bytes": 2280984,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_tune-raw.json",
+        "sha256": "4ba1ce0c8bc36cbdc8e182ffe61ca3ad5dc3737e194eeaf87a6d934ff39753fa"
+      },
+      "row_count": 96,
+      "score": {
+        "bytes": 101532,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_tune-score.json",
+        "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 491374,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_tune-joint.json",
+        "sha256": "4f71b7252e062bfab3af686e7d3766bf623174b57f52aec7c939c6ba106d2bcd"
+      },
+      "name": "fresh_tune",
+      "raw": {
+        "bytes": 598049,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_tune-raw.json",
+        "sha256": "a235409177bc19faf70e691eaf58053a22986e2efe1126bf33f3a031e54b2542"
+      },
+      "row_count": 36,
+      "score": {
+        "bytes": 53408,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_tune-score.json",
+        "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 506510,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_challenge-joint.json",
+        "sha256": "d78ff83828ca4aedc13feb6b219dfd44d15f758c09aed6cb765d483d3076e1ec"
+      },
+      "name": "fresh_challenge",
+      "raw": {
+        "bytes": 635836,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_challenge-raw.json",
+        "sha256": "df029cca8361d824fd8e1de5b141f9f3e08d44b669dccbb401ee7eeb2925d65b"
+      },
+      "row_count": 36,
+      "score": {
+        "bytes": 53748,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-fresh_challenge-score.json",
+        "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 1032310,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_authored_eval-joint.json",
+        "sha256": "6dea969837228f39a54447f7b4432504ad9bba381c4f5c7811af779037ca8355"
+      },
+      "name": "old_authored_eval",
+      "raw": {
+        "bytes": 1401761,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_authored_eval-raw.json",
+        "sha256": "47903e338c0dfcb79aabd735c58e75f60dcc8fe451c893fcfda3528f1b41da80"
+      },
+      "row_count": 72,
+      "score": {
+        "bytes": 105562,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-old_authored_eval-score.json",
+        "sha256": "d8a62b799b84a4ac9a301c97673fe3a926c4b3bcef3293129444de72a0a9b0c7"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 951744,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-authored_dev-joint.json",
+        "sha256": "4efbdf942566309489c3464d4539c803418513d011c05d87dfb6bbde06ce0831"
+      },
+      "name": "authored_dev",
+      "raw": {
+        "bytes": 1359929,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-authored_dev-raw.json",
+        "sha256": "41c69e01c0a80bc4a922dec428d41e8c04b940e06a9f3064d8e0d7cbf3b664b4"
+      },
+      "row_count": 72,
+      "score": {
+        "bytes": 104536,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-authored_dev-score.json",
+        "sha256": "cc2b7ea7f6a5416418d8a6a73f8c7cbe8ede8536a8df3e2d2a502841f7f94ff3"
+      }
+    },
+    {
+      "has_authored_reference": false,
+      "joint": {
+        "bytes": 990989,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-authored_eval-joint.json",
+        "sha256": "3d2b39553b43757d117e30dbf3cb9e3d73030f89d492f4476c89265f8f4dee1a"
+      },
+      "name": "authored_eval",
+      "raw": {
+        "bytes": 1361751,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-authored_eval-raw.json",
+        "sha256": "b8202da296ff8781e6dc2130fa760b35ad399824b9b5c306706470fe30b5ffe2"
+      },
+      "row_count": 72,
+      "score": null
+    },
+    {
+      "has_authored_reference": false,
+      "joint": {
+        "bytes": 103538,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-law-joint.json",
+        "sha256": "2763a3c4be4edd411efa8d83f2ab56822d99d8798a4dae00387e0d44cb5c65f2"
+      },
+      "name": "law",
+      "raw": {
+        "bytes": 273020,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/baseline-law-raw.json",
+        "sha256": "c1330a302660003cd75ffb45064cbe52034d5d6e567d942bff4e74b54f94ff87"
+      },
+      "row_count": 8,
+      "score": null
+    }
+  ],
+  "baseline_reuse": {
+    "bytes": 51869,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/summary.json",
+    "sha256": "6e166d8c826b6361a802103402e595d16cdb4ffb0542cc7652c2965287491877"
+  },
+  "cell": {
+    "actor_ranking_enabled": false,
+    "id": "rank0-presence2",
+    "modality_loss_weight": 2,
+    "presence_ce_weight": 2
+  },
+  "checkpoint": {
+    "bytes": 2743861,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/cell-checkpoint.json",
+    "sha256": "bb39e83b801b8ee026c123a858b204e9b81c971e36370dc8ad36acfd88d4fb3d"
+  },
+  "checkpoint_selection_executed": false,
+  "closing_owners": {
+    "ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "configured_dimension": 384,
+  "ctypes_dl_queries": [
+    "dl"
+  ],
+  "default_promotion": false,
+  "diagnostics": [
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 1450891,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_tune-joint.json",
+        "sha256": "7e593ddf3a3a494066774102261b18d58c1f69b4a00a4ecbb3265ae3732d607a"
+      },
+      "name": "old_tune",
+      "raw": {
+        "bytes": 2278766,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_tune-raw.json",
+        "sha256": "d3e3ea2bcb015b3495d5082a89f2edf76fb29edb9d2ccf5a2aaa604a28e85522"
+      },
+      "row_count": 96,
+      "score": {
+        "bytes": 101578,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_tune-score.json",
+        "sha256": "4224b845ad4dc6b695255c20014b8b31a120730bee23281e24c359a50468cd72"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 498069,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_tune-joint.json",
+        "sha256": "2ef9ff9004d91baddb175a94e8301a5533801b9dc04b6ff97ebc47c8c20cd081"
+      },
+      "name": "fresh_tune",
+      "raw": {
+        "bytes": 607817,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_tune-raw.json",
+        "sha256": "b1ce2981b10689c7622165217982372be5f1c5aed6bc2a4ea669c138b7120aa6"
+      },
+      "row_count": 36,
+      "score": {
+        "bytes": 53266,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_tune-score.json",
+        "sha256": "3cfbc38a67e6d4e034095e526c77de1572a15d2a91e58d4e8557893dd0be4896"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 524504,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_challenge-joint.json",
+        "sha256": "a351e95baf9af220954c74797460174f55f728529bbb73496d854763918d66f6"
+      },
+      "name": "fresh_challenge",
+      "raw": {
+        "bytes": 673740,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_challenge-raw.json",
+        "sha256": "457ccd6fc32dcbaabd0382fd68684b2fac1cb78ee450fa1f426a856085473336"
+      },
+      "row_count": 36,
+      "score": {
+        "bytes": 53522,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-fresh_challenge-score.json",
+        "sha256": "d9eae8844a6e9a18392bdb804537d1e020140aacfb995b610b5798a5b924d6e0"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 1047087,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_authored_eval-joint.json",
+        "sha256": "4d2ac52d9d97f9dac67693a155738e19d8cb4ea110207e323757214a6fbfd977"
+      },
+      "name": "old_authored_eval",
+      "raw": {
+        "bytes": 1445128,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_authored_eval-raw.json",
+        "sha256": "4f666dc05da325df9e46a497e4e8fb7170edda12921586f019030b50e5859f59"
+      },
+      "row_count": 72,
+      "score": {
+        "bytes": 105182,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-old_authored_eval-score.json",
+        "sha256": "076b45e63819ef34889075d8766f81e4f87f67a82eeee2e66c7be64eee94af98"
+      }
+    },
+    {
+      "has_authored_reference": true,
+      "joint": {
+        "bytes": 998580,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-authored_dev-joint.json",
+        "sha256": "3addba4b349557aa18f99bbbe5145fd7ac72dd3ca9337fd41239ca748366a9c6"
+      },
+      "name": "authored_dev",
+      "raw": {
+        "bytes": 1417819,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-authored_dev-raw.json",
+        "sha256": "772041e21d6754a89fbbbd0c453693580ac1c9d6d8a627e453450083908a2ed9"
+      },
+      "row_count": 72,
+      "score": {
+        "bytes": 104036,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-authored_dev-score.json",
+        "sha256": "593a7fe6939957800bd5bc6be48815afba83cf40d0054407e9f69f97861df324"
+      }
+    },
+    {
+      "has_authored_reference": false,
+      "joint": {
+        "bytes": 997840,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-authored_eval-joint.json",
+        "sha256": "9c2dccf539ed4025275fc4792e309d71ccb4f568d9d8a87a91f86b897d575d5a"
+      },
+      "name": "authored_eval",
+      "raw": {
+        "bytes": 1412449,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-authored_eval-raw.json",
+        "sha256": "abfda1ea38a5546dfeca62e854a1de5e530f6f4654d0db763756cc1a11f45e09"
+      },
+      "row_count": 72,
+      "score": null
+    },
+    {
+      "has_authored_reference": false,
+      "joint": {
+        "bytes": 101154,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-law-joint.json",
+        "sha256": "555f3eaf5bb6883a790cdd1c4ab82fb55abaf0f7fcbc3b2ec458fdbb3504454d"
+      },
+      "name": "law",
+      "raw": {
+        "bytes": 274806,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-law-raw.json",
+        "sha256": "bdded6b5c90f390d37b9b94a8aa37e4d808fe315fce988210518d1eecd32d483"
+      },
+      "row_count": 8,
+      "score": null
+    }
+  ],
+  "elapsed_seconds": 10.554842656012625,
+  "formalized": false,
+  "fresh_Adam": true,
+  "independent_statutory_gold": false,
+  "inherited_optimizer_moments": false,
+  "initial_continuation_checkpoint_sha256": "fe3b4e5db91a1471a3c02a52e96fb180d504756fcd81bec966ce2e7b8280a616",
+  "initial_parity": {
+    "bytes": 2087,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/initial-parity.json",
+    "sha256": "2defffaaeab02fd89486e5121f91761a13d1b2b60bb2732fcf553bcc418c1ed6"
+  },
+  "latent_enabled": false,
+  "opening_owners": {
+    "ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "original_artifacts_byte_exact": true,
+  "parent_optimizer_steps": 400,
+  "prepared_schedule": {
+    "batch_ids": [
+      [
+        "structured-train-bramble-t4-q5-f",
+        "structured-train-dahlia-t4-q7-f",
+        "matched-temporal-train-condition_duration-1-o-absent",
+        "matched-temporal-train-object_duration_title-1-f-absent",
+        "structured-train-cypress-t1-q3-p",
+        "structured-train-dahlia-t1-q4-o",
+        "structured-train-dahlia-t7-q2-f",
+        "structured-train-bramble-t0-q1-f",
+        "structured-train-cypress-t0-q2-o",
+        "structured-train-aster-t7-q7-o",
+        "structured-train-aster-t5-q5-f",
+        "structured-train-bramble-t7-q0-o"
+      ],
+      [
+        "structured-train-dahlia-t2-q5-o",
+        "structured-train-dahlia-t0-q3-o",
+        "structured-train-cypress-t0-q2-p",
+        "structured-train-cypress-t2-q4-p",
+        "matched-temporal-train-plain_deadline-0-p-absent",
+        "matched-temporal-train-object_duration_title-0-f-present",
+        "structured-train-bramble-t6-q7-o",
+        "structured-train-aster-t1-q1-o",
+        "structured-train-bramble-t0-q1-p",
+        "matched-temporal-train-exception_duration-1-p-present",
+        "matched-temporal-train-plain_deadline-0-p-present",
+        "structured-train-bramble-t1-q2-f"
+      ],
+      [
+        "structured-train-aster-t3-q3-p",
+        "matched-temporal-train-actor_duration_name-0-p-absent",
+        "structured-train-cypress-t6-q0-f",
+        "structured-train-dahlia-t2-q5-p",
+        "structured-train-aster-t3-q3-o",
+        "matched-temporal-train-exception_duration-0-f-absent",
+        "structured-train-cypress-t4-q6-p",
+        "structured-train-dahlia-t4-q7-p",
+        "structured-train-cypress-t5-q7-o",
+        "structured-train-bramble-t1-q2-p",
+        "matched-temporal-train-actor_duration_name-0-f-absent",
+        "matched-temporal-train-plain_deadline-0-o-present"
+      ],
+      [
+        "structured-train-bramble-t5-q6-p",
+        "structured-train-cypress-t6-q0-p",
+        "matched-temporal-train-condition_exception_duration-0-o-present",
+        "structured-train-cypress-t1-q3-o",
+        "matched-temporal-train-actor_duration_name-1-f-absent",
+        "matched-temporal-train-condition_exception_duration-1-f-absent",
+        "matched-temporal-train-condition_duration-1-f-present",
+        "matched-temporal-train-plain_deadline-0-f-absent",
+        "structured-train-bramble-t6-q7-f",
+        "matched-temporal-train-actor_duration_name-0-f-present",
+        "matched-temporal-train-object_duration_title-0-o-present",
+        "matched-temporal-train-condition_exception_duration-0-f-absent"
+      ],
+      [
+        "matched-temporal-train-exception_duration-1-o-absent",
+        "matched-temporal-train-actor_duration_name-1-o-present",
+        "structured-train-bramble-t2-q3-p",
+        "structured-train-dahlia-t4-q7-o",
+        "matched-temporal-train-plain_deadline-1-o-present",
+        "structured-train-aster-t5-q5-p",
+        "structured-train-bramble-t2-q3-f",
+        "matched-temporal-train-condition_exception_duration-1-o-absent",
+        "matched-temporal-train-condition_duration-0-f-absent",
+        "structured-train-bramble-t2-q3-o",
+        "structured-train-aster-t6-q6-p",
+        "structured-train-aster-t1-q1-f"
+      ],
+      [
+        "structured-train-cypress-t5-q7-p",
+        "matched-temporal-train-condition_exception_duration-0-o-absent",
+        "matched-temporal-train-exception_duration-0-p-present",
+        "structured-train-dahlia-t3-q6-f",
+        "structured-train-dahlia-t5-q0-p",
+        "structured-train-aster-t7-q7-f",
+        "structured-train-aster-t1-q1-p",
+        "matched-temporal-train-condition_duration-1-f-absent",
+        "structured-train-bramble-t3-q4-p",
+        "structured-train-aster-t0-q0-f",
+        "matched-temporal-train-condition_duration-0-o-absent",
+        "structured-train-cypress-t4-q6-o"
+      ],
+      [
+        "structured-train-aster-t2-q2-f",
+        "structured-train-aster-t4-q4-o",
+        "structured-train-cypress-t2-q4-o",
+        "matched-temporal-train-condition_duration-0-p-absent",
+        "matched-temporal-train-object_duration_title-0-f-absent",
+        "structured-train-dahlia-t1-q4-f",
+        "structured-train-cypress-t7-q1-o",
+        "structured-train-dahlia-t3-q6-o",
+        "structured-train-dahlia-t5-q0-o",
+        "structured-train-cypress-t5-q7-f",
+        "structured-train-bramble-t3-q4-o",
+        "structured-train-cypress-t7-q1-p"
+      ],
+      [
+        "matched-temporal-train-exception_duration-1-f-absent",
+        "structured-train-dahlia-t6-q1-p",
+        "matched-temporal-train-plain_deadline-1-p-absent",
+        "matched-temporal-train-exception_duration-1-f-present",
+        "matched-temporal-train-actor_duration_name-0-o-absent",
+        "structured-train-aster-t6-q6-f",
+        "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "matched-temporal-train-exception_duration-0-o-absent",
+        "matched-temporal-train-object_duration_title-1-f-present",
+        "matched-temporal-train-condition_duration-0-o-present",
+        "structured-train-bramble-t4-q5-o",
+        "structured-train-aster-t2-q2-o"
+      ],
+      [
+        "structured-train-cypress-t4-q6-f",
+        "structured-train-dahlia-t2-q5-f",
+        "matched-temporal-train-plain_deadline-1-f-present",
+        "structured-train-dahlia-t7-q2-o",
+        "structured-train-aster-t2-q2-p",
+        "structured-train-aster-t5-q5-o",
+        "structured-train-bramble-t5-q6-f",
+        "matched-temporal-train-exception_duration-0-o-present",
+        "matched-temporal-train-actor_duration_name-1-f-present",
+        "matched-temporal-train-condition_duration-0-f-present",
+        "structured-train-cypress-t6-q0-o",
+        "matched-temporal-train-plain_deadline-1-f-absent"
+      ],
+      [
+        "matched-temporal-train-exception_duration-0-f-present",
+        "structured-train-bramble-t7-q0-f",
+        "structured-train-dahlia-t3-q6-p",
+        "structured-train-aster-t6-q6-o",
+        "matched-temporal-train-condition_exception_duration-1-p-absent",
+        "structured-train-cypress-t2-q4-f",
+        "matched-temporal-train-actor_duration_name-0-p-present",
+        "matched-temporal-train-object_duration_title-0-o-absent",
+        "matched-temporal-train-object_duration_title-1-p-absent",
+        "structured-train-cypress-t7-q1-f",
+        "structured-train-bramble-t4-q5-p",
+        "structured-train-cypress-t3-q5-p"
+      ],
+      [
+        "structured-train-aster-t7-q7-p",
+        "structured-train-bramble-t1-q2-o",
+        "matched-temporal-train-object_duration_title-1-o-absent",
+        "matched-temporal-train-actor_duration_name-1-p-present",
+        "structured-train-cypress-t0-q2-f",
+        "structured-train-bramble-t3-q4-f",
+        "structured-train-aster-t0-q0-o",
+        "structured-train-cypress-t3-q5-f",
+        "matched-temporal-train-condition_duration-0-p-present",
+        "matched-temporal-train-condition_duration-1-o-present",
+        "matched-temporal-train-object_duration_title-0-p-absent",
+        "matched-temporal-train-exception_duration-0-p-absent"
+      ],
+      [
+        "matched-temporal-train-condition_exception_duration-1-o-present",
+        "matched-temporal-train-condition_exception_duration-0-p-present",
+        "matched-temporal-train-object_duration_title-1-o-present",
+        "structured-train-dahlia-t5-q0-f",
+        "structured-train-dahlia-t1-q4-p",
+        "matched-temporal-train-plain_deadline-0-o-absent",
+        "matched-temporal-train-actor_duration_name-1-o-absent",
+        "structured-train-bramble-t0-q1-o",
+        "structured-train-aster-t4-q4-p",
+        "matched-temporal-train-condition_exception_duration-0-f-present",
+        "matched-temporal-train-plain_deadline-1-o-absent",
+        "structured-train-cypress-t3-q5-o"
+      ],
+      [
+        "matched-temporal-train-object_duration_title-1-p-present",
+        "matched-temporal-train-object_duration_title-0-p-present",
+        "matched-temporal-train-condition_exception_duration-1-p-present",
+        "structured-train-dahlia-t6-q1-o",
+        "matched-temporal-train-plain_deadline-0-f-present",
+        "structured-train-dahlia-t7-q2-p",
+        "matched-temporal-train-condition_duration-1-p-absent",
+        "structured-train-aster-t0-q0-p",
+        "matched-temporal-train-exception_duration-1-o-present",
+        "matched-temporal-train-actor_duration_name-1-p-absent",
+        "structured-train-bramble-t5-q6-o",
+        "structured-train-cypress-t1-q3-f"
+      ],
+      [
+        "structured-train-dahlia-t0-q3-p",
+        "structured-train-dahlia-t6-q1-f",
+        "matched-temporal-train-actor_duration_name-0-o-present",
+        "structured-train-dahlia-t0-q3-f",
+        "structured-train-bramble-t7-q0-p",
+        "structured-train-aster-t4-q4-f",
+        "structured-train-bramble-t6-q7-p",
+        "matched-temporal-train-condition_duration-1-p-present",
+        "matched-temporal-train-exception_duration-1-p-absent",
+        "matched-temporal-train-plain_deadline-1-p-present",
+        "structured-train-aster-t3-q3-f",
+        "matched-temporal-train-condition_exception_duration-1-f-present"
+      ],
+      [
+        "structured-train-dahlia-t2-q5-p",
+        "matched-temporal-train-condition_duration-0-f-absent",
+        "matched-temporal-train-condition_exception_duration-1-o-present",
+        "structured-train-bramble-t4-q5-o",
+        "matched-temporal-train-exception_duration-1-f-present",
+        "structured-train-bramble-t5-q6-p",
+        "structured-train-aster-t0-q0-o",
+        "structured-train-dahlia-t2-q5-o",
+        "matched-temporal-train-condition_exception_duration-1-o-absent",
+        "matched-temporal-train-exception_duration-0-f-present",
+        "structured-train-cypress-t2-q4-f",
+        "structured-train-cypress-t0-q2-f"
+      ],
+      [
+        "structured-train-aster-t2-q2-o",
+        "structured-train-cypress-t6-q0-p",
+        "structured-train-bramble-t1-q2-p",
+        "structured-train-bramble-t2-q3-p",
+        "structured-train-cypress-t1-q3-o",
+        "structured-train-aster-t2-q2-f",
+        "matched-temporal-train-object_duration_title-1-f-absent",
+        "matched-temporal-train-actor_duration_name-1-o-present",
+        "matched-temporal-train-exception_duration-1-p-present",
+        "structured-train-dahlia-t0-q3-p",
+        "structured-train-dahlia-t4-q7-f",
+        "matched-temporal-train-actor_duration_name-1-p-absent"
+      ],
+      [
+        "structured-train-cypress-t7-q1-o",
+        "structured-train-dahlia-t6-q1-p",
+        "matched-temporal-train-plain_deadline-1-f-present",
+        "structured-train-cypress-t6-q0-f",
+        "structured-train-cypress-t5-q7-o",
+        "structured-train-bramble-t0-q1-p",
+        "matched-temporal-train-exception_duration-0-p-absent",
+        "matched-temporal-train-object_duration_title-0-p-absent",
+        "structured-train-dahlia-t3-q6-p",
+        "matched-temporal-train-condition_duration-0-o-absent",
+        "matched-temporal-train-actor_duration_name-1-f-present",
+        "matched-temporal-train-plain_deadline-0-o-absent"
+      ],
+      [
+        "structured-train-dahlia-t0-q3-f",
+        "matched-temporal-train-object_duration_title-0-f-absent",
+        "matched-temporal-train-condition_duration-0-p-absent",
+        "structured-train-aster-t2-q2-p",
+        "structured-train-bramble-t7-q0-f",
+        "matched-temporal-train-actor_duration_name-1-o-absent",
+        "matched-temporal-train-object_duration_title-0-p-present",
+        "structured-train-bramble-t7-q0-o",
+        "structured-train-aster-t6-q6-f",
+        "matched-temporal-train-condition_exception_duration-0-o-absent",
+        "structured-train-bramble-t3-q4-p",
+        "matched-temporal-train-object_duration_title-1-o-present"
+      ],
+      [
+        "matched-temporal-train-actor_duration_name-0-f-present",
+        "matched-temporal-train-condition_duration-1-p-present",
+        "structured-train-dahlia-t3-q6-f",
+        "structured-train-aster-t7-q7-f",
+        "matched-temporal-train-plain_deadline-0-p-present",
+        "matched-temporal-train-condition_exception_duration-0-f-present",
+        "structured-train-cypress-t4-q6-o",
+        "structured-train-aster-t6-q6-o",
+        "matched-temporal-train-actor_duration_name-0-f-absent",
+        "matched-temporal-train-plain_deadline-0-f-present",
+        "matched-temporal-train-condition_duration-1-o-absent",
+        "structured-train-aster-t3-q3-f"
+      ],
+      [
+        "matched-temporal-train-condition_exception_duration-1-p-absent",
+        "matched-temporal-train-object_duration_title-1-f-present",
+        "structured-train-aster-t5-q5-o",
+        "structured-train-cypress-t3-q5-o",
+        "structured-train-dahlia-t5-q0-p",
+        "matched-temporal-train-plain_deadline-1-f-absent",
+        "matched-temporal-train-exception_duration-1-o-absent",
+        "structured-train-bramble-t0-q1-o",
+        "structured-train-dahlia-t4-q7-o",
+        "structured-train-cypress-t7-q1-f",
+        "matched-temporal-train-exception_duration-0-f-absent",
+        "matched-temporal-train-object_duration_title-0-o-present"
+      ],
+      [
+        "structured-train-bramble-t3-q4-o",
+        "structured-train-cypress-t1-q3-f",
+        "matched-temporal-train-condition_duration-1-f-absent",
+        "matched-temporal-train-condition_duration-1-p-absent",
+        "structured-train-aster-t1-q1-o",
+        "structured-train-cypress-t3-q5-f",
+        "matched-temporal-train-condition_exception_duration-0-p-present",
+        "matched-temporal-train-exception_duration-0-o-present",
+        "structured-train-dahlia-t7-q2-o",
+        "matched-temporal-train-actor_duration_name-1-p-present",
+        "structured-train-cypress-t4-q6-f",
+        "structured-train-bramble-t4-q5-p"
+      ],
+      [
+        "matched-temporal-train-object_duration_title-0-o-absent",
+        "structured-train-aster-t0-q0-f",
+        "structured-train-bramble-t6-q7-o",
+        "structured-train-dahlia-t6-q1-f",
+        "matched-temporal-train-condition_exception_duration-1-f-present",
+        "structured-train-aster-t4-q4-o",
+        "structured-train-dahlia-t5-q0-o",
+        "matched-temporal-train-plain_deadline-0-f-absent",
+        "structured-train-dahlia-t7-q2-f",
+        "structured-train-aster-t7-q7-o",
+        "matched-temporal-train-condition_exception_duration-0-o-present",
+        "structured-train-dahlia-t6-q1-o"
+      ],
+      [
+        "structured-train-dahlia-t7-q2-p",
+        "matched-temporal-train-plain_deadline-1-o-present",
+        "matched-temporal-train-plain_deadline-1-p-present",
+        "structured-train-aster-t4-q4-p",
+        "structured-train-cypress-t0-q2-p",
+        "structured-train-cypress-t5-q7-f",
+        "structured-train-dahlia-t1-q4-f",
+        "matched-temporal-train-object_duration_title-1-p-present",
+        "matched-temporal-train-exception_duration-1-o-present",
+        "structured-train-cypress-t5-q7-p",
+        "matched-temporal-train-object_duration_title-1-o-absent",
+        "matched-temporal-train-exception_duration-1-p-absent"
+      ],
+      [
+        "matched-temporal-train-plain_deadline-0-o-present",
+        "structured-train-aster-t3-q3-p",
+        "structured-train-bramble-t4-q5-f",
+        "matched-temporal-train-plain_deadline-1-p-absent",
+        "structured-train-bramble-t2-q3-f",
+        "matched-temporal-train-actor_duration_name-1-f-absent",
+        "structured-train-dahlia-t1-q4-o",
+        "matched-temporal-train-actor_duration_name-0-o-absent",
+        "matched-temporal-train-condition_exception_duration-1-p-present",
+        "structured-train-bramble-t3-q4-f",
+        "structured-train-aster-t1-q1-f",
+        "structured-train-aster-t3-q3-o"
+      ],
+      [
+        "matched-temporal-train-actor_duration_name-0-o-present",
+        "structured-train-bramble-t2-q3-o",
+        "structured-train-cypress-t7-q1-p",
+        "structured-train-dahlia-t0-q3-o",
+        "structured-train-cypress-t6-q0-o",
+        "matched-temporal-train-condition_duration-1-f-present",
+        "structured-train-bramble-t6-q7-f",
+        "structured-train-aster-t5-q5-p",
+        "structured-train-bramble-t5-q6-o",
+        "matched-temporal-train-exception_duration-0-o-absent",
+        "structured-train-aster-t1-q1-p",
+        "matched-temporal-train-condition_duration-0-o-present"
+      ],
+      [
+        "matched-temporal-train-condition_duration-0-p-present",
+        "matched-temporal-train-object_duration_title-0-f-present",
+        "matched-temporal-train-exception_duration-0-p-present",
+        "structured-train-bramble-t1-q2-o",
+        "structured-train-cypress-t1-q3-p",
+        "matched-temporal-train-condition_exception_duration-1-f-absent",
+        "matched-temporal-train-condition_duration-0-f-present",
+        "structured-train-cypress-t4-q6-p",
+        "matched-temporal-train-condition_exception_duration-0-p-absent",
+        "matched-temporal-train-actor_duration_name-0-p-absent",
+        "structured-train-bramble-t6-q7-p",
+        "matched-temporal-train-object_duration_title-1-p-absent"
+      ],
+      [
+        "structured-train-dahlia-t3-q6-o",
+        "matched-temporal-train-condition_exception_duration-0-f-absent",
+        "matched-temporal-train-plain_deadline-0-p-absent",
+        "structured-train-aster-t6-q6-p",
+        "structured-train-aster-t4-q4-f",
+        "structured-train-cypress-t2-q4-p",
+        "matched-temporal-train-condition_duration-1-o-present",
+        "structured-train-dahlia-t1-q4-p",
+        "structured-train-aster-t7-q7-p",
+        "structured-train-cypress-t2-q4-o",
+        "structured-train-aster-t0-q0-p",
+        "structured-train-bramble-t1-q2-f"
+      ],
+      [
+        "structured-train-dahlia-t5-q0-f",
+        "structured-train-cypress-t3-q5-p",
+        "structured-train-dahlia-t4-q7-p",
+        "structured-train-bramble-t5-q6-f",
+        "matched-temporal-train-actor_duration_name-0-p-present",
+        "structured-train-aster-t5-q5-f",
+        "structured-train-bramble-t0-q1-f",
+        "matched-temporal-train-plain_deadline-1-o-absent",
+        "matched-temporal-train-exception_duration-1-f-absent",
+        "structured-train-bramble-t7-q0-p",
+        "structured-train-dahlia-t2-q5-f",
+        "structured-train-cypress-t0-q2-o"
+      ],
+      [
+        "matched-temporal-train-actor_duration_name-0-f-present",
+        "structured-train-cypress-t6-q0-o",
+        "matched-temporal-train-condition_duration-0-f-absent",
+        "matched-temporal-train-actor_duration_name-1-f-present",
+        "structured-train-aster-t6-q6-o",
+        "structured-train-cypress-t6-q0-p",
+        "structured-train-cypress-t7-q1-p",
+        "structured-train-aster-t5-q5-p",
+        "structured-train-bramble-t4-q5-p",
+        "matched-temporal-train-condition_duration-1-f-absent",
+        "structured-train-cypress-t0-q2-f",
+        "structured-train-bramble-t7-q0-o"
+      ],
+      [
+        "structured-train-bramble-t3-q4-o",
+        "matched-temporal-train-exception_duration-0-f-present",
+        "matched-temporal-train-condition_duration-1-p-absent",
+        "matched-temporal-train-condition_exception_duration-1-f-present",
+        "structured-train-dahlia-t3-q6-f",
+        "matched-temporal-train-actor_duration_name-1-o-present",
+        "matched-temporal-train-exception_duration-1-p-present",
+        "matched-temporal-train-plain_deadline-0-p-present",
+        "matched-temporal-train-object_duration_title-1-p-absent",
+        "structured-train-bramble-t5-q6-f",
+        "matched-temporal-train-exception_duration-1-p-absent",
+        "structured-train-cypress-t4-q6-p"
+      ],
+      [
+        "matched-temporal-train-condition_exception_duration-1-o-absent",
+        "structured-train-aster-t0-q0-f",
+        "structured-train-aster-t3-q3-o",
+        "matched-temporal-train-plain_deadline-1-o-absent",
+        "matched-temporal-train-condition_exception_duration-1-o-present",
+        "structured-train-aster-t3-q3-f",
+        "matched-temporal-train-condition_exception_duration-1-p-present",
+        "structured-train-cypress-t0-q2-o",
+        "matched-temporal-train-actor_duration_name-0-o-absent",
+        "matched-temporal-train-condition_duration-1-p-present",
+        "matched-temporal-train-actor_duration_name-1-p-present",
+        "matched-temporal-train-plain_deadline-0-o-absent"
+      ],
+      [
+        "structured-train-aster-t7-q7-o",
+        "structured-train-dahlia-t1-q4-p",
+        "matched-temporal-train-object_duration_title-0-o-present",
+        "structured-train-cypress-t3-q5-f",
+        "matched-temporal-train-actor_duration_name-1-f-absent",
+        "structured-train-dahlia-t6-q1-p",
+        "structured-train-aster-t0-q0-p",
+        "matched-temporal-train-plain_deadline-0-o-present",
+        "structured-train-dahlia-t6-q1-o",
+        "matched-temporal-train-condition_duration-0-o-absent",
+        "structured-train-dahlia-t3-q6-o",
+        "structured-train-cypress-t4-q6-o"
+      ]
+    ],
+    "batch_indices": [
+      [
+        38,
+        86,
+        114,
+        154,
+        52,
+        75,
+        95,
+        26,
+        48,
+        21,
+        17,
+        45
+      ],
+      [
+        78,
+        72,
+        49,
+        55,
+        98,
+        149,
+        42,
+        3,
+        25,
+        129,
+        99,
+        29
+      ],
+      [
+        10,
+        134,
+        68,
+        79,
+        9,
+        124,
+        61,
+        85,
+        63,
+        28,
+        136,
+        97
+      ],
+      [
+        40,
+        67,
+        157,
+        51,
+        142,
+        166,
+        119,
+        100,
+        44,
+        137,
+        145,
+        160
+      ],
+      [
+        126,
+        139,
+        31,
+        84,
+        103,
+        16,
+        32,
+        162,
+        112,
+        30,
+        19,
+        5
+      ],
+      [
+        64,
+        156,
+        123,
+        83,
+        88,
+        23,
+        4,
+        118,
+        34,
+        2,
+        108,
+        60
+      ],
+      [
+        8,
+        12,
+        54,
+        110,
+        148,
+        77,
+        69,
+        81,
+        87,
+        65,
+        33,
+        70
+      ],
+      [
+        130,
+        91,
+        104,
+        131,
+        132,
+        20,
+        158,
+        120,
+        155,
+        109,
+        36,
+        6
+      ],
+      [
+        62,
+        80,
+        107,
+        93,
+        7,
+        15,
+        41,
+        121,
+        143,
+        113,
+        66,
+        106
+      ],
+      [
+        125,
+        47,
+        82,
+        18,
+        164,
+        56,
+        135,
+        144,
+        152,
+        71,
+        37,
+        58
+      ],
+      [
+        22,
+        27,
+        150,
+        141,
+        50,
+        35,
+        0,
+        59,
+        111,
+        115,
+        146,
+        122
+      ],
+      [
+        163,
+        159,
+        151,
+        89,
+        76,
+        96,
+        138,
+        24,
+        13,
+        161,
+        102,
+        57
+      ],
+      [
+        153,
+        147,
+        165,
+        90,
+        101,
+        94,
+        116,
+        1,
+        127,
+        140,
+        39,
+        53
+      ],
+      [
+        73,
+        92,
+        133,
+        74,
+        46,
+        14,
+        43,
+        117,
+        128,
+        105,
+        11,
+        167
+      ],
+      [
+        79,
+        112,
+        163,
+        36,
+        131,
+        40,
+        0,
+        78,
+        162,
+        125,
+        56,
+        50
+      ],
+      [
+        6,
+        67,
+        28,
+        31,
+        51,
+        8,
+        154,
+        139,
+        129,
+        73,
+        86,
+        140
+      ],
+      [
+        69,
+        91,
+        107,
+        68,
+        63,
+        25,
+        122,
+        146,
+        82,
+        108,
+        143,
+        96
+      ],
+      [
+        74,
+        148,
+        110,
+        7,
+        47,
+        138,
+        147,
+        45,
+        20,
+        156,
+        34,
+        151
+      ],
+      [
+        137,
+        117,
+        83,
+        23,
+        99,
+        161,
+        60,
+        18,
+        136,
+        101,
+        114,
+        11
+      ],
+      [
+        164,
+        155,
+        15,
+        57,
+        88,
+        106,
+        126,
+        24,
+        84,
+        71,
+        124,
+        145
+      ],
+      [
+        33,
+        53,
+        118,
+        116,
+        3,
+        59,
+        159,
+        121,
+        93,
+        141,
+        62,
+        37
+      ],
+      [
+        144,
+        2,
+        42,
+        92,
+        167,
+        12,
+        87,
+        100,
+        95,
+        21,
+        157,
+        90
+      ],
+      [
+        94,
+        103,
+        105,
+        13,
+        49,
+        65,
+        77,
+        153,
+        127,
+        64,
+        150,
+        128
+      ],
+      [
+        97,
+        10,
+        38,
+        104,
+        32,
+        142,
+        75,
+        132,
+        165,
+        35,
+        5,
+        9
+      ],
+      [
+        133,
+        30,
+        70,
+        72,
+        66,
+        119,
+        44,
+        16,
+        39,
+        120,
+        4,
+        109
+      ],
+      [
+        111,
+        149,
+        123,
+        27,
+        52,
+        166,
+        113,
+        61,
+        158,
+        134,
+        43,
+        152
+      ],
+      [
+        81,
+        160,
+        98,
+        19,
+        14,
+        55,
+        115,
+        76,
+        22,
+        54,
+        1,
+        29
+      ],
+      [
+        89,
+        58,
+        85,
+        41,
+        135,
+        17,
+        26,
+        102,
+        130,
+        46,
+        80,
+        48
+      ],
+      [
+        137,
+        66,
+        112,
+        143,
+        18,
+        67,
+        70,
+        16,
+        37,
+        118,
+        50,
+        45
+      ],
+      [
+        33,
+        125,
+        116,
+        167,
+        83,
+        139,
+        129,
+        99,
+        152,
+        41,
+        128,
+        61
+      ],
+      [
+        162,
+        2,
+        9,
+        102,
+        163,
+        11,
+        165,
+        48,
+        132,
+        117,
+        141,
+        96
+      ],
+      [
+        21,
+        76,
+        145,
+        59,
+        142,
+        91,
+        1,
+        97,
+        90,
+        108,
+        81,
+        60
+      ]
+    ],
+    "batch_indices_sha256": "9cdc2280f877358b7321cf09ceb8e74c3e0ff1532c3f5d9dd01fc75f648c03fd",
+    "final_progress": {
+      "epochs_completed": 2,
+      "optimizer_steps": 32,
+      "row_cursor": 48
+    }
+  },
+  "promotion_gate": {
+    "applies_to": "raw_and_joint_IR",
+    "automatic_selection": false,
+    "new_permission_to_obligation_allowed": 0,
+    "old_count": 96,
+    "required_old_exact": 96,
+    "schema": "legacy-exact-permission-preservation-gate/v1"
+  },
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "same_original_parent_model_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+  "schema": "targeted-loss-curriculum-cell-results/v1",
+  "semantic_accuracy": null,
+  "semantic_correctness_verified": false,
+  "status": "completed",
+  "trained_parity": {
+    "bytes": 2087,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/trained-parity.json",
+    "sha256": "fc1169608ec89948b31ae238146d83f96ef7cda893c986045b15f5503e8e959b"
+  },
+  "training": {
+    "bytes": 795423,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence2-01/results/cell-training.json",
+    "sha256": "8a964c3da743544851ac3526507a7bcc0756304e72434900d150bd838333e780"
+  },
+  "training_count": 168
+}

@@ -1,0 +1,64 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_curriculum.py": {
+      "bytes": 27004,
+      "sha256": "311c39aa7e57c63838ee017e47b87411ffadaabd4d84c0b63b9f4d35103cd283"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py": {
+      "bytes": 32960,
+      "sha256": "66ccda4c13ce0e7f4c9e26fe03ad9383bc39d2c724a6c90a5dfda4aa38c103b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-loss-pure-contract-test-observation-v02.json": {
+      "bytes": 5045,
+      "sha256": "79cfd1484c9f6022256563dd9bc0fe309589c3f408c23658ff9055b846334050"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-loss-trainer-implementation-handoff-v01.json": {
+      "bytes": 17226,
+      "sha256": "ef49c07f4bc1c94e9dc8dc7546ea8deef09b1d28b0defdf98d7d44e4aac71341"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-objective-advisory-design-v01.json": {
+      "bytes": 4030,
+      "sha256": "2316f230dc910407a723528e5d66244e23a69e9decfd31ba6f7c09c2a45d4206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/trainer-independent-control-initial-failure-v01.json": {
+      "bytes": 650,
+      "sha256": "13f3518a522c6b7bd7419d8eaed837e3594f41f656511cef32a185a493851d52"
+    }
+  },
+  "controls": {
+    "additional_negative": 4,
+    "additional_positive": 4,
+    "execution": "stdlib unittest; named AST functions and finite differentiable scalar/vector fakes only",
+    "independently_replayed_author_AST_tests": 24,
+    "test_errors": 0,
+    "test_failures": 0
+  },
+  "findings": [],
+  "limitations": [
+    "Fake scalar/vector gradients and source/AST controls qualify the written routing/arithmetic, not real PyTorch kernels, realized optimizer behavior or accuracy. Actual guarded observations remain required.",
+    "Teacher-forced compatible ranking does not guarantee unconstrained inference topK coverage. The32-second deadline is soft; actual32 completion and fresh96 raw/joint permission preservation are separate checks.",
+    "References are authored engineering and384 conditioning is disabled; no independent legalgold, real8D/768D support, broader-family, Lean or promotion authority is granted. No production/numerical imports, model execution, packets, resource API, network/compiler/Git/shared mutations occurred.",
+    "The initial reviewer harness-only unused-argument failure is preserved; final full detached replay passed without production source/test edits."
+  ],
+  "passed": true,
+  "schema": "targeted-loss-trainer-source-independent-review/v1",
+  "scope": [
+    "Independent frozen source/outer-reader/objective/update-loop review. Legacy producers and loaders stay unchanged; the new closed policy binds actual actor/presence objective, exact source400 parent/weights, fresh Adam origin, seed1729/batch12/common168 rehearsal and source128 ceiling.",
+    "Ranking OFF/presence1 returns the exact retained modality2 expression; presence2 adds only condition/exception CE numerators with denominator10; ON adds .25 hinge after the main mean. OFF keeps counterfactual diagnostics and returns main exactly.",
+    "Complete row-major128 source boundary domain excludes gold, padding/reversed spans and overlap with active gold nonactor fields, permits adjacency and rejects incompatible gold. Empty domains produce differentiable zero. Detached vectorized argmax chooses only coordinates; chosen/gold scores retain gradients.",
+    "Saved rows join exact left-associated float32 hinge, gamma-bounded batch mean, exact ON/OFF total association and returned-batch loss. Objective/index/ID/source traces follow the returned finite optimizer step; resumes preserve policy/lineage and32 cumulative new updates.",
+    "Target-free retained inference is used by the new reader. Finite duplicate-refusing authenticated checkpoint I/O, constructor provenance/source fences and false proof/promotion flags were inspected statically. No actual checkpoint/model JSON was parsed."
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/audit_targeted_terminal_v02.py": {
+      "bytes": 49835,
+      "sha256": "1bc00d186f11057f97b758522b2cc6aedd8e7732c65b8cc9771dc215ed3cd47d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-observation-v01.json": {
+      "bytes": 1898,
+      "sha256": "8c4e88ea7813662066a0bed57ca8007e2db58ffb2c780571790d4a52b7b37209"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-v02.log": {
+      "bytes": 224,
+      "sha256": "79699fd20005fbb2c511a175947560ad64ddb060b07c1653dd8f4ee2aad12d98"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-v02.xml": {
+      "bytes": 29951,
+      "sha256": "45ed60f2717ea290522ee36b11bbdcf4f5bef0f112c4b932dccb2fce881ba2de"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/corpus-source-independent-review-v01.json": {
+      "bytes": 2795,
+      "sha256": "b301a9c17112dbfdae8352be2cc337151542b0177cb2d08cd0fa9edfc3dc79e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/tests/unit/logic/legal_ir/test_targeted_loss_curriculum.py": {
+      "bytes": 20942,
+      "sha256": "d1fc5316d2548bf5041193a368ddf4779d66ff555c1470be469c0160d204cf06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py": {
+      "bytes": 32960,
+      "sha256": "66ccda4c13ce0e7f4c9e26fe03ad9383bc39d2c724a6c90a5dfda4aa38c103b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/freeze_four_cell_outputs_v01.py": {
+      "bytes": 4939,
+      "sha256": "3995c6c0f917303574972b5583e140b63184e7232d88580c21d45328fe6575b1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/prepare_hf_targeted_release_v01.py": {
+      "bytes": 13435,
+      "sha256": "574baf11af82f9b4cf6896fdc6d0e5b8892359be005982502b66c9ec8e6b2b54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/prepare_targeted_loss.py": {
+      "bytes": 11652,
+      "sha256": "aecff8f97f0c76f6df9b505803974817eda8162d57501eb872a9370472609101"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/publish_hf_targeted_release_v01.py": {
+      "bytes": 13841,
+      "sha256": "6cf17157cfdd5cbc488caa130d1eeac3d56ec0e2035e2e498d5efb4a2846ce88"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/registration-v01.json": {
+      "bytes": 49724,
+      "sha256": "122dd798a3dbe26f8caf5f0115c5ae4369bc05b8f62adb426d129cf5e9142818"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/review_targeted_cell.py": {
+      "bytes": 18654,
+      "sha256": "dcc1c78194e84b9302c1cd27574313341ec16e368ad32e8dcf08b447b86f8150"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/root-science-source-independent-review-v01.json": {
+      "bytes": 5523,
+      "sha256": "1b1b5403886f5ec9f4271763a08c2d74fa7857c61980bb0626b9f7b2a9fa470a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py": {
+      "bytes": 35247,
+      "sha256": "092cc00ee5f55f1cbb33b76cabaf3aa759ad7e6b444385a87bcba06f861f3c78"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-hub-source-controls-observation-v01.json": {
+      "bytes": 4758,
+      "sha256": "d9daa0b5bf32c2bab23938e67e11fb9d4f7f22114b8a88d961cde62209abff85"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted_hub_source_review_controls_v01.py": {
+      "bytes": 9545,
+      "sha256": "4547b93d65ba1865a548fc15cbf3f2bd07fa6bbd1b0ecfed41d1e51c002d99b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/trainer-source-independent-review-v01.json": {
+      "bytes": 5083,
+      "sha256": "d1375989b69bad85563fa97eec2fc973ca2a0f1d29f9c3919b0ddce8ec875ce2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/training-export-v01.json": {
+      "bytes": 5052701,
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    }
+  },
+  "checks": {
+    "actual_total_updates_required": 128,
+    "all_four_retained": true,
+    "all_saved_payload_download_byte_lengths_and_SHA256s_checked": true,
+    "checks_remain_active_with_python_optimization": true,
+    "closed_four_cells": true,
+    "complete_old_and_prior_owned_identity_fences": true,
+    "copy_sources_require_independent_artifact_bindings": true,
+    "default_promotion": false,
+    "durable_preupload_created_verified_receipts": true,
+    "encoder_calls_required": 0,
+    "every_explicit_operation_adds_an_absent_prefix_path": true,
+    "immutable_prefix_CLI_readback_without_conflicting_explicit_filename": true,
+    "latent_enabled_required": false,
+    "max_chunk_files": 48,
+    "max_chunk_raw_bytes": 16000000,
+    "max_payload_bytes": 200000000,
+    "parent_CAS_every_chunk": true,
+    "private_global_runtime_bodies_excluded": true,
+    "pure_controls": {
+      "negative": 26,
+      "observation": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-hub-source-controls-observation-v01.json",
+      "positive": 12
+    },
+    "raw_checkpoint_bytes_opaque": true,
+    "single_public_artifact_bytes_strictly_less_than": 10000000,
+    "unknown_outcome_stops_without_automatic_retry": true
+  },
+  "findings": [],
+  "helper_author": "/root",
+  "limitations": [
+    "No concrete payload exists in this source review; publication still requires its separate exact payload review.",
+    "Root attributes and old file identities must be checked against the concrete baseline and immutable remote result; this source review does not claim an actual remote outcome.",
+    "The future model card, freeze manifest, result analysis, result/runtime reviews, and all runtime files need additional independent bindings before assembly.",
+    "No independent statutory gold, semantic/legal correctness, Lake compilation, genuine latent decoding, or default promotion is established by these helpers."
+  ],
+  "passed": true,
+  "release_prefix": "releases/20261012-targeted-loss-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "resolved_findings": [
+    {
+      "issue": "preparation copied bytes could differ from the earlier approved source pin",
+      "resolution": "raw copied bytes now directly equal approved byte length and SHA256 before write"
+    },
+    {
+      "issue": "preparation could consume one review/manifest and archive replacement bytes",
+      "resolution": "review and manifest pins are captured before reading, checked after reads/checks and propagated unchanged into the approved map"
+    },
+    {
+      "issue": "publication authorization review itself was not included in recurring custody fence",
+      "resolution": "review pin captured before parse, checked after parse and every fence, and used in durable preupload receipt"
+    }
+  ],
+  "reviewer": "/root/targeted_hub_review",
+  "schema": "targeted-loss-Hub-helper-source-independent-review/v1",
+  "scope": {
+    "SDK_or_helper_module_imported_by_reviewer": false,
+    "additional_artifact_pins_are_copy_provenance_and_upstream_review_bindings": true,
+    "checkpoint_JSON_or_reference_packet_JSON_read_by_reviewer": false,
+    "concrete_payload_authorization": false,
+    "network_or_Hub_API_performed_by_reviewer": false,
+    "numeric_models_or_resource_APIs_used_by_reviewer": false,
+    "read_only_Hub_baseline_snapshot_allowed_after_this_source_review": true,
+    "source_review_only": true,
+    "uploads_performed_by_reviewer": false
+  },
+  "source_review": [
+    "prepare_hf_targeted_release_v01.py",
+    "publish_hf_targeted_release_v01.py"
+  ]
+}

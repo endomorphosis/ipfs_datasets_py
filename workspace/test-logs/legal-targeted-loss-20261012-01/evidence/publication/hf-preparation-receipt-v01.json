@@ -1,0 +1,1233 @@
+{
+  "additive_only": true,
+  "baseline_pin": {
+    "bytes": 1138865,
+    "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-before-file-identities-v01.json",
+    "sha256": "c7fe53dd4c32b4b4eb96d412845c1276bb7f1bda9e11cfe045a99d34e62cab70"
+  },
+  "complete_upload_files": {
+    "releases/20261012-targeted-loss-v1/README.md": {
+      "bytes": 7575,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/README.md",
+      "sha256": "88c803d749e4cb214f3cb0444df45d11dda1e238a62951bde6af47684f2c9336"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/plan.json": {
+      "bytes": 50295,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/plan.json",
+      "sha256": "24bed0df3763668e5fe9b1314c61214f0bb991b7a4cd1f03c8933dd791d4b3b3"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-joint.json": {
+      "bytes": 951744,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-joint.json",
+      "sha256": "4efbdf942566309489c3464d4539c803418513d011c05d87dfb6bbde06ce0831"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-raw.json": {
+      "bytes": 1359929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-raw.json",
+      "sha256": "41c69e01c0a80bc4a922dec428d41e8c04b940e06a9f3064d8e0d7cbf3b664b4"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-score.json": {
+      "bytes": 104536,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_dev-score.json",
+      "sha256": "cc2b7ea7f6a5416418d8a6a73f8c7cbe8ede8536a8df3e2d2a502841f7f94ff3"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_eval-joint.json": {
+      "bytes": 990989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_eval-joint.json",
+      "sha256": "3d2b39553b43757d117e30dbf3cb9e3d73030f89d492f4476c89265f8f4dee1a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_eval-raw.json": {
+      "bytes": 1361751,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-authored_eval-raw.json",
+      "sha256": "b8202da296ff8781e6dc2130fa760b35ad399824b9b5c306706470fe30b5ffe2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506510,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-joint.json",
+      "sha256": "d78ff83828ca4aedc13feb6b219dfd44d15f758c09aed6cb765d483d3076e1ec"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 635836,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-raw.json",
+      "sha256": "df029cca8361d824fd8e1de5b141f9f3e08d44b669dccbb401ee7eeb2925d65b"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_challenge-score.json",
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491374,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-joint.json",
+      "sha256": "4f71b7252e062bfab3af686e7d3766bf623174b57f52aec7c939c6ba106d2bcd"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-raw.json": {
+      "bytes": 598049,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-raw.json",
+      "sha256": "a235409177bc19faf70e691eaf58053a22986e2efe1126bf33f3a031e54b2542"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-fresh_tune-score.json",
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-law-joint.json": {
+      "bytes": 103538,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-law-joint.json",
+      "sha256": "2763a3c4be4edd411efa8d83f2ab56822d99d8798a4dae00387e0d44cb5c65f2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-law-raw.json": {
+      "bytes": 273020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-law-raw.json",
+      "sha256": "c1330a302660003cd75ffb45064cbe52034d5d6e567d942bff4e74b54f94ff87"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1032310,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-joint.json",
+      "sha256": "6dea969837228f39a54447f7b4432504ad9bba381c4f5c7811af779037ca8355"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1401761,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-raw.json",
+      "sha256": "47903e338c0dfcb79aabd735c58e75f60dcc8fe451c893fcfda3528f1b41da80"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-score.json": {
+      "bytes": 105562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_authored_eval-score.json",
+      "sha256": "d8a62b799b84a4ac9a301c97673fe3a926c4b3bcef3293129444de72a0a9b0c7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-joint.json": {
+      "bytes": 1459768,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-joint.json",
+      "sha256": "81003b31546b12904abd600d1ff4c3ca5b4d7f1e60f17d86bc7074718098bf87"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-raw.json": {
+      "bytes": 2280984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-raw.json",
+      "sha256": "4ba1ce0c8bc36cbdc8e182ffe61ca3ad5dc3737e194eeaf87a6d934ff39753fa"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/baseline-old_tune-score.json",
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/cell-checkpoint.json": {
+      "bytes": 2743806,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/cell-checkpoint.json",
+      "sha256": "7c19510cceb44388cf8d5d2af991ba9010ff347c30b9303c142fcf68af58eb28"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/cell-training.json": {
+      "bytes": 795261,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/cell-training.json",
+      "sha256": "de3840bc16845f9e971a53fb3cf76f3df3771c1e066a01ee9671504d6172048a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-alternate_placeholders.json",
+      "sha256": "c7a1933f6f7629c925061fae818bd0673cdd410e8aacd1bf6760ac20d8fe3363"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-disabled.json": {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-disabled.json",
+      "sha256": "ee1be26d39628e722592ec32886d25c668814c0e0be1703427cfea6cb7297686"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-rotated_placeholders.json",
+      "sha256": "13236c5fa46d4b97f687181fb9622be2c7f420d6aee90a4650bba127d40da133"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-zeros.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity-zeros.json",
+      "sha256": "f7436d4bcdacb68ab8f7d3f60f8ce52cb65d63ff13bc653b8e2b7ee9e30fc2aa"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/initial-parity.json",
+      "sha256": "717b593e6fa685622a3a0ff3847a85638661bd12d454e84c86378be83b35a8fc"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/summary.json": {
+      "bytes": 51869,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/summary.json",
+      "sha256": "6e166d8c826b6361a802103402e595d16cdb4ffb0542cc7652c2965287491877"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-joint.json": {
+      "bytes": 978856,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-joint.json",
+      "sha256": "fc95536a765e02493fc82ad55321191b7af65bd90112693d9e773f8172d758e1"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-raw.json": {
+      "bytes": 1397038,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-raw.json",
+      "sha256": "a40ab2b71a1ee726c852511bc223871688419c148bc0f86edfa189e3a54bdaad"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-score.json": {
+      "bytes": 104126,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_dev-score.json",
+      "sha256": "c5c01604f8c845e10a9bfe9918f9a96c27fe02bc76f3f1d6917689d05d19a017"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_eval-joint.json": {
+      "bytes": 1018985,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_eval-joint.json",
+      "sha256": "44ecd1085dc74fe5f403a4aa58e01a55b85b62fd0e0866ee2ee05b0882b79757"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_eval-raw.json": {
+      "bytes": 1399950,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-authored_eval-raw.json",
+      "sha256": "c51006688f79b23e3e12311ad2ff4e803f7a300cc3badce1784219935bf71e89"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-joint.json": {
+      "bytes": 529781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-joint.json",
+      "sha256": "63600c3547e65bc5b19b27a529aea78b3ef70691d275ef295ba684514add4524"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-raw.json": {
+      "bytes": 665345,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-raw.json",
+      "sha256": "9d579428f987e5b33057843bf8cabc6d1a3521210b6a31d302ae73cb8c72ca84"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-score.json": {
+      "bytes": 53550,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_challenge-score.json",
+      "sha256": "98fda1a4588319b563c9428e3fa8d6dc98323e67f78afce33bae6fdde5328a89"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-joint.json": {
+      "bytes": 503538,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-joint.json",
+      "sha256": "ec0cec5396070266cb2c98574c1288628b384781384643691c3a87fa63bd4f05"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-raw.json": {
+      "bytes": 603851,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-raw.json",
+      "sha256": "8951f69500b19b6cd8417ed80cc02d72078be02fc88e0dbdf03570fe8fb31d3c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-score.json": {
+      "bytes": 53299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-fresh_tune-score.json",
+      "sha256": "9eb615a05242e1387a4f16290b3d431279d991188ac4b6aa0007f7f923b7a647"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-law-joint.json": {
+      "bytes": 107762,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-law-joint.json",
+      "sha256": "31067f363c2987e6e1aaf995d73d5ad4a2e004d782fc1ae24c721b876bcc5f4a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-law-raw.json": {
+      "bytes": 275068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-law-raw.json",
+      "sha256": "15efc5517801a5fd18bb28edb2683979bf36388f11ad5d357041ab53be3ce81c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1039510,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-joint.json",
+      "sha256": "16384b8187e184f1e8ee210500f8a6b318b8ab4001ebbe519a5325a677a670b9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1436876,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-raw.json",
+      "sha256": "ee2bf1ac34f522cc96b0859cd2ec4e565413c1f4a2614cf67d555a82d9a2a237"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-score.json": {
+      "bytes": 105203,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_authored_eval-score.json",
+      "sha256": "3bf5960033b113c87620010d2f3e25c31fe39b4be914c42ed8ec8790e68193de"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-joint.json": {
+      "bytes": 1459983,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-joint.json",
+      "sha256": "c8be2562f09a93a0e7b840e6a1e7771b382bc33eb0aeca03c7b0f1df37bc5720"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-raw.json": {
+      "bytes": 2279883,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-raw.json",
+      "sha256": "a6d9a3312f051a197e1d699abba3cad1eb45db880bf25af9cf1c3326340c73ca"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-score.json": {
+      "bytes": 101544,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-old_tune-score.json",
+      "sha256": "34f522f50005c8b858a6d24f59cf1d1a57fbe3e39506b763fcff52761e78b3fb"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 22345,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-alternate_placeholders.json",
+      "sha256": "70a6afdf8d134a811c929badfef04fc509c6708dd00c9cf0888c9e6df596281f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-disabled.json": {
+      "bytes": 22349,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-disabled.json",
+      "sha256": "bcdeab173f83627784f037bb34d2128e6ece4179984b771971a19c3c42172d5c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 22347,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-rotated_placeholders.json",
+      "sha256": "9901424dae6db6ac4d64e50c316d7fc395df34f3a5bc1d60f48b1c3ee3fc7e4c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-zeros.json": {
+      "bytes": 22345,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity-zeros.json",
+      "sha256": "8a18b88bf4bcdaa2aeae15aa4c9f928301dbd0e668341f10f8c185e504156283"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/results/trained-parity.json",
+      "sha256": "29c12ed0b838dcc6e2e5aec67dbec63a06bbcb1bf235e22e10eaded27d601b58"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child-exit.json": {
+      "bytes": 105,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child-exit.json",
+      "sha256": "fe88927fffab5d36bbcdf727a3262e8b883b3881388afbd7424764068904cf91"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child-identity.json",
+      "sha256": "4b7f40d6c6d085c54431c68b5c80a4815b8a4d6fab06d102cd431280943ed2fe"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child.log": {
+      "bytes": 66,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/child.log",
+      "sha256": "803b7e08b207dd0612ca989bf87ea31a3102fb3cf249fd87128879d7d6d7cf07"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/command.json": {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/command.json",
+      "sha256": "9517f3ade4819ce70dcac9ccef96775dc5026ecbd34fd89cf37622cef29cc315"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/group-rss-observations.jsonl": {
+      "bytes": 16004,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/group-rss-observations.jsonl",
+      "sha256": "37772041d7779a04858a10d4b733b56a51079cd2512d3739569df3c1cb6adbc9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/group-rss-summary.json": {
+      "bytes": 1748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/group-rss-summary.json",
+      "sha256": "2ae5d9624db6a1ce3d580ea3ff43587bad0fecccc60dc839edce17ed6a344504"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/guardian-exit.json",
+      "sha256": "625ff7004d929c6d19745d9043dba2c06f5f2790fca54ea647f42cf31594b8f4"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/lease-binding.json",
+      "sha256": "16f422398054eb400e3cb6a58035e9455da250d47c29ca14877ba851ea55601a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/lease-observations.jsonl": {
+      "bytes": 33725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/lease-observations.jsonl",
+      "sha256": "22e722dfc9150e43bd60d67c6e89cd719ce880c40923c5321c11832553e9e3eb"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/owned-group-final.json",
+      "sha256": "d4ac8a9b2c72eecef0d6d9b0bb1c680bb488dea978355c470245bd4df3ba9569"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/pre-admission.json": {
+      "bytes": 7991,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/pre-admission.json",
+      "sha256": "176724ea2e87eda6ab2fb5a8d886843c95da95143cce9acf49471f876ba188bc"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/resource-observations.json",
+      "sha256": "666b0b4ec88fc2ea58d7bd51134d3c85fb04420ee7d71fa0316478f5b5cea437"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/scheduler-adoption.json": {
+      "bytes": 4645,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/runtime/scheduler-adoption.json",
+      "sha256": "3d65e6ac06acd418a47a387c0a7894bac17285b8f9d41b0784bd2b85a74d749e"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence1/training-protocol-review.json": {
+      "bytes": 134613,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence1/training-protocol-review.json",
+      "sha256": "45de3b7cbe86fea89ba4121321d1b58bbd5b629efb85e72b6e85a39f00ece049"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/plan.json": {
+      "bytes": 57836,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/plan.json",
+      "sha256": "a5a6d1e986d46362181f7c02a23bce4017aba24c5b994e2c8b1786af971f1a3e"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/cell-checkpoint.json": {
+      "bytes": 2743861,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/cell-checkpoint.json",
+      "sha256": "bb39e83b801b8ee026c123a858b204e9b81c971e36370dc8ad36acfd88d4fb3d"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/cell-training.json": {
+      "bytes": 795423,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/cell-training.json",
+      "sha256": "8a964c3da743544851ac3526507a7bcc0756304e72434900d150bd838333e780"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-alternate_placeholders.json",
+      "sha256": "c7a1933f6f7629c925061fae818bd0673cdd410e8aacd1bf6760ac20d8fe3363"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-disabled.json": {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-disabled.json",
+      "sha256": "ee1be26d39628e722592ec32886d25c668814c0e0be1703427cfea6cb7297686"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-rotated_placeholders.json",
+      "sha256": "13236c5fa46d4b97f687181fb9622be2c7f420d6aee90a4650bba127d40da133"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-zeros.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity-zeros.json",
+      "sha256": "f7436d4bcdacb68ab8f7d3f60f8ce52cb65d63ff13bc653b8e2b7ee9e30fc2aa"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/initial-parity.json",
+      "sha256": "2defffaaeab02fd89486e5121f91761a13d1b2b60bb2732fcf553bcc418c1ed6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/summary.json": {
+      "bytes": 52157,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/summary.json",
+      "sha256": "074b8d0fe69f7c09cedc2e2b03cba797ff4891be834ef4b65cc03c92fed989cf"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-joint.json": {
+      "bytes": 998580,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-joint.json",
+      "sha256": "3addba4b349557aa18f99bbbe5145fd7ac72dd3ca9337fd41239ca748366a9c6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-raw.json": {
+      "bytes": 1417819,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-raw.json",
+      "sha256": "772041e21d6754a89fbbbd0c453693580ac1c9d6d8a627e453450083908a2ed9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-score.json": {
+      "bytes": 104036,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_dev-score.json",
+      "sha256": "593a7fe6939957800bd5bc6be48815afba83cf40d0054407e9f69f97861df324"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_eval-joint.json": {
+      "bytes": 997840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_eval-joint.json",
+      "sha256": "9c2dccf539ed4025275fc4792e309d71ccb4f568d9d8a87a91f86b897d575d5a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_eval-raw.json": {
+      "bytes": 1412449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-authored_eval-raw.json",
+      "sha256": "abfda1ea38a5546dfeca62e854a1de5e530f6f4654d0db763756cc1a11f45e09"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-joint.json": {
+      "bytes": 524504,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-joint.json",
+      "sha256": "a351e95baf9af220954c74797460174f55f728529bbb73496d854763918d66f6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-raw.json": {
+      "bytes": 673740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-raw.json",
+      "sha256": "457ccd6fc32dcbaabd0382fd68684b2fac1cb78ee450fa1f426a856085473336"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-score.json": {
+      "bytes": 53522,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_challenge-score.json",
+      "sha256": "d9eae8844a6e9a18392bdb804537d1e020140aacfb995b610b5798a5b924d6e0"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-joint.json": {
+      "bytes": 498069,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-joint.json",
+      "sha256": "2ef9ff9004d91baddb175a94e8301a5533801b9dc04b6ff97ebc47c8c20cd081"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-raw.json": {
+      "bytes": 607817,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-raw.json",
+      "sha256": "b1ce2981b10689c7622165217982372be5f1c5aed6bc2a4ea669c138b7120aa6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-score.json": {
+      "bytes": 53266,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-fresh_tune-score.json",
+      "sha256": "3cfbc38a67e6d4e034095e526c77de1572a15d2a91e58d4e8557893dd0be4896"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-law-joint.json": {
+      "bytes": 101154,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-law-joint.json",
+      "sha256": "555f3eaf5bb6883a790cdd1c4ab82fb55abaf0f7fcbc3b2ec458fdbb3504454d"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-law-raw.json": {
+      "bytes": 274806,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-law-raw.json",
+      "sha256": "bdded6b5c90f390d37b9b94a8aa37e4d808fe315fce988210518d1eecd32d483"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1047087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-joint.json",
+      "sha256": "4d2ac52d9d97f9dac67693a155738e19d8cb4ea110207e323757214a6fbfd977"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1445128,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-raw.json",
+      "sha256": "4f666dc05da325df9e46a497e4e8fb7170edda12921586f019030b50e5859f59"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-score.json": {
+      "bytes": 105182,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_authored_eval-score.json",
+      "sha256": "076b45e63819ef34889075d8766f81e4f87f67a82eeee2e66c7be64eee94af98"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-joint.json": {
+      "bytes": 1450891,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-joint.json",
+      "sha256": "7e593ddf3a3a494066774102261b18d58c1f69b4a00a4ecbb3265ae3732d607a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-raw.json": {
+      "bytes": 2278766,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-raw.json",
+      "sha256": "d3e3ea2bcb015b3495d5082a89f2edf76fb29edb9d2ccf5a2aaa604a28e85522"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-score.json": {
+      "bytes": 101578,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-old_tune-score.json",
+      "sha256": "4224b845ad4dc6b695255c20014b8b31a120730bee23281e24c359a50468cd72"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 24724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-alternate_placeholders.json",
+      "sha256": "3b65438fbb425a6625ab53aa0e9480a47eb238218dbaa66e9e608df7b7dd5527"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-disabled.json": {
+      "bytes": 24728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-disabled.json",
+      "sha256": "17905376698649c36868522a21163bd8fb546de34434a9ec787fd6dd55dab332"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 24726,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-rotated_placeholders.json",
+      "sha256": "770c388667f89ac9ca91295dee5ad87fd0a42fcf5c9314d4a4b0baf5157bb079"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-zeros.json": {
+      "bytes": 24724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity-zeros.json",
+      "sha256": "b83e573b0deb5f46711b4ce54a009bd6c4013547116dd6e141a6aa93ec21d58a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/results/trained-parity.json",
+      "sha256": "fc1169608ec89948b31ae238146d83f96ef7cda893c986045b15f5503e8e959b"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child-exit.json",
+      "sha256": "e5f33c72710e1476d3c65bc4d01ba53b93afb24435807b5faa3fc8324575248f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child-identity.json",
+      "sha256": "5dcf01c8281ffc771d48b7254f568a7202439fbf44fa16c5ffe891d998bfd8a4"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child.log": {
+      "bytes": 66,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/child.log",
+      "sha256": "49e7e83b7cac874be41fe4f99f335c42b9840ab16c5d29d68df3a5cf053f1c5e"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/command.json": {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/command.json",
+      "sha256": "3f79743e91cb8c933f89ce60c7bf1dd409eaa0422bfa8e630cfb3d117cfb8e67"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/group-rss-observations.jsonl": {
+      "bytes": 14509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/group-rss-observations.jsonl",
+      "sha256": "3ea6e7119a1d5851135be1a471ae5561c110b050ed481edc37ab01fdd0a79fc4"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/group-rss-summary.json": {
+      "bytes": 1748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/group-rss-summary.json",
+      "sha256": "e0169e8d32df616eb54ebdfe4c01ea1f83fbac0e003f3a52816f3a68f3822a11"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/guardian-exit.json",
+      "sha256": "abe8aa129c4d72099b24ec8c4c96fe23f09d43d9d27836552b883d8b4607acf9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/lease-binding.json",
+      "sha256": "42f247fd557675e770e5d11bb7e091650943c4c1a1a4bd129fcb957a944aaad6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/lease-observations.jsonl": {
+      "bytes": 29697,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/lease-observations.jsonl",
+      "sha256": "aa00e8348f0fa35bea36df16591bab4ddf418de0926c3b250f9d5ab72d22500a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/owned-group-final.json",
+      "sha256": "f3dc5d3a26d03980dd8fb9409f1f8750753769c8d0af1638c3bdb9f9c6a593f3"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/pre-admission.json": {
+      "bytes": 8001,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/pre-admission.json",
+      "sha256": "033e485262633b1bb789c8b25a1493bfc9a2a3abb0669cd7863d3e32eacd649c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/resource-observations.json",
+      "sha256": "10308068eae39ff6d31460a4a61ea39ce8c579a5a6e9a07d058cd0ad37f79c49"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/runtime/scheduler-adoption.json",
+      "sha256": "de106077d1756ba06b3c4a59f90ffd58689ee981eb5e5bb9cf6ed6fd7efa33a0"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank0-presence2/training-protocol-review.json": {
+      "bytes": 140332,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank0-presence2/training-protocol-review.json",
+      "sha256": "fa90f14df6f5582e81943433b85103b7f2da503d94578f2c6a1ab8a52596df63"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/plan.json": {
+      "bytes": 57835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/plan.json",
+      "sha256": "a5575df1cf498ee3358323c7cb54bac22f7d9d874fb809c11a821179d889f327"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/cell-checkpoint.json": {
+      "bytes": 2740867,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/cell-checkpoint.json",
+      "sha256": "446d8b2165290a76b8534bbe3205395f05eb64e7f51320e21d5d657564ee1b02"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/cell-training.json": {
+      "bytes": 794472,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/cell-training.json",
+      "sha256": "3ee9e75955c3d822dec54431650db26362a3df0517b33df990e2766bf7ebae37"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-alternate_placeholders.json",
+      "sha256": "c7a1933f6f7629c925061fae818bd0673cdd410e8aacd1bf6760ac20d8fe3363"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-disabled.json": {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-disabled.json",
+      "sha256": "ee1be26d39628e722592ec32886d25c668814c0e0be1703427cfea6cb7297686"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-rotated_placeholders.json",
+      "sha256": "13236c5fa46d4b97f687181fb9622be2c7f420d6aee90a4650bba127d40da133"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-zeros.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity-zeros.json",
+      "sha256": "f7436d4bcdacb68ab8f7d3f60f8ce52cb65d63ff13bc653b8e2b7ee9e30fc2aa"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/initial-parity.json",
+      "sha256": "72bd5f733bf71c3bbb31cb94cf98bf5c861adcfcc88adfce4f5f8376f35e55af"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/summary.json": {
+      "bytes": 52158,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/summary.json",
+      "sha256": "8605f294f35aedf6341989a7c6b2a843327bccb5b97e24392baa95d9d3433172"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-joint.json": {
+      "bytes": 1033315,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-joint.json",
+      "sha256": "ee10e0ba1b5b90b9a8aa7b0f542e58a85818dc6511cf2c5d4a1f4e6207ede288"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-raw.json": {
+      "bytes": 1421839,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-raw.json",
+      "sha256": "483309c9ec9d125a56dabfef0b5e33cf022d4a4ec2937068b677e871e293dfd1"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-score.json": {
+      "bytes": 104005,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_dev-score.json",
+      "sha256": "bf33ad78d3055adbcdd2afac6879fdc6f55dc4020dff6f8789775dde4a85dc96"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_eval-joint.json": {
+      "bytes": 1007461,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_eval-joint.json",
+      "sha256": "e9337101632af9b8a56d826e8bb4a45eaf7044b8cf7d14b94ec12ab6b33111c3"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_eval-raw.json": {
+      "bytes": 1381062,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-authored_eval-raw.json",
+      "sha256": "dfa637afa5a48ea9139e082ffb000758d5ad43ae3408146f9226772ffbfb71d7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-joint.json": {
+      "bytes": 517099,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-joint.json",
+      "sha256": "b430af1ac53fa963984f1596eb166d0dbc16cf65257fc39613d725dddf5ecece"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-raw.json": {
+      "bytes": 653962,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-raw.json",
+      "sha256": "7beabb741fe36c124acf09e22715a3fb542470721eb24fc8f15e246c6d383b2e"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-score.json": {
+      "bytes": 53598,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_challenge-score.json",
+      "sha256": "f4d8730303d109cfb9ddd7d1ed176d849860f62b4b9e14ba3c501bf1f8491c5f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-joint.json": {
+      "bytes": 504648,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-joint.json",
+      "sha256": "eb9abba71c386268af9cf57aff4facb3bbf5b2c0ea2c34a9644c488584d71729"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-raw.json": {
+      "bytes": 608108,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-raw.json",
+      "sha256": "a4efbbb059810e22a663ed8bea78491e0cf57255ed93ac022290d4a9820fe42e"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-score.json": {
+      "bytes": 53302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-fresh_tune-score.json",
+      "sha256": "42d813ea71ba94ba2b42c6f2fed502f1bc4fd7988199fa9114a7e4863d1105a7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-law-joint.json": {
+      "bytes": 104810,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-law-joint.json",
+      "sha256": "8a5fd5d84fff9b215293e36aff158b56fc017400d28cdf6c84ce08553509534a"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-law-raw.json": {
+      "bytes": 275272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-law-raw.json",
+      "sha256": "da2a05a1971e3331737265c1a3ec2d562d7f1b58e3dde05cbb7614adf053cd30"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-joint.json",
+      "sha256": "36fd3ab7eb0d4501d383f5a80e1e998da5ee628442bd30a332580395bf60f95c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1432413,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-raw.json",
+      "sha256": "3cff75cad048ae8a6986af0521fc8586fc25eb9b3d0f7d3a8953e210ceb8b8f5"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-score.json": {
+      "bytes": 105239,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_authored_eval-score.json",
+      "sha256": "73233a22abd2a8260d99287332f86eafebb7700becc11fda4d8b200d3cc6cc60"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-joint.json": {
+      "bytes": 1459958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-joint.json",
+      "sha256": "da6ecf67fecc67b785d49a57aa30fe143d45d17ef01321da8bb5220067245624"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-raw.json": {
+      "bytes": 2279993,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-raw.json",
+      "sha256": "c430ad835ccda61488a807eef5989ef717879f17d4be25679d179e9de74496b9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-score.json": {
+      "bytes": 101540,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-old_tune-score.json",
+      "sha256": "b54afd5b14c3b9896e7ec017998711a34d508ca9ce933a69c11719c0a86b0ebc"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 24727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-alternate_placeholders.json",
+      "sha256": "78d57b7d67afee1fb75d9cfb583e740e22737d30f3f80db0475faf42b5e37f08"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-disabled.json": {
+      "bytes": 24731,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-disabled.json",
+      "sha256": "c1e9caaa660eddf3b36ad8f316fb04c0617bbb09abe70e6993fd003ada77c13b"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 24729,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-rotated_placeholders.json",
+      "sha256": "62082b1ecb99c8a32dee4cb5c73ae94d5e75aab9f30308f1189456de00b37de7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-zeros.json": {
+      "bytes": 24727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity-zeros.json",
+      "sha256": "955eb2abd182799bf6165d2c8714aab6620c99fbc202675bf8bf6b7aef20b71c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/results/trained-parity.json",
+      "sha256": "202f9edb5eb9641e8fbb822dc12de8dc0a89022b5ec8150d7d734cb01ceacab6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child-exit.json",
+      "sha256": "caa77639daf5741299fc42d9e1bb3ef75330321453429f09343403672a5b7e3b"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child-identity.json",
+      "sha256": "2defaee5978057ed91a853a15fdb06d5dbbf3fb4e486531e1e66f62903c19e76"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child.log": {
+      "bytes": 66,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/child.log",
+      "sha256": "560866b4bd7de6b2a7974853d3ea4fea916802b91cb3472982cbed63d7fd78b8"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/command.json": {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/command.json",
+      "sha256": "df47439b66f3e1df2a42e53e0750e37f3608623e4aefdd45b257ec87e4ad5c25"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/group-rss-observations.jsonl": {
+      "bytes": 14511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/group-rss-observations.jsonl",
+      "sha256": "1789e7461df132d557ab3b84928d96b156fd246ec194b03c143d46bf42f0c39c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/group-rss-summary.json": {
+      "bytes": 1747,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/group-rss-summary.json",
+      "sha256": "eec351c0f0a91b29a471016c2b67c828cfe395cc6d74acb345c59673a8dda5c0"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/guardian-exit.json",
+      "sha256": "a3c0edf80092298944935657e8029ce324095e46db9752330db695c62b1d9065"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/lease-binding.json",
+      "sha256": "2317a7402bfd953b5fbe4d7a521b1ffe2469df68739ba4d32f7465eb63ba5802"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/lease-observations.jsonl": {
+      "bytes": 30640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/lease-observations.jsonl",
+      "sha256": "5a0cf6011f69fdd7d3a1a032408f12bed1e1ab27ec65596e776f3126dbb1a3ad"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/owned-group-final.json",
+      "sha256": "154aa0de81c1c6e82839898b5fb21a962371a6915361298fa035ee66c781e3a9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/pre-admission.json": {
+      "bytes": 8001,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/pre-admission.json",
+      "sha256": "7cd8d9a81bfde75cb6663ba153dbdefd74dae22718aae21a82da3733b54d9a66"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/resource-observations.json",
+      "sha256": "a1d39ef9cc8bcaaf41978b1c5df2aac8f7732ebf06cdd81553b4be8518e4ab54"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/scheduler-adoption.json": {
+      "bytes": 4645,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/runtime/scheduler-adoption.json",
+      "sha256": "18112b91851a9a47544332a13316e93ac8d968ad92e6903fb12c2d553d73aba9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence1/training-protocol-review.json": {
+      "bytes": 140441,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence1/training-protocol-review.json",
+      "sha256": "9477dd8fbb2fa3879ffe8c9cb1904f9e6b4cbd62342fd38e415e0f1f0e955179"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/plan.json": {
+      "bytes": 57835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/plan.json",
+      "sha256": "af1c3cf649640f3dabaf5db7c541c5cff508d058e1a14539c86c6f9c9d4abd1c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/cell-checkpoint.json": {
+      "bytes": 2740909,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/cell-checkpoint.json",
+      "sha256": "b68ccc8c054a1edc15c770552c8f9354bf8d7b570de448d9bd0e72b9b754d77f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/cell-training.json": {
+      "bytes": 794466,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/cell-training.json",
+      "sha256": "b1ef858f9b6b42c0a5d5886ba600ec14df1e6c368a1547b8eaf916f22edab0f9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-alternate_placeholders.json",
+      "sha256": "c7a1933f6f7629c925061fae818bd0673cdd410e8aacd1bf6760ac20d8fe3363"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-disabled.json": {
+      "bytes": 22355,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-disabled.json",
+      "sha256": "ee1be26d39628e722592ec32886d25c668814c0e0be1703427cfea6cb7297686"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-rotated_placeholders.json",
+      "sha256": "13236c5fa46d4b97f687181fb9622be2c7f420d6aee90a4650bba127d40da133"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-zeros.json": {
+      "bytes": 22351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity-zeros.json",
+      "sha256": "f7436d4bcdacb68ab8f7d3f60f8ce52cb65d63ff13bc653b8e2b7ee9e30fc2aa"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/initial-parity.json",
+      "sha256": "b63553cf574f23b708661e2e87c8995076df72060314180ac624586183cd410f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/summary.json": {
+      "bytes": 52158,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/summary.json",
+      "sha256": "de59e4665d834ebd40073b87893417fbcf5a16c66107c9c31a03685ac148c652"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-joint.json": {
+      "bytes": 1031467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-joint.json",
+      "sha256": "a5c811aaa91b8b3add6786b3a7ab884d9780ee6f4a6299856375c9a7e13baf48"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-raw.json": {
+      "bytes": 1427909,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-raw.json",
+      "sha256": "55c6a21b4f97b827fcdd196237805220c39d64f7ea4f7be3908ad3002760f7d9"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-score.json": {
+      "bytes": 103987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_dev-score.json",
+      "sha256": "d9314062c4cd2126f591bfcf6acf619b73d06448f2cc41cedc0138e4c8eca29b"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_eval-joint.json": {
+      "bytes": 1000567,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_eval-joint.json",
+      "sha256": "addea6ad8a448484ba675a1a4abfc68b716bb524296ac5b70cd387c9435a1162"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_eval-raw.json": {
+      "bytes": 1399769,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-authored_eval-raw.json",
+      "sha256": "be7e7376d0ff3b294903d94c65e0ec9d426be683755b16e5df81f8d69554f403"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526122,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-joint.json",
+      "sha256": "1d7de664c3a37af927d33e81ae8ed2bf0de10d12969b3722a107d46c9b308590"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-raw.json": {
+      "bytes": 662143,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-raw.json",
+      "sha256": "e7e0049de40ccce69b5a28094bd707218813d5183257d928f5ae86937d8d3093"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-score.json": {
+      "bytes": 53546,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_challenge-score.json",
+      "sha256": "c93e52dd9055b40c6e8f1a72caad3473251132c48e5acd391fedc1abf466dbd4"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-joint.json": {
+      "bytes": 511083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-joint.json",
+      "sha256": "023af8811cee66b685d43c73cfcb05d806c523f8f92d758488d6b5ffdf9c98df"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-raw.json": {
+      "bytes": 604593,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-raw.json",
+      "sha256": "c041cad1e56628d0aaca071fc00147116f329b06ca2900243a510081d37dcb64"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-score.json": {
+      "bytes": 53302,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-fresh_tune-score.json",
+      "sha256": "80446d2c56c400a2099585ae93673369d19fc05a7d0d91b2f35cb9e2073ac372"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-law-joint.json": {
+      "bytes": 106015,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-law-joint.json",
+      "sha256": "c7452de72d67513c264a3dfdc6189f319d24fd4fd66ec007e37285dc38295d76"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-law-raw.json": {
+      "bytes": 275188,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-law-raw.json",
+      "sha256": "b364a7c453901ce637cfbd128af420e9549ffa8ea1ed2d0cc9bd1609a2067a21"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1051130,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-joint.json",
+      "sha256": "1f02734f295fd758a4b90047e0313b22ee1d0aa923b8cd2302de6b2182cd2dd7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1443021,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-raw.json",
+      "sha256": "1d2c90f1fadabc881d4521e1baf2f4c8b7fb0ba38dfbb5a2eb443f90192577a6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-score.json": {
+      "bytes": 105195,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_authored_eval-score.json",
+      "sha256": "f30750bbb7955d2799dea6c25d09ac4873e8caf93a9406de67ff0608d5972de2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-joint.json": {
+      "bytes": 1453998,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-joint.json",
+      "sha256": "8015a809eac40969dfa36a0e664e2a25d915a4128b254186e286f98148a88f2c"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-raw.json": {
+      "bytes": 2279400,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-raw.json",
+      "sha256": "634b0cf7d8edbb9a2d6e4459ce68afd3264711ffadafddeec928248afb5680d0"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-score.json": {
+      "bytes": 101560,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-old_tune-score.json",
+      "sha256": "768a17d1f5fe093314582d44bba9726fd853cd71056a40c12d9aaaeda542e5e6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 25385,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-alternate_placeholders.json",
+      "sha256": "eb337a9d27de38954cebfa5ec121581d43f97d988b3d47c6287b299233a0a0a7"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-disabled.json": {
+      "bytes": 25389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-disabled.json",
+      "sha256": "3aac67e08275c2c3beef9faba33259fb5327ab76d6193bd1d0e9b757b91761b2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 25387,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-rotated_placeholders.json",
+      "sha256": "cfb99c95a6845cd3d5768feb83d93894a919e1c50e242429d99515371a78774f"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-zeros.json": {
+      "bytes": 25385,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity-zeros.json",
+      "sha256": "a24ca98844e476702c921d340901984d8c3279a975c7a1c27bf3fa314d345a4d"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity.json": {
+      "bytes": 2087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/results/trained-parity.json",
+      "sha256": "ccd26c44a6ddc0793447fd4b1d8853e58a2d3f6fa29802f2f48fc82718d7dcb3"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child-exit.json",
+      "sha256": "091034d042db4f26c281c9cd37d04452c3ae4f46d1c8c38667469ccc1e8041d1"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child-identity.json",
+      "sha256": "986e0a76abe611ab9dcbe879dcfe24045294c48ee02266be7a468662aea970f6"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child.log": {
+      "bytes": 66,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/child.log",
+      "sha256": "dcc25e2cce81b123563d0daf037a9f668d963df53b83149ccb4e8889dee9303d"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/command.json": {
+      "bytes": 1032,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/command.json",
+      "sha256": "bbb617a2d50839bc5b31e7bad25e08cc8c58502cfc799137b831d193efb9b339"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/group-rss-observations.jsonl": {
+      "bytes": 14491,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/group-rss-observations.jsonl",
+      "sha256": "d7ba4725c069ea6a1901fde7fefa712208dc3f99cad2164a336325abdb0b7969"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/group-rss-summary.json": {
+      "bytes": 1746,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/group-rss-summary.json",
+      "sha256": "0ae0ba87037e91a372ecb53c8cd0c6d69283cfda28b6720e9bd3d64d5298ac53"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/guardian-exit.json",
+      "sha256": "107910aa2c613fbadb3f5b5ab2f0644110311ed84942d6442d95bb223af24425"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/lease-binding.json",
+      "sha256": "52ab65312881ef8d6550d2ff4960bbabeb953c22c4fdc0730fdae80aa3991639"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/lease-observations.jsonl": {
+      "bytes": 30698,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/lease-observations.jsonl",
+      "sha256": "37f43b446d32732c185398bf96e3b513b75e71c493a708961d4432a5e75a7b00"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/owned-group-final.json",
+      "sha256": "08c452acfca09dc8f1b0189a2f97c57607b914687eed5652b2dad6bd4205f280"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/pre-admission.json": {
+      "bytes": 8001,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/pre-admission.json",
+      "sha256": "fce32774845943e211f5c08fcd738b978787322dce912e06f95dae8ecc92f3ad"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/resource-observations.json",
+      "sha256": "a422d7f272b834646c7bdbe2b3c734c89b232a3682a746af12d146130ff92fb2"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/runtime/scheduler-adoption.json",
+      "sha256": "d0195d6fdff4b231aa7cb8ff6d8c2901e718e9398452abc10513474d454e1486"
+    },
+    "releases/20261012-targeted-loss-v1/cells/rank1-presence2/training-protocol-review.json": {
+      "bytes": 140551,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/cells/rank1-presence2/training-protocol-review.json",
+      "sha256": "d5a6f84d88b1d2e0fc9943533f765c235d3c3aabee1548412453cf05313cdd0f"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/authored-reference-packet-v01.json": {
+      "bytes": 8262146,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/authored-reference-packet-v01.json",
+      "sha256": "b926dbbc459c8d21a51fd8876598c8b3830a979730b44a4b3c8d15d8f613676e"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-observation-v01.json": {
+      "bytes": 1898,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-observation-v01.json",
+      "sha256": "8c4e88ea7813662066a0bed57ca8007e2db58ffb2c780571790d4a52b7b37209"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-v02.log": {
+      "bytes": 224,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-v02.log",
+      "sha256": "79699fd20005fbb2c511a175947560ad64ddb060b07c1653dd8f4ee2aad12d98"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-v02.xml": {
+      "bytes": 29951,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/combined-pure-tests-v02.xml",
+      "sha256": "45ed60f2717ea290522ee36b11bbdcf4f5bef0f112c4b932dccb2fce881ba2de"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/corpus-source-independent-review-v01.json": {
+      "bytes": 2795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/corpus-source-independent-review-v01.json",
+      "sha256": "b301a9c17112dbfdae8352be2cc337151542b0177cb2d08cd0fa9edfc3dc79e9"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/four-cell-output-freeze-v01.json": {
+      "bytes": 56385,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/four-cell-output-freeze-v01.json",
+      "sha256": "b63ef59f3a1635161a99c046145bfc832d345a59bac88be9a7425c5bc414485a"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/registration-v01.json": {
+      "bytes": 49724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/registration-v01.json",
+      "sha256": "122dd798a3dbe26f8caf5f0115c5ae4369bc05b8f62adb426d129cf5e9142818"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 92149,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/result-independent-review-v01.json",
+      "sha256": "a07546b596a09c4234d257ff918c2db3b523efbb020973cc1a1db11b9fdbe33c"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/root-science-source-independent-review-v01.json": {
+      "bytes": 5523,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/root-science-source-independent-review-v01.json",
+      "sha256": "1b1b5403886f5ec9f4271763a08c2d74fa7857c61980bb0626b9f7b2a9fa470a"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/runtime-independent-review-v01.json": {
+      "bytes": 75030,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/runtime-independent-review-v01.json",
+      "sha256": "0a644639f6fa3775d6860ee782f94eddc339bf45afdffc6adf9cd5b7cc86dbbd"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/targeted-result-analysis-v01.json": {
+      "bytes": 3677235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/targeted-result-analysis-v01.json",
+      "sha256": "ce8bead53fe88a57e644e6c633eccf24c696e9752dcc49372e8f1280f935b9fa"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 5083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/trainer-source-independent-review-v01.json",
+      "sha256": "d1375989b69bad85563fa97eec2fc973ca2a0f1d29f9c3919b0ddce8ec875ce2"
+    },
+    "releases/20261012-targeted-loss-v1/evidence/training-export-v01.json": {
+      "bytes": 5052701,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/evidence/training-export-v01.json",
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/analyze_targeted_results_v01.py",
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/audit_targeted_terminal_v02.py": {
+      "bytes": 49835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/audit_targeted_terminal_v02.py",
+      "sha256": "1bc00d186f11057f97b758522b2cc6aedd8e7732c65b8cc9771dc215ed3cd47d"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/freeze_four_cell_outputs_v01.py": {
+      "bytes": 4939,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/freeze_four_cell_outputs_v01.py",
+      "sha256": "3995c6c0f917303574972b5583e140b63184e7232d88580c21d45328fe6575b1"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/prepare_hf_targeted_release_v01.py": {
+      "bytes": 13435,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/prepare_hf_targeted_release_v01.py",
+      "sha256": "574baf11af82f9b4cf6896fdc6d0e5b8892359be005982502b66c9ec8e6b2b54"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/prepare_targeted_loss.py": {
+      "bytes": 11652,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/prepare_targeted_loss.py",
+      "sha256": "aecff8f97f0c76f6df9b505803974817eda8162d57501eb872a9370472609101"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/publish_hf_targeted_release_v01.py": {
+      "bytes": 13841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/publish_hf_targeted_release_v01.py",
+      "sha256": "6cf17157cfdd5cbc488caa130d1eeac3d56ec0e2035e2e498d5efb4a2846ce88"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/review_targeted_cell.py": {
+      "bytes": 18654,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/review_targeted_cell.py",
+      "sha256": "dcc1c78194e84b9302c1cd27574313341ec16e368ad32e8dcf08b447b86f8150"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261012-targeted-loss-v1/recipe/run_targeted_loss.py": {
+      "bytes": 35247,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/recipe/run_targeted_loss.py",
+      "sha256": "092cc00ee5f55f1cbb33b76cabaf3aa759ad7e6b444385a87bcba06f861f3c78"
+    },
+    "releases/20261012-targeted-loss-v1/release-manifest.json": {
+      "bytes": 96288,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/release-manifest.json",
+      "sha256": "03831b4221aec26ed9ce89910b074de388cda68b322590a7411d10c6dd4f5270"
+    },
+    "releases/20261012-targeted-loss-v1/source/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/source/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py",
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "releases/20261012-targeted-loss-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "releases/20261012-targeted-loss-v1/source/tests/unit/logic/legal_ir/test_targeted_loss_curriculum.py": {
+      "bytes": 20942,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/source/tests/unit/logic/legal_ir/test_targeted_loss_curriculum.py",
+      "sha256": "d1fc5316d2548bf5041193a368ddf4779d66ff555c1470be469c0160d204cf06"
+    },
+    "releases/20261012-targeted-loss-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py": {
+      "bytes": 32960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01/releases/20261012-targeted-loss-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py",
+      "sha256": "66ccda4c13ce0e7f4c9e26fe03ad9383bc39d2c724a6c90a5dfda4aa38c103b8"
+    }
+  },
+  "default_promotion": false,
+  "expected_parent_revision": "3076b37eadd5536095d28500e78f53e4876c0832",
+  "freeze_manifest": {
+    "bytes": 56385,
+    "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/four-cell-output-freeze-v01.json",
+    "sha256": "b63ef59f3a1635161a99c046145bfc832d345a59bac88be9a7425c5bc414485a"
+  },
+  "helper_review": {
+    "bytes": 8898,
+    "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-helper-source-independent-review-v01.json",
+    "sha256": "b3d8d3f5c98176cc609a4ba95a2a8ffa3b0489a0bebcf1c085279d3ed12d4907"
+  },
+  "payload_bytes": 104535421,
+  "payload_files": 239,
+  "release_prefix": "releases/20261012-targeted-loss-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "result_review": {
+    "bytes": 92149,
+    "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/result-independent-review-v01.json",
+    "sha256": "a07546b596a09c4234d257ff918c2db3b523efbb020973cc1a1db11b9fdbe33c"
+  },
+  "runtime_review": {
+    "bytes": 75030,
+    "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/runtime-independent-review-v01.json",
+    "sha256": "0a644639f6fa3775d6860ee782f94eddc339bf45afdffc6adf9cd5b7cc86dbbd"
+  },
+  "schema": "targeted-loss-curriculum-Hub-preparation/v1",
+  "upload_root": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-upload-v01"
+}

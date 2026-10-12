@@ -1,0 +1,51 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/first-training-protocol-independent-review-v01.json": {
+      "bytes": 134613,
+      "sha256": "45de3b7cbe86fea89ba4121321d1b58bbd5b629efb85e72b6e85a39f00ece049"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/rank0-presence1-plan-v01.json": {
+      "bytes": 50295,
+      "sha256": "24bed0df3763668e5fe9b1314c61214f0bb991b7a4cd1f03c8933dd791d4b3b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/review_targeted_cell.py": {
+      "bytes": 18654,
+      "sha256": "dcc1c78194e84b9302c1cd27574313341ec16e368ad32e8dcf08b447b86f8150"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py": {
+      "bytes": 35247,
+      "sha256": "092cc00ee5f55f1cbb33b76cabaf3aa759ad7e6b444385a87bcba06f861f3c78"
+    }
+  },
+  "checks_full_fresh_opening_body_hash_map": true,
+  "findings": [],
+  "helper_executed_for_live_cell": false,
+  "metadata_negative_controls": 12,
+  "metadata_positive_controls": 1,
+  "model_state_JSON_parses": 0,
+  "negative_controls": [
+    "integer-ranking-switch",
+    "boolean-presence-weight",
+    "unknown-cell",
+    "latent-enabled",
+    "wrong-width",
+    "more-training-seconds",
+    "raised-storage",
+    "weakened-permission-gate",
+    "missing-old-packet-exclusion",
+    "leaked-eval-reference-panel",
+    "semantic-gold",
+    "default-promotion"
+  ],
+  "numerical_imports": 0,
+  "original_record_count": 522,
+  "passed": true,
+  "qualified_first_phase_sha256": "45de3b7cbe86fea89ba4121321d1b58bbd5b629efb85e72b6e85a39f00ece049",
+  "reference_packet_reads": 0,
+  "resource_API_calls": 0,
+  "retains_all_first_immutable_qualification_artifacts": true,
+  "same_training_manifest_and31producers": true,
+  "schema": "targeted-cell-review-helper-independent-review/v1",
+  "scope": "Independent source review of bounded stdlib observer and detached actual runner guards; no claim of numerical replay or resource admission",
+  "source_review_only": true
+}

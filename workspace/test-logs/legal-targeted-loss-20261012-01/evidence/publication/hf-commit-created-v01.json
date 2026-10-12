@@ -1,0 +1,67 @@
+{
+  "additions": 239,
+  "chunks": [
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 21,
+      "parent_revision": "3076b37eadd5536095d28500e78f53e4876c0832",
+      "revision": "c6b0e19f7ebabb65a73c5512520ba2c87c956021"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 26,
+      "parent_revision": "c6b0e19f7ebabb65a73c5512520ba2c87c956021",
+      "revision": "40fea6718e3af385392aa31f8072309dfac0c60d"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 45,
+      "parent_revision": "40fea6718e3af385392aa31f8072309dfac0c60d",
+      "revision": "107864b7520ec5284c04a2e03c00b955b5095b99"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 42,
+      "parent_revision": "107864b7520ec5284c04a2e03c00b955b5095b99",
+      "revision": "d943422a582e655a7f412245e9a24bde7e408365"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 44,
+      "parent_revision": "d943422a582e655a7f412245e9a24bde7e408365",
+      "revision": "5bcebe3ae52c45673ade0a36ea315a039ede118a"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 34,
+      "parent_revision": "5bcebe3ae52c45673ade0a36ea315a039ede118a",
+      "revision": "7a4fa4aaf40c1cde45d051f9b24e62324d07bbe8"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 12,
+      "parent_revision": "7a4fa4aaf40c1cde45d051f9b24e62324d07bbe8",
+      "revision": "960d2ae5c2d9b1a95ddd7c482654a372b820a896"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 15,
+      "parent_revision": "960d2ae5c2d9b1a95ddd7c482654a372b820a896",
+      "revision": "0958f81330fb7bb7664a8ce85355413d289932b7"
+    }
+  ],
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/0958f81330fb7bb7664a8ce85355413d289932b7",
+  "default_promotion": false,
+  "parent_revision": "3076b37eadd5536095d28500e78f53e4876c0832",
+  "release_prefix": "releases/20261012-targeted-loss-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "0958f81330fb7bb7664a8ce85355413d289932b7"
+}
