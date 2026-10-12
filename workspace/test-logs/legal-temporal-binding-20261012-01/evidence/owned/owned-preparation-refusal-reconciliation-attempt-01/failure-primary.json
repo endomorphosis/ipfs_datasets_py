@@ -1,0 +1,26 @@
+{
+  "authority_to_overwrite_observed_parallel_bytes": false,
+  "automatic_retry": false,
+  "automatic_rollback": false,
+  "error_type": "DaemonResourceError",
+  "leases_acquired": 0,
+  "local_ledger_backups_private": true,
+  "message": "storage reservation capacity exceeded",
+  "model_calls": 0,
+  "observed_byte_class": "exact_before",
+  "observed_ledger": {
+    "bytes": 6138012,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+  },
+  "observed_local_backup": {
+    "bytes": 6138012,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/ledger-observed-after-failure.local.json",
+    "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+  },
+  "original_failure_preserved": true,
+  "recovery_requires_fresh_independent_review": true,
+  "schema": "owned-claim-closeout-failure/v1",
+  "stage": "locked_source_and_ledger_fences",
+  "training_started": false
+}

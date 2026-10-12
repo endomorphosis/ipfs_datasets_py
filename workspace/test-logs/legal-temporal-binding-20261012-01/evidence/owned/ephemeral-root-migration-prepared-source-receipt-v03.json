@@ -1,0 +1,61 @@
+{
+  "apply_executed": false,
+  "claims_modified": false,
+  "full_ledger_backups_publication_permitted": false,
+  "helper": {
+    "bytes": 22791,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/migrate_ephemeral_resource_root.py",
+    "sha256": "032300fedfebbd54a2be4a76c88e00109880c02901a57c1eba3156a3591ad1d4"
+  },
+  "helper_frozen_mode": "0444",
+  "historical_workflow_inspection": {
+    "bytes": 64151,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/root-recovery-workflow-inspection-v01.json",
+    "sha256": "969ed61f00345a1838631a4afffc760aa21f17b1652e1b5b3a1c4a599e70a60d"
+  },
+  "initial_preflight_refusal_preserved": {
+    "bytes": 818,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-preflight-refusal-v01.json",
+    "sha256": "a0bb69b0af4f9257b60aba0d9375c5bd164d91e01205c824d6d586b430840b4a"
+  },
+  "ledger_endpoint_at_preparation": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1"
+  },
+  "limits_modified": false,
+  "lock_acquired": false,
+  "mutation_performed": false,
+  "output_attempt_created": false,
+  "passed": true,
+  "planned_ledger_after": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+  },
+  "protocol": {
+    "bytes": 64847,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-protocol-v03.json",
+    "sha256": "8e4e7120774f31f093bcba938a1a6e94cb5a2e21c9632328a693708396f692f2"
+  },
+  "protocol_frozen_mode": "0444",
+  "read_only_preflight_executed": true,
+  "read_only_preflight_exit_code": 0,
+  "read_only_preflight_passed": true,
+  "reservation_created": false,
+  "review_findings_fixed": [
+    "Guardian authenticated before import",
+    "Helper/protocol/guardian/review and producer endpoints fenced immediately before atomic write and completion",
+    "Original failure preserved if failure receipt saving also fails"
+  ],
+  "review_phase": "storage-root-migration",
+  "review_required_before_apply": true,
+  "schema": "ephemeral-root-migration-prepared-source-receipt/v3",
+  "source_files_modified": false,
+  "supersedes_source_receipt": {
+    "bytes": 2328,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-prepared-source-receipt-v02.json",
+    "sha256": "30dbce70d75f657921e53f8c5eb5000c704063d5ba4aa2210b30ee8c775740ef"
+  },
+  "training_started": false
+}

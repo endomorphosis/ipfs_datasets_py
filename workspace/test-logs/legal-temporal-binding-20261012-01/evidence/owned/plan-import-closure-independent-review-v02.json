@@ -1,0 +1,60 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json": {
+      "bytes": 37261,
+      "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-protocol-independent-review-v02.json": {
+      "bytes": 59112,
+      "sha256": "d32a46cbdaf4a344961e84eda327871acda1f329034954feac47074af49ae20f"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Read-only source/JSON and exact probe-receipt review; this reviewer did not execute the helper or any model/resource operation.",
+    "Probe qualifies only the exact four pure pre-Torch imports and ten actual package origins. Later numerical and external dependency graphs remain subject to existing runtime checks, not preapproved generically.",
+    "The old94 include historical resource-compatibility-v01 as recipe provenance; a new attempt-03 must obtain its own fresh runtime resource/protocol review.",
+    "No new training accuracy, checkpoint, completed result, statutory gold, all-family promotion, compiler success or HF payload is qualified.",
+    "Old plan/preparer/runner bytes and both unsuccessful actual attempts remain immutable. This dependency-only plan amendment grants no resource-admission authority."
+  ],
+  "observed_at_utc": "2026-10-12T01:54:47.035522+00:00",
+  "passed": true,
+  "schema": "temporal-binding-plan-import-closure-independent-review/v2",
+  "scope": {
+    "actual_new_validate_plan_validate_data_owner_origins_passed": true,
+    "actual_ten_package_origins_observed_in_numerical_denied_probe": true,
+    "distinct_plan_v02_only_two_maps_changed": true,
+    "exact_runner_bootstrap_and_four_pre_Torch_imports_replayed": true,
+    "later_loaded_package_origins_still_must_match_exact_frozen_map": true,
+    "new_artifact_count": 97,
+    "new_explicit_owner_count": 28,
+    "no_runtime_producer_autoallow_or_dynamic_dependency_minting": true,
+    "old_27_owner_pins_preserved": true,
+    "old_94_artifact_pins_preserved": true,
+    "old_owner_refusal_reproduced": true,
+    "reviewer_and_probe_model_optimizer_compiler_calls": 0,
+    "runner_0ae80_unchanged": true,
+    "same_scientific_data_initializer_optimizer_arms_seeds_budget_and_evaluation_fields": true,
+    "single_missing_pure_producer": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator"
+  }
+}

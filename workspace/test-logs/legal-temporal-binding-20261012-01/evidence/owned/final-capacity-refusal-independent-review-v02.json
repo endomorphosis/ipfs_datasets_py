@@ -1,0 +1,61 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_preparation_claim_closeout_refusal.py": {
+      "bytes": 9957,
+      "sha256": "5cbaf32f5b1b52524cc4b61bd69f4fd10ceadda50af9b609adb05c66aab1ade7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/failure-primary.json": {
+      "bytes": 1159,
+      "sha256": "0b09cc3b40070c4eb505e3386ad8bf636ee3e814fb4051c1cafc9c9e91c3c657"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-failure-independent-review-v01.json": {
+      "bytes": 4945,
+      "sha256": "b1ebbf3dc9e2e62a5fc3e5917ecc2e99740fcadcbef70d42b37ad718f8e6bfbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-census-after-closeout-refusal-v02.json": {
+      "bytes": 119537,
+      "sha256": "7453d509874f1370c231cf87e42ab4487c6ce3e0b32168f5904dc48d8742a949"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 14937,
+      "sha256": "7359cbd5bdb9ee6234cadb03b5f9a9840c4c63c5bbddd4b7473941e0319fc06f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6138012,
+      "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+    },
+    "/tmp/ipfs-datasets-resource-scheduler-1000.json": {
+      "bytes": 1356,
+      "sha256": "1d007288744628626aa6c3b5e5cb7cd65b26e3f3934c9c36f42251077d0c2fa9"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Closing capacity is an observed shared-root snapshot, not a physical disk exhaustion or continuous resource claim.",
+    "The full still-charged policy blocks own0350 release and further fitting under observed state. Hypothetical subtraction neither permits mutation nor removes the remaining cap excess.",
+    "No cap raise, foreign claim expiration, output deletion or automatic retry is authorized. A later external capacity change requires fresh observations and a newly reviewed decision.",
+    "Source/test/dependency-fix/evidence publication proceeds independently; there are no new weights, completed fit panels or statutory accuracy measurements.",
+    "Reviewer performed no model, compiler, owner API, lock, scheduler client, claim mutation or network operation."
+  ],
+  "observed_at_utc": "2026-10-12T02:01:52.429810+00:00",
+  "passed": true,
+  "schema": "temporal-binding-final-capacity-refusal-independent-review/v2",
+  "scope": {
+    "actual_existing_API_closeout_refused_before_write": true,
+    "additional_request_bytes": 0,
+    "all_513_bodies_and_prior512_c6_preserved": true,
+    "charged_bytes": 147483706183,
+    "current_own_group_empty_and_lease_absent": true,
+    "exact_ledger_scheduler_root_source_endpoint_fences": true,
+    "exact_owner_compatible_readonly_shared_root_census": true,
+    "full_outstanding_reservations_bytes": 48381777216,
+    "hypothetical_own_release_still_over_cap": true,
+    "no_third_training_or_administrative_retry_authorized": true,
+    "observed_apparent_bytes": 99101928967,
+    "observed_excess_bytes": 2483706183,
+    "original_511_bodies_and_101_retained_claims_unchanged": true,
+    "own0350_retained200MB_counted_once": true,
+    "public_private_body_exclusion_verified": true,
+    "unchanged_cap_bytes": 145000000000
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "actual_updates": 0,
+  "data_export": {
+    "bytes": 4972708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-export-v01.json",
+    "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+  },
+  "findings": [],
+  "model_calls": 0,
+  "numerical_imports_denied": true,
+  "passed": true,
+  "plan": {
+    "bytes": 37261,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json",
+    "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+  },
+  "schema": "temporal-contrast-actual-fresh-export-preflight/v1"
+}

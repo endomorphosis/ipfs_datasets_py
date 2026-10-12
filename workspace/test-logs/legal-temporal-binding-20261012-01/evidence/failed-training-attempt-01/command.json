@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "/home/barberb/.local/bin/python",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+    "--plan",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json",
+    "--output",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/results"
+  ],
+  "candidate_pythonpath": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets",
+  "cwd": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets",
+  "model_authority": false,
+  "no_cuda": true,
+  "no_proof_workers": true,
+  "resources": {
+    "admission_timeout_seconds": 120,
+    "child_deadline_seconds": 300,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "ledger_lock_timeout_seconds": 60,
+    "memory_mb": 1536,
+    "storage_bytes": 200000000
+  },
+  "startup_gate": "owned Python leader waits for custody and watchdog before exec"
+}

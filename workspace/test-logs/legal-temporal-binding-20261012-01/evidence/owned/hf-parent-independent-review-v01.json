@@ -1,0 +1,59 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-download-v01.log": {
+      "bytes": 193,
+      "sha256": "0c67d522579779a74776c166fe49dc9d34e564238f4ded2f32a428f1c97902cb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-live-intake-v01.json": {
+      "bytes": 532,
+      "sha256": "76d0a44e3736eca441ba26664e76c4c779d8549e9c28ca9caea4098908e35772"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-readback-receipt-v01.json": {
+      "bytes": 1330,
+      "sha256": "7557dcc615d406404deb4c63e3d611e9b6647eee1fb0314064e2e042e53b3c8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-readback-v01/releases/20261011-retained-raw384-pointer-v1/checkpoints/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Independent hashing of one already downloaded immutable CLI readback plus the retained local parent; this reviewer made no network call or model restore.",
+    "One matching model file does not certify every remote model weight or any new training result.",
+    "Remote immutable endpoint is joined through root-authored model_info/download receipts and the independently recomputed ordinary Git blob identity; no Hugging Face mutation is qualified.",
+    "Only the intake metadata, CLI log, readback receipt and this review may be copied into Git; checkpoint bytes/cache remain local."
+  ],
+  "observed_at_utc": "2026-10-12T01:16:40.180270+00:00",
+  "passed": true,
+  "public_contribution_allowlist": [
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-live-intake-v01.json",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-readback-receipt-v01.json",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-download-v01.log",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-independent-review-v01.json"
+  ],
+  "public_contribution_exclusions": [
+    "hf-parent-readback-v01/** including the downloaded checkpoint and Hugging Face cache metadata",
+    "The local prior warm checkpoint body; only its pin is evidence here"
+  ],
+  "schema": "temporal-binding-hf-parent-independent-review/v1",
+  "scope": {
+    "Hub_mutations": 0,
+    "all_remote_weights_audited": false,
+    "bytes": 2744449,
+    "checkpoint_restore": false,
+    "downloaded_parent_equals_unchanged_local_warm_parent": true,
+    "immutable_revision": "a2c8aa64d8c363eb796438b385c14058e607a5ec",
+    "model_calls": 0,
+    "new_weights_produced": false,
+    "one_remote_file": "releases/20261011-retained-raw384-pointer-v1/checkpoints/source_only-1729/checkpoint-400.json",
+    "ordinary_git_blob_sha1": "8564c9636bd9c6e6910b558cb3c11c222fd92358",
+    "raw_checkpoint_read_only": true,
+    "raw_sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb",
+    "repository": "Publicus/legal-ir-autoencoder"
+  }
+}

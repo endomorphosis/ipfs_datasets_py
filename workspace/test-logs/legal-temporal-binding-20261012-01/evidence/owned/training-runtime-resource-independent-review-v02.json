@@ -1,0 +1,228 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_preparation_refusal_v02.py": {
+      "bytes": 6310,
+      "sha256": "3d661e29cf3de283308d4927724ea90572699c69a9b93b21d28f8725af20c7a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_training_runtime_resources_v02.py": {
+      "bytes": 23229,
+      "sha256": "47bc21159d2dbf0f8b1f3a7c4331ac12b5aadcc4124e5572efb9995583b86a0d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/resource-compatibility-v02.json": {
+      "bytes": 6800,
+      "sha256": "648dba36a753fc147451c7fd2a56eff96d7e31fcc9f49eaee4d3c56031e660a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/runtime-resource-audit-procedure-v04.json": {
+      "bytes": 92731,
+      "sha256": "c90a067987638d5f1149e4eeff6360f3cf2b40776501b24debd0567caf1b3315"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-preparation-refusal-audit-v02.json": {
+      "bytes": 7062,
+      "sha256": "d0c4e4ebf0ed3b7b0e2d64b7fbd4c4c96d897722ac881c8def5c7c6ccf69043c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-protocol-independent-review-v02.json": {
+      "bytes": 59112,
+      "sha256": "d32a46cbdaf4a344961e84eda327871acda1f329034954feac47074af49ae20f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-runtime-resource-audit-v02.json": {
+      "bytes": 15579,
+      "sha256": "b1d5d6b8453f97e5428391faeaa46e46a11baf21cc061b4f78b38079fe966346"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6138012,
+      "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/child-exit.json": {
+      "bytes": 76,
+      "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/failure-primary.json": {
+      "bytes": 1366,
+      "sha256": "1c78826718d0498bf7498dd3183a9b24c612d73dfa13316def22d894dafe1605"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/guardian-exit.json": {
+      "bytes": 1763,
+      "sha256": "f5f233dfb6d9732fac2f7976b553bd62ae270229c31557fa08d299197e36582b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/pre-admission.json": {
+      "bytes": 8005,
+      "sha256": "cbd0614f02d3774266bf29a0f15ab1b39678a79722863fba6615edeabe0637b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/resources-final-failure.json": {
+      "bytes": 718,
+      "sha256": "8db4574d3f969060b3af6eecb5f64719a8b0b90679cb5ab74e5c9dbaa99011cf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child-exit.json": {
+      "bytes": 74,
+      "sha256": "9b7a72ebc4e2af2e8ccf0d0372aa5168bd7bb944e14ea10fa7df79685fd4f7bf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "cb99c763f1dbeef6cf51c171561e3fc5f5d751d23f08543f7f75ac22a39256c0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/command.json": {
+      "bytes": 1057,
+      "sha256": "fed66904f382a94721667a42dbb489ace108bb236fb6a76fe545d9826a1c3008"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/failure-primary.json": {
+      "bytes": 4576,
+      "sha256": "48166406b34545cb75dce28c4368533094ea8f6bfc3d5a14e8bfdc6779961aad"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/group-rss-observations.jsonl": {
+      "bytes": 7473,
+      "sha256": "a69a7d8000bdf1bcd4e2f6170e0efcdf450adb66d2189380df496e33702280da"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/group-rss-summary.json": {
+      "bytes": 1609,
+      "sha256": "8a0572c7d2f443e2571e9080d246c432b70d5917a77487ef25d607fff9716a19"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/guardian-exit.json": {
+      "bytes": 4544,
+      "sha256": "48caae79f732ca10aba8883e215f1b95781e698051e3591a2413604c8d4939ef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "4f4cddab6f0b09b4d3dc9e151225f061bf13f3380856b21c2bf80fcd00e1efdc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/lease-observations.jsonl": {
+      "bytes": 16852,
+      "sha256": "cb9022cc610bc2749a4bf1ed93800b67876e8765b093acb97d8fc0e22fbd013e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "706d8043c6f583633baf71bd60c552a6f49ccff50d62f1cd80fcb3c26955ac1c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/resources-final-failure.json": {
+      "bytes": 4027,
+      "sha256": "90cac4ed770516f86aff8af57e125abf5c2cd9bb8e4633857c247945cb2c3a77"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "6e5f0089cecb720583d29f5274e9e2859d2ee24ccd1cc8ff46bb4c27fef6859a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/child-exit.json": {
+      "bytes": 72,
+      "sha256": "efe6e5323a6f07ccb773801a858afa7f20cd6eff3e30a2809490523838c0e9b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/child-identity.json": {
+      "bytes": 43,
+      "sha256": "db748f3c8f5538695c43fba026c33d42e7a686ec7ccd3c87b091bf1556de54f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/child.log": {
+      "bytes": 907,
+      "sha256": "153b1dd9e8a00eb09a7ab007618087cd53996a095447e20151004840997f1440"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/command.json": {
+      "bytes": 1057,
+      "sha256": "15c5a71c49308f0b4d598b7ebd11768a8774cd87fa743b88ecccd991be7a85d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/failure-primary.json": {
+      "bytes": 4849,
+      "sha256": "aeebdb470f098dadae5ca51d8edd26c482216f5ba8a345252370d607140d54cc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/group-rss-observations.jsonl": {
+      "bytes": 8998,
+      "sha256": "0e09196ef193afd238cb473bf68b57ca367f46a31726cd660af192a38ddeecbb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/group-rss-summary.json": {
+      "bytes": 1734,
+      "sha256": "71ecfc9bb68f9b3e0779a653148095052a11c8416deee902dfa3255672d15ff7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/guardian-exit.json": {
+      "bytes": 4379,
+      "sha256": "4e592e85d6d6ac35c924958bd44aabc213cd7035b5d2c722ce5a0ef06308fde2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "3c45ba001f5e831a0a23c0e99b2b2f0f13b6d3f605a9634d20d3e849cebdc4df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/lease-observations.jsonl": {
+      "bytes": 17872,
+      "sha256": "0e140548787d6bd43f777179d1fc4c87f8d6967b3e4c7b59a09482a5dc27e207"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "b95c83749ecfc90362c828f976600e48b9bb258118b5dd9631817313dc967a2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/resources-final-failure.json": {
+      "bytes": 4598,
+      "sha256": "77f90f796d34ba6616bd22f9b2889262d23b5b43603dad1b264a0c1a3926f772"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/resources-start.json": {
+      "bytes": 2538,
+      "sha256": "ecbf46b25ba6bb2e175a3023d41f32b9c512933de8723c5ad9254918562aac63"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/results/child-failure.json": {
+      "bytes": 755,
+      "sha256": "cc2c0c75aecc90129a83aad0bb31eca29071e49fbc9398265da92d6a5ceec1a9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "8239caa58b612061de8302db45036b45df98504d7ae8264cb8fa25973bc5060e"
+    },
+    "/tmp/ipfs-datasets-resource-scheduler-1000.json": {
+      "bytes": 1356,
+      "sha256": "1d007288744628626aa6c3b5e5cb7cd65b26e3f3934c9c36f42251077d0c2fa9"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Actual failure qualified, not successful completed64 training. A nonzero sampled model-permission RSS phase describes a live authorized Python child, not a numerical/model call.",
+    "Zero runner numerical/model calls are inferred from exact pinned failure stack/order, preparation-state zero counters/no saved states, and the exact four-import numerical-denied pure replay. No independent numerical-call instrumentation is claimed.",
+    "Historical checkpoint bytes were already hash-read through opening artifact checks; historical checkpoint JSON parsing, reconstruction and restore were not reached.",
+    "All prior512 record bodies and both old failed attempts were independently rehashed; only new0350 claim was added by authorized attempt and remains retained until separately reviewed exact existing-API reconciliation.",
+    "No numerical, compiler, checkpoint restore, scheduler client, lock, claim mutation, network or HF call by this reviewer.",
+    "Runtime review is a failure-preservation receipt and cannot pass the future successful-result/HF helper completed-outcome gates."
+  ],
+  "observed_at_utc": "2026-10-12T01:56:13.173577+00:00",
+  "passed": true,
+  "schema": "temporal-binding-training-runtime-resource-independent-review/v2",
+  "scope": {
+    "actual_model_phase_RSS_not_used_to_infer_model_calls": true,
+    "actual_returned_optimizer_updates": 0,
+    "both_previous_failed_attempts_complete_unchanged": true,
+    "complete_terminal_artifact_bytes": 61141,
+    "complete_terminal_artifact_count": 15,
+    "current_child_group_empty": true,
+    "data_JSON_parse_line_not_reached": 528,
+    "exact_v02_pre_admission_review_plan_runner_guardian_joined": true,
+    "explicit_runner_Torch_import_line_not_reached": 556,
+    "failed_before_explicit_runner_Torch_import": true,
+    "failed_before_model_gate": false,
+    "failure_runner_line": 527,
+    "gate_permission_opened": true,
+    "guardian_child_returncodes": [
+      1,
+      1
+    ],
+    "in_progress_arm_updates_unknown": false,
+    "independent_numerical_call_trace_available": false,
+    "leader_reaped": true,
+    "new_own_claim_retained": true,
+    "new_own_reservation_id": "0350dfb651f943178d7b1cbc2113443e",
+    "no_completed_summary_or_checkpoint_or_HF_payload": true,
+    "old_511_plus_released_c6_512_bodies_unchanged": true,
+    "outcome": "failed_preparation_producer_closure",
+    "own_lease_absent": true,
+    "parent_JSON_parse_line_not_reached": 531,
+    "physical_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02",
+    "runner_model_calls_inferred_zero_from_exact_source_trace_and_pure_probe": true,
+    "saved_model_states": []
+  }
+}

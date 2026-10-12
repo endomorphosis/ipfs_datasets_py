@@ -1,0 +1,761 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/canonical-intake.json": {
+      "bytes": 643,
+      "sha256": "302eb7af14e55cb2e2b7a28c70729aeec31b62d9caa7949f387604d6689b3e63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/final-parallel-integration-review-v01.json": {
+      "bytes": 19636,
+      "sha256": "d31bc9fe3d0947dc8e269443ed240e1a0cfa9e3a4a5b7e128078e678f5c46ba0"
+    }
+  },
+  "distinct_recoveries": [
+    {
+      "branch_only_against_prior_main_count": 48,
+      "branch_only_commits": 48,
+      "commit_object_retained": true,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "outside_intake_ancestry": true,
+      "refs": [
+        {
+          "observed": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "prior_observed": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "ref": "refs/heads/publication/main-20261004/datasets"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "observed": {
+            "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+            "branch": "refs/heads/publication/main-20261004/datasets",
+            "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+          },
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+        }
+      ],
+      "repo": "source"
+    },
+    {
+      "branch_only_against_prior_main_count": 50,
+      "branch_only_commits": 50,
+      "commit_object_retained": true,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "outside_intake_ancestry": true,
+      "refs": [
+        {
+          "observed": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "prior_observed": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "ref": "refs/heads/publication/main-refresh-20261004/datasets-01"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "observed": {
+            "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+            "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+            "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+          },
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        }
+      ],
+      "repo": "source"
+    },
+    {
+      "branch_only_against_prior_main_count": 5,
+      "branch_only_commits": 5,
+      "commit_object_retained": true,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "outside_intake_ancestry": true,
+      "refs": [
+        {
+          "observed": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "prior_observed": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "ref": "refs/heads/publication/main-20261004/root-02"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "observed": {
+            "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+            "branch": "refs/heads/publication/main-20261004/root-02",
+            "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+          },
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+        }
+      ],
+      "repo": "root"
+    },
+    {
+      "branch_only_against_prior_main_count": 4,
+      "branch_only_commits": 4,
+      "commit_object_retained": true,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "outside_intake_ancestry": true,
+      "refs": [
+        {
+          "observed": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "prior_observed": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "ref": "refs/heads/publication/main-20261004/root-03"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "observed": {
+            "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+            "branch": "refs/heads/publication/main-20261004/root-03",
+            "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+          },
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+        }
+      ],
+      "repo": "root"
+    },
+    {
+      "branch_only_against_prior_main_count": 6,
+      "branch_only_commits": 6,
+      "commit_object_retained": true,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "outside_intake_ancestry": true,
+      "refs": [
+        {
+          "observed": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "prior_observed": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "ref": "refs/heads/publication/main-refresh-20261004/root-01"
+        }
+      ],
+      "registered_worktree_endpoints": [
+        {
+          "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "observed": {
+            "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+            "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+            "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+          },
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        }
+      ],
+      "repo": "root"
+    }
+  ],
+  "execution": {
+    "canonical_indices_touched": false,
+    "compiler_executed": false,
+    "ledger_bodies_read": false,
+    "models_loaded": false,
+    "network_accessed": false,
+    "refs_mutated": false,
+    "source_edits": false,
+    "tests_rerun": false,
+    "training_executed": false
+  },
+  "findings": [],
+  "parallel_owner_review": {
+    "conflict_with_pure_opt_in_temporal_module": false,
+    "prior_work_retained_by_ancestry": true,
+    "root": "Docs 80/81 and the 19-file header-custody evidence prefix are parallel owner contributions. Their numerical, Docker, Lean/Z3 and GitHub billing claims remain those authors’ qualified historical evidence, not this LegalIR round’s validation. Both datasets and accelerator pins advanced; preserve newer accelerator.",
+    "root_changed_paths": 23,
+    "source": "Three paths preserve bounded child ownership and cleanup across outer exceptions; no LegalIR temporal/scope/family owner changed. This is a static read of their patch, not a rerun of their numerical qualification.",
+    "source_changed_paths": 3
+  },
+  "passed": true,
+  "proposed_source_paths": {
+    "ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "collides_with_parallel_changes": false,
+      "present_at_intake_main": false
+    },
+    "tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "collides_with_parallel_changes": false,
+      "present_at_intake_main": false
+    }
+  },
+  "repositories": {
+    "root": {
+      "baseline": {
+        "bytes": 1256,
+        "commit_content_sha256": "0f25ae1c3732188de2463e10950ac53d57c9cc68645650135184ed8175078ae4",
+        "parents": [
+          "9036a6d4ff06f7c56e681001a18c4130037f1917",
+          "f23fd713ab83ef2ed800c0b62e36edef7d80073f"
+        ],
+        "sha": "3762db604ceb0d2cc6b80dd52a94c3c5e7d225a4"
+      },
+      "baseline_ancestor_of_intake": true,
+      "changed_paths": {
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-archive-fixture.log": {
+          "after": {
+            "bytes": 6598,
+            "git_oid": "972fec129760adaa904b78811f2b4272ee6bcb5d",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "41586c75b78833c3537931ebd4eab8569f9315481179828d99f9ce9ee64c0ce6"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-custody-public-field.log": {
+          "after": {
+            "bytes": 4891,
+            "git_oid": "4d049430c58295fc62a7c0ccb787f08d8600e409",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "3dcb8a043311a3281c3f6faf7bd81517a761e29de2cac20c90f49ab6f97c5df6"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-custody-recipe.log": {
+          "after": {
+            "bytes": 5021,
+            "git_oid": "becb73127b9a647a8ece22d8ad7a951f6e6e454c",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "6a4caecda196e54c08c8975dde1b77aa0a6269210ec49a19358b3e42df9dc4ab"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-custody-tamper-fixture.log": {
+          "after": {
+            "bytes": 4766,
+            "git_oid": "a1d72a7c0d785b9fad5b56484c415883d77aa63a",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "0a86bb1cf70a737befcbbd83d509b2ec5ce8119039e8de63a17728dd36bd456e"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-docs-shell.log": {
+          "after": {
+            "bytes": 873,
+            "git_oid": "90ba810b1a5c0622e0e69763be4b849f0a7a1a5e",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "6465baa8624e327aa3d4cdec593fcc5accaae12517ed44c7af578fc1112fcb7e"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-pure-public-field.log": {
+          "after": {
+            "bytes": 5143,
+            "git_oid": "5048a10a7f2f0f9880e078a4dc8e50a6f2020bce",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "82b616156379074fe6bdbef68c064862ec8f59a835528635fa0dec9b90be508f"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-pure-source-guard.log": {
+          "after": {
+            "bytes": 4934,
+            "git_oid": "838794eb7b252791417e618d8416443752c317f5",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "05ba9c5054d8dd1d82d107e04a44c7000df6f7280f12e8ee6aeaa3705eba5fd9"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-real-deterministic-reference.log": {
+          "after": {
+            "bytes": 5424,
+            "git_oid": "5db0a45e531bb7f1a1580bf5476a681365b702b5",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "24282ffa8b40b8bcb66ebd839f64b04f7a8406e6faeb3163a0269320381b290b"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/attempt-regression-drift-boundary.log": {
+          "after": {
+            "bytes": 5273,
+            "git_oid": "e60e31e80c806a86746224ebc32a94cab9988fb2",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "9a2b7b2e58595fcaeedeb054bf2b922b6a6bcc5ae1b8bf97e8d4c104c019dc0d"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/commands.json": {
+          "after": {
+            "bytes": 1933,
+            "git_oid": "b7a01d931b7c1a88ea2bae84446d2e895b5df068",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "4524e8bfafde16c7e032e87b9cce23583223d4632877fdbe7d6082f92506e9b2"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/docs-gates.log": {
+          "after": {
+            "bytes": 414,
+            "git_oid": "35ff14996c1bcf7361490ac91f5a4eb70a2f0e1e",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "b70b46ca47246be9eda4f85649fcf1f1812c43f7a1d13d2534555878f543b9e4"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/qualification.json": {
+          "after": {
+            "bytes": 7902,
+            "git_oid": "6f50db8ac85ded569edc2ea36fa54f7c17183808",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "ce9fe3bbb00dc8def6e8406ca05fb71e118efb12819b9059b875f447b1d68c69"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/source-manifest.json": {
+          "after": {
+            "bytes": 2848,
+            "git_oid": "48ca18b4b5f05ad14513c895a1f9e4560ba223fa",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "77122564947a4236e0f9c4a6fe265e2e4319a1aa77ed82d545e36195083304a7"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-custody-final.log": {
+          "after": {
+            "bytes": 2784,
+            "git_oid": "f053d8118b949a7657bd0259a8348af256d49a23",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "1cb8b214f334bbaac4dfd3ed7044414e48969c53ab3aed4b57485ec54cbf69d3"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-merged-archive.log": {
+          "after": {
+            "bytes": 3824,
+            "git_oid": "195fad4d31a904082023df17a56e182fb3abcba8",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "f1c62307db94087196824e0baef9b692a5e79d8ddf0e2c328fe9b23db05ec273"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-merged-real-restart.log": {
+          "after": {
+            "bytes": 1709,
+            "git_oid": "ff09fc330ad1fe575c8234be470e0f57957c1d9e",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "ea610e9fabb233b82e1fbf0afb75f56baadf5285b43f3114922f909e344a610c"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-pure-final.log": {
+          "after": {
+            "bytes": 2692,
+            "git_oid": "443d52d6117f8d0a241ad03c7c45f24876987b36",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "65358524a77045b163da17263802278d968b455e94310b7fb68c12120e637540"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-recipe-final.log": {
+          "after": {
+            "bytes": 2694,
+            "git_oid": "9523ee25f0733e838a0ebeae91cb7ab08d926772",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "91b2475310bda11f49bd14ac903f2e8772dcfa20da1956edb3bcf02fa6994273"
+          },
+          "before": null
+        },
+        "artifacts/supervisor-header-proof-key-custody-20261011/tests-regression-final.log": {
+          "after": {
+            "bytes": 3977,
+            "git_oid": "f6cca6023d3ef93ad1410f5fc4b394aaed383cb1",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "0de8082bba0fb6bd5999571f10b2625bcd752ed4beede6c0913b88021e07cf28"
+          },
+          "before": null
+        },
+        "external/ipfs_accelerate": {
+          "after": {
+            "git_oid": "58d040065dd16acc5f44eae54c56ac533090b5ae",
+            "kind": "commit",
+            "mode": "160000"
+          },
+          "before": {
+            "git_oid": "7d67f14dc275237d815cb843c8772d95a7e2c8d1",
+            "kind": "commit",
+            "mode": "160000"
+          }
+        },
+        "external/ipfs_datasets": {
+          "after": {
+            "git_oid": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3",
+            "kind": "commit",
+            "mode": "160000"
+          },
+          "before": {
+            "git_oid": "2a1794e388e88389c48966fb78a1b74c26a0c832",
+            "kind": "commit",
+            "mode": "160000"
+          }
+        },
+        "implementation_plan/docs/80-supervisor-numerical-runtime-successors-2026-10-11.md": {
+          "after": {
+            "bytes": 3944,
+            "git_oid": "e689e92a9baad3bd7dff262112bd2398dfefae27",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "516910e4326e46ae21339e450bea77eaffe59a357cf0eb9cccf616696ff59c26"
+          },
+          "before": null
+        },
+        "implementation_plan/docs/81-supervisor-header-proof-key-custody-2026-10-12.md": {
+          "after": {
+            "bytes": 5391,
+            "git_oid": "5349e91cd87b64f0c27ef15d9f54364402ecd6b4",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "65a55f6a19c467c7f6582bd35b43df728d72fb2fd9f9e0f26fa03cba64c8e058"
+          },
+          "before": null
+        }
+      },
+      "deleted_paths": [],
+      "intake": {
+        "bytes": 291,
+        "commit_content_sha256": "6cc0cdc7f464adb5b458d2115815366c3c9abb25a9313756ee000e35dd5cdf1e",
+        "parents": [
+          "b45f0258eb615e4f8fb23e223fc09150cef8178b"
+        ],
+        "sha": "e059c70b6826398030e3ab43461e658e615574f4"
+      },
+      "intake_registered_head": "e059c70b6826398030e3ab43461e658e615574f4",
+      "new_commits": [
+        {
+          "bytes": 287,
+          "commit_content_sha256": "2b883967c9bd4f85d229a1575761bd5019db475246ecf235244dc494ebc31dfc",
+          "parents": [
+            "3762db604ceb0d2cc6b80dd52a94c3c5e7d225a4"
+          ],
+          "sha": "b45f0258eb615e4f8fb23e223fc09150cef8178b"
+        },
+        {
+          "bytes": 291,
+          "commit_content_sha256": "6cc0cdc7f464adb5b458d2115815366c3c9abb25a9313756ee000e35dd5cdf1e",
+          "parents": [
+            "b45f0258eb615e4f8fb23e223fc09150cef8178b"
+          ],
+          "sha": "e059c70b6826398030e3ab43461e658e615574f4"
+        }
+      ],
+      "unchanged_prior_tree_entries": 36275
+    },
+    "source": {
+      "baseline": {
+        "bytes": 1248,
+        "commit_content_sha256": "8bd1760982873f0ca94f9c865d1d9a3f4d1d51f5899505b984f0be47199fa7e6",
+        "parents": [
+          "68374b51032b7a9fa795a79829e4d8eb2f2a5ca4",
+          "3555a2153f299e3ff84945a0a51d275efa324831"
+        ],
+        "sha": "2a1794e388e88389c48966fb78a1b74c26a0c832"
+      },
+      "baseline_ancestor_of_intake": true,
+      "changed_paths": {
+        "docs/software_contracts/numerical_selection_384.md": {
+          "after": {
+            "bytes": 8016,
+            "git_oid": "74426aaa272f697253b8cd449ddb54fc57ca6644",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "fd7b308bb317b502f6f29ad9634a8c8fa0ef04f95071083426f7d0498b0e446b"
+          },
+          "before": {
+            "git_oid": "ac8a183eba86e843b40f1a6aa15559493d586f2f",
+            "kind": "blob",
+            "mode": "100644"
+          }
+        },
+        "ipfs_datasets_py/logic/backends/codebase_process.py": {
+          "after": {
+            "bytes": 57509,
+            "git_oid": "fd22d4d86cf961b19e325716885447f764dfe589",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "297f9b0c88501abd33181c259d302f2f9d67c48b651884aca58a45fe6107ad34"
+          },
+          "before": {
+            "git_oid": "e8ac623bc1ea20fd75387f58e8ee0dfbc35de3c2",
+            "kind": "blob",
+            "mode": "100644"
+          }
+        },
+        "tests/unit/logic/backends/test_codebase_process_parallel_limits.py": {
+          "after": {
+            "bytes": 8864,
+            "git_oid": "b797de1e1bc1d2a1a1bed4c5ea139806499e274f",
+            "kind": "blob",
+            "mode": "100644",
+            "sha256": "6f864cd289f7d028cafead94a7114bb4d1e8cde6a87ea53fbc4482a3e2a9b72b"
+          },
+          "before": {
+            "git_oid": "d7b45f7761a1e01ef7dd1cd229693cfff55a64be",
+            "kind": "blob",
+            "mode": "100644"
+          }
+        }
+      },
+      "deleted_paths": [],
+      "intake": {
+        "bytes": 281,
+        "commit_content_sha256": "1a5feec2012e7f9b51bc20b9d7cc89f4d5d4808e844159c37ef2da422028d2d3",
+        "parents": [
+          "2a1794e388e88389c48966fb78a1b74c26a0c832"
+        ],
+        "sha": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3"
+      },
+      "intake_registered_head": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3",
+      "new_commits": [
+        {
+          "bytes": 281,
+          "commit_content_sha256": "1a5feec2012e7f9b51bc20b9d7cc89f4d5d4808e844159c37ef2da422028d2d3",
+          "parents": [
+            "2a1794e388e88389c48966fb78a1b74c26a0c832"
+          ],
+          "sha": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3"
+        }
+      ],
+      "unchanged_prior_tree_entries": 30144
+    }
+  },
+  "root_gitlinks": {
+    "baseline_all9": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "7d67f14dc275237d815cb843c8772d95a7e2c8d1",
+      "external/ipfs_datasets": "2a1794e388e88389c48966fb78a1b74c26a0c832",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "intake_all9": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "58d040065dd16acc5f44eae54c56ac533090b5ae",
+      "external/ipfs_datasets": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "intent": "Only external/ipfs_datasets may be advanced by this LegalIR contribution; all eight other gitlinks, including the newer accelerator pin, must match the actual root merge first parent."
+  },
+  "schema": "legal-temporal-binding-parallel-main-review/v1",
+  "scope": "independent read-only immutable intake main progress and preserved historical endpoints; no source compatibility or model/proof qualification",
+  "selected_history_retention": {
+    "root": [
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+        "sha": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+        "sha": "30e61092341b47b4e49eb30df443fd607536333a"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+        "sha": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+        "sha": "739e7088a203a4b307d96192e489a88dbf9177b1"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+        "sha": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+        "sha": "00130686f43e35105e2ee98e5a36428f3aff3538"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+        "sha": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+        "sha": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+        "sha": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/main",
+        "sha": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6"
+      }
+    ],
+    "source": [
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+        "sha": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+        "sha": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+        "sha": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+        "sha": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+        "sha": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+        "sha": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+        "sha": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+        "sha": "575a129f19068d58d66cc8119e85c3d23faa560a"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+        "sha": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+        "sha": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+        "sha": "004887f6250b083e0b095d5ac7563bc5bb792491"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+        "sha": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-native-cache-20261011-01",
+        "sha": "f3901341cdde9b4485315327d5ef06abd1485b11"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+        "sha": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+        "sha": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+        "sha": "1530efd07032bac88229c6c97ca5994d498e6216"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-structured-training-20261011-01",
+        "sha": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+        "sha": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+        "sha": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+        "sha": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/codex/source-v2-warm-start-20261004",
+        "sha": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+      },
+      {
+        "ancestor_of_intake_main": true,
+        "commit_object_retained": true,
+        "ref": "refs/heads/main",
+        "sha": "4af461728329cdad4bfb910ab878d016ce279e54"
+      }
+    ]
+  }
+}

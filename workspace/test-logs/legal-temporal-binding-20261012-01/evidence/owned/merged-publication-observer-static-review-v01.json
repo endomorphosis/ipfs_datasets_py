@@ -1,0 +1,32 @@
+{
+  "actual_publication_reviewed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/record_merged_publication.py": {
+      "bytes": 6055,
+      "sha256": "e6427ee0eb721a27943f7d89660d7fc1ef298529d296e24b96384141189bff35"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Static source review only; no GitHub or Git observer execution by this reviewer.",
+    "A root-selected map must already match independently reviewed actual staged objects; this helper is not authority to stage/commit/merge.",
+    "A later final independent audit must verify actual first-parent ancestry and retention of latest reviewed root afed9ed3\u2026/accelerator ab2938\u2026 plus source fd4be\u2026 and historical selected/recovery endpoints.",
+    "Actual hosted CI observations remain separate and may not be labeled passing from merge metadata.",
+    "No autoformalization accuracy, model, compiler or continuous custody qualification."
+  ],
+  "observed_at_utc": "2026-10-12T01:51:13.387467+00:00",
+  "passed": true,
+  "schema": "temporal-binding-merged-publication-observer-static-review/v1",
+  "scope": {
+    "actual_PR_merged_head_equals_owned_HEAD": true,
+    "all_eight_other_root_gitlinks_preserved": true,
+    "complete_first_parent_tree_diff_equals_closed_objects": true,
+    "exact_expected_object_map_SHA_bounded_strict_JSON_required": true,
+    "exact_staged_mode_OID_bytes_SHA_verified": true,
+    "hosted_CI_pass_not_inferred": true,
+    "no_fetch_stage_commit_push_merge_or_canonical_index_commands": true,
+    "only_owned_exclusive_fsynced_receipt_written": true,
+    "ordinary_two_parent_merge_second_parent_equals_owned_head": true,
+    "read_only_two_isolated_Git_repositories_and_GitHub_PR_metadata": true
+  }
+}

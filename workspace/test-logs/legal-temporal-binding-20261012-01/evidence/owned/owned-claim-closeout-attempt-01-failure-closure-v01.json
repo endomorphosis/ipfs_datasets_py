@@ -1,0 +1,30 @@
+{
+  "actual_claim_changes": 0,
+  "actual_failed_files": {
+    "attempt-started.json": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-01/attempt-started.json",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "actual_model_calls": 0,
+  "actual_source_changes": false,
+  "correction_scope": "Writable fdopen custody and authenticated normal tempfile writer events only",
+  "failed_before_API_or_lock": true,
+  "ledger_before_and_after": {
+    "bytes": 6133274,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+  },
+  "ledger_unchanged": true,
+  "old_511_bodies_unchanged": true,
+  "own_c6_record_unchanged": true,
+  "passed": true,
+  "prior_attempt_reused": false,
+  "root_failure_log": {
+    "bytes": 1578,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-claim-reconciliation-execution-v01.log",
+    "sha256": "a0784b00824ccc44e83f0eb909e0554f6cf9c7e8cd6c820370456ed05b20abba"
+  },
+  "schema": "owned-claim-closeout-attempt-01-failure-closure/v1"
+}

@@ -1,0 +1,196 @@
+{
+  "HF_mutation": false,
+  "Lake_executed_by_audit": false,
+  "absolute_peak_measured": false,
+  "actual_model_calls_known_zero": true,
+  "artifacts": {
+    "child-exit.json": {
+      "bytes": 74,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child-exit.json",
+      "sha256": "9b7a72ebc4e2af2e8ccf0d0372aa5168bd7bb944e14ea10fa7df79685fd4f7bf"
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child-identity.json",
+      "sha256": "cb99c763f1dbeef6cf51c171561e3fc5f5d751d23f08543f7f75ac22a39256c0"
+    },
+    "child.log": {
+      "bytes": 0,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/child.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "command.json": {
+      "bytes": 1057,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/command.json",
+      "sha256": "fed66904f382a94721667a42dbb489ace108bb236fb6a76fe545d9826a1c3008"
+    },
+    "failure-primary.json": {
+      "bytes": 4576,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/failure-primary.json",
+      "sha256": "48166406b34545cb75dce28c4368533094ea8f6bfc3d5a14e8bfdc6779961aad"
+    },
+    "group-rss-observations.jsonl": {
+      "bytes": 7473,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/group-rss-observations.jsonl",
+      "sha256": "a69a7d8000bdf1bcd4e2f6170e0efcdf450adb66d2189380df496e33702280da"
+    },
+    "group-rss-summary.json": {
+      "bytes": 1609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/group-rss-summary.json",
+      "sha256": "8a0572c7d2f443e2571e9080d246c432b70d5917a77487ef25d607fff9716a19"
+    },
+    "guardian-exit.json": {
+      "bytes": 4544,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/guardian-exit.json",
+      "sha256": "48caae79f732ca10aba8883e215f1b95781e698051e3591a2413604c8d4939ef"
+    },
+    "lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/lease-binding.json",
+      "sha256": "4f4cddab6f0b09b4d3dc9e151225f061bf13f3380856b21c2bf80fcd00e1efdc"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 16852,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/lease-observations.jsonl",
+      "sha256": "cb9022cc610bc2749a4bf1ed93800b67876e8765b093acb97d8fc0e22fbd013e"
+    },
+    "pre-admission.json": {
+      "bytes": 8001,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/pre-admission.json",
+      "sha256": "706d8043c6f583633baf71bd60c552a6f49ccff50d62f1cd80fcb3c26955ac1c"
+    },
+    "resources-final-failure.json": {
+      "bytes": 4027,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/resources-final-failure.json",
+      "sha256": "90cac4ed770516f86aff8af57e125abf5c2cd9bb8e4633857c247945cb2c3a77"
+    },
+    "scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01/scheduler-adoption.json",
+      "sha256": "6e5f0089cecb720583d29f5274e9e2859d2ee24ccd1cc8ff46bb4c27fef6859a"
+    }
+  },
+  "artifacts_durable_asserted": false,
+  "attempt_terminal_bytes": 53597,
+  "audit_checkpoint_restore": false,
+  "audit_claims_modified": false,
+  "audit_limits_modified": false,
+  "audit_locks_acquired": 0,
+  "audit_model_calls": 0,
+  "audit_optimizer_updates": 0,
+  "audit_scheduler_clients": 0,
+  "child_created": true,
+  "child_identity": {
+    "birth": "78423735",
+    "pid": 3855138
+  },
+  "child_launch_through_reap_wall_seconds": null,
+  "child_returncode": 125,
+  "continuous_custody_claimed": false,
+  "current_owned_group": {
+    "available": true,
+    "live_processes": 0,
+    "rss_bytes": 0
+  },
+  "failed_before_model_gate": true,
+  "final_reserved_attempt_bytes": null,
+  "finalized_accounting_excludes_later_terminal_receipts": false,
+  "findings": [],
+  "full_local_migration_backups_published": false,
+  "group_RSS_observation_count": 15,
+  "guardian_elapsed_seconds": 30.003330084960908,
+  "guardian_returncode": 1,
+  "helper": {
+    "bytes": 21185,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_training_runtime_resources.py",
+    "sha256": "2ec906645e70d40a2708cd97d6f41142db4986d8478ceacb4cdec7c9ae64da63"
+  },
+  "in_progress_or_unreported_partial_updates_unknown": false,
+  "kernel_hard_cap": false,
+  "leader_reaped": true,
+  "lease_id": "c3b0b7024e824a5e82a947ef4161f499",
+  "lease_observation_count": 17,
+  "ledger_after": {
+    "bytes": 6133274,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+  },
+  "ledger_before": {
+    "bytes": 6133274,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+  },
+  "model_phase_wall_seconds": null,
+  "observed_at_utc": "2026-10-12T00:52:04.838186+00:00",
+  "old_511_record_bodies_unchanged": true,
+  "old_record_count": 511,
+  "other_new_reservation_ids": [],
+  "outcome": "failed_or_refused",
+  "owned_lease_absent_at_observation": true,
+  "owned_record_body_sha256": "5229dac937e9f0bf876214826a243858e144d2bd2fe389094a15754c2056e580",
+  "owned_record_present": true,
+  "owned_record_status": "retained",
+  "owned_reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+  "passed": true,
+  "physical_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01",
+  "prior_failed_attempt_files": {
+    "child-exit.json": {
+      "bytes": 76,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/child-exit.json",
+      "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+    },
+    "failure-primary.json": {
+      "bytes": 1366,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/failure-primary.json",
+      "sha256": "1c78826718d0498bf7498dd3183a9b24c612d73dfa13316def22d894dafe1605"
+    },
+    "guardian-exit.json": {
+      "bytes": 1763,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/guardian-exit.json",
+      "sha256": "f5f233dfb6d9732fac2f7976b553bd62ae270229c31557fa08d299197e36582b"
+    },
+    "pre-admission.json": {
+      "bytes": 8005,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/pre-admission.json",
+      "sha256": "cbd0614f02d3774266bf29a0f15ab1b39678a79722863fba6615edeabe0637b5"
+    },
+    "resources-final-failure.json": {
+      "bytes": 718,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261011-01/resources-final-failure.json",
+      "sha256": "8db4574d3f969060b3af6eecb5f64719a8b0b90679cb5ab74e5c9dbaa99011cf"
+    }
+  },
+  "procedure": {
+    "bytes": 29510,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/runtime-resource-audit-procedure-v03.json",
+    "sha256": "44e859afcc047c8522a2610192ab6fe7f57f74739448d7aa597c96d3de8c2e2b"
+  },
+  "recorded_returned_prefix_updates": 0,
+  "resources": {
+    "admission_timeout_seconds": 120,
+    "child_deadline_seconds": 300,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "ledger_lock_timeout_seconds": 60,
+    "memory_mb": 1536,
+    "storage_bytes": 200000000
+  },
+  "runtime_completed_and_released_qualified": false,
+  "sampled_model_phase_peak_rss_bytes": null,
+  "sampled_peak_only": true,
+  "scheduler_after": {
+    "bytes": 1330,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "scheduler_before": {
+    "bytes": 1330,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "scheduler_endpoint_bytes_unchanged": true,
+  "schema": "temporal-binding-training-runtime-resource-audit/v1",
+  "semantic_accuracy": null,
+  "total_actual_updates_known_from_complete_summary": false,
+  "update_evidence_scope": "Recorded completed child summary and returned arm training reports; no new numerical replay or optimizer-update tracing"
+}

@@ -1,0 +1,72 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/docs/autoencoders/legal_temporal_occurrence_bindings_20261012.md": {
+      "bytes": 4510,
+      "sha256": "41d8d0c8eb26acccec29441110f86932b8c24caa999de3cf10d58df7307cd273"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": {
+      "bytes": 6908,
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "bytes": 23526,
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_duration_bound_qualified.py": {
+      "bytes": 11482,
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "bytes": 29623,
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-boundary-tests-v01.xml": {
+      "bytes": 64577,
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-new-boundary-tests-v02.xml": {
+      "bytes": 24775,
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-recipe-tests-v01.xml": {
+      "bytes": 7643,
+      "sha256": "8cff98086c1ad78fc22b691f81b831609b2d02050482b6847482e2c4e576bc12"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/workspace/implementation_plan/docs/82-legal-temporal-occurrence-bindings-2026-10-12.md": {
+      "bytes": 4510,
+      "sha256": "41d8d0c8eb26acccec29441110f86932b8c24caa999de3cf10d58df7307cd273"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Documentation and existing pinned code/test observations only; no execution by this reviewer.",
+    "Flat local explicit evaluation clocks with day/hour within/minimum durations; dates, business-day arithmetic, event-relative origins, binders, nested/shared attachments and unresolved coverage remain unsupported.",
+    "Structural integrity does not establish statutory meaning, reviewer/source/checkpoint authenticity, compiler success, all-family support or training accuracy.",
+    "Native preparation retains the existing qualified emitter; two existing real-Lake tests remain disabled.",
+    "An earlier reviewer receipt script stopped at a dict/list artifact-shape assumption before creating any receipt; corrected here without modifying reviewed inputs."
+  ],
+  "observed_at_utc": "2026-10-12T01:02:17.012453+00:00",
+  "passed": true,
+  "schema": "temporal-binding-guide-independent-review/v1",
+  "scope": {
+    "all_training_masks_zero_and_authority_limits_verified": true,
+    "api_signatures_and_expected_content_pins_verified": true,
+    "both_guide_bodies_equal": true,
+    "current_distinct_inert_passes": 417,
+    "current_four_source_test_pins_unchanged": true,
+    "disabled_real_Lake_cases": 2,
+    "exact_char_utf8_geometry_and_clock_type_checks_verified": true,
+    "import_time_and_pre_post_endpoint_fences_verified": true,
+    "none_required_only_lowering_consumer_verified": true,
+    "superseded_133_boundary_cases_excluded": true,
+    "unchanged_complete_native_output_preservation_verified": true
+  }
+}

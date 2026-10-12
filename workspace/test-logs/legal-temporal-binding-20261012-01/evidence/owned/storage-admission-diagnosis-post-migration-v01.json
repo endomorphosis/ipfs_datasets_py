@@ -1,0 +1,235 @@
+{
+  "accounting_policy": "Exact named-root apparent bytes + every outstanding reservation in full + requested bytes; no cached census reused",
+  "admission_guaranteed": false,
+  "automatic_retry_performed": false,
+  "capacity_arithmetic_feasible_at_observation": true,
+  "charged_bytes": 142920051128,
+  "child_created": false,
+  "claims_modified": false,
+  "continuous_custody_claimed": false,
+  "endpoint": {
+    "bytes": 66496,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-post-migration-v01.json",
+    "sha256": "e6221c1d109b1d5bec0bc142b6f4d16f0931bf97ae3700c740024d481e0b4787"
+  },
+  "feasible_at_observation": true,
+  "findings": [],
+  "historical_owner_read_refusal": null,
+  "inventory": {
+    "apparent_bytes": 94538273912,
+    "entry_count": 1354168,
+    "special_file_count": 5,
+    "symlink_count": 666
+  },
+  "inventory_seconds": 14.211969822994433,
+  "ledger": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+  },
+  "ledger_bytes_unchanged_during_inventory": true,
+  "limit_bytes": 145000000000,
+  "limits_modified": false,
+  "minimum_accounting_headroom_needed_bytes": 0,
+  "minimum_filesystem_free_bytes": 513872564224,
+  "mismatched_roots": [],
+  "model_calls": 0,
+  "new_attempt_prerequisites": [
+    "Fresh complete hash-bound experiment plan and independent review binding the new recorded root and ledger endpoint",
+    "Unique new attempt path; failed old attempt preserved",
+    "Fresh guardian source closure and scheduler/ledger endpoint review immediately before admission",
+    "Unchanged 2 CPU / 1536 MiB / one child / 200 MB / 300 seconds envelope",
+    "Guardian admission gate before any child/model",
+    "No training until actual admission succeeds"
+  ],
+  "observed_at_utc": "2026-10-12T00:42:15.648247+00:00",
+  "optimizer_updates": 0,
+  "outstanding_full_reservations_bytes": 48181777216,
+  "over_limit_bytes": 0,
+  "passed": true,
+  "physical_free_space_condition_satisfied": true,
+  "record_count": 511,
+  "recovery_workflow": {
+    "api_executes_claim_write": true,
+    "authorized_recovery_candidate_established": false,
+    "available_api": "Historical owner DaemonResourceReservation.release(artifacts_durable=True), explicitly audited legacy recovery; strict finalize requires full still-charged census before release",
+    "cap_increase_authorized": false,
+    "dead_PID_is_not_release_authority": true,
+    "deletion_required": false,
+    "mutation_performed": false,
+    "ordinary_API_rebinds_dead_owner": false,
+    "owner_verification": "_verify_owner_roots requires os.getpid() == original _owner_pid; creating a new object yields a new claim ID rather than adopting old claims",
+    "potential_claims_for_existing_owners_to_review": [
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67942731,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/training-r1"
+        },
+        "authority_verified": false,
+        "owner_pid": 1421156,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "4ca144ebfb780e5aa9e502fd7459f620052b00b20d00f8351aedaaa3829ef687",
+        "release_eligible": false,
+        "reservation_id": "474ee6b5ae784516ae1dab7ca38c8cc6",
+        "status": "retained",
+        "storage_bytes": 4000000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": null,
+        "authority_verified": false,
+        "owner_pid": 992205,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "e03e22df40369a099511732783f7a15474447ae6bc0d1a190137cdde5bdd41ab",
+        "release_eligible": false,
+        "reservation_id": "304467ad285444d1b28806057db0d17c",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67414409,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r2/owner"
+        },
+        "authority_verified": false,
+        "owner_pid": 987454,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "ab903fadf1fc079ec527f2c890265cb9338a8570ecd567086fb8d3baa7d99fd2",
+        "release_eligible": false,
+        "reservation_id": "59e2d6d1d77c412fa4a2e719eb3485d4",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67139412,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926/capture-r1"
+        },
+        "authority_verified": false,
+        "owner_pid": 3181298,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "f93d32a0d4d6e49a23e1513fbac4a427386c5a5914608fbdad632ee53fa7423f",
+        "release_eligible": false,
+        "reservation_id": "626a02434b7b4c569415731a25d3b9f9",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67414452,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r3/owner"
+        },
+        "authority_verified": false,
+        "owner_pid": 1006961,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "61ee2dbe72097b6451be5d7b17b7e84d578d56a7c1b24824440aed0ea6cb5fa4",
+        "release_eligible": false,
+        "reservation_id": "66ac618811f8466480bf876b28010108",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": null,
+        "authority_verified": false,
+        "owner_pid": 977720,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "97544e129cdf5acc7f7d89b79156342682d54aa9fb458c650b778282bebd2bb7",
+        "release_eligible": false,
+        "reservation_id": "88d024d77b9e4cc6beaf9cb0e596f00d",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 73295886,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-20261004/training-r1"
+        },
+        "authority_verified": false,
+        "owner_pid": 3186029,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "213478d8ac0eb27c3c000f1aa0f0b1a33723d6d00dca15cea4419e7b353cdb89",
+        "release_eligible": false,
+        "reservation_id": "9ff3b600b0be46e8842d05a62d149ba1",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67139775,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1"
+        },
+        "authority_verified": false,
+        "owner_pid": 3927785,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "17bfac0973e51a3a8de522c246787f0786effaff06cc2ff9a71a065753b38541",
+        "release_eligible": false,
+        "reservation_id": "aac1a959a09343f8b24040016fee2c4c",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": {
+          "device": 66306,
+          "inode": 67139807,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2"
+        },
+        "authority_verified": false,
+        "owner_pid": 4061722,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "8d41bc450e6f7162104a25ec23fa570ed6a18a7865f379dc5d68b5ee08702424",
+        "release_eligible": false,
+        "reservation_id": "b08a7cfa09c648e69851ca85c306f285",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      },
+      {
+        "artifacts_durable_verified": false,
+        "attempt_directory": null,
+        "authority_verified": false,
+        "owner_pid": 992206,
+        "owner_pid_present_at_observation": false,
+        "record_body_sha256": "ffd5e474b21dbe5f6fe95437532af52151de541592ef4132d4c8d5e010eee797",
+        "release_eligible": false,
+        "reservation_id": "ba3cba0ddfc64b44b88400a78b4da0ef",
+        "status": "retained",
+        "storage_bytes": 1500000000
+      }
+    ],
+    "required": [
+      "Established exact claim ownership and authorization",
+      "Authenticated original owner/child identities and absent live child group",
+      "Preserved ordinary attempt-root identities",
+      "Audited durable receipts and weights",
+      "Explicit lock-held owner release under the unchanged accounting policy",
+      "Fresh endpoint checks and independent experiment review before a new attempt"
+    ]
+  },
+  "requested_bytes": 200000000,
+  "reservation_acquired": false,
+  "root_identity_condition_satisfied": true,
+  "root_migration_completed_and_observed": true,
+  "root_migration_completion": {
+    "bytes": 58795,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/completion.json",
+    "sha256": "7f57397bd0cdbba0c89d27fb2b387f793a061a16b2f53c048682e53471a23769"
+  },
+  "schema": "temporal-binding-storage-admission-diagnosis/v1",
+  "status_counts": {
+    "released": 410,
+    "retained": 101
+  }
+}

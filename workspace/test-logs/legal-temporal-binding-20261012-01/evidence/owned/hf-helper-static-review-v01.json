@@ -1,0 +1,117 @@
+{
+  "API_calls": 0,
+  "artifacts": {
+    "/home/barberb/.codex/plugins/cache/openai-curated-remote/hugging-face/1.0.0/skills/cli/SKILL.md": {
+      "bytes": 14936,
+      "sha256": "ee85209886c4ec3d3d850489368be193d11a8a3fa589012b39a4a5bbf7c7da2e"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/huggingface_hub/_commit_api.py": {
+      "bytes": 41010,
+      "sha256": "a461120ec89ca5631e66772dfbbd7adf92a04dfbd4a32a24fe13e5f598082162"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/huggingface_hub/hf_api.py": {
+      "bytes": 487935,
+      "sha256": "444326f4016052dca2cc8ead904cba8255f601aefe4c7efeb96865865d2ad1f1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json": {
+      "bytes": 37261,
+      "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v01.md": {
+      "bytes": 4935,
+      "sha256": "aebd1b47058f34a2f707fb03a371c0274fe769ef14598b0852a0b809bc5e31c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-implementation-handoff-v01.json": {
+      "bytes": 1502,
+      "sha256": "458005b696a4023a94d3a95c823f1ba68c41c50542e555a08654c1ab83e6ba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/migration-post-closure-independent-review-v01.json": {
+      "bytes": 10862,
+      "sha256": "6fee4e49050b36f9ed8d80c98e00127c27d7bdc4832c944defa9b1b31f94366d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release.py": {
+      "bytes": 16200,
+      "sha256": "7dd7046eb98e2bb25bcc9fc3a318bcef31c53196b3c0feb972f31e4d33ee7e4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release.py": {
+      "bytes": 9764,
+      "sha256": "76b972ac8df7af811f49ee313227d91a6114fb497a8b9a60284241b5763b835e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-implementation-handoff-v01.json": {
+      "bytes": 1868,
+      "sha256": "93e88b71f37d9b06cd4af6f21ec1cfebbb02f2c68c7278067f5c12ad3e62c47b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-protocol-independent-review-v01.json": {
+      "bytes": 48385,
+      "sha256": "b6472ff418b37cb42e409f1b777842523179dcc73326c17d1805a6e343177bad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-independent-review-v02.json": {
+      "bytes": 12700,
+      "sha256": "423d775253dc04ec4b182f3db0ae800215d8acde6a30f53a2eee27b78089b0b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/prepare_hf_release.py": {
+      "bytes": 6249,
+      "sha256": "bac6db1eeb0f1746cf3ba924b70c68dd8e39882ca4bb63e0132a0dee651bbef0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/publish_hf_release.py": {
+      "bytes": 8179,
+      "sha256": "ad121bc72a11bbae5abd476ec79d5cbbc21c8250d5417ebfa6d47bce6923e5f6"
+    }
+  },
+  "checks": {
+    "actual417pass2skip_observation_fields": true,
+    "actual64total_and32each_control_contrast_complete_step_limit": true,
+    "all_preconditions_explicit_require_survive_python_optimization": true,
+    "byte_identical_historical_corrected_corpus_review_reuse": true,
+    "closed_minimal_complete_result_review_and_all_immediate_JSON_inventory": true,
+    "closed_public_metadata_no_full_private_ledger_copies": true,
+    "contained_exclusive_staging_count1000_byte200million_cap": true,
+    "dormant384_zero_encoder_no_semantic_default_Lake_promotion": true,
+    "duplicate_nonfinite_overflowing_JSON_refused": true,
+    "durable_preupload_created_commit_and_after_identities_before_readback": true,
+    "exact_parent_CAS_prefix_additions_only_no_delete_card_default_changes": true,
+    "fresh_Adam_no_inherited_moments": true,
+    "fresh_plan_model_owner_source_and_additive4file_reviews": true,
+    "immutable_actual_hf_download_byte_checks": true,
+    "immutable_payload_bytes_before_SDK_add_operations": true,
+    "local_SDK_accepts_bytes_and_parent_commit_CAS_documented": true,
+    "prior_helpers_unchanged": true,
+    "retained_checkpoint_and_weight_lineage_contract": true
+  },
+  "concrete_payload_prepared": false,
+  "created_at_utc": "2026-10-12T00:55:23.491542+00:00",
+  "current_blockers": [
+    "Actual numerical attempt has no completed result or new checkpoint: the model gate refused storage capacity before model startup.",
+    "No exact seven-key result-independent review, concrete staged upload inventory, current immutable Hub baseline or publication review exists."
+  ],
+  "downloads": 0,
+  "findings": [],
+  "helper_execution_performed": false,
+  "limitations": [
+    "Static source qualification does not execute SDK/CLI, attest a future runtime, produce weights, measure accuracy or grant Hub mutation authority.",
+    "A future complete paired result, exact concrete payload and independent publication review remain mandatory.",
+    "Staging/source endpoint checks are sequential ordinary filesystem checks; they do not provide continuous custody or kernel isolation.",
+    "New duration boundary source is engineering evidence separate from this paired model\u2019s measured capability; calendars/events/shared binders and broader-family qualification remain unestablished.",
+    "Unexpected postcommit attributes/additions are preserved in durable commit/identity receipts and refuse automatic success; no automatic delete/rollback is qualified."
+  ],
+  "models_or_compiler_calls": 0,
+  "passed": true,
+  "publication_approved": false,
+  "release_prefix": "releases/20261012-temporal-role-contrast-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "temporal-binding-Hub-helper-static-review/v1",
+  "scope": "Independent source/AST/local installed SDK and CLI skill review only; helper source qualification is not concrete result/payload/publication approval.",
+  "uploads": 0
+}

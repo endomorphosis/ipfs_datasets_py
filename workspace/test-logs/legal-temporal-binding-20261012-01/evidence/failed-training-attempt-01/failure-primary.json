@@ -1,0 +1,139 @@
+{
+  "child_identity": {
+    "birth": "78423735",
+    "pid": 3855138
+  },
+  "error": {
+    "code": null,
+    "error_type": "DaemonResourceError",
+    "message_omitted_to_avoid_capability_leak": true,
+    "traceback_frames": [
+      {
+        "file": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py",
+        "function": "execute",
+        "line": 496
+      },
+      {
+        "file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+        "function": "check_usage",
+        "line": 527
+      },
+      {
+        "file": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+        "function": "_account",
+        "line": 399
+      }
+    ]
+  },
+  "group_rss": {
+    "absolute_peak_measured": false,
+    "continuous_coverage_claimed": false,
+    "failure": null,
+    "first_observation_monotonic_by_phase": {
+      "gated": 784237.451925934,
+      "model": null,
+      "post_model": null
+    },
+    "identity": {
+      "birth": "78423735",
+      "pid": 3855138
+    },
+    "kernel_hard_cap": false,
+    "last_observation_monotonic_by_phase": {
+      "gated": 784252.182511191,
+      "model": null,
+      "post_model": null
+    },
+    "max_observation_gap_seconds_by_phase": {
+      "gated": 1.0802814769558609,
+      "model": 0.0,
+      "post_model": 0.0
+    },
+    "memory_limit_bytes": 1610612736,
+    "model_gate_permitted_at_monotonic": null,
+    "model_leader_reaped_at_monotonic": null,
+    "model_phase_sample_count": 0,
+    "model_phase_wall_seconds": null,
+    "poll_seconds": 1.0,
+    "sample_counts_by_phase": {
+      "gated": 15,
+      "model": 0,
+      "post_model": 0
+    },
+    "sampled_model_phase_peak_rss_bytes": null,
+    "sampled_peak_only": true,
+    "sampled_peaks_by_phase": {
+      "gated": 11800576,
+      "model": 0,
+      "post_model": 0
+    },
+    "sampler_started_at_monotonic": 784237.451921422,
+    "scheduler_or_claim_mutation": false,
+    "schema": "guardian-owned-group-rss-summary/v1",
+    "timing_scope": "model gate permission through leader reap; includes model import and guardian polling, not isolated fit time"
+  },
+  "model_started": false,
+  "resources": {
+    "cleanup_error": null,
+    "lease_cancellation_read": false,
+    "ledger_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "record": {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 87432290,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-01"
+      },
+      "child": {
+        "birth": "78423735",
+        "pid": 3855138
+      },
+      "child_process_slots": 1,
+      "cpu_slots": 2,
+      "created_at": 1791766163.7277799,
+      "external_charges": {},
+      "last_usage": {
+        "additional_requested_bytes": 200000000,
+        "charged_bytes": 144938277970,
+        "inventory": {
+          "apparent_bytes": 96556500754,
+          "entry_count": 1359227,
+          "special_file_count": 6,
+          "symlink_count": 703
+        },
+        "limit_bytes": 145000000000,
+        "minimum_filesystem_free_bytes": 510976757760,
+        "observed_apparent_bytes": 96556500754,
+        "outstanding_full_reservations_bytes": 48181777216,
+        "scope": "named_roots_only_apparent_bytes"
+      },
+      "memory_mb": 1536,
+      "owner_pid": 3850209,
+      "prior_children": [],
+      "reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+      "scheduler_lane": "hammer_lean",
+      "status": "active",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    "reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+    "resource_lease": {
+      "acquired_at": 1791766163.8082798,
+      "child_process_slots": 1,
+      "cpu_slots": 2,
+      "gpu_memory_mb": 0,
+      "lane": "hammer_lean",
+      "lease_id": "c3b0b7024e824a5e82a947ef4161f499",
+      "locally_released_flag": false,
+      "memory_mb": 1536,
+      "owner_pid": 3850209,
+      "parent_lease_id": null,
+      "requires_gpu": false,
+      "unified_memory_mb": 0,
+      "wait_seconds": 7.51926563680172e-07
+    },
+    "scheduler_state_read": false,
+    "schema": "guardian-cached-resource-snapshot/v1",
+    "snapshot_scope": "cached_owner_primitives_only"
+  }
+}

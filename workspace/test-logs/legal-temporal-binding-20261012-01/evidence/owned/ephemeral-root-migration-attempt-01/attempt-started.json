@@ -1,0 +1,33 @@
+{
+  "admission_performed": false,
+  "claims_released": 0,
+  "expected_after": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+  },
+  "expected_before": {
+    "bytes": 6132214,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1"
+  },
+  "helper": {
+    "bytes": 22791,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/migrate_ephemeral_resource_root.py",
+    "sha256": "032300fedfebbd54a2be4a76c88e00109880c02901a57c1eba3156a3591ad1d4"
+  },
+  "local_ledger_copies_excluded_from_public_contribution": true,
+  "owner_pid": 3662000,
+  "protocol": {
+    "bytes": 64847,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-protocol-v03.json",
+    "sha256": "8e4e7120774f31f093bcba938a1a6e94cb5a2e21c9632328a693708396f692f2"
+  },
+  "review": {
+    "bytes": 12632,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-independent-review-v01.json",
+    "sha256": "7f988c1134d75a654cbe0f821aee22365228889e4239e95f36e3c612d9e494bf"
+  },
+  "schema": "ephemeral-root-migration-attempt-started/v1",
+  "training_started": false
+}

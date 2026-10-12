@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-claim-reconciliation-execution-v01.log": {
+      "bytes": 1578,
+      "sha256": "a0784b00824ccc44e83f0eb909e0554f6cf9c7e8cd6c820370456ed05b20abba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-01/attempt-started.json": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-independent-review-v01.json": {
+      "bytes": 12493,
+      "sha256": "e27d51ba650f9e489e6c773695fe1fed12f9f7963b9de3f7f4ccc14d58f065db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v02.json": {
+      "bytes": 76273,
+      "sha256": "8496367692e25fdddb471a6fe31be6f3e5d936a36bd037814fbb789ba8cfcf14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py": {
+      "bytes": 19879,
+      "sha256": "fad6b89b750b0f82c54ddd7209b11df2b4ba3c535fcd56a61eba4b5bfa627344"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6133274,
+      "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "This pass qualifies observed refusal and preservation, not successful claim release or mutation authority.",
+    "Failure occurs before API try/failure handling; the execution log and empty file remain the concrete original history.",
+    "Any correction requires distinct versioned helper/protocol/output and fresh independent review; the old one-shot operation is not reused.",
+    "Current tempfile.NamedTemporaryFile synthetic directory-open boundary must also be reviewed and tested before another administrative apply.",
+    "No model, optimizer, compiler, scheduler client or ledger mutation by this reviewer."
+  ],
+  "observed_at_utc": "2026-10-12T01:13:42.375214+00:00",
+  "passed": true,
+  "schema": "owned-claim-wrapper-refusal-independent-review/v1",
+  "scope": {
+    "actual_created_file_bytes": 0,
+    "actual_only_created_file": "attempt-started.json",
+    "administrative_attempt": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-01",
+    "all_512_records_unchanged": true,
+    "cause": "owned exclusive file was created, then audit hook refused the integer-FD open event emitted by os.fdopen before any receipt bytes or API call",
+    "existing_API_reconciliation_calls": 0,
+    "failure_before_existing_API_invocation": true,
+    "ledger_lock_acquisitions": 0,
+    "live_ledger_bytes_unchanged": true,
+    "own_claim_still_retained": true,
+    "source_helper_and_protocol_preserved": true
+  }
+}

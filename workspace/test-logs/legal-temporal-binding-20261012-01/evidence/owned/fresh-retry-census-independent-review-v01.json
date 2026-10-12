@@ -1,0 +1,80 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_closeout_and_retry_census.py": {
+      "bytes": 13106,
+      "sha256": "5b45f48f4f9900896c00dccf6346b05706148c89c1217a82443802b77f8c6727"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/failed-attempt-independent-review-v01.json": {
+      "bytes": 9167,
+      "sha256": "e26c35c76e34ff1983cd3158e5427546375f6b9dc00dcbec0f868940e40edbfe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/own-claim-closeout-postaudit-v01.json": {
+      "bytes": 56565,
+      "sha256": "dc05bfcf63d152673fe6bc11fa217b38fd2f0a0bfa24cec388d674a9fcff2a10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/completion.json": {
+      "bytes": 4033,
+      "sha256": "339247a1a9158ff841d676cc4c2213cf182f10c6535e2cb4e498a5acbef1b53c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-postclosure-independent-review-v01.json": {
+      "bytes": 5232,
+      "sha256": "170976533576f2a319701eb69c543f119db1f35549cddc68d13d901d44090ebe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v04.json": {
+      "bytes": 79812,
+      "sha256": "e8cd8064a9e52124e204c97f454180b7f3fbbf28278d0da61d2f181203cc2b4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/retry-storage-census-01.json": {
+      "bytes": 5958,
+      "sha256": "9a3718327a8e13bb078aa79c8e1584e5ae8e16fbbefe7a2ce03dabdbabf3bf62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/retry-storage-census-02.json": {
+      "bytes": 5958,
+      "sha256": "2e1e09007645ee60d55a58acbe34f9b712daac6600843d8cedd59a72647f9e6b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6136638,
+      "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+    },
+    "/tmp/ipfs-datasets-resource-scheduler-1000.json": {
+      "bytes": 1330,
+      "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "These are two eligible owner-compatible snapshots with exact endpoint fences; shared descendants changed by 540,235,052 bytes between observations. No stable complete tree or continuous capacity is claimed.",
+    "The existing admission owner must repeat full inventory and include requested 200MB exactly once; a later capacity refusal aborts. No claim expiry, foreign cleanup, cap raise or bypass is authorized.",
+    "Only our actual released claim changed previously; all original 511 record bodies and the 101 old retained full charges remain untouched.",
+    "A new training run still requires its own concrete independent protocol review with live ledger/scheduler/source pins and unique absent attempt-02.",
+    "Full private local ledger backups are excluded from public copies; this receipt preserves their previously verified postclosure pin boundary without copying body contents."
+  ],
+  "observed_at_utc": "2026-10-12T01:48:02.598398+00:00",
+  "passed": true,
+  "schema": "temporal-binding-fresh-retry-census-independent-review/v1",
+  "scope": {
+    "actual_admission_performed": false,
+    "actual_own_200MB_closeout_precedes_two_observations": true,
+    "apparent_shared_inventory_change_bytes": -540235052,
+    "capacity_refusal_attempt_01_admission_headroom_bytes": 61722030,
+    "charged_bytes": [
+      144636896800,
+      144096661748
+    ],
+    "continuous_capacity_or_tree_stability_claimed": false,
+    "exact_ledger_scheduler_root_source_endpoints_unchanged_during_and_between_scans": true,
+    "headroom_bytes": [
+      363103200,
+      903338252
+    ],
+    "latest_live_ledger_sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245",
+    "latest_live_scheduler_sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8",
+    "new_requested_200MB_charged_once_each": true,
+    "observed_capacity_improvement_vs_attempt_01": true,
+    "old_511_claim_bodies_and_101_retained_charges_preserved": true,
+    "old_training_attempt_and_failed_cleanup_wrapper_preserved": true,
+    "reviewer_model_lock_API_or_claim_calls": 0,
+    "shared_root_inventory_strict_parameter": false,
+    "two_owner_compatible_shared_root_censuses": true
+  }
+}
