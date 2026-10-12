@@ -1,0 +1,65 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/copy_public_evidence-draft-v02.py": {
+      "bytes": 13666,
+      "sha256": "f74345613b00b61f2551f27c2535b2b6d2de498001e1aaff86e7209fa6d3d5b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/copy_public_evidence-draft-v03.py": {
+      "bytes": 15797,
+      "sha256": "5e798626f459555acf9b8c2b138ea6005448204ca0f9e47c1ac9ba3c2986745d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/copy_public_evidence.py": {
+      "bytes": 15884,
+      "sha256": "9093c77f98e045318fd46d7e8f65c21301bf0d1db9eb5543ab4060d9ba411e39"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/final-contribution-independent-review-v01.json": {
+      "bytes": 5672,
+      "sha256": "5d5772ef427951623b0fa886cb983d66852fa32600fa8124a4170bf975dbfca2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/public-evidence-copy-design-v01.md": {
+      "bytes": 4787,
+      "sha256": "846841ab8cf20068dea3ccbe880845c225280757a8d08e17953f0c4c0cdbdcb6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/public-evidence-copy-implementation-handoff-v03.json": {
+      "bytes": 657,
+      "sha256": "792f3a6926005ccc7e54c26f4ceef8aa6893e7d7e8f70dac270e36a8495dca0d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/record_closed_stage.py": {
+      "bytes": 4844,
+      "sha256": "c7ef9e2c2bddd5cecbd29167c3d2e43c0b0a1c3b426fe700c0447599ade4359e"
+    }
+  },
+  "concrete_copy_or_staging_approved": false,
+  "concrete_inventory_reviewed": false,
+  "findings": [],
+  "limitations": [
+    "Static final helper source/design qualification only; no proposal, copy, stage observer or Git command execution by this reviewer.",
+    "Approval covers exact final helper9093c77f\u2026 only. Earlier source versions and proposals remain historical; any later additions need separate pin/review.",
+    "Actual root-selected inventory and copied destination/staged object maps still require independent complete-byte/closed-path review.",
+    "Two actual failed attempts and future HFv03 source helpers do not imply successful fitting, measured accuracy or an executable/approved release payload.",
+    "No weights, full foreign ledger records, *.local.json backups, downloaded HF checkpoint/cache or arbitrary historical draft tree may enter public contribution.",
+    "Earlier reviewer sealing attempts refused stale helper hashes and assumed catalogue variable shapes before any receipt write; this first sealed static-copy receipt binds final frozen current source."
+  ],
+  "observed_at_utc": "2026-10-12T02:04:23.191494+00:00",
+  "passed": true,
+  "schema": "temporal-binding-public-evidence-copy-independent-review/v1",
+  "scope": {
+    "25MB_source_metadata_only_bound": true,
+    "actual_no_attempt03_no_new_weights_final_outcome": true,
+    "current_final_contribution_and_capacity_failure_reviews_in_catalogue": true,
+    "exact_failed_attempt_01_files": 13,
+    "exact_failed_attempt_02_files": 15,
+    "exclusive_source_pin_immutable_payload_bytes_and_closing_pins": true,
+    "file_and_created_directory_fsync_before_receipt": true,
+    "final_finite_owned_catalogue_files": 138,
+    "finite_source_code_test_guide_files": 5,
+    "fixed_two_isolated_destinations": true,
+    "four_exact_prefixed_boundary_drafts_and_two_prior_cleanup_sources_individually_retained": true,
+    "full_raw_local_ledger_foreign_claim_bodies_checkpoints_download_cache_excluded": true,
+    "no_fetch_stage_commit_merge_push_or_canonical_index_commands": true,
+    "read_only_two_repo_stage_observer_exact_changed_paths_stage0_mode_blobSHA_gitlink": true,
+    "root_selected_manifest_SHA_required": true,
+    "stage_map_bounded_strict_JSON_exact_integer_bytes": true
+  },
+  "source_qualification_only": true
+}

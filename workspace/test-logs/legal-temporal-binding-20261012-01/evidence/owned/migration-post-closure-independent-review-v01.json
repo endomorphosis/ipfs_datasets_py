@@ -1,0 +1,192 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/attempt-started.json": {
+      "bytes": 1566,
+      "sha256": "b592793d679ffac97287584d297ebed73127f7ceaee63df8784fa449c48d5909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/completion.json": {
+      "bytes": 58795,
+      "sha256": "7f57397bd0cdbba0c89d27fb2b387f793a061a16b2f53c048682e53471a23769"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-after-planned.local.json": {
+      "bytes": 6132214,
+      "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-after.local.json": {
+      "bytes": 6132214,
+      "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-before.local.json": {
+      "bytes": 6132214,
+      "sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/planned-mutation.json": {
+      "bytes": 57281,
+      "sha256": "4387d1b52845d7ffa49708898763b3358a799b8a684db1ad34bfafde4ae78332"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-independent-review-v01.json": {
+      "bytes": 12632,
+      "sha256": "7f988c1134d75a654cbe0f821aee22365228889e4239e95f36e3c612d9e494bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-protocol-v03.json": {
+      "bytes": 64847,
+      "sha256": "8e4e7120774f31f093bcba938a1a6e94cb5a2e21c9632328a693708396f692f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/migrate_ephemeral_resource_root.py": {
+      "bytes": 22791,
+      "sha256": "032300fedfebbd54a2be4a76c88e00109880c02901a57c1eba3156a3591ad1d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/post-migration-resource-compatibility-v01.json": {
+      "bytes": 8148,
+      "sha256": "49a61f18dfd0a097b0eb648e2b8d25b2bdf360698cb5f4d3268e6e27f506f25e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission_post_migration-draft-v01.py": {
+      "bytes": 17306,
+      "sha256": "4bdd5e20a4cdaf6f1cce8aad214dab8e1fdad2f69ac312186a4a1280ffab6c8a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission_post_migration.py": {
+      "bytes": 20360,
+      "sha256": "c2c2f945b3c0d59d45a7cb678d0ad270a68b96bd6083aa874f8b5403d07d3be6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-post-migration-v01.json": {
+      "bytes": 10234,
+      "sha256": "6fb9a3ac15089d767ee3db4d7243fa86e958e1032e0a581a3268bb8ecc4f4dae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-recheck-receipt-post-migration-v01.json": {
+      "bytes": 1770,
+      "sha256": "1820fdfa884a9bf34e8664eeda56abde05c196d07ca081895d73344c528273d5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-post-migration-v01.json": {
+      "bytes": 66496,
+      "sha256": "e6221c1d109b1d5bec0bc142b6f4d16f0931bf97ae3700c740024d481e0b4787"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6132214,
+      "sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    "/tmp/ipfs-datasets-resource-scheduler-1000.json": {
+      "bytes": 1078,
+      "sha256": "067a39aaf8b08d1cf1bf2466ec011fdf1fb1d2deb3f028620a0ce0ffd555b1db"
+    }
+  },
+  "authority": {
+    "continuous_custody_claimed": false,
+    "new_training_admission_approved_by_this_receipt": false,
+    "reviewer_inventory_rerun": false,
+    "reviewer_migration_execution": false,
+    "reviewer_resource_client_or_lease": false,
+    "reviewer_training_or_model_or_compiler": false
+  },
+  "created_at_utc": "2026-10-12T00:43:58.621150+00:00",
+  "findings": [],
+  "limitations": [
+    "The fresh saved census establishes apparent accounting feasibility only at its observation; it is not a reservation or continuous lease.",
+    "Current root/ledger/scheduler equality is a sequential endpoint observation without lock acquisition.",
+    "Root replacement cause remains unverified; no reboot provenance or legal/model accuracy follows.",
+    "The reviewer parsed full local recovery ledgers for exact nonroot preservation but only SHA/metadata appears in this public-safe review."
+  ],
+  "migration": {
+    "active_or_reserved_count": 0,
+    "after_ledger_sha256": "eea94a55e9b1ea02ab43bee38105ca99bccefaae9d70e41e18c0b514e69ab7a8",
+    "all511record_body_hashes_preserved": true,
+    "all_nonroot_fields_exact": true,
+    "before_ledger_sha256": "fe7ab8468ff4276ea06ea0560056d55f0e690359099d79d2b21e0139cbedcbe1",
+    "cap_bytes_unchanged": 145000000000,
+    "complete": true,
+    "durable_roots_unchanged": 3,
+    "exact_planned_after": true,
+    "existing_lock_and_atomic_writer": true,
+    "new_root": {
+      "device": 66306,
+      "inode": 524352,
+      "path": "/tmp/pytest-of-barberb"
+    },
+    "no_model_or_admission_during_migration": true,
+    "no_original_claim_adoption_or_release": true,
+    "old_root": {
+      "device": 66306,
+      "inode": 533856,
+      "path": "/tmp/pytest-of-barberb"
+    },
+    "only_one_ephemeral_root_changed": true,
+    "outstanding_claim_bytes_unchanged": 48181777216,
+    "released_count": 410,
+    "retained_count": 101
+  },
+  "next_requirements": [
+    "Fresh complete hash-bound training plan and independent review against the post-migration root/ledger/scheduler endpoints.",
+    "Unique new attempt path retaining the old failed attempt.",
+    "Unchanged guardian resource envelope and actual admission before any child or model."
+  ],
+  "passed": true,
+  "private_recovery_backups": {
+    "exact_bytes_verified": true,
+    "mandatory_exclusion_from_contribution": true,
+    "paths": [
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-before.local.json",
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-after-planned.local.json",
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/ephemeral-root-migration-attempt-01/ledger-after.local.json"
+    ],
+    "publish_full_bodies": false
+  },
+  "saved_fresh_inventory": {
+    "admission_guaranteed": false,
+    "apparent_bytes": 94538273912,
+    "capacity_and_root_conditions_feasible_at_observation": true,
+    "charged_bytes": 142920051128,
+    "fresh_historical_owner_read_succeeded": true,
+    "ledger_and_scheduler_bytes_unchanged_during_saved_inventory": true,
+    "limit_bytes": 145000000000,
+    "mismatched_roots": [],
+    "no_lease_client_reservation_lock_model_by_observer": true,
+    "outstanding_full_reservations_bytes": 48181777216,
+    "remaining_charged_headroom_bytes": 2079948872,
+    "requested_bytes": 200000000
+  },
+  "schema": "ephemeral-root-migration-post-closure-independent-review/v1",
+  "scope": "Read-only actual migration completion/local backup/current ledger root and record closure plus exact saved fresh resource census arithmetic. Reviewer executes neither migration nor inventory/admission."
+}

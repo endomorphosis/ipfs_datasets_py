@@ -1,0 +1,136 @@
+{
+  "adapter": "guardian-local subclass rejects any configuration mismatch or missing state under inherited lock",
+  "capacity_changed": false,
+  "client_getter_scope": "this guardian resource-owner module only; no scheduler source or other process modified",
+  "complete": true,
+  "created_at_unix": 1791769808.1442602,
+  "default_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 24922,
+    "proof_memory_stall_percent": 2.0,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 16,
+    "total_cpu_slots": 16,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 99688,
+    "total_unified_memory_mb": null
+  },
+  "differing_default_fields": {
+    "lane_reservations": {
+      "adopted": {
+        "validation": {
+          "cpu_slots": 1,
+          "memory_mb": 0
+        }
+      },
+      "default": {
+        "validation": {
+          "cpu_slots": 2,
+          "memory_mb": 0
+        }
+      }
+    },
+    "proof_memory_headroom_mb": {
+      "adopted": 2458,
+      "default": 24922
+    },
+    "total_child_process_slots": {
+      "adopted": 4,
+      "default": 16
+    },
+    "total_cpu_slots": {
+      "adopted": 4,
+      "default": 16
+    },
+    "total_memory_mb": {
+      "adopted": 9830,
+      "default": 99688
+    }
+  },
+  "global_scheduler_cache_modified": false,
+  "helper_sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f",
+  "leases_acquired_by_adoption": 0,
+  "leases_cancelled_by_adoption": 0,
+  "leases_released_by_adoption": 0,
+  "model_or_training_started": false,
+  "nonpersisted_client_policy": {
+    "auto_renew_leases": true,
+    "lease_ttl_seconds": 120.0,
+    "poll_interval_seconds": 0.05,
+    "pressure_sampler": "trusted local scheduler default; no serialized callback",
+    "proof_sampler": "trusted local scheduler default; no serialized callback"
+  },
+  "observation_scope": "snapshot hashes may differ when other processes progress; no foreign claims are edited by this adapter",
+  "observed_after": {
+    "bytes": 1330,
+    "device": 66306,
+    "inode": 528604,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "observed_after_claims_sha256": "e87f7f65bc11cdee4d44d691f879446d6ad6b933cb6756be30960d107d7c959e",
+  "observed_after_lease_count": 0,
+  "observed_after_waiter_count": 0,
+  "observed_before": {
+    "bytes": 1330,
+    "device": 66306,
+    "inode": 531481,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "observed_before_claims_sha256": "e87f7f65bc11cdee4d44d691f879446d6ad6b933cb6756be30960d107d7c959e",
+  "observed_before_lease_count": 0,
+  "observed_before_waiter_count": 0,
+  "owner_pid": 643818,
+  "producer_sha256": {
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c",
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+  },
+  "proof_guards_changed": false,
+  "reset_performed": false,
+  "scheduler_constructor_may_rewrite_identical_json_under_lock": true,
+  "schema": "guardian-adopt-shared-scheduler/v1",
+  "shared_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 1,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 2458,
+    "proof_memory_stall_percent": 2.0,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 4,
+    "total_cpu_slots": 4,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 9830,
+    "total_unified_memory_mb": null
+  },
+  "shared_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+  "stale_recovery_called_by_adoption": false
+}

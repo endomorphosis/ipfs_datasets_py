@@ -1,0 +1,23 @@
+{
+  "full_local_ledger_backups_excluded_from_publication": true,
+  "helper": {
+    "bytes": 19842,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_preparation_refusal.py",
+    "sha256": "2a66e1d052064a906fb5eca8ffe7b7cf1d66d46ab4796b9b9553ffbdee7ca051"
+  },
+  "leases_acquired": 0,
+  "original_owner_adopted": false,
+  "protocol": {
+    "bytes": 91091,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-protocol-v01.json",
+    "sha256": "c4657a3ed338f1abfc740c8313956785a7305dab05061bc23a12e63d9ff9d69a"
+  },
+  "reservation_id": "0350dfb651f943178d7b1cbc2113443e",
+  "review": {
+    "bytes": 20230,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-independent-review-v01.json",
+    "sha256": "ecfcd0816276418ef0c970c61e568f07a417209b95f593814e3b0bef6b3db2ac"
+  },
+  "schema": "owned-claim-reconciliation-attempt/v1",
+  "training_started": false
+}

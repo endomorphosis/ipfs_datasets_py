@@ -1,0 +1,17 @@
+{
+  "admitted": false,
+  "completed_updates": 0,
+  "created_output": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02/results",
+  "detail": "unfrozen package producer: ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator",
+  "error_type": "ValueError",
+  "formalized": false,
+  "in_progress_arm_updates_unknown": false,
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "saved_states": [],
+  "semantic_accuracy": null,
+  "semantic_correctness_verified": false,
+  "stage": "preparation",
+  "update_counter_scope": "returned completed prefixes only; exceptions inside fit can leave partial updates unknown"
+}

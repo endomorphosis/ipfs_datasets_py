@@ -1,0 +1,78 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v02.md": {
+      "bytes": 3030,
+      "sha256": "d42de82f2867d9d17b89ab1aad515d0f78d018aba0fade533bd1c9478c0c5af0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-implementation-handoff-v02.json": {
+      "bytes": 2345,
+      "sha256": "5d90674e5fb75faa068aecddc38918fa97ffa218bdcf49f5716d4f207b302616"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-static-review-v01.json": {
+      "bytes": 6812,
+      "sha256": "006668ca7d379cd2f149b7ee1d4cd8fd33a7e227d2f0a8fcf84e19ae888072e3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-independent-review-v01.json": {
+      "bytes": 3421,
+      "sha256": "5b5bfde904d76f9edb98824e08eaecb9f415b29ff92438ffc7fe872e8e721f9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release.py": {
+      "bytes": 16200,
+      "sha256": "7dd7046eb98e2bb25bcc9fc3a318bcef31c53196b3c0feb972f31e4d33ee7e4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release_v02.py": {
+      "bytes": 24049,
+      "sha256": "ddd6b6e674f3cf00b43f3bd2549fc5ed0c9f5178d6c5442c2445cfb3648411de"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release.py": {
+      "bytes": 9764,
+      "sha256": "76b972ac8df7af811f49ee313227d91a6114fb497a8b9a60284241b5763b835e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release_v02.py": {
+      "bytes": 9781,
+      "sha256": "ecac8fcfbc44b17f6ef831d7a6464b38c0be55030507964d726bd7fb21eb7a51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    }
+  },
+  "concrete_payload_reviewed": false,
+  "findings": [],
+  "limitations": [
+    "Static source qualification only; no preparation, model, compiler, Hugging Face API, download or upload by this reviewer.",
+    "No completed actual retry-02 result or concrete payload is approved by this receipt. Every current success/result/runtime gate must pass before any future staging or upload.",
+    "The actual runtime independent review may retain private endpoint pins; only the finite public prerequisite set is read/copied, and full ledger bodies/foreign claims/checkpoint downloads remain excluded from Git evidence.",
+    "Configured 384 dimension is dormant source-only context, not fresh encoder/latent use or an 8D/768D comparison.",
+    "Reported training/evaluation diagnostics remain authored and exposed; no statutory gold, semantic fidelity, full logic-family promotion or Lake build claim.",
+    "Any future successful result and staged payload still require their own independent complete inventory and actual-runtime review; historical v01 protocol cannot substitute."
+  ],
+  "observed_at_utc": "2026-10-12T01:21:05.284814+00:00",
+  "passed": true,
+  "publication_approved": false,
+  "schema": "temporal-binding-hf-helper-static-review/v2",
+  "scope": {
+    "actual_417_pass_2_disabled_Lake_observation_and_four_boundary_pins_required": true,
+    "actual_pre_admission_protocol_plan_runner_guardian_join_verified": true,
+    "actual_v02_resource_and_runtime_reviews_required": true,
+    "both_real_32_update_arms_warm_weights_fresh_Adam_lineage_required": true,
+    "closed_selected_public_runtime_evidence_no_private_backup_reads": true,
+    "corpus_review_byte_identity_reuse_limits_retained": true,
+    "exact_15_guardian_files_plus_ordinary_results_directory_required": true,
+    "exact_immutable_revision_CLI_readback_required": true,
+    "exact_successful_attempt_02_required": true,
+    "immutable_payload_bytes_add_only_parent_CAS_no_promotion": true,
+    "minimal_closed_v02_result_review_and_all_immediate_JSON_inventory_required": true,
+    "preupload_commit_after_identity_receipts_fsynced": true,
+    "prior_v01_helpers_preserved": true,
+    "release_prefix": "releases/20261012-temporal-role-contrast-v2",
+    "repository": "Publicus/legal-ir-autoencoder",
+    "runtime_audit_completed64_and_released_own_claim_required": true,
+    "source_only_no_helper_execution": true,
+    "terminal_success_model_gate_positive_sample_reap_durable_release_required": true
+  }
+}

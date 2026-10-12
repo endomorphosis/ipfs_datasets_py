@@ -1,0 +1,32 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/post-migration-resource-compatibility-v01.json": {
+      "bytes": 8148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/post-migration-resource-compatibility-v01.json",
+      "sha256": "49a61f18dfd0a097b0eb648e2b8d25b2bdf360698cb5f4d3268e6e27f506f25e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission_post_migration.py": {
+      "bytes": 20360,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission_post_migration.py",
+      "sha256": "c2c2f945b3c0d59d45a7cb678d0ad270a68b96bd6083aa874f8b5403d07d3be6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-post-migration-v01.json": {
+      "bytes": 10234,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-post-migration-v01.json",
+      "sha256": "6fb9a3ac15089d767ee3db4d7243fa86e958e1032e0a581a3268bb8ecc4f4dae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-post-migration-v01.json": {
+      "bytes": 66496,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-post-migration-v01.json",
+      "sha256": "e6221c1d109b1d5bec0bc142b6f4d16f0931bf97ae3700c740024d481e0b4787"
+    }
+  },
+  "child_created": false,
+  "claims_modified": false,
+  "feasible_at_observation": true,
+  "limits_modified": false,
+  "model_calls": 0,
+  "over_limit_bytes": 0,
+  "passed": true,
+  "schema": "temporal-binding-storage-recheck-receipt/v1"
+}

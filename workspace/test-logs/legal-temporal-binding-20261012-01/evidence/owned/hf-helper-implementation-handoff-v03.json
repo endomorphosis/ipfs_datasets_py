@@ -1,0 +1,28 @@
+{
+  "API_calls": 0,
+  "HF_preparation_or_publisher_executions": 0,
+  "compiler_calls": 0,
+  "files": [
+    {
+      "bytes": 24389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release_v03.py",
+      "sha256": "049458c05b6b1616773267f434934193b7ea04b2377129422a78cc4411b5a053"
+    },
+    {
+      "bytes": 9781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release_v03.py",
+      "sha256": "05995c4a98a99d394f7f572df8ac34f5525bb0cdebd8399197037ebd63f88037"
+    },
+    {
+      "bytes": 2264,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v03.md",
+      "sha256": "3a88a557c524e8248654c502869afafe7b3db9be0a1bb63eebd5cfd0f1b861e1"
+    }
+  ],
+  "model_calls": 0,
+  "payload_prepared": false,
+  "prior_v02_sources_unchanged": true,
+  "publication_approved": false,
+  "schema": "temporal-contrast-Hub-helper-static-handoff/v3",
+  "specific_reproducibility_fix": "Archive actual new pure closure helper, observation and independent review."
+}

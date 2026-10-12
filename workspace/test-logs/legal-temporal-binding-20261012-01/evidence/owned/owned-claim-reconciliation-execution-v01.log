@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py", line 258, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py", line 165, in main
+    save(OUT/'attempt-started.json',dict(schema='owned-claim-reconciliation-attempt/v1',helper=protocol['helper'],protocol=protocol_pin,
+  File "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py", line 87, in save
+    def save(p,x):return save_bytes(p,json.dumps(x,sort_keys=True,indent=2,allow_nan=False).encode()+b'\n')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py", line 85, in save_bytes
+    with os.fdopen(fd,'wb') as s:s.write(b);s.flush();os.fsync(s.fileno())
+         ^^^^^^^^^^^^^^^^^^
+  File "<frozen os>", line 1037, in fdopen
+  File "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py", line 44, in audit
+    if not APPLY_AUTHORIZED or not allowed:raise AssertionError('Unreviewed or out-of-scope filesystem write refused')
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Unreviewed or out-of-scope filesystem write refused

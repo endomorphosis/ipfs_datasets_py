@@ -1,0 +1,95 @@
+{
+  "after": {
+    "bytes": 6136638,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+  },
+  "after_local_backup": {
+    "bytes": 6136638,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after.local.json",
+    "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+  },
+  "all_old_511_claim_bodies_unchanged": true,
+  "before": {
+    "bytes": 6133274,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+  },
+  "before_local_backup": {
+    "bytes": 6133274,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-before.local.json",
+    "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+  },
+  "cap_changed": false,
+  "complete": true,
+  "durable_failed_attempt_bytes": 53597,
+  "existing_lock_and_atomic_writer_used": true,
+  "failed_attempt_immutable": true,
+  "final_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 144436893436,
+    "inventory": {
+      "apparent_bytes": 96255116220,
+      "entry_count": 1368875,
+      "special_file_count": 8,
+      "symlink_count": 973
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 511035006976,
+    "observed_apparent_bytes": 96255116220,
+    "outstanding_full_reservations_bytes": 48181777216,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "full_claim_accounting": {
+    "additional_requested_bytes": 0,
+    "charged_bytes": 144636893436,
+    "inventory": {
+      "apparent_bytes": 96255116220,
+      "entry_count": 1368875,
+      "special_file_count": 8,
+      "symlink_count": 973
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 511035006976,
+    "observed_apparent_bytes": 96255116220,
+    "outstanding_full_reservations_bytes": 48381777216,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "helper": {
+    "bytes": 19744,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py",
+    "sha256": "8b3f6647f88b0b42a81b913917bfa28e08958d03176799e4e2d0d97c27f1f8ef"
+  },
+  "independent_review": {
+    "bytes": 14892,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-independent-review-v02.json",
+    "sha256": "4322aa21fa31cd35698901cd079b963f58e1d34501280fd3cc5b1f0d9dfdfe92"
+  },
+  "leases_acquired": 0,
+  "local_full_ledger_backups_excluded_from_publication": true,
+  "model_calls": 0,
+  "no_automatic_retry": true,
+  "normal_existing_reconciliation_API_used": true,
+  "only_own_claim_changed": true,
+  "optimizer_updates": 0,
+  "original_owner_adopted": false,
+  "outputs_deleted": false,
+  "own_claim_released": true,
+  "own_released_bytes": 200000000,
+  "planned_after_local_backup": {
+    "bytes": 6136638,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after-planned.local.json",
+    "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+  },
+  "protocol": {
+    "bytes": 79812,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v04.json",
+    "sha256": "e8cd8064a9e52124e204c97f454180b7f3fbbf28278d0da61d2f181203cc2b4a"
+  },
+  "record_count_after": 512,
+  "record_count_before": 512,
+  "reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+  "schema": "owned-gated-refusal-reconciliation-result/v1",
+  "source_files_modified": false,
+  "training_started": false
+}

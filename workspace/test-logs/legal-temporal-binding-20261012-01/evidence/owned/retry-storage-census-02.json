@@ -1,0 +1,170 @@
+{
+  "actual_admission_performed": false,
+  "admission_guaranteed": false,
+  "all_101_old_retained_claims_charged_in_full": true,
+  "all_old_511_claim_bodies_unchanged": true,
+  "charged_bytes": 144096661748,
+  "claims_modified": false,
+  "clients_constructed": 0,
+  "closeout_completion": {
+    "bytes": 4033,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/completion.json",
+    "sha256": "339247a1a9158ff841d676cc4c2213cf182f10c6535e2cb4e498a5acbef1b53c"
+  },
+  "closeout_independent_review": {
+    "bytes": 14892,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-independent-review-v02.json",
+    "sha256": "4322aa21fa31cd35698901cd079b963f58e1d34501280fd3cc5b1f0d9dfdfe92"
+  },
+  "continuous_custody_claimed": false,
+  "exact_own_claim_released": true,
+  "failed_attempt_files": [
+    {
+      "bytes": 74,
+      "path": "child-exit.json",
+      "sha256": "9b7a72ebc4e2af2e8ccf0d0372aa5168bd7bb944e14ea10fa7df79685fd4f7bf"
+    },
+    {
+      "bytes": 44,
+      "path": "child-identity.json",
+      "sha256": "cb99c763f1dbeef6cf51c171561e3fc5f5d751d23f08543f7f75ac22a39256c0"
+    },
+    {
+      "bytes": 0,
+      "path": "child.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1057,
+      "path": "command.json",
+      "sha256": "fed66904f382a94721667a42dbb489ace108bb236fb6a76fe545d9826a1c3008"
+    },
+    {
+      "bytes": 4576,
+      "path": "failure-primary.json",
+      "sha256": "48166406b34545cb75dce28c4368533094ea8f6bfc3d5a14e8bfdc6779961aad"
+    },
+    {
+      "bytes": 7473,
+      "path": "group-rss-observations.jsonl",
+      "sha256": "a69a7d8000bdf1bcd4e2f6170e0efcdf450adb66d2189380df496e33702280da"
+    },
+    {
+      "bytes": 1609,
+      "path": "group-rss-summary.json",
+      "sha256": "8a0572c7d2f443e2571e9080d246c432b70d5917a77487ef25d607fff9716a19"
+    },
+    {
+      "bytes": 4544,
+      "path": "guardian-exit.json",
+      "sha256": "48caae79f732ca10aba8883e215f1b95781e698051e3591a2413604c8d4939ef"
+    },
+    {
+      "bytes": 694,
+      "path": "lease-binding.json",
+      "sha256": "4f4cddab6f0b09b4d3dc9e151225f061bf13f3380856b21c2bf80fcd00e1efdc"
+    },
+    {
+      "bytes": 16852,
+      "path": "lease-observations.jsonl",
+      "sha256": "cb9022cc610bc2749a4bf1ed93800b67876e8765b093acb97d8fc0e22fbd013e"
+    },
+    {
+      "bytes": 8001,
+      "path": "pre-admission.json",
+      "sha256": "706d8043c6f583633baf71bd60c552a6f49ccff50d62f1cd80fcb3c26955ac1c"
+    },
+    {
+      "bytes": 4027,
+      "path": "resources-final-failure.json",
+      "sha256": "90cac4ed770516f86aff8af57e125abf5c2cd9bb8e4633857c247945cb2c3a77"
+    },
+    {
+      "bytes": 4646,
+      "path": "scheduler-adoption.json",
+      "sha256": "6e5f0089cecb720583d29f5274e9e2859d2ee24ccd1cc8ff46bb4c27fef6859a"
+    }
+  ],
+  "findings": [],
+  "full_local_backup_bodies_published": false,
+  "helper": {
+    "bytes": 13106,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_closeout_and_retry_census.py",
+    "sha256": "5b45f48f4f9900896c00dccf6346b05706148c89c1217a82443802b77f8c6727"
+  },
+  "immutable_failed_attempt_13_file_bytes": 53597,
+  "inventory": {
+    "apparent_bytes": 95714884532,
+    "entry_count": 1365466,
+    "special_file_count": 8,
+    "symlink_count": 950
+  },
+  "ledger_after": {
+    "bytes": 6136638,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+  },
+  "ledger_before": {
+    "bytes": 6136638,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+  },
+  "limits_modified": false,
+  "locks_acquired": 0,
+  "minimum_filesystem_free_bytes": 516837068800,
+  "model_calls": 0,
+  "observed_at_end_utc": "2026-10-12T01:46:30.379095+00:00",
+  "observed_at_start_utc": "2026-10-12T01:46:15.908338+00:00",
+  "old_511_status_counts": {
+    "active": 0,
+    "released": 410,
+    "reserved": 0,
+    "retained": 101
+  },
+  "optimizer_updates": 0,
+  "outstanding_full_reservations_bytes": 48181777216,
+  "owned_released_record_body_sha256": "02dda3737757efeddc1d002a821f344a22797964314ba2e76ec07b3e88359c31",
+  "passed": true,
+  "private_before_planned_actual_canonical_ledger_backups_equal": true,
+  "record_count": 512,
+  "remaining_charged_headroom_bytes": 903338252,
+  "requested200MB_charged_once": true,
+  "requested_storage_bytes": 200000000,
+  "requested_storage_fits_at_observation": true,
+  "reservations_constructed": 0,
+  "root_identities": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 524352,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "scan": 2,
+  "scheduler_after": {
+    "bytes": 1330,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "scheduler_before": {
+    "bytes": 1330,
+    "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+    "sha256": "cc6a5ae09e2e509221987f9e072468e9167dc159ce5d1d5fc7b87c311c17b9c8"
+  },
+  "schema": "owned-closeout-strict-retry-storage-census/v1",
+  "storage_limit_bytes": 145000000000
+}

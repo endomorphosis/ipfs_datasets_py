@@ -1,0 +1,23 @@
+{
+  "full_local_ledger_backups_excluded_from_publication": true,
+  "helper": {
+    "bytes": 19744,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py",
+    "sha256": "8b3f6647f88b0b42a81b913917bfa28e08958d03176799e4e2d0d97c27f1f8ef"
+  },
+  "leases_acquired": 0,
+  "original_owner_adopted": false,
+  "protocol": {
+    "bytes": 79812,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v04.json",
+    "sha256": "e8cd8064a9e52124e204c97f454180b7f3fbbf28278d0da61d2f181203cc2b4a"
+  },
+  "reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+  "review": {
+    "bytes": 14892,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-independent-review-v02.json",
+    "sha256": "4322aa21fa31cd35698901cd079b963f58e1d34501280fd3cc5b1f0d9dfdfe92"
+  },
+  "schema": "owned-claim-reconciliation-attempt/v1",
+  "training_started": false
+}

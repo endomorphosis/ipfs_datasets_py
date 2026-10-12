@@ -1,0 +1,295 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py": {
+      "bytes": 16905,
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py": {
+      "bytes": 19295,
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py": {
+      "bytes": 16858,
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py": {
+      "bytes": 18936,
+      "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_compiler.py": {
+      "bytes": 37034,
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": {
+      "bytes": 29993,
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py": {
+      "bytes": 4214,
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": {
+      "bytes": 6908,
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py": {
+      "bytes": 36925,
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py": {
+      "bytes": 13297,
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "bytes": 23526,
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/autoformal/test_legal_canonical_qualified.py": {
+      "bytes": 16582,
+      "sha256": "bf6dfabaf2c2f972386b97fbd6637a0b61b928f4adcb8f47b2aec45a1a5abae1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope.py": {
+      "bytes": 33666,
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py": {
+      "bytes": 16503,
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_duration_bound_qualified.py": {
+      "bytes": 11482,
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "bytes": 29623,
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_role_contrast_corpus.py": {
+      "bytes": 18610,
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/duration_bound_qualified-draft-v01.py": {
+      "bytes": 6785,
+      "sha256": "7573fdd48fce3826095efab39c8975139a2b904bb897559775b43b7f6b1cb26b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-boundary-tests-v01.log": {
+      "bytes": 431,
+      "sha256": "deab22d1762b1403a03bfce24377ef7615830958e0624216c4ad4a6628b9a494"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-boundary-tests-v01.xml": {
+      "bytes": 64577,
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-new-boundary-tests-v02.log": {
+      "bytes": 180,
+      "sha256": "c523c43126e522a5de0df41d22b046c5795cf3ca20eccfdb163ac7268f1ffb19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-new-boundary-tests-v02.xml": {
+      "bytes": 24775,
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/parallel-main-review-v01.json": {
+      "bytes": 30264,
+      "sha256": "ced1a9738154892b997d04fbbc9c2460bafa016c468758ac159535d3bbdcc707"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-design-v01.md": {
+      "bytes": 6976,
+      "sha256": "8deddfb847f3555770fc6e9de07618ca1a90d3d11cf9765a00fe6e1761c8693c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-implementation-handoff-v01.json": {
+      "bytes": 1868,
+      "sha256": "93e88b71f37d9b06cd4af6f21ec1cfebbb02f2c68c7278067f5c12ad3e62c47b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal_bindings-draft-v01.py": {
+      "bytes": 22670,
+      "sha256": "95028b0e113f4af295896e5bfdffa997f82665f9f6694e179363fae32246d921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/test_duration_bound_qualified-draft-v01.py": {
+      "bytes": 10525,
+      "sha256": "bf78ede1c7a09a12ff8cc9e3ada91c1344e1b733fdb6e687c7ca9001fa05333f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/test_temporal_bindings-draft-v01.py": {
+      "bytes": 28867,
+      "sha256": "b98130903d58766c4c85a5c202898feeda101a71db5a3b82be9d26c37b3785a2"
+    }
+  },
+  "authority": {
+    "all_semantic_statutory_family_training_model_proof_authority": false,
+    "all_training_masks_zero": true,
+    "consumer_native_Lake_execution": false,
+    "consumer_native_lowering_prepared": true,
+    "reviewer_model_or_compiler_execution": false,
+    "reviewer_source_edits": false,
+    "reviewer_subject_imports": false,
+    "transport_report_native_interpretation_validated": false
+  },
+  "created_at_utc": "2026-10-12T00:42:18.400156+00:00",
+  "final_source_and_test_pins": [
+    {
+      "bytes": 23526,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py",
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    {
+      "bytes": 6908,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py",
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    {
+      "bytes": 29623,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_bindings.py",
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    {
+      "bytes": 11482,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_duration_bound_qualified.py",
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    }
+  ],
+  "findings": [],
+  "fixed_draft_findings": [
+    "Python bool/int equality no longer aliases declared clock semantic fields.",
+    "Shared temporal identity and overlapping physical/role geometry cannot masquerade as local occurrence ownership.",
+    "Exact-source fragment/date negative controls and positive two-rule repeated literal controls added.",
+    "Imported additive producer identities fenced; final five controls replace the stale-file snapshot-only observation."
+  ],
+  "integrity_contract": [
+    "Separately expected candidate/interpretation/scope input/scope declaration hashes, complete detached original inputs, closed integer-only JSON and exact replay.",
+    "Canonical rule/facet values join exact scope-owned temporal leaf paths, ordered rule IDs, occurrence identities and original source/context spans.",
+    "Whole origin-text SHA plus exact Unicode-character and UTF8-byte bounds; no normalization or substring lookup.",
+    "Complete one-to-one local duration map and independent caller clock inventory; semantic scalar types and values match unchanged interpretation.",
+    "Distinct repeated temporal spans remain distinct; shared/reused/overlapping temporal or non-temporal-role geometry conservatively refuses.",
+    "Binding/scope and wrapper import-time producer endpoint fences refuse substitutions before downstream validation/native import; endpoints rechecked after preparation.",
+    "Qualified consumer replays complete pinned report, requires none_required context/direct source anchors, and retains byte-equivalent unchanged native output.",
+    "Old native expression/mapping/formula/activation-time checks remain active; no old owner, parser, registry or trainer changed."
+  ],
+  "limitations": [
+    "Authored geometry and caller declarations are engineering data; neither symbols, complete coverage, clocks nor temporal ownership are independently verified legal meaning.",
+    "The initial local profile deliberately refuses binders, nested/shared scope, event-relative clocks, calendars/business-day conventions and unresolved contexts.",
+    "Context-bound transport is supported only inertly; native consumer accepts none_required direct-source cases.",
+    "Import-time endpoint hashes are source observations, not authenticated executable memory, continuous custody or universal alias-resistant isolation.",
+    "All output requires separately qualified lake build legal and statutory review; no temporal/TDFOL/DCEC or all-family promotion follows.",
+    "No current training accuracy, actual law gold, new weights or 8D/384D/768D matched evaluation follows from these tests."
+  ],
+  "passed": true,
+  "schema": "temporal-binding-code-independent-review/v1",
+  "scope": "Read-only final source/AST, authored tests and saved inert qualification review; no subject imports, models, compiler, resources or network executed by reviewer.",
+  "source_head": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3",
+  "test_observation": {
+    "errors": 0,
+    "failures": 0,
+    "final_affected_file_passed": 138,
+    "final_distinct_current_passed": 360,
+    "final_distinct_current_skipped": 2,
+    "initial_passed": 355,
+    "initial_skipped": 2,
+    "native_source_preparation_in_inert_tests": true,
+    "numerical_or_compiler_execution_claimed": false,
+    "reviewer_reran_tests": false,
+    "skip_names": [
+      "test_real_lake_guard_deadline_and_exception_countermodels",
+      "test_real_lake_rejects_false_guarded_compliance_claim"
+    ],
+    "superseded_new_file_cases_excluded": 133,
+    "unchanged_Lake_skipped_reused": 2,
+    "unchanged_passed_reused": 222
+  },
+  "unchanged_current_owners": [
+    {
+      "bytes": 29993,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py",
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 4214,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope_bridge.py",
+      "sha256": "7e74f5ea2230549165fd0cb0230b2b8baaa0016cc2352d5a422c70c20f5e4da8",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 109257,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 37034,
+      "path": "ipfs_datasets_py/logic/legal_ir/canonical_compiler.py",
+      "sha256": "daa148e076ebfd0e61f5a06a915bb924023873bcad5b41923976a33e2693ebdd",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 36925,
+      "path": "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 13297,
+      "path": "ipfs_datasets_py/logic/legal_ir/saved_span_native_views.py",
+      "sha256": "049260f3a683d58a906290436667804f410d4839161cfe7e2202b37b7f892d6d",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 19295,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 16905,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 16858,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 18936,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_qualified_lean.py",
+      "sha256": "645d38508004833092cd5fd9870f29fdae34aa0e262471888973cb3203121408",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 33666,
+      "path": "tests/unit/logic/legal_ir/test_canonical_statement_scope.py",
+      "sha256": "0e2e272942c41472a4f166319c8212c25ee5901a0d86044c4937719ff80faa18",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 16503,
+      "path": "tests/unit/logic/legal_ir/test_canonical_statement_scope_bridge.py",
+      "sha256": "09623ca049a5af6a7912c67f1b74a5cbd1878e75393533d77a4bbf1765d92aea",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 16582,
+      "path": "tests/unit/logic/autoformal/test_legal_canonical_qualified.py",
+      "sha256": "bf6dfabaf2c2f972386b97fbd6637a0b61b928f4adcb8f47b2aec45a1a5abae1",
+      "unchanged_from_intake_main": true
+    },
+    {
+      "bytes": 18610,
+      "path": "tests/unit/logic/legal_ir/test_temporal_role_contrast_corpus.py",
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2",
+      "unchanged_from_intake_main": true
+    }
+  ]
+}

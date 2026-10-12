@@ -1,0 +1,94 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/contribution-draft-v01.md": {
+      "bytes": 5851,
+      "sha256": "98a545879d89668644e18874a76bad99b6274f146b17c44b3275e1fc451044ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/contribution-draft-v02.md": {
+      "bytes": 8952,
+      "sha256": "4b3a35d5ca8bdf4590f44f36cb9adf887fbe3ec445b874e197e81736e8bf3170"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/contribution.md": {
+      "bytes": 9379,
+      "sha256": "b92e5083ec699eea403b259e9a201c811c83b183ef09320e6f91760fd7f003c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/failed-attempt-independent-review-v01.json": {
+      "bytes": 9167,
+      "sha256": "e26c35c76e34ff1983cd3158e5427546375f6b9dc00dcbec0f868940e40edbfe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/final-capacity-refusal-independent-review-v02.json": {
+      "bytes": 3540,
+      "sha256": "0c7be7abf34e3d65bf062ba4fe39726c0ac5154989b8e1adfebe72aa86c56074"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-static-review-v03.json": {
+      "bytes": 3959,
+      "sha256": "39fb5e2fde707e67531c2e29e9c478360a5a84c12e442373f97800a19f1403b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-parent-independent-review-v01.json": {
+      "bytes": 3421,
+      "sha256": "5b5bfde904d76f9edb98824e08eaecb9f415b29ff92438ffc7fe872e8e721f9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-claim-wrapper-refusal-independent-review-v01.json": {
+      "bytes": 3028,
+      "sha256": "6ccff0e306b17ab1993052f600d5ae2776208dca2ed5799f00832a45b160f293"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-postclosure-independent-review-v01.json": {
+      "bytes": 5232,
+      "sha256": "170976533576f2a319701eb69c543f119db1f35549cddc68d13d901d44090ebe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-failure-independent-review-v01.json": {
+      "bytes": 4945,
+      "sha256": "b1ebbf3dc9e2e62a5fc3e5917ecc2e99740fcadcbef70d42b37ad718f8e6bfbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/parallel-main-review-v02.json": {
+      "bytes": 23550,
+      "sha256": "2828a751e3928c2178fb872f7c5c146a5edcdec320a7127878888b098b83b924"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-guide-independent-review-v01.json": {
+      "bytes": 4293,
+      "sha256": "9e749ad2b6dac41fafcafe757fb82aee789bd028101ccd40aa34002f8350c89d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 14937,
+      "sha256": "7359cbd5bdb9ee6234cadb03b5f9a9840c4c63c5bbddd4b7473941e0319fc06f"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Final prose and pinned existing observations only; no execution or model/compiler/resource/network call by reviewer.",
+    "Numerical zero for retry02 is a bounded source-order/trace/pure-import inference; neither gate permission nor RSS samples measure numerical calls.",
+    "Capacity closing numbers are a snapshot of shared named roots and policy charges, not physical disk exhaustion or continuous custody.",
+    "Actual source/root staging and merged publication still require separate full object/first-parent/canonical-index/history audits.",
+    "No successful lake build legal, statutory semantic gold, all registered logic families, latent8D/768D comparison or measured training improvement is claimed."
+  ],
+  "observed_at_utc": "2026-10-12T02:02:15.960089+00:00",
+  "passed": true,
+  "schema": "temporal-binding-final-contribution-independent-review/v1",
+  "scope": {
+    "actual_training_attempt_01_pre_gate_capacity_refusal": true,
+    "actual_training_attempt_02_post_gate_pre_numerical_producer_refusal": true,
+    "closing_cap_excess2483706183_and_own_retained_charge_once": true,
+    "closure_fixed97_28_plan_only_owner_artifact_maps_changed": true,
+    "code_API_profile_integrity_and_none_required_limits_match_final_pins": true,
+    "current_417_distinct_passes_and_two_real_Lake_disabled_cases": true,
+    "final_contribution_body_current_9379_bytes": true,
+    "fixed_source_only_warm_parent_data_arms_budgets_and_exposed_diagnostic_limits": true,
+    "latest_parallel_afed_ab2938_preservation_requirements": true,
+    "no_attempt03_new_weights_accuracy_or_HF_mutation_claim": true,
+    "one_exact_retained_parent_HF_readback_not_all_remote_weight_audit": true,
+    "original_wrapper_fdopen_refusal_and_corrected_only_c6_release_preserved": true,
+    "own0350_full_still_charged_closeout_refusal_no_write": true
+  }
+}

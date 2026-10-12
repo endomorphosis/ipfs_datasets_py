@@ -1,0 +1,58 @@
+{
+  "API_calls": 0,
+  "HF_preparer_or_publisher_executions": 0,
+  "compiler_calls": 0,
+  "concrete_payload_prepared": false,
+  "copy_executions": 0,
+  "downloads": 0,
+  "files": [
+    {
+      "bytes": 24049,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release_v02.py",
+      "sha256": "ddd6b6e674f3cf00b43f3bd2549fc5ed0c9f5178d6c5442c2445cfb3648411de"
+    },
+    {
+      "bytes": 9781,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release_v02.py",
+      "sha256": "ecac8fcfbc44b17f6ef831d7a6464b38c0be55030507964d726bd7fb21eb7a51"
+    },
+    {
+      "bytes": 3030,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v02.md",
+      "sha256": "d42de82f2867d9d17b89ab1aad515d0f78d018aba0fade533bd1c9478c0c5af0"
+    },
+    {
+      "bytes": 11224,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/copy_public_evidence.py",
+      "sha256": "8a669de1ef66058af8f4436ad7e527e4c0fa5c565395b9e1e78e7b935b687483"
+    },
+    {
+      "bytes": 4235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/record_closed_stage.py",
+      "sha256": "0b084a491a0b0a5a81ed4132a92a9339562f3ef77e6c14c3782b1efae9814c92"
+    },
+    {
+      "bytes": 2551,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/public-evidence-copy-design-v01.md",
+      "sha256": "6d3250aac3dd68f327a45549bd8a92560f1a571100e91812baf0dccccfeb306e"
+    }
+  ],
+  "git_mutations": 0,
+  "model_calls": 0,
+  "publication_approved": false,
+  "schema": "temporal-contrast-Hub-helper-static-handoff/v2",
+  "source_scope": "Versioned actual successful retry-02 join and finite public evidence/cached-stage observation helpers only.",
+  "uploads": 0,
+  "v01_helpers_unchanged": [
+    {
+      "bytes": 16200,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release.py",
+      "sha256": "7dd7046eb98e2bb25bcc9fc3a318bcef31c53196b3c0feb972f31e4d33ee7e4c"
+    },
+    {
+      "bytes": 9764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release.py",
+      "sha256": "76b972ac8df7af811f49ee313227d91a6114fb497a8b9a60284241b5763b835e"
+    }
+  ]
+}

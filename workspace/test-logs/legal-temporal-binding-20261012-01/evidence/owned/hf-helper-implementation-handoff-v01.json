@@ -1,0 +1,41 @@
+{
+  "API_calls": 0,
+  "compiler_calls": 0,
+  "concrete_payload_prepared": false,
+  "downloads": 0,
+  "files": [
+    {
+      "bytes": 16200,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release.py",
+      "sha256": "7dd7046eb98e2bb25bcc9fc3a318bcef31c53196b3c0feb972f31e4d33ee7e4c"
+    },
+    {
+      "bytes": 9764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release.py",
+      "sha256": "76b972ac8df7af811f49ee313227d91a6114fb497a8b9a60284241b5763b835e"
+    },
+    {
+      "bytes": 4935,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v01.md",
+      "sha256": "aebd1b47058f34a2f707fb03a371c0274fe769ef14598b0852a0b809bc5e31c2"
+    }
+  ],
+  "helper_executions": 0,
+  "model_calls": 0,
+  "prior_helpers_unchanged": [
+    {
+      "bytes": 6249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/prepare_hf_release.py",
+      "sha256": "bac6db1eeb0f1746cf3ba924b70c68dd8e39882ca4bb63e0132a0dee651bbef0"
+    },
+    {
+      "bytes": 8179,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/publish_hf_release.py",
+      "sha256": "ad121bc72a11bbae5abd476ec79d5cbbc21c8250d5417ebfa6d47bce6923e5f6"
+    }
+  ],
+  "publication_approved": false,
+  "review_after_fresh_training_protocol_pass": true,
+  "schema": "temporal-contrast-Hub-helper-static-handoff/v1",
+  "uploads": 0
+}

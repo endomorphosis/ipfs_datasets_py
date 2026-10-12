@@ -1,0 +1,45 @@
+{
+  "model_calls": 0,
+  "owned_fixture_directory": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/write-gate-boundary-fixture-02",
+  "passed": true,
+  "real_ledger_modified": false,
+  "real_ledger_sha256_after": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2",
+  "real_ledger_sha256_before": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2",
+  "reservation_or_scheduler_activity": false,
+  "schema": "owned-closeout-write-boundary-tests/v1",
+  "test_count": 8,
+  "tests": [
+    {
+      "name": "unarmed output create",
+      "passed": true
+    },
+    {
+      "name": "exclusive tracked fdopen succeeds",
+      "passed": true
+    },
+    {
+      "name": "untracked writable fdopen",
+      "passed": true
+    },
+    {
+      "name": "aliased writable descriptor registration",
+      "passed": true
+    },
+    {
+      "name": "general writable directory open",
+      "passed": true
+    },
+    {
+      "name": "genuine tempfile outside writer phase",
+      "passed": true
+    },
+    {
+      "name": "unapproved atomic prefix",
+      "passed": true
+    },
+    {
+      "name": "genuine NamedTemporaryFile directory event and tracked atomic FD succeed",
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,437 @@
+{
+  "absent_current_prerequisite_or_patch_modules": [
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_occurrence_provenance.py",
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_event_interpretation.py",
+    "ipfs_datasets_py/logic/autoformal/legal_temporal_deadline_interpretation.py"
+  ],
+  "additional_current_scope_and_test_objects": {
+    "ipfs_datasets_py/logic/legal_ir/canonical_statement_scope.py": {
+      "bytes": 29993,
+      "git_blob": "18783070b45c280067552f110bc48748a210e53e",
+      "sha256": "5b90021bffd9a29327490788e9a9eee9ba1788679c5adae6a02e84be9a718c6a",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "ipfs_datasets_py/logic/legal_ir/statutory_scope_declaration_binding.py": {
+      "bytes": 29041,
+      "git_blob": "674c85357c4d6ee7362780da3df722179077ae87",
+      "sha256": "bbc52f425a3bd5e5845a47970adbf82bed54e544add558a941a456cbc39c5e07",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "tests/unit/logic/autoformal/test_legal_canonical_qualified.py": {
+      "bytes": 16582,
+      "git_blob": "96c22bd4181fa7ab07ab091ae3891a62a8e2d5cc",
+      "sha256": "bf6dfabaf2c2f972386b97fbd6637a0b61b928f4adcb8f47b2aec45a1a5abae1",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    }
+  },
+  "authority": {
+    "code_adopted": false,
+    "compiler_executed": false,
+    "family_qualification_established": false,
+    "foreign_mutable_logs_or_checkpoint_bodies_inspected": false,
+    "gold_labels_created": false,
+    "model_calls": false,
+    "refs_changed": false,
+    "semantic_fidelity_established": false,
+    "source_edits": false,
+    "training_executed": false
+  },
+  "closing_evidence_bytes_equal_opening": true,
+  "created_at_utc": "2026-10-11T22:24:05.761528+00:00",
+  "evidence_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/actual-temporal-proposal-diagnostics-v01.json": {
+      "bytes": 204528,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/actual-temporal-proposal-diagnostics-v01.json",
+      "sha256": "1df837289e963870cad9dae0cc970f5315a0b7b28e79255d37c4d8c9cbfed9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/final-integration-independent-review-v01.json": {
+      "bytes": 392852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/final-integration-independent-review-v01.json",
+      "sha256": "fcd6589e08d6cb0a8d5235467f913326cf7fd1141470a427a2bdb58ec37a0670"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/main-effort-retention-review-v01.json": {
+      "bytes": 294791,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/main-effort-retention-review-v01.json",
+      "sha256": "2dbc94826c192708e7db3e67bcef228140818b8e3a39d222147b3b269b1b22e0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-guide-final-v01.md": {
+      "bytes": 7323,
+      "path": "/home/barberb/lift_coding/artifacts/legal-scope-family-20261011-01/source-guide-final-v01.md",
+      "sha256": "756dcbf6b710d4ec7431799bc1ef145d72d223f1ebfbe55b72b55f842ae9fb16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-deadline-interpretation-20261005/changes.patch": {
+      "bytes": 71141,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-deadline-interpretation-20261005/changes.patch",
+      "sha256": "53043fd47df1482e0ac6332fc0acf6ff8ccd61e5ce747cb1188dfd88b53bc2bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-event-interpretation-20261005/changes.patch": {
+      "bytes": 58910,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-event-interpretation-20261005/changes.patch",
+      "sha256": "b6790f9a504353f7066e7653392f4b88a860b69fe218332f83e03d41b635c07a"
+    }
+  },
+  "findings": [],
+  "historical_patch_reviews": [
+    {
+      "exists_in_pinned_source": false,
+      "historical_completion_receipt_body_reinspected": false,
+      "new_module_bodies_inspected_without_import": [
+        {
+          "bytes": 19268,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_temporal_event_interpretation.py",
+          "sha256": "96eba826a8c90ba4d2520f6ab254321f93dd8ae7eab9ef939f9b7ab5d34f33c6",
+          "top_level_function_names": [
+            "_wire",
+            "digest",
+            "_copy",
+            "_require",
+            "_closed",
+            "_seal",
+            "_dependency_pins",
+            "producer_pins",
+            "_span",
+            "_source_anchor",
+            "_skeleton",
+            "build_interpretation_requests",
+            "prepare_event_interpretation",
+            "validate_event_interpretation"
+          ]
+        }
+      ],
+      "patch": {
+        "bytes": 58910,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-event-interpretation-20261005/changes.patch",
+        "sha256": "b6790f9a504353f7066e7653392f4b88a860b69fe218332f83e03d41b635c07a"
+      },
+      "patch_applied": false,
+      "provenance_status": "historical_saved_patch_only_not_current_committed_API"
+    },
+    {
+      "exists_in_pinned_source": false,
+      "historical_completion_receipt_body_reinspected": false,
+      "new_module_bodies_inspected_without_import": [
+        {
+          "bytes": 21004,
+          "path": "ipfs_datasets_py/logic/autoformal/legal_temporal_deadline_interpretation.py",
+          "sha256": "e2fdd30dda994b1842b27dcd46bca1f82a2f1fa921e6e707da1ce86a6ad04d72",
+          "top_level_function_names": [
+            "_dependency_pins",
+            "producer_pins",
+            "_deadline_surface",
+            "build_deadline_requests",
+            "_expanded_formulas",
+            "_ast_budget",
+            "_event_ltl_expression",
+            "_lean_declarations",
+            "prepare_deadline_interpretation",
+            "validate_deadline_interpretation"
+          ]
+        }
+      ],
+      "patch": {
+        "bytes": 71141,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-deadline-interpretation-20261005/changes.patch",
+        "sha256": "53043fd47df1482e0ac6332fc0acf6ff8ccd61e5ce747cb1188dfd88b53bc2bd"
+      },
+      "patch_applied": false,
+      "provenance_status": "historical_saved_patch_only_not_current_committed_API"
+    }
+  ],
+  "limitations": [
+    "Selected immutable objects and saved endpoint receipts were inspected; current recovery refs/worktree registration were not independently re-audited in this review.",
+    "Historical completion/source-pin receipts are referenced by the saved diagnostic but their bodies were not reinspected here.",
+    "No corpus, runner or training protocol was reviewed by this receipt."
+  ],
+  "next_implementable_gap": {
+    "current_bridge": "legal_canonical_qualified.prepare_canonical_qualified(candidate, interpretation)",
+    "current_implementation_or_training_executed": false,
+    "current_limit": "Whole-source identity and facet-index ledger; lowering_details.origin_provenance_scope is whole_source_identity_not_qualifier_span_alignment.",
+    "existing_custody_owner": "canonical_statement_scope.validate_scope_declaration(request, declaration, expected_input_sha256=...)",
+    "initial_support": "Unchanged explicit within/minimum plain day/hour duration profile, with event-relative/calendar/business-day/shared/nested/unresolved cases refused rather than flattened.",
+    "meaningful_tests": [
+      "Repeated identical literal cannot exchange occurrence IDs.",
+      "Unicode character and UTF-8 offsets distinguished.",
+      "Changed source/context/leaf/anchor and bool offsets refused.",
+      "Identical condition/temporal literal cannot exchange facet ownership.",
+      "Missing, extra, duplicated or partially mapped temporal leaves refused.",
+      "Clock choices are explicit and cannot default or silently change.",
+      "Non-duration fragments civilian law enforcement official under this and weapon of refuse transport; no reviewed semantic-label claim.",
+      "Previously exposed authored within 1201 days slices preserve exact geometry, without new accuracy claims."
+    ],
+    "name": "Exact duration-occurrence-to-scope-and-clock binding before future lowering",
+    "required_bindings": [
+      "candidate and scope input digests",
+      "canonical rule index and temporal index",
+      "scope rule ID, exact temporal leaf path and occurrence ID",
+      "original source/context anchor plus recomputed character and UTF-8 geometry",
+      "exact duration literal and all caller-supplied clock/kind/quantity/unit/origin/endpoints",
+      "statutory packet/submission/context custody when present"
+    ],
+    "suggested_new_pure_interface": "prepare_duration_bindings(candidate, interpretation, scope_request, scope_declaration, occurrence_bindings, *, expected_candidate_sha256, expected_scope_input_sha256)"
+  },
+  "overlap_and_risks": [
+    "The two archival source recovery heads already carry all eleven prior temporal/duration/calendar owners byte-for-byte; they lack the saved-span adapter and newer scope modules. Whole-branch adoption would regress current LegalIR progress.",
+    "Both historical interpretation patches rely on legal_temporal_occurrence_provenance.py, absent from the merged source. The deadline patch also relies on the absent event interpretation module.",
+    "Deadline patch parser repair intentionally changes qualifier strings and content IDs; session and qualification integrations require separate reviewed reconciliation.",
+    "Old deadline expansion supports at most 30 ticks and explicit integer tick scales, not the exposed within-1201-days duration; it does not establish calendar or real-time meaning.",
+    "Source-coordinate custody and repeated occurrence identity are useful engineering controls, not resolved statutory legal ownership or faithful temporal interpretation."
+  ],
+  "passed": true,
+  "preserved_recovery_heads": [
+    {
+      "commit_object_bytes": 305,
+      "commit_object_sha256": "4b626d869490097398096f3085963115286edde3b6460e79a860849e254c03a5",
+      "current_refs_or_worktree_bodies_reinspected": false,
+      "head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "repo": "source",
+      "saved_ancestor_of_old_baseline": false,
+      "saved_branch_only_commits": 48,
+      "saved_exact_refs": [
+        "refs/heads/publication/main-20261004/datasets"
+      ],
+      "saved_registered_worktrees": [
+        {
+          "HEAD": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+          "branch": "refs/heads/publication/main-20261004/datasets",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/datasets"
+        }
+      ],
+      "saved_review_says_preserved": true
+    },
+    {
+      "commit_object_bytes": 286,
+      "commit_object_sha256": "3ce86227267bd735f588c9d6b58dbe16f0783c86d0752a4af4365f60b92c46a5",
+      "current_refs_or_worktree_bodies_reinspected": false,
+      "head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "repo": "source",
+      "saved_ancestor_of_old_baseline": false,
+      "saved_branch_only_commits": 50,
+      "saved_exact_refs": [
+        "refs/heads/publication/main-refresh-20261004/datasets-01"
+      ],
+      "saved_registered_worktrees": [
+        {
+          "HEAD": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+          "branch": "refs/heads/publication/main-refresh-20261004/datasets-01",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/datasets-main-refresh-01/publication-worktree"
+        }
+      ],
+      "saved_review_says_preserved": true
+    },
+    {
+      "commit_object_bytes": 435,
+      "commit_object_sha256": "bd2969abca46f729a8de91b3e43aa824abcf394c5c4fa24741f0177d9554d661",
+      "current_refs_or_worktree_bodies_reinspected": false,
+      "head": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+      "repo": "root",
+      "saved_ancestor_of_old_baseline": false,
+      "saved_branch_only_commits": 5,
+      "saved_exact_refs": [
+        "refs/heads/publication/main-20261004/root-02"
+      ],
+      "saved_registered_worktrees": [
+        {
+          "HEAD": "ce3e21da27d23bfa4ac5490be9a5cb44798945f2",
+          "branch": "refs/heads/publication/main-20261004/root-02",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-02"
+        }
+      ],
+      "saved_review_says_preserved": true,
+      "source_gitlink": "aa586a9b91b583a2ac5d867bd107ba0c5a4762d5"
+    },
+    {
+      "commit_object_bytes": 305,
+      "commit_object_sha256": "d6cb49b7ff3212486dadea0023a64acd3644bf7fdad0eb1a21547584b508c19b",
+      "current_refs_or_worktree_bodies_reinspected": false,
+      "head": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+      "repo": "root",
+      "saved_ancestor_of_old_baseline": false,
+      "saved_branch_only_commits": 4,
+      "saved_exact_refs": [
+        "refs/heads/publication/main-20261004/root-03"
+      ],
+      "saved_registered_worktrees": [
+        {
+          "HEAD": "57fd19895ce42ad68f87b3d7126fbf19da285bdb",
+          "branch": "refs/heads/publication/main-20261004/root-03",
+          "worktree": "/home/barberb/lift_coding/.worktrees/publication-main-20261004/root-03"
+        }
+      ],
+      "saved_review_says_preserved": true,
+      "source_gitlink": "ddf6b79467b68159650df81befc288c8553df664"
+    },
+    {
+      "commit_object_bytes": 286,
+      "commit_object_sha256": "ecdc24e842db2a02b2ef80f2ca4a2c650afeb78fa70f90e08f674b95742780d5",
+      "current_refs_or_worktree_bodies_reinspected": false,
+      "head": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+      "repo": "root",
+      "saved_ancestor_of_old_baseline": false,
+      "saved_branch_only_commits": 6,
+      "saved_exact_refs": [
+        "refs/heads/publication/main-refresh-20261004/root-01"
+      ],
+      "saved_registered_worktrees": [
+        {
+          "HEAD": "9d1944b9a9fd95abbb6297b4c7d34a1312809f14",
+          "branch": "refs/heads/publication/main-refresh-20261004/root-01",
+          "worktree": "/home/barberb/lift_coding/artifacts/autoformalization-publication-20261004/git/root-main-refresh-01/publication-worktree"
+        }
+      ],
+      "saved_review_says_preserved": true,
+      "source_gitlink": "ddf6b79467b68159650df81befc288c8553df664"
+    }
+  ],
+  "reusable_ideas": [
+    "Exact source and physical document observation identities; validated coordinate translation rather than assuming additive offsets through normalized whitespace.",
+    "Distinct repeated occurrences, token-aligned anchors, source/request substitution controls, and complete refusal inventories.",
+    "Explicit temporal origin, scope, units, endpoints, weak/strong until, trigger/response reuse policy and separate holds/occurs traces.",
+    "Regenerated producer-pinned replay; altered AST/code/authority and bool-offset negative controls."
+  ],
+  "reviewer_task": "/root/temporal_recovery_review",
+  "schema": "legal-temporal-recovery-read-only-review/v1",
+  "scope": "Read-only immutable Git objects and pinned saved evidence; no executable recovery adoption or semantic qualification.",
+  "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8",
+  "source_owners": {
+    "calendar": {
+      "bytes": 16905,
+      "git_blob": "9f8f5a740dfff16ea67dd07b8208eed97ce64aaa",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_calendar.py",
+      "sha256": "6e5275dbd1f15d58bc7c0e1480b2af68fae11b08c03a8fe6a1c0e3d97c959501",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "canonical_duration": {
+      "bytes": 19295,
+      "git_blob": "ee1bd80f49ee54d784ce3d82f2a970c18c628cb3",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_canonical_qualified.py",
+      "sha256": "580544f2bf329c54832eee9b66042794bab2e6938bad142952aca9f4438f5902",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "duration_gate": {
+      "bytes": 10400,
+      "git_blob": "40b0d574bfcf92350120611cc8023e27738e03e6",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_qualified_lake.py",
+      "sha256": "a4e96b4955021d6d5a65aebe5cdf6a32f78b4160aeb22e06ee8f5fb4ebba66eb",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "duration_native": {
+      "bytes": 16858,
+      "git_blob": "669c7d3a7d8df39e094cb84fad39fd4ce164fa71",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/formalization/autoencoder/native_legal_qualified_lean.py",
+      "sha256": "5407ba7299b002048ff8f45dbea7295d3b210f41904f28a98684042d055d0b2a",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "event_owner_adapter": {
+      "bytes": 12682,
+      "git_blob": "74def56ab7d41a37d814c81c5ad22408084ac135",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_temporal_event_owner_adapter_v4.py",
+      "sha256": "9ca4051c79a81102e9c58a8d2e2ec39af61868e2a2f29adac343d7a8c8cdd2cc",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "event_proposer": {
+      "bytes": 27231,
+      "git_blob": "c9e4318b1c8d18f12ad558ded061fce3117e138d",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_temporal_event_proposer_v4.py",
+      "sha256": "4f2a6b9640a8b244ff5da67e38ba4424e21acbd33c93e06ba50fab4502440866",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "owner_type_head": {
+      "bytes": 20704,
+      "git_blob": "ff5ab03f9e0919cd7c86537ab8a29a0fb32d2987",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_temporal_ownership_head.py",
+      "sha256": "499c11ec908268ffc83aed986dc493f75b6e903d37cbe93de9b66b7446a78c07",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "paired_corpus": {
+      "bytes": 25370,
+      "git_blob": "c15f433233b3345f529a9f5c04eec26fabeda56f",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_paired_temporal_ownership_corpus.py",
+      "sha256": "fd9a3609dd5fbc11e211a66f768061035c317995899c31eaecf73ec76f50ccf0",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "paired_head": {
+      "bytes": 20007,
+      "git_blob": "c3ac6af62bf1b9de759b476fb6db9ccd6d059d09",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_paired_temporal_ownership.py",
+      "sha256": "e18ae54536426e4909cd10c818546a210be5801abf2e8c578141ca5aa6ee4ab3",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "saved_span_adapter": {
+      "bytes": 36925,
+      "git_blob": "9ce309ebd225459ecb6928ad42f0e51fbfff75e2",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/legal_ir/saved_span_family_adapter.py",
+      "sha256": "36c283b10294ab0e0db35497e51ac82988a056bd64c169827aacc84f5bd388e4",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "source_family_bridge": {
+      "bytes": 21178,
+      "git_blob": "c44085c2e590b15fe2143691a6189d80714079d7",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/logic/autoformal/legal_source_family_bridge.py",
+      "sha256": "660601ed20971eb972c3a9c6c0ededf5fceeaf734260074a7e64333739b97212",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    },
+    "timing_worker": {
+      "bytes": 35654,
+      "git_blob": "d83f1bacfc70aba00113716472b6a3f8c00053f8",
+      "matches_prior_diagnostic_owner_pin": true,
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_timing_ownership.py",
+      "sha256": "85199b5bcfe0a50d1f4277c8f893d828a1c59b39e40ceb333ec8a324956f0619",
+      "source_commit": "4b9e96753eb3e5f4951cc3f7c39b09b778d3d6b8"
+    }
+  },
+  "source_recovery_owner_comparisons": [
+    {
+      "changed_current_owner_keys": [],
+      "exact_current_owner_keys": [
+        "calendar",
+        "canonical_duration",
+        "duration_gate",
+        "duration_native",
+        "event_owner_adapter",
+        "event_proposer",
+        "owner_type_head",
+        "paired_corpus",
+        "paired_head",
+        "source_family_bridge",
+        "timing_worker"
+      ],
+      "missing_current_owner_keys": [
+        "saved_span_adapter"
+      ],
+      "recovery_head": "5eedd23dd8b8ae4e2cac1716f00f1fcaf19a2801",
+      "whole_branch_adoption_recommended": false
+    },
+    {
+      "changed_current_owner_keys": [],
+      "exact_current_owner_keys": [
+        "calendar",
+        "canonical_duration",
+        "duration_gate",
+        "duration_native",
+        "event_owner_adapter",
+        "event_proposer",
+        "owner_type_head",
+        "paired_corpus",
+        "paired_head",
+        "source_family_bridge",
+        "timing_worker"
+      ],
+      "missing_current_owner_keys": [
+        "saved_span_adapter"
+      ],
+      "recovery_head": "23540627b1cf6515df0fd84c9417b4cbdb91234a",
+      "whole_branch_adoption_recommended": false
+    }
+  ]
+}

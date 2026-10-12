@@ -1,0 +1,18 @@
+{
+  "actual_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02",
+  "assertion": "fresh attempt already exists",
+  "attempt_existed_at_check": true,
+  "claims_modified": false,
+  "helper": {
+    "bytes": 23229,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_training_runtime_resources_v02.py",
+    "sha256": "47bc21159d2dbf0f8b1f3a7c4331ac12b5aadcc4124e5572efb9995583b86a0d"
+  },
+  "helper_never_executed": true,
+  "model_calls": 0,
+  "no_before_execution_timing_claim": true,
+  "observed_at_utc": "2026-10-12T01:50:48.864709+00:00",
+  "optimizer_updates": 0,
+  "procedure_not_created_by_initial_preparation": true,
+  "schema": "runtime-observer-preparation-timing-refusal/v1"
+}

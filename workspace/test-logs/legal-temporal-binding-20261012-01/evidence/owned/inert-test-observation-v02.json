@@ -1,0 +1,44 @@
+{
+  "compiler_executed": false,
+  "current_distinct_passed": 417,
+  "current_failed": 0,
+  "current_skipped": 2,
+  "final_new_boundary_passed": 138,
+  "findings": [],
+  "independent_code_review": {
+    "bytes": 16266,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json",
+    "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+  },
+  "network_calls_denied": true,
+  "numerical_training_executed": false,
+  "passed": true,
+  "recipe_passed": 57,
+  "schema": "temporal-binding-current-inert-test-observation/v2",
+  "source_handoff": {
+    "bytes": 1868,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-implementation-handoff-v01.json",
+    "sha256": "93e88b71f37d9b06cd4af6f21ec1cfebbb02f2c68c7278067f5c12ad3e62c47b"
+  },
+  "superseded_first_run_new_boundary_cases": 133,
+  "top_level_plugin_initialization_qualified": false,
+  "unchanged_first_run_passed_reused": 222,
+  "unchanged_real_lake_cases_disabled": 2,
+  "xml_pins": [
+    {
+      "bytes": 64577,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-boundary-tests-v01.xml",
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    {
+      "bytes": 24775,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-new-boundary-tests-v02.xml",
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    {
+      "bytes": 7643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-recipe-tests-v01.xml",
+      "sha256": "8cff98086c1ad78fc22b691f81b831609b2d02050482b6847482e2c4e576bc12"
+    }
+  ]
+}

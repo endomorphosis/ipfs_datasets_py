@@ -1,0 +1,76 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-claim-reconciliation-execution-v01.log": {
+      "bytes": 1289,
+      "sha256": "9d4584eebd670db0f617a08dccc68343cc1aa5a209b3dcd68a28579591f21f5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/attempt-started.json": {
+      "bytes": 1050,
+      "sha256": "110c43041260a42701f8f19e24dbe7e2fef7fe43594fa1f2ba6150bcaebe5009"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/failure-primary.json": {
+      "bytes": 1159,
+      "sha256": "0b09cc3b40070c4eb505e3386ad8bf636ee3e814fb4051c1cafc9c9e91c3c657"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/ledger-before.local.json": {
+      "bytes": 6138012,
+      "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/ledger-observed-after-failure.local.json": {
+      "bytes": 6138012,
+      "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-independent-review-v01.json": {
+      "bytes": 20230,
+      "sha256": "ecfcd0816276418ef0c970c61e568f07a417209b95f593814e3b0bef6b3db2ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-protocol-v01.json": {
+      "bytes": 91091,
+      "sha256": "c4657a3ed338f1abfc740c8313956785a7305dab05061bc23a12e63d9ff9d69a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_preparation_refusal.py": {
+      "bytes": 19842,
+      "sha256": "2a66e1d052064a906fb5eca8ffe7b7cf1d66d46ab4796b9b9553ffbdee7ca051"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 14937,
+      "sha256": "7359cbd5bdb9ee6234cadb03b5f9a9840c4c63c5bbddd4b7473941e0319fc06f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6138012,
+      "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Actual administrative refusal is independently qualified; no successful own0350 release or new training attempt03 is approved.",
+    "Stored helper phase remains the enclosing locked fence phase; the exact traceback refines actual refusal to existing recovery API _account before any proposed write.",
+    "All current513 claim bodies are unchanged, including new own0350 retained and earlier releasedc6. Full still-charged capacity is respected; it cannot be bypassed by subtracting own claim first.",
+    "Full before/observed local ledger bodies remain private and must be excluded from Git/HF; only failure metadata/log/review/pins may be contributed.",
+    "Any future recovery/training requires external capacity change, fresh observations and a newly reviewed concrete decision. Engineering source/evidence publication can proceed independently."
+  ],
+  "observed_at_utc": "2026-10-12T01:59:46.799420+00:00",
+  "passed": true,
+  "public_exclusions": [
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/ledger-before.local.json",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01/ledger-observed-after-failure.local.json"
+  ],
+  "schema": "owned-preparation-refusal-reconciliation-failure-independent-review/v1",
+  "scope": {
+    "actual_administrative_attempt": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-preparation-refusal-reconciliation-attempt-01",
+    "actual_outcome": "existing_API_full_still_charged_census_capacity_refusal_before_ledger_write",
+    "all_513_bodies_unchanged": true,
+    "all_prior512_including_released_c6_unchanged": true,
+    "automatic_rollback_or_retry": false,
+    "before_observed_current_ledger_bytes_exact": true,
+    "existing_ledger_lock_entered": true,
+    "no_claim_subtraction_cap_raise_or_output_deletion": true,
+    "ordinary_existing_API_reconciliation_invoked": true,
+    "original_exception_preserved": true,
+    "own0350_still_retained": true,
+    "own_claim_bytes_still_charged": 200000000,
+    "planned_mutation_or_atomic_write_reached": false,
+    "reviewer_mutation_calls": 0,
+    "root_administrative_model_optimizer_or_lease_calls": 0
+  }
+}

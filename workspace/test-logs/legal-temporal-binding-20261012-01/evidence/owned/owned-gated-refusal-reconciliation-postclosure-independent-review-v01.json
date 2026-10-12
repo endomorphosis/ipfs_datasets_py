@@ -1,0 +1,88 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-claim-wrapper-refusal-independent-review-v01.json": {
+      "bytes": 3028,
+      "sha256": "6ccff0e306b17ab1993052f600d5ae2776208dca2ed5799f00832a45b160f293"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/attempt-started.json": {
+      "bytes": 1032,
+      "sha256": "c495c65007218af0df293bff33294b3c0d446a6574c9bcd81d1584edd880d120"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/completion.json": {
+      "bytes": 4033,
+      "sha256": "339247a1a9158ff841d676cc4c2213cf182f10c6535e2cb4e498a5acbef1b53c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after-planned.local.json": {
+      "bytes": 6136638,
+      "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after.local.json": {
+      "bytes": 6136638,
+      "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-before.local.json": {
+      "bytes": 6133274,
+      "sha256": "36bd860793b6cc96f19b5169a568875115593e70ab06dc35a935a9d98aa594e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/planned-mutation.json": {
+      "bytes": 56583,
+      "sha256": "1993646cb90e79b04b4a537bf96216f8b0fc398db62144197b0c81eb7a06972f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-independent-review-v02.json": {
+      "bytes": 14892,
+      "sha256": "4322aa21fa31cd35698901cd079b963f58e1d34501280fd3cc5b1f0d9dfdfe92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v04.json": {
+      "bytes": 79812,
+      "sha256": "e8cd8064a9e52124e204c97f454180b7f3fbbf28278d0da61d2f181203cc2b4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal.py": {
+      "bytes": 19744,
+      "sha256": "8b3f6647f88b0b42a81b913917bfa28e08958d03176799e4e2d0d97c27f1f8ef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json": {
+      "bytes": 6136638,
+      "sha256": "c0dbf04869d02cad395276d8b1d0f238b0a6b0794cb6cc2a84feb846f1d08245"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Read-only independent body/byte comparison after root-owned existing API execution; this reviewer made no lock, API, claim or model call.",
+    "Full still-charged census passed before release; final accounting subtracts only the exact own 200MB reservation, not its retained output files.",
+    "All local full ledger bodies are private and excluded from Git/HF; this receipt retains only pins/counts and the exact own event summary.",
+    "Observed administrative completion is not continuous capacity, admission authority or approval to retry training. Two separately captured fresh strict resource censuses and a concrete new training review remain required."
+  ],
+  "observed_at_utc": "2026-10-12T01:20:24.534029+00:00",
+  "passed": true,
+  "public_exclusions": [
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-before.local.json",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after-planned.local.json",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02/ledger-after.local.json"
+  ],
+  "schema": "owned-gated-refusal-reconciliation-postclosure-independent-review/v1",
+  "scope": {
+    "actual_administrative_attempt": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-attempt-02",
+    "all_511_other_record_bodies_unchanged": true,
+    "automatic_retry": false,
+    "cap_145GB_and_actual_four_roots_unchanged": true,
+    "complete": true,
+    "existing_API_exact_one_own_transition_verified": true,
+    "failed_training_13_files_53597_bytes_unchanged": true,
+    "final_census_accounting_bytes": 144436893436,
+    "full_still_charged_census_bytes": 144636893436,
+    "leases_acquired": 0,
+    "local_planned_actual_current_bytes_exact": true,
+    "model_calls": 0,
+    "optimizer_updates": 0,
+    "original_owner_not_adopted": true,
+    "outputs_deleted": false,
+    "own_released_bytes": 200000000,
+    "own_status_after": "released",
+    "own_status_before": "retained",
+    "record_count": 512,
+    "released_count": 411,
+    "reservation_id": "c6ea2674cee9469494468d688a90ca4e",
+    "retained_count": 101,
+    "zero_active_reserved_records": true
+  }
+}

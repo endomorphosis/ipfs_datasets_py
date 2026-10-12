@@ -1,0 +1,41 @@
+{
+  "events": [
+    {
+      "caller_file": "<stdin>",
+      "caller_function": "<module>",
+      "flags": 557249,
+      "mode": null,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/stdlib-tempfile-event-fixture-01/exclusive-output.json",
+      "path_kind": "path"
+    },
+    {
+      "caller_file": "<frozen os>",
+      "caller_function": "fdopen",
+      "flags": 524865,
+      "mode": "w",
+      "path": 3,
+      "path_kind": "fd"
+    },
+    {
+      "caller_file": "/usr/lib/python3.12/tempfile.py",
+      "caller_function": "NamedTemporaryFile",
+      "flags": 524866,
+      "mode": "w+",
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/stdlib-tempfile-event-fixture-01",
+      "path_kind": "path"
+    },
+    {
+      "caller_file": "/usr/lib/python3.12/tempfile.py",
+      "caller_function": "_mkstemp_inner",
+      "flags": 557250,
+      "mode": null,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/stdlib-tempfile-event-fixture-01/.daemon-reservation-84rdwacg",
+      "path_kind": "path"
+    }
+  ],
+  "fixture_directory": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/stdlib-tempfile-event-fixture-01",
+  "numerical_calls": 0,
+  "real_ledger_or_claims_touched": false,
+  "schema": "owned-closeout-stdlib-open-event-observation/v1",
+  "tempfile_source_sha256": "8c8033ed1426ace79e07a6608887d2a1694d817d63d61b04c3d59339f24b4269"
+}

@@ -1,0 +1,68 @@
+{
+  "actual_attempt_03_exists_or_executed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-design-v03.md": {
+      "bytes": 2264,
+      "sha256": "3a88a557c524e8248654c502869afafe7b3db9be0a1bb63eebd5cfd0f1b861e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-implementation-handoff-v03.json": {
+      "bytes": 1096,
+      "sha256": "87f1956f3432c7e71abffd87313cf81086e2f14bbb25006ae116dcecf68c6da6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/hf-helper-static-review-v02.json": {
+      "bytes": 4737,
+      "sha256": "b9c055784def398e2e30448484eb43ace3c85423f30ce3a59ca5abb8968cd3db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release_v03.py": {
+      "bytes": 24389,
+      "sha256": "049458c05b6b1616773267f434934193b7ea04b2377129422a78cc4411b5a053"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release_v03.py": {
+      "bytes": 9781,
+      "sha256": "05995c4a98a99d394f7f572df8ac34f5525bb0cdebd8399197037ebd63f88037"
+    }
+  },
+  "concrete_payload_reviewed": false,
+  "findings": [],
+  "limitations": [
+    "Future helper source qualification only; no attempt03 runtime, completed result, staged payload, SDK/API/download/upload or publisher/preparer execution by this reviewer.",
+    "Actual retained own0350 capacity refusal blocks a new fit under current state; this source receipt does not waive resource or recovery requirements.",
+    "Every future runtime and concrete result review must match actual successful attempt03; historical v01/v02 authorization cannot substitute.",
+    "The closure-fixed97/28 plan changes only explicit pure producer custody; no scientific recipe/model/optimizer/data/budget improvement is measured.",
+    "Actual source-only dormant384 contexts do not qualify fresh latent encoding, 8D/768D comparison, statutory accuracy, all logic families or Lake build."
+  ],
+  "observed_at_utc": "2026-10-12T02:00:57.443746+00:00",
+  "passed": true,
+  "publication_approved": false,
+  "schema": "temporal-binding-hf-helper-static-review/v3",
+  "scope": {
+    "actual_dependency_closure_preparer_preflight_review_copied": true,
+    "actual_plan_v02_97_artifacts_28_owners_required": true,
+    "actual_pre_admission_and_independent_successful_runtime_review_mandatory": true,
+    "all_v02_success_and_publication_guards_retained": true,
+    "complete64_control_contrast32_each_lineage_and_all_result_JSON_mandatory": true,
+    "immutable_inmemory_additions_exact_parent_CAS_and_CLI_readback_retained": true,
+    "old_HF_helpers_unchanged": true,
+    "only_exact_attempt_review_resource_runtime_result_v03_and_receipt_paths_advanced": true,
+    "private_ledger_backups_and_Git_weights_excluded": true,
+    "release_prefix": "releases/20261012-temporal-role-contrast-v3",
+    "repository": "Publicus/legal-ir-autoencoder",
+    "source_only_future_attempt_03": true
+  }
+}

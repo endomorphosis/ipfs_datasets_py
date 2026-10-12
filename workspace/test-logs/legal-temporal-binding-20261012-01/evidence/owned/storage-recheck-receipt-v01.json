@@ -1,0 +1,27 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission.py": {
+      "bytes": 15272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/recheck_storage_admission.py",
+      "sha256": "c22b093f84b43796997b0286b6ffd638f9c3e8976bf30586f9f65c31df5f61ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-v01.json": {
+      "bytes": 10319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-v01.json",
+      "sha256": "9605b900f6ed24b5fb06ebee54b1ef5ff962d4a38aa16d1a360dc7a9f7e08aa4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-v01.json": {
+      "bytes": 65383,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-resource-endpoints-v01.json",
+      "sha256": "50237564ed853b4083f6b7c2fa8457b73ad61fec54ac4f92a0d6f6505ec82539"
+    }
+  },
+  "child_created": false,
+  "claims_modified": false,
+  "feasible_at_observation": false,
+  "limits_modified": false,
+  "model_calls": 0,
+  "over_limit_bytes": 0,
+  "passed": true,
+  "schema": "temporal-binding-storage-recheck-receipt/v1"
+}

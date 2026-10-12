@@ -1,0 +1,37 @@
+{
+  "ast_parsed": true,
+  "files": [
+    {
+      "bytes": 23526,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py",
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    {
+      "bytes": 6908,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py",
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    {
+      "bytes": 29623,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_bindings.py",
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    {
+      "bytes": 11482,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_duration_bound_qualified.py",
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    {
+      "bytes": 6976,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-design-v01.md",
+      "sha256": "8deddfb847f3555770fc6e9de07618ca1a90d3d11cf9765a00fe6e1761c8693c"
+    }
+  ],
+  "implementation_agent_executed_compiler": false,
+  "implementation_agent_executed_models": false,
+  "implementation_agent_executed_native_calls": false,
+  "implementation_agent_executed_tests": false,
+  "schema": "temporal-binding-implementation-handoff/v1",
+  "scope": "Four additive source/test files plus owned design notes only; root owns inert validation/integration; five new tests follow a specific independent producer fence finding.",
+  "source_head": "fd4be4da2a3976a8e40f47d7337cebb6332c95f3"
+}

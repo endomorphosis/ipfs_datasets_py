@@ -1,0 +1,19 @@
+{
+  "apply_executed": false,
+  "claim_modified": false,
+  "durability_asserted_by_preflight": false,
+  "followup_review_findings": [
+    "Recheck stable lock immediately before and after atomic writer",
+    "Classify observed failure ledger without rollback"
+  ],
+  "full_census_performed_by_preflight": false,
+  "helper_original_sha256": "974571757092eab2b94d08cc5a686fadf08b845f531665fcef3d365a5fcedc75",
+  "helper_preserved_draft_path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/reconcile_owned_gated_refusal-draft-v01.py",
+  "lock_acquired": false,
+  "observed_original_owner_absent": true,
+  "observed_owned_child_group_absent": true,
+  "passed": true,
+  "protocol_path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned-gated-refusal-reconciliation-protocol-v01.json",
+  "read_only_preflight_exit_code": 0,
+  "schema": "owned-gated-refusal-preflight-history/v1"
+}
