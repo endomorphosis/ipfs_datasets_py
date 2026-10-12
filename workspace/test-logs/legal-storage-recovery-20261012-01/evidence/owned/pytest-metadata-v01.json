@@ -1,0 +1,50 @@
+{
+  "schema": "legal-storage-pytest-metadata/v1",
+  "utc": "2026-10-12T02:53:31Z",
+  "read_only": true,
+  "root_entries": [
+    {
+      "path": "/tmp/pytest-of-barberb/pytest-158",
+      "mode_type": "directory",
+      "device": 66306,
+      "inode": 529870,
+      "mtime_utc": "2026-10-12T02:46:46Z",
+      "ctime_utc": "2026-10-12T02:46:46Z",
+      "pytest_lock": null
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/pytest-156",
+      "mode_type": "directory",
+      "device": 66306,
+      "inode": 528324,
+      "mtime_utc": "2026-10-12T02:51:46Z",
+      "ctime_utc": "2026-10-12T02:51:46Z",
+      "pytest_lock": null
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/pytest-current",
+      "mode_type": "symlink",
+      "device": 66306,
+      "inode": 524341,
+      "mtime_utc": "2026-10-12T02:46:44Z",
+      "ctime_utc": "2026-10-12T02:46:44Z",
+      "target": "/tmp/pytest-of-barberb/pytest-158"
+    },
+    {
+      "path": "/tmp/pytest-of-barberb/pytest-157",
+      "mode_type": "directory",
+      "device": 66306,
+      "inode": 528663,
+      "mtime_utc": "2026-10-12T02:53:24Z",
+      "ctime_utc": "2026-10-12T02:53:24Z",
+      "pytest_lock": {
+        "bytes": 7,
+        "is_regular": true,
+        "mtime_utc": "2026-10-12T02:45:09Z",
+        "pid": 2100272,
+        "proc_present": true
+      }
+    }
+  ],
+  "limitation": "missing lock or dead PID alone does not authorize deletion; current processes and open files need a separate concrete owner review"
+}

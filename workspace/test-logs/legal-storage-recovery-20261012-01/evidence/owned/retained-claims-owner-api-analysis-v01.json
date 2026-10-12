@@ -1,0 +1,569 @@
+{
+  "attempt_owner_clusters": [
+    {
+      "attempt_owner_cluster": "unbound_attempt",
+      "count": 12,
+      "full_storage_bytes": 7340000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 0
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-jobs-20260926",
+      "count": 7,
+      "full_storage_bytes": 4750000000,
+      "metadata_candidate_full_storage_bytes": 750000000,
+      "metadata_candidates": 3,
+      "represented_artifact_apparent_regular_bytes": 240120590
+    },
+    {
+      "attempt_owner_cluster": "decoder-generated-field-training-20261003",
+      "count": 2,
+      "full_storage_bytes": 4300000000,
+      "metadata_candidate_full_storage_bytes": 4300000000,
+      "metadata_candidates": 2,
+      "represented_artifact_apparent_regular_bytes": 249995188
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/distributed-autoencoders-20260928",
+      "count": 5,
+      "full_storage_bytes": 3390000000,
+      "metadata_candidate_full_storage_bytes": 3390000000,
+      "metadata_candidates": 5,
+      "represented_artifact_apparent_regular_bytes": 174195407
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/source-corpus-catalog-20260926",
+      "count": 1,
+      "full_storage_bytes": 1500000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 5083142
+    },
+    {
+      "attempt_owner_cluster": "decoder-modality-gap-20261004",
+      "count": 1,
+      "full_storage_bytes": 1500000000,
+      "metadata_candidate_full_storage_bytes": 1500000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 76067692
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/source-corpus-delivery-20260926",
+      "count": 1,
+      "full_storage_bytes": 1500000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 5301464
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/source-corpus-delivery-20260926-r2",
+      "count": 1,
+      "full_storage_bytes": 1500000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 5311695
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/concurrent-autoformal-diagnosis-20260927",
+      "count": 10,
+      "full_storage_bytes": 1450000000,
+      "metadata_candidate_full_storage_bytes": 1450000000,
+      "metadata_candidates": 10,
+      "represented_artifact_apparent_regular_bytes": 313057567
+    },
+    {
+      "attempt_owner_cluster": "decoder-modality-gap-r2-20261004",
+      "count": 4,
+      "full_storage_bytes": 1200000000,
+      "metadata_candidate_full_storage_bytes": 1200000000,
+      "metadata_candidates": 4,
+      "represented_artifact_apparent_regular_bytes": 3991605
+    },
+    {
+      "attempt_owner_cluster": "decoder-content-matched-20261004",
+      "count": 1,
+      "full_storage_bytes": 1200000000,
+      "metadata_candidate_full_storage_bytes": 1200000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 21435
+    },
+    {
+      "attempt_owner_cluster": "decoder-content-matched-r2-20261004",
+      "count": 1,
+      "full_storage_bytes": 1200000000,
+      "metadata_candidate_full_storage_bytes": 1200000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 8158611
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/owned-daemon-shadow-20260925",
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 5639
+    },
+    {
+      "attempt_owner_cluster": "native4096-low-resident-20261004",
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 200838522
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/prepared-campaign-inputs-20260926",
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 79748789
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-package-20260926",
+      "count": 1,
+      "full_storage_bytes": 900000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4408131
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/concurrent-autoformal-smoke-20260927",
+      "count": 6,
+      "full_storage_bytes": 830000000,
+      "metadata_candidate_full_storage_bytes": 830000000,
+      "metadata_candidates": 6,
+      "represented_artifact_apparent_regular_bytes": 267330386
+    },
+    {
+      "attempt_owner_cluster": "decoder-mean-centered-source-20261003",
+      "count": 1,
+      "full_storage_bytes": 800000000,
+      "metadata_candidate_full_storage_bytes": 800000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 34499264
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/autoencoder-convergence-20260929",
+      "count": 1,
+      "full_storage_bytes": 750000000,
+      "metadata_candidate_full_storage_bytes": 750000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 94274792
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/legacy-cuda-campaign-20260930",
+      "count": 1,
+      "full_storage_bytes": 750000000,
+      "metadata_candidate_full_storage_bytes": 750000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 613748056
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/entity-v2-full-source-20260927",
+      "count": 1,
+      "full_storage_bytes": 750000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 310918825
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/uscode-corpus-export-20260926",
+      "count": 1,
+      "full_storage_bytes": 750000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4894911
+    },
+    {
+      "attempt_owner_cluster": "legal-trigger-readout-pilot-20261007-01",
+      "count": 3,
+      "full_storage_bytes": 600000000,
+      "metadata_candidate_full_storage_bytes": 600000000,
+      "metadata_candidates": 3,
+      "represented_artifact_apparent_regular_bytes": 215481
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/parallel-training-campaign-20260929T042818Z",
+      "count": 1,
+      "full_storage_bytes": 600000000,
+      "metadata_candidate_full_storage_bytes": 600000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 385511
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z",
+      "count": 1,
+      "full_storage_bytes": 600000000,
+      "metadata_candidate_full_storage_bytes": 600000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 4272709
+    },
+    {
+      "attempt_owner_cluster": "decoder-balanced-wording-20261007",
+      "count": 2,
+      "full_storage_bytes": 500000000,
+      "metadata_candidate_full_storage_bytes": 500000000,
+      "metadata_candidates": 2,
+      "represented_artifact_apparent_regular_bytes": 8677989
+    },
+    {
+      "attempt_owner_cluster": "ui-modal-coverage-20261002",
+      "count": 1,
+      "full_storage_bytes": 500000000,
+      "metadata_candidate_full_storage_bytes": 500000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 20403034
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-workflow-recapture-20260926",
+      "count": 1,
+      "full_storage_bytes": 400000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4260165
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-workflow-20260926",
+      "count": 1,
+      "full_storage_bytes": 400000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4211689
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/supervisor-claim-paired-214-20260927",
+      "count": 1,
+      "full_storage_bytes": 350000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 32815586
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/supervisor-claim-paired-214-r3-20260927",
+      "count": 1,
+      "full_storage_bytes": 325000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 30625919
+    },
+    {
+      "attempt_owner_cluster": "decoder-contextual-margins-20261004",
+      "count": 1,
+      "full_storage_bytes": 300000000,
+      "metadata_candidate_full_storage_bytes": 300000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 21883
+    },
+    {
+      "attempt_owner_cluster": "decoder-native-owner-20261004",
+      "count": 1,
+      "full_storage_bytes": 300000000,
+      "metadata_candidate_full_storage_bytes": 300000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 61773
+    },
+    {
+      "attempt_owner_cluster": "native4096-layer-reclaim-pilot-r2-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 150702
+    },
+    {
+      "attempt_owner_cluster": "decoder-training-paraphrases-r2-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 21417
+    },
+    {
+      "attempt_owner_cluster": "native4096-layer-reclaim-pilot-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 149180
+    },
+    {
+      "attempt_owner_cluster": "decoder-training-paraphrases-r3-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 21908
+    },
+    {
+      "attempt_owner_cluster": "decoder-fresh-normative-style-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 6989160
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-owned-execution-20260926",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4943693
+    },
+    {
+      "attempt_owner_cluster": "native4096-four-width-20261004",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 147012
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/uscode-source-inventory-20260925",
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "metadata_candidate_full_storage_bytes": 250000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 2159057
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/entity-v2-validation-20260927-r2",
+      "count": 1,
+      "full_storage_bytes": 200000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 2992902
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/entity-v2-validation-20260927-r4",
+      "count": 1,
+      "full_storage_bytes": 200000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4577742
+    },
+    {
+      "attempt_owner_cluster": "legal-scope-span-pilot-20261007-01",
+      "count": 1,
+      "full_storage_bytes": 200000000,
+      "metadata_candidate_full_storage_bytes": 200000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 29845
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/entity-v2-validation-20260927",
+      "count": 1,
+      "full_storage_bytes": 200000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 2981907
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-batches-profile-20260926",
+      "count": 1,
+      "full_storage_bytes": 180000000,
+      "metadata_candidate_full_storage_bytes": 180000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 104606776
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/supervisor-claim-candidate-214-20260927",
+      "count": 1,
+      "full_storage_bytes": 150000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 18354423
+    },
+    {
+      "attempt_owner_cluster": "decoder-selected-continuation-20261004",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 18287
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/source-span-batch-3-20260927",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 345245
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/surface-profile-text-reuse-20260925",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 16354576
+    },
+    {
+      "attempt_owner_cluster": "native4096-layer-reclaim-20261004",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 449913
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-quack-control-20260926",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4685565
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-quack-control-repair-20260926",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4713515
+    },
+    {
+      "attempt_owner_cluster": "object-projection-20261004",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 21314
+    },
+    {
+      "attempt_owner_cluster": "decoder-continuation-20261004",
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "metadata_candidate_full_storage_bytes": 100000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 19707
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/entity-v2-validation-20260927-r5",
+      "count": 1,
+      "full_storage_bytes": 50000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4586093
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-merge-semantics-20260926",
+      "count": 1,
+      "full_storage_bytes": 50000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 4532289
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/campaign-package-tests-retry-20260926",
+      "count": 1,
+      "full_storage_bytes": 50000000,
+      "metadata_candidate_full_storage_bytes": 0,
+      "metadata_candidates": 0,
+      "represented_artifact_apparent_regular_bytes": 1564473
+    },
+    {
+      "attempt_owner_cluster": "federal-corpus-audits/tasks-index-raw-sql-20260927",
+      "count": 1,
+      "full_storage_bytes": 50000000,
+      "metadata_candidate_full_storage_bytes": 50000000,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 6854589
+    },
+    {
+      "attempt_owner_cluster": "uscode-identity-recovery-20261011-01",
+      "count": 1,
+      "full_storage_bytes": 16777216,
+      "metadata_candidate_full_storage_bytes": 16777216,
+      "metadata_candidates": 1,
+      "represented_artifact_apparent_regular_bytes": 30899
+    }
+  ],
+  "bound_attempt_overlap_pairs": [],
+  "current_classification": {
+    "existing_api_metadata_candidates": {
+      "count": 63,
+      "full_storage_bytes": 24316777216
+    },
+    "external_charges_separate_design": {
+      "count": 25,
+      "declared_external_bytes": 6000388608,
+      "full_storage_bytes": 14725000000
+    },
+    "nonordinary_symlink_outputs_separate_design": {
+      "count": 2,
+      "full_storage_bytes": 2000000000
+    },
+    "unbound_attempt_separate_design": {
+      "count": 12,
+      "full_storage_bytes": 7340000000
+    }
+  },
+  "current_ledger_same_as_metadata_intake": true,
+  "existing_api": {
+    "all_child_groups_dead_required": true,
+    "complete_regular_unaliased_nonempty_sha_fsynced_artifact_inventory_required": true,
+    "exact_record_hash_and_attempt_identity_required": true,
+    "external_charges_supported": false,
+    "fresh_under_cap_census_required": true,
+    "full_target_claim_accounting_before_release": true,
+    "function": "reconcile_retained_reservation",
+    "line": 52,
+    "original_owner_pid_absence_required": true,
+    "outputs_deleted": false,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "unbound_attempt_supported": false
+  },
+  "metadata_report": {
+    "bytes": 182069,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-metadata-intake-v01.json",
+    "sha256": "5040d2629181d64c17acbefe893f9c37a14d80b8bf40d2663620c54e61e567f1"
+  },
+  "mutations_executed": false,
+  "observed_at_utc": "2026-10-12T02:54:45Z",
+  "recommendation": [
+    "First restore apparent-byte headroom within actual named roots through a concrete reviewed owner-controlled archival/disposable-output action. Removing data elsewhere, or only increasing filesystem free space, does not reduce named-root accounting.",
+    "When full still-charged census is under 145 GB, close our exact retained 0350 preparation-refusal claim using a fresh distinct reviewed administrative attempt. Do not reuse its previous failed closeout directory.",
+    "Then prepare individual owner-scoped closeouts, prioritizing the 4 GB generated-field attempt; preserve all outputs and retain every other claim body unchanged, not age-based expiration.",
+    "Hold separate design/review for unbound claims, externally charged claims and symlink-bearing artifacts; existing administrative API refuses them.",
+    "Require live census and headroom margin before fresh training. The apparent-byte ceiling with all current claims is 96,618,222,784 B; with a 200 MB new request it is 96,418,222,784 B. Neither threshold accounts for concurrent future growth."
+  ],
+  "represented_artifact_apparent_regular_bytes_sum": 2990225639,
+  "schema": "retained-claims-owner-api-analysis/v1",
+  "source_pins": [
+    {
+      "bytes": 6230,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "5d36b28b4bda7cba91fbbe146cf2e3752f06f3e3adb6c92772788466ef701aa7"
+    },
+    {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    }
+  ],
+  "specific_next_claim_after_bootstrap_headroom": {
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 67942731,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/training-r1"
+    },
+    "child_groups": [
+      {
+        "leader_birth_matches": null,
+        "leader_observed": false,
+        "non_zombie_group_members": 0,
+        "pid": 1434010,
+        "recorded_birth": "7454855"
+      }
+    ],
+    "observed_artifact_bytes": 249979161,
+    "owner_pid": 1421156,
+    "rationale": "Largest no-external ordinary-output candidate; 4 GB full claim could be legitimately removed after exact durable closeout while keeping the 249,979,161 observed artifact bytes. Requires owner-scoped review and fresh under-cap pre-release census; no authorization inferred.",
+    "reservation_id": "474ee6b5ae784516ae1dab7ca38c8cc6",
+    "status": "metadata_candidate_only",
+    "storage_bytes": 4000000000
+  }
+}

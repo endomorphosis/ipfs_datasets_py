@@ -1,0 +1,122 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-design-v01.json": {
+      "bytes": 8030,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-design-v01.json",
+      "sha256": "8641559c989f662d3d3f3fae4754621c9cd2674cb4ea2ea1365a4eb6927c372b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-implementation-handoff-v01.json": {
+      "bytes": 6728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-implementation-handoff-v01.json",
+      "sha256": "9c32e55d84822770727afc614fdd0c44e3b41c06d0a7cdb3fe59f58b19c6739f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+      "bytes": 10852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "bytes": 41249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "sha256": "6beda84236c405f8c75601d39d64e5a0a1b86c4e4afca6f340d1ca92f45f6d64"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+      "bytes": 23019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+      "sha256": "76380d972134f154d7f1c4473dca121d9e0b0f754988767dc3323821355a8f84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests.py": {
+      "bytes": 2372,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests.py",
+      "sha256": "50713263e6d27877f3e5529b3817f045ad0222866ceb0a0becf0bf5c3e01c589"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.log": {
+      "bytes": 99,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.log",
+      "sha256": "ac1d2d7b7434ed7d961c9b7ff3f0f8511e6745cf5e32a658c334928827407aa8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.xml": {
+      "bytes": 14458,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.xml",
+      "sha256": "cb07ae01891a5f5b8af00fc61996139d505bce3219205347a166168a85c888ce"
+    }
+  },
+  "changed_source_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py"
+  ],
+  "checks": {
+    "actual_admission_still_refuses_over_cap_after_closeout": true,
+    "administrative_census_allocates_no_work_and_retains_full_preclaim": true,
+    "atomic_failure_primary_error_preserved_without_automatic_retry_or_rollback": true,
+    "cap_still_145000000000": true,
+    "default_require_capacity_preserves_v1_receipt_and_capacity_cutoff": true,
+    "diff_check_clean": true,
+    "durable_regular_unaliased_nonempty_attempt_and_roots_rechecked": true,
+    "explicit_policy_validated_before_filesystem_access": true,
+    "foreign_original_and_projected_bodies_preserved": true,
+    "fresh_two_scan_projected_release_outstanding_delta_exact": true,
+    "frozen_source_and_tests_match_handoff": true,
+    "old_admission_account_owner_byte_identical": true,
+    "only_recovery_api_and_meaningful_tests_changed": true,
+    "owner_current_and_prior_groups_rechecked_after_censuses": true,
+    "physical_free_shortfall_observed_without_admission": true,
+    "scheduler_proof_owner_and_owner_tests_byte_identical_to_main": true,
+    "selected_original_and_projected_record_digests_rechecked": true,
+    "source_ast_valid": true,
+    "v2_projection_and_required_actual_postwrite_labels_explicit": true
+  },
+  "created_at_utc": "2026-10-12T03:08:51Z",
+  "findings": [],
+  "limits": [
+    "Static independent source review plus root fixture results; this receipt is not concrete live applicator review.",
+    "No API call, ledger lock, reservation, lease, deletion, model or compiler was executed by reviewer.",
+    "Only root exact own0350 candidate is in current live-application scope; no foreign or bulk recovery inferred.",
+    "Externally charged, unbound, symlink-bearing and live/reused-owner claims remain unsupported/refused.",
+    "Administrative closeout keeps cap and pathname accounting unchanged; reduced retained claim is not admission authority.",
+    "Current unchanged owner tests include three baseline stale140GB expectations; no full production-owner suite result asserted.",
+    "Previous fixture startup refusals v01/v02/v03/v04 are preserved historical outcomes and not counted as current passing cases."
+  ],
+  "live_application_approved": false,
+  "passed": true,
+  "phase": "administrative-storage-closeout-source",
+  "publication_approved": false,
+  "resolved_draft_concern": {
+    "issue": "Selected retained body or copied projection could drift during census while carrying stale previous_record_sha256.",
+    "resolution": "Author added exact original object/digest checks after each census and a copied-selected digest check after projected census, with original/copy drift and replacement negative controls."
+  },
+  "schema": "administrative-storage-closeout-independent-review/v1",
+  "source_main": "050e08d67db70817903dce750ee76b6ba839c41e",
+  "test_observation": {
+    "executed_by_root_not_reviewer": true,
+    "failed_cases": 0,
+    "log": {
+      "bytes": 99,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.log",
+      "sha256": "ac1d2d7b7434ed7d961c9b7ff3f0f8511e6745cf5e32a658c334928827407aa8"
+    },
+    "passed_cases": 68,
+    "scope": "Test-local small real files/ledgers/scheduler fixtures, outside live named roots; denied numerical imports/network/process creation. Existing os.kill(self_pid,0) fixture liveness probe is read-only and bounded by runner.",
+    "skipped_cases": 0,
+    "xml": {
+      "bytes": 14458,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.xml",
+      "sha256": "cb07ae01891a5f5b8af00fc61996139d505bce3219205347a166168a85c888ce"
+    }
+  }
+}

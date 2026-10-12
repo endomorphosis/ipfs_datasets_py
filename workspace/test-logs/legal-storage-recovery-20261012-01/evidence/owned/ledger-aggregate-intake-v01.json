@@ -1,0 +1,40 @@
+{
+  "schema": "legal-storage-ledger-aggregate/v1",
+  "utc": "2026-10-12T02:54:37Z",
+  "read_only": true,
+  "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+  "bytes": 6138012,
+  "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753",
+  "identity_and_size_stable_read": true,
+  "limit_bytes": 145000000000,
+  "record_count": 513,
+  "status_counts": {
+    "released": 411,
+    "retained": 102
+  },
+  "outstanding_full_reservations_bytes": 48381777216,
+  "named_roots": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 524352,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "private_claim_bodies_saved": false,
+  "claim_mutations_performed": false
+}

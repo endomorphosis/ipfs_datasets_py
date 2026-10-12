@@ -1,0 +1,168 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-independent-review-v01.json": {
+      "bytes": 8394,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-independent-review-v01.json",
+      "sha256": "7c12ff5ea93c319a817f52c80a7fd2fe33aaf318f1c890a4f91af722253622ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/docs/autoencoders/storage_accounting_recovery_20261012.md": {
+      "bytes": 7539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/docs/autoencoders/storage_accounting_recovery_20261012.md",
+      "sha256": "7524495f20db013b19cfe09b13f6fde2398fc166732f290b3ee79a5dd701ddd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/filesystem-intake-v01.json": {
+      "bytes": 2242,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/filesystem-intake-v01.json",
+      "sha256": "c9af34b62db108b59c4f859d84d5f111ecce2e2bfc0270ef006cce1f55ada9db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert-test-observation-v01.json": {
+      "bytes": 2650,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert-test-observation-v01.json",
+      "sha256": "5c86a58168e11e63746149d5de767f8ee6486768de6858d351e0cc1d90743821"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/ledger-aggregate-intake-v01.json": {
+      "bytes": 1234,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/ledger-aggregate-intake-v01.json",
+      "sha256": "d034c8c65955e10bd7afc39503c9b7e751605818791a80aa39699e470a769adf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v01.json": {
+      "bytes": 197283,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v01.json",
+      "sha256": "6375506e4b813fb5167a28f601663a651aab57af71e2b004505608f6740cc2fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v02.json": {
+      "bytes": 197078,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v02.json",
+      "sha256": "50aed05e9a5823f1be25c4bb72785b236b5d352287d4beb011a6c34c22ad1b97"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/actual-postwrite-census.json": {
+      "bytes": 1145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/actual-postwrite-census.json",
+      "sha256": "50ad1849bfcfdcfd6fc8ff69427ed1c4071e423d238cb71ff8db89e0c3d949dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/completion.json": {
+      "bytes": 5415,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/completion.json",
+      "sha256": "ec98d6df3e637100ed79ac6c14d7d7dd4f86ed963cb12af0487b15362a462d0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-independent-review-v02.json": {
+      "bytes": 39643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-independent-review-v02.json",
+      "sha256": "1b7175bf25e1daebdcf9a8902d5a50f8d09dbbb93a0c3d30959a941397a5d483"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-postclosure-independent-review-v01.json": {
+      "bytes": 42177,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-postclosure-independent-review-v01.json",
+      "sha256": "b98214491b7924ef0e1f17627a29592b077e7f0122be621ad72cecb226635e21"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/pytest-metadata-v01.json": {
+      "bytes": 1474,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/pytest-metadata-v01.json",
+      "sha256": "512c4263f94b0bb451fc007b4ce6b07cd0b10b57a4ce794acea6cb898129a9bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-metadata-intake-v01.json": {
+      "bytes": 182069,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-metadata-intake-v01.json",
+      "sha256": "5040d2629181d64c17acbefe893f9c37a14d80b8bf40d2663620c54e61e567f1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-owner-api-analysis-v01.json": {
+      "bytes": 22367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-owner-api-analysis-v01.json",
+      "sha256": "fabb62ace7d63d8148f1b519484315fc10b6c751c726459ce82cf6d8ed53f661"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-capacity-intake-v01.json": {
+      "bytes": 9440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-capacity-intake-v01.json",
+      "sha256": "17b9a4ca81610a650dae1e63d32b2a8d13bd3b75a6f4f04769f08a0911855d29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-plan.md": {
+      "bytes": 7539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-plan.md",
+      "sha256": "7524495f20db013b19cfe09b13f6fde2398fc166732f290b3ee79a5dd701ddd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-remediation-next-actions-v01.json": {
+      "bytes": 13150,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-remediation-next-actions-v01.json",
+      "sha256": "a5271d1b892d7f8664f11c11f46f2f4d4722b741f20fdb792f9c8b45ade62bb7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/failed-attempt-cleanup-review.json": {
+      "bytes": 30977,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/failed-attempt-cleanup-review.json",
+      "sha256": "35f36d8aebe933c9425aab0c68403854ec8e9b31d6ddbd61be3e3787e69088cc"
+    }
+  },
+  "checks": {
+    "15_failed_files61141B_preserved_no_outputs_removed": true,
+    "25_external14725000000_12_unbound7340000000_2_symlink2000000000_need_separate_design": true,
+    "4GB_candidate249979161_observed_outputs_already_charged_preserved": true,
+    "5_to10GB_margin_engineering_choice_not_cap_change_or_guarantee": true,
+    "76_current_inert_tests68_recovery8_owner_scope_honest": true,
+    "accounting_cap_145GB_preserved_not_requested_to_raise": true,
+    "actual_headroom1526021806_hypothetical200M1326021806_correct": true,
+    "administrative_v2_preserves_no_admission_authority_and_projection_label": true,
+    "advised_completed_to_retained_wording_resolved": true,
+    "after513_records412_released101_retained48181777216_full_claims": true,
+    "candidate_prior_review_four_fits_does_not_complete18_fit_comparison": true,
+    "current_complete_manifest_must_be_reconciled_before_historical_closeout": true,
+    "default_v1_and_admission_unchanged_as_independently_reviewed_not_self_approved": true,
+    "doc_numerics_recomputed_from_primary_receipts": true,
+    "fresh_headroom1527497843_and_extra3672502157_for5GB_after200M_correct": true,
+    "fresh_independent_sequential143472502157_not_claimed_owner_admission": true,
+    "historical_140GB_guardian_not_adopted_or_rerun": true,
+    "initial513_records411_released102_retained48381777216_full_claims": true,
+    "initial63_candidates24316777216_less_own200M_is62_and24116777216": true,
+    "initial96911604740_apparent_and31552270383_alias_bytes_sequential_not_atomic": true,
+    "legacy_three_140GB_owner_tests_not_misreported_as_passed": true,
+    "no_foreign_or_bulk_release_permission_or_age_expiry": true,
+    "no_training_weights_legal_fidelity_latent_family_or_Lake_qualification_claim": true,
+    "only_own0350_200M_released512_other_bodies_preserved": true,
+    "ordinary_du_hardlink_dedup_not_used_for_owner_admission": true,
+    "pathname_apparent_and_full_retained_claim_accounting_preserved": true,
+    "physical_free_496495968256_and_inodes219973903_correct_decimal_rounding": true,
+    "pre148650554404_projection148783748326_actual143473978194_distinguished": true,
+    "private_raw_ledgers_stay_private_and_not_review_public_payload": true,
+    "projection_to_actual_observed_drop5309770132_not_attributed_to_own200M": true,
+    "pytest157_lock158_current_intake_observation_not_liveness_guarantee": true,
+    "root_and_source_guides_byte_identical": true,
+    "source_capture_archive_and_pytest_cleanup_require_owner_dependency_review": true,
+    "tmp_root_inode524352_matches_no_new_migration_inferred": true
+  },
+  "created_at_utc": "2026-10-12T03:28:00.731392+00:00",
+  "findings": [],
+  "limitations": [
+    "This review approves the exact root-authored documentation, not this reviewer's own recovery implementation; the source has a separate independent reviewer.",
+    "Primary storage observations are bounded, sequential endpoints and do not guarantee continuous custody or future headroom/admission.",
+    "The 4GB historical claim remains metadata-only. Fresh complete current artifact manifest, liveness, scope/durability and concrete independent application review are required before any closeout.",
+    "No raw .local ledger backups, foreign claim bodies, model weights or historical attempt payloads are included in this receipt. The prior cleanup review is referenced by metadata pin only and is not copied or reapproved for live release.",
+    "No foreign deletion, claim release, cap increase, training retry, archive/model publication or semantic/compiler qualification follows from this documentation review."
+  ],
+  "passed": true,
+  "phase": "root-authored-storage-documentation",
+  "resolved_draft_note": {
+    "final": "Review retained historical claims",
+    "original": "Review completed historical claims",
+    "reason": "Metadata candidates include failed/incomplete comparisons; no completed-comparison assumption is warranted."
+  },
+  "reviewer_actions": {
+    "ledger_locks_acquired": 0,
+    "live_api_calls": 0,
+    "live_ledger_reads": 0,
+    "models_or_compiler_executed": 0,
+    "report_file_only_written": true,
+    "shared_source_or_docs_mutated": 0,
+    "tests_executed": 0
+  },
+  "schema": "storage-recovery-documentation-independent-review/v1",
+  "scope": {
+    "future_foreign_cleanup_approval": false,
+    "live_application_approval": false,
+    "publication_payload_approval": false,
+    "reviewed_artifacts": [
+      "root-authored storage-plan.md",
+      "identical source storage_accounting_recovery_20261012.md"
+    ],
+    "self_source_approval": false,
+    "source_approval_relied_on": "administrative-storage-closeout-independent-review-v01.json by separate reviewer",
+    "source_implementation_author_is_this_reviewer": true
+  }
+}

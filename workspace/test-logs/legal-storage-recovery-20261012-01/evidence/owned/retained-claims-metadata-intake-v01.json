@@ -1,0 +1,4870 @@
+{
+  "attempt_owner_groups": [
+    {
+      "count": 2,
+      "full_storage_bytes": 500000000,
+      "key": "decoder-balanced-wording-20261007"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 1200000000,
+      "key": "decoder-content-matched-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 1200000000,
+      "key": "decoder-content-matched-r2-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 300000000,
+      "key": "decoder-contextual-margins-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "key": "decoder-continuation-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "decoder-fresh-normative-style-20261004"
+    },
+    {
+      "count": 2,
+      "full_storage_bytes": 4300000000,
+      "key": "decoder-generated-field-training-20261003"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 800000000,
+      "key": "decoder-mean-centered-source-20261003"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 1500000000,
+      "key": "decoder-modality-gap-20261004"
+    },
+    {
+      "count": 4,
+      "full_storage_bytes": 1200000000,
+      "key": "decoder-modality-gap-r2-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 300000000,
+      "key": "decoder-native-owner-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "key": "decoder-selected-continuation-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "decoder-training-paraphrases-r2-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "decoder-training-paraphrases-r3-20261004"
+    },
+    {
+      "count": 59,
+      "full_storage_bytes": 25525000000,
+      "key": "federal-corpus-audits"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 200000000,
+      "key": "legal-scope-span-pilot-20261007-01"
+    },
+    {
+      "count": 3,
+      "full_storage_bytes": 600000000,
+      "key": "legal-trigger-readout-pilot-20261007-01"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "native4096-four-width-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "key": "native4096-layer-reclaim-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "native4096-layer-reclaim-pilot-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 250000000,
+      "key": "native4096-layer-reclaim-pilot-r2-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "key": "native4096-low-resident-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 100000000,
+      "key": "object-projection-20261004"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 500000000,
+      "key": "ui-modal-coverage-20261002"
+    },
+    {
+      "count": 12,
+      "full_storage_bytes": 7340000000,
+      "key": "unbound_attempt"
+    },
+    {
+      "count": 1,
+      "full_storage_bytes": 16777216,
+      "key": "uscode-identity-recovery-20261011-01"
+    }
+  ],
+  "blocker_counts": {
+    "durable_inventory_nonordinary_or_aliased": 2,
+    "external_charges_need_separate_recovery": 25,
+    "no_bound_attempt_directory_existing_api_unsupported": 12
+  },
+  "lane_groups": [
+    {
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "key": "None"
+    },
+    {
+      "count": 101,
+      "full_storage_bytes": 47381777216,
+      "key": "hammer_lean"
+    }
+  ],
+  "ledger": {
+    "bytes": 6138012,
+    "device": 66306,
+    "inode": 67026197,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "2075fb14e99da8aafe58d363dfdaab552be5cd17f04a73733e07ef9a4f45e753"
+  },
+  "ledger_endpoint_still_matches_at_completion": true,
+  "limitations": [
+    "Metadata-only bounded point observations; no content hashes or fsync durability qualification for attempt outputs.",
+    "No ledger write, lock, reservation, release, deletion, original-owner adoption, model or compiler execution.",
+    "Candidate status is not administrative authorization or admission; existing API must freshly reverify all invariants, hash and fsync exact complete artifact set and retain full target claim during an under-cap capacity census.",
+    "No PID command line or environment data captured.",
+    "Historical claims belong to other attempt owners; no age-based expiration or blanket foreign reconciliation inferred."
+  ],
+  "metadata_candidate_count": 63,
+  "metadata_candidate_full_storage_bytes": 24316777216,
+  "observed_at_utc": "2026-10-12T02:52:47Z",
+  "outstanding_count": 102,
+  "outstanding_full_storage_bytes": 48381777216,
+  "policy_limit_bytes": 145000000000,
+  "retention_reason_groups": [
+    {
+      "count": 75,
+      "full_storage_bytes": 42876777216,
+      "key": "context_failed"
+    },
+    {
+      "count": 20,
+      "full_storage_bytes": 3105000000,
+      "key": "explicit_release_required"
+    },
+    {
+      "count": 7,
+      "full_storage_bytes": 2400000000,
+      "key": "scheduler_admission_failed"
+    }
+  ],
+  "roots": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 524352,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "rows": [
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139986,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/capture-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 800167,
+          "recorded_birth": "103914753"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 2992902,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 7,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139986,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r2/capture-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 6,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 782877,
+      "owner_pid_observed": false,
+      "record_body_sha256": "90ffc81c0717010f13232b2e06756a26412e98b9914f24e5d8e1f334685f56dd",
+      "reservation_id": "009b71918a2e42118859174b1bb8a693",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 87433606,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 655833,
+          "recorded_birth": "78788165"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "legal-trigger-readout-pilot-20261007-01",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 61141,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 16,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 87433606,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-02"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 15,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 643818,
+      "owner_pid_observed": false,
+      "record_body_sha256": "3ae75c3caaeda15a751532c94f6d64b7d03c4178795ba4e97664eb6f5352fa50",
+      "reservation_id": "0350dfb651f943178d7b1cbc2113443e",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410489,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r6"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3381433,
+          "recorded_birth": "112043696"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 35307604,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 31,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67410489,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r6"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 28,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3378820,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f96137ae12e79dde3657de53df24f5976d712a82e48eaed80d6ac4ccc976f130",
+      "reservation_id": "03d975deb7684361abbbfc1fd7999048",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67025175,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-margins-20261004/diagnostic-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2872715,
+          "recorded_birth": "9436303"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-contextual-margins-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 21883,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67025175,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-contextual-margins-20261004/diagnostic-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2850465,
+      "owner_pid_observed": false,
+      "record_body_sha256": "cf039ba3d065eaab210a6074c6e851dd803dc1b5821251954b5d7f8da75059ba",
+      "reservation_id": "0573ed4b2bd8408da6fb4f07e77e5478",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137973,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 142612,
+          "recorded_birth": "100164703"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 104606776,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 140,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137973,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-batches-profile-20260926/profile-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 76,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 140908,
+      "owner_pid_observed": false,
+      "record_body_sha256": "413ef8ffc6ce9fd2ee99aabd1964eea54b707f58e3a6a8b4b690db12dea0a20e",
+      "reservation_id": "05a2312e42c545b492f4932490dc58b6",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 180000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74367617,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 4109248,
+          "recorded_birth": "36790097"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-balanced-wording-20261007",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 8654116,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74367617,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/training-384-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 22,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 4105276,
+      "owner_pid_observed": false,
+      "record_body_sha256": "c9d46e74469ed3ec3ccbed5b481228a96ad068de630ff95dbdb76e746f1be0d8",
+      "reservation_id": "06080822b0b14999b55b462a37620f24",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 400000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410336,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3371477,
+          "recorded_birth": "112039722"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 47361816,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 240,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67410336,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 144,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3368867,
+      "owner_pid_observed": false,
+      "record_body_sha256": "d06d0c20e6a1da297260a12a882abc8b9f493ddb1af4539224c6d9a1c1f7f36f",
+      "reservation_id": "0bebf32982af445e831700681eac1586",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 68073470,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/diagnostic-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1610539,
+          "recorded_birth": "7511348"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-generated-field-training-20261003",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 16027,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 7,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 68073470,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/diagnostic-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 6,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1607680,
+      "owner_pid_observed": false,
+      "record_body_sha256": "9b94b59758bf08e3f963bab273399cdd4d8636914b2ab3851cd57eb804bdba52",
+      "reservation_id": "0f4698c1b5b047ec9d539f2dbfab2ed0",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 3069723,
+      "owner_pid_observed": false,
+      "record_body_sha256": "9d9b2a7a8d5808729c34aab5d21927404494aad7939028780da54acb70bd9dd6",
+      "reservation_id": "12a43b169d9747e0af5cfa28f0e66595",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67141551,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1211326,
+          "recorded_birth": "109325603"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 40924463,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 95,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67141551,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 62,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1209494,
+      "owner_pid_observed": false,
+      "record_body_sha256": "a1e412abb2e28704322e6a22b79cf1c74857856edd7da81b680f3429f890bdb0",
+      "reservation_id": "197b8975b9ef44e5a4950ba88bc52317",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 80000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67773794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/stages/sweep"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 414170,
+          "recorded_birth": "122641740"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 385511,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 28,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67773794,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/parallel-training-campaign-20260929T042818Z/stages/sweep"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 380709,
+      "owner_pid_observed": false,
+      "record_body_sha256": "a769bc160264f9422c5e41e68e7f11e9202938100a6fd52b3e7332f5bbe28f4a",
+      "reservation_id": "1acde7257b3e41958cd3426140eed165",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 600000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67416582,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-b/jobs/span-attempt-d4b7fd3b5ac95cb00afeeaeae31db15438ab9bd5ce520dcfbeb165949ab0d9df/attempt-1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1054320,
+          "recorded_birth": "119736451"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 53774746,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 69,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67416582,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-b/jobs/span-attempt-d4b7fd3b5ac95cb00afeeaeae31db15438ab9bd5ce520dcfbeb165949ab0d9df/attempt-1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 42,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1049465,
+      "owner_pid_observed": false,
+      "record_body_sha256": "9e58ee59bec508afa0f1951806261269085c9adfe266fc4edc0276f5e15153e2",
+      "reservation_id": "1ad1d378129a45acb6f8e972a8392d60",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 120000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137338,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2373890,
+          "recorded_birth": "99359009"
+        },
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2347857,
+          "recorded_birth": "99347806"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 76929734,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 43,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137338,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 27,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 2346303,
+      "owner_pid_observed": false,
+      "record_body_sha256": "214e49a647224665c9d7fe97c3649580721a8c379e735894e8fd4a1641cc5203",
+      "reservation_id": "209e07d4d9f74ce1be5452ad93258aa1",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67019794,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3181458,
+          "recorded_birth": "111961545"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1351888,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 101,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67019794,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 62,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3175345,
+      "owner_pid_observed": false,
+      "record_body_sha256": "863c911f67bff8a5b5a52235235ad041c4f3bf130ca46f694eab035ba88a3066",
+      "reservation_id": "24b5fb790064496e981b3338388cef39",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140250,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-candidate-214-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3091392,
+          "recorded_birth": "104865020"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 18354423,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 215,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140250,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-candidate-214-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 178,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3072461,
+      "owner_pid_observed": false,
+      "record_body_sha256": "44a97ddac11a3a11c9e3a216c789b1812cf29fb1b6c9898ab5638899f7b2f736",
+      "reservation_id": "2537e017ec5c4bb9b09d97a197ee9336",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67004957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-shadow-20260925/integration-r1/invocation/attempt-1-1-a904daab453a489e884cc6f6dad15bc7"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 629638,
+          "recorded_birth": "91671742"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 5639,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 3,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67004957,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-shadow-20260925/integration-r1/invocation/attempt-1-1-a904daab453a489e884cc6f6dad15bc7"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 3,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 623988,
+      "owner_pid_observed": false,
+      "record_body_sha256": "43c28369b7aef74e3508970be26c033a40248bc6b96282b06454df365bdf23a7",
+      "reservation_id": "297afa219ed346c6b0e77ac2dcb04783",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410219,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r5"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3323666,
+          "recorded_birth": "112020407"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29487403,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67410219,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r5"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 20,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3320881,
+      "owner_pid_observed": false,
+      "record_body_sha256": "b2edaee68b74890d98dc34430009ed3cb9ae20b87f9ca66273610f0d5ffc70f6",
+      "reservation_id": "2ad915af9c3047f9824438463da73b37",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137628,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-recapture-20260926/capture-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3261485,
+          "recorded_birth": "99721519"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4260165,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137628,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-recapture-20260926/capture-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3259878,
+      "owner_pid_observed": false,
+      "record_body_sha256": "0637399d199745d939944ecb102750478311b9b41763b55a4784e38223120e6c",
+      "reservation_id": "2d4c9da5e53043b18f6552eb8e6990af",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 400000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 1049464,
+      "owner_pid_observed": false,
+      "record_body_sha256": "716902810e9b615a1b3a0b61834e820e275510b0d377e6b1e24f61c1125f1973",
+      "reservation_id": "2deaec2bdb614e4781912da2c1541623",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 220000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 992205,
+      "owner_pid_observed": false,
+      "record_body_sha256": "e03e22df40369a099511732783f7a15474447ae6bc0d1a190137cdde5bdd41ab",
+      "reservation_id": "304467ad285444d1b28806057db0d17c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 1049465,
+      "owner_pid_observed": false,
+      "record_body_sha256": "d9d07fc3d90dfa4d180d31b50e3316660f4e7e99f22fd948bf511d22d21eb587",
+      "reservation_id": "36a5096b586048cfab4ce5d6a3d63787",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 220000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73305747,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 181890,
+          "recorded_birth": "11242528"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-modality-gap-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1929395,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 22,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73305747,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 179203,
+      "owner_pid_observed": false,
+      "record_body_sha256": "27328057c70812f833b9f076a475a0f80f268b66792eb3edf8e36c7e76ede667",
+      "reservation_id": "3afd60c9361c44b39c382e8327afa748",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74333615,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-pilot-r2-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2404679,
+          "recorded_birth": "14989478"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "native4096-layer-reclaim-pilot-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 150702,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 16,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74333615,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-pilot-r2-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2402117,
+      "owner_pid_observed": false,
+      "record_body_sha256": "50a8eb3789d94b9572dde950c9d5bfeffb84bf14a364ccd50755fbf5993a13d7",
+      "reservation_id": "3be5d085b9f7498dbd2ab555739458bf",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67399418,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2845344,
+          "recorded_birth": "109993998"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 49515484,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 186,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67399418,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r6"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 116,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2842117,
+      "owner_pid_observed": false,
+      "record_body_sha256": "0feeb2cf5013813ad7dd901014d630e4662ff32a2ed9ab6c04c3ca9e439e5f25",
+      "reservation_id": "46b02aabb1f44f769143755554857d79",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67942731,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1434010,
+          "recorded_birth": "7454855"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-generated-field-training-20261003",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 249979161,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 124,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67942731,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-20261003/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 109,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1421156,
+      "owner_pid_observed": false,
+      "record_body_sha256": "4ca144ebfb780e5aa9e502fd7459f620052b00b20d00f8351aedaaa3829ef687",
+      "reservation_id": "474ee6b5ae784516ae1dab7ca38c8cc6",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 4000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 72230047,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/smoke-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1067923,
+          "recorded_birth": "149005798"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "ui-modal-coverage-20261002",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 20403034,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 82,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 72230047,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/smoke-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 66,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 999932,
+      "owner_pid_observed": false,
+      "record_body_sha256": "a16977a526dc1becabf6cac8c5b6be46b5ec8461174d5e7dadf86838cff15f21",
+      "reservation_id": "4835b100977c45f3bab812aeac98bebc",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67247374,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2311797,
+          "recorded_birth": "109776149"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29906744,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 94,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67247374,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 60,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2310422,
+      "owner_pid_observed": false,
+      "record_body_sha256": "5c679167c29d20fd4b4dcbf6800046cbc775f7e5bf9fc42751d5db0082669254",
+      "reservation_id": "4ea25ddadcb54fa1a797b01e469476cc",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67774225,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/stages/smoke"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1528154,
+          "recorded_birth": "123038415"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4272709,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 24,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67774225,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-training-hotpath-20260929T054400Z/stages/smoke"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 16,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1527573,
+      "owner_pid_observed": false,
+      "record_body_sha256": "53261748e6b248b9b7b2618cdb9d529c3c9d0c057dc0c615d39bce5f4da30d63",
+      "reservation_id": "52969aded7da4ca7aea32eec5f65b34a",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 600000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 66978080,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2248520,
+          "recorded_birth": "11785682"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-content-matched-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 21435,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 66978080,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2236415,
+      "owner_pid_observed": false,
+      "record_body_sha256": "7c8fff9af9dab455179fb669b29d10c2aaf366a03ebc0686b691a55c7bf08c58",
+      "reservation_id": "53f45e0990464673ba62693cf2aff8f8",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67409942,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3225856,
+          "recorded_birth": "111979268"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 25791838,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 18,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67409942,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 15,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3222851,
+      "owner_pid_observed": false,
+      "record_body_sha256": "55728234c76e26f3db1fd3971bf30ed9ee4859731fefd02694544a0d4a696209",
+      "reservation_id": "58040b11816843e486bcb44e8338bd00",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67416566,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-a/jobs/span-attempt-0a97f31d92a6fa5a5a962a1fec51479bb499254d08839cab4a904bfa7d069032/attempt-1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1057380,
+          "recorded_birth": "119737424"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29949493,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 90,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67416566,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/node-a/jobs/span-attempt-0a97f31d92a6fa5a5a962a1fec51479bb499254d08839cab4a904bfa7d069032/attempt-1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 56,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1049464,
+      "owner_pid_observed": false,
+      "record_body_sha256": "a26b01930a768f76b81027b9ee2cd484edb6280c65a92f89a27082ca37a87fb9",
+      "reservation_id": "595bd5f94ee7415ea390a1f46d37b8f4",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 120000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67414409,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r2/owner"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 30145897,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 34,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67414409,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r2/owner"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 21,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 987454,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ab903fadf1fc079ec527f2c890265cb9338a8570ecd567086fb8d3baa7d99fd2",
+      "reservation_id": "59e2d6d1d77c412fa4a2e719eb3485d4",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67019891,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3184706,
+          "recorded_birth": "111963559"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 10850882,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 18,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67019891,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 15,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3182566,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f0735426388faad521eec9cc8a6de2340ebdcce8c043ba722319e7f42daface0",
+      "reservation_id": "5e1dbee50a724fed96b6f6a24f0ba00a",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73305663,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 16998,
+          "recorded_birth": "11176807"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-modality-gap-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 46278,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 11,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73305663,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 10,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 4154155,
+      "owner_pid_observed": false,
+      "record_body_sha256": "8cdf9cbb65f6d25764867cab701ed60d1e8362aae40d5bcc0e8895d11b33dd8d",
+      "reservation_id": "5e7a3953a9da453c907976fc0a266793",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74333253,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/evaluation-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2060045,
+          "recorded_birth": "14865270"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-selected-continuation-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 18287,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74333253,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-selected-continuation-20261004/evaluation-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2027229,
+      "owner_pid_observed": false,
+      "record_body_sha256": "374267b9c53dd8875421058f0ad0159ab8ffadeb89ebaa11a59d1bd2cf504e08",
+      "reservation_id": "5ec04d4960404fdea5fce74881416e21",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137428,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r7"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2459772,
+          "recorded_birth": "99393848"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 78336727,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 42,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137428,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r7"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 25,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2459731,
+      "owner_pid_observed": false,
+      "record_body_sha256": "6e58f52d112992205a66185e5956a708e9b03dec5408b4992ed94de0a74eb33a",
+      "reservation_id": "5f3497ae47224e3db174311ef6e3caa1",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74334384,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 45838,
+          "recorded_birth": "15650163"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-training-paraphrases-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 21417,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 9,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74334384,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r2-20261004/preparation-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 41543,
+      "owner_pid_observed": false,
+      "record_body_sha256": "7a468846d8cc2d747ba64022b1b8e35b72ff737265953390381aaf1050d9c6f4",
+      "reservation_id": "5ffa8e3f64cf4a05932798801cadf444",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74324702,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-native-owner-20261004/preflight-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3221637,
+          "recorded_birth": "13727427"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-native-owner-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 61773,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 14,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74324702,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-native-owner-20261004/preflight-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 11,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3194445,
+      "owner_pid_observed": false,
+      "record_body_sha256": "eae9f890a08d38804895942307c6f997a1c524b49f0c0a309bfd796c05c93ceb",
+      "reservation_id": "60efbd79db0e45628b5acbe4ea21c8f3",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67141386,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-span-batch-3-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3326036,
+          "recorded_birth": "106703641"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 345245,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 17,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67141386,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-span-batch-3-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 12,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3323505,
+      "owner_pid_observed": false,
+      "record_body_sha256": "1d8951a14080994d17f250370a1742bc369e47ce2ba5f114e8d5eec82405d0d4",
+      "reservation_id": "621046712fa544e78dc738e95648b8f7",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139412,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3200450,
+          "recorded_birth": "103166627"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 5083142,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139412,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-catalog-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3181298,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f93d32a0d4d6e49a23e1513fbac4a427386c5a5914608fbdad632ee53fa7423f",
+      "reservation_id": "626a02434b7b4c569415731a25d3b9f9",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73305710,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r3"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 114724,
+          "recorded_birth": "11216794"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-modality-gap-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1920052,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 22,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73305710,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r3"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 109760,
+      "owner_pid_observed": false,
+      "record_body_sha256": "21ab359367795e3607165a91f58d42e273c9a7bf875099844a8b75c56057d1a5",
+      "reservation_id": "64dc750e5a1e4cd08fed48ad8b43fdd8",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410083,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3257635,
+          "recorded_birth": "111992497"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29487407,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67410083,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 20,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3254527,
+      "owner_pid_observed": false,
+      "record_body_sha256": "2b93692aad285d0116806387ccb8c28a2c34ebca8d12650ee12d01e070f76569",
+      "reservation_id": "6594c0cfff564c43b6237e87314da06d",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67414452,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r3/owner"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 30153146,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 34,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67414452,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r3/owner"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 22,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1006961,
+      "owner_pid_observed": false,
+      "record_body_sha256": "61ee2dbe72097b6451be5d7b17b7e84d578d56a7c1b24824440aed0ea6cb5fa4",
+      "reservation_id": "66ac618811f8466480bf876b28010108",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67005386,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/surface-profile-text-reuse-20260925"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 16354576,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 37,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67005386,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/surface-profile-text-reuse-20260925"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 34,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2691213,
+      "owner_pid_observed": false,
+      "record_body_sha256": "a7087297131eee469c293dbdf2229ecacc113d4aec1605fd70bd0aef9273c355",
+      "reservation_id": "6bf81288533d4a4fba5d29372ff69529",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74333445,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-pilot-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2185182,
+          "recorded_birth": "14907545"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "native4096-layer-reclaim-pilot-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 149180,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 16,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74333445,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-pilot-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2181574,
+      "owner_pid_observed": false,
+      "record_body_sha256": "c043af7fb1141d68ff9a8c1529487297f95d64ca77a3ae81bc295c0096d6645c",
+      "reservation_id": "77683ba77bcb40eb85d19dfe946802bc",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67371015,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2754298,
+          "recorded_birth": "109955728"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 49374312,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 186,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67371015,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r5"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 116,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2751058,
+      "owner_pid_observed": false,
+      "record_body_sha256": "179cf204b0acb91b56572ac94e3d26f4a9cc1adf5f32757821c211c1c9365e4b",
+      "reservation_id": "77dedd5a6cea41eab960b9f5c67d6bb6",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 4121264,
+      "owner_pid_observed": false,
+      "record_body_sha256": "b61d6709041747fa17972e016e800e19cdb44a11b12a2a4ab4682adf4542a78d",
+      "reservation_id": "7bae0dfca193405b9c64d57f88b9cb52",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 400000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140029,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 959162,
+          "recorded_birth": "103980480"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4586093,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 18,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140029,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r5/capture-r5"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 943230,
+      "owner_pid_observed": false,
+      "record_body_sha256": "c3b16152b861edf83d02223b70bf20ed8f1421458ff3094ce2dc1b0a2e24ec8f",
+      "reservation_id": "7dea88cac74c46b989517e4078897e00",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 50000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74367441,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/preflight-384-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3832078,
+          "recorded_birth": "36693757"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-balanced-wording-20261007",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 23873,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 9,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74367441,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-balanced-wording-20261007/preflight-384-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 9,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3827124,
+      "owner_pid_observed": false,
+      "record_body_sha256": "1d5effdf10f9ffcd293b3f0a34f8b1ff3a0f884c0a5d5ba40357c8002a497ba5",
+      "reservation_id": "7ee0d2fdbb4b4176b32fad8ada3cff1f",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137390,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r6"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2424734,
+          "recorded_birth": "99379591"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 76349836,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 35,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137390,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r6"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 20,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2422949,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ad10b69634243d91c81f626cbf6687a635a7d474cc612e0b691e1639489b45fc",
+      "reservation_id": "7f774906c9e447059d7e1675288b5172",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140004,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 912260,
+          "recorded_birth": "103959593"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4577742,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 18,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140004,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927-r4/capture-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 891954,
+      "owner_pid_observed": false,
+      "record_body_sha256": "4199f35c2636bb0ae4d0c8aa49a4095b3556365f1bd91ae5c1cb5cbb3a377239",
+      "reservation_id": "7f84b1fdcb834acfbf02d2586014cc0b",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140479,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-paired-214-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3501944,
+          "recorded_birth": "105036271"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 32815586,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 425,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140479,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-paired-214-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 349,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3482730,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ffa999651a06fc86473350055f5c1c2d5f15a51055de00564753a6ba0d5125fd",
+      "reservation_id": "81d46ee6a7c242a9885ba8e8a6a38a7d",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 350000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 3850850,
+      "owner_pid_observed": false,
+      "record_body_sha256": "934dec0ed03b18f364bd39619fd0ee281923e5ca28cdce669c8f9ba62ef7d717",
+      "reservation_id": "8827ac316aae4ecbbfddf9dedf0332d7",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": null,
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": null
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 977720,
+      "owner_pid_observed": false,
+      "record_body_sha256": "97544e129cdf5acc7f7d89b79156342682d54aa9fb458c650b778282bebd2bb7",
+      "reservation_id": "88d024d77b9e4cc6beaf9cb0e596f00d",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67766138,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2980295,
+          "recorded_birth": "122045593"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 94274792,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 532,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67766138,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/autoencoder-convergence-20260929/native-three-arm"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 343,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2978997,
+      "owner_pid_observed": false,
+      "record_body_sha256": "c9064830b4435e5a77ba7aa49eb66ab6b763da35cf0fab4cf295d89df4334d82",
+      "reservation_id": "8d1cee6dcc5241b3b31ee0836ae23859",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 750000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67416509,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/owner"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 30172125,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 30,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67416509,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/distributed-autoencoders-20260928/native-r4/owner"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 21,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1043267,
+      "owner_pid_observed": false,
+      "record_body_sha256": "2693895bddc1f1ce78bc829db422261b44abdfc7a376f5d2f6756a0f8b69de5b",
+      "reservation_id": "8f634b6b77984543a24831abb9423ede",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74333264,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-20261004/build-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2063197,
+          "recorded_birth": "14866748"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "native4096-layer-reclaim-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 449913,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 16,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74333264,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-layer-reclaim-20261004/build-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2048284,
+      "owner_pid_observed": false,
+      "record_body_sha256": "fa1b6f31a613149a7adcb0d9f9109fe407e285ef2810d4a6011c866402c727c1",
+      "reservation_id": "8fe9e6c5b2e141ae9d1ef4093de00c7d",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 86285396,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2874358,
+          "recorded_birth": "71241180"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "legal-trigger-readout-pilot-20261007-01",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 62440,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 15,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 86285396,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/retained-pointer-cache-20261011-01"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2870220,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f01370b4d742af8b0a48acb8d504e597ec06a136853ff36880ee34fb149e8d6b",
+      "reservation_id": "9210033eb5874d61ad74a7707753d006",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 68849982,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2606349,
+          "recorded_birth": "138390883"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 613748056,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 131,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 68849982,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/legacy-cuda-campaign-20260930/runtime"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 125,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2604950,
+      "owner_pid_observed": false,
+      "record_body_sha256": "20c4f73b6cfb0c1e231e3d3e94789550bef5ca97d0a6f699ff5b364e5152308b",
+      "reservation_id": "925d20c66d464740ba035f4f66cdf4d1",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 750000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 2088123,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ec6aae645e33db8d3049da38d4d72e1d91ed7e7ba8a06837c099e8c306878e13",
+      "reservation_id": "95f34652267a4512820e6ae26e7000bc",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67138874,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3167790,
+          "recorded_birth": "101418085"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4532289,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67138874,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-merge-semantics-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3150929,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ecb34f50e8624de3909fbbf99843a5f68b2f2a03307054b0bb97d2177b2d7d4a",
+      "reservation_id": "969675cb3c3e449ab0fd7dbe2ca29634",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 50000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74334436,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 265343,
+          "recorded_birth": "15694757"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-training-paraphrases-r3-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 21908,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74334436,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-training-paraphrases-r3-20261004/preparation-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 256511,
+      "owner_pid_observed": false,
+      "record_body_sha256": "d3eee695e10759ab2cc09fde0fd69eeedbc27b7eaa4b52bad5619053ab680303",
+      "reservation_id": "9995e6239f4f458886fc7f98a221e093",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73295886,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3238996,
+          "recorded_birth": "10865683"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-modality-gap-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 76067692,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 46,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73295886,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 40,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3186029,
+      "owner_pid_observed": false,
+      "record_body_sha256": "213478d8ac0eb27c3c000f1aa0f0b1a33723d6d00dca15cea4419e7b353cdb89",
+      "reservation_id": "9ff3b600b0be46e8842d05a62d149ba1",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67138511,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-package-tests-retry-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1564473,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 3,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67138511,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-package-tests-retry-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 3,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 1495500,
+      "owner_pid_observed": false,
+      "record_body_sha256": "e14a822bc55775d10fe8457100e5e6aa2be67f5f6dc0ae89c9830d29cd66522b",
+      "reservation_id": "a312dcd5f2e6405db2023e265226b94b",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 50000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67141357,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/tasks-index-raw-sql-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 280788,
+          "recorded_birth": "105436394"
+        },
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 278775,
+          "recorded_birth": "105435652"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 6854589,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 20,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67141357,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/tasks-index-raw-sql-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 261842,
+      "owner_pid_observed": false,
+      "record_body_sha256": "842e8b5202091d90e8f3ea1f6cc2dbbfda6dba9fdd9d34c484f173384949fe81",
+      "reservation_id": "a4388e7397f543b1bd68fbe522556dc2",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 50000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139775,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3946329,
+          "recorded_birth": "103478575"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 5301464,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139775,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3927785,
+      "owner_pid_observed": false,
+      "record_body_sha256": "17bfac0973e51a3a8de522c246787f0786effaff06cc2ff9a71a065753b38541",
+      "reservation_id": "aac1a959a09343f8b24040016fee2c4c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67247632,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r4"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2482517,
+          "recorded_birth": "109845696"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 48420477,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 158,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67247632,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r4"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 94,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2479881,
+      "owner_pid_observed": false,
+      "record_body_sha256": "663022cb29f6754a10c54b91872d36cdc85e30a17ced681e6fbc697bffac5ead",
+      "reservation_id": "ace678f9047a4f399de1c05893cd33ae",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 1750611,
+      "owner_pid_observed": false,
+      "record_body_sha256": "03dffa174fede18cea94f8f44d0fbf2170e334dea157d28574ebd67524a2c7b3",
+      "reservation_id": "ad8ac488792847ff80e8d97bf7fec70b",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73316538,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-low-resident-20261004/build-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1416939,
+          "recorded_birth": "14638052"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "native4096-low-resident-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 200838522,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 3681,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73316538,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-low-resident-20261004/build-r1"
+        },
+        "nonordinary_entries": [
+          {
+            "kind": "symlink",
+            "relative_path": "results/build/bin/libggml-base.so"
+          },
+          {
+            "kind": "symlink",
+            "relative_path": "results/build/bin/libggml-base.so.0"
+          }
+        ],
+        "regular_files": 3286,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "durable_inventory_nonordinary_or_aliased"
+      ],
+      "owner_pid": 1413618,
+      "owner_pid_observed": false,
+      "record_body_sha256": "63915056c63dda5a9690b2468b94bf634c924bde8f5a41a1bf79221e283f5f68",
+      "reservation_id": "aebb073f220842cc8fe11a7a20d5b150",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139082,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1314670,
+          "recorded_birth": "102384579"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4685565,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139082,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 1298097,
+      "owner_pid_observed": false,
+      "record_body_sha256": "876f4716e47441d4008e9510f9ae825c692083d5f15c467557098a8acaa0ecd3",
+      "reservation_id": "af51e1abd59442fb8fd55a61781b5961",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139122,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-repair-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1466674,
+          "recorded_birth": "102446608"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4713515,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139122,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-quack-control-repair-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 1449264,
+      "owner_pid_observed": false,
+      "record_body_sha256": "49565587629562ab30abbbd0c28f8401ad4bb70534cabbb41256098a63089397",
+      "reservation_id": "af5bab36df5a4c59a9b6a52867d09b81",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139807,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 4081135,
+          "recorded_birth": "103533727"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 5311695,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 22,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139807,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/source-corpus-delivery-20260926-r2/capture-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 4061722,
+      "owner_pid_observed": false,
+      "record_body_sha256": "8d41bc450e6f7162104a25ec23fa570ed6a18a7865f379dc5d68b5ee08702424",
+      "reservation_id": "b08a7cfa09c648e69851ca85c306f285",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67410055,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r3"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3316335,
+          "recorded_birth": "112017427"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 49609913,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 186,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67410055,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r3"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 114,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3314918,
+      "owner_pid_observed": false,
+      "record_body_sha256": "e499bdb6b0656f810e19cc3a0e0fc12dcde10ed43b63d68119218f2d7f0ce5fe",
+      "reservation_id": "b1531f8ac021442284701cdab3d3c9d1",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 85721246,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 250600,
+          "recorded_birth": "70399307"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "legal-trigger-readout-pilot-20261007-01",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 91900,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 17,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 85721246,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-01"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 15,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 243641,
+      "owner_pid_observed": false,
+      "record_body_sha256": "782b0c2bd21fd7f85f5d1eada602e1b4a5fdacf3e758baa4c36273a40bba8a38",
+      "reservation_id": "b5c38886316c4fe080e49d84774be92e",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67019915,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3211319,
+          "recorded_birth": "111973820"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 54334972,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 193,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67019915,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/capture-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 119,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3208881,
+      "owner_pid_observed": false,
+      "record_body_sha256": "579efe2c2fb51f5986f2b0771bed2bb50c85815a932bad24d532d71ac9c61c89",
+      "reservation_id": "b5fe34de7d834f038ef575057b7a6539",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74329004,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-20261004/preparation-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1523130,
+          "recorded_birth": "14677835"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-fresh-normative-style-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 6989160,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 18,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74329004,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-fresh-normative-style-20261004/preparation-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 16,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1465685,
+      "owner_pid_observed": false,
+      "record_body_sha256": "5af362f46d22f0909a4b80b653587f6178d91ea5c99cfc49698bf0f39534805c",
+      "reservation_id": "b61ddc6d8fa34208abc3a19517206b01",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73305688,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 65360,
+          "recorded_birth": "11196894"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-modality-gap-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 95880,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 10,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73305688,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-modality-gap-r2-20261004/publication-integration/test-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 9,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 61217,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f04aeea8296c54d91dbf02dede8e8e1d1053e6c6c3b98608eb8032ce6bca1df1",
+      "reservation_id": "b664aecfb14f4acdacd0caa9e62c5256",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 992206,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ffd5e474b21dbe5f6fe95437532af52151de541592ef4132d4c8d5e010eee797",
+      "reservation_id": "ba3cba0ddfc64b44b88400a78b4da0ef",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1500000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67409968,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r3"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3239852,
+          "recorded_birth": "111985729"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29473844,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 20,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67409968,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-diagnosis-20260927/proposal-r3"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 17,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3237195,
+      "owner_pid_observed": false,
+      "record_body_sha256": "1f2e2c5060aaa7e1653fac300f6eb94849c46ffa8b0c3e48d5ed097cc12b1c3f",
+      "reservation_id": "bb1fe8809afd4066be3f8167345e87f3",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 75000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 4121263,
+      "owner_pid_observed": false,
+      "record_body_sha256": "7fe0b4b1e2d1e3c9300348bace60c2282d1db4b878a09cab4ab9092c07cab173",
+      "reservation_id": "bd320bc608d243f4863daeab23e6579b",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 400000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67138474,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-package-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1355695,
+          "recorded_birth": "100667287"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4408131,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67138474,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-package-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 1353386,
+      "owner_pid_observed": false,
+      "record_body_sha256": "780a424f401a25c611a5503f17b1de2b213195318bceb5969cdfe8a52760d5e9",
+      "reservation_id": "bd482976b5b94085887ff34e193d198c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 900000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67247475,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2397949,
+          "recorded_birth": "109811315"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 49188906,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 156,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67247475,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/concurrent-autoformal-smoke-20260927/capture-r3"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 93,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2394342,
+      "owner_pid_observed": false,
+      "record_body_sha256": "137780106f41fadbef4b68a660e161a4e72762bccb287a5d1c0c074d5af6999b",
+      "reservation_id": "c258894ac4f44b09bc550265d9cc838d",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 150000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67138970,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-owned-execution-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 455330,
+          "recorded_birth": "102029321"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4943693,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 23,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67138970,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-owned-execution-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 439946,
+      "owner_pid_observed": false,
+      "record_body_sha256": "69336f4835a38ee1904a09fa8385fe930ef4a1a0f46a09eb4ff28f343834412c",
+      "reservation_id": "c2773bf889f64efc8fc433c89f2cf03b",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137480,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2711441,
+          "recorded_birth": "99497724"
+        },
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2678266,
+          "recorded_birth": "99483826"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 79748789,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 48,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137480,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/prepared-campaign-inputs-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 30,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 2677266,
+      "owner_pid_observed": false,
+      "record_body_sha256": "2e62e893e2aa7a89d256a057cd2311d9bef87fc783013afcfe6c0dfa5be819f9",
+      "reservation_id": "c396f8aa732a40569deb9d9f4c18e554",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74324957,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/object-projection-20261004/preflight-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3330278,
+          "recorded_birth": "13766273"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "object-projection-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 21314,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74324957,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/object-projection-20261004/preflight-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3319553,
+      "owner_pid_observed": false,
+      "record_body_sha256": "74efc8a14287cc73a8c4b8bf7d2f4d5fc09a0effa6cb4d3bd95eb5937a4de8b9",
+      "reservation_id": "c5385ffead94445bbfc6662c31f3c390",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 75286201,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3156324,
+          "recorded_birth": "71354721"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "uscode-identity-recovery-20261011-01",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 30899,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 7,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 75286201,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/uscode-identity-recovery-20261011-01/ordinal-profile-01"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 7,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3152900,
+      "owner_pid_observed": false,
+      "record_body_sha256": "b2419f16ebe7866cf51cc8df240f09726e97248cb8286bf304db4a20cb4e11b9",
+      "reservation_id": "ce044fc614564ad7a92886ed385f443d",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 16777216,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137328,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r3"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2303790,
+          "recorded_birth": "99329693"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1317748,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137328,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r3"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 7,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 2303222,
+      "owner_pid_observed": false,
+      "record_body_sha256": "f6a89a6b68992aada535a0cedb71cf4cbd19d5a15858c178a309cc58b8d01b35",
+      "reservation_id": "d86d41b441f54b4e8e4dc0f92b694f05",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": null,
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "unbound_attempt",
+      "metadata_inventory": null,
+      "observed_precondition_blockers": [
+        "no_bound_attempt_directory_existing_api_unsupported"
+      ],
+      "owner_pid": 3247479,
+      "owner_pid_observed": false,
+      "record_body_sha256": "7c58eaf2a827fe61686e8813f987032352fea3afb5912495607b90e39ee3ff75",
+      "reservation_id": "d8e0d85bcbb44a77848c26f41371e211",
+      "retention_reason": "scheduler_admission_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 300000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2250994,
+          "recorded_birth": "99307862"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1316884,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137317,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 7,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 2248683,
+      "owner_pid_observed": false,
+      "record_body_sha256": "64f8d169e1c846c828a134ff2e498731504246182a166cd1c16583e3dcf3a05f",
+      "reservation_id": "d93220e986a04c658630dffa0847fb01",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74367470,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-scope-span-pilot-20261007-01/attempt-01"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3879964,
+          "recorded_birth": "36712773"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "legal-scope-span-pilot-20261007-01",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 29845,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 11,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74367470,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-scope-span-pilot-20261007-01/attempt-01"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 11,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3877584,
+      "owner_pid_observed": false,
+      "record_body_sha256": "8ca0235630770a4f1914fe327386854aceb6019c3c47063aaf01e57c3306029d",
+      "reservation_id": "dc5a24634a8f4ab2bb03946fb64e6921",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74333028,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1685914,
+          "recorded_birth": "14733062"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "native4096-four-width-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 147012,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 16,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74333028,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 14,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 1679885,
+      "owner_pid_observed": false,
+      "record_body_sha256": "8313bd98065b5e30def757888090304c9faa549650896615d34c8eb171bca72b",
+      "reservation_id": "e240695167ee46709e93139873255877",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139972,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 765861,
+          "recorded_birth": "103900295"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 2981907,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 7,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139972,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-validation-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 6,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 748095,
+      "owner_pid_observed": false,
+      "record_body_sha256": "ad9ba96d7a01b6cf84f4405d8da953c743c030e5f31c4dc9c331e8628c0a8f28",
+      "reservation_id": "e76a7eaf115c4780b4fdec07a505d86c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137612,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3232271,
+          "recorded_birth": "99710203"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4211689,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 10,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137612,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-workflow-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 9,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3230097,
+      "owner_pid_observed": false,
+      "record_body_sha256": "7683ff2d8d2a5cdcff479daa63bc495994a5f58157d44f14bfba00add45280a2",
+      "reservation_id": "e8b041892be947a7b1762eac60a8b7ec",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 400000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140923,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-paired-214-r3-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3783833,
+          "recorded_birth": "105150158"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 30625919,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 421,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140923,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/supervisor-claim-paired-214-r3-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 345,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 3763964,
+      "owner_pid_observed": false,
+      "record_body_sha256": "863e0ac47fa27eafd9685cc5ee7f3d77a6404d44bf3edfeea8d79869fec11443",
+      "reservation_id": "eb303394c53e48378c9a56b3f909285a",
+      "retention_reason": "explicit_release_required",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 325000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67136561,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2227520,
+          "recorded_birth": "99299237"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4565755,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 754,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67136561,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r1"
+        },
+        "nonordinary_entries": [
+          {
+            "kind": "symlink",
+            "relative_path": "tests/tmp/test_v8_metadata_preflight_nevcurrent"
+          },
+          {
+            "kind": "symlink",
+            "relative_path": "tests/tmp/test_v8_exact_multileaf_verificurrent"
+          },
+          {
+            "kind": "symlink",
+            "relative_path": "tests/tmp/test_v8_exact_selected_closurecurrent"
+          }
+        ],
+        "regular_files": 719,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "durable_inventory_nonordinary_or_aliased"
+      ],
+      "owner_pid": 2226559,
+      "owner_pid_observed": false,
+      "record_body_sha256": "2da9a99e6cb2ecd1eb95ca8f4642af12e2babf6ee4b8ffeba34eefa8071f0847",
+      "reservation_id": "ec90bcac1c394496b6dba037b4852254",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1000000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67005440,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3111027,
+          "recorded_birth": "94395680"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 2159057,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 12,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67005440,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-source-inventory-20260925/acquisition-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 5,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3110046,
+      "owner_pid_observed": false,
+      "record_body_sha256": "d030df9022e223246e34636569d669afe20f704bd98babccc1ff48dec61e6eb7",
+      "reservation_id": "ed98eab092564602b9c3920370deda94",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67140108,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1686784,
+          "recorded_birth": "104283162"
+        },
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 1684684,
+          "recorded_birth": "104282145"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 310918825,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 26,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67140108,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/entity-v2-full-source-20260927/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 19,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 1665851,
+      "owner_pid_observed": false,
+      "record_body_sha256": "628d83fe3e32b3cceacd18cc3440580c19e49413ac22a0c5cbb3d3ea016192f9",
+      "reservation_id": "f03a653cc81942bd9f9009a7e32da4f7",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 750000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 72234392,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-mean-centered-source-20261003/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 728656,
+          "recorded_birth": "1768459"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-mean-centered-source-20261003",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 34499264,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 29,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 72234392,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-mean-centered-source-20261003/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 25,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 723490,
+      "owner_pid_observed": false,
+      "record_body_sha256": "b22a9b519012108046b733b9476d283a8134b7a62dee49ef1435deb150c7c9a1",
+      "reservation_id": "f0d21ef4e10443b993b0735b1e94aee9",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 800000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 73314795,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r2-20261004/training-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2494124,
+          "recorded_birth": "11874804"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-content-matched-r2-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 8158611,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 15,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 73314795,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-content-matched-r2-20261004/training-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 13,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2483937,
+      "owner_pid_observed": false,
+      "record_body_sha256": "90d5cda4178dce70a8667c09950b897bd7a209aa8a4368e82e4bee048c7396d2",
+      "reservation_id": "f4250feb221a463f8e13429e062e0866",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 1200000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67137385,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r5"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 1303906,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 2,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67137385,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/campaign-jobs-20260926/probe-r5"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 2,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 2395475,
+      "owner_pid_observed": false,
+      "record_body_sha256": "5062a9aec8388e20f7b0da5b1bb9a64ce7584bff6b7db45683123464080d8be5",
+      "reservation_id": "f86ac5ac38e549bfba20dc03564ff41c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 250000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 67139219,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926/capture-r1"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 2626241,
+          "recorded_birth": "102927686"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": false,
+      "external_charges_count": 1,
+      "group": "federal-corpus-audits",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 4894911,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 22,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 67139219,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/uscode-corpus-export-20260926/capture-r1"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 18,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [
+        "external_charges_need_separate_recovery"
+      ],
+      "owner_pid": 2609318,
+      "owner_pid_observed": false,
+      "record_body_sha256": "e4ef69c90113743327b20eabb25fc9e73a7b9c8c2a2f0a897e5e2baf5d2e02e1",
+      "reservation_id": "fc86a5aaeb5d4606823b2ec3e2be4cb4",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 750000000,
+      "workload": "canonical_trainer"
+    },
+    {
+      "artifacts_durable_asserted": false,
+      "attempt_directory": {
+        "device": 66306,
+        "inode": 74324632,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-continuation-20261004/preflight-r2"
+      },
+      "authority_to_reconcile": false,
+      "child_groups": [
+        {
+          "leader_birth_matches": null,
+          "leader_observed": false,
+          "non_zombie_group_members": 0,
+          "pid": 3174540,
+          "recorded_birth": "13710044"
+        }
+      ],
+      "existing_api_candidate_after_required_hash_fsync_and_under_cap_census": true,
+      "external_charges_count": 0,
+      "group": "decoder-continuation-20261004",
+      "metadata_inventory": {
+        "apparent_regular_bytes": 19707,
+        "complete": true,
+        "content_hash_inventory_completed": false,
+        "durability_verified": false,
+        "entry_count": 8,
+        "exists": true,
+        "hardlinked_regular_files": 0,
+        "identity": {
+          "device": 66306,
+          "inode": 74324632,
+          "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-continuation-20261004/preflight-r2"
+        },
+        "nonordinary_entries": [],
+        "regular_files": 8,
+        "root_metadata_unchanged": true
+      },
+      "observed_precondition_blockers": [],
+      "owner_pid": 3170617,
+      "owner_pid_observed": false,
+      "record_body_sha256": "e45021ac722e0ebdea719a244cb7ec52897ad05c174fc21eddbd7602ad870d9b",
+      "reservation_id": "febe02de33b5437693152a309627351c",
+      "retention_reason": "context_failed",
+      "scheduler_lane": "hammer_lean",
+      "status": "retained",
+      "storage_bytes": 100000000,
+      "workload": "canonical_trainer"
+    }
+  ],
+  "schema": "retained-claims-readonly-metadata-intake/v1",
+  "state_counts": {
+    "released": 411,
+    "retained": 102
+  },
+  "workload_groups": [
+    {
+      "count": 1,
+      "full_storage_bytes": 1000000000,
+      "key": "None"
+    },
+    {
+      "count": 101,
+      "full_storage_bytes": 47381777216,
+      "key": "canonical_trainer"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "actual_accounting": {
+    "additional_requested_bytes": 0,
+    "capacity_satisfied": true,
+    "charged_bytes": 143473978194,
+    "filesystem_free_shortfall_bytes": 0,
+    "inventory": {
+      "apparent_bytes": 95292200978,
+      "entry_count": 1356729,
+      "special_file_count": 5,
+      "symlink_count": 673
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 491742093312,
+    "observed_apparent_bytes": 95292200978,
+    "outstanding_full_reservations_bytes": 48181777216,
+    "over_limit_bytes": 0,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "actual_postwrite_observation": true,
+  "cap_changed": false,
+  "ledger": {
+    "bytes": 6142162,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "1f93e0ca70ea6199f16d58834e30d60d127f9891e380454e470df352720bb824"
+  },
+  "new_reservations": 0,
+  "new_resource_leases": 0,
+  "own_claim_status": "released",
+  "prewrite_projection": false,
+  "schema": "owned-administrative-actual-postwrite-census/v1",
+  "training_admitted": false
+}

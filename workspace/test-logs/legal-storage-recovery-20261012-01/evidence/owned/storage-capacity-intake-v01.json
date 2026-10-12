@@ -1,0 +1,148 @@
+{
+  "schema": "legal-storage-capacity-intake/v1",
+  "utc": "2026-10-12T02:55:32Z",
+  "read_only": true,
+  "findings": [],
+  "artifacts": [
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/scan_storage_metadata.py",
+      "bytes": 6654,
+      "sha256": "34258faec6bda4ad2c90f61cee61760f7d553cae0ef9a17a0584a3619b212dbd"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/filesystem-intake-v01.json",
+      "bytes": 2242,
+      "sha256": "c9af34b62db108b59c4f859d84d5f111ecce2e2bfc0270ef006cce1f55ada9db"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v01.json",
+      "bytes": 197283,
+      "sha256": "6375506e4b813fb5167a28f601663a651aab57af71e2b004505608f6740cc2fd"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/metadata-census-execution-v01.log",
+      "bytes": 844,
+      "sha256": "7f13dc82482d1ede67552728b29f8881ec46d66d6180babd6f705e653d23a8ee"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/ledger-aggregate-intake-v01.json",
+      "bytes": 1234,
+      "sha256": "d034c8c65955e10bd7afc39503c9b7e751605818791a80aa39699e470a769adf"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/pytest-metadata-v01.json",
+      "bytes": 1474,
+      "sha256": "512c4263f94b0bb451fc007b4ce6b07cd0b10b57a4ce794acea6cb898129a9bb"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/du-count-links-apparent-depth1-v01.tsv",
+      "bytes": 32543,
+      "sha256": "d5bdd969e6317b0f260d4d5df0ad70762281f3299372e20af9e426d6c2a2f71b"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/du-allocated-deduplicated-v01.tsv",
+      "bytes": 293,
+      "sha256": "fe2bb7085c43cb4c51e234b43ec64929d1e345069e2490a766909a4741745916"
+    },
+    {
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/largest-candidates-depth2-v01.tsv",
+      "bytes": 132876,
+      "sha256": "98788b4f3e8bfea64b3f428162196c62c915456b915a03e1ba8aec660dd9893a"
+    }
+  ],
+  "scope": "filesystem and named-root metadata diagnosis; not an owner admission/release decision",
+  "numbers": {
+    "apparent_named_root_pathname_bytes": 96911604740,
+    "outstanding_full_reservation_bytes": 48381777216,
+    "asynchronous_comparison_charged_bytes": 145293381956,
+    "cap_bytes": 145000000000,
+    "asynchronous_comparison_over_cap_bytes": 293381956,
+    "asynchronous_comparison_with_200MB_retry_bytes": 145493381956,
+    "asynchronous_comparison_retry_over_cap_bytes": 493381956,
+    "minimum_user_available_filesystem_bytes_at_intake": 496495968256,
+    "minimum_inode_free_at_intake": 219973903,
+    "extra_apparent_bytes_from_observed_hardlink_aliases": 31552270383
+  },
+  "diagnosis": [
+    "The cooperative 145 GB logical cap is the obstacle; physical filesystem free space and inode counts are ample.",
+    "The owner charges named-root apparent bytes for every regular pathname, including every hardlink alias, plus the FULL amount of every nonreleased reservation. This is an intentional contract, not numerical evidence of the same bytes being mistakenly counted twice.",
+    "Ordinary du suppresses duplicate hardlinked inodes. Its much lower total is unsuitable for admission. --count-links approximates owner size accounting but the pure metadata census precisely excludes directory sizes.",
+    "31.55 GB of the observed pathname total comes from repeated hardlink aliases. Several large source/validation snapshots embed archive weights, proof keys and archived evidence; hardlinking these captures reduced physical cost but did not reduce the agreed logical charge.",
+    "Temporary pytest roots are active and growing. pytest-157 has a present process lock; lack of a lock for other directories does not establish deletion authority.",
+    "Named root inode/dev identities match the ledger, including tmp inode 524352. No new migration appears needed from this bounded observation."
+  ],
+  "candidate_owner_reviews": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits",
+      "apparent_bytes": 20812313050,
+      "hardlinked_path_bytes": 5024,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-event-validation-resume-20261002",
+      "apparent_bytes": 6876884894,
+      "hardlinked_path_bytes": 6843480655,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native-dcec-ui-20261002",
+      "apparent_bytes": 6832874661,
+      "hardlinked_path_bytes": 6732650509,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/source-conditioning-development-20261002",
+      "apparent_bytes": 4167389909,
+      "hardlinked_path_bytes": 4123467884,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/intent-ui-gap-repair-20261002",
+      "apparent_bytes": 4052925689,
+      "hardlinked_path_bytes": 4003553195,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/intent-ui-coverage-20261002",
+      "apparent_bytes": 4022542368,
+      "hardlinked_path_bytes": 3931223717,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/source384-fidelity-20261001",
+      "apparent_bytes": 2652720671,
+      "hardlinked_path_bytes": 2560387680,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-margin-20261004",
+      "apparent_bytes": 2251433883,
+      "hardlinked_path_bytes": 0,
+      "reason": "completed historical source/validation captures or original corpus artifacts need exact provenance/retention/runtime dependency review before any archive/removal"
+    }
+  ],
+  "recommended_next_actions": [
+    "Independently reconcile our exact latest failed 200 MB retained claim through the existing administrative owner API only after dead-owner/group and durable-artifact checks. This does not delete any observations and cannot by itself establish stable headroom.",
+    "Pick completed historical source snapshot owners for manifest/dependency/retention review and reversible archive preparation. Preserve all model/parent/source/proof artifacts referenced by current guardians, published release manifests or another agent. No directory is approved for deletion by this report.",
+    "Coordinate active writers and restore a meaningful growth buffer (for example 5-10 GB) below the existing cap before a new 300 second run. A current below-cap snapshot alone already failed in previous attempts.",
+    "For future captures, create minimal reviewed file closures and store one immutable content copy with explicit path/reference manifests; hardlink aliases within counted roots still consume full apparent budget. Do not retroactively change existing pinned captures or the accounting rule.",
+    "Run a fresh actual owner census after concrete authorized recovery, then refresh exact guardian/reviewer pins. Do not alter the 145 GB cap or restart a training loop from this diagnostic."
+  ],
+  "mutations": {
+    "artifact_delete": false,
+    "artifact_move": false,
+    "claim_release": false,
+    "lock_acquisition": false,
+    "resource_admission": false,
+    "model_call": false,
+    "compiler_call": false,
+    "cap_change": false
+  },
+  "limitations": [
+    "metadata census and ledger aggregate are sequential, asynchronous observations, not an atomic owner census; calculated over-cap figures are explanatory only",
+    "no content hashing or equivalence proof of candidate payloads; metadata and size do not prove safe archival/deletion",
+    "observed alias groups are bounded metadata samples, not permission to mutate old hardlink graphs",
+    "no retention eligibility or authority over other agents artifacts granted"
+  ],
+  "agents_instruction_files_found": []
+}

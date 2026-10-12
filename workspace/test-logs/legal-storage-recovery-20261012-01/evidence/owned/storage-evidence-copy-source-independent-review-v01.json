@@ -1,0 +1,386 @@
+{
+  "artifacts_existing_finite59": {
+    "owned/administrative-closeout-execution-v01.log": {
+      "bytes": 245,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-closeout-execution-v01.log",
+      "sha256": "7e26d5d3e4c4fa6f404783d8090bf61487d2053839a630dd8e3793b5afdb7dcd"
+    },
+    "owned/administrative-storage-closeout-design-v01.json": {
+      "bytes": 8030,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-design-v01.json",
+      "sha256": "8641559c989f662d3d3f3fae4754621c9cd2674cb4ea2ea1365a4eb6927c372b"
+    },
+    "owned/administrative-storage-closeout-implementation-handoff-v01.json": {
+      "bytes": 6728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-implementation-handoff-v01.json",
+      "sha256": "9c32e55d84822770727afc614fdd0c44e3b41c06d0a7cdb3fe59f58b19c6739f"
+    },
+    "owned/administrative-storage-closeout-independent-review-v01.json": {
+      "bytes": 8394,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-independent-review-v01.json",
+      "sha256": "7c12ff5ea93c319a817f52c80a7fd2fe33aaf318f1c890a4f91af722253622ac"
+    },
+    "owned/canonical-intake-v01.json": {
+      "bytes": 641,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/canonical-intake-v01.json",
+      "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+    },
+    "owned/copy_storage_evidence.py": {
+      "bytes": 10471,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/copy_storage_evidence.py",
+      "sha256": "8b9e80a39563d0a8f705a7df519b43756790fb4cecdd9fa8ede0ac25c142ae08"
+    },
+    "owned/du-allocated-deduplicated-v01.tsv": {
+      "bytes": 293,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/du-allocated-deduplicated-v01.tsv",
+      "sha256": "fe2bb7085c43cb4c51e234b43ec64929d1e345069e2490a766909a4741745916"
+    },
+    "owned/du-count-links-apparent-depth1-v01.tsv": {
+      "bytes": 32543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/du-count-links-apparent-depth1-v01.tsv",
+      "sha256": "d5bdd969e6317b0f260d4d5df0ad70762281f3299372e20af9e426d6c2a2f71b"
+    },
+    "owned/filesystem-intake-v01.json": {
+      "bytes": 2242,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/filesystem-intake-v01.json",
+      "sha256": "c9af34b62db108b59c4f859d84d5f111ecce2e2bfc0270ef006cce1f55ada9db"
+    },
+    "owned/generated-field-4gb-closeout-preparation-execution-v01.log": {
+      "bytes": 368,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/generated-field-4gb-closeout-preparation-execution-v01.log",
+      "sha256": "80ffb2ee75f43c61bc77d1725bc940fa4491629c26d30b046fe8dd5b04f620d2"
+    },
+    "owned/generated-field-4gb-closeout-preparation-v01.json": {
+      "bytes": 169770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/generated-field-4gb-closeout-preparation-v01.json",
+      "sha256": "959193579651185a501792f7b1d35be84eb4efe84845444a78d23e3399a336ff"
+    },
+    "owned/inert-test-observation-v01.json": {
+      "bytes": 2650,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert-test-observation-v01.json",
+      "sha256": "5c86a58168e11e63746149d5de767f8ee6486768de6858d351e0cc1d90743821"
+    },
+    "owned/inert_resource_tests-draft-v01.py": {
+      "bytes": 2129,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests-draft-v01.py",
+      "sha256": "fdf2a2602ca74760e1e936c30df6fff01950be8d3043204d27f762f73587f9b3"
+    },
+    "owned/inert_resource_tests-draft-v02.py": {
+      "bytes": 2241,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests-draft-v02.py",
+      "sha256": "ffe7c4b8c49478a7ff730bb9257cf248be3abe80a37bf880e83a9bfc41f31d02"
+    },
+    "owned/inert_resource_tests.py": {
+      "bytes": 2372,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/inert_resource_tests.py",
+      "sha256": "50713263e6d27877f3e5529b3817f045ad0222866ceb0a0becf0bf5c3e01c589"
+    },
+    "owned/largest-candidates-depth2-v01.tsv": {
+      "bytes": 132876,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/largest-candidates-depth2-v01.tsv",
+      "sha256": "98788b4f3e8bfea64b3f428162196c62c915456b915a03e1ba8aec660dd9893a"
+    },
+    "owned/ledger-aggregate-intake-v01.json": {
+      "bytes": 1234,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/ledger-aggregate-intake-v01.json",
+      "sha256": "d034c8c65955e10bd7afc39503c9b7e751605818791a80aa39699e470a769adf"
+    },
+    "owned/metadata-census-execution-v01.log": {
+      "bytes": 844,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/metadata-census-execution-v01.log",
+      "sha256": "7f13dc82482d1ede67552728b29f8881ec46d66d6180babd6f705e653d23a8ee"
+    },
+    "owned/metadata-census-execution-v02.log": {
+      "bytes": 845,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/metadata-census-execution-v02.log",
+      "sha256": "9a5506e9efdf89454fa9ea409395dc29d300713552bf35408a8ffc28422ce698"
+    },
+    "owned/named-root-metadata-census-v01.json": {
+      "bytes": 197283,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v01.json",
+      "sha256": "6375506e4b813fb5167a28f601663a651aab57af71e2b004505608f6740cc2fd"
+    },
+    "owned/named-root-metadata-census-v02.json": {
+      "bytes": 197078,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/named-root-metadata-census-v02.json",
+      "sha256": "50aed05e9a5823f1be25c4bb72785b236b5d352287d4beb011a6c34c22ad1b97"
+    },
+    "owned/owned-preparation-administrative-closeout-attempt-01/actual-postwrite-census.json": {
+      "bytes": 1145,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/actual-postwrite-census.json",
+      "sha256": "50ad1849bfcfdcfd6fc8ff69427ed1c4071e423d238cb71ff8db89e0c3d949dc"
+    },
+    "owned/owned-preparation-administrative-closeout-attempt-01/attempt-started.json": {
+      "bytes": 1071,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/attempt-started.json",
+      "sha256": "1832a10060a41ded0ac783b66e1594d74f85eedc3c392e809f5b89e646769eb3"
+    },
+    "owned/owned-preparation-administrative-closeout-attempt-01/completion.json": {
+      "bytes": 5415,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/completion.json",
+      "sha256": "ec98d6df3e637100ed79ac6c14d7d7dd4f86ed963cb12af0487b15362a462d0a"
+    },
+    "owned/owned-preparation-administrative-closeout-attempt-01/planned-mutation.json": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-attempt-01/planned-mutation.json",
+      "sha256": "f73c27f68a7c5d14fc226a52e2e892b3a6b8f64f964ff968d3cd89a1a65b3a17"
+    },
+    "owned/owned-preparation-administrative-closeout-independent-review-v01.json": {
+      "bytes": 38601,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-independent-review-v01.json",
+      "sha256": "bc587131af4ae401736913b5145529141fb5a3432ad834c1c890a5c5735b5310"
+    },
+    "owned/owned-preparation-administrative-closeout-independent-review-v02.json": {
+      "bytes": 39643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-independent-review-v02.json",
+      "sha256": "1b7175bf25e1daebdcf9a8902d5a50f8d09dbbb93a0c3d30959a941397a5d483"
+    },
+    "owned/owned-preparation-administrative-closeout-postclosure-independent-review-v01.json": {
+      "bytes": 42177,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-postclosure-independent-review-v01.json",
+      "sha256": "b98214491b7924ef0e1f17627a29592b077e7f0122be621ad72cecb226635e21"
+    },
+    "owned/owned-preparation-administrative-closeout-preflight-v01.log": {
+      "bytes": 921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-preflight-v01.log",
+      "sha256": "5d75eb53c15763f5e9bdbff26a4d05f4aad0c958278dcc08d81485e85941a26b"
+    },
+    "owned/owned-preparation-administrative-closeout-protocol-v01.json": {
+      "bytes": 100662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owned-preparation-administrative-closeout-protocol-v01.json",
+      "sha256": "797b6a8556b9ae9a420e9471c1873a19b4423de999e9622046855ba54b872d62"
+    },
+    "owned/owner-regression-tests-v01.log": {
+      "bytes": 113,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owner-regression-tests-v01.log",
+      "sha256": "0079f1c90aa7ef51a74192bf06786fa80a8a9355a1dbb51231c5fd1b48584908"
+    },
+    "owned/owner-regression-tests-v01.xml": {
+      "bytes": 1727,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/owner-regression-tests-v01.xml",
+      "sha256": "314a3e54c766d9ac77655c50bf70c3f7bc7167fa2d92ac41d9d2098e66b2280d"
+    },
+    "owned/parallel-main-independent-review-v01.json": {
+      "bytes": 52698,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/parallel-main-independent-review-v01.json",
+      "sha256": "af0cd00fa2828cfca9cefbcbc1025f94aa30a6d5e51a787ddbad3cce12397100"
+    },
+    "owned/prepare_generated_field_4gb_closeout.py": {
+      "bytes": 17818,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/prepare_generated_field_4gb_closeout.py",
+      "sha256": "f1e6fe156335e170c105619fda91830632f1a4506da3d7fa4875f41ce22d001a"
+    },
+    "owned/pytest-metadata-v01.json": {
+      "bytes": 1474,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/pytest-metadata-v01.json",
+      "sha256": "512c4263f94b0bb451fc007b4ce6b07cd0b10b57a4ce794acea6cb898129a9bb"
+    },
+    "owned/reconcile_owned_preparation_refusal_administrative.py": {
+      "bytes": 26745,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/reconcile_owned_preparation_refusal_administrative.py",
+      "sha256": "a17678349d03d5867fe4f1f60fd49a8c26609799fc56e0a3793d935c701ee065"
+    },
+    "owned/recovery-tests-v01.log": {
+      "bytes": 5321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v01.log",
+      "sha256": "eabdb53b6dc1b6cb984d6dfdac1711c8cc1975e1f9c3157ce849defcb5961b12"
+    },
+    "owned/recovery-tests-v02.log": {
+      "bytes": 2648,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v02.log",
+      "sha256": "2fa16ebd41bc6d331e7f151abb9b8b6795f133beef81bc91ccfd5c55843afb12"
+    },
+    "owned/recovery-tests-v03.log": {
+      "bytes": 4507,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v03.log",
+      "sha256": "f2114f524b1c41300d538da7da9aa4dd0dc057e645122c547e42a7336d4ebab5"
+    },
+    "owned/recovery-tests-v03.xml": {
+      "bytes": 199530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v03.xml",
+      "sha256": "c0861230c2a5288e30eec3a98cd29e0c8b845296096fc202fba0089b736260b5"
+    },
+    "owned/recovery-tests-v04.log": {
+      "bytes": 3137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v04.log",
+      "sha256": "12034eb63921a3c3b43e222c317d47273a2a3b7de086d5163db6a7f69d59c8c7"
+    },
+    "owned/recovery-tests-v04.xml": {
+      "bytes": 3197,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v04.xml",
+      "sha256": "257fc23cec90ae940b3687c75d0b1d4e161debb0219d7676b80d4a954f5213f9"
+    },
+    "owned/recovery-tests-v05.log": {
+      "bytes": 99,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.log",
+      "sha256": "ac1d2d7b7434ed7d961c9b7ff3f0f8511e6745cf5e32a658c334928827407aa8"
+    },
+    "owned/recovery-tests-v05.xml": {
+      "bytes": 14458,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/recovery-tests-v05.xml",
+      "sha256": "cb07ae01891a5f5b8af00fc61996139d505bce3219205347a166168a85c888ce"
+    },
+    "owned/retained-claims-metadata-intake-v01.json": {
+      "bytes": 182069,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-metadata-intake-v01.json",
+      "sha256": "5040d2629181d64c17acbefe893f9c37a14d80b8bf40d2663620c54e61e567f1"
+    },
+    "owned/retained-claims-owner-api-analysis-v01.json": {
+      "bytes": 22367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/retained-claims-owner-api-analysis-v01.json",
+      "sha256": "fabb62ace7d63d8148f1b519484315fc10b6c751c726459ce82cf6d8ed53f661"
+    },
+    "owned/review_owned_administrative_closeout.py": {
+      "bytes": 11640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/review_owned_administrative_closeout.py",
+      "sha256": "0f6a95c5012d508d4148324031bdadf9f721ebb45ae1ddf3c46d1051f07d72cf"
+    },
+    "owned/review_owned_administrative_postclosure.py": {
+      "bytes": 14570,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/review_owned_administrative_postclosure.py",
+      "sha256": "f3e952113d59d635dab96001121312816e4d637e9c971676b6ab20304f075aef"
+    },
+    "owned/scan_storage_metadata.py": {
+      "bytes": 6654,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/scan_storage_metadata.py",
+      "sha256": "34258faec6bda4ad2c90f61cee61760f7d553cae0ef9a17a0584a3619b212dbd"
+    },
+    "owned/scan_storage_metadata_v02.py": {
+      "bytes": 6654,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/scan_storage_metadata_v02.py",
+      "sha256": "15312809458f5d37a7a009114038a5024e21a2d0077dc7688f9a6a5a3f01177a"
+    },
+    "owned/storage-capacity-intake-v01.json": {
+      "bytes": 9440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-capacity-intake-v01.json",
+      "sha256": "17b9a4ca81610a650dae1e63d32b2a8d13bd3b75a6f4f04769f08a0911855d29"
+    },
+    "owned/storage-documentation-independent-review-v01.json": {
+      "bytes": 11571,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-documentation-independent-review-v01.json",
+      "sha256": "9da549650f21062ba784a370b3f3e59bbf9e66ea9246f3c73cbb40869eb70458"
+    },
+    "owned/storage-plan.md": {
+      "bytes": 7539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-plan.md",
+      "sha256": "7524495f20db013b19cfe09b13f6fde2398fc166732f290b3ee79a5dd701ddd9"
+    },
+    "owned/storage-remediation-next-actions-v01.json": {
+      "bytes": 13150,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-remediation-next-actions-v01.json",
+      "sha256": "a5271d1b892d7f8664f11c11f46f2f4d4722b741f20fdb792f9c8b45ade62bb7"
+    },
+    "prior/owned_closeout_write_gate.py": {
+      "bytes": 6934,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned_closeout_write_gate.py",
+      "sha256": "e9f3c4fdfadf23db63ebb4ce10d46b0a356dde8836380b012e033324508d5015"
+    },
+    "prior/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "source/docs/autoencoders/storage_accounting_recovery_20261012.md": {
+      "bytes": 7539,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/docs/autoencoders/storage_accounting_recovery_20261012.md",
+      "sha256": "7524495f20db013b19cfe09b13f6fde2398fc166732f290b3ee79a5dd701ddd9"
+    },
+    "source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py": {
+      "bytes": 10852,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+      "sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4"
+    },
+    "source/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py": {
+      "bytes": 23019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_resource_recovery.py",
+      "sha256": "76380d972134f154d7f1c4473dca121d9e0b0f754988767dc3323821355a8f84"
+    }
+  },
+  "checks": {
+    "all25_current_JSON_public_guard_clean": true,
+    "all59_existing_sources_exact_ordinary_unaliased": true,
+    "candidate4GB_preparation_inventory_metadata_not_model_states": true,
+    "closed_inventory_fields_and_strict_int_counts": true,
+    "closing_source_digest_fences_present": true,
+    "directory_and_file_fsync_present": true,
+    "duplicate_and_nonfinite_JSON_rejected": true,
+    "entrypoint_not_executed_on_import": true,
+    "exact_frozen_helper_AST_and_SHA": true,
+    "exact_sources_and_destination_list_required": true,
+    "exclusive_new_file_writes_and_copy_digest_readback": true,
+    "explicit_exact_manifest_SHA_for_copy": true,
+    "finite_unique60_catalogue_no_glob_or_live_ledger": true,
+    "fixed_owned_D_and_W_destinations_both_absent": true,
+    "full_ledger_and_full_record_recursive_rejection": true,
+    "hard_5MB_total_bound": true,
+    "immutable_payload_buffers_authenticate_bytes_after_read": true,
+    "imports_only_stdlib": true,
+    "lease_key_and_HF_TOKEN_fields_rejected_nested": true,
+    "no_git_stage_commit_push_merge_in_helper": true,
+    "no_live_owner_API_ledger_lock_model_compiler_or_network_call": true,
+    "no_raw_full_ledgers_foreign_record_bodies_or_weights_in_exact_catalogue": true,
+    "only_pending_file_this_static_receipt": true,
+    "partial_failure_not_falsely_successful_and_no_auto_deletion_or_retry": true,
+    "single_key_weight_state_rejected_top_and_nested": true,
+    "source3_pins_and_prior2_gate_guardian_bytes_only": true,
+    "source_review_resolved_single_key_model_guard_gap": true
+  },
+  "created_at_utc": "2026-10-12T03:51:51.608013+00:00",
+  "findings": [],
+  "helper": {
+    "bytes": 10471,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/copy_storage_evidence.py",
+    "sha256": "8b9e80a39563d0a8f705a7df519b43756790fb4cecdd9fa8ede0ac25c142ae08"
+  },
+  "limitations": [
+    "This is source-only approval for preparing an exact finite manifest. Actual copying requires a separate concrete manifest/payload review and exact approved SHA.",
+    "The JSON privacy guard is additional defense for this independently checked finite catalogue; no approval for arbitrary new files or schemas follows.",
+    "Source and destination observations are sequential, not a filesystem transaction or continuous custody guarantee. Immutable buffers, readback and closing source checks prevent a successful receipt on detected drift.",
+    "A failed copy can retain a partial new destination; the helper does not erase it, retry into it or roll back. Preserve and independently review any such failure.",
+    "This reviewer authored the recovery implementation. Approval of those own source modules remains the separate7c12 source review; this receipt reviews the root-authored copy helper and finite evidence scope.",
+    "No full .local ledger backup, foreign reservation body, trained checkpoint payload or credential value is copied or approved. Protocol/ledger/weight references are metadata hashes only.",
+    "No GitHub/Hugging Face publication, training admission, model selection or legal/compiler/logic-family qualification is approved here."
+  ],
+  "passed": true,
+  "phase": "source-only-finite-public-evidence-copy",
+  "resolved_draft_finding": {
+    "all_rejected": true,
+    "constructed_validation_cases": 16,
+    "fix": "Final guard independently rejects model_state, optimizer_state, state_dict and weights at every JSON nesting depth.",
+    "no_current_catalogue_JSON_used_these_keys": true,
+    "prior_helper_metadata": {
+      "bytes": 10447,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/copy_storage_evidence-draft-v01.py",
+      "sha256": "21e60bba0568bd4bbb06790e33592e5680705aa94a7c43c1e143264f5953abef"
+    },
+    "problem": "Prior guard rejected model_state only when optimizer_state was also present."
+  },
+  "reviewer_actions": {
+    "evidence_copies": 0,
+    "helper_main_executed": false,
+    "ledger_locks_acquired": 0,
+    "live_ledger_API_calls": 0,
+    "models_or_compiler_executed": 0,
+    "pytest_or_numerical_tests_executed": 0,
+    "source_or_docs_modified": false,
+    "static_AST_and_json_negative_controls_only": true,
+    "static_review_receipt_only_written": true
+  },
+  "schema": "storage-evidence-copy-source-independent-review/v1",
+  "scope": {
+    "Git_staging_or_publication_approved": false,
+    "JSON_payloads_checked": 25,
+    "MAX_BYTES": 5000000,
+    "catalogue_total_files_after_this_receipt": 60,
+    "concrete_copy_approved": false,
+    "destinations": [
+      "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/workspace/test-logs/legal-storage-recovery-20261012-01/evidence",
+      "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/workspace/artifacts/legal-storage-recovery-20261012-01/evidence"
+    ],
+    "existing_files_checked": 59,
+    "existing_source_bytes_without_this_receipt": 1771492,
+    "live_API_ledger_or_model_actions_approved": false,
+    "manifest_preparation_approved": true,
+    "own_recovery_source_self_approval": false
+  }
+}

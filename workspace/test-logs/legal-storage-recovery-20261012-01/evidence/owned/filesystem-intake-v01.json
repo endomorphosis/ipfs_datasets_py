@@ -1,0 +1,71 @@
+{
+  "schema": "legal-storage-filesystem-intake/v1",
+  "utc": "2026-10-12T02:51:19Z",
+  "mutation_performed": false,
+  "roots": [
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "device": 66306,
+      "inode": 66764317,
+      "is_symlink": false,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "filesystem": {
+        "block_size": 4096,
+        "total_bytes": 4031871553536,
+        "free_bytes": 701336702976,
+        "available_bytes": 496495968256,
+        "inode_total": 250036224,
+        "inode_free": 219973903,
+        "inode_available": 219973903
+      }
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "device": 66306,
+      "inode": 58092485,
+      "is_symlink": false,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "filesystem": {
+        "block_size": 4096,
+        "total_bytes": 4031871553536,
+        "free_bytes": 701336702976,
+        "available_bytes": 496495968256,
+        "inode_total": 250036224,
+        "inode_free": 219973903,
+        "inode_available": 219973903
+      }
+    },
+    {
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "device": 66306,
+      "inode": 51016937,
+      "is_symlink": false,
+      "resolved": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "filesystem": {
+        "block_size": 4096,
+        "total_bytes": 4031871553536,
+        "free_bytes": 701336702976,
+        "available_bytes": 496495968256,
+        "inode_total": 250036224,
+        "inode_free": 219973903,
+        "inode_available": 219973903
+      }
+    },
+    {
+      "path": "/tmp/pytest-of-barberb",
+      "device": 66306,
+      "inode": 524352,
+      "is_symlink": false,
+      "resolved": "/tmp/pytest-of-barberb",
+      "filesystem": {
+        "block_size": 4096,
+        "total_bytes": 4031871553536,
+        "free_bytes": 701336702976,
+        "available_bytes": 496495968256,
+        "inode_total": 250036224,
+        "inode_free": 219973903,
+        "inode_available": 219973903
+      }
+    }
+  ]
+}
