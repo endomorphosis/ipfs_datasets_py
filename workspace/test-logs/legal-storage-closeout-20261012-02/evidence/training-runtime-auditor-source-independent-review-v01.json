@@ -1,0 +1,96 @@
+{
+  "adaptation": {
+    "all_pretraining513_hashes_preserved_during_training": true,
+    "exact_historical_selected_claim": "474ee6b5ae784516ae1dab7ca38c8cc6",
+    "exact_previous_retained_body_sha256": "4ca144ebfb780e5aa9e502fd7459f620052b00b20d00f8351aedaaa3829ef687",
+    "old510_other_hashes_preserved": true,
+    "old510_unselected_unchanged_reported_true": true,
+    "old511_unchanged_reported_false": true,
+    "only_that_old511_member_may_change_before_training": true,
+    "output_procedure_and_training_review_move_only_to_N": true,
+    "prior_c6_and0350_releases_still_preserved": true,
+    "recipe_root_remains_prior_T": true,
+    "released_target_exact_digest_and_v2_event_validated": true,
+    "separate_completed4GB_closeout_pinned": true
+  },
+  "approvals": {
+    "HF_or_Git_publication_approved_here": false,
+    "claim_reconciliation_approved_here": false,
+    "concrete_audit_procedure_approved": false,
+    "frozen_auditor_source_passed": true,
+    "observer_execution_approved_here": false,
+    "training_admission_or_model_calls_approved": false
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/audit_training_runtime_resources.py": {
+      "bytes": 26121,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/audit_training_runtime_resources.py",
+      "sha256": "a6b90d6b7080da73f988b183510642e7702d50f68c739a4cfe5bf6f3c49a27e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-auditor-baseline-controls-v01.json": {
+      "bytes": 1215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-auditor-baseline-controls-v01.json",
+      "sha256": "6429d97076a9b2a65482465c6998660db0fe3a03090ba66467c20b8b40cbe04f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_training_runtime_resources_v03.py": {
+      "bytes": 23683,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/audit_training_runtime_resources_v03.py",
+      "sha256": "5cd4f00e76263d3acb087fb608497c73f5ea59670b4e284a930d70943335cd21"
+    }
+  },
+  "findings": [],
+  "future_execution_requirements": [
+    "Prepare and independently review the concrete runtime procedure only after actual selected4GB closeout and independent postwrite closure.",
+    "Bind exact selected released record digest, complete source/operation/closure receipts, and actual pretraining513-body map; no additional historical baseline exceptions.",
+    "Authenticate fresh training plan/runner/guardian/review/resource compatibility and exact terminal attempt03 artifacts.",
+    "Keep historical outputs/weights opaque or source-pinned for custody; neither this static receipt nor detached baseline controls replay old modelstates."
+  ],
+  "limitations": [
+    "The prior runtime-check body is byte-preserved except exact paths and selectedhistorical baseline logic; no later lease/RSS/update/durability controls were reexecuted by this review.",
+    "Detached1+11 controls establish only compiled baseline predicate behavior, not a real closeout, trainingrun, schedulerlease or current storage capacity.",
+    "The procedure remains unprepared until actualcloseout; this source approval cannot substitute for exact operation/postclosure/training/runtime-procedure reviews.",
+    "Any future passing outcome remains engineering/resource evidence; no USCode gold fidelity, broaderlogic-family qualification, genuine8D/768D latent comparison, Lake build or semanticaccuracy claim is granted."
+  ],
+  "observed_at_utc": "2026-10-12T05:02:42Z",
+  "passed": true,
+  "phase": "training-runtime-auditor-source",
+  "reviewer_actions": {
+    "Git_HF_calls": 0,
+    "checkpoint_restores": 0,
+    "complete_helper_imports": 0,
+    "ledger_locks": 0,
+    "model_calls": 0,
+    "old_or_new_guardian_imports": 0,
+    "optimizer_updates": 0,
+    "production_ledger_reads": 0,
+    "resource_API_calls": 0,
+    "tests_executed": 0
+  },
+  "root_detached_controls": {
+    "executed_by_root_not_reviewer": true,
+    "later_runtime_checks_reexecuted": false,
+    "negative_cases": 11,
+    "positive_cases": 1,
+    "source_AST_statements_only": true,
+    "synthetic_dictionary_and_stub_readers_only": true
+  },
+  "schema": "post-closeout-training-runtime-auditor-static-independent-review/v1",
+  "scope": "Frozen source-only read/diff review and root detached AST-baseline controls; no concrete runtime procedure or terminal outcome qualified",
+  "unchanged_later_source_checks": {
+    "145GB_owner_cap_roots_and_reader_closure": true,
+    "32_per_arm_and64_complete_summary_updates": true,
+    "DenyModels_and_no_restore": true,
+    "RSS_identity_sample_counts_peaks_deadline_flags": true,
+    "closing_ledger_source_and_attempt_hash_fences": true,
+    "completed_attempt_durability_release_and_bytes": true,
+    "dead_group_and_reaped_leader": true,
+    "exact_training_review_and_compatibility_bindings": true,
+    "fresh_owned200MB_envelope_and_terminal_record": true,
+    "lease_config_absence_sample_stage_and_gap_checks": true,
+    "no_continuous_custody_absolute_peak_or_semantic_proof_claims": true,
+    "no_network_process_signals_locks_or_resource_clients": true,
+    "only_exclusive_owned_output_receipt_written": true,
+    "prior_failed_attempt_files": true,
+    "unknown_partial_updates_not_assumed_zero": true
+  }
+}

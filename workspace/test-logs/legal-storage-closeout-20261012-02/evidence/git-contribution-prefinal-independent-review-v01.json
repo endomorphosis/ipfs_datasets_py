@@ -1,0 +1,1427 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/.git/hooks/applypatch-msg.sample": {
+      "bytes": 478,
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+    },
+    "/home/barberb/lift_coding/.git/hooks/commit-msg.sample": {
+      "bytes": 896,
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+    },
+    "/home/barberb/lift_coding/.git/hooks/fsmonitor-watchman.sample": {
+      "bytes": 4726,
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+    },
+    "/home/barberb/lift_coding/.git/hooks/post-update.sample": {
+      "bytes": 189,
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-applypatch.sample": {
+      "bytes": 424,
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-commit.sample": {
+      "bytes": 1643,
+      "sha256": "f9af7d95eb1231ecf2eba9770fedfa8d4797a12b02d7240e98d568201251244a"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-merge-commit.sample": {
+      "bytes": 416,
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-push.sample": {
+      "bytes": 1374,
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-rebase.sample": {
+      "bytes": 4898,
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+    },
+    "/home/barberb/lift_coding/.git/hooks/pre-receive.sample": {
+      "bytes": 544,
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+    },
+    "/home/barberb/lift_coding/.git/hooks/prepare-commit-msg.sample": {
+      "bytes": 1492,
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+    },
+    "/home/barberb/lift_coding/.git/hooks/push-to-checkout.sample": {
+      "bytes": 2783,
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+    },
+    "/home/barberb/lift_coding/.git/hooks/sendemail-validate.sample": {
+      "bytes": 2308,
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+    },
+    "/home/barberb/lift_coding/.git/hooks/update.sample": {
+      "bytes": 3650,
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/applypatch-msg.sample": {
+      "bytes": 478,
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/commit-msg.sample": {
+      "bytes": 896,
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/fsmonitor-watchman.sample": {
+      "bytes": 4726,
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/post-update.sample": {
+      "bytes": 189,
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-applypatch.sample": {
+      "bytes": 424,
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-commit.sample": {
+      "bytes": 1643,
+      "sha256": "f9af7d95eb1231ecf2eba9770fedfa8d4797a12b02d7240e98d568201251244a"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-merge-commit.sample": {
+      "bytes": 416,
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-push.sample": {
+      "bytes": 1374,
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-rebase.sample": {
+      "bytes": 4898,
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/pre-receive.sample": {
+      "bytes": 544,
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/prepare-commit-msg.sample": {
+      "bytes": 1492,
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/push-to-checkout.sample": {
+      "bytes": 2783,
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/sendemail-validate.sample": {
+      "bytes": 2308,
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks/update.sample": {
+      "bytes": 3650,
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/audit_training_runtime_resources.py": {
+      "bytes": 26121,
+      "sha256": "a6b90d6b7080da73f988b183510642e7702d50f68c739a4cfe5bf6f3c49a27e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/canonical-intake-v01.json": {
+      "bytes": 641,
+      "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets-expected-stage-prefinal-v01.json": {
+      "bytes": 14463,
+      "sha256": "9d91e155a3e686b672ae1b0b959d370390de57f9504232879703900158984c14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/docs/autoencoders/legal_storage_temporal_training_20261012.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/audit_training_runtime_resources.py": {
+      "bytes": 26121,
+      "sha256": "a6b90d6b7080da73f988b183510642e7702d50f68c739a4cfe5bf6f3c49a27e4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/canonical-intake-v01.json": {
+      "bytes": 641,
+      "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-administrative-closeout-independent-review-v01.json": {
+      "bytes": 84714,
+      "sha256": "567028eacf289289852a8b9f125dede8ca96d8807568fe8ce8aceaeb16675e2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-administrative-closeout-protocol-v01.json": {
+      "bytes": 169318,
+      "sha256": "f3c79aeb53be19ad37e72074151685ab0fb1893f25ee842aca82d6e415e1a4b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-applicator-handoff-v02.json": {
+      "bytes": 6998,
+      "sha256": "7393cbf3a8f75da3c01f1b4e24bd074b8107374c991bb5005cb26cd4c44e9a0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-applicator-source-independent-review-v01.json": {
+      "bytes": 9867,
+      "sha256": "58e1a9af448b63fe48f68dbe868f82eb81f6ed63c149d421edb7083869fe4aa2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-closeout-inventory-v01.json": {
+      "bytes": 172420,
+      "sha256": "b5b350c81e9d9a770e78c5f8e9839bc559b1833fdcc6d6ef999535b8fbf66489"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/hf-helper-source-independent-review-v04.json": {
+      "bytes": 13837,
+      "sha256": "de57b48ecb92de372d379ae4ea17e1b1b710d2f090389858c7de530fb171719c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/hf-preparation-receipt-v03.json": {
+      "bytes": 58194,
+      "sha256": "8585520b3d4d7c2d4e540ccf27b71f1f983c54bd008be20ccd34221708eaab59"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/historical-4gb-closeout/completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/prepare_generated_field_4gb_inventory.py": {
+      "bytes": 18677,
+      "sha256": "5bed9d10e0e466cb3de810d7950100f657f33ea30c5e487f28e13fcdb4658205"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/reconcile_generated_field_4gb_v02.py": {
+      "bytes": 30662,
+      "sha256": "30edc6fd4e466464892aabdd4d895ff3d15403bc17ee501ee418986b478e8ed0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/all-data-schedules-before-models.json": {
+      "bytes": 43835,
+      "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-parity.json": {
+      "bytes": 2063,
+      "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-fresh_challenge-score.json": {
+      "bytes": 53514,
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-fresh_tune-score.json": {
+      "bytes": 53263,
+      "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-old_tune-score.json": {
+      "bytes": 101549,
+      "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-parity.json": {
+      "bytes": 2063,
+      "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-training.json": {
+      "bytes": 3116,
+      "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-fresh_challenge-score.json": {
+      "bytes": 53700,
+      "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-fresh_tune-score.json": {
+      "bytes": 53352,
+      "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-parity.json": {
+      "bytes": 2059,
+      "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-training.json": {
+      "bytes": 3153,
+      "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/summary.json": {
+      "bytes": 63633,
+      "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_generated_field_4gb_operation.py": {
+      "bytes": 13968,
+      "sha256": "b1394c3576d413412939369a335057f51a7a25e65d000c1a532f26fc46ff49a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_generated_field_4gb_postclosure.py": {
+      "bytes": 14908,
+      "sha256": "f4db78073f9f8e1ced12ff6b15bd8a6fdb326a9d292f39a522406a42899ba4c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_saved_training_results.py": {
+      "bytes": 33571,
+      "sha256": "d53fe82b13e563754b37b82083dd134775fc02e05d77182728e7836ec9e9d43f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_training_runtime_resource.py": {
+      "bytes": 17445,
+      "sha256": "e4ff7f908fabbbd78ac0a7e0bca7727a6b7024d438a8d7141e1f8c5aa982fa0b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-auditor-baseline-controls-v01.json": {
+      "bytes": 1215,
+      "sha256": "6429d97076a9b2a65482465c6998660db0fe3a03090ba66467c20b8b40cbe04f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-recipe-custody-prefinal-v01.json": {
+      "bytes": 23657,
+      "sha256": "4795425826cd30f63dc5530211fab29b41aeb751a2235e4732992926de6fecf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-audit-procedure-v01.json": {
+      "bytes": 127798,
+      "sha256": "3255a5ee1a813480016f601e75e6a429f91eb6a7db9c286c78bdfd8746ca063e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/datasets/workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-science-source-prefinal-independent-review-v01.json": {
+      "bytes": 12748,
+      "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-independent-review-v01.json": {
+      "bytes": 84714,
+      "sha256": "567028eacf289289852a8b9f125dede8ca96d8807568fe8ce8aceaeb16675e2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-protocol-v01.json": {
+      "bytes": 169318,
+      "sha256": "f3c79aeb53be19ad37e72074151685ab0fb1893f25ee842aca82d6e415e1a4b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-applicator-handoff-v02.json": {
+      "bytes": 6998,
+      "sha256": "7393cbf3a8f75da3c01f1b4e24bd074b8107374c991bb5005cb26cd4c44e9a0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-applicator-source-independent-review-v01.json": {
+      "bytes": 9867,
+      "sha256": "58e1a9af448b63fe48f68dbe868f82eb81f6ed63c149d421edb7083869fe4aa2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-closeout-inventory-v01.json": {
+      "bytes": 172420,
+      "sha256": "b5b350c81e9d9a770e78c5f8e9839bc559b1833fdcc6d6ef999535b8fbf66489"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/git-copy-manifest-prefinal-v01.json": {
+      "bytes": 52652,
+      "sha256": "b5e7519f5391cbed29602a347165d57884803b2eebc8febde27a658dd943b72a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-helper-source-independent-review-v04.json": {
+      "bytes": 13837,
+      "sha256": "de57b48ecb92de372d379ae4ea17e1b1b710d2f090389858c7de530fb171719c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-preparation-receipt-v03.json": {
+      "bytes": 58194,
+      "sha256": "8585520b3d4d7c2d4e540ccf27b71f1f983c54bd008be20ccd34221708eaab59"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/README.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/model-card-v01.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/prepare_generated_field_4gb_inventory.py": {
+      "bytes": 18677,
+      "sha256": "5bed9d10e0e466cb3de810d7950100f657f33ea30c5e487f28e13fcdb4658205"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/reconcile_generated_field_4gb_v02.py": {
+      "bytes": 30662,
+      "sha256": "30edc6fd4e466464892aabdd4d895ff3d15403bc17ee501ee418986b478e8ed0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/review_generated_field_4gb_operation.py": {
+      "bytes": 13968,
+      "sha256": "b1394c3576d413412939369a335057f51a7a25e65d000c1a532f26fc46ff49a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/review_generated_field_4gb_postclosure.py": {
+      "bytes": 14908,
+      "sha256": "f4db78073f9f8e1ced12ff6b15bd8a6fdb326a9d292f39a522406a42899ba4c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/review_saved_training_results.py": {
+      "bytes": 33571,
+      "sha256": "d53fe82b13e563754b37b82083dd134775fc02e05d77182728e7836ec9e9d43f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/review_training_runtime_resource.py": {
+      "bytes": 17445,
+      "sha256": "e4ff7f908fabbbd78ac0a7e0bca7727a6b7024d438a8d7141e1f8c5aa982fa0b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-auditor-baseline-controls-v01.json": {
+      "bytes": 1215,
+      "sha256": "6429d97076a9b2a65482465c6998660db0fe3a03090ba66467c20b8b40cbe04f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-recipe-custody-prefinal-v01.json": {
+      "bytes": 23657,
+      "sha256": "4795425826cd30f63dc5530211fab29b41aeb751a2235e4732992926de6fecf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-audit-procedure-v01.json": {
+      "bytes": 127798,
+      "sha256": "3255a5ee1a813480016f601e75e6a429f91eb6a7db9c286c78bdfd8746ca063e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-science-source-prefinal-independent-review-v01.json": {
+      "bytes": 12748,
+      "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace-expected-stage-prefinal-v01.json": {
+      "bytes": 1376,
+      "sha256": "5a082bbb555866a1694ad2ccc6fb9fb6e44cd95fcb7f75474381a7a570dd3143"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/artifacts/legal-storage-closeout-20261012-02/evidence/canonical-intake-v01.json": {
+      "bytes": 641,
+      "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/artifacts/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/artifacts/legal-storage-closeout-20261012-02/evidence/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/artifacts/legal-storage-closeout-20261012-02/evidence/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/artifacts/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/workspace/implementation_plan/docs/88-legal-storage-closeout-and-temporal-training-2026-10-12.md": {
+      "bytes": 3828,
+      "sha256": "db1cd81faaa6464fd1c5dc07e27fd9ab526443b1e772415a1d82de3a0d25026e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/final-storage-integration-independent-review-v02.json": {
+      "bytes": 82853,
+      "sha256": "d6aa75f9d4a2cb500b49ce8b959d02fec5b6a47aea31b537caabb2409fdeab30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/parallel-main-independent-review-v01.json": {
+      "bytes": 52698,
+      "sha256": "af0cd00fa2828cfca9cefbcbc1025f94aa30a6d5e51a787ddbad3cce12397100"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/storage-publication-preflight-independent-review-v01.json": {
+      "bytes": 30667,
+      "sha256": "cb8480354995a2897049efebb1a4e27f0143762b4d8ca7d9de28dab055a1f6c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/all-data-schedules-before-models.json": {
+      "bytes": 43835,
+      "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity.json": {
+      "bytes": 2063,
+      "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-score.json": {
+      "bytes": 53514,
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_tune-score.json": {
+      "bytes": 53263,
+      "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-old_tune-score.json": {
+      "bytes": 101549,
+      "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity.json": {
+      "bytes": 2063,
+      "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-training.json": {
+      "bytes": 3116,
+      "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_challenge-score.json": {
+      "bytes": 53700,
+      "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_tune-score.json": {
+      "bytes": 53352,
+      "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity.json": {
+      "bytes": 2059,
+      "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-training.json": {
+      "bytes": 3153,
+      "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/summary.json": {
+      "bytes": 63633,
+      "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    }
+  },
+  "canonical_opening_and_closing_exact": {
+    "root": {
+      "HEAD": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "symbolic_HEAD": "refs/heads/chore/fmt-check-main"
+    },
+    "source": {
+      "HEAD": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "symbolic_HEAD": "refs/heads/main"
+    }
+  },
+  "documentation_claims_reviewed": {
+    "authored_exposed_panels_not_USCode_gold": true,
+    "both32_fresh_update_arms_recorded_not_independently_optimizer_traced": true,
+    "no_default_promotion_or_Lake_execution_or_broad_family_qualification": true,
+    "panels_match_saved_independent_analysis": true,
+    "sampled_RSS_not_kernel_hardcap": true,
+    "selected_historical_4GB_closeout_outputs_retained": true,
+    "source_guide_equals_actual_prepared_df0d_model_card": true,
+    "source_only_latent_disabled_nominal384_no_real8D768D": true
+  },
+  "findings": [],
+  "finite_public_scope": {
+    "actual_copy_bytes_verified": true,
+    "actual_full_private_ledgers_or_owned_record_bodies_copied": false,
+    "actual_model_weight_states_copied": false,
+    "datasets_allowed_paths": {
+      "docs/autoencoders/legal_storage_temporal_training_20261012.md": {
+        "bytes": 5755,
+        "mode": "100644",
+        "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child-exit.json": {
+        "bytes": 105,
+        "mode": "100644",
+        "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child-identity.json": {
+        "bytes": 44,
+        "mode": "100644",
+        "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/child.log": {
+        "bytes": 77,
+        "mode": "100644",
+        "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/command.json": {
+        "bytes": 1042,
+        "mode": "100644",
+        "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/group-rss-observations.jsonl": {
+        "bytes": 16503,
+        "mode": "100644",
+        "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/group-rss-summary.json": {
+        "bytes": 1737,
+        "mode": "100644",
+        "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/guardian-exit.json": {
+        "bytes": 521,
+        "mode": "100644",
+        "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/lease-binding.json": {
+        "bytes": 694,
+        "mode": "100644",
+        "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/lease-observations.jsonl": {
+        "bytes": 34722,
+        "mode": "100644",
+        "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/owned-group-final.json": {
+        "bytes": 190,
+        "mode": "100644",
+        "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/pre-admission.json": {
+        "bytes": 8001,
+        "mode": "100644",
+        "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/resource-observations.json": {
+        "bytes": 873,
+        "mode": "100644",
+        "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/actual-run/scheduler-adoption.json": {
+        "bytes": 4646,
+        "mode": "100644",
+        "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/audit_training_runtime_resources.py": {
+        "bytes": 26121,
+        "mode": "100644",
+        "sha256": "a6b90d6b7080da73f988b183510642e7702d50f68c739a4cfe5bf6f3c49a27e4"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/canonical-intake-v01.json": {
+        "bytes": 641,
+        "mode": "100644",
+        "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-administrative-closeout-independent-review-v01.json": {
+        "bytes": 84714,
+        "mode": "100644",
+        "sha256": "567028eacf289289852a8b9f125dede8ca96d8807568fe8ce8aceaeb16675e2a"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-administrative-closeout-protocol-v01.json": {
+        "bytes": 169318,
+        "mode": "100644",
+        "sha256": "f3c79aeb53be19ad37e72074151685ab0fb1893f25ee842aca82d6e415e1a4b4"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-applicator-handoff-v02.json": {
+        "bytes": 6998,
+        "mode": "100644",
+        "sha256": "7393cbf3a8f75da3c01f1b4e24bd074b8107374c991bb5005cb26cd4c44e9a0a"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-applicator-source-independent-review-v01.json": {
+        "bytes": 9867,
+        "mode": "100644",
+        "sha256": "58e1a9af448b63fe48f68dbe868f82eb81f6ed63c149d421edb7083869fe4aa2"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-closeout-inventory-v01.json": {
+        "bytes": 172420,
+        "mode": "100644",
+        "sha256": "b5b350c81e9d9a770e78c5f8e9839bc559b1833fdcc6d6ef999535b8fbf66489"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+        "bytes": 88005,
+        "mode": "100644",
+        "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/hf-helper-source-independent-review-v04.json": {
+        "bytes": 13837,
+        "mode": "100644",
+        "sha256": "de57b48ecb92de372d379ae4ea17e1b1b710d2f090389858c7de530fb171719c"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/hf-preparation-receipt-v03.json": {
+        "bytes": 58194,
+        "mode": "100644",
+        "sha256": "8585520b3d4d7c2d4e540ccf27b71f1f983c54bd008be20ccd34221708eaab59"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/historical-4gb-closeout/completion.json": {
+        "bytes": 5854,
+        "mode": "100644",
+        "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/prepare_generated_field_4gb_inventory.py": {
+        "bytes": 18677,
+        "mode": "100644",
+        "sha256": "5bed9d10e0e466cb3de810d7950100f657f33ea30c5e487f28e13fcdb4658205"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/prepare_hf_release_v04.py": {
+        "bytes": 25858,
+        "mode": "100644",
+        "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/publish_hf_release_v04.py": {
+        "bytes": 9781,
+        "mode": "100644",
+        "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/reconcile_generated_field_4gb_v02.py": {
+        "bytes": 30662,
+        "mode": "100644",
+        "sha256": "30edc6fd4e466464892aabdd4d895ff3d15403bc17ee501ee418986b478e8ed0"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/resource-compatibility-v01.json": {
+        "bytes": 6800,
+        "mode": "100644",
+        "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/result-independent-review-v01.json": {
+        "bytes": 18994,
+        "mode": "100644",
+        "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/all-data-schedules-before-models.json": {
+        "bytes": 43835,
+        "mode": "100644",
+        "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-fresh_challenge-score.json": {
+        "bytes": 53748,
+        "mode": "100644",
+        "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-fresh_tune-score.json": {
+        "bytes": 53408,
+        "mode": "100644",
+        "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-old_tune-score.json": {
+        "bytes": 101532,
+        "mode": "100644",
+        "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/baseline-parity.json": {
+        "bytes": 2063,
+        "mode": "100644",
+        "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-fresh_challenge-score.json": {
+        "bytes": 53514,
+        "mode": "100644",
+        "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-fresh_tune-score.json": {
+        "bytes": 53263,
+        "mode": "100644",
+        "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-old_tune-score.json": {
+        "bytes": 101549,
+        "mode": "100644",
+        "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-parity.json": {
+        "bytes": 2063,
+        "mode": "100644",
+        "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/contrast-training.json": {
+        "bytes": 3116,
+        "mode": "100644",
+        "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-fresh_challenge-score.json": {
+        "bytes": 53700,
+        "mode": "100644",
+        "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-fresh_tune-score.json": {
+        "bytes": 53352,
+        "mode": "100644",
+        "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-old_tune-score.json": {
+        "bytes": 101532,
+        "mode": "100644",
+        "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-parity.json": {
+        "bytes": 2059,
+        "mode": "100644",
+        "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/control-training.json": {
+        "bytes": 3153,
+        "mode": "100644",
+        "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/results/summary.json": {
+        "bytes": 63633,
+        "mode": "100644",
+        "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_generated_field_4gb_operation.py": {
+        "bytes": 13968,
+        "mode": "100644",
+        "sha256": "b1394c3576d413412939369a335057f51a7a25e65d000c1a532f26fc46ff49a7"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_generated_field_4gb_postclosure.py": {
+        "bytes": 14908,
+        "mode": "100644",
+        "sha256": "f4db78073f9f8e1ced12ff6b15bd8a6fdb326a9d292f39a522406a42899ba4c4"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_saved_training_results.py": {
+        "bytes": 33571,
+        "mode": "100644",
+        "sha256": "d53fe82b13e563754b37b82083dd134775fc02e05d77182728e7836ec9e9d43f"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/review_training_runtime_resource.py": {
+        "bytes": 17445,
+        "mode": "100644",
+        "sha256": "e4ff7f908fabbbd78ac0a7e0bca7727a6b7024d438a8d7141e1f8c5aa982fa0b"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-auditor-baseline-controls-v01.json": {
+        "bytes": 1215,
+        "mode": "100644",
+        "sha256": "6429d97076a9b2a65482465c6998660db0fe3a03090ba66467c20b8b40cbe04f"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-protocol-independent-review-v01.json": {
+        "bytes": 54420,
+        "mode": "100644",
+        "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-recipe-custody-prefinal-v01.json": {
+        "bytes": 23657,
+        "mode": "100644",
+        "sha256": "4795425826cd30f63dc5530211fab29b41aeb751a2235e4732992926de6fecf6"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-result-analysis-v01.json": {
+        "bytes": 57456,
+        "mode": "100644",
+        "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-auditor-source-independent-review-v01.json": {
+        "bytes": 5410,
+        "mode": "100644",
+        "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-procedure-independent-review-v01.json": {
+        "bytes": 71974,
+        "mode": "100644",
+        "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-audit-procedure-v01.json": {
+        "bytes": 127798,
+        "mode": "100644",
+        "sha256": "3255a5ee1a813480016f601e75e6a429f91eb6a7db9c286c78bdfd8746ca063e"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-audit-v01.json": {
+        "bytes": 40834,
+        "mode": "100644",
+        "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-independent-review-v02.json": {
+        "bytes": 88381,
+        "mode": "100644",
+        "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+      },
+      "workspace/test-logs/legal-storage-closeout-20261012-02/evidence/training-science-source-prefinal-independent-review-v01.json": {
+        "bytes": 12748,
+        "mode": "100644",
+        "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+      }
+    },
+    "direct_root_guide_not_a_copy": "implementation_plan/docs/88-legal-storage-closeout-and-temporal-training-2026-10-12.md",
+    "full_owned_record_receipts_excluded": [
+      "resources-start.json",
+      "resources-final.json"
+    ],
+    "manifest_copies": 66,
+    "manifest_copy_bytes": 2384433,
+    "model_state_JSONs_parsed": 0,
+    "workspace_allowed_paths": {
+      "artifacts/legal-storage-closeout-20261012-02/evidence/canonical-intake-v01.json": {
+        "bytes": 641,
+        "mode": "100644",
+        "sha256": "9764c9908c2fccb96c5312ae2e3e04ebc12b463ee8ceae9418b20b980d46f377"
+      },
+      "artifacts/legal-storage-closeout-20261012-02/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+        "bytes": 88005,
+        "mode": "100644",
+        "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+      },
+      "artifacts/legal-storage-closeout-20261012-02/evidence/result-independent-review-v01.json": {
+        "bytes": 18994,
+        "mode": "100644",
+        "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+      },
+      "artifacts/legal-storage-closeout-20261012-02/evidence/training-result-analysis-v01.json": {
+        "bytes": 57456,
+        "mode": "100644",
+        "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+      },
+      "artifacts/legal-storage-closeout-20261012-02/evidence/training-runtime-resource-independent-review-v02.json": {
+        "bytes": 88381,
+        "mode": "100644",
+        "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+      },
+      "implementation_plan/docs/88-legal-storage-closeout-and-temporal-training-2026-10-12.md": {
+        "bytes": 3828,
+        "mode": "100644",
+        "sha256": "db1cd81faaa6464fd1c5dc07e27fd9ab526443b1e772415a1d82de3a0d25026e"
+      }
+    }
+  },
+  "limitations": [
+    "Bounded prefinal observation; canonical/index fences are exact at opening and closing, not continuous no-write proof.",
+    "The prior frozen review authenticates five recovery worktrees; this bounded review rechecks 32 immutable commit objects and ancestry without rescanning foreign worktree payloads.",
+    "66 finite copies plus the own root guide were reviewed; future publication receipts and datasets gitlink require an exact supplemental stage/object review.",
+    "HF source/preparation review and existing release prefix describe prepared artifacts only; this receipt grants no inferred remote publication outcome."
+  ],
+  "normal_hooks": {
+    "datasets": {
+      "active_hook_files": [],
+      "default_hooks_directory": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/hooks",
+      "files": {
+        "applypatch-msg.sample": {
+          "bytes": 478,
+          "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+        },
+        "commit-msg.sample": {
+          "bytes": 896,
+          "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+        },
+        "fsmonitor-watchman.sample": {
+          "bytes": 4726,
+          "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+        },
+        "post-update.sample": {
+          "bytes": 189,
+          "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+        },
+        "pre-applypatch.sample": {
+          "bytes": 424,
+          "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+        },
+        "pre-commit.sample": {
+          "bytes": 1643,
+          "sha256": "f9af7d95eb1231ecf2eba9770fedfa8d4797a12b02d7240e98d568201251244a"
+        },
+        "pre-merge-commit.sample": {
+          "bytes": 416,
+          "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+        },
+        "pre-push.sample": {
+          "bytes": 1374,
+          "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+        },
+        "pre-rebase.sample": {
+          "bytes": 4898,
+          "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+        },
+        "pre-receive.sample": {
+          "bytes": 544,
+          "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+        },
+        "prepare-commit-msg.sample": {
+          "bytes": 1492,
+          "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+        },
+        "push-to-checkout.sample": {
+          "bytes": 2783,
+          "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+        },
+        "sendemail-validate.sample": {
+          "bytes": 2308,
+          "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+        },
+        "update.sample": {
+          "bytes": 3650,
+          "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+        }
+      },
+      "hooksPath_override": false
+    },
+    "workspace": {
+      "active_hook_files": [],
+      "default_hooks_directory": "/home/barberb/lift_coding/.git/hooks",
+      "files": {
+        "applypatch-msg.sample": {
+          "bytes": 478,
+          "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7"
+        },
+        "commit-msg.sample": {
+          "bytes": 896,
+          "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437"
+        },
+        "fsmonitor-watchman.sample": {
+          "bytes": 4726,
+          "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0"
+        },
+        "post-update.sample": {
+          "bytes": 189,
+          "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5"
+        },
+        "pre-applypatch.sample": {
+          "bytes": 424,
+          "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475"
+        },
+        "pre-commit.sample": {
+          "bytes": 1643,
+          "sha256": "f9af7d95eb1231ecf2eba9770fedfa8d4797a12b02d7240e98d568201251244a"
+        },
+        "pre-merge-commit.sample": {
+          "bytes": 416,
+          "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53"
+        },
+        "pre-push.sample": {
+          "bytes": 1374,
+          "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a"
+        },
+        "pre-rebase.sample": {
+          "bytes": 4898,
+          "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3"
+        },
+        "pre-receive.sample": {
+          "bytes": 544,
+          "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989"
+        },
+        "prepare-commit-msg.sample": {
+          "bytes": 1492,
+          "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619"
+        },
+        "push-to-checkout.sample": {
+          "bytes": 2783,
+          "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f"
+        },
+        "sendemail-validate.sample": {
+          "bytes": 2308,
+          "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92"
+        },
+        "update.sample": {
+          "bytes": 3650,
+          "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106"
+        }
+      },
+      "hooksPath_override": false
+    }
+  },
+  "observed_at_utc": "2026-10-12T05:41:20.770334+00:00",
+  "own_prefinal_endpoints": {
+    "datasets": {
+      "HEAD": "c18390b350c7ab40f5bd342578204a03dc34fe05",
+      "index_entries_equal_HEAD": 30385,
+      "origin": "https://github.com/endomorphosis/ipfs_datasets_py",
+      "prefinal_paths_not_yet_staged": 61,
+      "symbolic_HEAD": "refs/heads/codex/legal-storage-closeout-20261012-02"
+    },
+    "workspace": {
+      "HEAD": "b1be608c9b0caca0abf41dcf06a7e45a84309e1f",
+      "index_entries_equal_HEAD": 36615,
+      "origin": "https://github.com/endomorphosis/lift_coding.git",
+      "prefinal_paths_not_yet_staged": 6,
+      "symbolic_HEAD": "refs/heads/codex/legal-storage-closeout-workspace-20261012-02"
+    }
+  },
+  "parallel_root_preservation": {
+    "all8_non_datasets_links_must_be_preserved_from_this_latest_base": true,
+    "base_after": "b1be608c9b0caca0abf41dcf06a7e45a84309e1f",
+    "base_before": "b8a113d46f545cbec1edbbfaabaea5cfc3fc13ce",
+    "exact_changed_paths": [
+      "external/ipfs_accelerate",
+      "implementation_plan/docs/87-supervisor-retained-source-inventory-2026-10-12.md"
+    ],
+    "latest_root_gitlinks": {
+      "JevOps": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "Mcp-Plus-Plus": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "external/ipfs_accelerate": "2eda41dfebb0a92a88c069362c7c03c82fb7145e",
+      "external/ipfs_datasets": "c18390b350c7ab40f5bd342578204a03dc34fe05",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "hallucinate_app": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "swissknife": "4772c7ff648dd5f438af059e21a1a5305d32dbe3"
+    },
+    "supervisor87_preserved_oid": "2a75cf94c144ff7fab7e46bdcfe3cfd19717fbe8"
+  },
+  "passed": true,
+  "pending_not_approved_by_this_receipt": [
+    "Actual stage/index changes and resulting Git blobs",
+    "Actual source commit/push/PR merge and source hosted checks",
+    "HF concrete payload review/publication receipts and their future finite copy bytes",
+    "Actual root datasets gitlink update to the newly verified source merge",
+    "Final root stage/commit/push/PR merge and hosted checks"
+  ],
+  "phase": "git-contribution-prefinal",
+  "prior_history_retention": {
+    "five_recoveryworktrees_deep_review_reused": {
+      "actual_prior_main_ancestry_verified": true,
+      "five_recoveryworktrees_deepreview_reused": true,
+      "fresh_deep_foreign_worktree_audit_performed": false,
+      "receipt": {
+        "bytes": 52698,
+        "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/parallel-main-independent-review-v01.json",
+        "sha256": "af0cd00fa2828cfca9cefbcbc1025f94aa30a6d5e51a787ddbad3cce12397100"
+      },
+      "selected32objects_deepreview_reused": true
+    },
+    "fresh_foreign_worktree_deep_scan": false,
+    "prior_final_integration_review": {
+      "bytes": 82853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/final-storage-integration-independent-review-v02.json",
+      "sha256": "d6aa75f9d4a2cb500b49ce8b959d02fec5b6a47aea31b537caabb2409fdeab30"
+    },
+    "selected32_commit_objects_currently_ancestral": {
+      "root": [
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006",
+          "selected_commit": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/dual-bank-wording-adapter-root-20261007",
+          "selected_commit": "30e61092341b47b4e49eb30df443fd607536333a"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01",
+          "selected_commit": "aab99b3792e4d13572830f4aa91c7915092b23fe"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01",
+          "selected_commit": "739e7088a203a4b307d96192e489a88dbf9177b1"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01",
+          "selected_commit": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01",
+          "selected_commit": "00130686f43e35105e2ee98e5a36428f3aff3538"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-retention-objective-20261011-01",
+          "selected_commit": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01",
+          "selected_commit": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/supervisor-context-token-economy-root-20261006",
+          "selected_commit": "3b0162bebe0b7a09727081cb8c5f5c15378caba1"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/main",
+          "selected_commit": "0213bb5e0a2d5a736e9555fb9112411d6a1313d6"
+        }
+      ],
+      "source": [
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/autoencoder-progress-reconciliation-datasets-20261006",
+          "selected_commit": "a3f16f2870a80a7e985b35bed3334512c47d9dc3"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/contextual-legal-runtime-20261006",
+          "selected_commit": "39f25777d557df1c51b8f98ed0dcd084c35d4d6d"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/dual-bank-wording-adapter-datasets-20261007",
+          "selected_commit": "aed87b0d980422c2ca9efaa26cf92df30c51d768"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/normative-cache-input-datasets-20261007",
+          "selected_commit": "c4382ae53ab9497245fccdf85855f0e314711fbc"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/agent/normative-decoder-runtime-datasets-20261007",
+          "selected_commit": "6a954ecef4fa78a5e58aa4fdb070cc3d1e86fcff"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/autoencoder-owner-integration-20261007-01",
+          "selected_commit": "53e87779a527349b65875cb20b59ca9eb48ed70c"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/ir-publication-main-integration-20261004",
+          "selected_commit": "f3164b7cb04c4c2c5647d4b5ffa74a87074ba01b"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-cross-agent-guards-20261006",
+          "selected_commit": "575a129f19068d58d66cc8119e85c3d23faa560a"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-decoder-followup-20261006-01",
+          "selected_commit": "0f733b621335a3fb95e3f8855f2100cd95ba01b5"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-decoder-progress-20261011-01",
+          "selected_commit": "b4002de1e73d295e222cd7258bd07e4784a6b928"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-grouped-integration-20261006-02",
+          "selected_commit": "004887f6250b083e0b095d5ac7563bc5bb792491"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-joint-readout-20261011-01",
+          "selected_commit": "146e4c88fea6d0a9ab671af00e1596a9a60ea784"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-native-cache-20261011-01",
+          "selected_commit": "f3901341cdde9b4485315327d5ef06abd1485b11"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-open-vocabulary-20261011-01",
+          "selected_commit": "fe00dd1d64d0e26e0b396e40cadd094d544efd0c"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-original-text-roundtrip-retained-20261004",
+          "selected_commit": "2b87326cb73f4f09d12aff3ccb68e0a6142a686c"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-scope-span-training-20261007-01",
+          "selected_commit": "1530efd07032bac88229c6c97ca5994d498e6216"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-structured-training-20261011-01",
+          "selected_commit": "7c90b27d9fd193e768e8ecdca0bb5055145f1b78"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-support-action-model-20261007-01",
+          "selected_commit": "7b93b2d97a8985b3f2db29963bd0979749f66163"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-support-gate-model-20261007-01",
+          "selected_commit": "8695a31b0b91b73a1cd66abcc8ea0e998e59c9c6"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/legal-trigger-readout-model-20261007-01",
+          "selected_commit": "e35aef47ef6d67f7d07793be487e2be04ec6c7d6"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/codex/source-v2-warm-start-20261004",
+          "selected_commit": "d1643c2c621f45f0ca0080e017fe6717b093e478"
+        },
+        {
+          "commit_retained_and_ancestral_to_prefinal_base": true,
+          "prior_ref": "refs/heads/main",
+          "selected_commit": "4af461728329cdad4bfb910ab878d016ce279e54"
+        }
+      ]
+    },
+    "selected_branch_names_not_recreated": true
+  },
+  "reviewer_actions": {
+    "Git_mutations": 0,
+    "compiler_calls": 0,
+    "finite_public_metadata_and_bytes_review": true,
+    "git_read_only_metadata_commands": true,
+    "leases_or_admissions": 0,
+    "model_restores_or_forwards": 0,
+    "network_calls": 0,
+    "optimizer_updates": 0,
+    "shared_ledger_API_or_locks": 0,
+    "whole_shared_tree_census": 0
+  },
+  "schema": "legal-storage-training-git-contribution-prefinal-independent-review/v1"
+}

@@ -1,0 +1,52 @@
+{
+  "actual_encoder_calls": 0,
+  "admitted": false,
+  "controls": [
+    {
+      "control": "none",
+      "name": "zeros",
+      "report": {
+        "bytes": 22351,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-zeros.json",
+        "sha256": "fc4186ba7198db544b3acf1e21a2cf33d3d97a2d43fd288c703d0ee6d702d35e"
+      }
+    },
+    {
+      "control": "none",
+      "name": "alternate_placeholders",
+      "report": {
+        "bytes": 22351,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-alternate_placeholders.json",
+        "sha256": "550d40cc600bae86fcca5c802f07116e0519ca66485ac416d141a5c677a0ce14"
+      }
+    },
+    {
+      "control": "disabled",
+      "name": "disabled",
+      "report": {
+        "bytes": 22355,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-disabled.json",
+        "sha256": "af3a7b30a65c156a26535fa113b3f17a4733f4fc55eca4cc9970c4b746dc8d3e"
+      }
+    },
+    {
+      "control": "rotate",
+      "name": "rotated_placeholders",
+      "report": {
+        "bytes": 22353,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-rotated_placeholders.json",
+        "sha256": "c288cdd7cfca25cdf8d08a6c53a8b646fec5ccd32a590c84e5def5860d8a7e4c"
+      }
+    }
+  ],
+  "formalized": false,
+  "genuine_latent_semantics_tested": false,
+  "passed": true,
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "source-only-dormant384-placeholder-parity/v1",
+  "score_and_greedy_decisions_bit_equal": true,
+  "semantic_correctness_verified": false,
+  "source_count": 2
+}

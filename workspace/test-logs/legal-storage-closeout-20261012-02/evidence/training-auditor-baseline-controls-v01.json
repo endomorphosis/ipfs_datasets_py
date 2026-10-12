@@ -1,0 +1,27 @@
+{
+  "detached_negative_cases": 11,
+  "detached_positive_cases": 1,
+  "findings": [],
+  "passed": true,
+  "results": {
+    "changed_cap_refused": true,
+    "changed_other_claims_refused": true,
+    "changed_unselected_old_record_refused": true,
+    "deleted_outputs_refused": true,
+    "exact_single_reviewed_change_accepted": true,
+    "incomplete_closeout_refused": true,
+    "missing_prior_record_refused": true,
+    "wrong_completion_pin_refused": true,
+    "wrong_original_target_hash_refused": true,
+    "wrong_released_bytes_refused": true,
+    "wrong_selected_released_hash_refused": true,
+    "wrong_target_refused": true
+  },
+  "schema": "training-auditor-pretraining-baseline-controls/v1",
+  "scope": "Compiled only actual baseline-validation statements; synthetic dictionaries and stub metadata readers, no complete observer import or production reads/API/locks/numerical work. Later runtime/model/lease/RSS/update checks are not exercised by these controls.",
+  "source": {
+    "bytes": 26121,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/audit_training_runtime_resources.py",
+    "sha256": "a6b90d6b7080da73f988b183510642e7702d50f68c739a4cfe5bf6f3c49a27e4"
+  }
+}

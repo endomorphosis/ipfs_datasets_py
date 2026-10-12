@@ -1,0 +1,1779 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-after-file-identities-v03.json": {
+      "bytes": 1048733,
+      "sha256": "fad9a61b1e41000ae38ae8cf47e292cc0f57eea8e4dc1efaf530e16cba8c5c0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-before-file-identities-v01.json": {
+      "bytes": 1019501,
+      "sha256": "e2557123ffb21a10288fba743b2d7306d07c98bf9533df453140dcc3ea11d976"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-commit-created-v03.json": {
+      "bytes": 406,
+      "sha256": "7fb66eaf70c5c545f33850329dacbd6d86c3095b81eaba85d67094aece3f71cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-download-verification-v03.log": {
+      "bytes": 218,
+      "sha256": "ab2190a01bbf125f9c625377ca560d7d4ae4404e5251abcde50712f9ea7db3ef"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-helper-source-independent-review-v04.json": {
+      "bytes": 13837,
+      "sha256": "de57b48ecb92de372d379ae4ea17e1b1b710d2f090389858c7de530fb171719c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-preparation-receipt-v03.json": {
+      "bytes": 58194,
+      "sha256": "8585520b3d4d7c2d4e540ccf27b71f1f983c54bd008be20ccd34221708eaab59"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-preupload-custody-v03.json": {
+      "bytes": 645,
+      "sha256": "9d709050a5f0236bba2f943f64e8e902f46db4e445608c98c12ecb90b0f1896c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-publication-independent-review-v04.json": {
+      "bytes": 84765,
+      "sha256": "d3f9caf788d6a7d0bbb5af0db7c5fe1a8c93e890069251842c5a163d1dcf97ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-publication-verification-v03.json": {
+      "bytes": 59394,
+      "sha256": "3f8f43e17e5d03a875d7d3516bfe3bbe1d931633ed83cb2b780aa421ef4b82a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/README.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/actual-run/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/boundary/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": {
+      "bytes": 6908,
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/boundary/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "bytes": 23526,
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/boundary/temporal-binding-design-v01.md": {
+      "bytes": 6976,
+      "sha256": "8deddfb847f3555770fc6e9de07618ca1a90d3d11cf9765a00fe6e1761c8693c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/boundary/tests/unit/logic/legal_ir/test_duration_bound_qualified.py": {
+      "bytes": 11482,
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/boundary/tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "bytes": 29623,
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-experiment-plan.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/authored-temporal-contrast-corpus-v01.json": {
+      "bytes": 1672663,
+      "sha256": "47cc9d72fc3678c01962e08d6c61a71c1078bc89ef510e23586e4adfd814c280"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/historical-4gb-closeout-completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/historical-corpus-independent-review-v02.json": {
+      "bytes": 12700,
+      "sha256": "423d775253dc04ec4b182f3db0ae800215d8acde6a30f53a2eee27b78089b0b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-ambiguity-audit-v01.json": {
+      "bytes": 62331,
+      "sha256": "fe40c5e16b77f1dfa7b55af35de1536a9e690a3534a501c3de1f07967ec19e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-boundary-tests-v01.xml": {
+      "bytes": 64577,
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-new-boundary-tests-v02.xml": {
+      "bytes": 24775,
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-recipe-tests-v01.xml": {
+      "bytes": 7643,
+      "sha256": "8cff98086c1ad78fc22b691f81b831609b2d02050482b6847482e2c4e576bc12"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/migration-post-closure-independent-review-v01.json": {
+      "bytes": 10862,
+      "sha256": "6fee4e49050b36f9ed8d80c98e00127c27d7bdc4832c944defa9b1b31f94366d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/post-migration-resource-compatibility-v01.json": {
+      "bytes": 8148,
+      "sha256": "49a61f18dfd0a097b0eb648e2b8d25b2bdf360698cb5f4d3268e6e27f506f25e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/storage-admission-diagnosis-post-migration-v01.json": {
+      "bytes": 10234,
+      "sha256": "6fb9a3ac15089d767ee3db4d7243fa86e958e1032e0a581a3268bb8ecc4f4dae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/temporal-recovery-review-v01.json": {
+      "bytes": 21267,
+      "sha256": "b462bff702e9d86d98e0ea5f6b850e5e3853d2d0de023e983eb51e8857208cd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-science-source-prefinal-independent-review-v01.json": {
+      "bytes": 12748,
+      "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_temporal_contrast_pilot.py": {
+      "bytes": 10203,
+      "sha256": "acf9cd3ef8bbfed855cc1b49886145e0a8fb7ab2c365901e57c041c4ecc2da83"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/release-manifest.json": {
+      "bytes": 55716,
+      "sha256": "63a4ce3d4b77cd3b493e6432fac65d510c69ee197cb759339870d8c9f4b74d32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/all-data-schedules-before-models.json": {
+      "bytes": 43835,
+      "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506617,
+      "sha256": "c539bbd32abe62b2e65a49064f4c5e19c6a9bd0ca9dc4cd05f4cbc05e07f8085"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 635836,
+      "sha256": "d434b66b5401621a6c80ac4d2fa96fd1cfd371f2261bc112dba24f46b6c57def"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491481,
+      "sha256": "2682de1c14e4518b603b5a6c4f4a87d7c9270b60b4fe2d7b834f4b9c6923be3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-raw.json": {
+      "bytes": 598049,
+      "sha256": "8cddee01eb47b631b52008baa4bffb336562272d2cfacf99256f9898b897dc4e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-law-joint.json": {
+      "bytes": 103645,
+      "sha256": "7d701d045e0ff4507199bd16825cd5b9f83b04ce4bd9f6fe448189741d29c88f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-law-raw.json": {
+      "bytes": 273020,
+      "sha256": "44cf8305611770bb5ba3af362e8c6739e3fb507f20789105c81cbf87b2bc2c77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-joint.json": {
+      "bytes": 1459875,
+      "sha256": "b0c933e0864604c3269747c1ba165f6a8e49aaba940c1afa2a2349a80e31377f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-raw.json": {
+      "bytes": 2280984,
+      "sha256": "242ee586fe74cf70ac8625b09fefc8bfc1e3e6b821162bf0d4e50c772fb1bea3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "sha256": "550d40cc600bae86fcca5c802f07116e0519ca66485ac416d141a5c677a0ce14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-disabled.json": {
+      "bytes": 22355,
+      "sha256": "af3a7b30a65c156a26535fa113b3f17a4733f4fc55eca4cc9970c4b746dc8d3e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "sha256": "c288cdd7cfca25cdf8d08a6c53a8b646fec5ccd32a590c84e5def5860d8a7e4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-zeros.json": {
+      "bytes": 22351,
+      "sha256": "fc4186ba7198db544b3acf1e21a2cf33d3d97a2d43fd288c703d0ee6d702d35e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity.json": {
+      "bytes": 2063,
+      "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/baseline.json": {
+      "bytes": 5088,
+      "sha256": "19edc69343c056948d6ebc4c2c97a58ecea78317739b9ddce774f6c79cb39e9a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-checkpoint.json": {
+      "bytes": 2737844,
+      "sha256": "4f00c8d722aa73d5443161db5384a7a567c6e691c180a7cd1eba8544b25ab26e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-joint.json": {
+      "bytes": 527473,
+      "sha256": "06e136e84aab1629b029d7abfafde63c2916f41882204087f44b1ac97d0a0ef7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-raw.json": {
+      "bytes": 671656,
+      "sha256": "262acd68cd2150e61bde8e1f953d73ccbf24066a56ec42a2c960f47726ea7d62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-score.json": {
+      "bytes": 53514,
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-joint.json": {
+      "bytes": 499001,
+      "sha256": "d74c54b1fae3d60ddd6b9df23fcb2769f554a87ea88beaddcd6e57d09ac93247"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-raw.json": {
+      "bytes": 611504,
+      "sha256": "3004db96127a2a8a29828dd23d74cbcaf1da0a1673aeb50b97462ec5f0e6a623"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-score.json": {
+      "bytes": 53263,
+      "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-law-joint.json": {
+      "bytes": 101183,
+      "sha256": "8047b67778db64f1c8969c93bf1a1132c1c790271f450e943749b3058e508e6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-law-raw.json": {
+      "bytes": 274848,
+      "sha256": "2446527406ea994593f3ac15b6afdd3ce1242f269d9bb7fa412dff3f1e7ffa7c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-joint.json": {
+      "bytes": 1458590,
+      "sha256": "a5a60fd9f5576dd245ff6329c9a60623de4de015be9f34f28cf74f94722489fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-raw.json": {
+      "bytes": 2279573,
+      "sha256": "226b62961bd89fc031458594aa5a2cf0f2acd421b13c8e42a73b7efd8350f9cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-score.json": {
+      "bytes": 101549,
+      "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-alternate_placeholders.json": {
+      "bytes": 24720,
+      "sha256": "595c5701164bbc51cd08980fcb233c64e844d43e0d3941599f7b600e7d99fd25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-disabled.json": {
+      "bytes": 24724,
+      "sha256": "4c588891d7a87d11ecaa5e2ad61d7e70c222bf64a3213bdb03254395ff1cf51f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-rotated_placeholders.json": {
+      "bytes": 24722,
+      "sha256": "a0b3744711b22df5c404c0a3363c69a7c5ee0844535460f367710eac81636a7b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-zeros.json": {
+      "bytes": 24720,
+      "sha256": "bef53d60c648de971d725110836ccefc4b04b8924049d3f82e5c380439af7992"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity.json": {
+      "bytes": 2063,
+      "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-training.json": {
+      "bytes": 3116,
+      "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-checkpoint.json": {
+      "bytes": 2740501,
+      "sha256": "8cdaf7756cdfcf4d542f1ae4d81c52e52c110ae9b1c7192f598e7c5a5ab334b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-joint.json": {
+      "bytes": 524366,
+      "sha256": "a4ad332c90c1df38c6f505bb55afa8012882d76fd934c680d00c97bafd5a5f1d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-raw.json": {
+      "bytes": 636164,
+      "sha256": "348d5f80f08363023919e6540a8690f00aceb82160887bd7d9785e14867fa912"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-score.json": {
+      "bytes": 53700,
+      "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-joint.json": {
+      "bytes": 501717,
+      "sha256": "f308fac554db2abf3f38550ec3b82c479754e01924d8af8102742ee7c4ab2d6e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-raw.json": {
+      "bytes": 599871,
+      "sha256": "d2caa9cc4f89fde62e5f4c5c6557124c061555fffd601fe268ea243206be2ef1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-score.json": {
+      "bytes": 53352,
+      "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-law-joint.json": {
+      "bytes": 104241,
+      "sha256": "cbfa55a128749e50e2199d61dd36342a2e9845dde38c869e1f183b77b9c3fbd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-law-raw.json": {
+      "bytes": 273568,
+      "sha256": "037dc6739d3ce6440cdebb41956c66b892d94a7ac294fff25781710841389a46"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-joint.json": {
+      "bytes": 1460076,
+      "sha256": "39333b2676ccb508646b60b2cb2203193d07aff8d6774309e3ec88975ef8b44f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-raw.json": {
+      "bytes": 2280959,
+      "sha256": "72083f6cefd396dcaa48d7542453f39ea6def187dc7702b1af2a7d2fe43aac03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-alternate_placeholders.json": {
+      "bytes": 25386,
+      "sha256": "e10108f6aa8cee30886066ed86c7c14a8509314bbf0b30bf486457b227f8726d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-disabled.json": {
+      "bytes": 25390,
+      "sha256": "492a793e22f9903dc5d2c77140ac32e5b8a363c85b0870748a06a27b4f22c3be"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-rotated_placeholders.json": {
+      "bytes": 25388,
+      "sha256": "f3435aa99dbd64cb35fb66c95ff83e65f60a7205bf2ff1ebd7131d1fd0962648"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-zeros.json": {
+      "bytes": 25386,
+      "sha256": "f3179be79109cf43bbaaa22fcd33df14518281bc53260418a9efd78feceb942a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity.json": {
+      "bytes": 2059,
+      "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/control-training.json": {
+      "bytes": 3153,
+      "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/results/summary.json": {
+      "bytes": 63633,
+      "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/tests/test_temporal_contrast_recipe.py": {
+      "bytes": 21225,
+      "sha256": "4735379fc6f8e26e5ead9655f48ad5199178d3e2cb49d17daa052046955aa5a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-upload-v03/releases/20261012-temporal-role-contrast-v3/tests/test_temporal_role_contrast_corpus.py": {
+      "bytes": 18610,
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/README.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/actual-run/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/boundary/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": {
+      "bytes": 6908,
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/boundary/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "bytes": 23526,
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/boundary/temporal-binding-design-v01.md": {
+      "bytes": 6976,
+      "sha256": "8deddfb847f3555770fc6e9de07618ca1a90d3d11cf9765a00fe6e1761c8693c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/boundary/tests/unit/logic/legal_ir/test_duration_bound_qualified.py": {
+      "bytes": 11482,
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/boundary/tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "bytes": 29623,
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-experiment-plan.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/actual-training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/authored-temporal-contrast-corpus-v01.json": {
+      "bytes": 1672663,
+      "sha256": "47cc9d72fc3678c01962e08d6c61a71c1078bc89ef510e23586e4adfd814c280"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/historical-4gb-closeout-completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/historical-corpus-independent-review-v02.json": {
+      "bytes": 12700,
+      "sha256": "423d775253dc04ec4b182f3db0ae800215d8acde6a30f53a2eee27b78089b0b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-ambiguity-audit-v01.json": {
+      "bytes": 62331,
+      "sha256": "fe40c5e16b77f1dfa7b55af35de1536a9e690a3534a501c3de1f07967ec19e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-boundary-tests-v01.xml": {
+      "bytes": 64577,
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-new-boundary-tests-v02.xml": {
+      "bytes": 24775,
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-recipe-tests-v01.xml": {
+      "bytes": 7643,
+      "sha256": "8cff98086c1ad78fc22b691f81b831609b2d02050482b6847482e2c4e576bc12"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/migration-post-closure-independent-review-v01.json": {
+      "bytes": 10862,
+      "sha256": "6fee4e49050b36f9ed8d80c98e00127c27d7bdc4832c944defa9b1b31f94366d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/post-migration-resource-compatibility-v01.json": {
+      "bytes": 8148,
+      "sha256": "49a61f18dfd0a097b0eb648e2b8d25b2bdf360698cb5f4d3268e6e27f506f25e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/storage-admission-diagnosis-post-migration-v01.json": {
+      "bytes": 10234,
+      "sha256": "6fb9a3ac15089d767ee3db4d7243fa86e958e1032e0a581a3268bb8ecc4f4dae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/temporal-recovery-review-v01.json": {
+      "bytes": 21267,
+      "sha256": "b462bff702e9d86d98e0ea5f6b850e5e3853d2d0de023e983eb51e8857208cd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/evidence/training-science-source-prefinal-independent-review-v01.json": {
+      "bytes": 12748,
+      "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_temporal_contrast_pilot.py": {
+      "bytes": 10203,
+      "sha256": "acf9cd3ef8bbfed855cc1b49886145e0a8fb7ab2c365901e57c041c4ecc2da83"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/recipe/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/release-manifest.json": {
+      "bytes": 55716,
+      "sha256": "63a4ce3d4b77cd3b493e6432fac65d510c69ee197cb759339870d8c9f4b74d32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/all-data-schedules-before-models.json": {
+      "bytes": 43835,
+      "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506617,
+      "sha256": "c539bbd32abe62b2e65a49064f4c5e19c6a9bd0ca9dc4cd05f4cbc05e07f8085"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 635836,
+      "sha256": "d434b66b5401621a6c80ac4d2fa96fd1cfd371f2261bc112dba24f46b6c57def"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491481,
+      "sha256": "2682de1c14e4518b603b5a6c4f4a87d7c9270b60b4fe2d7b834f4b9c6923be3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-raw.json": {
+      "bytes": 598049,
+      "sha256": "8cddee01eb47b631b52008baa4bffb336562272d2cfacf99256f9898b897dc4e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-law-joint.json": {
+      "bytes": 103645,
+      "sha256": "7d701d045e0ff4507199bd16825cd5b9f83b04ce4bd9f6fe448189741d29c88f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-law-raw.json": {
+      "bytes": 273020,
+      "sha256": "44cf8305611770bb5ba3af362e8c6739e3fb507f20789105c81cbf87b2bc2c77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-joint.json": {
+      "bytes": 1459875,
+      "sha256": "b0c933e0864604c3269747c1ba165f6a8e49aaba940c1afa2a2349a80e31377f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-raw.json": {
+      "bytes": 2280984,
+      "sha256": "242ee586fe74cf70ac8625b09fefc8bfc1e3e6b821162bf0d4e50c772fb1bea3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "sha256": "550d40cc600bae86fcca5c802f07116e0519ca66485ac416d141a5c677a0ce14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-disabled.json": {
+      "bytes": 22355,
+      "sha256": "af3a7b30a65c156a26535fa113b3f17a4733f4fc55eca4cc9970c4b746dc8d3e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "sha256": "c288cdd7cfca25cdf8d08a6c53a8b646fec5ccd32a590c84e5def5860d8a7e4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity-zeros.json": {
+      "bytes": 22351,
+      "sha256": "fc4186ba7198db544b3acf1e21a2cf33d3d97a2d43fd288c703d0ee6d702d35e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline-parity.json": {
+      "bytes": 2063,
+      "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/baseline.json": {
+      "bytes": 5088,
+      "sha256": "19edc69343c056948d6ebc4c2c97a58ecea78317739b9ddce774f6c79cb39e9a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-checkpoint.json": {
+      "bytes": 2737844,
+      "sha256": "4f00c8d722aa73d5443161db5384a7a567c6e691c180a7cd1eba8544b25ab26e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-joint.json": {
+      "bytes": 527473,
+      "sha256": "06e136e84aab1629b029d7abfafde63c2916f41882204087f44b1ac97d0a0ef7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-raw.json": {
+      "bytes": 671656,
+      "sha256": "262acd68cd2150e61bde8e1f953d73ccbf24066a56ec42a2c960f47726ea7d62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_challenge-score.json": {
+      "bytes": 53514,
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-joint.json": {
+      "bytes": 499001,
+      "sha256": "d74c54b1fae3d60ddd6b9df23fcb2769f554a87ea88beaddcd6e57d09ac93247"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-raw.json": {
+      "bytes": 611504,
+      "sha256": "3004db96127a2a8a29828dd23d74cbcaf1da0a1673aeb50b97462ec5f0e6a623"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-fresh_tune-score.json": {
+      "bytes": 53263,
+      "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-law-joint.json": {
+      "bytes": 101183,
+      "sha256": "8047b67778db64f1c8969c93bf1a1132c1c790271f450e943749b3058e508e6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-law-raw.json": {
+      "bytes": 274848,
+      "sha256": "2446527406ea994593f3ac15b6afdd3ce1242f269d9bb7fa412dff3f1e7ffa7c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-joint.json": {
+      "bytes": 1458590,
+      "sha256": "a5a60fd9f5576dd245ff6329c9a60623de4de015be9f34f28cf74f94722489fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-raw.json": {
+      "bytes": 2279573,
+      "sha256": "226b62961bd89fc031458594aa5a2cf0f2acd421b13c8e42a73b7efd8350f9cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-old_tune-score.json": {
+      "bytes": 101549,
+      "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-alternate_placeholders.json": {
+      "bytes": 24720,
+      "sha256": "595c5701164bbc51cd08980fcb233c64e844d43e0d3941599f7b600e7d99fd25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-disabled.json": {
+      "bytes": 24724,
+      "sha256": "4c588891d7a87d11ecaa5e2ad61d7e70c222bf64a3213bdb03254395ff1cf51f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-rotated_placeholders.json": {
+      "bytes": 24722,
+      "sha256": "a0b3744711b22df5c404c0a3363c69a7c5ee0844535460f367710eac81636a7b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity-zeros.json": {
+      "bytes": 24720,
+      "sha256": "bef53d60c648de971d725110836ccefc4b04b8924049d3f82e5c380439af7992"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-parity.json": {
+      "bytes": 2063,
+      "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/contrast-training.json": {
+      "bytes": 3116,
+      "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-checkpoint.json": {
+      "bytes": 2740501,
+      "sha256": "8cdaf7756cdfcf4d542f1ae4d81c52e52c110ae9b1c7192f598e7c5a5ab334b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-joint.json": {
+      "bytes": 524366,
+      "sha256": "a4ad332c90c1df38c6f505bb55afa8012882d76fd934c680d00c97bafd5a5f1d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-raw.json": {
+      "bytes": 636164,
+      "sha256": "348d5f80f08363023919e6540a8690f00aceb82160887bd7d9785e14867fa912"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_challenge-score.json": {
+      "bytes": 53700,
+      "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-joint.json": {
+      "bytes": 501717,
+      "sha256": "f308fac554db2abf3f38550ec3b82c479754e01924d8af8102742ee7c4ab2d6e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-raw.json": {
+      "bytes": 599871,
+      "sha256": "d2caa9cc4f89fde62e5f4c5c6557124c061555fffd601fe268ea243206be2ef1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-fresh_tune-score.json": {
+      "bytes": 53352,
+      "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-law-joint.json": {
+      "bytes": 104241,
+      "sha256": "cbfa55a128749e50e2199d61dd36342a2e9845dde38c869e1f183b77b9c3fbd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-law-raw.json": {
+      "bytes": 273568,
+      "sha256": "037dc6739d3ce6440cdebb41956c66b892d94a7ac294fff25781710841389a46"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-joint.json": {
+      "bytes": 1460076,
+      "sha256": "39333b2676ccb508646b60b2cb2203193d07aff8d6774309e3ec88975ef8b44f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-raw.json": {
+      "bytes": 2280959,
+      "sha256": "72083f6cefd396dcaa48d7542453f39ea6def187dc7702b1af2a7d2fe43aac03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-alternate_placeholders.json": {
+      "bytes": 25386,
+      "sha256": "e10108f6aa8cee30886066ed86c7c14a8509314bbf0b30bf486457b227f8726d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-disabled.json": {
+      "bytes": 25390,
+      "sha256": "492a793e22f9903dc5d2c77140ac32e5b8a363c85b0870748a06a27b4f22c3be"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-rotated_placeholders.json": {
+      "bytes": 25388,
+      "sha256": "f3435aa99dbd64cb35fb66c95ff83e65f60a7205bf2ff1ebd7131d1fd0962648"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity-zeros.json": {
+      "bytes": 25386,
+      "sha256": "f3179be79109cf43bbaaa22fcd33df14518281bc53260418a9efd78feceb942a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-parity.json": {
+      "bytes": 2059,
+      "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/control-training.json": {
+      "bytes": 3153,
+      "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/results/summary.json": {
+      "bytes": 63633,
+      "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/tests/test_temporal_contrast_recipe.py": {
+      "bytes": 21225,
+      "sha256": "4735379fc6f8e26e5ead9655f48ad5199178d3e2cb49d17daa052046955aa5a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/hf-verified-download-v03/releases/20261012-temporal-role-contrast-v3/tests/test_temporal_role_contrast_corpus.py": {
+      "bytes": 18610,
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/model-card-v01.md": {
+      "bytes": 5755,
+      "sha256": "df0d3c55728e7af22e2c6cf32f67dc02cb275c4bec188ad52640641a993a8269"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "5783f5bddc064b1e4f3a135c2b4255d550c14ddf9892b7afc8cea9e57a1ae4ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 88381,
+      "sha256": "1d9b5b222505d0d5ceed4ff48216fa3bb034b9dd750776441778386b2358f49a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-science-source-prefinal-independent-review-v01.json": {
+      "bytes": 12748,
+      "sha256": "af78976dc54ca97972ed2e1bd2dc138e6ef166699ca378bc15b7d69231ff6838"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/authored-temporal-contrast-corpus-v01.json": {
+      "bytes": 1672663,
+      "sha256": "47cc9d72fc3678c01962e08d6c61a71c1078bc89ef510e23586e4adfd814c280"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/duration_bound_qualified.py": {
+      "bytes": 6908,
+      "sha256": "02e7d7ef02bbade94d4b6e66237488df71ec2166823d1b829a91d2f04200fd10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_bindings.py": {
+      "bytes": 23526,
+      "sha256": "50d6acfdf5c6c5f4f317d84ac75d7af8c5cc2f6566a4591173333115f306f888"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_duration_bound_qualified.py": {
+      "bytes": 11482,
+      "sha256": "5cdd9fe6e461cb20ea1398fe79e5d3da17e0c74ac7ca98ff9bf66cc4036b0ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_bindings.py": {
+      "bytes": 29623,
+      "sha256": "4ba0eb13b330b2a8cd53151ed7845e2601bb6bb4db610cb2a8f9d944d523cbaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/tests/unit/logic/legal_ir/test_temporal_role_contrast_corpus.py": {
+      "bytes": 18610,
+      "sha256": "8d3fe298725ad628a43f6edda0df27ada922fc3d8216afa6faa1123312971bd2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-ambiguity-audit-v01.json": {
+      "bytes": 62331,
+      "sha256": "fe40c5e16b77f1dfa7b55af35de1536a9e690a3534a501c3de1f07967ec19e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-boundary-tests-v01.xml": {
+      "bytes": 64577,
+      "sha256": "c89c5af3c547574a222d3c9db979f56ea6b4ff0d335bcb6c11135010e297aaf8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-new-boundary-tests-v02.xml": {
+      "bytes": 24775,
+      "sha256": "f414962a785c4dd0290adb19f117a7ba8093f6e8c102574fa912031683ea1bda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-recipe-tests-v01.xml": {
+      "bytes": 7643,
+      "sha256": "8cff98086c1ad78fc22b691f81b831609b2d02050482b6847482e2c4e576bc12"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-test-observation-v02.json": {
+      "bytes": 1799,
+      "sha256": "cea39486337b4e9661534e85dc525463aa207e42b07beef237c02cadae4ed92c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/migration-post-closure-independent-review-v01.json": {
+      "bytes": 10862,
+      "sha256": "6fee4e49050b36f9ed8d80c98e00127c27d7bdc4832c944defa9b1b31f94366d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/post-migration-resource-compatibility-v01.json": {
+      "bytes": 8148,
+      "sha256": "49a61f18dfd0a097b0eb648e2b8d25b2bdf360698cb5f4d3268e6e27f506f25e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot.py": {
+      "bytes": 10203,
+      "sha256": "acf9cd3ef8bbfed855cc1b49886145e0a8fb7ab2c365901e57c041c4ecc2da83"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/storage-admission-diagnosis-post-migration-v01.json": {
+      "bytes": 10234,
+      "sha256": "6fb9a3ac15089d767ee3db4d7243fa86e958e1032e0a581a3268bb8ecc4f4dae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-code-independent-review-v01.json": {
+      "bytes": 16266,
+      "sha256": "3331e42517e1d439bd476468585118896c037d7f70df779dc8e08f895ae87474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-binding-design-v01.md": {
+      "bytes": 6976,
+      "sha256": "8deddfb847f3555770fc6e9de07618ca1a90d3d11cf9765a00fe6e1761c8693c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-recovery-review-v01.json": {
+      "bytes": 21267,
+      "sha256": "b462bff702e9d86d98e0ea5f6b850e5e3853d2d0de023e983eb51e8857208cd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/tests/test_temporal_contrast_recipe.py": {
+      "bytes": 21225,
+      "sha256": "4735379fc6f8e26e5ead9655f48ad5199178d3e2cb49d17daa052046955aa5a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-contrast-20261011-01/corpus-independent-review-v02.json": {
+      "bytes": 12700,
+      "sha256": "423d775253dc04ec4b182f3db0ae800215d8acde6a30f53a2eee27b78089b0b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/all-data-schedules-before-models.json": {
+      "bytes": 43835,
+      "sha256": "bbdd3c3c6c956d36055c546842b1b9a90f74a9bbf57ece5669df60ea02b55415"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506617,
+      "sha256": "c539bbd32abe62b2e65a49064f4c5e19c6a9bd0ca9dc4cd05f4cbc05e07f8085"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 635836,
+      "sha256": "d434b66b5401621a6c80ac4d2fa96fd1cfd371f2261bc112dba24f46b6c57def"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491481,
+      "sha256": "2682de1c14e4518b603b5a6c4f4a87d7c9270b60b4fe2d7b834f4b9c6923be3b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_tune-raw.json": {
+      "bytes": 598049,
+      "sha256": "8cddee01eb47b631b52008baa4bffb336562272d2cfacf99256f9898b897dc4e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-law-joint.json": {
+      "bytes": 103645,
+      "sha256": "7d701d045e0ff4507199bd16825cd5b9f83b04ce4bd9f6fe448189741d29c88f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-law-raw.json": {
+      "bytes": 273020,
+      "sha256": "44cf8305611770bb5ba3af362e8c6739e3fb507f20789105c81cbf87b2bc2c77"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-old_tune-joint.json": {
+      "bytes": 1459875,
+      "sha256": "b0c933e0864604c3269747c1ba165f6a8e49aaba940c1afa2a2349a80e31377f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-old_tune-raw.json": {
+      "bytes": 2280984,
+      "sha256": "242ee586fe74cf70ac8625b09fefc8bfc1e3e6b821162bf0d4e50c772fb1bea3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-alternate_placeholders.json": {
+      "bytes": 22351,
+      "sha256": "550d40cc600bae86fcca5c802f07116e0519ca66485ac416d141a5c677a0ce14"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-disabled.json": {
+      "bytes": 22355,
+      "sha256": "af3a7b30a65c156a26535fa113b3f17a4733f4fc55eca4cc9970c4b746dc8d3e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-rotated_placeholders.json": {
+      "bytes": 22353,
+      "sha256": "c288cdd7cfca25cdf8d08a6c53a8b646fec5ccd32a590c84e5def5860d8a7e4c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity-zeros.json": {
+      "bytes": 22351,
+      "sha256": "fc4186ba7198db544b3acf1e21a2cf33d3d97a2d43fd288c703d0ee6d702d35e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline-parity.json": {
+      "bytes": 2063,
+      "sha256": "fc1798bafe1958e352d58b41d390993d03cb486b90610d51e011fc4fe25a4ac0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/baseline.json": {
+      "bytes": 5088,
+      "sha256": "19edc69343c056948d6ebc4c2c97a58ecea78317739b9ddce774f6c79cb39e9a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-checkpoint.json": {
+      "bytes": 2737844,
+      "sha256": "4f00c8d722aa73d5443161db5384a7a567c6e691c180a7cd1eba8544b25ab26e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-joint.json": {
+      "bytes": 527473,
+      "sha256": "06e136e84aab1629b029d7abfafde63c2916f41882204087f44b1ac97d0a0ef7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-raw.json": {
+      "bytes": 671656,
+      "sha256": "262acd68cd2150e61bde8e1f953d73ccbf24066a56ec42a2c960f47726ea7d62"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-score.json": {
+      "bytes": 53514,
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_tune-joint.json": {
+      "bytes": 499001,
+      "sha256": "d74c54b1fae3d60ddd6b9df23fcb2769f554a87ea88beaddcd6e57d09ac93247"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_tune-raw.json": {
+      "bytes": 611504,
+      "sha256": "3004db96127a2a8a29828dd23d74cbcaf1da0a1673aeb50b97462ec5f0e6a623"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_tune-score.json": {
+      "bytes": 53263,
+      "sha256": "067e9e07da4b4e33936cf3446ba2030b5df151cacf4813c7ed8d8f955127309e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-law-joint.json": {
+      "bytes": 101183,
+      "sha256": "8047b67778db64f1c8969c93bf1a1132c1c790271f450e943749b3058e508e6c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-law-raw.json": {
+      "bytes": 274848,
+      "sha256": "2446527406ea994593f3ac15b6afdd3ce1242f269d9bb7fa412dff3f1e7ffa7c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-old_tune-joint.json": {
+      "bytes": 1458590,
+      "sha256": "a5a60fd9f5576dd245ff6329c9a60623de4de015be9f34f28cf74f94722489fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-old_tune-raw.json": {
+      "bytes": 2279573,
+      "sha256": "226b62961bd89fc031458594aa5a2cf0f2acd421b13c8e42a73b7efd8350f9cd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-old_tune-score.json": {
+      "bytes": 101549,
+      "sha256": "c97f550e8249a0cd21155aca1937af8d67fac5f0cef779e5a72c66c0e306dcf7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity-alternate_placeholders.json": {
+      "bytes": 24720,
+      "sha256": "595c5701164bbc51cd08980fcb233c64e844d43e0d3941599f7b600e7d99fd25"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity-disabled.json": {
+      "bytes": 24724,
+      "sha256": "4c588891d7a87d11ecaa5e2ad61d7e70c222bf64a3213bdb03254395ff1cf51f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity-rotated_placeholders.json": {
+      "bytes": 24722,
+      "sha256": "a0b3744711b22df5c404c0a3363c69a7c5ee0844535460f367710eac81636a7b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity-zeros.json": {
+      "bytes": 24720,
+      "sha256": "bef53d60c648de971d725110836ccefc4b04b8924049d3f82e5c380439af7992"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-parity.json": {
+      "bytes": 2063,
+      "sha256": "a733891a1eb24161001e1e7fad50115e5be9543886e10ab5f2da7823883f22e6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-training.json": {
+      "bytes": 3116,
+      "sha256": "c52330aab2400bd26f2bd9d75843235062e0790e5dcdb238ace494b4a56e126a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-checkpoint.json": {
+      "bytes": 2740501,
+      "sha256": "8cdaf7756cdfcf4d542f1ae4d81c52e52c110ae9b1c7192f598e7c5a5ab334b8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_challenge-joint.json": {
+      "bytes": 524366,
+      "sha256": "a4ad332c90c1df38c6f505bb55afa8012882d76fd934c680d00c97bafd5a5f1d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_challenge-raw.json": {
+      "bytes": 636164,
+      "sha256": "348d5f80f08363023919e6540a8690f00aceb82160887bd7d9785e14867fa912"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_challenge-score.json": {
+      "bytes": 53700,
+      "sha256": "309baac3ad8d32c91512544107542db10003cec0aa8d2cca3a96114a199a2d93"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_tune-joint.json": {
+      "bytes": 501717,
+      "sha256": "f308fac554db2abf3f38550ec3b82c479754e01924d8af8102742ee7c4ab2d6e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_tune-raw.json": {
+      "bytes": 599871,
+      "sha256": "d2caa9cc4f89fde62e5f4c5c6557124c061555fffd601fe268ea243206be2ef1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-fresh_tune-score.json": {
+      "bytes": 53352,
+      "sha256": "df37928c56583d1f5603987ca09170cdaf622fbe450c400b7c3d0c5c957962b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-law-joint.json": {
+      "bytes": 104241,
+      "sha256": "cbfa55a128749e50e2199d61dd36342a2e9845dde38c869e1f183b77b9c3fbd9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-law-raw.json": {
+      "bytes": 273568,
+      "sha256": "037dc6739d3ce6440cdebb41956c66b892d94a7ac294fff25781710841389a46"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-old_tune-joint.json": {
+      "bytes": 1460076,
+      "sha256": "39333b2676ccb508646b60b2cb2203193d07aff8d6774309e3ec88975ef8b44f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-old_tune-raw.json": {
+      "bytes": 2280959,
+      "sha256": "72083f6cefd396dcaa48d7542453f39ea6def187dc7702b1af2a7d2fe43aac03"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-old_tune-score.json": {
+      "bytes": 101532,
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity-alternate_placeholders.json": {
+      "bytes": 25386,
+      "sha256": "e10108f6aa8cee30886066ed86c7c14a8509314bbf0b30bf486457b227f8726d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity-disabled.json": {
+      "bytes": 25390,
+      "sha256": "492a793e22f9903dc5d2c77140ac32e5b8a363c85b0870748a06a27b4f22c3be"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity-rotated_placeholders.json": {
+      "bytes": 25388,
+      "sha256": "f3435aa99dbd64cb35fb66c95ff83e65f60a7205bf2ff1ebd7131d1fd0962648"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity-zeros.json": {
+      "bytes": 25386,
+      "sha256": "f3179be79109cf43bbaaa22fcd33df14518281bc53260418a9efd78feceb942a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-parity.json": {
+      "bytes": 2059,
+      "sha256": "82aa243b82783f3476057eff65a8e23709910bd4f5b8665a8c8e983c51d3df3f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/control-training.json": {
+      "bytes": 3153,
+      "sha256": "72fa4d2512aafc4f67f9de51f7bda05b4e5578a6eecbe94e8d227e10619f99ed"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/summary.json": {
+      "bytes": 63633,
+      "sha256": "44ff3637dc4a057c4825d805a47e0021b32c0a0e7b6f31a57874d17d2ec8dfea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    }
+  },
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/f573ae8401b0774df0f43fc8ee026a79d9c400a9",
+  "expected_parent_revision": "a2c8aa64d8c363eb796438b385c14058e607a5ec",
+  "findings": [],
+  "independent_remote_observation": {
+    "API": "HfApi.model_info",
+    "complete_saved_after_identity_map_equal": true,
+    "download_count": 0,
+    "file_count": 3451,
+    "files_metadata": true,
+    "identity_map_sha256": "32a2697c3383256e282beff66d5c9c73f7f6799bcfb3c8c09c4948f537ef9dc4",
+    "metadata_read_count": 1,
+    "repo_type": "model",
+    "requested_revision": "f573ae8401b0774df0f43fc8ee026a79d9c400a9",
+    "returned_revision": "f573ae8401b0774df0f43fc8ee026a79d9c400a9",
+    "scope": "Fixed immutable revision only; current mutable main was not queried and no second weight download was performed."
+  },
+  "limitations": [
+    "Parent CAS qualification joins the still-exact reviewed publisher call, durable preupload baseline and returned commit receipts. This review does not independently capture the original HTTP request or fetch a separate commit-parent ancestry trace.",
+    "The old3311 files are preserved by complete remote blob/size/LFS identities. They were not redownloaded; only the already-downloaded140 new payload files were rehashed locally.",
+    "CLI local download metadata cache outside the fixed release prefix is excluded from payload inventory. Only the exact140 release paths are publication/readback artifacts.",
+    "Both paired source-only checkpoints are archived without default promotion. Authored challenge25/36 and older92/96 diagnostic counts are bounded engineering observations, not independently reviewed legal semantic accuracy or statistical/causal proof.",
+    "384 latent conditioning is disabled; no genuine8D/384D/768D latent comparison, USCode statutorygold, broader logic-family qualification or lake build legal success is established.",
+    "The finite public payload excludes full reservation ledger/ownedrecord bodies and both resources-start/final wrappers. Absolute source paths and reservation IDs/hashes remain provenance metadata, with local private raw backups unpublished.",
+    "This receipt qualifies immutable revisionf573 publication and readback only. It does not assert future mutable-main state, continuous source custody, new training authorization, model selection or later publication."
+  ],
+  "observed_at_utc": "2026-10-12T05:43:41.316766+00:00",
+  "passed": true,
+  "phase": "actual-HF-publication",
+  "qualification": {
+    "CAS_parent_same_as_reviewed_complete_baseline": true,
+    "all140_existing_downloads_match_reviewed_payload_bytes_SHA_and_verification_receipt": true,
+    "all_282_prepublication_artifact_bindings_still_exact": true,
+    "all_additions_only_fixed_new_release_prefix": true,
+    "all_old_blob_size_LFS_metadata_exact": true,
+    "complete_approved_payload_bytes": 34332267,
+    "complete_approved_payload_files": 140,
+    "default_promotion": false,
+    "download_prefix_file_inventory_closed_symlink_free": true,
+    "exact_review_and_preparation_pins_in_durable_preupload_receipt": true,
+    "new_files": 140,
+    "old_file_identities_preserved": 3311,
+    "remote_addition_set_exact_payload_set": true,
+    "remote_new_file_sizes_and_LFS_SHA_when_present_match_payload": true,
+    "remote_total_files": 3451,
+    "reviewed_source_create_commit_parent_commit_before_sha_enforced": true,
+    "semantic_accuracy": null,
+    "source_helpers_and_source_review_bytes_unchanged": true
+  },
+  "release_prefix": "releases/20261012-temporal-role-contrast-v3",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "reviewed_actual_revision": "f573ae8401b0774df0f43fc8ee026a79d9c400a9",
+  "reviewer_actions": {
+    "Git_HF_mutations": 0,
+    "file_download_calls": 0,
+    "immutable_model_info_metadata_reads": 1,
+    "ledger_or_private_backup_reads": 0,
+    "model_checkpoint_JSON_parses": 0,
+    "model_restore_forward_encoder_optimizer_compiler_calls": 0,
+    "resource_API_leases_locks_signals": 0,
+    "upload_calls": 0
+  },
+  "schema": "temporal-contrast-Hub-actual-publication-independent-review/v1",
+  "scope": "Independent actual additive publication/readback review at fixed immutable commitf573ae8401b0774df0f43fc8ee026a79d9c400a9. Authenticates the approved concrete payload and still-exact v04 source, durable preupload/commit/identity/verification receipts, complete3311 old blob/LFS identities and exact140 additions, and all140 already-downloaded byte/SHA identities against staged payload. One revision-pinned read-only model_info metadata call independently confirmed the complete3451-file savedafter map. Reviewer performed no upload, second download, model restore/forward, ledger/resource or Git mutation."
+}

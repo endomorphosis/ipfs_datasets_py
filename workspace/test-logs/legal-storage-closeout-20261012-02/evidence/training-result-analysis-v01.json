@@ -1,0 +1,1530 @@
+{
+  "checkpoint_contracts": {
+    "contrast": {
+      "adam_parameters": 23,
+      "adam_steps": 32,
+      "base_sha256": "b36538b14a657de26ca7b2de58d380e5778b4266831b7665b3cbe905b50b2833",
+      "canonical_sha256": "4f00c8d722aa73d5443161db5384a7a567c6e691c180a7cd1eba8544b25ab26e",
+      "changed_source_parameters": [
+        "byte_embedding.weight",
+        "encoder.bias_hh_l0",
+        "encoder.bias_hh_l0_reverse",
+        "encoder.bias_ih_l0",
+        "encoder.bias_ih_l0_reverse",
+        "encoder.weight_hh_l0",
+        "encoder.weight_hh_l0_reverse",
+        "encoder.weight_ih_l0",
+        "encoder.weight_ih_l0_reverse",
+        "end.bias",
+        "end.weight",
+        "modality.bias",
+        "modality.weight",
+        "presence.bias",
+        "presence.weight",
+        "start.bias",
+        "start.weight",
+        "token_projection.bias",
+        "token_projection.weight"
+      ],
+      "copied_initial_model_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+      "dormant_latent_parameters_unchanged": true,
+      "initial_base_sha256": "6eafebeee2f356d086ba3f850f0b091c6fb414986f93f3f7367774c573f59805",
+      "initial_outer_sha256": "4772023683d9fa5a7763cacf685cb7b4c90c600fe25d235f3a3fc24c288133fd",
+      "model_tensors": 23,
+      "progress": {
+        "epochs_completed": 2,
+        "optimizer_steps": 32,
+        "row_cursor": 48
+      },
+      "raw_pin": {
+        "bytes": 2737844,
+        "sha256": "4f00c8d722aa73d5443161db5384a7a567c6e691c180a7cd1eba8544b25ab26e"
+      },
+      "source_parent_sha256": "fd7eb4bd7c8c5d5abb23d168e6b67300497eea6243b5c8cd5779cfbc566d5279"
+    },
+    "control": {
+      "adam_parameters": 23,
+      "adam_steps": 32,
+      "base_sha256": "db6fb3f2c141373b476dd621d2721d7aeba5f07782d329b7aa18ccac11aa7fa7",
+      "canonical_sha256": "8cdaf7756cdfcf4d542f1ae4d81c52e52c110ae9b1c7192f598e7c5a5ab334b8",
+      "changed_source_parameters": [
+        "byte_embedding.weight",
+        "encoder.bias_hh_l0",
+        "encoder.bias_hh_l0_reverse",
+        "encoder.bias_ih_l0",
+        "encoder.bias_ih_l0_reverse",
+        "encoder.weight_hh_l0",
+        "encoder.weight_hh_l0_reverse",
+        "encoder.weight_ih_l0",
+        "encoder.weight_ih_l0_reverse",
+        "end.bias",
+        "end.weight",
+        "modality.bias",
+        "modality.weight",
+        "presence.bias",
+        "presence.weight",
+        "start.bias",
+        "start.weight",
+        "token_projection.bias",
+        "token_projection.weight"
+      ],
+      "copied_initial_model_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+      "dormant_latent_parameters_unchanged": true,
+      "initial_base_sha256": "3bc611379c0c2916be5ad253f153a1acb9204646e98db3bce7d4356bb53d517d",
+      "initial_outer_sha256": "f956c15efd1ca3a05b59ddfdca00cae91ff6980325423fd938270d9bf249aa35",
+      "model_tensors": 23,
+      "progress": {
+        "epochs_completed": 3,
+        "optimizer_steps": 32,
+        "row_cursor": 60
+      },
+      "raw_pin": {
+        "bytes": 2740501,
+        "sha256": "8cdaf7756cdfcf4d542f1ae4d81c52e52c110ae9b1c7192f598e7c5a5ab334b8"
+      },
+      "source_parent_sha256": "fd7eb4bd7c8c5d5abb23d168e6b67300497eea6243b5c8cd5779cfbc566d5279"
+    }
+  },
+  "findings": [],
+  "limits": [
+    "One seed1729; unequal108/168 training populations and different batch schedules. Equal32 new updates per arm support a bounded engineering comparison, not causal attribution to a single curriculum factor.",
+    "The96/36/36 references are caller-authored engineering targets. The8 law sources were already exposed and carry no independently reviewed targets; no legal semantic accuracy is measured.",
+    "384D is configured with latent conditioning disabled. Placeholder controls do not qualify genuine8D/384D/768D autoencoder semantics or a cross-dimension decoder comparison.",
+    "Pure Python parsed only the two new checkpointJSONs and their embedded provenance, without model construction/restoration/forward. The original parent file and13 historical4GB modelstates remained opaque; original parent raw5df identity is source-pinned.",
+    "Complete saved-logit joint replay compiles named pure frozen-source predicates with structural source/canonical-rule stubs. This authenticates saved selection/search arithmetic and copied IR, not a new compiler run, full family qualification or independent semantic validation.",
+    "Saved Adam steps, finite tensors, schedule progress, changed weights and training reports are mutually consistent; this audit does not independently trace runtime gradient/optimizer execution or prove objective-loss values by numerical replay.",
+    "Resource/runtime closure is reviewed separately. No Lake build, broader logic-family compliance, USCode gold fidelity, new default promotion, model-state adoption, Git/HF publication or checkpoint selection is granted."
+  ],
+  "observed_at_utc": "2026-10-12T05:30:26.588630+00:00",
+  "old_regressions": [
+    {
+      "id": "native-tuning-calendula-t4-q5-p",
+      "joint": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified calendula public register",
+            "temporal": [
+              "before 2072-02-02"
+            ]
+          }
+        ]
+      },
+      "joint_exact": false,
+      "mismatched_roles": [],
+      "modality_exact": false,
+      "raw": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified calendula public register",
+            "temporal": [
+              "before 2072-02-02"
+            ]
+          }
+        ]
+      },
+      "raw_exact": false,
+      "reference": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the certified calendula public register",
+            "temporal": [
+              "before 2072-02-02"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-tuning-calendula-t6-q7-p",
+      "joint": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [
+              "the calendula preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified calendula public register",
+            "temporal": []
+          }
+        ]
+      },
+      "joint_exact": false,
+      "mismatched_roles": [
+        "temporal"
+      ],
+      "modality_exact": true,
+      "raw": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [
+              "the calendula preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified calendula public register",
+            "temporal": []
+          }
+        ]
+      },
+      "raw_exact": false,
+      "reference": {
+        "rules": [
+          {
+            "action": "retain",
+            "actor": "Calendula Regional Board",
+            "conditions": [
+              "the calendula registration application has been accepted"
+            ],
+            "exceptions": [
+              "the calendula preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified calendula public register",
+            "temporal": [
+              "before 2072-02-02"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-tuning-hellebore-t0-q3-p",
+      "joint": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified hellebore public register",
+            "temporal": [
+              "before 2072-04-04"
+            ]
+          }
+        ]
+      },
+      "joint_exact": false,
+      "mismatched_roles": [],
+      "modality_exact": false,
+      "raw": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the certified hellebore public register",
+            "temporal": [
+              "before 2072-04-04"
+            ]
+          }
+        ]
+      },
+      "raw_exact": false,
+      "reference": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the certified hellebore public register",
+            "temporal": [
+              "before 2072-04-04"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-tuning-hellebore-t1-q4-p",
+      "joint": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [
+              "the hellebore registration application has been accepted"
+            ],
+            "exceptions": [
+              "the hellebore preservation notice remains effective"
+            ],
+            "modality": "O",
+            "object": "the certified hellebore public register",
+            "temporal": []
+          }
+        ]
+      },
+      "joint_exact": false,
+      "mismatched_roles": [],
+      "modality_exact": false,
+      "raw": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [
+              "the hellebore registration application has been accepted"
+            ],
+            "exceptions": [
+              "the hellebore preservation notice remains effective"
+            ],
+            "modality": "O",
+            "object": "the certified hellebore public register",
+            "temporal": []
+          }
+        ]
+      },
+      "raw_exact": false,
+      "reference": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "Hellebore District Public Information Review Board",
+            "conditions": [
+              "the hellebore registration application has been accepted"
+            ],
+            "exceptions": [
+              "the hellebore preservation notice remains effective"
+            ],
+            "modality": "P",
+            "object": "the certified hellebore public register",
+            "temporal": []
+          }
+        ]
+      }
+    }
+  ],
+  "panels": [
+    {
+      "classes": {
+        "legacy_authored": {
+          "joint_exact_ir": 96,
+          "raw_decoded": 96,
+          "raw_exact_ir": 96,
+          "reference_temporal_present": 48,
+          "rows": 96,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 96
+        }
+      },
+      "joint_exact": 96,
+      "joint_modality_exact": 96,
+      "joint_role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 96
+      },
+      "modality_exact": 96,
+      "pair_both_joint_exact": 0,
+      "pair_both_raw_exact": 0,
+      "pair_both_temporal_correct": 0,
+      "pairs": 0,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 96,
+      "role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 96
+      },
+      "rows": 96,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0,
+      "temporal_presence_correct": 96
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 4,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 1,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 1,
+          "temporal_presence_correct": 5
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 1,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 0,
+      "joint_modality_exact": 25,
+      "joint_role_exact": {
+        "action": 31,
+        "actor": 12,
+        "conditions": 17,
+        "exceptions": 17,
+        "object": 14,
+        "temporal": 18
+      },
+      "modality_exact": 6,
+      "pair_both_joint_exact": 0,
+      "pair_both_raw_exact": 0,
+      "pair_both_temporal_correct": 11,
+      "pairs": 18,
+      "panel": "fresh_tune",
+      "raw_abstentions": 30,
+      "raw_exact": 0,
+      "role_exact": {
+        "action": 6,
+        "actor": 3,
+        "conditions": 1,
+        "exceptions": 6,
+        "object": 3,
+        "temporal": 1
+      },
+      "rows": 36,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 7,
+      "temporal_presence_correct": 29
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 6,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 4,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 2,
+          "raw_decoded": 5,
+          "raw_exact_ir": 2,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 2,
+          "temporal_presence_correct": 4
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 5,
+          "raw_decoded": 5,
+          "raw_exact_ir": 5,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 7,
+      "joint_modality_exact": 30,
+      "joint_role_exact": {
+        "action": 32,
+        "actor": 22,
+        "conditions": 20,
+        "exceptions": 14,
+        "object": 27,
+        "temporal": 23
+      },
+      "modality_exact": 19,
+      "pair_both_joint_exact": 3,
+      "pair_both_raw_exact": 3,
+      "pair_both_temporal_correct": 10,
+      "pairs": 18,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 16,
+      "raw_exact": 7,
+      "role_exact": {
+        "action": 20,
+        "actor": 18,
+        "conditions": 10,
+        "exceptions": 13,
+        "object": 20,
+        "temporal": 14
+      },
+      "rows": 36,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 8,
+      "temporal_presence_correct": 28
+    },
+    {
+      "joint_exact": null,
+      "joint_selected": 6,
+      "panel": "law",
+      "raw_decoded": 1,
+      "raw_exact": null,
+      "reference_scope": "previously_exposed_unreviewed_target_free_law_only",
+      "rows": 8,
+      "state": "baseline"
+    },
+    {
+      "classes": {
+        "legacy_authored": {
+          "joint_exact_ir": 96,
+          "raw_decoded": 96,
+          "raw_exact_ir": 96,
+          "reference_temporal_present": 48,
+          "rows": 96,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 96
+        }
+      },
+      "joint_exact": 96,
+      "joint_modality_exact": 96,
+      "joint_role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 96
+      },
+      "modality_exact": 96,
+      "pair_both_joint_exact": 0,
+      "pair_both_raw_exact": 0,
+      "pair_both_temporal_correct": 0,
+      "pairs": 0,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 96,
+      "role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 96
+      },
+      "rows": 96,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0,
+      "temporal_presence_correct": 96
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 3,
+          "raw_decoded": 2,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 1,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 2,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 2,
+          "raw_decoded": 3,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 7,
+      "joint_modality_exact": 28,
+      "joint_role_exact": {
+        "action": 35,
+        "actor": 23,
+        "conditions": 26,
+        "exceptions": 22,
+        "object": 16,
+        "temporal": 29
+      },
+      "modality_exact": 6,
+      "pair_both_joint_exact": 0,
+      "pair_both_raw_exact": 0,
+      "pair_both_temporal_correct": 15,
+      "pairs": 18,
+      "panel": "fresh_tune",
+      "raw_abstentions": 30,
+      "raw_exact": 0,
+      "role_exact": {
+        "action": 6,
+        "actor": 4,
+        "conditions": 3,
+        "exceptions": 6,
+        "object": 0,
+        "temporal": 5
+      },
+      "rows": 36,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3,
+      "temporal_presence_correct": 33
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 2,
+          "raw_decoded": 6,
+          "raw_exact_ir": 2,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 1,
+          "temporal_presence_correct": 5
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 2,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 2,
+          "raw_decoded": 6,
+          "raw_exact_ir": 2,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 2,
+          "temporal_presence_correct": 4
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 6,
+          "raw_decoded": 6,
+          "raw_exact_ir": 6,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 10,
+      "joint_modality_exact": 32,
+      "joint_role_exact": {
+        "action": 36,
+        "actor": 28,
+        "conditions": 26,
+        "exceptions": 18,
+        "object": 30,
+        "temporal": 30
+      },
+      "modality_exact": 19,
+      "pair_both_joint_exact": 4,
+      "pair_both_raw_exact": 4,
+      "pair_both_temporal_correct": 12,
+      "pairs": 18,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 16,
+      "raw_exact": 10,
+      "role_exact": {
+        "action": 20,
+        "actor": 20,
+        "conditions": 14,
+        "exceptions": 14,
+        "object": 20,
+        "temporal": 18
+      },
+      "rows": 36,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 6,
+      "temporal_presence_correct": 30
+    },
+    {
+      "joint_exact": null,
+      "joint_selected": 7,
+      "panel": "law",
+      "raw_decoded": 2,
+      "raw_exact": null,
+      "reference_scope": "previously_exposed_unreviewed_target_free_law_only",
+      "rows": 8,
+      "state": "control"
+    },
+    {
+      "classes": {
+        "legacy_authored": {
+          "joint_exact_ir": 92,
+          "raw_decoded": 96,
+          "raw_exact_ir": 92,
+          "reference_temporal_present": 48,
+          "rows": 96,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 1,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 95
+        }
+      },
+      "joint_exact": 92,
+      "joint_modality_exact": 93,
+      "joint_role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "modality_exact": 93,
+      "pair_both_joint_exact": 0,
+      "pair_both_raw_exact": 0,
+      "pair_both_temporal_correct": 0,
+      "pairs": 0,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 92,
+      "role_exact": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "rows": 96,
+      "state": "contrast",
+      "temporal_false_negatives": 1,
+      "temporal_false_positives": 0,
+      "temporal_presence_correct": 95
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 2,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 6,
+          "raw_decoded": 2,
+          "raw_exact_ir": 2,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 1,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 5,
+          "raw_decoded": 0,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 3,
+          "raw_decoded": 3,
+          "raw_exact_ir": 3,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 4,
+          "raw_decoded": 3,
+          "raw_exact_ir": 3,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 19,
+      "joint_modality_exact": 32,
+      "joint_role_exact": {
+        "action": 34,
+        "actor": 27,
+        "conditions": 32,
+        "exceptions": 28,
+        "object": 30,
+        "temporal": 29
+      },
+      "modality_exact": 10,
+      "pair_both_joint_exact": 6,
+      "pair_both_raw_exact": 1,
+      "pair_both_temporal_correct": 15,
+      "pairs": 18,
+      "panel": "fresh_tune",
+      "raw_abstentions": 26,
+      "raw_exact": 8,
+      "role_exact": {
+        "action": 10,
+        "actor": 8,
+        "conditions": 10,
+        "exceptions": 10,
+        "object": 10,
+        "temporal": 10
+      },
+      "rows": 36,
+      "state": "contrast",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3,
+      "temporal_presence_correct": 33
+    },
+    {
+      "classes": {
+        "actor_duration_name": {
+          "joint_exact_ir": 0,
+          "raw_decoded": 6,
+          "raw_exact_ir": 0,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_duration": {
+          "joint_exact_ir": 5,
+          "raw_decoded": 6,
+          "raw_exact_ir": 5,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "condition_exception_duration": {
+          "joint_exact_ir": 3,
+          "raw_decoded": 3,
+          "raw_exact_ir": 3,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 3,
+          "temporal_presence_correct": 3
+        },
+        "exception_duration": {
+          "joint_exact_ir": 6,
+          "raw_decoded": 6,
+          "raw_exact_ir": 6,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "object_duration_title": {
+          "joint_exact_ir": 5,
+          "raw_decoded": 6,
+          "raw_exact_ir": 5,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        },
+        "plain_deadline": {
+          "joint_exact_ir": 6,
+          "raw_decoded": 6,
+          "raw_exact_ir": 6,
+          "reference_temporal_present": 3,
+          "rows": 6,
+          "temporal_ambiguous": 0,
+          "temporal_false_negative": 0,
+          "temporal_false_positive": 0,
+          "temporal_presence_correct": 6
+        }
+      },
+      "joint_exact": 25,
+      "joint_modality_exact": 35,
+      "joint_role_exact": {
+        "action": 36,
+        "actor": 30,
+        "conditions": 33,
+        "exceptions": 36,
+        "object": 35,
+        "temporal": 33
+      },
+      "modality_exact": 32,
+      "pair_both_joint_exact": 10,
+      "pair_both_raw_exact": 10,
+      "pair_both_temporal_correct": 15,
+      "pairs": 18,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact": 25,
+      "role_exact": {
+        "action": 33,
+        "actor": 27,
+        "conditions": 33,
+        "exceptions": 33,
+        "object": 32,
+        "temporal": 33
+      },
+      "rows": 36,
+      "state": "contrast",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3,
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_exact": null,
+      "joint_selected": 7,
+      "panel": "law",
+      "raw_decoded": 2,
+      "raw_exact": null,
+      "reference_scope": "previously_exposed_unreviewed_target_free_law_only",
+      "rows": 8,
+      "state": "contrast"
+    }
+  ],
+  "passed": true,
+  "result_bytes": 25673096,
+  "result_file_count": 55,
+  "result_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results",
+  "reviewer_actions": {
+    "Git_HF_mutations": 0,
+    "compiler_or_network_calls": 0,
+    "historical4GB_modelstate_parses": 0,
+    "leases_or_locks": 0,
+    "model_forwards": 0,
+    "model_restores": 0,
+    "new_checkpoint_JSONs_parsed": 2,
+    "numerical_imports": 0,
+    "optimizer_updates": 0,
+    "original_parent_JSON_parses": 0,
+    "resource_API_calls": 0
+  },
+  "schema": "temporal-contrast-saved-result-analysis/v1",
+  "source_artifact_pins": {
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/__init__.py": {
+      "bytes": 1489,
+      "sha256": "49fc715b733e1579d77c2ec1734b40e6bd21ebafe427c8eb142a40a1e3819361"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/__init__.py": {
+      "bytes": 8914,
+      "sha256": "cdcf2cbdf3ce3bf4793d93c46cf03c94713c6d64bbc7e0f2d4de9dc9f155cd8f"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/abstract.py": {
+      "bytes": 6706,
+      "sha256": "255f29d6c0a8ec24f3556c22a19ea4d92e57a6ab12a7340f91e0f48bcfdbab30"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/range_alphabet.py": {
+      "bytes": 6247,
+      "sha256": "561042b2f28c1e0026b1ba790f50c9c0237cdb1042d7c35d608632b59376aaea"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/alphabet/string_alphabet.py": {
+      "bytes": 4942,
+      "sha256": "10aa0a8c492892ed9eceb80a4d23da5bfa7ec045dd4af456ea722ecfdd176c26"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/__init__.py": {
+      "bytes": 13562,
+      "sha256": "60f749c3f42e9b4f9daba64df096c391dbdc97815acb8a41c5540b14e49c2f58"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/base.py": {
+      "bytes": 13150,
+      "sha256": "cbb72db470a9bfc9fffbdd47bfebfdc82f3dfd94753b60923f3de9cfea0218ab"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/block.py": {
+      "bytes": 18082,
+      "sha256": "a0e078006705592f8467ac4b9862dcf10f515f7059a3f6e1425ab48c577e9035"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/errors.py": {
+      "bytes": 2843,
+      "sha256": "626ee10c0579db8d3e0535194f7b33e7bda0f09e8ed893fee19e026d78b46f9a"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/fixchar.py": {
+      "bytes": 19138,
+      "sha256": "15455b45b02672a5dc1f4017ba725ad5f70abbbd15325f79c5f013f174cdaacb"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/simple.py": {
+      "bytes": 3337,
+      "sha256": "93ea9be368c0bb6522a23c9f3db5f1b871a76b202cc95295078457d95bf5b20c"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/bases/encoding/zeropad.py": {
+      "bytes": 9036,
+      "sha256": "a270e3e39822f66cf700b814b41aec0d69ba0097e81e54be179460574301f3be"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py": {
+      "bytes": 7953,
+      "sha256": "c83cfcc0d33e14cda10ec533a21a6443db36bb032d3bf5216f109e8811ac74e9"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/__init__.py": {
+      "bytes": 822,
+      "sha256": "6402f73dfa7845c9e3a48ea4491e853c5b6a25bb9ce50ed75c5bc49f55134dad"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/cid/__init__.py": {
+      "bytes": 29778,
+      "sha256": "23b40fbe51b6081334ab5722244aa312100b4dbfedf2bb1fd829e3612067df85"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/__init__.py": {
+      "bytes": 26301,
+      "sha256": "92b7a63a4f9a6707b7701124b8920eb0518bf5f4478ada5953af6a3612b18294"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/err.py": {
+      "bytes": 436,
+      "sha256": "385c23a4c77749cf48f7d9a57ab013449376c0da20d8d4192dadddb16ae631ab"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multiaddr/raw.py": {
+      "bytes": 9358,
+      "sha256": "21b6009bbb3afbeae2b830157fbeeaa650676dbd9fe08a846c8362f1c8bafdca"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/__init__.py": {
+      "bytes": 21446,
+      "sha256": "0fcb709e920758265991af0669b00f21653ee97e689a1c7fb35c7d3336fdc5a2"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/err.py": {
+      "bytes": 430,
+      "sha256": "c396db3f67e604a65da6a6ff5af16641d705c349fa532580d21946ccccf6dee0"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multibase/raw.py": {
+      "bytes": 15668,
+      "sha256": "a64f0bf2b418f7e0fa04ff9779029edd4ca64a706df2613738f16e39ae64c6af"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/__init__.py": {
+      "bytes": 24349,
+      "sha256": "3cae3cdf6e2ce429f1958fad9440016e96ddf389a03fb9512f661ab257be9fff"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multicodec/err.py": {
+      "bytes": 439,
+      "sha256": "6757260650e4dd255c57429d0aa0a09d02403ae02f24c37f53eeab974ce489b1"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/__init__.py": {
+      "bytes": 23825,
+      "sha256": "23a208621643522801d95cf646984bf63b8c39f832957c700e134d61eba9bd58"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/__init__.py": {
+      "bytes": 229,
+      "sha256": "28fa79bb8693275567aaee3bf02f3e59eb6eb930e480a061c8018ebf1cf4e649"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/sha.py": {
+      "bytes": 3663,
+      "sha256": "98e90bebc56474a24dba841c234c09d3d9821aac5ba4035acd02cebe23d58d14"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/_hashfuns/utils.py": {
+      "bytes": 2670,
+      "sha256": "9a3ae21e0a4ea0a2be3b3a5248827b066de6f9dfc1ce51bd86b76d99c636bb2a"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/err.py": {
+      "bytes": 430,
+      "sha256": "9442f5b15e71ba3c37c27a72b2b08307fe5ef9a23c5441c44aa5dbdd11076217"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/multihash/raw.py": {
+      "bytes": 12717,
+      "sha256": "0581b2c4d3c0d312414b74b0d7017556f6701575af15c033988a718bcd5dc373"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats/varint/__init__.py": {
+      "bytes": 7948,
+      "sha256": "7e75efb57a9828dba4dede49aa27f3e82328ed0554d9e248985953d445df7fd8"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/__init__.py": {
+      "bytes": 1126,
+      "sha256": "bcadd2cd17932b89132677be34418c5b20ac6d63b48aa0ba4a86a1c5a3878920"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/config.py": {
+      "bytes": 3968,
+      "sha256": "7d09d2595e1c7af28492a37db369a553e0815010690531a509dc0f9ce8bfccb2"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase-table.json": {
+      "bytes": 3908,
+      "sha256": "f8a6ca3892c6140c7909ef67ed50e8da593ff34fa77d3f858a72f4a02da3d4a7"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multibase.py": {
+      "bytes": 4079,
+      "sha256": "ed9928753d7eaf4ce4140300435a19c6b0eec619d167ce76a1e339e72a368c44"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec-table.json": {
+      "bytes": 90766,
+      "sha256": "289d9e9bd1394da3c2e8da7164e2c9af0c6802d219cad6fec763f8c7de1d9d31"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/multiformats_config/multicodec.py": {
+      "bytes": 5863,
+      "sha256": "55b1e767dd2ba7f4066a52d3a5a834d7ab2eafe9a746e70b3f8bb710b3e876cd"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/typing_extensions.py": {
+      "bytes": 165012,
+      "sha256": "4040ca1a1ecbee00d1385c12a93084d1c5bd46f0b774f07e5ae7e91c4f55e696"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/__init__.py": {
+      "bytes": 709,
+      "sha256": "fc80729c42f23c8078dc386ab936cf8cee115838209cd64fe095c64d55e268cb"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/inspector.py": {
+      "bytes": 19383,
+      "sha256": "dbfbf54300c7469eab444316d04f117701e298e649f242ef0aad4a6ca43f3e00"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation.py": {
+      "bytes": 37609,
+      "sha256": "38f1bbabfde71f591f0be0cb365967778e0578f3aa45f48edfc58a0abc5b70da"
+    },
+    "/home/barberb/.local/lib/python3.12/site-packages/typing_validation/validation_failure.py": {
+      "bytes": 18324,
+      "sha256": "89d76e2620ee6c5ad26f35c1cf112362d6047c48a233303090fd25b2e6f263a1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-joint-readout-20261011-01/raw384-equivalence.json": {
+      "bytes": 10795,
+      "sha256": "c2ab0d2a353289084cbcf9def1700fd5efe47c1f714a783b681494aaeeaa83b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/28de7a02af3c295d51081957fa907b814fb2eb0150b2a5ba365a819e4d685294.txt": {
+      "bytes": 9770,
+      "sha256": "a45ae8405c2f676e9cff8228e4a6ac55d5bf218a38fce6bd5997aab57198e973"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/2fa487fba6561dba31007630eb12dba307a803ac601cefcfb0aff28df2b1506f.txt": {
+      "bytes": 7137,
+      "sha256": "4eb71a041ad27372b4c59da960ec4f92d16ed643f9179f3c8cfdbde889f3c3c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/36ab7a68520103d9d69962985ebfd7d5ac3a32fa309e91a28a4917c4bdb4afc5.txt": {
+      "bytes": 21457,
+      "sha256": "553203ab2805137223f5c535b076c98e24e2a15475f42fd1b06c95476cd71523"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/42a53dc741c30d44d330d3ab508f93ab775fdc9661f1f66f76e4e03ebf461bbb.txt": {
+      "bytes": 459,
+      "sha256": "d20b3757a5f14ffe82f331a9fd21fb507f090c023c3e118e1dfa2e330e58bec2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/54ff2826f41f12e142657daf8ef1964b7edd65cf11e43565d2f6256857e46549.txt": {
+      "bytes": 72690,
+      "sha256": "b948413763e0cbe53c89a0b275530e047eed17e67ca877b65ccf7f29ef3cc330"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/670d8e5072fa96625038365d0e94dd1d2215c72d37e90f50f8ba71c201623874.txt": {
+      "bytes": 28742,
+      "sha256": "8d4daf7bbf58755c4b85543bfbcc5f7cabd017022375fd780cf0d7b18007f160"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/a1b7c26910597caa7b473936e06014c1455fc853a0c71599529503033efb90ee.txt": {
+      "bytes": 6364,
+      "sha256": "9237dbe672abc81115bad4e732bc57b02db3010fd064f185ac3184a6e7f9e961"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-documents/c6eb14c5710480da2cce2a08ae4ea58f8503cb708febe9d33ffe60d4fcbf4864.txt": {
+      "bytes": 2312,
+      "sha256": "0a154f0a44dcabf61fb7462f580464108566dad7fde5db534253d1679eaef4c5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-native-cache-20261011-01/source-requests.json": {
+      "bytes": 6328,
+      "sha256": "47ff87852d84bec775fc0da4f2da88d0f445da087fbf4d14c18b952ec3dd1032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/authored-train-tune-only.json": {
+      "bytes": 16289807,
+      "sha256": "e48952c8f7ece2716469b32089b013c2e2431e10dfc5ec381c8de9a7eee222b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/experiment-plan.json": {
+      "bytes": 38076,
+      "sha256": "d327abe7debe81906d114883703373d33f9094a2c81e9c716ec27ec8a1fc61f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-structured-training-20261011-01/exposed-law-source-only.json": {
+      "bytes": 99164,
+      "sha256": "04e485c0657c6a478ec0e40f29250cbc11dc5eba4494aee9055946092839b7c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/authored-temporal-contrast-corpus-v01.json": {
+      "bytes": 1672663,
+      "sha256": "47cc9d72fc3678c01962e08d6c61a71c1078bc89ef510e23586e4adfd814c280"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json": {
+      "bytes": 37261,
+      "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/inert-ambiguity-audit-v01.json": {
+      "bytes": 62331,
+      "sha256": "fe40c5e16b77f1dfa7b55af35de1536a9e690a3534a501c3de1f07967ec19e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot.py": {
+      "bytes": 10203,
+      "sha256": "acf9cd3ef8bbfed855cc1b49886145e0a8fb7ab2c365901e57c041c4ecc2da83"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot_v02.py": {
+      "bytes": 9004,
+      "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/resource-compatibility-v01.json": {
+      "bytes": 6800,
+      "sha256": "33d819d1f444341c0e7688219fbc74720e12f1003c0500cb94ac1d1b084d1d63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/temporal-recovery-review-v01.json": {
+      "bytes": 21267,
+      "sha256": "b462bff702e9d86d98e0ea5f6b850e5e3853d2d0de023e983eb51e8857208cd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/arbitrary-native-cache-20261011-02/results/source-production/native384-receipt-001.json": {
+      "bytes": 38209,
+      "sha256": "f35d2d17ffb2269bff0f3f7f69cc01e00c36867c4e81ab63255077cfc5f0b989"
+    },
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": {
+      "bytes": 67440,
+      "sha256": "97387fb55ccfc0cc109dfe99b81de2b7bbaac723d1c215107dc69a068c4b1fae"
+    },
+    "/usr/lib/python3.12/ctypes/util.py": {
+      "bytes": 14584,
+      "sha256": "9cddec0d3640c812f023cf850107e38705a040fb22213181a8cd30cdd49ea0d1"
+    }
+  },
+  "source_export_pin": {
+    "bytes": 4972708,
+    "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+  },
+  "validation_counts": {
+    "authored_score_rows": 504,
+    "greedy_predicate_checks": 552,
+    "panel_source_rows": 528,
+    "parity_source_rows": 24,
+    "saved_logit_joint_replays": 528
+  }
+}

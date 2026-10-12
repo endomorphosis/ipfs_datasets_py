@@ -1,0 +1,131 @@
+{
+  "145GB_owner_source": {
+    "bytes": 36724,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+    "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+  },
+  "API_source": {
+    "bytes": 10852,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_resource_recovery.py",
+    "sha256": "c3497e4c731f2944f6319b2ac2b1d9375bdd69723189cd116471abef8bc3c6e4"
+  },
+  "application_executed": false,
+  "capacity_policy": "administrative_closeout",
+  "created_at_utc": "2026-10-12T04:48:56Z",
+  "expected_ledger_sha256": "1f93e0ca70ea6199f16d58834e30d60d127f9891e380454e470df352720bb824",
+  "expected_record_body_sha256": "4ca144ebfb780e5aa9e502fd7459f620052b00b20d00f8351aedaaa3829ef687",
+  "fixed_durable_artifacts": {
+    "bytes": 249979161,
+    "directories_including_root": 16,
+    "original_four_completed_fits_do_not_complete_eighteen_fit_campaign": true,
+    "regular_files": 109,
+    "sibling_source_test_plan_readiness_files": 8
+  },
+  "fixed_envelope": {
+    "child": {
+      "birth": "7454855",
+      "pid": 1434010
+    },
+    "historical_child_process_slots": 1,
+    "historical_cpu_slots": 1,
+    "historical_memory_mb": 4096,
+    "original_owner_pid": 1421156,
+    "storage_bytes": 4000000000
+  },
+  "fresh_inventory": {
+    "bytes": 172420,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-closeout-inventory-v01.json",
+    "sha256": "b5b350c81e9d9a770e78c5f8e9839bc559b1833fdcc6d6ef999535b8fbf66489"
+  },
+  "helper": {
+    "bytes": 30662,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/reconcile_generated_field_4gb_v02.py",
+    "sha256": "30edc6fd4e466464892aabdd4d895ff3d15403bc17ee501ee418986b478e8ed0"
+  },
+  "inventory_execution": {
+    "bytes": 366,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-inventory-execution-v01.log",
+    "sha256": "001ed500a7e579637923600a05ac095b9f28abe2604637902c101a0c0d0003a5"
+  },
+  "inventory_preparer": {
+    "bytes": 18677,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/prepare_generated_field_4gb_inventory.py",
+    "sha256": "5bed9d10e0e466cb3de810d7950100f657f33ea30c5e487f28e13fcdb4658205"
+  },
+  "ledger_before_counts": {
+    "outstanding_full_claim_bytes": 48181777216,
+    "records": 513,
+    "released": 412,
+    "retained": 101
+  },
+  "live_ledger_lock_acquired": false,
+  "new_leases_or_claims_created": false,
+  "numerical_or_compiler_imports_executed": false,
+  "output_directory": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01",
+  "pending": [
+    "Independent source-code review of this frozen applicator.",
+    "Frozen concrete protocol with source review and fresh live endpoints, then independent concrete operation review.",
+    "Root-onlyapply after both passed reviews, independent actualclosure, storagecheck and any separate trainingqualification."
+  ],
+  "phase": "implementation-awaiting-independent-source-and-operation-review",
+  "prior_API_independent_review": {
+    "bytes": 8394,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/administrative-storage-closeout-independent-review-v01.json",
+    "sha256": "7c12ff5ea93c319a817f52c80a7fd2fe33aaf318f1c890a4f91af722253622ac"
+  },
+  "prior_S_files_modified": false,
+  "prior_approved_applicator": {
+    "bytes": 26745,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-recovery-20261012-01/reconcile_owned_preparation_refusal_administrative.py",
+    "sha256": "a17678349d03d5867fe4f1f60fd49a8c26609799fc56e0a3793d935c701ee065"
+  },
+  "prior_draft_preserved": {
+    "bytes": 30291,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/reconcile_generated_field_4gb.py",
+    "sha256": "8498c552d3e0f6b34550a9f12cbf1becb636cd235d6ceda13a32558da5e847e4"
+  },
+  "private_ledger_bytes_copied_or_written": false,
+  "prospective_counts_not_actual_result": {
+    "outstanding_full_claim_bytes": 44181777216,
+    "records": 513,
+    "released": 413,
+    "retained": 100
+  },
+  "removed_untruthful_inherited_field": "all_old_511_claim_bodies_unchanged",
+  "replacement_field": "all_old_510_nonselected_claim_bodies_unchanged",
+  "reservation_id": "474ee6b5ae784516ae1dab7ca38c8cc6",
+  "resolved_review_finding": {
+    "fix": "Repeat owner-root/source/protocol/review/lock/directory/sibling and exact ledger fences after final hashing, then check liveness immediately before atomic write.",
+    "issue": "Final249MB durable hash preceded the last source/directory/lock checks; source drift during that hash could first be noticed after write."
+  },
+  "resource_API_invoked": false,
+  "schema": "generated-field-4gb-applicator-handoff/v1",
+  "source_safeguards": [
+    "Opening exact1f93 ledger and exact4ca selected body; preserve all512 other bodies including prior0350/c6 released records.",
+    "Current reviewed145GB b00 owner+c349 administrative API/e9f3 writegate, with all old allocation/admission controls unchanged; historical140GB generated-field guardian is metadata only and never imported/executed.",
+    "Exact109 regular unaliased raw hashes/fsync and16 directory identities/8 sibling identity+hash checks; source/manifest/config/lock fences throughout prewrite and postwrite.",
+    "Only one existing atomic ledger write under original lock. Full still-charged precensus, second fresh prospective postscan, separate actualpostwrite snapshot.",
+    "Private before/planned/actual/uncertain ledger backups localonly. No rollback/retry or overwrite if uncertain/parallelbytes observed.",
+    "All scalar completionzero model/update/lease fields describe this administrative operation; historical4fit output is retained and no modelstate parsed/replayed or promoted.",
+    "API independent source review plus a new independent frozen applicator-source review and new concrete operation review required beforeapply."
+  ],
+  "supersedes_handoff": {
+    "bytes": 6110,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-applicator-handoff-v01.json",
+    "sha256": "217e3fb29648d094ad34c51869e683660b0bf5897120af879e747baa982e3e07"
+  },
+  "truthful_compatibility_completion_fields": [
+    "complete",
+    "reservation_id",
+    "own_claim_released",
+    "own_released_bytes",
+    "outputs_deleted",
+    "cap_changed",
+    "all_prior_512_claim_bodies_unchanged"
+  ],
+  "unchanged_narrow_writegate": {
+    "bytes": 6934,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/owned_closeout_write_gate.py",
+    "sha256": "e9f3c4fdfadf23db63ebb4ce10d46b0a356dde8836380b012e033324508d5015"
+  }
+}
