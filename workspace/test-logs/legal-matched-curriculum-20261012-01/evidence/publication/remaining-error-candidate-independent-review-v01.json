@@ -1,0 +1,113 @@
+{
+  "actor_in_K8_failed_gold_ranks": [
+    2,
+    2,
+    5,
+    8
+  ],
+  "actor_outside_K8_gold_ranks": [
+    23,
+    19,
+    34,
+    31,
+    36,
+    36
+  ],
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 4935,
+      "sha256": "5ac76e0a6fb924302e69c0be53a31aa8db7d61a62f80e62caa4e63bfbef7004a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/authored-reference-packet-v01.json": {
+      "bytes": 14849840,
+      "sha256": "19545dfa6ae65e8344b682571936ae057e96836da4bc2bdbdf13d55b43081e8d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/eight-cell-output-freeze-v01.json": {
+      "bytes": 99398,
+      "sha256": "ba4f5ddb00e35a9ae9271611097a503e3d058a9335a0c42a66a395024348e3fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-result-analysis-v01.json": {
+      "bytes": 1947470,
+      "sha256": "1bf9fba1678a73eaf7c9fa1d8bb3f13ec2e4d94ad5b013bf98da1277dd1f68f4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/registration-v01.json": {
+      "bytes": 49475,
+      "sha256": "73ec44610213d23ab27faa215565d6c10fe501fbf6212949f3e976ae0e29725e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/remaining-error-candidate-audit-v01.json": {
+      "bytes": 360412,
+      "sha256": "950ddb231a29ccd4ce5ae80f900181a10df746f180053bc3b20370ad718828cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/remaining-training-gaps-v01.md": {
+      "bytes": 3397,
+      "sha256": "35ee6f8a37378f82a26230059cc312a5f7e5ea4e51f758cdb0add3de9657db6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/result-independent-review-v01.json": {
+      "bytes": 128603,
+      "sha256": "c80280c16b1dc790d1c01863917d52d1b0c035a9493c6c1b45a8fbb02a30e5ab"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "9dd8c585510dd3ba1e7ec109d576747bba65cbdbbbf7da42c151c5618fce50dc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1040579,
+      "sha256": "bc98f39b4343d452b3105c5ec020a622643dccd1f238296df1a7053a77d859b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1444197,
+      "sha256": "1eb2312f67816dc52f820dd7f26057e25a4c1a330cbc35592bdc5f548b4a5e9e"
+    }
+  },
+  "checks": {
+    "actor_control6_and_hard4_objective_failure_conclusions_verified": true,
+    "all_doc_numeric_and_qualified_future_experiment_claims_supported": true,
+    "everygold_field_char_token_UTF8_reference_geometry_and_sourcehash_checked": true,
+    "everypresentfield_full_uppertriangular_f32_startend_domain_independently_ranked": true,
+    "fixedmodality_presence_margins_and_exactIR_mismatch_counts_checked": true,
+    "pairwise_reference_vs_saved_otherfacet_compatibility_checked": true,
+    "samepresence_objective_fsum_and_absence_of_crosspresence_comparison_checked": true,
+    "scope_control6_presence_failures_and_two_quote_leaks_verified": true,
+    "stabletie_order_top8_exactrank_scores_margins_andK8K16_flags_checked": true
+  },
+  "combined_scope_presence_errors": {
+    "conditions": 3,
+    "exceptions": 6
+  },
+  "default_promotion": false,
+  "findings": [],
+  "legal_gold_approval": false,
+  "limitations": [
+    "Authored shared-template evaluation is now exposed and source references were visible to builder; this is saved-score geometry/arithmetic support, not statutory semantics or independent gold.",
+    "Candidate coverage and objective dominance separate deterministic mechanisms but do not prove any proposed training remedy or unseen-law benefit.",
+    "Objective comparisons are qualified only when fixed presence sets agree; different presence domains are not ranked against one another.",
+    "No predictions were repaired by a model, no checkpoint selected, and no new training/compiler/latent/family qualification occurred."
+  ],
+  "observed_at_utc": "2026-10-12T17:41:41.916596+00:00",
+  "passed": true,
+  "present_facet_full_domains_checked": 108,
+  "quoted_exception_temporal_leak_ids": [
+    "matched-temporal-authored_eval-condition_exception_duration-0-o-present",
+    "matched-temporal-authored_eval-condition_exception_duration-0-f-present"
+  ],
+  "reviewer_actions": {
+    "model_JSON_parses_restores_forwards_updates": 0,
+    "network_Git_HF_compiler": 0,
+    "new_prediction_repair_or_selection": 0,
+    "production_or_numerical_imports": 0,
+    "resource_API_leases_locks": 0,
+    "scalar_saved_values_only": true
+  },
+  "rows_checked": 24,
+  "schema": "matched-curriculum-remaining-error-candidate-independent-review/v1",
+  "scope": "Independent saved-score support for24 exposed authored evaluation rows and root training-gap document; exactsource/head/reference binds, independent full scalar span enumeration and objective/compatibility math; no new numerical run",
+  "two_classes_O_to_P_errors": 4
+}

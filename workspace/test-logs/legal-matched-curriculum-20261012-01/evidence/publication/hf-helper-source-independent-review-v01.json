@@ -1,0 +1,80 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/freeze_runtime_endpoint_v01.py": {
+      "bytes": 3171,
+      "sha256": "d7c0d80f8684a91494ed7cb9743d51e84cc1bf0295addb9e5a545b7ea18b9771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/prepare_hf_release_v01.py": {
+      "bytes": 12559,
+      "sha256": "a69bd030068632af0ebe1967abb1f111ace18cace41d44e8c098715b295da4ae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/publish_hf_release_v01.py": {
+      "bytes": 10259,
+      "sha256": "0e67f96e9aa4512d298b91f2ee3d31c08354bd5c9cad924ba1613d78efb1b3a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    }
+  },
+  "controls": {
+    "all_four_private_source_paths_refused_beforecopy": true,
+    "closed11key_publisher_review_schema_passed_and_mutants_refused": true,
+    "detached_negative_controls_refused": 11,
+    "exact13publicwrapper_list_excludes_owned_record_wrappers": true,
+    "original_publisher_coreCAS_operation_and_immutable_payload_AST_preserved": true,
+    "payload_buffers_captured_beforeSDKconstruction_or_remote_calls": true,
+    "unapproved_mismatchedcopy_hashes_refused": true
+  },
+  "findings": [],
+  "helpers": {
+    "preparer": {
+      "bytes": 12559,
+      "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/prepare_hf_release_v01.py",
+      "sha256": "a69bd030068632af0ebe1967abb1f111ace18cace41d44e8c098715b295da4ae"
+    },
+    "private_snapshot_sampler": {
+      "bytes": 3171,
+      "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/freeze_runtime_endpoint_v01.py",
+      "sha256": "d7c0d80f8684a91494ed7cb9743d51e84cc1bf0295addb9e5a545b7ea18b9771"
+    },
+    "publisher": {
+      "bytes": 10259,
+      "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/publish_hf_release_v01.py",
+      "sha256": "0e67f96e9aa4512d298b91f2ee3d31c08354bd5c9cad924ba1613d78efb1b3a0"
+    }
+  },
+  "limitations": [
+    "Source approval permits local preparation only once exact eight-cell freeze/result/runtime artifact reviews exist; it is not concrete payload or upload approval.",
+    "A separate closed11key concrete publication review must bind all selected payload files and current remote baseline before publication.",
+    "Private snapshots are root-authored sampled endpoint copies, not independently witnessed continuous custody; their full bodies stay excluded.",
+    "Future result/runtime reviews must include every selected protocol/wrapper/evidence/data/source/card path. Unlisted copied sources are refused.",
+    "Raw saved model bytes remain opaque; no numerical/semantic/USCodegold/Lake/genuine8D384D768Dlatent or promotion result qualified here."
+  ],
+  "observed_at_utc": "2026-10-12T17:15:04.111906+00:00",
+  "passed": true,
+  "reviewer_actions": {
+    "Git_mutations": 0,
+    "Hub_API_or_network_calls": 0,
+    "detached_static_predicates_only": true,
+    "eval_reference_packet_access": 0,
+    "full_helper_imports_or_execution": 0,
+    "model_weight_JSON_parses_restores_forwards_updates": 0,
+    "production_FS_payload_snapshot_or_download_copies": 0,
+    "resource_API_lease_locks_signals": 0
+  },
+  "schema": "matched-curriculum-Hub-helper-source-independent-review/v1",
+  "scope": "Independent source/static and named detached predicate review of root-authored helpers; no full imports or production execution",
+  "source_checks": {
+    "CAS_full_oldfile_identity_prefixonly_additions_immutable_downloadreadback": true,
+    "all8_exact_cell_plan_summary_preterminal_joins": true,
+    "everycopy_explicit_result_runtime_or_helper_approval_provenance": true,
+    "everypublicruntimewrapper_bound_by_runtime_review": true,
+    "no_defaultpromotion": true,
+    "opaque8checkpoint_archive_requires_actual32_each_andreviews": true,
+    "private_ledger_snapshots_and_owned_record_bodies_not_selected": true,
+    "private_snapshot_sampler_only_globalread_and_owned400copies": true,
+    "result_runtime_helper_freeze_bound_in_receipt_andpublisher": true,
+    "snapshot_scope_sampled_not_continuous_or_independently_witnessed": true
+  }
+}

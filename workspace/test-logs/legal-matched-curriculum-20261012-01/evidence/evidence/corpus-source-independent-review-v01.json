@@ -1,0 +1,45 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/combined-pure-tests-v03.log": {
+      "bytes": 153,
+      "sha256": "c4a34cc48625ad2ba896bc7384b38a13201ad078709451e0daa009d1760ceebf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/combined-pure-tests-v03.xml": {
+      "bytes": 8789,
+      "sha256": "a095c23e0bd9eb581e1138cde84213263c03548ee38dd1333fbe678bf5b1ae61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/curriculum-implementation-handoff-v01.json": {
+      "bytes": 13267,
+      "sha256": "d447dea33c7b373a1315b7a3389e6107de4c1430ea3f62793e7045462c2e0dab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/tests/unit/logic/legal_ir/test_matched_temporal_curriculum.py": {
+      "bytes": 16173,
+      "sha256": "b1cecde739051c18a276023d5e09521a7949c171da21a8a1e3ca8716773f80e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/training-export-v01.json": {
+      "bytes": 9840705,
+      "sha256": "dbf2cc7af675c3d5987c73c76eb3435fc4694d00bf669d3ca9955035e0019571"
+    }
+  },
+  "authored_rows_geometry_checked": 912,
+  "checks": [
+    "Independent regex token endpoints and unique copied facet atoms",
+    "Declared new O/P/F cue between actor/action (legacy cue variants not reinterpreted)",
+    "Allfour168 populations/fresh72 quotas O/P/F24each and36temporal",
+    "Evaluation72source-only exact3fields and no evaluationmetadata",
+    "Combined68puretests183subtests complete using actualimmutable priorfixture"
+  ],
+  "findings": [],
+  "limitations": [
+    "Caller-authored synthetic meanings; no independent legal gold or semantic holdout",
+    "Evaluation reference packet not opened or scored; geometry checks cover training and available development/exposed references",
+    "No numerical imports/restores/forward/update/compiler/API/leases/locks/Git/HF mutation"
+  ],
+  "new_rows_explicit_cues_checked": 360,
+  "passed": true,
+  "schema": "matched-curriculum-independent-source-geometry-review/v1"
+}
