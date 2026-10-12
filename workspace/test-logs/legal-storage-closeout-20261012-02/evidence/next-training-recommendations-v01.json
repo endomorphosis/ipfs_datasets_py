@@ -1,0 +1,430 @@
+{
+  "actions_performed": {
+    "Git_HF_mutations": 0,
+    "checkpoint_JSONs_parsed_this_design": 0,
+    "compiler_or_network_execution": 0,
+    "metadata_and_saved_scores_read": true,
+    "model_or_numerical_imports": 0,
+    "model_restore_or_forward": 0,
+    "new_corpus_created": false,
+    "recommendation_receipt_written": true,
+    "resource_API_leases_locks": 0,
+    "training_updates": 0
+  },
+  "audited_baselines": [
+    {
+      "joint_exact": 96,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 96,
+      "rows": 96,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0
+    },
+    {
+      "joint_exact": 0,
+      "panel": "fresh_tune",
+      "raw_abstentions": 30,
+      "raw_exact": 0,
+      "rows": 36,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 7
+    },
+    {
+      "joint_exact": 7,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 16,
+      "raw_exact": 7,
+      "rows": 36,
+      "state": "baseline",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 8
+    },
+    {
+      "joint_exact": null,
+      "panel": "law",
+      "raw_exact": null,
+      "rows": 8,
+      "state": "baseline"
+    },
+    {
+      "joint_exact": 96,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 96,
+      "rows": 96,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0
+    },
+    {
+      "joint_exact": 7,
+      "panel": "fresh_tune",
+      "raw_abstentions": 30,
+      "raw_exact": 0,
+      "rows": 36,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "joint_exact": 10,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 16,
+      "raw_exact": 10,
+      "rows": 36,
+      "state": "control",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 6
+    },
+    {
+      "joint_exact": null,
+      "panel": "law",
+      "raw_exact": null,
+      "rows": 8,
+      "state": "control"
+    },
+    {
+      "joint_exact": 92,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact": 92,
+      "rows": 96,
+      "state": "contrast",
+      "temporal_false_negatives": 1,
+      "temporal_false_positives": 0
+    },
+    {
+      "joint_exact": 19,
+      "panel": "fresh_tune",
+      "raw_abstentions": 26,
+      "raw_exact": 8,
+      "rows": 36,
+      "state": "contrast",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "joint_exact": 25,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact": 25,
+      "rows": 36,
+      "state": "contrast",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "joint_exact": null,
+      "panel": "law",
+      "raw_exact": null,
+      "rows": 8,
+      "state": "contrast"
+    }
+  ],
+  "bounded_followups": {
+    "loss_controls": [
+      "If actor curricula still prefer truncated actors, compare unchanged objective with actor-endpoint loss weight2 against exactly the same parent/data/schedule. Do not combine untested actor weighting with the first factorial.",
+      "If scope pairs still fail, test a bounded paired training consistency term only on newly authored training pairs: non-temporal decisions stay invariant while temporal presence follows the paired source. Pair batching changes the sampler and therefore needs its own matched sampling control.",
+      "If modality weighting fixes P/O but harms F/O or span roles, test a smaller preregistered weight or balanced training-pair replay; choose only on a distinct authored development set."
+    ],
+    "selector_controls": [
+      "K16 is a diagnostic control, not a full-actor fix: five known gold actor spans are already inK8 and have lower scores than the shortened actor. Avoid blanket longest-span or gold-aware bonuses.",
+      "Keep learned modality/presence fixed in ordinary joint search. Boundary search cannot silently delete an incorrectly predicted temporal facet or relabel O asP.",
+      "Evaluate a separate conservative abstention policy for overlap/conflicting-scope cases using only source/head evidence and a held-out authored calibration set. Report raw/joint/conservative exact counts, selective precision, coverage and per-class refusal rates; abstentions are not recovered correct outputs."
+    ]
+  },
+  "design_only": true,
+  "executed": false,
+  "limitations": [
+    "This is a root-local design based on already audited, exposed observations; no new outcome, corpus or execution authority is created.",
+    "Actor-rank measurements compare saved logits with caller-authored span declarations. They identify a scored boundary problem but do not establish legal actor interpretation or an optimal new loss.",
+    "Initial8-cell single-parent single-seed results would remain exploratory. Replication, blind legal references, family contracts and compiler evidence are separate unexecuted requirements."
+  ],
+  "next_factorial": {
+    "attempt_layout": "One independently admitted cell/seed per fresh attempt; sequential1child execution, fresh200MB reservation and fresh capacity observation. Include checkpoints, full diagnostics, terminal receipts and any retained external charge in the200MB budget. Do not aggregate all8 or24 fits into an unreviewed shared claim or relax145GB cap.",
+    "cells": [
+      {
+        "actor_curriculum": 0,
+        "id": "actor0-scope0-modality0",
+        "modality_loss_weight": 1,
+        "new_updates": 32,
+        "scope_curriculum": 0,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 0,
+        "id": "actor0-scope0-modality1",
+        "modality_loss_weight": 2,
+        "new_updates": 32,
+        "scope_curriculum": 0,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 0,
+        "id": "actor0-scope1-modality0",
+        "modality_loss_weight": 1,
+        "new_updates": 32,
+        "scope_curriculum": 1,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 0,
+        "id": "actor0-scope1-modality1",
+        "modality_loss_weight": 2,
+        "new_updates": 32,
+        "scope_curriculum": 1,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 1,
+        "id": "actor1-scope0-modality0",
+        "modality_loss_weight": 1,
+        "new_updates": 32,
+        "scope_curriculum": 0,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 1,
+        "id": "actor1-scope0-modality1",
+        "modality_loss_weight": 2,
+        "new_updates": 32,
+        "scope_curriculum": 0,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 1,
+        "id": "actor1-scope1-modality0",
+        "modality_loss_weight": 1,
+        "new_updates": 32,
+        "scope_curriculum": 1,
+        "training_rows": 168
+      },
+      {
+        "actor_curriculum": 1,
+        "id": "actor1-scope1-modality1",
+        "modality_loss_weight": 2,
+        "new_updates": 32,
+        "scope_curriculum": 1,
+        "training_rows": 168
+      }
+    ],
+    "common_initialization": {
+      "batch_size": 12,
+      "config_seed": 1729,
+      "copied_model_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+      "latent_dimension": 384,
+      "latent_enabled": false,
+      "learning_rate": 0.001,
+      "new_Adam_moments": "empty per cell; no carryover of previous cell moments",
+      "original_parent_raw_sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb",
+      "parent_optimizer_steps": 400,
+      "source_parent_base_sha256": "fd7eb4bd7c8c5d5abb23d168e6b67300497eea6243b5c8cd5779cfbc566d5279"
+    },
+    "design": "2x2x2 matched actor curriculum x scope curriculum x modality-loss weight;8 cells x32 new updates =256 proposed updates at initial seed1729.",
+    "factor_levels": {
+      "actor0": "Current-style new actor templates in the fixed12 actor-class slots.",
+      "actor1": "New matched long-name/quoted-suffix actor templates in those same12 slots.",
+      "modality0": "Existing equally weighted modality plus6 facet-loss objective.",
+      "modality1": "Weight modality2 and each facet1, normalized by8; no class-label override or inference regex.",
+      "scope0": "Current-style new combined-scope templates in the fixed12 combined-condition/exception slots.",
+      "scope1": "New clause-scope hard negatives and matched true-deadline partners in those same12 slots."
+    },
+    "matched_data": "Every cell has identical96 legacy replay occurrences plus72 authored occurrences,12 per each of6 fresh classes. Change only actor12 and/or condition_exception12 slots when their factor is enabled. Balance modalities and presence partners; do not silently increase sample count, repeat count or maximum source length in a treatment cell.",
+    "matched_schedule": "Use the same preregistered32-step index sequence over168 slots in every cell; ID/source manifest hashes may differ in treatment slots. Save actual batch-index traces and final progress, not only a calculated schedule. Record loss/gradient/update evidence without claiming an independent numerical replay.",
+    "readout_controls": "For each cell, publish unchanged raw greedy and jointK8 separately on the same saved heads. A preregistered jointK16 replay may diagnose domain truncation; search remains capped at50000 nodes and unfinished searches abstain. No larger-K outcome is automatically preferred or promoted.",
+    "replication": "Initial8-cell seed1729 stage is exploratory. Genuine multiple-seed replication requires a reviewed separate batch_order_seed from the inherited initialization seed: current warm-start validation requires config seed to match the original parent. Never label identical deterministic reruns as independent seeds or pass new seeds into the current parent-copy API. Once supported, repeat all8 cells at3 predeclared order seeds with paired schedules and report seed-level variability.",
+    "resource_envelope": {
+      "admission_timeout_seconds": 120,
+      "child_deadline_seconds": 300,
+      "child_process_slots": 1,
+      "cpu_slots": 2,
+      "ledger_lock_timeout_seconds": 60,
+      "memory_mb": 1536,
+      "storage_bytes": 200000000
+    },
+    "status": "Proposal only; new corpus, loss/source change, exact plan and each bounded guardian attempt require concrete review before execution."
+  },
+  "observed_at_utc": "2026-10-12T05:39:14.841239+00:00",
+  "priorities": [
+    {
+      "evidence_ids": [
+        "temporal-contrast-challenge-actor_duration_name-0-o-absent",
+        "temporal-contrast-challenge-actor_duration_name-0-o-present",
+        "temporal-contrast-challenge-actor_duration_name-0-p-absent",
+        "temporal-contrast-challenge-actor_duration_name-0-p-present",
+        "temporal-contrast-challenge-actor_duration_name-0-f-absent",
+        "temporal-contrast-challenge-actor_duration_name-0-f-present"
+      ],
+      "failure": "Six authored challenge actor spans truncate the entire named/quoted suffix; all other facets are correct.",
+      "interpretation": "Five correct full-actor spans already occur in top8, with one at rank9. Domain width alone does not explain the failures; the learned score prefers a shorter actor. This is an authored reference diagnosis, not a statutory interpretation.",
+      "next_action": "Create new authored actor-boundary pairs with long entity names, appositives, named/quoted duration strings and independent true deadlines. Balance O/P/F and temporal-present/absent variants; vary lexical names, quotes and suffix lengths. Preserve full source-aligned actor endpoints. Never transplant the six exposed test occurrences into training.",
+      "priority": 1,
+      "saved_score_evidence": [
+        {
+          "authored_full_actor_span_rank": 5,
+          "best_saved_float32_score": 14.460817337036133,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": true,
+          "full_actor_saved_float32_score": 9.587518692016602,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-o-absent"
+        },
+        {
+          "authored_full_actor_span_rank": 5,
+          "best_saved_float32_score": 13.976127624511719,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": true,
+          "full_actor_saved_float32_score": 9.445220947265625,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-o-present"
+        },
+        {
+          "authored_full_actor_span_rank": 7,
+          "best_saved_float32_score": 13.812122344970703,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": true,
+          "full_actor_saved_float32_score": 8.178550720214844,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-p-absent"
+        },
+        {
+          "authored_full_actor_span_rank": 6,
+          "best_saved_float32_score": 12.503460884094238,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": true,
+          "full_actor_saved_float32_score": 7.30350399017334,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-p-present"
+        },
+        {
+          "authored_full_actor_span_rank": 9,
+          "best_saved_float32_score": 13.608110427856445,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": false,
+          "full_actor_saved_float32_score": 7.6438703536987305,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-f-absent"
+        },
+        {
+          "authored_full_actor_span_rank": 7,
+          "best_saved_float32_score": 13.032218933105469,
+          "full_actor_in_top16": true,
+          "full_actor_in_top8": true,
+          "full_actor_saved_float32_score": 7.425322532653809,
+          "id": "temporal-contrast-challenge-actor_duration_name-0-f-present"
+        }
+      ]
+    },
+    {
+      "evidence_ids": [
+        "temporal-contrast-challenge-condition_exception_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_exception_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_exception_duration-0-f-absent"
+      ],
+      "failure": "Three challenge temporal false positives occur only in combined condition/exception temporal-absent variants. Joint selection truncates the condition to accommodate an incorrectly fixed temporal head.",
+      "next_action": "Create paired source-scope curricula: durations inside conditions, exceptions, quotes and names versus true rule-level deadlines, with both temporal-present and absent partners. Keep non-temporal gold facets identical within pairs and pair groups isolated across splits. Add condition+exception permutations and distant deadlines, without using original law targets.",
+      "priority": 2
+    },
+    {
+      "additional_temporal_regression_ids": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "evidence_ids": [
+        "native-tuning-calendula-t4-q5-p",
+        "native-tuning-hellebore-t0-q3-p",
+        "native-tuning-hellebore-t1-q4-p"
+      ],
+      "failure": "Three older P references become O, plus one older temporal clause disappears.",
+      "next_action": "Hold a balanced legacy replay quota constant across all factorial cells. Include fresh may/shall/shall-not minimal triplets over the same long actor/condition/exception contexts. Test increased modality loss separately; preserve the already exposed older96 as a regression panel, not an independent holdout.",
+      "priority": 3
+    },
+    {
+      "failure": "One remaining challenge object-title truncation and one F-to-O modality error.",
+      "next_action": "Track as secondary endpoint-boundary and prohibition regression sentinels; add new object-title and shall-not triplets within existing quotas, rather than retuning on their exact exposed occurrences.",
+      "priority": 4
+    }
+  ],
+  "promotion_gates": {
+    "Lake_gate": "In a separately reviewed compiler job, generate source-pinned Lean modules from the same typed authoritative AST and run lake build legal against a pinned project/toolchain. Check complete exit/log/module coverage, reject placeholder proofs and unintended inconsistency-producing axioms, and disclose legitimate source premises. A successful build establishes elaboration/type correctness only; legal equivalence still requires the independent reference review.",
+    "engineering_gate": [
+      "Close all new source/corpus/context/checkpoint/score hashes; capture actual optimizer/batch traces and preserve all prior artifacts. Fresh independent resource, procedure, scientific and terminal runtime reviews must pass.",
+      "Recover older96/96 exactIR under both raw and joint policies; specifically eliminate3 known P-to-O and1 known missed temporal regression, with no hidden abstention substitutions.",
+      "On exposed authored diagnostics, aim for all6 long-actor challenge rows correct, zero scope temporalFP without new temporalFN, and challenge>=31/36 with fresh_tune raw>=8/36 and joint>=19/36. Record every role/class/pair failure and per-readout abstention; these are remediation goals, not unseen semantic proof.",
+      "Choose one candidate/loss/readout recipe using a separately authored development split, then freeze it before any new sealed evaluation. Preregister primary exactIR, modality/scope critical-error rates, coverage and per-family endpoints; avoid seed/policy cherry-picking."
+    ],
+    "independent_USCode_gate": {
+      "acceptance": "All accepted outputs must preserve reviewed modality, parties, scope, exceptions, temporal anchors and quantification; zero adjudicated critical modality/scope flips in the sealed benchmark. Report accepted coverage plus all refusals and uncertainties, with section-clustered paired intervals. Preregister the exact noninferiority/improvement margin before opening gold; no posthoc threshold or legal-fidelity claim from zero observed errors alone.",
+      "proposed_initial_floor": "Preregister at least120 eligible clauses from30 distinct sections across6 titles, stratified O/P/F, actor/object naming, true deadlines, nested conditions/exceptions, negation and cross-references. Keep unsupported structures and ambiguous sources explicit; no silent exclusion of model failures. This is a proposed initial coverage floor, not comprehensive USCode qualification.",
+      "reference_candidates": [
+        "justicedao/open-us-law-span-cache",
+        "justicedao/uscode-autoformal-span-cache"
+      ],
+      "reference_status": "Neither authored96/36/36, the8 exposed unreviewed law rows, nor the named HuggingFace span caches establish independently reviewed statutory gold by themselves. Dataset IDs are candidate source/provenance locations only.",
+      "required_review": "Create an unseen, source-versioned benchmark with full relevant subsection/definitions/exceptions/cross-reference context, independent legal/formal reviewers blinded to model outputs, adjudicated ambiguity and acceptable equivalent ASTs. No benchmark target or document group enters training, tuning, retrieval or encoder-target fitting."
+    },
+    "logic_family_gate": {
+      "current_scope": "Audited outputs are one canonical copied-span deontic rule; they do not establish9 evaluation views or broader logic-family support.",
+      "frozen_evaluation_views": [
+        "deontic",
+        "frame_logic",
+        "tdfol",
+        "knowledge_graphs",
+        "cec",
+        "external_provers",
+        "decompiler",
+        "temporal",
+        "provenance"
+      ],
+      "required_matrix": "Before any broader-family claim, pin the actual logic-module family/parser/AST capabilities and map each supported source structure to typed AST export, parser/serializer round trip, source-aligned legal review and independent proof obligations. Evaluation views such as provenance/knowledge_graphs are not proof of new logical expressiveness.",
+      "unsupported": "Multi-rule, quantified, nested or cross-referenced structures beyond the learned single-rule contract must route to an explicitly qualified adapter/model or abstain with a reason; never claim coverage by displaying a deontic payload under another family name."
+    },
+    "promotion_status": "The current contrast checkpoint remains an experimental candidate with four older regressions and unresolved actor/scope failures. No default replacement or legal deployment is recommended. Archive/publication of weights must preserve that status and provenance; archival is not promotion."
+  },
+  "schema": "temporal-contrast-next-training-recommendations/v1",
+  "source_and_latent_controls": {
+    "fair_latent_design": "Freeze a preregistered encoder-specific adapter into a common conditioning width; keep decoder trainable capacity, gate normalization/residual bound, same copied source weights, data, update budget and order seeds matched. Publish adapter capacity/provenance and source-only control explicitly.",
+    "genuine_latent_stage": "After encoders and feature contracts are independently authenticated, compare source-only against genuine text-derived8D/384D/768D conditioning. Use no target-derived embeddings; preserve source-context joins, training/evaluation splits and frozen encoder provenance. Current384-only warm-start API needs an explicit reviewed new interface/adapter; these are not drop-in dimensions.",
+    "next_source_only_stage": [
+      "Repeat zero/disabled/rotated/alternate placeholder controls with exact same saved-score projections. They should remain bit-equal under latent_disabled384 and must not be called genuine latent ablations.",
+      "Use fresh source minimal pairs for actor rename, quoted-title extension, condition/exception duration relocation and may/shall/shall-not. Expected outputs change only in declared source-dependent roles. Keep entity/date and structural groups disjoint from training.",
+      "Blank source should refuse under the input contract. Shuffled/destructive source probes are stability diagnostics with no original-reference accuracy claim."
+    ],
+    "positive_claim_requirement": "Real-latent gains must survive independent reviewed legal-reference evaluation and exceed source-only with uncertainty reported. Placeholder equality or source-only improvements cannot validate any autoencoder.",
+    "within_conditioned_model_controls": [
+      "Correct source-aligned latent.",
+      "All-zero latent.",
+      "Latent conditioning disabled.",
+      "Latents permuted across independent evaluation source groups."
+    ]
+  },
+  "source_evidence": {
+    "challenge_raw_heads": {
+      "bytes": 671656,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-raw.json",
+      "sha256": "262acd68cd2150e61bde8e1f953d73ccbf24066a56ec42a2c960f47726ea7d62"
+    },
+    "challenge_score": {
+      "bytes": 53514,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/results/contrast-fresh_challenge-score.json",
+      "sha256": "38b289e7d20a073490291513c5bec27aee1f9e62487ba4a48fc970ba0156b9d5"
+    },
+    "family_evaluator_source": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "fixed_current_plan": {
+      "bytes": 38346,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json",
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "independent_result_review": {
+      "bytes": 18994,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/result-independent-review-v01.json",
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "saved_analysis": {
+      "bytes": 57456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-result-analysis-v01.json",
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    }
+  }
+}

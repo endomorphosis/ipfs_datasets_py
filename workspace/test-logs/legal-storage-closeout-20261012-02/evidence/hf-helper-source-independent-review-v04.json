@@ -1,0 +1,229 @@
+{
+  "actual_success_gate": {
+    "actual_runtime_review_v02_normalized_artifact_map_mandatory_before_prepare": true,
+    "actual_saved_audit_metadata_passes_compiled_gate": true,
+    "all55_result_JSONs_require_closed_independent_result_review": true,
+    "complete_exact15_local_guardian_wrappers_required": true,
+    "complete_paired64_total32_per_arm_updates_required": true,
+    "exact_previous_and_released_body_digests_and_completion_pin_required": true,
+    "no_general_exception_for_other_old_or_current_records": true,
+    "old511_unchanged_must_be_false_old510_true_all_current513_true": true,
+    "only_exact_prior474_historical4GB_reconciliation_accepted": true,
+    "parent5df_retained400_and_genuine_copied_parent_weights_fresh_Adam_checks_unchanged": true,
+    "source_only384_latent_disabled_zero_encoder_calls_no_gold_no_promotion_no_Lake": true
+  },
+  "approvals": {
+    "actual_HF_publication_or_remote_preservation_qualified_here": false,
+    "concrete_staged_payload_review_passed_here": false,
+    "exact_frozen_helper_source_passed": true,
+    "network_or_HF_upload_authorized_by_this_source_receipt": false,
+    "runtime_or_numerical_result_semantics_requalified_here": false
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/completion.json": {
+      "bytes": 5854,
+      "sha256": "76161bf258d425fdec21522835e57cd634f696a1af0885e54391e823b234db53"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-postclosure-independent-review-v01.json": {
+      "bytes": 88005,
+      "sha256": "772d20bb1f305d767a3a59be66c6d5607189cc2e2403253dc843aa554837dff2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/prepare_hf_release_v04.py": {
+      "bytes": 25858,
+      "sha256": "8ccb3d0df1a53945882122300e4a46ba6d3c3c3f857ca73e8edd7037cb4f13b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/publish_hf_release_v04.py": {
+      "bytes": 9781,
+      "sha256": "c4cefe959933d061be37e002284c9ae77253181199d9f537fa18e30e2be89805"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/result-independent-review-v01.json": {
+      "bytes": 18994,
+      "sha256": "738ba284093283f3dafb095309812eaa829d2096eabd5d75b5d272ae34ac50a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-protocol-independent-review-v01.json": {
+      "bytes": 54420,
+      "sha256": "e5fa23010ac138ecb874e54355e734b3c5752dc050e52724f84c5614a702cf63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-result-analysis-v01.json": {
+      "bytes": 57456,
+      "sha256": "e444dafeacd8206bfb5614d3942b89a3c53fff02719181c28e832cb040d46181"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-auditor-source-independent-review-v01.json": {
+      "bytes": 5410,
+      "sha256": "29cc46c86bc1207e93613b41735ccb60060aef2a1073a1366985c849b3066a29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-procedure-independent-review-v01.json": {
+      "bytes": 71974,
+      "sha256": "d699e1807d07f8aa904b8a42716e0858b2f9f45d2917c7a3d6c8a35a3882050d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-audit-procedure-v01.json": {
+      "bytes": 127798,
+      "sha256": "3255a5ee1a813480016f601e75e6a429f91eb6a7db9c286c78bdfd8746ca063e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-runtime-resource-audit-v01.json": {
+      "bytes": 40834,
+      "sha256": "cc4589649cbbd721eb2d01e529d4851c96f322028d2ac3723f386e9990e2d6c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_hf_release_v03.py": {
+      "bytes": 24389,
+      "sha256": "049458c05b6b1616773267f434934193b7ea04b2377129422a78cc4411b5a053"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/publish_hf_release_v03.py": {
+      "bytes": 9781,
+      "sha256": "05995c4a98a99d394f7f572df8ac34f5525bb0cdebd8399197037ebd63f88037"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c72df50f92bf8fc9d8e688bc9013c16e3032faa3dd585e6814713f9c70ffc38"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child-identity.json": {
+      "bytes": 44,
+      "sha256": "2ba6eadd89d323dd88f035fdf97e6ed9f3f23ee3b686f1216c1703bd8cf0e5d4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/child.log": {
+      "bytes": 77,
+      "sha256": "ade81fac92547757de6055080dcfbe12fddd10e0bcbb3ea4f5473f34a2f0f023"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/command.json": {
+      "bytes": 1042,
+      "sha256": "2bc9b7ef10bc215c1888a464959cfb40d66407d8e11e3749957c9c4cf30d19f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-observations.jsonl": {
+      "bytes": 16503,
+      "sha256": "9a2d65f3b86b01aa2f00401003ebd0186a3edcc5b55739221e761a47f9b2d40a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/group-rss-summary.json": {
+      "bytes": 1737,
+      "sha256": "2d244e7ad33a8a08893440b0b80e1633881897472ec444982d870db7b78d9aa3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "88ea7a68b13c825c3ff6618e9f4a2941e8a94d6f466c6f3cd3d60a74914a65fc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "2466614e3cdb3a40cc7c62ae235538d97f875da6a2d843154a07c298de2fcec4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/lease-observations.jsonl": {
+      "bytes": 34722,
+      "sha256": "e533b83a75e2ac84743291ac59e634ec47ccea2006bcf0219fa57e1b548f1169"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "d7aa75431db2af04df5a26ed2252a0eab6bba484ec7126cc7e27b57717767bf9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/pre-admission.json": {
+      "bytes": 8001,
+      "sha256": "ddd1753267d4d814d67d3949f2fa9e754309c819fb2f80aa764f5380d653571c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "543184d9ba7604bd067ed919c4a24181d7b95f1dad9a8a66ad946ef869b51600"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-role-contrast-20261012-03/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "f8969533e1a8ba27ec5bff56c40869e730483b2a3f4e0e85161d9fc695379fa2"
+    }
+  },
+  "detached_controls": {
+    "actual_audit_predicate_shape_join_separately_passed_without_model_or_private_backup_read": true,
+    "actual_source_AST_predicate_only_not_complete_helper_import": true,
+    "all15_negative_cases_refused": true,
+    "negative_case_names": [
+      "old511_true",
+      "old510_false",
+      "current513_false",
+      "wrong_historical_claim",
+      "wrong_previous_body",
+      "wrong_released_body",
+      "wrong_completion_pin",
+      "incomplete_outcome",
+      "updates63",
+      "updates_bool",
+      "own_retained",
+      "completion_false",
+      "pre_model_failure",
+      "wrong_attempt",
+      "wrong_audit_schema"
+    ],
+    "negative_cases": 15,
+    "positive_cases": 1,
+    "synthetic_metadata_and_stub_pin_only": true
+  },
+  "findings": [],
+  "limitations": [
+    "This source receipt cannot substitute for exact staged payload/schema/privacy/modelcard review, current complete Hub baseline and publication authorization.",
+    "Actual runtime-independent-v02 receipt is a guarded pending input when this static review begins; concrete preparation must fail until it exists, passes and binds exact selected public bytes with closed bytes/sha metadata.",
+    "No full private ledger/record bodies are copied. Absolute paths, record IDs and hashes remain public provenance metadata; final recursive payload inspection is still required.",
+    "Trusted local reviewed inputs are hash-fenced; this is not universal alias-resistant filesystem isolation or cryptographic execution attestation.",
+    "An upload timeout/uncertain result may leave a committed additive release; helper writes durable receipts but performs no rollback or automatic retry. Actual postcommit observation must establish outcome before further publication.",
+    "Remote preservation and immutable readback remain future network observations, not established by static source review.",
+    "Source-only paired engineering diagnostics establish no independently reviewed USCode fidelity, logic-family qualification, genuine8D/768D autoencoder comparison or lake build legal success."
+  ],
+  "observed_at_utc": "2026-10-12T05:34:35.475840+00:00",
+  "passed": true,
+  "phase": "hf-helper-source",
+  "privacy": {
+    "excluded_full_owned_record_wrappers": [
+      "resources-start.json",
+      "resources-final.json"
+    ],
+    "excluded_wrappers_still_validated_locally_and_hash_referenced_by_independent_runtime_custody": true,
+    "explicit_manifest_names_excluded2wrappers": true,
+    "full_finite_payload_recursive_privacy_review_still_required": true,
+    "full_ledger_or_owned_record_shapes_found_in_selected_wrappers": false,
+    "no_local_ledger_backup_or_live_ledger_copy_source": true,
+    "selected_public_wrapper_count": 13,
+    "selected_public_wrappers_inspected_for_full_reservations_or_record_shapes": true
+  },
+  "release_prefix": "releases/20261012-temporal-role-contrast-v3",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "reviewer_actions": {
+    "Git_HF_mutations": 0,
+    "SDK_or_network_calls": 0,
+    "live_ledger_or_private_backup_reads": 0,
+    "model_checkpoint_JSON_parses": 0,
+    "model_or_encoder_optimizer_compiler_calls": 0,
+    "production_helper_executions": 0,
+    "resource_API_lease_lock_or_signal_calls": 0,
+    "source_imports": 0
+  },
+  "schema": "post-closeout-Hub-helper-source-independent-review/v4",
+  "scope": "Independent static review of exact frozen N v04 preparer/publisher against immutable T v03 basis, plus detached exact-source predicate controls and a shape-only privacy check of the13 selected public wrappers. No production helper, SDK, numerical model, ledger or network operation executed.",
+  "source_comparison": {
+    "actual_training_review_compatibility_audit_runtime_review_results_analysis_modelcard_are_N": true,
+    "both_sources_AST_parse_without_import": true,
+    "completed_lineage_read_json_copy_fsync_gates_bytecode_structure_unchanged": true,
+    "old_T_helpers_unchanged": true,
+    "prepare_changed_functions": [
+      "actual_successful_attempt",
+      "main"
+    ],
+    "publisher_difference": "Only prerequisite preparer path v03->v04 and concrete result-review path v03->v01; additive/CAS/identity/buffer/download algorithms unchanged.",
+    "selected_new_helpers": "N/prepare_hf_release_v04.py and N/publish_hf_release_v04.py only; retained N v03 drafts not selected",
+    "source_plan_runner_guardian_data_recipe28owner_files_remain_T": true
+  },
+  "staging_and_publisher_checks": {
+    "all_concrete_review_input_hashes_verified_before_network_and_again_before_commit": true,
+    "all_old_identities_preserved_and_exact_new_additions_checked_at_returned_commit": true,
+    "assert_optimization_cannot_disable_require_gates": true,
+    "closed_concrete_upload_receipt_and_independent_payload_review_required": true,
+    "create_commit_revision_main_parent_commit_before_sha_CAS": true,
+    "default_promotion": false,
+    "download_CLI_fixed_actual_revision_and_all_selected_bytes_SHA_verified": true,
+    "duplicate_and_nonfinite_JSON_rejected": true,
+    "exclusive_durable_preupload_commit_identity_and_verification_receipts": true,
+    "new_prefix_absent_in_old_baseline_required": true,
+    "operations_only_CommitOperationAdd_under_fixed_prefix": true,
+    "payload_file_limit": 1000,
+    "payload_limit_bytes": 200000000,
+    "payload_loaded_into_immutable_byte_buffers_before_SDK_call": true,
+    "preparer_local_only_exclusive_prefix_copy_source_rehash_fsync_and_manifest": true,
+    "remote_pre_parent_SHA_and_complete_existing_blob_LFS_identity_map_must_match": true,
+    "source_and_staged_payload_bytes_rechecked_after_download": true
+  }
+}

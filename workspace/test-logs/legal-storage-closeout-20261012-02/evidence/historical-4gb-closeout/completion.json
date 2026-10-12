@@ -1,0 +1,136 @@
+{
+  "actual_postwrite_accounting": {
+    "additional_requested_bytes": 0,
+    "capacity_satisfied": true,
+    "charged_bytes": 139261329031,
+    "filesystem_free_shortfall_bytes": 0,
+    "inventory": {
+      "apparent_bytes": 95079551815,
+      "entry_count": 1360440,
+      "special_file_count": 6,
+      "symlink_count": 721
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 471340924928,
+    "observed_apparent_bytes": 95079551815,
+    "outstanding_full_reservations_bytes": 44181777216,
+    "over_limit_bytes": 0,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "actual_postwrite_census_receipt": {
+    "bytes": 1145,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/actual-postwrite-census.json",
+    "sha256": "7595d7ba1499db8cc5bd2c7a5cde5762fc454eae53dde80c5d539f4cbed4b680"
+  },
+  "after": {
+    "bytes": 6162890,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "a50b21493d6e19541c51ffda214dcba79014a9e1b0df542a35bc812ea518b0d7"
+  },
+  "after_local_backup": {
+    "bytes": 6162890,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/ledger-after.local.json",
+    "sha256": "a50b21493d6e19541c51ffda214dcba79014a9e1b0df542a35bc812ea518b0d7"
+  },
+  "all_old_510_nonselected_claim_bodies_unchanged": true,
+  "all_other_512_claim_bodies_unchanged": true,
+  "all_prior_512_claim_bodies_unchanged": true,
+  "before": {
+    "bytes": 6142162,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits/owned-daemon-resource-control/disk-reservations.json",
+    "sha256": "1f93e0ca70ea6199f16d58834e30d60d127f9891e380454e470df352720bb824"
+  },
+  "before_local_backup": {
+    "bytes": 6142162,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/ledger-before.local.json",
+    "sha256": "1f93e0ca70ea6199f16d58834e30d60d127f9891e380454e470df352720bb824"
+  },
+  "candidate_directory_count": 16,
+  "candidate_regular_artifact_count": 109,
+  "cap_changed": false,
+  "capacity_policy": "administrative_closeout",
+  "complete": true,
+  "durable_failed_attempt_bytes": 249979161,
+  "execution_scope": "this administrative closeout only; historical4fit output is retained from incomplete18fit campaign",
+  "existing_lock_and_atomic_writer_used": true,
+  "failed_attempt_immutable": true,
+  "final_accounting": {
+    "additional_requested_bytes": 0,
+    "capacity_satisfied": true,
+    "charged_bytes": 139261308303,
+    "filesystem_free_shortfall_bytes": 0,
+    "inventory": {
+      "apparent_bytes": 95079531087,
+      "entry_count": 1360440,
+      "special_file_count": 6,
+      "symlink_count": 721
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 471306936320,
+    "observed_apparent_bytes": 95079531087,
+    "outstanding_full_reservations_bytes": 44181777216,
+    "over_limit_bytes": 0,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "full_claim_accounting": {
+    "additional_requested_bytes": 0,
+    "capacity_satisfied": true,
+    "charged_bytes": 143261308303,
+    "filesystem_free_shortfall_bytes": 0,
+    "inventory": {
+      "apparent_bytes": 95079531087,
+      "entry_count": 1360440,
+      "special_file_count": 6,
+      "symlink_count": 721
+    },
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 471499915264,
+    "observed_apparent_bytes": 95079531087,
+    "outstanding_full_reservations_bytes": 48181777216,
+    "over_limit_bytes": 0,
+    "scope": "named_roots_only_apparent_bytes"
+  },
+  "helper": {
+    "bytes": 30662,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/reconcile_generated_field_4gb_v02.py",
+    "sha256": "30edc6fd4e466464892aabdd4d895ff3d15403bc17ee501ee418986b478e8ed0"
+  },
+  "historical_model_states_parsed_or_replayed": false,
+  "independent_review": {
+    "bytes": 84714,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-independent-review-v01.json",
+    "sha256": "567028eacf289289852a8b9f125dede8ca96d8807568fe8ce8aceaeb16675e2a"
+  },
+  "leases_acquired": 0,
+  "local_full_ledger_backups_excluded_from_publication": true,
+  "model_calls": 0,
+  "no_automatic_retry": true,
+  "only_own_claim_changed": true,
+  "optimizer_updates": 0,
+  "original_historical_training_attempt_complete": false,
+  "original_owner_adopted": false,
+  "outputs_deleted": false,
+  "own_claim_released": true,
+  "own_released_bytes": 4000000000,
+  "planned_after_local_backup": {
+    "bytes": 6162890,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-attempt-01/ledger-after-planned.local.json",
+    "sha256": "a50b21493d6e19541c51ffda214dcba79014a9e1b0df542a35bc812ea518b0d7"
+  },
+  "previous0350_and_c6_releases_preserved": true,
+  "prewrite_final_accounting_is_projection": true,
+  "prior_sibling_artifact_count": 8,
+  "protocol": {
+    "bytes": 169318,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/generated-field-4gb-administrative-closeout-protocol-v01.json",
+    "sha256": "f3c79aeb53be19ad37e72074151685ab0fb1893f25ee842aca82d6e415e1a4b4"
+  },
+  "record_count_after": 513,
+  "record_count_before": 513,
+  "reservation_id": "474ee6b5ae784516ae1dab7ca38c8cc6",
+  "reviewed_administrative_reconciliation_API_used": true,
+  "schema": "generated-field-4gb-administrative-closeout-result/v1",
+  "source_files_modified": false,
+  "training_admitted": false,
+  "training_started": false
+}

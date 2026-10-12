@@ -1,0 +1,236 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-closeout-20261012-02/training-recipe-custody-prefinal-v01.json": {
+      "bytes": 23657,
+      "sha256": "4795425826cd30f63dc5530211fab29b41aeb751a2235e4732992926de6fecf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json": {
+      "bytes": 37261,
+      "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json": {
+      "bytes": 38346,
+      "sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/failed-attempt-independent-review-v01.json": {
+      "bytes": 9167,
+      "sha256": "e26c35c76e34ff1983cd3158e5427546375f6b9dc00dcbec0f868940e40edbfe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-independent-review-v02.json": {
+      "bytes": 3608,
+      "sha256": "71906985cecbab1d28d9d36d4ebf8f0fc72840f815a9dc2cd5dbb73c6e1f67e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/plan-import-closure-preflight-v02.json": {
+      "bytes": 6995,
+      "sha256": "b638139691b8448320a8f2d1cdd1a8654ccd034fd0844027efe3c559d9678b1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-protocol-independent-review-v02.json": {
+      "bytes": 59112,
+      "sha256": "d32a46cbdaf4a344961e84eda327871acda1f329034954feac47074af49ae20f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-runtime-resource-independent-review-v02.json": {
+      "bytes": 14937,
+      "sha256": "7359cbd5bdb9ee6234cadb03b5f9a9840c4c63c5bbddd4b7473941e0319fc06f"
+    }
+  },
+  "authority": {
+    "actual_4GB_closeout_qualified_here": false,
+    "execution_authority": false,
+    "fresh_runtime_resource_compatibility_qualified_here": false,
+    "model_optimizer_encoder_compiler_calls": 0,
+    "network_Git_HF_mutation": false,
+    "phase_training_receipt_issued": false,
+    "reservation_or_lease_or_lock_acquired": false,
+    "resource_API_called": false,
+    "source_and_scientific_prefinal_only": true,
+    "statutory_fidelity_logic_family_or_successful_training_qualified": false
+  },
+  "custody": {
+    "added_artifact_pins": {
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+        "bytes": 38995,
+        "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v01.json": {
+        "bytes": 37261,
+        "sha256": "5822ab0255293ec81474de351c52547f7483f3ccef7407d9760bc0431214a9fb"
+      },
+      "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/prepare_temporal_contrast_pilot_v02.py": {
+        "bytes": 9004,
+        "sha256": "e6c1c0515374a852d6e71cf08f1d0776e51e6a81e745de8ad25f30c97b736324"
+      }
+    },
+    "all97_frozen_artifact_hashes_independently_verified": true,
+    "both_failed_round_attempts_and_older_five_files_unchanged": true,
+    "checkpoint_JSON_parsed_or_restored_by_reviewer": false,
+    "explicit_package_owner_pin_count": 28,
+    "failed_attempts": {
+      "attempt01": {
+        "artifact_map_sha256": "1de724a91b1b0edcb51a02d21c9cb3d2130adfc03b9808e025e1292e265e575b",
+        "verified_terminal_artifact_bytes": 53597,
+        "verified_terminal_artifact_count": 13
+      },
+      "attempt02": {
+        "artifact_map_sha256": "cd1120dceb1abbb0ae555096b6a4f7a30cdf49c63fbc2e6559e0af7fcb61ca04",
+        "verified_terminal_artifact_bytes": 61141,
+        "verified_terminal_artifact_count": 15
+      },
+      "older_failed_attempt": {
+        "artifact_map_sha256": "c558ad1ae1daf2da13f974293a2b49a0202b5eb616e5f07a696e3040cf9a09b8",
+        "verified_terminal_artifact_bytes": 11928,
+        "verified_terminal_artifact_count": 5
+      }
+    },
+    "frozen_artifact_map_sha256": "2a7a957da8dd07502d15af1af2e9baa3925a75dbf497271f678efa4ca419e39f",
+    "frozen_plan_artifact_count": 97,
+    "historical_parent_raw_file_only_hash_read": true,
+    "old94_artifact_pins_and_old27_owner_pins_unchanged": true,
+    "only_plan_fields_changed": [
+      "artifacts",
+      "source_owner_pins"
+    ],
+    "pure_import_probe_qualification_reused": "Four exact pre-Torch imports and ten observed package origins only; passed independent closure receipt and probe bytes rehashed. Reviewer did not re-import subjects.",
+    "same_runner_guardian_data_and_scientific_fields": true,
+    "sole_added_package_owner": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator",
+    "total_frozen_artifact_bytes_hash_read": 27861657
+  },
+  "findings": [],
+  "guardian_path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_scope_guardian.py",
+  "guardian_sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed",
+  "limitations": [
+    "Single1729 exploratory run and unequal108/168 inventories/rehearsal ratios cannot isolate a contrastive objective or establish statistical certainty.",
+    "Fresh authored references are builder-visible and share templates/class lexicons/split number ranges; source/group disjointness does not create blinded or independent legal gold.",
+    "law8 are previously exposed unreviewed source-only diagnostics; full statutory context and independently reviewed formal targets are not supplied to the model.",
+    "Copied duration literals and role labels do not establish clock semantics, event-owner interpretation, temporal-family compliance or lake build legal.",
+    "Historical compatibility-v01 remains immutable recipe provenance only; previous training-phase-v02 authorization and old live ledger pins do not authorize attempt03.",
+    "Pure import review qualifies the ten observed pre-Torch package origins, not later numerical/external dependency graphs or universal filesystem/network isolation.",
+    "No new model result, accuracy improvement, checkpoint selection, promotion, family compliance or Hugging Face payload is qualified."
+  ],
+  "observed_at_utc": "2026-10-12T04:59:20.131762+00:00",
+  "package_root": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets",
+  "passed": true,
+  "phase": "training-source-science-prefinal",
+  "plan_path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/experiment-plan-v02.json",
+  "plan_sha256": "a5d27947b54c1ae5cf0c8b8bbfa952b92c5af0db4fbae4591239b844654022c4",
+  "required_before_concrete_training_review": [
+    "Successful exact reviewed4GBcloseout and separate actual endpoint/retention qualification, preserving all512 other ledger bodies and checkpoint bytes.",
+    "Fresh read-only owner-compatible resource report bound to actual post-closeout ledger/scheduler/roots and unchanged145GBcap, including prospective200MB exactly once; later admission remains fail-closed.",
+    "Fresh exact phase=training review binding plan-v02, unchanged runner/guardian, package_root/run_root and unique absent attempt03, with immutable97 unchanged and fresh volatile runtime inputs outside recipe artifacts.",
+    "Actual guardian admission/lease ownership, child group/resource tracking, loaded producer checks and runtime invariants remain required; this receipt cannot substitute for them."
+  ],
+  "run_root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01",
+  "runner_path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+  "runner_sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05",
+  "schema": "temporal-binding-training-source-science-prefinal-independent-review/v1",
+  "scientific_contract": {
+    "Lake_executed": false,
+    "arms": [
+      {
+        "name": "control",
+        "new_steps": 32,
+        "training_count": 108,
+        "training_manifest_sha256": "213bfaf8e0d0d8708a3d0cb4525e16fef26f988a2619cd778f9b1ad70b4191b7",
+        "training_population": "control_train"
+      },
+      {
+        "name": "contrast",
+        "new_steps": 32,
+        "training_count": 168,
+        "training_manifest_sha256": "665487ad8f059f3ab2e18fb3feed3d64c7c9ce1b40626fbabc92f49d97515d43",
+        "training_population": "contrast_train"
+      }
+    ],
+    "batch_size": 12,
+    "challenge_or_law_used_for_updates_or_selection": false,
+    "checkpoint_selection_executed": false,
+    "common_authored_rehearsal_rows": 96,
+    "context": "Disabled latent384 placeholders, retained historical transport and zero fresh vectors. No encoder calls, genuine latent semantics or 8D/768D comparison.",
+    "contrast_fresh_role_rows": 72,
+    "control_fresh_plain_rows": 12,
+    "default_promotion": false,
+    "evaluation_panels": [
+      {
+        "count": 96,
+        "has_authored_reference": true,
+        "name": "old_tune",
+        "population": "old_tune",
+        "provenance": "authored_synthetic_not_legal_authority"
+      },
+      {
+        "count": 36,
+        "has_authored_reference": true,
+        "name": "fresh_tune",
+        "population": "fresh_tune",
+        "provenance": "authored_synthetic_not_legal_authority"
+      },
+      {
+        "count": 36,
+        "has_authored_reference": true,
+        "name": "fresh_challenge",
+        "population": "fresh_challenge",
+        "provenance": "authored_synthetic_not_legal_authority"
+      },
+      {
+        "count": 8,
+        "has_authored_reference": false,
+        "name": "law",
+        "population": "law",
+        "provenance": "previously_exposed_unreviewed_law_source_only"
+      }
+    ],
+    "fresh_empty_Adam_moments_and_progress0_each_arm_required_at_runtime": true,
+    "independent_semantic_holdout": false,
+    "learning_rate": 0.001,
+    "objective": "Unchanged modality/presence/copied-span cross entropy and clipping5; no new architecture, structured training objective or logic-family lowering.",
+    "parent_base_canonical_sha256": "fd7eb4bd7c8c5d5abb23d168e6b67300497eea6243b5c8cd5779cfbc566d5279",
+    "parent_historical_optimizer_steps": 400,
+    "parent_model_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+    "parent_raw_file_sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb",
+    "planned_final_progress": {
+      "contrast": {
+        "epochs_completed": 2,
+        "optimizer_steps": 32,
+        "row_cursor": 48
+      },
+      "control": {
+        "epochs_completed": 3,
+        "optimizer_steps": 32,
+        "row_cursor": 60
+      }
+    },
+    "readout": "Preserve raw greedy and fixed-presence/modality jointK8 candidate search with max50000 nodes; score complete authored96/36/36 populations including refusals, role/class and paired differences. law8 has no scored reference.",
+    "reference_free_generation_claimed": false,
+    "resource_contract": {
+      "child_slots": 1,
+      "cpu_slots": 2,
+      "rss_mib": 1536,
+      "storage_bytes": 200000000,
+      "wall_seconds": 300
+    },
+    "returned_partial_states_saved_before_32_update_success_guards": true,
+    "same_batch_schedule": false,
+    "same_parent_weights_each_arm": true,
+    "same_source_exposure_or_causal_architecture_comparison_claimed": false,
+    "seed": 1729,
+    "semantic_gold": false,
+    "total_new_updates_if_both_arms_complete": 64,
+    "training_seconds_per_arm": 32
+  },
+  "scope": "Independent read-only source/scientific and immutable recipe custody review for a prospective unique attempt-03. This receipt is intentionally not a training-phase execution authorization."
+}
