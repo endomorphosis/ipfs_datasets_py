@@ -1,8 +1,10 @@
-"""Explicit Security-only compatibility for one unrelated UI decoder pin change.
+"""Security-only compatibility for exact reviewed nonsemantic pin transitions.
 
 The immutable artifact is checked against a caller-supplied SHA256. Only a
-detached runtime view changes: one known historical UI decoder dependency pin
-may move to its known current value. Every other implementation field, weight,
+detached runtime view changes: the historical UI decoder dependency and/or tree
+diagnostic stream pin may move to their individually known current values.
+Tree diagnostic compatibility has a separate profile, mode and scope. Every
+other implementation field, weight,
 schema, split manifest and runtime check remains unchanged. This is not a
 general checkpoint migration or permission to ignore numerical/validator drift.
 """
@@ -20,10 +22,14 @@ from .security.source_normalization_384 import INPUT_VIEW
 
 SCHEMA = "security-source-384-checkpoint-compatibility/v1"
 PROFILE = "security-structured384-known-unrelated-ui-pin/v1"
+TREE_DIAGNOSTIC_PROFILE = "security-structured384-known-stderr-tree-pin/v1"
 UI_DEPENDENCY = "ipfs_datasets_py.logic.ui_ux_ir.decoder"
 OLD_UI_SHA256 = "d7be6bff3a1f1464d4783567b90942258ef718bc1c2b7e02938698ed4e619e57"
 NEW_UI_SHA256 = "21e8315b0054f7755512212d610d4e3f5f4ac86387f3b27edb9632fa8ca68bc3"
 PIN_PATH = ("shared_runtime", "native", "dependencies", UI_DEPENDENCY)
+TREE_PIN_PATH = ("shared_runtime", "numerical", "files", "tree_pin.py")
+OLD_TREE_SHA256 = "587165942fb06ea9effc836b555e0ac0606c5876b013a374a1e76d25ee069e4d"
+NEW_TREE_SHA256 = "ec43fd9379f3c9198451e8d62d98db53826dcf115e6858039a73c3da7d72a1c2"
 COMPONENTS = ("projection_state", "head_state", "target_schema", "training_manifest",
     "validation_manifest", "parent_binding", "input_transform", "config", "training", "lineage")
 UNCHANGED = dict(artifact_modified=False, runtime_view_persisted=False,
@@ -33,6 +39,15 @@ UNCHANGED = dict(artifact_modified=False, runtime_view_persisted=False,
 SCOPE = ("Only a known unrelated UI decoder pin differs; the Security structured runtime, "
          "numerical implementation, Security validators and all checkpoint content except "
          "that implementation pin must remain exact. Receipt validation alone is not artifact replay.")
+TREE_DIAGNOSTIC_SCOPE = (
+    "Only the exact reviewed tree diagnostic stdout-to-stderr pin transition differs; "
+    "checkout rejection, numerical code, validators, weights and all other checkpoint "
+    "content remain exact. Receipt validation alone is not artifact replay.")
+COMBINED_SCOPE = (
+    "Only the exact reviewed tree diagnostic stdout-to-stderr and unrelated UI decoder "
+    "pin transitions differ; checkout rejection, numerical code, Security validators, "
+    "weights and all other checkpoint content remain exact. "
+    "Receipt validation alone is not artifact replay.")
 
 
 def _require(condition, reason):
@@ -52,9 +67,11 @@ def _hash(value):
     return type(value) is str and re.fullmatch(r"[a-f0-9]{64}", value) is not None
 
 
-def _pin(implementation):
+def _pin(implementation, path=PIN_PATH):
     try:
-        return implementation["shared_runtime"]["native"]["dependencies"][UI_DEPENDENCY]
+        for component in path:
+            implementation = implementation[component]
+        return implementation
     except (TypeError, KeyError) as error:
         raise ValueError("closed Security implementation pin tree required") from error
 
@@ -62,31 +79,53 @@ def _pin(implementation):
 def _delta(original, current):
     if original == current:
         return "strict", []
-    _require(_pin(original) == OLD_UI_SHA256 and _pin(current) == NEW_UI_SHA256,
-        "only the known unrelated UI decoder pin transition is compatible")
     expected = deepcopy(current)
-    expected["shared_runtime"]["native"]["dependencies"][UI_DEPENDENCY] = OLD_UI_SHA256
+    changes = []
+    if _pin(original) != _pin(current):
+        _require(_pin(original) == OLD_UI_SHA256 and _pin(current) == NEW_UI_SHA256,
+            "only the known unrelated UI decoder pin transition is compatible")
+        expected["shared_runtime"]["native"]["dependencies"][UI_DEPENDENCY] = OLD_UI_SHA256
+        changes.append(dict(path=list(PIN_PATH), before=OLD_UI_SHA256, after=NEW_UI_SHA256))
+    tree_changed = _pin(original, TREE_PIN_PATH) != _pin(current, TREE_PIN_PATH)
+    if tree_changed:
+        _require(_pin(original, TREE_PIN_PATH) == OLD_TREE_SHA256
+            and _pin(current, TREE_PIN_PATH) == NEW_TREE_SHA256,
+            "only the known tree diagnostic stderr pin transition is compatible")
+        expected["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = OLD_TREE_SHA256
+        changes.append(dict(path=list(TREE_PIN_PATH), before=OLD_TREE_SHA256, after=NEW_TREE_SHA256))
     _require(original == expected,
         "Security numerical, validator or other implementation pins differ")
-    return "known_unrelated_ui_decoder_pin", [dict(path=list(PIN_PATH),
-        before=OLD_UI_SHA256, after=NEW_UI_SHA256)]
+    if tree_changed:
+        return ("known_ui_decoder_and_tree_pin_stderr_diagnostic" if len(changes) == 2
+                else "known_tree_pin_stderr_diagnostic"), changes
+    return "known_unrelated_ui_decoder_pin", changes
+
+
+def _profile(mode):
+    if mode == "known_tree_pin_stderr_diagnostic":
+        return TREE_DIAGNOSTIC_PROFILE, TREE_DIAGNOSTIC_SCOPE
+    if mode == "known_ui_decoder_and_tree_pin_stderr_diagnostic":
+        return TREE_DIAGNOSTIC_PROFILE, COMBINED_SCOPE
+    _require(mode in {"strict", "known_unrelated_ui_decoder_pin"}, "unknown compatibility mode")
+    return PROFILE, SCOPE
 
 
 def _receipt(checkpoint, view, artifact_sha256):
     original, current = checkpoint["implementation"], view["implementation"]
     mode, changed = _delta(original, current)
+    profile, scope = _profile(mode)
     before = {key: value for key, value in checkpoint.items() if key != "implementation"}
     after = {key: value for key, value in view.items() if key != "implementation"}
     _require(structured._raw(before) == structured._raw(after),
         "compatibility view changed checkpoint content")
-    return dict(schema=SCHEMA, profile=PROFILE, domain_id="security_ir",
+    return dict(schema=SCHEMA, profile=profile, domain_id="security_ir",
         checkpoint_schema=structured.SCHEMA, artifact_sha256=artifact_sha256,
         runtime_view_sha256=_digest(view), mode=mode, applied=bool(changed),
         original_implementation=deepcopy(original), runtime_implementation=deepcopy(current),
         original_implementation_sha256=_digest(original), runtime_implementation_sha256=_digest(current),
         changed_pins=changed, unchanged_content_sha256=_digest(before),
         unchanged_component_sha256={key: _digest(checkpoint[key]) for key in COMPONENTS},
-        scope=SCOPE, **UNCHANGED)
+        scope=scope, **UNCHANGED)
 
 
 def validate_checkpoint_compatibility(receipt, expected_sha256):
@@ -102,15 +141,18 @@ def validate_checkpoint_compatibility(receipt, expected_sha256):
         "unchanged_content_sha256", "unchanged_component_sha256", "scope", *UNCHANGED}
     _require(type(receipt) is dict and set(receipt) == fields,
         "closed checkpoint compatibility receipt required")
-    _require(receipt["schema"] == SCHEMA and receipt["profile"] == PROFILE
+    _require(receipt["schema"] == SCHEMA
         and receipt["domain_id"] == "security_ir" and receipt["checkpoint_schema"] == structured.SCHEMA
-        and receipt["artifact_sha256"] == expected_sha256 and receipt["scope"] == SCOPE,
+        and receipt["artifact_sha256"] == expected_sha256,
         "checkpoint compatibility profile or artifact differs")
     _require(all(type(receipt[key]) is type(value) and receipt[key] == value
         for key, value in UNCHANGED.items()), "checkpoint compatibility cannot grant authority or mutation")
     current = structured._implementation()
     _require(receipt["runtime_implementation"] == current, "current implementation differs from compatibility receipt")
     mode, changes = _delta(receipt["original_implementation"], current)
+    profile, scope = _profile(mode)
+    _require(receipt["profile"] == profile and receipt["scope"] == scope,
+        "checkpoint compatibility profile or scope differs")
     _require(receipt["mode"] == mode and type(receipt["applied"]) is bool
         and receipt["applied"] == bool(changes) and receipt["changed_pins"] == changes,
         "checkpoint compatibility pin delta differs")
@@ -189,7 +231,7 @@ class CompatibleSourceProgramDecoder384:
 
 
 def load_source_program_decoder_384_v2(path, *, expected_sha256, decoder="structured", input_view="raw"):
-    """Load Security weights with one explicit, exactly identified compatibility case."""
+    """Load Security weights with explicit, exactly identified compatibility cases."""
     _require(decoder == "structured", "compatibility loader supports structured Security checkpoints only")
     _require(input_view in ("raw", INPUT_VIEW), "unsupported source input view")
     selected, raw, view, receipt = _read_view(path, expected_sha256)

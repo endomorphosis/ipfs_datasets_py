@@ -1,4 +1,4 @@
-"""One explicit non-Security pin migration, with real unchanged decoder inference."""
+"""Exact reviewed pin transitions preserve decoder content and strict checks."""
 from copy import deepcopy
 import hashlib
 import json
@@ -108,6 +108,69 @@ def test_exact_current_checkpoint_uses_strict_mode_and_same_predictions(tmp_path
     receipt = report["checkpoint_compatibility"]
     assert receipt["mode"] == "strict" and not receipt["applied"] and receipt["changed_pins"] == []
     assert receipt["runtime_view_sha256"] == checksum
+
+
+@pytest.mark.parametrize("include_ui", [False, True])
+def test_tree_diagnostic_transition_has_distinct_receipt_and_unchanged_inference(tmp_path, include_ui):
+    from ipfs_datasets_py.logic.autoformal import tree_pin
+    assert hashlib.sha256(Path(tree_pin.__file__).read_bytes()).hexdigest() == api.NEW_TREE_SHA256
+    value = checkpoint()
+    if not include_ui:
+        value["implementation"] = api.structured._implementation()
+    value["implementation"]["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = api.OLD_TREE_SHA256
+    path, checksum = write(tmp_path, value)
+    original = path.read_bytes()
+    with pytest.raises(ValueError, match="implementation pins differ"):
+        strict.load_source_program_decoder_384(path, expected_sha256=checksum)
+    loaded = api.load_source_program_decoder_384_v2(path, expected_sha256=checksum)
+    report = loaded.infer(rows())
+    receipt = report["checkpoint_compatibility"]
+    assert receipt["mode"] == ("known_ui_decoder_and_tree_pin_stderr_diagnostic" if include_ui
+        else "known_tree_pin_stderr_diagnostic")
+    assert receipt["profile"] == api.TREE_DIAGNOSTIC_PROFILE != api.PROFILE
+    assert receipt["scope"] == (api.COMBINED_SCOPE if include_ui else api.TREE_DIAGNOSTIC_SCOPE)
+    assert receipt["scope"] != api.SCOPE
+    changes = ([dict(path=list(api.PIN_PATH), before=api.OLD_UI_SHA256, after=api.NEW_UI_SHA256)]
+        if include_ui else [])
+    changes.append(dict(path=list(api.TREE_PIN_PATH), before=api.OLD_TREE_SHA256, after=api.NEW_TREE_SHA256))
+    assert receipt["changed_pins"] == changes
+    assert report["rows"][0]["candidate_ir"]["document"]["operator"] == "+"
+    assert report["rows"][0]["source_contract"]["status"] == "qualified"
+    assert api.verify_checkpoint_compatibility(receipt, path, checksum) == receipt
+    assert path.read_bytes() == original
+    assert all(loaded.decoder.runtime.checkpoint[key] == value[key] for key in value if key != "implementation")
+    assert all(receipt[key] == expected for key, expected in api.UNCHANGED.items())
+    # Copy the same authored numeric fixture with current pins solely to compare
+    # strict decoder predictions. This is not migration of a released artifact.
+    current = deepcopy(value); current["implementation"] = api.structured._implementation()
+    strict_path, strict_sha = write(tmp_path, current)
+    assert strict.load_source_program_decoder_384(strict_path, expected_sha256=strict_sha).infer(rows())["rows"] == report["rows"]
+    for change in (dict(profile=api.PROFILE), dict(scope=api.SCOPE), dict(mode="known_unrelated_ui_decoder_pin")):
+        with pytest.raises(ValueError, match="profile|scope|delta"):
+            api.validate_checkpoint_compatibility({**receipt, **change}, checksum)
+
+
+@pytest.mark.parametrize("change", ["unknown_original", "unknown_current", "reversed", "missing_tree",
+    "numerical", "security", "runtime", "extra_pin"])
+def test_tree_diagnostic_compatibility_rejects_every_unreviewed_transition(tmp_path, monkeypatch, change):
+    value = checkpoint()
+    shared = value["implementation"]["shared_runtime"]
+    shared["numerical"]["files"]["tree_pin.py"] = api.OLD_TREE_SHA256
+    current = api.structured._implementation()
+    if change == "unknown_original": shared["numerical"]["files"]["tree_pin.py"] = "b" * 64
+    elif change == "unknown_current": current["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = "b" * 64
+    elif change == "reversed":
+        shared["numerical"]["files"]["tree_pin.py"] = api.NEW_TREE_SHA256
+        current["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = api.OLD_TREE_SHA256
+    elif change == "missing_tree": shared["numerical"]["files"].pop("tree_pin.py")
+    elif change == "numerical": shared["numerical"]["files"]["modal_latent_formula.py"] = "b" * 64
+    elif change == "security": shared["native"]["dependencies"]["ipfs_datasets_py.logic.security_ir.model"] = "b" * 64
+    elif change == "runtime": value["implementation"]["runtime_sha256"] = "b" * 64
+    else: shared["numerical"]["files"]["invented.py"] = "b" * 64
+    monkeypatch.setattr(api.structured, "_implementation", lambda: deepcopy(current))
+    path, checksum = write(tmp_path, value)
+    with pytest.raises(ValueError, match="pin|implementation"):
+        api.load_source_program_decoder_384_v2(path, expected_sha256=checksum)
 
 
 @pytest.mark.parametrize("change", ["unknown_ui", "numerical", "security", "runtime", "extra_pin", "missing_pin"])
@@ -260,8 +323,12 @@ def test_real_published_checkpoint_replays_archived_precomputed_vector_without_c
     report = loaded.infer(inputs)
     assert len(report["rows"]) == len(expected) == 1
     for actual, archived in zip(report["rows"], expected):
-        for key in ("candidate_ir", "predicted_classes", "projected_embedding", "head_sha256", "projection_sha256"):
+        for key in ("candidate_ir", "predicted_classes", "head_sha256", "projection_sha256"):
             assert actual[key] == archived[key]
+        # The archived BLAS result can differ by floating-point roundoff across
+        # runtimes. Keep numerical error tightly bounded; categorical outputs
+        # and immutable weight hashes above remain exact.
+        assert actual["projected_embedding"] == pytest.approx(archived["projected_embedding"], rel=0, abs=1e-15)
         assert actual["source_contract"]["status"] == "qualified"
     receipt = report["checkpoint_compatibility"]
     assert api.verify_checkpoint_compatibility(receipt, path, checksum) == receipt

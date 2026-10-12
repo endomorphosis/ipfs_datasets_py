@@ -7,6 +7,7 @@ install. Callers that need this tree put it on the path themselves.
 from __future__ import annotations
 
 import importlib
+import sys
 from pathlib import Path
 
 
@@ -30,7 +31,8 @@ _MODULES = (
 def require_workspace_logic_tree() -> dict[str, str]:
     """Import the compiler, decompiler, and parser and require this checkout.
 
-    Prints one resolved-path line. Raises ``LogicTreePinError`` when any
+    Prints one resolved-path diagnostic to stderr, preserving stdout for
+    callers' machine-readable output. Raises ``LogicTreePinError`` when any
     module file sits outside ``workspace_root()``.
     """
 
@@ -51,5 +53,5 @@ def require_workspace_logic_tree() -> dict[str, str]:
             "Put that tree first on PYTHONPATH, or point the editable install "
             "at it. This check does not rewrite the install."
         )
-    print("logic tree pin " + " ".join(f"{label}={path}" for label, path in resolved.items()))
+    print("logic tree pin " + " ".join(f"{label}={path}" for label, path in resolved.items()), file=sys.stderr)
     return resolved
