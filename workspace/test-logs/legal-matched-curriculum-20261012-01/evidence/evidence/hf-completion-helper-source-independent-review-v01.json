@@ -1,0 +1,65 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/complete_hf_release_v03.py": {
+      "bytes": 21457,
+      "sha256": "817d4faa2217ee77a15811545f3b75b8d297c04b69b665a2b9b300d4dff98785"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-before-file-identities-v01.json": {
+      "bytes": 1048733,
+      "sha256": "fad9a61b1e41000ae38ae8cf47e292cc0f57eea8e4dc1efaf530e16cba8c5c0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-partial-publication-reconciliation-v01.json": {
+      "bytes": 1135006,
+      "sha256": "85878cf226c8d693f4b2947dc8a1f68765deb730af92187d7d28ab893dbf6cfe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-preparation-receipt-v02.json": {
+      "bytes": 177349,
+      "sha256": "a0470b02d2cd8e1751e4de25aafdbefa790ca59dd362ba8b250b2b612f1fbcc1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-publication-independent-review-v02.json": {
+      "bytes": 131517,
+      "sha256": "27fe643b11b21a2ecf2d44d391a0dd537748b395eddb0c7e8e944bd33de8dc1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-recovery-helper-source-independent-review-v01.json": {
+      "bytes": 4360,
+      "sha256": "f16aef6aafd68d53142afb9ba4bcce1ca73effc10bd5485b0b01b8591533ecc3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-root-gitattributes-after-v01.txt": {
+      "bytes": 2350,
+      "sha256": "d8b99b7ff67dd690617b4285ba90b0e84c5feeff481a1d568dc13ee667c2b892"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-root-gitattributes-before-v01.txt": {
+      "bytes": 2230,
+      "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/publish_hf_release_v01.py": {
+      "bytes": 10259,
+      "sha256": "0e67f96e9aa4512d298b91f2ee3d31c08354bd5c9cad924ba1613d78efb1b3a0"
+    }
+  },
+  "controls": {
+    "byte_identity_cases": 11,
+    "existing_original": 384,
+    "known_root_delta_bytes": 120,
+    "missing_original": 21,
+    "old_identity_count": 3451,
+    "one_commit_site": true,
+    "original_prefix": 405,
+    "root_after_bytes": 2350,
+    "root_before_bytes": 2230
+  },
+  "findings": [],
+  "limitations": [
+    "Source qualification grants no concrete upload authority. The saved reconciliation is a point-in-time endpoint; the publisher rechecks the complete current map and CAS before writing.",
+    "Hugging Face may perform implicit attributes changes; final exact baseline checks must pass rather than assuming the restoration succeeds.",
+    "An exception during create_commit must remain an unknown outcome requiring reconciliation, with no automatic retry. Checkpoints remain opaque bytes; no semantic accuracy or default promotion is qualified."
+  ],
+  "passed": true,
+  "schema": "matched-curriculum-Hub-completion-helper-source-independent-review/v1",
+  "scope": [
+    "Independent static review of the frozen completion source and unchanged imported publisher; no complete import, API, network, model parsing or publication.",
+    "Detached byte-identity controls and exact saved current/baseline/original population and attributes joins.",
+    "One CAS commit at known 4602870f7fb6b85fbff0ad4dc92b5546ba803091: 21 missing original paths plus seven finite extras and the sole exact original root .gitattributes restoration.",
+    "Separate concrete closed eleven-key review remains required; all old identities, complete prefix byte identities, immutable 412-file readback and original root attributes are mandatory after commit."
+  ]
+}

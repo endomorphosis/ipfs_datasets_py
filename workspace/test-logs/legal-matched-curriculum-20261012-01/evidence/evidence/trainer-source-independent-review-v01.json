@@ -1,0 +1,99 @@
+{
+  "actions": {
+    "blocked_imports": [],
+    "complete_trainer_or_legacy_imports": 0,
+    "historical_checkpoint_JSON_parses": 0,
+    "model_restore_or_forward": 0,
+    "network_compiler_Git_HF_calls": 0,
+    "numerical_imports": 0,
+    "optimizer_updates": 0,
+    "production_ledger_reads": 0,
+    "resource_API_lease_lock_calls": 0
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-decoder-native-conditioning-20261002/run-01/source_only-1729/checkpoint-400.json": {
+      "bytes": 2744449,
+      "sha256": "5df537d8c7141578c1355af43317b9c5a327305295a11760aee2897244bc5dbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/curriculum-pure-contract-test-observation-v01.json": {
+      "bytes": 8301,
+      "sha256": "2685539a990b7bb6d366a1ed984ecb31238e932309c136b07214c829aad2c541"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/curriculum-trainer-implementation-handoff-v01.json": {
+      "bytes": 10130,
+      "sha256": "cd599669e81eb19b81451b7ef1e647622384ee658600a7e167217a2b5696bb71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_curriculum.py": {
+      "bytes": 27004,
+      "sha256": "311c39aa7e57c63838ee017e47b87411ffadaabd4d84c0b63b9f4d35103cd283"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_curriculum_contracts.py": {
+      "bytes": 33707,
+      "sha256": "177096d9c145a17190e407f1a9664e9a941833132122842f0761062539b03af6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/run_curriculum_pure_tests.py": {
+      "bytes": 4500,
+      "sha256": "954ff7521d41d3b6c7edffebc05aec1bd571030e15d8cd9d6a8f2d19e7b4f0d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    }
+  },
+  "findings": [],
+  "independent_controls": {
+    "author_contract_tests_passed": true,
+    "author_contract_tests_rerun": 19,
+    "bad_step_and_seconds_types_refused_before_model_boundary": true,
+    "cumulative33_refused_before_model_boundary": true,
+    "legacy_loss_body_AST_equal_except_namespace_qualification": true,
+    "single_optimizer_step_site_followed_by_trace": true,
+    "target_free_decoder_signature_and_body": true,
+    "valid32_reaches_only_forbidden_synthetic_boundary": true,
+    "weight1_return_AST_exact_legacy": true,
+    "weight2_return_normalized_by8": true
+  },
+  "limitations": [
+    "Static and synthetic review establishes source contracts, not numerical gradient parity, realized optimizer effects or accuracy.",
+    "The batch trace is trainer-authored returned-prefix evidence; crashes after an update may leave unreturned partial progress unknown.",
+    "The nested legacy constructor descriptor does not supersede the new outer training policy; extracting the inner checkpoint drops curriculum provenance.",
+    "Each cell requires its own current concrete plan and guarded resource admission. This source receipt grants no lease, capacity change, cleanup or execution authority.",
+    "No sealed authored evaluation references were opened or rescored; no legal gold, Lake, encoder effect or promotion claim."
+  ],
+  "observed_at_utc": "2026-10-12T07:37:57.249522+00:00",
+  "passed": true,
+  "schema": "bounded-curriculum-trainer-source-independent-review/v1",
+  "scope": "Different-author frozen trainer, contracts, unchanged legacy producer custody and raw-only parent identity; detached pure predicates and metadata stubs only",
+  "source_findings": {
+    "JSON_loader_expected_raw_SHA_duplicate_and_nonfinite_refusal": true,
+    "actual_outer_objective_and_separate_batch_seed_authoritative": true,
+    "all_authority_flags_false": true,
+    "exclusive_checkpoint_save_and_bounded_reader": true,
+    "losses_and_batches_recorded_after_update_finite_checks": true,
+    "maximum32_cumulative_updates_and_soft32s_boundary": true,
+    "module_contains_no_resource_or_admission_calls": true,
+    "original_parent_weights_and_fresh_Adam_boundary_authenticated": true,
+    "resume_preserves_policy_origin_source_and_manifest_fingerprints": true,
+    "strict_closed_policy_and_outer_schema": true
+  }
+}

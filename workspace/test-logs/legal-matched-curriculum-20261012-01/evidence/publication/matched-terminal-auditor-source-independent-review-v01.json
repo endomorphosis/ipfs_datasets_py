@@ -1,0 +1,105 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-plan-v01.json": {
+      "bytes": 49520,
+      "sha256": "2b1ff445abc72b2876b94e028b65cc6fc2c0fcdb65777000df9d6f138fe7e980"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/audit_matched_terminal_v03.py": {
+      "bytes": 33353,
+      "sha256": "2460ac98525f4de313e839fba93e10c4a1d38d25824bd0dde8ce7f3f648bce46"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/first-training-protocol-independent-review-v02.json": {
+      "bytes": 104209,
+      "sha256": "fe60bae52be4d280ee8f373f6ccef1b6b10b96285216b9b25edc505afc1f71b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-terminal-auditor-procedure-v03.json": {
+      "bytes": 3439,
+      "sha256": "aeb0d8e98dd8edc4b1c7d05b64f11c704eef6fe14ec18e414816f14deac59ae3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/resource-baseline-audit-design-v01.json": {
+      "bytes": 71353,
+      "sha256": "1bde5b5a892787e2d37cc0a57883ad3148c5d8213a8356938a17ee1f396f3445"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "9ecd362f784764d1d5149b4ad59a73889a5835c500b4c6d130d06262b301d5ec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/group-rss-summary.json": {
+      "bytes": 1758,
+      "sha256": "bc101bec82cf0c6f0b5a56dc39c794bf88d1a61848242b3edcb6465e004e0f43"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "01e3d8135e8feee438296e0940f0230e92167d3b31eb63f588558bb9cbdd2082"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/cell-training.json": {
+      "bytes": 47977,
+      "sha256": "4d94ef0a9875000102241d99d160b15edf75bbcae6b32fe471933784923046b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/summary.json": {
+      "bytes": 49796,
+      "sha256": "a7e9468974f573213a730610b6943b05479ae27ebc804400dd258aa5b59c735c"
+    }
+  },
+  "auditor": {
+    "bytes": 33353,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/audit_matched_terminal_v03.py",
+    "sha256": "2460ac98525f4de313e839fba93e10c4a1d38d25824bd0dde8ce7f3f648bce46"
+  },
+  "controls": {
+    "actual_first_RSS_summary_join_passed": true,
+    "actual_first_returned32_trace_metadata_passed": true,
+    "closed_nonfinite_duplicate_metadata_JSON_refused": true,
+    "detached_negative_controls_refused": 23,
+    "original_and_immediate_opening_body_changes_refused": true,
+    "unexpected_second_new_record_or_adopted_old_claim_refused": true,
+    "weight1_explicitseed32_sampler_reproduced_without_models": true
+  },
+  "findings": [],
+  "limitations": [
+    "Source/procedure approval allows read-only audit execution, not training/admission or numerical-result approval.",
+    "Private endpoint copies are root-authored samples, not independently witnessed contemporaneous reads or continuous global custody.",
+    "The auditor qualifies successful32 returned report traces, not independent kernel optimizer tracing; failures remain unqualified and may have unknown partial progress.",
+    "RSS limits and five-second observed gaps are sampled-qualification criteria, not kernel hard quotas, continuous coverage or configured guardian RSS hardstop proof.",
+    "Current bound group endpoint is observed at audit time; global scheduler/ledger may later change while cells continue.",
+    "No semantic/legalgold, Lake, real latent comparison, checkpoint promotion or numerical replay qualified."
+  ],
+  "observed_at_utc": "2026-10-12T08:06:57.261793+00:00",
+  "passed": true,
+  "procedure": {
+    "bytes": 3439,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-terminal-auditor-procedure-v03.json",
+    "sha256": "aeb0d8e98dd8edc4b1c7d05b64f11c704eef6fe14ec18e414816f14deac59ae3"
+  },
+  "resolved_source_findings": [
+    "Separate exactfive-key plan resource fields and seven-key guardian envelope.",
+    "Pinned baseline schema fallback supports later review metadata while enforcing original daemon schema.",
+    "Repeat frozen input/source/plan/review/source-approval/baseline/private-copy/attempt fences at close.",
+    "Top-level model RSS count/peak join reproduced per-phase events; observedgaps<=5 qualified as an audit criterion."
+  ],
+  "reviewer_actions": {
+    "complete_auditor_or_production_imports": 0,
+    "eval_reference_packet_access_or_scores": 0,
+    "model_JSON_parses_restores_forwards_updates": 0,
+    "named_AST_metadata_predicates_only": true,
+    "network_compiler_Git_HF": 0,
+    "numerical_imports": 0,
+    "resource_API_leases_locks_signals": 0,
+    "shared_ledger_or_scheduler_reads": 0
+  },
+  "schema": "matched-curriculum-terminal-auditor-source-independent-review/v1",
+  "scope": "Different-author stdlib terminal observer and observational procedure; exactsource static inspection plus named AST criteria, actual returned trace/RSS metadata only, detached synthetic record digests",
+  "static_checks": {
+    "cap145_and_roots_config_preserved": true,
+    "deferred_reference_packet_blocked": true,
+    "exactly_one_new_own_released200MB_body_and_all_old_bodies_preserved": true,
+    "leader_reaped_bound_current_group_absence_and300s_deadline_checked": true,
+    "lease_binding_envelope_absence_and_recorded_gaps_checked": true,
+    "no_numeric_admission_authority_or_guarantee": true,
+    "no_resource_package_or_model_imports": true,
+    "old_new_checkpoint_bytes_opaque": true,
+    "output_exclusive_owned_receipt_only": true,
+    "sampled_RSS_event_phases_peaks_timestamps_and1536MiB_envelope_reproduced": true,
+    "terminal_total_includes_later_receipts_under200MB": true
+  }
+}

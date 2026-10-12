@@ -1,0 +1,52 @@
+{
+  "actual_encoder_calls": 0,
+  "admitted": false,
+  "controls": [
+    {
+      "control": "none",
+      "name": "zeros",
+      "report": {
+        "bytes": 22380,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/trained-parity-zeros.json",
+        "sha256": "caab969a97a7026d3d960d55fa24b669ed450dae868622f830d8f8a290e33ae5"
+      }
+    },
+    {
+      "control": "none",
+      "name": "alternate_placeholders",
+      "report": {
+        "bytes": 22380,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/trained-parity-alternate_placeholders.json",
+        "sha256": "3c5672a3184003c83d17a53ea9dc0e060a9940562d01bc9919caf6b7de4870b4"
+      }
+    },
+    {
+      "control": "disabled",
+      "name": "disabled",
+      "report": {
+        "bytes": 22384,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/trained-parity-disabled.json",
+        "sha256": "6b6377890fa58fd8008fe3a247ad32f514f76104878c23e16df06af7d29eabae"
+      }
+    },
+    {
+      "control": "rotate",
+      "name": "rotated_placeholders",
+      "report": {
+        "bytes": 22382,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/trained-parity-rotated_placeholders.json",
+        "sha256": "77177b784b74b2479ad5f65094f9f274946d447a360f0766fa25d0c21ee870e6"
+      }
+    }
+  ],
+  "formalized": false,
+  "genuine_latent_semantics_tested": false,
+  "passed": true,
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "source-only-dormant384-placeholder-parity/v1",
+  "score_and_greedy_decisions_bit_equal": true,
+  "semantic_correctness_verified": false,
+  "source_count": 2
+}

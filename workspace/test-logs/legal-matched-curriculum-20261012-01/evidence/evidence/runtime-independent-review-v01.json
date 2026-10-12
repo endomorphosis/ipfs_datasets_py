@@ -1,0 +1,1091 @@
+{
+  "Lake_executed": false,
+  "absolute_peak_measured": false,
+  "all_original514_and_each_fresh_opening_record_body_preserved": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-plan-v01.json": {
+      "bytes": 49520,
+      "sha256": "2b1ff445abc72b2876b94e028b65cc6fc2c0fcdb65777000df9d6f138fe7e980"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-terminal-resource-audit-v01.json": {
+      "bytes": 28584,
+      "sha256": "7390ff45ed7a4005870b68d3bcd25d1326eadf6dc4913a2ee405b2bdcf2c5602"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "a4a789824b330b109e7f49f057986978e81877ed610375aa22d552188badb775"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-terminal-resource-audit-v01.json": {
+      "bytes": 22543,
+      "sha256": "6ec44efc938f8b875c6a4cf42f0ccb7ac82c1e7620bc9a4bbea89b688a03b670"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-training-protocol-independent-review-v01.json": {
+      "bytes": 133957,
+      "sha256": "5f4f7ad199360cab4e1155fb71f0263735d9ddb87a963315df502d183921f00a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "ea0206c6fe49648daf6c8b45e91e6b8bdc78e8ecec68347440b463350aa77a26"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-terminal-resource-audit-v01.json": {
+      "bytes": 22543,
+      "sha256": "d846f8e4b275349781bc64f20b73ad3476a3010c3d873a612ad361d497e95f44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-training-protocol-independent-review-v01.json": {
+      "bytes": 134067,
+      "sha256": "96be10ceb791577bd34dfc6d7347f8873a89b6d9c8cd2f333ab8116127f3abef"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "095ca035935263b4b3a9342a469fa4260f2a6578c3b02c861ef38b8275ff9910"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-terminal-resource-audit-v01.json": {
+      "bytes": 22543,
+      "sha256": "ebd526ee320c5d2fdef6a244dce40e3cc1305a446e07592b8935fd88d8f67b25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-training-protocol-independent-review-v01.json": {
+      "bytes": 134177,
+      "sha256": "81472a088ac450fa926bf5dee0927a465d68e7fd436c9ef35d035c2a9c8539d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "c37e528ee1494d2776abe5dad6dd58188169beef08cff436814b3e801888cd66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-terminal-resource-audit-v01.json": {
+      "bytes": 22542,
+      "sha256": "22b96682eb21d6d422ef979233200504f0aec4ac1420a32c9b17e6095abf077a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-training-protocol-independent-review-v01.json": {
+      "bytes": 134287,
+      "sha256": "7387095295e86551e501dd154aa9cc2ce0bb35feacf1a264b40caa2fa6abd714"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "0732e616eaafa90eea45d41609242cb8f3597aca974f3e14df2f8546686a8635"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-terminal-resource-audit-v01.json": {
+      "bytes": 22543,
+      "sha256": "850f5f5008fa030b226e96dcb183c2722108eb1f11d1971fe2bcee179224a16c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-training-protocol-independent-review-v01.json": {
+      "bytes": 134397,
+      "sha256": "763a454f3a4ca15c17cdd9a47cfbb3fe9d239cd97dfb40a728aa86972f8b2815"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "264c74a7517e58be3ed9a6453a99b81b4e4eba58fcef8ef803d12177585ae066"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-terminal-resource-audit-v01.json": {
+      "bytes": 22544,
+      "sha256": "ab9b668510b7495f3053b545b55d7ce381e98df9808e550b4d7ca98f546d82fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-training-protocol-independent-review-v01.json": {
+      "bytes": 134507,
+      "sha256": "fd9d16f930f42a0b8e4b5597bfaec56fa9c7ba94791a95482093794c03e74ffe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-plan-v01.json": {
+      "bytes": 56352,
+      "sha256": "3dd07ad3175addb60aa692dcae47a5e2f8d6d6a25eaf1d983894013c4e002916"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-terminal-resource-audit-v01.json": {
+      "bytes": 22544,
+      "sha256": "db1dff28871eeeb6fed6fa049a00a1dbb66980907c1c62316267ea4a303528da"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-training-protocol-independent-review-v01.json": {
+      "bytes": 134617,
+      "sha256": "9006d12b77ebf5b3f7aa40cce81a1953f266115bda9ac06f656954a9a1299699"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/audit_matched_terminal_v03.py": {
+      "bytes": 33353,
+      "sha256": "2460ac98525f4de313e839fba93e10c4a1d38d25824bd0dde8ce7f3f648bce46"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/first-training-protocol-independent-review-v02.json": {
+      "bytes": 104209,
+      "sha256": "fe60bae52be4d280ee8f373f6ccef1b6b10b96285216b9b25edc505afc1f71b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/freeze_runtime_endpoint_v01.py": {
+      "bytes": 3171,
+      "sha256": "d7c0d80f8684a91494ed7cb9743d51e84cc1bf0295addb9e5a545b7ea18b9771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 4353,
+      "sha256": "9667c056b360441e5e989e9314e012a0396b5be4534d7e41e02fa044d4d0339c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-terminal-auditor-procedure-v03.json": {
+      "bytes": 3439,
+      "sha256": "aeb0d8e98dd8edc4b1c7d05b64f11c704eef6fe14ec18e414816f14deac59ae3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-terminal-auditor-source-independent-review-v01.json": {
+      "bytes": 6440,
+      "sha256": "11f9f827cf09600ee8c63577f3424b91480815d8406cdaa868eb383fd1cf24b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/prepare_runtime_author_aggregate_v01.py": {
+      "bytes": 8953,
+      "sha256": "029b19cc1352bb1acd86782b07c89c881477ec8e373394c769210d6348fc205a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope0-modality0/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "498f1c7c2ef4f45cace0379dbe4ffc9edd2ab1138f5e4da3ac99437d17559189"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope0-modality1/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "03eb911dc7998253798252c5246560d7d220a0ffb960060414bb21ea3c7fc4ef"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope1-modality0/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "443cd0e186a4ac51e365be9eb77b304a008413750b43b697b118ea2f352967bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope1-modality1/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "33922f22757ef62150afb4f71f4ecff30c8cf5c79128be08569b847607b62ee3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope0-modality0/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "85b5f4f05afacf60e7664cb238930d1924151b8c030bb933876e69742a8281ad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope0-modality1/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "e344a676bccf54a667e4734eff4baffe30a6115dc02f0b5be3abe24d1e164635"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope1-modality0/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "ce03bc3fcb430629b696c4a84343b02e64938f76a5a028cd23931d767ca7d605"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope1-modality1/snapshot-receipt.json": {
+      "bytes": 2795,
+      "sha256": "9b9e6f1c7109cff87a8411d70de0dc6fe5f055682754c0d04f07aeda991cb9ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/resource-baseline-audit-design-v01.json": {
+      "bytes": 71353,
+      "sha256": "1bde5b5a892787e2d37cc0a57883ad3148c5d8213a8356938a17ee1f396f3445"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/runtime-author-aggregate-v01.json": {
+      "bytes": 69732,
+      "sha256": "a6d7d01ac152ae415ed5dee96ddaba055ae93a5f6af4041a1247a8344067cdff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "9ecd362f784764d1d5149b4ad59a73889a5835c500b4c6d130d06262b301d5ec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "d3be0c55294952a3315b1508376c4a73b4fead85e8b8d374220af1e9cdcb166b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/child.log": {
+      "bytes": 74,
+      "sha256": "e816ebde03f534150e98e6406ffe084d852a2bcc1f86dd1cc41ce57f08603a94"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/command.json": {
+      "bytes": 1076,
+      "sha256": "606006b816aa946ef0e16ad9ce4c9b3c486fdf18a7004d7f7310b94ca5426d91"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/group-rss-observations.jsonl": {
+      "bytes": 15014,
+      "sha256": "e0ed640e81f2635c60b8498cade30ddd82e531a9f8a1b75fed38fcc554fbd39b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/group-rss-summary.json": {
+      "bytes": 1758,
+      "sha256": "bc101bec82cf0c6f0b5a56dc39c794bf88d1a61848242b3edcb6465e004e0f43"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "01e3d8135e8feee438296e0940f0230e92167d3b31eb63f588558bb9cbdd2082"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "a2140c691f8e1d898d383074dbd433e3d326eb9242664d541307418120cf2fd6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/lease-observations.jsonl": {
+      "bytes": 32717,
+      "sha256": "ab789145e85affed6c17753ee7236bd8c58cf42c5d8be3e5a015a328d99b46cf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "8bf53f9fe4ba78cec5971a9d944fe5abf56b7a5295f204da10be888629dcdbc1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/pre-admission.json": {
+      "bytes": 8024,
+      "sha256": "6890c464f6d0bb324ef9f1b9d4ca2e719b9689101ad4d5f06519944a1d730850"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "c0a986a95e996c0c6d405df32b97fa916dffded40fbcf12a851d20967bbb603e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/cell-checkpoint.json": {
+      "bytes": 2740985,
+      "sha256": "357300e49b363484eef464c436b40ad8ce18053b7304ac29a18a32e6bf6dd878"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/cell-training.json": {
+      "bytes": 47977,
+      "sha256": "4d94ef0a9875000102241d99d160b15edf75bbcae6b32fe471933784923046b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/results/summary.json": {
+      "bytes": 49796,
+      "sha256": "a7e9468974f573213a730610b6943b05479ae27ebc804400dd258aa5b59c735c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality0-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "4677a1c0d7e3ba406756228351813379bb1a6190a63f3154b00e357101715de9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "3641b4d6e330f09d65f41c62015ebbd027753ed1187c28f9f466f5abbb856912"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "8c1a2d89b6f92f76f3772bd948fbda760031af09a77c8c779e52058cdbaa86d0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/child.log": {
+      "bytes": 74,
+      "sha256": "0e6d3882d41740c6191de9a9155f6ba9868c327446525504fa47b88657235789"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/command.json": {
+      "bytes": 1076,
+      "sha256": "f5929383668629da57aff535e7881b31dfdbafcf2104479593342061d462b27a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/group-rss-observations.jsonl": {
+      "bytes": 14012,
+      "sha256": "92e09c379cab6b7ab45d10e854d258c52c0e1c3f772abc4df1627ffb0fae569b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/group-rss-summary.json": {
+      "bytes": 1757,
+      "sha256": "743b1e28443926ef08c2f742c65907d4e3372e52603e8aae4b7b8d22876e9817"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "eb561ca4e0bf99800ec08226dfe85b4f6abe8fde43e26cd889d9c8d8fbe94f5b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "e31f99930debe6a27e0e0a98ffee75633cbb1b7864bf5ab2229f81fd67d882d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/lease-observations.jsonl": {
+      "bytes": 28688,
+      "sha256": "f31ef56fb315349b132fadd138f0b271c11754be9538aa498b7abc80ab892106"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "645f965b88767d683b5bd468d8adc1411d7ab9d35475c9d2133f63490cee3c68"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "8a44399f4a7f32ec428887bb86674ba17ee97c706b774e6e6a7e44db88d5f4bd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "7cb5d3201b8d8567f920833a29e8068230b32c60d6fd0994ea0894d7d056bcbf"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-checkpoint.json": {
+      "bytes": 2742144,
+      "sha256": "01dda8db527879dd47f84af2e0486d7ccd4e8df04ea501fb55410c343cbaa27d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/results/cell-training.json": {
+      "bytes": 47985,
+      "sha256": "d3abe32938149bba74f22d58f81ddedc0fab356b72c3254a8befb81c519000af"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/results/summary.json": {
+      "bytes": 50095,
+      "sha256": "e55c2b791c178a8a781e8de7dafae62f2fa19c17f70388e2df295ea59d779011"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope0-modality1-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "ee20170c45fe8fcafec2dfaffa385f378d7f86f06cd7e11497379a8c95b64d02"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "971ddb857875085978e30a6ac7108c6810c989063043d99c584bbb6ea41a2b84"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "c98e9c607ebe63e2f2c36b2bdc8447dfd0d0fee3f7fbd071f22c6881fda93b79"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/child.log": {
+      "bytes": 74,
+      "sha256": "38f19f405a932ababf32c8abfcbdc6d6b23ec83d13faeb59c4236751abdc97c0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/command.json": {
+      "bytes": 1076,
+      "sha256": "3b471b5eb6ebf5a4ef495f9fb9fc06b75ebcd18b99cf1310cd366c333b0b5233"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/group-rss-observations.jsonl": {
+      "bytes": 14513,
+      "sha256": "3e033b97db1a0062d5e83ea5cdeaccde400d129483d183078fb5bccc5f2a9123"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/group-rss-summary.json": {
+      "bytes": 1759,
+      "sha256": "e24cda9846cadc7318aa0a0906b8845121fd0226ae33e903ccd159346b18d807"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "df67ee4360bbbd38ec36c91506705a4a7adbd1f007858354af14f143910b9b2b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "e8ce87ecd9f0b53d60971dd455defff81f1fa57106d92d24e048ed67769cbc9d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/lease-observations.jsonl": {
+      "bytes": 30713,
+      "sha256": "51848b4eb100a680e77468308a105cb91b6eb4a82752e524f010cddb9c3e8566"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "b15bb18b8e8bc776ba6faa10c2ba67cff21b58b4cf0ebc31bd46bf50d94e29ea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "6f532ceea6feda7fdaa1cd64f464c9b6939fd6d8e4c58268096aa9d1929e206a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "a8271e54fb1fac77e3b7b53bbed83177c70b1605395cfe793881bdddce7b20c0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/results/cell-checkpoint.json": {
+      "bytes": 2741154,
+      "sha256": "d4bbe6e1a75ed5648cb517aa953cb33ff75971b6e4a05593744c29ffa4cc8eb7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/results/cell-training.json": {
+      "bytes": 47980,
+      "sha256": "798bfaa382143dd40838df3e664336356640e78d00db9ca7d338de3ec2c5ba9e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "10682bcea2c4142069f379a453f3a200740f047acea4d08f7c2ab82da2d2794b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality0-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "ce5459bb19e32acf0e2af462a3624c6f1fc31cf1b3a42e42183a74ca884a95de"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "dd071d4e5706f8e3bb7ce1d130bd590725dce2e53750b307e532d757b6a634ff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "9481ccfbe901a5da7a41fd5823d5aa83c01465864c7a64c369e161193da7055f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/child.log": {
+      "bytes": 74,
+      "sha256": "3df35f9b238c8e012c94813469304397664c99b21f36dfbed50ee6ccad9a52a8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/command.json": {
+      "bytes": 1076,
+      "sha256": "3b7b560f33206af4fe5d0c5c6668ec08083f0d9f91c3e1a2b33ccab2b0e7d188"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/group-rss-observations.jsonl": {
+      "bytes": 14009,
+      "sha256": "1a61950b530286f266237ffe5dab5a17077cd4a7a60a0fc86120c1a0e006e8c6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/group-rss-summary.json": {
+      "bytes": 1758,
+      "sha256": "45c9c7d92be1d5de04015a17b7d096b824d4c4dda159612249dad027cc182e62"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "95294001ea6e02baae810648d67c12d0648fade70db03622778831f16d263e8b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "f4db6b10776f22b209e04ea3808a0eb5269698c9b5f0a5da1438e1cc393d3e03"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/lease-observations.jsonl": {
+      "bytes": 29684,
+      "sha256": "f0e3e6465e829f29dc7d97932d5f274084a721413ac6ebd39a75cb07fd0d7c25"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "78b5c4950bdc7f3ea027954c718e0eb57935277ce5bc56818451641cbccc750b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "189480f42474a73935bd06a3c20051d81c53ee8e0899097e64bcf23668ed08ee"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "4f64baa648a26b5cb6aa6f24cce7d051e3c67201b86c99f01c70b7b01d46c924"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/results/cell-checkpoint.json": {
+      "bytes": 2741757,
+      "sha256": "b6c996810492c69b62df1e270bf892c7b61966838a36d802ba53dc2e276eee53"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/results/cell-training.json": {
+      "bytes": 47989,
+      "sha256": "c6511aa780078e8e7015c6e44383169e766e0f8e7c2b177656ebf826737d4806"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "7b23a7051e66e19590f437f4dc367d1a4215504ec94db3a3bf03e833b3be9204"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor0-scope1-modality1-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "8f5ac1f208eb061ca65cff37430edbcd50d9dc60b54f2536f887a2e39e1720d3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "2f7fa08c80e7fc58391e049d534451d12cfc0a3eade3e8fbe2de463c69529c91"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "ac4b1fb700c5a094940f8db6941d609a63249fe402c779339d46275ba98b6854"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/child.log": {
+      "bytes": 74,
+      "sha256": "3f8909c145149d0fec9cf3a6591847b02aa01fbfb3fca8c60818eb8273f6ea3e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/command.json": {
+      "bytes": 1076,
+      "sha256": "1f36597f4a6318de38f0d38b33149bdb47d3377f9e53d7b7f27a018093a96481"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/group-rss-observations.jsonl": {
+      "bytes": 13997,
+      "sha256": "7f6fdeef35156b2ef32e08c3c5fe170c51bb81c80038a593fefb41edee9ba959"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/group-rss-summary.json": {
+      "bytes": 1756,
+      "sha256": "a4f8e028ab005117b7697f85119e0b61c7fc95f5b57731f67c97eaf69d4488f0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "f5f866301d5f7abf1ea0baa617cf815183a3701040b6c6d28086b7d2a9b60edd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/lease-binding.json": {
+      "bytes": 692,
+      "sha256": "945b0ba21306f2edaccd243e499ba790ddfd4139a49afa2fed2f44907f457d0f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/lease-observations.jsonl": {
+      "bytes": 28575,
+      "sha256": "0c02a881bc907a4b1a3cd941d1b720b8f427d04a4ef42d73e1b4e264ebe682e4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "e48c0855671bd6462f02b7fd07ce1a9ee77a48a0ce8185e12c30ab0c516af36e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "40ed0e23aba7b95a5b6bab16a3e5c33f3f55d1059de2458dffd71acd2aec2f8c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "a2ae2cfd0e45e9572bf494f426401777cc958a90df65b3bde4ab13c11c34f373"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/results/cell-checkpoint.json": {
+      "bytes": 2741713,
+      "sha256": "9190d8a899acc640a850d68f18ffa019bce4a1ccf491a6cc6805a263a0fe2a27"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/results/cell-training.json": {
+      "bytes": 47995,
+      "sha256": "757a17fb03dc0d7cd4f9e15ff4e79bfdb33a8d5906d8b4d605b87dca4cbe20ef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "1a507c335d249aaddcf46631bd80faa02ad91e563d4a04a0e0b6cd914a35337f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality0-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "adb761e61ccecc4fc7c2451201ef3da9eb0ba185c02dcfdcff6ebd79498dcc32"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/child-exit.json": {
+      "bytes": 104,
+      "sha256": "785bd1cecfba10e26191496a9ac06acaffcf5acf14bab466e42363b4610707b6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "560c1926605716fc44a555a474e8b26570e55a927550772ebc23e49dc3ab47db"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/child.log": {
+      "bytes": 74,
+      "sha256": "de2b464432e1d981ff23a64ea2b99d172f03d262e679108d8952fa98641e8095"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/command.json": {
+      "bytes": 1076,
+      "sha256": "c6bc4baea148e1099a56011e4398679211c890d7965f171ab23feb8bb878d542"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/group-rss-observations.jsonl": {
+      "bytes": 14015,
+      "sha256": "81a1a10e43fea10bf1c87b7ba9c07808b398621050ddf263bb4ab573cbb9f066"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/group-rss-summary.json": {
+      "bytes": 1758,
+      "sha256": "0e0ddd7fcb2bc93adb02565dc957a9440745801d148383f2e98ea99b4fa04e8a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "9c5333b59e4ff14f32ae270322d028071344fade292c79ad1795cbd725e82717"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "d1769f1a54f38291287f7f389ff247415c821adfba6e0fb9f322b719a0376f4f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/lease-observations.jsonl": {
+      "bytes": 29638,
+      "sha256": "7df8d2d0708e796ffb862b161499616894dfafc2f66e30a3b633c6c850096951"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "af91ea89a29a0f664c8029fdf08f10c5cd9ca7c68303cc6f9ad2e877da93a567"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "ffbad3ade6c31aa27d87f3cd2a78954c06955cde0eee32bb1535a28ef847bbb3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "c415ee6abbe8bbe1744c6b4b722daff782ff6726355e3951e4dbee58a048e89f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/results/cell-checkpoint.json": {
+      "bytes": 2742356,
+      "sha256": "0d7399da30d0e2a3b1ecc5b202738fb1a37648f1cdddfb6b1b49be7caf917567"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/results/cell-training.json": {
+      "bytes": 47986,
+      "sha256": "0f9f6e25e240baa45434875cc1930a8dfdb237c5aae4f3a8d9bae56ace4758f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/results/summary.json": {
+      "bytes": 50097,
+      "sha256": "5900f97dcf77a01fa2936e15c857bee1aa9d345a61629721e001af389b07e5c1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope0-modality1-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "1b58643fdc6749f0b23c79234e8fb042eb35e8b51d09af6df758265aebdf77f9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/child-exit.json": {
+      "bytes": 105,
+      "sha256": "a569747e4ae83ade3c87e68269690f1e57b9ff58a1009b2c6e0fb807a0e696a7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "e31b43f175dc1584962d404b0fd70b7281700f17a170e16cbb9f66a07f9dc51b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/child.log": {
+      "bytes": 74,
+      "sha256": "a3cff564f2eae26eb3770fe80d0d9b0ece0d20b0143857b49537981f49a53f2b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/command.json": {
+      "bytes": 1076,
+      "sha256": "a08e4c96944cc0491435752edc7aab417bd70dfe6e0fa6ac339867337b1f1924"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/group-rss-observations.jsonl": {
+      "bytes": 14004,
+      "sha256": "53fb9c1201d9f050b847b93512a84a24955deff893a11d1882c150500b501651"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/group-rss-summary.json": {
+      "bytes": 1757,
+      "sha256": "e53030ddf0897debfd6fa840039d6df69b1686de649353a8b3e4078fe8cdbb44"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "346e84296c1ae8daa8be2750f09786523f23806a6410efa771ff5de4ee33bcf6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "9b70c7c473516c39cb5a71043919adb1d7673abb5d2f0c2d90eecbe8c52b2b08"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/lease-observations.jsonl": {
+      "bytes": 29694,
+      "sha256": "8a9975a2877b1678ba9bb70d86af1812d8e6b5e0e9be70e20e98dc0af8edbd29"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "5a6fae066f3a1f20d017e742ed6a95147d1825f8e5c7921db1dafe89e0dae1d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "4a68369cc900fb9ba95a9359c604c7d6a33b92b2a416527d2624942176aeec4d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/resource-observations.json": {
+      "bytes": 874,
+      "sha256": "04b822ea2212ba4d68ea7e15329f5f5e4066b1c54ecc2fe24b9ef3ab98b402fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/results/cell-checkpoint.json": {
+      "bytes": 2741996,
+      "sha256": "fafc7936e4151bb415ba451920d536075d0f1aa985c271fa1221e8f99d18031b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/results/cell-training.json": {
+      "bytes": 47982,
+      "sha256": "2ce59f8b28bce3cd8590e24e305278c2e61ae7d16ba3bc8422c79c3ce362142c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "946ac2066c1452118e6590cbd3759ea66eeb72c858314c3346186af297fd5aa7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality0-01/scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "7769dab597e9eadfcbd203b69bbb608b96fb39f060ed497bca5a2023a56fdabc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/child-exit.json": {
+      "bytes": 105,
+      "sha256": "b6d19f391ee2b90e2f772ab3862fa3c20d73c1c1cd899b7165c53dff3799d204"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "7681ba95ca09b0a4872d997c3ad9cc11ab722824877220592703db271f0c6a78"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/child.log": {
+      "bytes": 74,
+      "sha256": "3750214276a8457cbf58d416db06575d84238f4663500a74e2919aa2dba1001a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/command.json": {
+      "bytes": 1076,
+      "sha256": "064fd38137d443e6f16cbd040f1aa2fc927a86f460bf2743111d813d210458f0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/group-rss-observations.jsonl": {
+      "bytes": 14018,
+      "sha256": "aaf753d7f4b6613ded938bb45c2d53fbb46cf987d2ee0b34b625a8f057cddf2f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/group-rss-summary.json": {
+      "bytes": 1758,
+      "sha256": "d6c7275d717b13c128b144a47f7a03073be0c0a2e34e31a296fbfa8c53346bcc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "c1eb71084fef0b4fd06a0d563a5e5e5f1906ef1fb2f0b346962148f2868d5a61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "1a017b412e894e75302d4b55fff4ec7645aceb23b425ab077acaca74b256bdfc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/lease-observations.jsonl": {
+      "bytes": 29679,
+      "sha256": "829ac10dff2082dc84dbe04b7e067f35e7fd8180bed554d43e1ea73f7058b711"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "68b20c4ec5d1641b4b5619fa72b0ee0b2fd6f703575b24ec15612010b69672b4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/pre-admission.json": {
+      "bytes": 8042,
+      "sha256": "acdbf0261898ad443b056401a89603b3a60d98d9c34c80e9086784e1cfbdb308"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/resource-observations.json": {
+      "bytes": 873,
+      "sha256": "4d3adb0cb07fdd5c943f28cf5dba98c83677f8af2e44f051c3ea0662051a7f42"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/cell-checkpoint.json": {
+      "bytes": 2742179,
+      "sha256": "3d2aa44944703899d5be7735391d4113c1c81d87dd427d2f3e023e54ce6282ad"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/cell-training.json": {
+      "bytes": 47975,
+      "sha256": "bc11224884585bcc7ce8035a8186de4e4395c24606fd6adf762163dd26d346f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/results/summary.json": {
+      "bytes": 50096,
+      "sha256": "9dd8c585510dd3ba1e7ec109d576747bba65cbdbbbf7da42c151c5618fce50dc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/matched-temporal-20261012-actor1-scope1-modality1-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "a22373feb85d448f200caf2cd244aff4db675890472d3c940ec8aacefe290ff8"
+    }
+  },
+  "cap_bytes": 145000000000,
+  "cells": [
+    {
+      "attempt_terminal_bytes": 26215508,
+      "audit": {
+        "bytes": 28584,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-terminal-resource-audit-v01.json",
+        "sha256": "7390ff45ed7a4005870b68d3bcd25d1326eadf6dc4913a2ee405b2bdcf2c5602"
+      },
+      "cell": "actor0-scope0-modality0",
+      "closing_records": 515,
+      "opening_records": 514,
+      "own_record_body_sha256": "f74c488bf447dd81223c20e23f735d8c73e92b753351a5ca964a0eeb2156877d",
+      "own_reservation_id": "b608742e1be346fcb605edb073e829eb",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 104209,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/first-training-protocol-independent-review-v02.json",
+        "sha256": "fe60bae52be4d280ee8f373f6ccef1b6b10b96285216b9b25edc505afc1f71b5"
+      },
+      "plan": {
+        "bytes": 49520,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality0-plan-v01.json",
+        "sha256": "2b1ff445abc72b2876b94e028b65cc6fc2c0fcdb65777000df9d6f138fe7e980"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 739823616,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope0-modality0/snapshot-receipt.json",
+        "sha256": "498f1c7c2ef4f45cace0379dbe4ffc9edd2ab1138f5e4da3ac99437d17559189"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14743175,
+      "audit": {
+        "bytes": 22543,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-terminal-resource-audit-v01.json",
+        "sha256": "6ec44efc938f8b875c6a4cf42f0ccb7ac82c1e7620bc9a4bbea89b688a03b670"
+      },
+      "cell": "actor0-scope0-modality1",
+      "closing_records": 516,
+      "opening_records": 515,
+      "own_record_body_sha256": "a45d32fc50104331c0ec84f3077638a59339916625b9911dd4885cdc57da07c8",
+      "own_reservation_id": "ad2e075589574a34bf89b3e03f63e535",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 133957,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-training-protocol-independent-review-v01.json",
+        "sha256": "5f4f7ad199360cab4e1155fb71f0263735d9ddb87a963315df502d183921f00a"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope0-modality1-plan-v01.json",
+        "sha256": "a4a789824b330b109e7f49f057986978e81877ed610375aa22d552188badb775"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 753434624,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope0-modality1/snapshot-receipt.json",
+        "sha256": "03eb911dc7998253798252c5246560d7d220a0ffb960060414bb21ea3c7fc4ef"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14741616,
+      "audit": {
+        "bytes": 22543,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-terminal-resource-audit-v01.json",
+        "sha256": "d846f8e4b275349781bc64f20b73ad3476a3010c3d873a612ad361d497e95f44"
+      },
+      "cell": "actor0-scope1-modality0",
+      "closing_records": 517,
+      "opening_records": 516,
+      "own_record_body_sha256": "df84c653e159aaa7a8aa044e7765e10e7a08caf618135a6a234ae623db91d47d",
+      "own_reservation_id": "3b4590f9929242e7ab115d4534c8c60f",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134067,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-training-protocol-independent-review-v01.json",
+        "sha256": "96be10ceb791577bd34dfc6d7347f8873a89b6d9c8cd2f333ab8116127f3abef"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality0-plan-v01.json",
+        "sha256": "ea0206c6fe49648daf6c8b45e91e6b8bdc78e8ecec68347440b463350aa77a26"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 755003392,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope1-modality0/snapshot-receipt.json",
+        "sha256": "443cd0e186a4ac51e365be9eb77b304a008413750b43b697b118ea2f352967bd"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14760379,
+      "audit": {
+        "bytes": 22543,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-terminal-resource-audit-v01.json",
+        "sha256": "ebd526ee320c5d2fdef6a244dce40e3cc1305a446e07592b8935fd88d8f67b25"
+      },
+      "cell": "actor0-scope1-modality1",
+      "closing_records": 518,
+      "opening_records": 517,
+      "own_record_body_sha256": "97a5186e0bd30917c5d2c97083727d7a4113a4436ad30246b40df61ab4c6e7d0",
+      "own_reservation_id": "4df0a5ac272e4db799a7ee08667ee6fd",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134177,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-training-protocol-independent-review-v01.json",
+        "sha256": "81472a088ac450fa926bf5dee0927a465d68e7fd436c9ef35d035c2a9c8539d2"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor0-scope1-modality1-plan-v01.json",
+        "sha256": "095ca035935263b4b3a9342a469fa4260f2a6578c3b02c861ef38b8275ff9910"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 750043136,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor0-scope1-modality1/snapshot-receipt.json",
+        "sha256": "33922f22757ef62150afb4f71f4ecff30c8cf5c79128be08569b847607b62ee3"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14737152,
+      "audit": {
+        "bytes": 22542,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-terminal-resource-audit-v01.json",
+        "sha256": "22b96682eb21d6d422ef979233200504f0aec4ac1420a32c9b17e6095abf077a"
+      },
+      "cell": "actor1-scope0-modality0",
+      "closing_records": 519,
+      "opening_records": 518,
+      "own_record_body_sha256": "ba0cc6eaca67e9fa13061736b52169a91ce64b5974fdcad552bc03dde12f1b03",
+      "own_reservation_id": "aa90874ce7ea4f54be7a4a91a7a78aaf",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134287,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-training-protocol-independent-review-v01.json",
+        "sha256": "7387095295e86551e501dd154aa9cc2ce0bb35feacf1a264b40caa2fa6abd714"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality0-plan-v01.json",
+        "sha256": "c37e528ee1494d2776abe5dad6dd58188169beef08cff436814b3e801888cd66"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 745725952,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope0-modality0/snapshot-receipt.json",
+        "sha256": "85b5f4f05afacf60e7664cb238930d1924151b8c030bb933876e69742a8281ad"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14744065,
+      "audit": {
+        "bytes": 22543,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-terminal-resource-audit-v01.json",
+        "sha256": "850f5f5008fa030b226e96dcb183c2722108eb1f11d1971fe2bcee179224a16c"
+      },
+      "cell": "actor1-scope0-modality1",
+      "closing_records": 520,
+      "opening_records": 519,
+      "own_record_body_sha256": "56cf38589b9f860d644ccd7fd82d76f6b5e995020dfbbf26b4b1b475a5bbb1b2",
+      "own_reservation_id": "294ac373c50349789e27a5cb16057c70",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134397,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-training-protocol-independent-review-v01.json",
+        "sha256": "763a454f3a4ca15c17cdd9a47cfbb3fe9d239cd97dfb40a728aa86972f8b2815"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope0-modality1-plan-v01.json",
+        "sha256": "0732e616eaafa90eea45d41609242cb8f3597aca974f3e14df2f8546686a8635"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 753827840,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope0-modality1/snapshot-receipt.json",
+        "sha256": "e344a676bccf54a667e4734eff4baffe30a6115dc02f0b5be3abe24d1e164635"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14746558,
+      "audit": {
+        "bytes": 22544,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-terminal-resource-audit-v01.json",
+        "sha256": "ab9b668510b7495f3053b545b55d7ce381e98df9808e550b4d7ca98f546d82fa"
+      },
+      "cell": "actor1-scope1-modality0",
+      "closing_records": 521,
+      "opening_records": 520,
+      "own_record_body_sha256": "601f070d79b0ccf4cd95b7ad680aa4f77c9503deab349c1753004837082956ff",
+      "own_reservation_id": "9b214d101e504aa0acd1755ff34aa32b",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134507,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-training-protocol-independent-review-v01.json",
+        "sha256": "fd9d16f930f42a0b8e4b5597bfaec56fa9c7ba94791a95482093794c03e74ffe"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality0-plan-v01.json",
+        "sha256": "264c74a7517e58be3ed9a6453a99b81b4e4eba58fcef8ef803d12177585ae066"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 756764672,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope1-modality0/snapshot-receipt.json",
+        "sha256": "ce03bc3fcb430629b696c4a84343b02e64938f76a5a028cd23931d767ca7d605"
+      }
+    },
+    {
+      "attempt_terminal_bytes": 14747542,
+      "audit": {
+        "bytes": 22544,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-terminal-resource-audit-v01.json",
+        "sha256": "db1dff28871eeeb6fed6fa049a00a1dbb66980907c1c62316267ea4a303528da"
+      },
+      "cell": "actor1-scope1-modality1",
+      "closing_records": 522,
+      "opening_records": 521,
+      "own_record_body_sha256": "96e45b5cb47df2353da1ef478e14b281897f6c1e38decad093451af2235d7292",
+      "own_reservation_id": "0b6812b52592461590d87603284062b3",
+      "own_status": "released",
+      "phase_review": {
+        "bytes": 134617,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-training-protocol-independent-review-v01.json",
+        "sha256": "9006d12b77ebf5b3f7aa40cce81a1953f266115bda9ac06f656954a9a1299699"
+      },
+      "plan": {
+        "bytes": 56352,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/actor1-scope1-modality1-plan-v01.json",
+        "sha256": "3dd07ad3175addb60aa692dcae47a5e2f8d6d6a25eaf1d983894013c4e002916"
+      },
+      "returned_updates": 32,
+      "sampled_model_peak_RSS_bytes": 753451008,
+      "snapshot_receipt": {
+        "bytes": 2795,
+        "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/private-runtime-snapshots/actor1-scope1-modality1/snapshot-receipt.json",
+        "sha256": "9b9e6f1c7109cff87a8411d70de0dc6fe5f055682754c0d04f07aeda991cb9ba"
+      }
+    }
+  ],
+  "closing_record_count": 522,
+  "completed_cells": 8,
+  "continuous_custody_claimed": false,
+  "current_owned_group_absence_qualification": "Approved actual auditor observed each bound group absent at its recorded audit time; no new group scan performed by this reviewer",
+  "default_promotion": false,
+  "exact_eight_new_own_claims_released": true,
+  "final_record_body_hash_map_sha256": "8aae4b7e76e3c53231a5243c4b695687121e73e726796152eb18bee8cf323088",
+  "final_record_status_counts": {
+    "released": 422,
+    "retained": 100
+  },
+  "findings": [],
+  "independent_contemporaneous_copy_witness": false,
+  "kernel_hard_cap": false,
+  "limitations": [
+    "Independent artifact/metadata verification of completed eight runs and root-frozen endpoint samples, not continuous lease or global storage custody.",
+    "Per-cell actual auditor qualified current bound-group absence at its timestamp; this reviewer reused those qualified observations without creating another /proc scan.",
+    "RSS peaks and five-second gaps describe recorded samples, not absolute peaks, kernel hard limits or configured guardian RSS hardstop coverage.",
+    "Durability is the recorded guardian/owner assertion plus stable byte custody; no filesystem crash-recovery experiment.",
+    "Checkpoints are opaque raw-hashed states;256 updates are returned trainer traces, not independently traced numerical kernels.",
+    "No legalgold, semanticfidelity, genuine latent comparison, broad logic-family, Lake, modelselection or publication approval is established by runtime review."
+  ],
+  "maximum_sampled_model_RSS_bytes": 756764672,
+  "observed_at_utc": "2026-10-12T17:23:30.805600+00:00",
+  "opening_record_count": 514,
+  "own_record_body_sha256": {
+    "0b6812b52592461590d87603284062b3": "96e45b5cb47df2353da1ef478e14b281897f6c1e38decad093451af2235d7292",
+    "294ac373c50349789e27a5cb16057c70": "56cf38589b9f860d644ccd7fd82d76f6b5e995020dfbbf26b4b1b475a5bbb1b2",
+    "3b4590f9929242e7ab115d4534c8c60f": "df84c653e159aaa7a8aa044e7765e10e7a08caf618135a6a234ae623db91d47d",
+    "4df0a5ac272e4db799a7ee08667ee6fd": "97a5186e0bd30917c5d2c97083727d7a4113a4436ad30246b40df61ab4c6e7d0",
+    "9b214d101e504aa0acd1755ff34aa32b": "601f070d79b0ccf4cd95b7ad680aa4f77c9503deab349c1753004837082956ff",
+    "aa90874ce7ea4f54be7a4a91a7a78aaf": "ba0cc6eaca67e9fa13061736b52169a91ce64b5974fdcad552bc03dde12f1b03",
+    "ad2e075589574a34bf89b3e03f63e535": "a45d32fc50104331c0ec84f3077638a59339916625b9911dd4885cdc57da07c8",
+    "b608742e1be346fcb605edb073e829eb": "f74c488bf447dd81223c20e23f735d8c73e92b753351a5ca964a0eeb2156877d"
+  },
+  "passed": true,
+  "private_sample_descriptors": [
+    {
+      "cell": "actor0-scope0-modality0",
+      "ledger_sample": {
+        "bytes": 6167546,
+        "sha256": "f922bd2e37efae906631080388fb002a95b8dbb944c4ba59d491349b1db144a8"
+      },
+      "scheduler_sample": {
+        "bytes": 1335,
+        "sha256": "fda1537e5ea881965912bb90059a46dcc8e8234150044e7d7339a0e61aa43950"
+      }
+    },
+    {
+      "cell": "actor0-scope0-modality1",
+      "ledger_sample": {
+        "bytes": 6169882,
+        "sha256": "4d384888d3ac0a0b90e208bbbf81e29176502e738b4dfc1b1a9e5fc873f7c854"
+      },
+      "scheduler_sample": {
+        "bytes": 1359,
+        "sha256": "ee080a45aa260b22d414c324b1971dfff5ee3c27a14807d2e2fd03c90f453315"
+      }
+    },
+    {
+      "cell": "actor0-scope1-modality0",
+      "ledger_sample": {
+        "bytes": 6172218,
+        "sha256": "936797a774948da9be2c669786f4bcc509ff8afd541b8522cb85690bbbdcb700"
+      },
+      "scheduler_sample": {
+        "bytes": 1382,
+        "sha256": "61b8c7f81b8faf7abb1d82eb35796884d51f9c119994e14866aacb8076c09cb1"
+      }
+    },
+    {
+      "cell": "actor0-scope1-modality1",
+      "ledger_sample": {
+        "bytes": 6174555,
+        "sha256": "a58eea468cc2ee7b855e449d212b7e250fb14b37025455ac48e22d0601d514b2"
+      },
+      "scheduler_sample": {
+        "bytes": 1404,
+        "sha256": "a5214db30ba6edd22783936030cebd7481e906f09c7726e4992d4ea6f849212e"
+      }
+    },
+    {
+      "cell": "actor1-scope0-modality0",
+      "ledger_sample": {
+        "bytes": 6176892,
+        "sha256": "47fec0efd8e14e8c3948ed8fbd21444215ae43fb2d4d2e644ac557359548e44f"
+      },
+      "scheduler_sample": {
+        "bytes": 1426,
+        "sha256": "398183fe137a123a8fff77a2c0d42889f4d486b6891cf225ec4c4ce236eb61b9"
+      }
+    },
+    {
+      "cell": "actor1-scope0-modality1",
+      "ledger_sample": {
+        "bytes": 6179230,
+        "sha256": "29d248f997c58ab3f7bf2da6fa346f1e14d82c00c162af3b1e477dce07d0b38e"
+      },
+      "scheduler_sample": {
+        "bytes": 1446,
+        "sha256": "ef054715eea96e062985c5d737c3683e45a53bbcc388f82533c0fa94c43b5c96"
+      }
+    },
+    {
+      "cell": "actor1-scope1-modality0",
+      "ledger_sample": {
+        "bytes": 6181568,
+        "sha256": "d667b64aa1778ba28931e32aef85d9d451075dd3ee338a3ef789f9b3686c502d"
+      },
+      "scheduler_sample": {
+        "bytes": 1468,
+        "sha256": "af977166478cd63f3f686898ee7d781d1d4d2805a2118b1c726e5e23e71c77d9"
+      }
+    },
+    {
+      "cell": "actor1-scope1-modality1",
+      "ledger_sample": {
+        "bytes": 6183905,
+        "sha256": "5c869374e90bbc1e9e50cd3866c98f08deae36c1a1150bacfacf4a8304fa550e"
+      },
+      "scheduler_sample": {
+        "bytes": 1490,
+        "sha256": "043cef42701d63fafc6a0ba72b87a0866d44afd10801e7fdada78d8cdebf72c0"
+      }
+    }
+  ],
+  "public_wrapper_count": 104,
+  "public_wrapper_names": [
+    "pre-admission.json",
+    "scheduler-adoption.json",
+    "lease-binding.json",
+    "command.json",
+    "child-identity.json",
+    "resource-observations.json",
+    "child-exit.json",
+    "group-rss-summary.json",
+    "owned-group-final.json",
+    "guardian-exit.json",
+    "lease-observations.jsonl",
+    "group-rss-observations.jsonl",
+    "child.log"
+  ],
+  "raw_private_body_artifacts_or_copies_in_public_map": false,
+  "reviewer_actions": {
+    "evaluation_packet_reads_or_scores": 0,
+    "full_auditor_aggregate_helper_imports": 0,
+    "model_JSON_parses_restores_forwards_updates": 0,
+    "network_compiler_Git_HF": 0,
+    "new_live_global_endpoint_or_proc_scans": 0,
+    "new_sharedtree_censuses": 0,
+    "private_snapshot_bodies_read_for_independent_hash_preservation_not_published": true,
+    "qualified_trace_metadata_predicate_only": true,
+    "resource_API_leases_locks_signals": 0
+  },
+  "root_frozen_sampled_copies": true,
+  "sampled_endpoints_only": true,
+  "scheduler_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+  "schema": "matched-curriculum-runtime-independent-review/v1",
+  "semantic_accuracy": null,
+  "total_returned_optimizer_updates": 256,
+  "total_terminal_attempt_bytes": 129435995
+}

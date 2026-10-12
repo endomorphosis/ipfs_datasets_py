@@ -1,0 +1,1547 @@
+{
+  "admitted": false,
+  "base_checkpoint_sha256": "b97aa5f28c55624872bbcfda0b46fea3be5261cc553c3b2843237162f715f66d",
+  "batch_losses": [
+    0.1818520873785019,
+    0.11135691404342651,
+    0.22680062055587769,
+    0.6504004597663879,
+    0.3945980966091156,
+    0.2135431468486786,
+    0.06724504381418228,
+    0.3186378479003906,
+    0.1939832866191864,
+    0.22342871129512787,
+    0.22659015655517578,
+    0.36538636684417725,
+    0.19347333908081055,
+    0.12112165987491608,
+    0.10869408398866653,
+    0.2204630821943283,
+    0.12847189605236053,
+    0.21352441608905792,
+    0.18766076862812042,
+    0.06636793911457062,
+    0.14167581498622894,
+    0.08185212314128876,
+    0.08007711172103882,
+    0.12228196859359741,
+    0.060111064463853836,
+    0.12682434916496277,
+    0.05426366627216339,
+    0.04513523727655411,
+    0.10606998205184937,
+    0.1117674708366394,
+    0.09112508594989777,
+    0.05738868936896324
+  ],
+  "batch_trace": {
+    "batch_order_seed": 1729,
+    "batch_order_seed_origin": "explicit",
+    "batch_size": 12,
+    "batches": [
+      {
+        "gradient_norm_before_clip": 1.0967884063720703,
+        "ids": [
+          "structured-train-bramble-t4-q5-f",
+          "structured-train-dahlia-t4-q7-f",
+          "matched-temporal-train-condition_duration-1-o-absent",
+          "matched-temporal-train-object_duration_title-1-f-absent",
+          "structured-train-cypress-t1-q3-p",
+          "structured-train-dahlia-t1-q4-o",
+          "structured-train-dahlia-t7-q2-f",
+          "structured-train-bramble-t0-q1-f",
+          "structured-train-cypress-t0-q2-o",
+          "structured-train-aster-t7-q7-o",
+          "structured-train-aster-t5-q5-f",
+          "structured-train-bramble-t7-q0-o"
+        ],
+        "indices": [
+          38,
+          86,
+          114,
+          154,
+          52,
+          75,
+          95,
+          26,
+          48,
+          21,
+          17,
+          45
+        ],
+        "loss": 0.1818520873785019,
+        "optimizer_step": 1,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 1,
+          "row_cursor": 12
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 0,
+          "row_cursor": 0
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.5358145833015442,
+        "ids": [
+          "structured-train-dahlia-t2-q5-o",
+          "structured-train-dahlia-t0-q3-o",
+          "structured-train-cypress-t0-q2-p",
+          "structured-train-cypress-t2-q4-p",
+          "matched-temporal-train-plain_deadline-0-p-absent",
+          "matched-temporal-train-object_duration_title-0-f-present",
+          "structured-train-bramble-t6-q7-o",
+          "structured-train-aster-t1-q1-o",
+          "structured-train-bramble-t0-q1-p",
+          "matched-temporal-train-exception_duration-1-p-present",
+          "matched-temporal-train-plain_deadline-0-p-present",
+          "structured-train-bramble-t1-q2-f"
+        ],
+        "indices": [
+          78,
+          72,
+          49,
+          55,
+          98,
+          149,
+          42,
+          3,
+          25,
+          129,
+          99,
+          29
+        ],
+        "loss": 0.11135691404342651,
+        "optimizer_step": 2,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 2,
+          "row_cursor": 24
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 1,
+          "row_cursor": 12
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.44858089089393616,
+        "ids": [
+          "structured-train-aster-t3-q3-p",
+          "matched-temporal-train-actor_duration_name-0-p-absent",
+          "structured-train-cypress-t6-q0-f",
+          "structured-train-dahlia-t2-q5-p",
+          "structured-train-aster-t3-q3-o",
+          "matched-temporal-train-exception_duration-0-f-absent",
+          "structured-train-cypress-t4-q6-p",
+          "structured-train-dahlia-t4-q7-p",
+          "structured-train-cypress-t5-q7-o",
+          "structured-train-bramble-t1-q2-p",
+          "matched-temporal-train-actor_duration_name-0-f-absent",
+          "matched-temporal-train-plain_deadline-0-o-present"
+        ],
+        "indices": [
+          10,
+          134,
+          68,
+          79,
+          9,
+          124,
+          61,
+          85,
+          63,
+          28,
+          136,
+          97
+        ],
+        "loss": 0.22680062055587769,
+        "optimizer_step": 3,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 3,
+          "row_cursor": 36
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 2,
+          "row_cursor": 24
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 2.338712453842163,
+        "ids": [
+          "structured-train-bramble-t5-q6-p",
+          "structured-train-cypress-t6-q0-p",
+          "matched-temporal-train-condition_exception_duration-0-o-present",
+          "structured-train-cypress-t1-q3-o",
+          "matched-temporal-train-actor_duration_name-1-f-absent",
+          "matched-temporal-train-condition_exception_duration-1-f-absent",
+          "matched-temporal-train-condition_duration-1-f-present",
+          "matched-temporal-train-plain_deadline-0-f-absent",
+          "structured-train-bramble-t6-q7-f",
+          "matched-temporal-train-actor_duration_name-0-f-present",
+          "matched-temporal-train-object_duration_title-0-o-present",
+          "matched-temporal-train-condition_exception_duration-0-f-absent"
+        ],
+        "indices": [
+          40,
+          67,
+          157,
+          51,
+          142,
+          166,
+          119,
+          100,
+          44,
+          137,
+          145,
+          160
+        ],
+        "loss": 0.6504004597663879,
+        "optimizer_step": 4,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 4,
+          "row_cursor": 48
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 3,
+          "row_cursor": 36
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 2.3604421615600586,
+        "ids": [
+          "matched-temporal-train-exception_duration-1-o-absent",
+          "matched-temporal-train-actor_duration_name-1-o-present",
+          "structured-train-bramble-t2-q3-p",
+          "structured-train-dahlia-t4-q7-o",
+          "matched-temporal-train-plain_deadline-1-o-present",
+          "structured-train-aster-t5-q5-p",
+          "structured-train-bramble-t2-q3-f",
+          "matched-temporal-train-condition_exception_duration-1-o-absent",
+          "matched-temporal-train-condition_duration-0-f-absent",
+          "structured-train-bramble-t2-q3-o",
+          "structured-train-aster-t6-q6-p",
+          "structured-train-aster-t1-q1-f"
+        ],
+        "indices": [
+          126,
+          139,
+          31,
+          84,
+          103,
+          16,
+          32,
+          162,
+          112,
+          30,
+          19,
+          5
+        ],
+        "loss": 0.3945980966091156,
+        "optimizer_step": 5,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 5,
+          "row_cursor": 60
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 4,
+          "row_cursor": 48
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.9615588188171387,
+        "ids": [
+          "structured-train-cypress-t5-q7-p",
+          "matched-temporal-train-condition_exception_duration-0-o-absent",
+          "matched-temporal-train-exception_duration-0-p-present",
+          "structured-train-dahlia-t3-q6-f",
+          "structured-train-dahlia-t5-q0-p",
+          "structured-train-aster-t7-q7-f",
+          "structured-train-aster-t1-q1-p",
+          "matched-temporal-train-condition_duration-1-f-absent",
+          "structured-train-bramble-t3-q4-p",
+          "structured-train-aster-t0-q0-f",
+          "matched-temporal-train-condition_duration-0-o-absent",
+          "structured-train-cypress-t4-q6-o"
+        ],
+        "indices": [
+          64,
+          156,
+          123,
+          83,
+          88,
+          23,
+          4,
+          118,
+          34,
+          2,
+          108,
+          60
+        ],
+        "loss": 0.2135431468486786,
+        "optimizer_step": 6,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 6,
+          "row_cursor": 72
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 5,
+          "row_cursor": 60
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.35353904962539673,
+        "ids": [
+          "structured-train-aster-t2-q2-f",
+          "structured-train-aster-t4-q4-o",
+          "structured-train-cypress-t2-q4-o",
+          "matched-temporal-train-condition_duration-0-p-absent",
+          "matched-temporal-train-object_duration_title-0-f-absent",
+          "structured-train-dahlia-t1-q4-f",
+          "structured-train-cypress-t7-q1-o",
+          "structured-train-dahlia-t3-q6-o",
+          "structured-train-dahlia-t5-q0-o",
+          "structured-train-cypress-t5-q7-f",
+          "structured-train-bramble-t3-q4-o",
+          "structured-train-cypress-t7-q1-p"
+        ],
+        "indices": [
+          8,
+          12,
+          54,
+          110,
+          148,
+          77,
+          69,
+          81,
+          87,
+          65,
+          33,
+          70
+        ],
+        "loss": 0.06724504381418228,
+        "optimizer_step": 7,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 7,
+          "row_cursor": 84
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 6,
+          "row_cursor": 72
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 1.5597131252288818,
+        "ids": [
+          "matched-temporal-train-exception_duration-1-f-absent",
+          "structured-train-dahlia-t6-q1-p",
+          "matched-temporal-train-plain_deadline-1-p-absent",
+          "matched-temporal-train-exception_duration-1-f-present",
+          "matched-temporal-train-actor_duration_name-0-o-absent",
+          "structured-train-aster-t6-q6-f",
+          "matched-temporal-train-condition_exception_duration-0-p-absent",
+          "matched-temporal-train-exception_duration-0-o-absent",
+          "matched-temporal-train-object_duration_title-1-f-present",
+          "matched-temporal-train-condition_duration-0-o-present",
+          "structured-train-bramble-t4-q5-o",
+          "structured-train-aster-t2-q2-o"
+        ],
+        "indices": [
+          130,
+          91,
+          104,
+          131,
+          132,
+          20,
+          158,
+          120,
+          155,
+          109,
+          36,
+          6
+        ],
+        "loss": 0.3186378479003906,
+        "optimizer_step": 8,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 8,
+          "row_cursor": 96
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 7,
+          "row_cursor": 84
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.7289765477180481,
+        "ids": [
+          "structured-train-cypress-t4-q6-f",
+          "structured-train-dahlia-t2-q5-f",
+          "matched-temporal-train-plain_deadline-1-f-present",
+          "structured-train-dahlia-t7-q2-o",
+          "structured-train-aster-t2-q2-p",
+          "structured-train-aster-t5-q5-o",
+          "structured-train-bramble-t5-q6-f",
+          "matched-temporal-train-exception_duration-0-o-present",
+          "matched-temporal-train-actor_duration_name-1-f-present",
+          "matched-temporal-train-condition_duration-0-f-present",
+          "structured-train-cypress-t6-q0-o",
+          "matched-temporal-train-plain_deadline-1-f-absent"
+        ],
+        "indices": [
+          62,
+          80,
+          107,
+          93,
+          7,
+          15,
+          41,
+          121,
+          143,
+          113,
+          66,
+          106
+        ],
+        "loss": 0.1939832866191864,
+        "optimizer_step": 9,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 9,
+          "row_cursor": 108
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 8,
+          "row_cursor": 96
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 1.0300275087356567,
+        "ids": [
+          "matched-temporal-train-exception_duration-0-f-present",
+          "structured-train-bramble-t7-q0-f",
+          "structured-train-dahlia-t3-q6-p",
+          "structured-train-aster-t6-q6-o",
+          "matched-temporal-train-condition_exception_duration-1-p-absent",
+          "structured-train-cypress-t2-q4-f",
+          "matched-temporal-train-actor_duration_name-0-p-present",
+          "matched-temporal-train-object_duration_title-0-o-absent",
+          "matched-temporal-train-object_duration_title-1-p-absent",
+          "structured-train-cypress-t7-q1-f",
+          "structured-train-bramble-t4-q5-p",
+          "structured-train-cypress-t3-q5-p"
+        ],
+        "indices": [
+          125,
+          47,
+          82,
+          18,
+          164,
+          56,
+          135,
+          144,
+          152,
+          71,
+          37,
+          58
+        ],
+        "loss": 0.22342871129512787,
+        "optimizer_step": 10,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 10,
+          "row_cursor": 120
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 9,
+          "row_cursor": 108
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.6788317561149597,
+        "ids": [
+          "structured-train-aster-t7-q7-p",
+          "structured-train-bramble-t1-q2-o",
+          "matched-temporal-train-object_duration_title-1-o-absent",
+          "matched-temporal-train-actor_duration_name-1-p-present",
+          "structured-train-cypress-t0-q2-f",
+          "structured-train-bramble-t3-q4-f",
+          "structured-train-aster-t0-q0-o",
+          "structured-train-cypress-t3-q5-f",
+          "matched-temporal-train-condition_duration-0-p-present",
+          "matched-temporal-train-condition_duration-1-o-present",
+          "matched-temporal-train-object_duration_title-0-p-absent",
+          "matched-temporal-train-exception_duration-0-p-absent"
+        ],
+        "indices": [
+          22,
+          27,
+          150,
+          141,
+          50,
+          35,
+          0,
+          59,
+          111,
+          115,
+          146,
+          122
+        ],
+        "loss": 0.22659015655517578,
+        "optimizer_step": 11,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 11,
+          "row_cursor": 132
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 10,
+          "row_cursor": 120
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 1.3820072412490845,
+        "ids": [
+          "matched-temporal-train-condition_exception_duration-1-o-present",
+          "matched-temporal-train-condition_exception_duration-0-p-present",
+          "matched-temporal-train-object_duration_title-1-o-present",
+          "structured-train-dahlia-t5-q0-f",
+          "structured-train-dahlia-t1-q4-p",
+          "matched-temporal-train-plain_deadline-0-o-absent",
+          "matched-temporal-train-actor_duration_name-1-o-absent",
+          "structured-train-bramble-t0-q1-o",
+          "structured-train-aster-t4-q4-p",
+          "matched-temporal-train-condition_exception_duration-0-f-present",
+          "matched-temporal-train-plain_deadline-1-o-absent",
+          "structured-train-cypress-t3-q5-o"
+        ],
+        "indices": [
+          163,
+          159,
+          151,
+          89,
+          76,
+          96,
+          138,
+          24,
+          13,
+          161,
+          102,
+          57
+        ],
+        "loss": 0.36538636684417725,
+        "optimizer_step": 12,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 12,
+          "row_cursor": 144
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 11,
+          "row_cursor": 132
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.49828195571899414,
+        "ids": [
+          "matched-temporal-train-object_duration_title-1-p-present",
+          "matched-temporal-train-object_duration_title-0-p-present",
+          "matched-temporal-train-condition_exception_duration-1-p-present",
+          "structured-train-dahlia-t6-q1-o",
+          "matched-temporal-train-plain_deadline-0-f-present",
+          "structured-train-dahlia-t7-q2-p",
+          "matched-temporal-train-condition_duration-1-p-absent",
+          "structured-train-aster-t0-q0-p",
+          "matched-temporal-train-exception_duration-1-o-present",
+          "matched-temporal-train-actor_duration_name-1-p-absent",
+          "structured-train-bramble-t5-q6-o",
+          "structured-train-cypress-t1-q3-f"
+        ],
+        "indices": [
+          153,
+          147,
+          165,
+          90,
+          101,
+          94,
+          116,
+          1,
+          127,
+          140,
+          39,
+          53
+        ],
+        "loss": 0.19347333908081055,
+        "optimizer_step": 13,
+        "post_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 13,
+          "row_cursor": 156
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 12,
+          "row_cursor": 144
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.36071279644966125,
+        "ids": [
+          "structured-train-dahlia-t0-q3-p",
+          "structured-train-dahlia-t6-q1-f",
+          "matched-temporal-train-actor_duration_name-0-o-present",
+          "structured-train-dahlia-t0-q3-f",
+          "structured-train-bramble-t7-q0-p",
+          "structured-train-aster-t4-q4-f",
+          "structured-train-bramble-t6-q7-p",
+          "matched-temporal-train-condition_duration-1-p-present",
+          "matched-temporal-train-exception_duration-1-p-absent",
+          "matched-temporal-train-plain_deadline-1-p-present",
+          "structured-train-aster-t3-q3-f",
+          "matched-temporal-train-condition_exception_duration-1-f-present"
+        ],
+        "indices": [
+          73,
+          92,
+          133,
+          74,
+          46,
+          14,
+          43,
+          117,
+          128,
+          105,
+          11,
+          167
+        ],
+        "loss": 0.12112165987491608,
+        "optimizer_step": 14,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 14,
+          "row_cursor": 0
+        },
+        "pre_progress": {
+          "epochs_completed": 0,
+          "optimizer_steps": 13,
+          "row_cursor": 156
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.7456351518630981,
+        "ids": [
+          "structured-train-dahlia-t2-q5-p",
+          "matched-temporal-train-condition_duration-0-f-absent",
+          "matched-temporal-train-condition_exception_duration-1-o-present",
+          "structured-train-bramble-t4-q5-o",
+          "matched-temporal-train-exception_duration-1-f-present",
+          "structured-train-bramble-t5-q6-p",
+          "structured-train-aster-t0-q0-o",
+          "structured-train-dahlia-t2-q5-o",
+          "matched-temporal-train-condition_exception_duration-1-o-absent",
+          "matched-temporal-train-exception_duration-0-f-present",
+          "structured-train-cypress-t2-q4-f",
+          "structured-train-cypress-t0-q2-f"
+        ],
+        "indices": [
+          79,
+          112,
+          163,
+          36,
+          131,
+          40,
+          0,
+          78,
+          162,
+          125,
+          56,
+          50
+        ],
+        "loss": 0.10869408398866653,
+        "optimizer_step": 15,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 15,
+          "row_cursor": 12
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 14,
+          "row_cursor": 0
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.6164364814758301,
+        "ids": [
+          "structured-train-aster-t2-q2-o",
+          "structured-train-cypress-t6-q0-p",
+          "structured-train-bramble-t1-q2-p",
+          "structured-train-bramble-t2-q3-p",
+          "structured-train-cypress-t1-q3-o",
+          "structured-train-aster-t2-q2-f",
+          "matched-temporal-train-object_duration_title-1-f-absent",
+          "matched-temporal-train-actor_duration_name-1-o-present",
+          "matched-temporal-train-exception_duration-1-p-present",
+          "structured-train-dahlia-t0-q3-p",
+          "structured-train-dahlia-t4-q7-f",
+          "matched-temporal-train-actor_duration_name-1-p-absent"
+        ],
+        "indices": [
+          6,
+          67,
+          28,
+          31,
+          51,
+          8,
+          154,
+          139,
+          129,
+          73,
+          86,
+          140
+        ],
+        "loss": 0.2204630821943283,
+        "optimizer_step": 16,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 16,
+          "row_cursor": 24
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 15,
+          "row_cursor": 12
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.3184272348880768,
+        "ids": [
+          "structured-train-cypress-t7-q1-o",
+          "structured-train-dahlia-t6-q1-p",
+          "matched-temporal-train-plain_deadline-1-f-present",
+          "structured-train-cypress-t6-q0-f",
+          "structured-train-cypress-t5-q7-o",
+          "structured-train-bramble-t0-q1-p",
+          "matched-temporal-train-exception_duration-0-p-absent",
+          "matched-temporal-train-object_duration_title-0-p-absent",
+          "structured-train-dahlia-t3-q6-p",
+          "matched-temporal-train-condition_duration-0-o-absent",
+          "matched-temporal-train-actor_duration_name-1-f-present",
+          "matched-temporal-train-plain_deadline-0-o-absent"
+        ],
+        "indices": [
+          69,
+          91,
+          107,
+          68,
+          63,
+          25,
+          122,
+          146,
+          82,
+          108,
+          143,
+          96
+        ],
+        "loss": 0.12847189605236053,
+        "optimizer_step": 17,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 17,
+          "row_cursor": 36
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 16,
+          "row_cursor": 24
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.6088724732398987,
+        "ids": [
+          "structured-train-dahlia-t0-q3-f",
+          "matched-temporal-train-object_duration_title-0-f-absent",
+          "matched-temporal-train-condition_duration-0-p-absent",
+          "structured-train-aster-t2-q2-p",
+          "structured-train-bramble-t7-q0-f",
+          "matched-temporal-train-actor_duration_name-1-o-absent",
+          "matched-temporal-train-object_duration_title-0-p-present",
+          "structured-train-bramble-t7-q0-o",
+          "structured-train-aster-t6-q6-f",
+          "matched-temporal-train-condition_exception_duration-0-o-absent",
+          "structured-train-bramble-t3-q4-p",
+          "matched-temporal-train-object_duration_title-1-o-present"
+        ],
+        "indices": [
+          74,
+          148,
+          110,
+          7,
+          47,
+          138,
+          147,
+          45,
+          20,
+          156,
+          34,
+          151
+        ],
+        "loss": 0.21352441608905792,
+        "optimizer_step": 18,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 18,
+          "row_cursor": 48
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 17,
+          "row_cursor": 36
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.5998342633247375,
+        "ids": [
+          "matched-temporal-train-actor_duration_name-0-f-present",
+          "matched-temporal-train-condition_duration-1-p-present",
+          "structured-train-dahlia-t3-q6-f",
+          "structured-train-aster-t7-q7-f",
+          "matched-temporal-train-plain_deadline-0-p-present",
+          "matched-temporal-train-condition_exception_duration-0-f-present",
+          "structured-train-cypress-t4-q6-o",
+          "structured-train-aster-t6-q6-o",
+          "matched-temporal-train-actor_duration_name-0-f-absent",
+          "matched-temporal-train-plain_deadline-0-f-present",
+          "matched-temporal-train-condition_duration-1-o-absent",
+          "structured-train-aster-t3-q3-f"
+        ],
+        "indices": [
+          137,
+          117,
+          83,
+          23,
+          99,
+          161,
+          60,
+          18,
+          136,
+          101,
+          114,
+          11
+        ],
+        "loss": 0.18766076862812042,
+        "optimizer_step": 19,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 19,
+          "row_cursor": 60
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 18,
+          "row_cursor": 48
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.3269641101360321,
+        "ids": [
+          "matched-temporal-train-condition_exception_duration-1-p-absent",
+          "matched-temporal-train-object_duration_title-1-f-present",
+          "structured-train-aster-t5-q5-o",
+          "structured-train-cypress-t3-q5-o",
+          "structured-train-dahlia-t5-q0-p",
+          "matched-temporal-train-plain_deadline-1-f-absent",
+          "matched-temporal-train-exception_duration-1-o-absent",
+          "structured-train-bramble-t0-q1-o",
+          "structured-train-dahlia-t4-q7-o",
+          "structured-train-cypress-t7-q1-f",
+          "matched-temporal-train-exception_duration-0-f-absent",
+          "matched-temporal-train-object_duration_title-0-o-present"
+        ],
+        "indices": [
+          164,
+          155,
+          15,
+          57,
+          88,
+          106,
+          126,
+          24,
+          84,
+          71,
+          124,
+          145
+        ],
+        "loss": 0.06636793911457062,
+        "optimizer_step": 20,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 20,
+          "row_cursor": 72
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 19,
+          "row_cursor": 60
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.48645567893981934,
+        "ids": [
+          "structured-train-bramble-t3-q4-o",
+          "structured-train-cypress-t1-q3-f",
+          "matched-temporal-train-condition_duration-1-f-absent",
+          "matched-temporal-train-condition_duration-1-p-absent",
+          "structured-train-aster-t1-q1-o",
+          "structured-train-cypress-t3-q5-f",
+          "matched-temporal-train-condition_exception_duration-0-p-present",
+          "matched-temporal-train-exception_duration-0-o-present",
+          "structured-train-dahlia-t7-q2-o",
+          "matched-temporal-train-actor_duration_name-1-p-present",
+          "structured-train-cypress-t4-q6-f",
+          "structured-train-bramble-t4-q5-p"
+        ],
+        "indices": [
+          33,
+          53,
+          118,
+          116,
+          3,
+          59,
+          159,
+          121,
+          93,
+          141,
+          62,
+          37
+        ],
+        "loss": 0.14167581498622894,
+        "optimizer_step": 21,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 21,
+          "row_cursor": 84
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 20,
+          "row_cursor": 72
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.4964868128299713,
+        "ids": [
+          "matched-temporal-train-object_duration_title-0-o-absent",
+          "structured-train-aster-t0-q0-f",
+          "structured-train-bramble-t6-q7-o",
+          "structured-train-dahlia-t6-q1-f",
+          "matched-temporal-train-condition_exception_duration-1-f-present",
+          "structured-train-aster-t4-q4-o",
+          "structured-train-dahlia-t5-q0-o",
+          "matched-temporal-train-plain_deadline-0-f-absent",
+          "structured-train-dahlia-t7-q2-f",
+          "structured-train-aster-t7-q7-o",
+          "matched-temporal-train-condition_exception_duration-0-o-present",
+          "structured-train-dahlia-t6-q1-o"
+        ],
+        "indices": [
+          144,
+          2,
+          42,
+          92,
+          167,
+          12,
+          87,
+          100,
+          95,
+          21,
+          157,
+          90
+        ],
+        "loss": 0.08185212314128876,
+        "optimizer_step": 22,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 22,
+          "row_cursor": 96
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 21,
+          "row_cursor": 84
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.5577346086502075,
+        "ids": [
+          "structured-train-dahlia-t7-q2-p",
+          "matched-temporal-train-plain_deadline-1-o-present",
+          "matched-temporal-train-plain_deadline-1-p-present",
+          "structured-train-aster-t4-q4-p",
+          "structured-train-cypress-t0-q2-p",
+          "structured-train-cypress-t5-q7-f",
+          "structured-train-dahlia-t1-q4-f",
+          "matched-temporal-train-object_duration_title-1-p-present",
+          "matched-temporal-train-exception_duration-1-o-present",
+          "structured-train-cypress-t5-q7-p",
+          "matched-temporal-train-object_duration_title-1-o-absent",
+          "matched-temporal-train-exception_duration-1-p-absent"
+        ],
+        "indices": [
+          94,
+          103,
+          105,
+          13,
+          49,
+          65,
+          77,
+          153,
+          127,
+          64,
+          150,
+          128
+        ],
+        "loss": 0.08007711172103882,
+        "optimizer_step": 23,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 23,
+          "row_cursor": 108
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 22,
+          "row_cursor": 96
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.4241812527179718,
+        "ids": [
+          "matched-temporal-train-plain_deadline-0-o-present",
+          "structured-train-aster-t3-q3-p",
+          "structured-train-bramble-t4-q5-f",
+          "matched-temporal-train-plain_deadline-1-p-absent",
+          "structured-train-bramble-t2-q3-f",
+          "matched-temporal-train-actor_duration_name-1-f-absent",
+          "structured-train-dahlia-t1-q4-o",
+          "matched-temporal-train-actor_duration_name-0-o-absent",
+          "matched-temporal-train-condition_exception_duration-1-p-present",
+          "structured-train-bramble-t3-q4-f",
+          "structured-train-aster-t1-q1-f",
+          "structured-train-aster-t3-q3-o"
+        ],
+        "indices": [
+          97,
+          10,
+          38,
+          104,
+          32,
+          142,
+          75,
+          132,
+          165,
+          35,
+          5,
+          9
+        ],
+        "loss": 0.12228196859359741,
+        "optimizer_step": 24,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 24,
+          "row_cursor": 120
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 23,
+          "row_cursor": 108
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.25002431869506836,
+        "ids": [
+          "matched-temporal-train-actor_duration_name-0-o-present",
+          "structured-train-bramble-t2-q3-o",
+          "structured-train-cypress-t7-q1-p",
+          "structured-train-dahlia-t0-q3-o",
+          "structured-train-cypress-t6-q0-o",
+          "matched-temporal-train-condition_duration-1-f-present",
+          "structured-train-bramble-t6-q7-f",
+          "structured-train-aster-t5-q5-p",
+          "structured-train-bramble-t5-q6-o",
+          "matched-temporal-train-exception_duration-0-o-absent",
+          "structured-train-aster-t1-q1-p",
+          "matched-temporal-train-condition_duration-0-o-present"
+        ],
+        "indices": [
+          133,
+          30,
+          70,
+          72,
+          66,
+          119,
+          44,
+          16,
+          39,
+          120,
+          4,
+          109
+        ],
+        "loss": 0.060111064463853836,
+        "optimizer_step": 25,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 25,
+          "row_cursor": 132
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 24,
+          "row_cursor": 120
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.4957621395587921,
+        "ids": [
+          "matched-temporal-train-condition_duration-0-p-present",
+          "matched-temporal-train-object_duration_title-0-f-present",
+          "matched-temporal-train-exception_duration-0-p-present",
+          "structured-train-bramble-t1-q2-o",
+          "structured-train-cypress-t1-q3-p",
+          "matched-temporal-train-condition_exception_duration-1-f-absent",
+          "matched-temporal-train-condition_duration-0-f-present",
+          "structured-train-cypress-t4-q6-p",
+          "matched-temporal-train-condition_exception_duration-0-p-absent",
+          "matched-temporal-train-actor_duration_name-0-p-absent",
+          "structured-train-bramble-t6-q7-p",
+          "matched-temporal-train-object_duration_title-1-p-absent"
+        ],
+        "indices": [
+          111,
+          149,
+          123,
+          27,
+          52,
+          166,
+          113,
+          61,
+          158,
+          134,
+          43,
+          152
+        ],
+        "loss": 0.12682434916496277,
+        "optimizer_step": 26,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 26,
+          "row_cursor": 144
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 25,
+          "row_cursor": 132
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.6314100623130798,
+        "ids": [
+          "structured-train-dahlia-t3-q6-o",
+          "matched-temporal-train-condition_exception_duration-0-f-absent",
+          "matched-temporal-train-plain_deadline-0-p-absent",
+          "structured-train-aster-t6-q6-p",
+          "structured-train-aster-t4-q4-f",
+          "structured-train-cypress-t2-q4-p",
+          "matched-temporal-train-condition_duration-1-o-present",
+          "structured-train-dahlia-t1-q4-p",
+          "structured-train-aster-t7-q7-p",
+          "structured-train-cypress-t2-q4-o",
+          "structured-train-aster-t0-q0-p",
+          "structured-train-bramble-t1-q2-f"
+        ],
+        "indices": [
+          81,
+          160,
+          98,
+          19,
+          14,
+          55,
+          115,
+          76,
+          22,
+          54,
+          1,
+          29
+        ],
+        "loss": 0.05426366627216339,
+        "optimizer_step": 27,
+        "post_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 27,
+          "row_cursor": 156
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 26,
+          "row_cursor": 144
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.2442350536584854,
+        "ids": [
+          "structured-train-dahlia-t5-q0-f",
+          "structured-train-cypress-t3-q5-p",
+          "structured-train-dahlia-t4-q7-p",
+          "structured-train-bramble-t5-q6-f",
+          "matched-temporal-train-actor_duration_name-0-p-present",
+          "structured-train-aster-t5-q5-f",
+          "structured-train-bramble-t0-q1-f",
+          "matched-temporal-train-plain_deadline-1-o-absent",
+          "matched-temporal-train-exception_duration-1-f-absent",
+          "structured-train-bramble-t7-q0-p",
+          "structured-train-dahlia-t2-q5-f",
+          "structured-train-cypress-t0-q2-o"
+        ],
+        "indices": [
+          89,
+          58,
+          85,
+          41,
+          135,
+          17,
+          26,
+          102,
+          130,
+          46,
+          80,
+          48
+        ],
+        "loss": 0.04513523727655411,
+        "optimizer_step": 28,
+        "post_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 28,
+          "row_cursor": 0
+        },
+        "pre_progress": {
+          "epochs_completed": 1,
+          "optimizer_steps": 27,
+          "row_cursor": 156
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.3040841817855835,
+        "ids": [
+          "matched-temporal-train-actor_duration_name-0-f-present",
+          "structured-train-cypress-t6-q0-o",
+          "matched-temporal-train-condition_duration-0-f-absent",
+          "matched-temporal-train-actor_duration_name-1-f-present",
+          "structured-train-aster-t6-q6-o",
+          "structured-train-cypress-t6-q0-p",
+          "structured-train-cypress-t7-q1-p",
+          "structured-train-aster-t5-q5-p",
+          "structured-train-bramble-t4-q5-p",
+          "matched-temporal-train-condition_duration-1-f-absent",
+          "structured-train-cypress-t0-q2-f",
+          "structured-train-bramble-t7-q0-o"
+        ],
+        "indices": [
+          137,
+          66,
+          112,
+          143,
+          18,
+          67,
+          70,
+          16,
+          37,
+          118,
+          50,
+          45
+        ],
+        "loss": 0.10606998205184937,
+        "optimizer_step": 29,
+        "post_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 29,
+          "row_cursor": 12
+        },
+        "pre_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 28,
+          "row_cursor": 0
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.48911288380622864,
+        "ids": [
+          "structured-train-bramble-t3-q4-o",
+          "matched-temporal-train-exception_duration-0-f-present",
+          "matched-temporal-train-condition_duration-1-p-absent",
+          "matched-temporal-train-condition_exception_duration-1-f-present",
+          "structured-train-dahlia-t3-q6-f",
+          "matched-temporal-train-actor_duration_name-1-o-present",
+          "matched-temporal-train-exception_duration-1-p-present",
+          "matched-temporal-train-plain_deadline-0-p-present",
+          "matched-temporal-train-object_duration_title-1-p-absent",
+          "structured-train-bramble-t5-q6-f",
+          "matched-temporal-train-exception_duration-1-p-absent",
+          "structured-train-cypress-t4-q6-p"
+        ],
+        "indices": [
+          33,
+          125,
+          116,
+          167,
+          83,
+          139,
+          129,
+          99,
+          152,
+          41,
+          128,
+          61
+        ],
+        "loss": 0.1117674708366394,
+        "optimizer_step": 30,
+        "post_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 30,
+          "row_cursor": 24
+        },
+        "pre_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 29,
+          "row_cursor": 12
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.5350126028060913,
+        "ids": [
+          "matched-temporal-train-condition_exception_duration-1-o-absent",
+          "structured-train-aster-t0-q0-f",
+          "structured-train-aster-t3-q3-o",
+          "matched-temporal-train-plain_deadline-1-o-absent",
+          "matched-temporal-train-condition_exception_duration-1-o-present",
+          "structured-train-aster-t3-q3-f",
+          "matched-temporal-train-condition_exception_duration-1-p-present",
+          "structured-train-cypress-t0-q2-o",
+          "matched-temporal-train-actor_duration_name-0-o-absent",
+          "matched-temporal-train-condition_duration-1-p-present",
+          "matched-temporal-train-actor_duration_name-1-p-present",
+          "matched-temporal-train-plain_deadline-0-o-absent"
+        ],
+        "indices": [
+          162,
+          2,
+          9,
+          102,
+          163,
+          11,
+          165,
+          48,
+          132,
+          117,
+          141,
+          96
+        ],
+        "loss": 0.09112508594989777,
+        "optimizer_step": 31,
+        "post_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 31,
+          "row_cursor": 36
+        },
+        "pre_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 30,
+          "row_cursor": 24
+        },
+        "schema": "completed-curriculum-batch/v1"
+      },
+      {
+        "gradient_norm_before_clip": 0.19016073644161224,
+        "ids": [
+          "structured-train-aster-t7-q7-o",
+          "structured-train-dahlia-t1-q4-p",
+          "matched-temporal-train-object_duration_title-0-o-present",
+          "structured-train-cypress-t3-q5-f",
+          "matched-temporal-train-actor_duration_name-1-f-absent",
+          "structured-train-dahlia-t6-q1-p",
+          "structured-train-aster-t0-q0-p",
+          "matched-temporal-train-plain_deadline-0-o-present",
+          "structured-train-dahlia-t6-q1-o",
+          "matched-temporal-train-condition_duration-0-o-absent",
+          "structured-train-dahlia-t3-q6-o",
+          "structured-train-cypress-t4-q6-o"
+        ],
+        "indices": [
+          21,
+          76,
+          145,
+          59,
+          142,
+          91,
+          1,
+          97,
+          90,
+          108,
+          81,
+          60
+        ],
+        "loss": 0.05738868936896324,
+        "optimizer_step": 32,
+        "post_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 32,
+          "row_cursor": 48
+        },
+        "pre_progress": {
+          "epochs_completed": 2,
+          "optimizer_steps": 31,
+          "row_cursor": 36
+        },
+        "schema": "completed-curriculum-batch/v1"
+      }
+    ],
+    "batches_sha256": "89774b90434aa711b86b2f875e5229a5a7cdc2e4a947cd6b78140e51375ad09f",
+    "completed_updates": 32,
+    "final_progress": {
+      "epochs_completed": 2,
+      "optimizer_steps": 32,
+      "row_cursor": 48
+    },
+    "ids_sha256": "da14ee4d0e937905834a2be61461218039aba307153541d0ca7d89f5d9368f04",
+    "independent_runtime_trace": false,
+    "indices_sha256": "9cdc2280f877358b7321cf09ceb8e74c3e0ff1532c3f5d9dd01fc75f648c03fd",
+    "initial_progress": {
+      "epochs_completed": 0,
+      "optimizer_steps": 0,
+      "row_cursor": 0
+    },
+    "schema": "completed-curriculum-batch-trace/v1",
+    "scope": "indices_and_IDs_used_by_this_trainer_recorded_after_returned_optimizer_step_and_finite_guards",
+    "training_count": 168,
+    "training_manifest_sha256": "8292b2521c0c71efdfd462b5a4fbd71758e8f6d2de8927ea11a19f9da5bb3f24",
+    "unreturned_partial_updates_attested": false
+  },
+  "changed_parameter_names": [
+    "byte_embedding.weight",
+    "token_projection.weight",
+    "token_projection.bias",
+    "encoder.weight_ih_l0",
+    "encoder.weight_hh_l0",
+    "encoder.bias_ih_l0",
+    "encoder.bias_hh_l0",
+    "encoder.weight_ih_l0_reverse",
+    "encoder.weight_hh_l0_reverse",
+    "encoder.bias_ih_l0_reverse",
+    "encoder.bias_hh_l0_reverse",
+    "modality.weight",
+    "modality.bias",
+    "presence.weight",
+    "presence.bias",
+    "start.weight",
+    "start.bias",
+    "end.weight",
+    "end.bias"
+  ],
+  "checkpoint_sha256": "b6c996810492c69b62df1e270bf892c7b61966838a36d802ba53dc2e276eee53",
+  "continuation_checkpoint_sha256": "d81e0b33578dde3052fb61d6f11c78d87a4a6cb98d1286b61c67d59a1f3b86f9",
+  "continuation_optimizer_steps_total": 32,
+  "deadline_scope": "soft_boundary_before_numeric_batch; initialization_and_serialization_not_interruptible",
+  "elapsed_seconds": 1.1432959670200944,
+  "formalized": false,
+  "gradient_norm_max": 2.3604421615600586,
+  "initial_curriculum_checkpoint_sha256": "0bce7e874a0630a828df4e9c0b194042d4dc8f5a0b2e9fa892d41c6573ed3039",
+  "optimizer_steps": 32,
+  "partial_failure_scope": "only_successfully_returned_prefix_traced; exceptions_can_leave_unreturned_partial_updates_unknown",
+  "previous_curriculum_checkpoint_sha256": "3b2ba0adef5394077ee30515fcc67353d3f6701676258d37331a73d7ba81499b",
+  "promotion_performed": false,
+  "proof_authority": false,
+  "publication_performed": false,
+  "qualified": false,
+  "roundtrip_ok": false,
+  "schema": "bounded-curriculum-span-legal-formula-training/v1",
+  "semantic_correctness_verified": false,
+  "source_parent_checkpoint_sha256": "fd7eb4bd7c8c5d5abb23d168e6b67300497eea6243b5c8cd5779cfbc566d5279",
+  "source_parent_model_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+  "stopped_reason": "step_limit",
+  "training_executed": true,
+  "training_policy": {
+    "batch_order_seed": 1729,
+    "batch_order_seed_origin": "explicit",
+    "batch_size": 12,
+    "facet_loss_weights": {
+      "action": 1,
+      "actor": 1,
+      "conditions": 1,
+      "exceptions": 1,
+      "object": 1,
+      "temporal": 1
+    },
+    "initialization_seed": 1729,
+    "latent_dimension": 384,
+    "latent_enabled": false,
+    "max_new_optimizer_steps": 32,
+    "modality_loss_weight": 2,
+    "nested_loss_metadata_scope": "legacy_constructor_descriptor; this_outer_policy_defines_actual_training_objective",
+    "normalization_denominator": 8,
+    "objective": "weighted_modality_equal_facet_mean_pointer/v1",
+    "schema": "bounded-source-span-curriculum-policy/v1"
+  },
+  "training_policy_sha256": "839e38444bf81d989f62e8c8b429e62464c68dcec4b35d5a28076c571642da5e",
+  "tuning": {
+    "complete": true,
+    "objective_loss": 0.02747745008673519,
+    "objective_policy_sha256": "839e38444bf81d989f62e8c8b429e62464c68dcec4b35d5a28076c571642da5e",
+    "rows_evaluated": 96,
+    "teacher_forcing": true,
+    "used_for_fit_or_selection": false
+  }
+}

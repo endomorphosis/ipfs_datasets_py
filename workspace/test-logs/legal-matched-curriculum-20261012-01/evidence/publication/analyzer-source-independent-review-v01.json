@@ -1,0 +1,80 @@
+{
+  "analyzer": {
+    "bytes": 52199,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/analyze_matched_results_v01.py",
+    "sha256": "17b2996a51d278a03eed46316945ca92afd1663abccda335d998404e00f4fa03"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/analyze_matched_results_v01.py": {
+      "bytes": 52199,
+      "sha256": "17b2996a51d278a03eed46316945ca92afd1663abccda335d998404e00f4fa03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/freeze_eight_cell_outputs_v01.py": {
+      "bytes": 3815,
+      "sha256": "4bd0c89ab8696176a4e090974d839cf6b1958e7fb846394d673961e81ec4dc6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-analyzer-author-controls-observation-v01.json": {
+      "bytes": 4256,
+      "sha256": "5e88d4d4bed1263b06e2512421253d33a7822f9d9698d7527359d2758c22ee8c"
+    }
+  },
+  "author_evidence_scope": {
+    "author12_positive21_negative_reported_not_independent_final_run": true,
+    "final_main_pair_normalization_inspected_separately": true,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/matched-analyzer-author-controls-observation-v01.json",
+    "tested_predecessor_sha256": "3479ee337d3a7952a327a336006594812452eafa3d1aec6080030ab9fbf855e2"
+  },
+  "controls": {
+    "constant_matrix_effects_zero_for_row_class_pair_denominators": true,
+    "eightcomplete_cells_and_opening_fences_before_reference_permission": true,
+    "explicit_eval_scoring_flag_precedes_only_packet_read": true,
+    "final_frozen_source_negative_refusals": 20,
+    "final_frozen_source_positive_controls": 9,
+    "first46_reuse30_result_path_counts": true,
+    "incorrect_source_parent_policy_progress_manifest_trace_gradient_and_authority_refused": true,
+    "known_polynomial_main_DOD_triple_and_coded_scaling_match": true,
+    "weight1_and_weight2_exact32_completed_contracts_pass": true
+  },
+  "eight_cell_freezer": {
+    "bytes": 3815,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/freeze_eight_cell_outputs_v01.py",
+    "sha256": "4bd0c89ab8696176a4e090974d839cf6b1958e7fb846394d673961e81ec4dc6d"
+  },
+  "findings": [],
+  "limitations": [
+    "Source approval does not authorize premature packet access: exact completed eight-cell freeze and explicit root scoring invocation are required by analyzer before reference read.",
+    "Corpus was authored by this reviewer and independently approved by root earlier; this review covers another author\u2019s analyzer implementation, not self-approval of targets.",
+    "Synthetic tests establish calculation/contract behavior, not numerical success, actual scores, statistical significance, seed robustness or independent legal fidelity.",
+    "Saved head/scorer replay checks frozen arithmetic/IR metadata with structural stubs; it does not independently qualify codec semantics, broader logic families or Lake compilation.",
+    "Author controls ran on the reported predecessor; final main pair normalization was independently inspected and final detached predicates were tested here.",
+    "Runtime custody requires separate actual resource review; source-only384 disabled conditioning is not genuine latent or 8D768D encoder evidence."
+  ],
+  "observed_at_utc": "2026-10-12T17:19:15.578027+00:00",
+  "passed": true,
+  "reviewer_actions": {
+    "actual_new_result_JSON_reads_or_scores": 0,
+    "checkpoint_JSON_parses_restores_forwards_updates": 0,
+    "complete_analyzer_freezer_or_scoring_helper_imports": 0,
+    "evaluation_packet_opens": 0,
+    "full_main_execution": 0,
+    "named_AST_synthetic_functions_only_executed": true,
+    "network_Git_HF_compiler": 0,
+    "numerical_or_resource_imports_API_leases_locks": 0
+  },
+  "schema": "matched-curriculum-analyzer-source-independent-review/v1",
+  "scope": "Different-author analyzer and root freezer static/source review plus named AST synthetic metadata/factorial controls; no actual result scoring or reference packet access",
+  "source_checks": {
+    "all8_candidates_retained_no_defaultwinner": true,
+    "all8_unique_complete32_phase_output_inventory_terminal_source_joins": true,
+    "closing_result_source_manifest_packet_analyzer_fences": true,
+    "deferred_authored_eval_shared_templates_author_visible_no_statutoryholdout_claim": true,
+    "exact_common_original_parent_raw_hash_no_modelparse": true,
+    "freezer_opaque_checkpoint_rawpins_no_reference_packet_read": true,
+    "law8_unreviewed_unscored": true,
+    "modality_confusions_and_role_errors_presence_FP_FN_and_abstention_classification": true,
+    "no_significance_seedrobustness_semantic_or_selection_claim": true,
+    "no_tuning_loss_comparison_across_different_weights": true,
+    "pure_named_saved_head_greedy_joint_and_scoring_replay_only": true,
+    "row_panel_class_pair_denominators_separate": true
+  }
+}

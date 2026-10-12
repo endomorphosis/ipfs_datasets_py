@@ -1,0 +1,19 @@
+{
+  "all_old_identities_exact": true,
+  "failed_log": {
+    "bytes": 7480,
+    "path": "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-publication-execution-v01.log",
+    "sha256": "4ba0f9488df7632207f44e247ed38a34302c1b8a8042a02049ddc1bd9fef9c3c"
+  },
+  "failed_publish_returncode": 1,
+  "failure": "SSLEOFError at create_commit; no commit receipt returned",
+  "files": 3451,
+  "findings": [],
+  "observation_scope": "One actual full remote identity observation after failed request; no continuous or future guarantee",
+  "passed": true,
+  "release_prefix_absent": true,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "retry_has_not_started": true,
+  "revision": "f573ae8401b0774df0f43fc8ee026a79d9c400a9",
+  "schema": "matched-Hub-failed-request-reconciliation/v1"
+}

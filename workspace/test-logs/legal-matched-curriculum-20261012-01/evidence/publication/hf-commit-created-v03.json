@@ -1,0 +1,11 @@
+{
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/3076b37eadd5536095d28500e78f53e4876c0832",
+  "default_promotion": false,
+  "exact_original_root_repair": true,
+  "operations": 29,
+  "parent_revision": "4602870f7fb6b85fbff0ad4dc92b5546ba803091",
+  "prefix_additions": 28,
+  "release_prefix": "releases/20261012-matched-curriculum-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "3076b37eadd5536095d28500e78f53e4876c0832"
+}

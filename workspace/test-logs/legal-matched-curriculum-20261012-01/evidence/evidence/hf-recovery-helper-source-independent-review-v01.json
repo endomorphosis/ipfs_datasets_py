@@ -1,0 +1,71 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-failed-attempt-reconciliation-v01.json": {
+      "bytes": 802,
+      "sha256": "9b05f69df6c96838b8136f6657360e5cec6116312b64bf1ede8732a9cd91905f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/hf-publication-execution-v01.log": {
+      "bytes": 7480,
+      "sha256": "4ba0f9488df7632207f44e247ed38a34302c1b8a8042a02049ddc1bd9fef9c3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/prepare_hf_release_v01.py": {
+      "bytes": 12559,
+      "sha256": "a69bd030068632af0ebe1967abb1f111ace18cace41d44e8c098715b295da4ae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/prepare_hf_release_v02.py": {
+      "bytes": 4190,
+      "sha256": "cb620c08048c312d42b5c70e22bf6805e58bf03628f18ff15d972d023587fac2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/publish_hf_release_v01.py": {
+      "bytes": 10259,
+      "sha256": "0e67f96e9aa4512d298b91f2ee3d31c08354bd5c9cad924ba1613d78efb1b3a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/publish_hf_release_v02.py": {
+      "bytes": 10698,
+      "sha256": "8f7e1a9c8ac4ad172994ccfdafe974b9188486f76c99ba19a3dc724357cd5477"
+    }
+  },
+  "controls": {
+    "48file_boundary_49splits_and16MB_exact_boundary": true,
+    "Git_blob_SHA1_header_and_LFS_SHA256_size_identity_checks": true,
+    "allnames_once_stable_sort_nooversizedartifact_orbooleanbytes": true,
+    "failedlog_checked_no_bearer_or_HF_token_literal": true,
+    "negative_detached_refusals": 9,
+    "onecreate_site_eachchunk_parent_current_CAS_no_delete_or_replacement": true,
+    "original_large14849840byte_packet_fits_single_chunk": true,
+    "positive_detached_chunk_and_identity_cases": 6,
+    "unknowncreate_exception_writes_durable_reconciliation_need_and_reraises_no_retryloop": true
+  },
+  "findings": [],
+  "limitations": [
+    "Source approval is not concrete405payload approval. A new closed11key v2 publication review must bind every actual payload and recovery input before root invokes publisher.",
+    "The failed-request reconciliation is a sampled oldf573/3451 observation, not a guarantee the old request can never commit later; fresh baseline and perchunk CAS/identity fences must stop any late or parallel change.",
+    "Chunk commits can expose an incomplete prefix temporarily. Only final complete405 immutable download/readback qualifies the archive; no default promotion occurs.",
+    "The publisher does not implement automatic retry/resume. Any uncertain request outcome requires a separate concrete remote reconciliation before another write.",
+    "Intermediate nonLFS checks use Gitblob identities; final immutable readback verifies rawSHA256 for every payload file.",
+    "No model/semantics/genuine latent/family/Lake/statutorygold or resource-admission authority is added."
+  ],
+  "observed_at_utc": "2026-10-12T17:49:30.463369+00:00",
+  "passed": true,
+  "reviewer_actions": {
+    "API_network_or_externalwrites": 0,
+    "full_helper_or_Hub_SDK_imports": 0,
+    "model_JSON_parses_restores_forwards_updates": 0,
+    "resource_API_lease_lock_orGitmutations": 0,
+    "synthetic_AST_chunk_identity_predicates_only": true
+  },
+  "schema": "matched-curriculum-Hub-recovery-helper-source-independent-review/v1",
+  "scope": "Independent frozen transport recovery source and pure chunk/identity planner review; same authorized additive archive, no full helper imports, SDK/network or publication execution",
+  "source_checks": {
+    "Gitblob_orLFSbyteidentity_join_aftereach_commit": true,
+    "absentpaths_only_and_exactnewchunk_remoteidentity_set": true,
+    "add_only_five_reviewed_recovery_files_and_generatedmanifest": true,
+    "allrawimmutablebuffers_and_completeclosed_review_beforeSDK": true,
+    "complete405thenimmutable405download_byteSHAverification": true,
+    "durable_pre_created_verified_chunk_receipts": true,
+    "freshfullbaseline_and_eachchunk_current_parent_baseline_pluspriorowned_fences": true,
+    "preserve_all399_original_payload_bytes_and_original_receipts": true,
+    "same200MBtotalcap_no_defaultpromotion_no_numeric_changes": true,
+    "stop_on_unknownoutcome_or_identity_drift_no_blindadoption_or_retry": true
+  }
+}
