@@ -1,0 +1,52 @@
+{
+  "actual_encoder_calls": 0,
+  "admitted": false,
+  "controls": [
+    {
+      "control": "none",
+      "name": "zeros",
+      "report": {
+        "bytes": 22345,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/trained-parity-zeros.json",
+        "sha256": "8a18b88bf4bcdaa2aeae15aa4c9f928301dbd0e668341f10f8c185e504156283"
+      }
+    },
+    {
+      "control": "none",
+      "name": "alternate_placeholders",
+      "report": {
+        "bytes": 22345,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/trained-parity-alternate_placeholders.json",
+        "sha256": "70a6afdf8d134a811c929badfef04fc509c6708dd00c9cf0888c9e6df596281f"
+      }
+    },
+    {
+      "control": "disabled",
+      "name": "disabled",
+      "report": {
+        "bytes": 22349,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/trained-parity-disabled.json",
+        "sha256": "bcdeab173f83627784f037bb34d2128e6ece4179984b771971a19c3c42172d5c"
+      }
+    },
+    {
+      "control": "rotate",
+      "name": "rotated_placeholders",
+      "report": {
+        "bytes": 22347,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/targeted-loss-20261012-rank0-presence1-01/results/trained-parity-rotated_placeholders.json",
+        "sha256": "9901424dae6db6ac4d64e50c316d7fc395df34f3a5bc1d60f48b1c3ee3fc7e4c"
+      }
+    }
+  ],
+  "formalized": false,
+  "genuine_latent_semantics_tested": false,
+  "passed": true,
+  "promotion_performed": false,
+  "proof_authority": false,
+  "qualified": false,
+  "schema": "source-only-dormant384-placeholder-parity/v1",
+  "score_and_greedy_decisions_bit_equal": true,
+  "semantic_correctness_verified": false,
+  "source_count": 2
+}

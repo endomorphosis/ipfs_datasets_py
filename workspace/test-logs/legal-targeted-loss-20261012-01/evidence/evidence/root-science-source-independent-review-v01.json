@@ -1,0 +1,95 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-matched-curriculum-20261012-01/root-science-source-independent-review-v01.json": {
+      "bytes": 41638,
+      "sha256": "757840f4eb03a3d5c05b34115c4303b581e338f93721601fc863fbf3aa5b9000"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/corpus-source-independent-review-v01.json": {
+      "bytes": 2795,
+      "sha256": "b301a9c17112dbfdae8352be2cc337151542b0177cb2d08cd0fa9edfc3dc79e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/freeze_four_cell_outputs_v01.py": {
+      "bytes": 4939,
+      "sha256": "3995c6c0f917303574972b5583e140b63184e7232d88580c21d45328fe6575b1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/prepare_targeted_loss.py": {
+      "bytes": 11652,
+      "sha256": "aecff8f97f0c76f6df9b505803974817eda8162d57501eb872a9370472609101"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/resource-baseline-audit-design-v01.json": {
+      "bytes": 70055,
+      "sha256": "329167f594fd856f6b297dba509e64778799a03d133a03ff3b0618ed109192d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_targeted_loss.py": {
+      "bytes": 35247,
+      "sha256": "092cc00ee5f55f1cbb33b76cabaf3aa759ad7e6b444385a87bcba06f861f3c78"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "controls": {
+    "execution": "detached exact-source AST functions and inert synthetic counter/plan fixtures; no full recipe/helper import",
+    "negative": 32,
+    "negative_cases": [
+      "integer_actor_flag",
+      "bool_presence_weight",
+      "out_of_range_presence",
+      "changed_modality",
+      "wrong_cell_identity",
+      "changed_seed",
+      "bool_seed",
+      "active_latent",
+      "encoder_execution",
+      "semantic_gold",
+      "promotion",
+      "Lake",
+      "overlong_training",
+      "changed_package",
+      "changed_runner",
+      "missing_forbidden_new_reference",
+      "admitted_reference_artifact",
+      "evaluation_has_reference",
+      "old_evaluation_mislabeled_source_only",
+      "legacy_permission_gate_relaxed",
+      "unknown_plan_field",
+      "incomplete_baseline_pair",
+      "wrong_panel_count",
+      "unreturned31_updates",
+      "wrong_training_count",
+      "wrong_report_policy",
+      "wrong_sampler_indices",
+      "wrong_sampler_ids",
+      "missing_last_batch",
+      "progress_gap",
+      "changed_trace_hash",
+      "wrong_loss_list"
+    ],
+    "positive": 5
+  },
+  "findings": [],
+  "limitations": [
+    "The synthetic controls exercise metadata guards only and are not valid executable training plans or model checkpoints. Declared corpus geometry/membership is qualified by the separate b301 corpus review, not by synthetic targets.",
+    "The32-second training deadline is soft at batch boundaries; actual32 returned steps must be measured. The normalized presence factor also scales other main-loss terms as declared; the gold-compatible actor hinge does not guarantee unconstrained raw topK coverage.",
+    "No full parent/model JSON, evaluation reference packet, model execution, numerical/resource import, admission/lease/lock, shared-tree census, compiler/network/Git mutation or old/new reference scoring occurred."
+  ],
+  "passed": true,
+  "pending_required": [
+    "Separate frozen targeted trainer source qualification and actual combined pure tests/preparation.",
+    "Independent exact first-cell phase=training review plus fresh guardian admission; source qualification alone does not grant numerical execution.",
+    "Postattempt runtime/result/immutable archive audits."
+  ],
+  "schema": "targeted-loss-root-science-source-independent-review/v1",
+  "scope": [
+    "Independent static review of the frozen runner/preparer/four-cell output freezer, with exact-source structural metadata and returned-step/hash guard controls.",
+    "One common mixed168 population and seven392 panels; first rank0-presence1 creates only the zero-update retained-parent baseline, and three others reuse its complete authenticated diagnostics. The reusable baseline validator body matches the prior qualified body except first-cell filename/result schema.",
+    "The new authored evaluation is exported as only id/source_text/latent, its metadata is omitted, and both old/new packet paths are explicitly forbidden in the child and excluded from plan artifacts. References remain deferred until all four returned32 output bundles are frozen.",
+    "Actual objective/policy authority belongs to the separately validated new targeted trainer outer schema. Runner passes exact actor flag/presence weight, retains modality2 and fresh Adam/source-parent/seed/batch32 boundaries. Partial attempts save checkpoints/reports/failure evidence and fail equal-budget comparison.",
+    "The freezer hashes exactly52 first-result files and33 per remaining cell (151total), raw model bytes only, after successful durable/released guardian endpoints. It copies reference descriptors from registration without parsing packets and grants no admission/model/promotion authority."
+  ]
+}

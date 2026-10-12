@@ -1,0 +1,71 @@
+{
+  "all_panel_max_source_tokens": 76,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/datasets/tests/unit/logic/legal_ir/test_targeted_loss_curriculum.py": {
+      "bytes": 20942,
+      "sha256": "d1fc5316d2548bf5041193a368ddf4779d66ff555c1470be469c0160d204cf06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/review_targeted_corpus_source.py": {
+      "bytes": 9031,
+      "sha256": "16367e306cad554a93d81649ddf610b5919468b3c5af2df0a6cec995656b5f16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/root-corpus-review-initial-check-failure-v01.json": {
+      "bytes": 459,
+      "sha256": "b8d1aa2b2672945f5bdb50381581426cc50b5ef519027085e05ace24cddd68c1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-corpus-author-pure-test-observation-v04.json": {
+      "bytes": 1376,
+      "sha256": "72e7aada3a5bbd3b9c0f152be64c28d1e72855e2b94054589e221b0ad20e3eb8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/targeted-corpus-author-review-v01.json": {
+      "bytes": 4496,
+      "sha256": "609fec8781839e3ed932d08112f434d04f8560fa8a05ba8081a34c782f9634e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/training-export-v01.json": {
+      "bytes": 4972708,
+      "sha256": "1992f1c3a3b67d3a3b6d1b01122183e24b537357fc45e928ff5bd747d60825bd"
+    }
+  },
+  "compiler_network_calls": 0,
+  "declared_char_UTF8_token_geometry_joins": 1440,
+  "evaluation_child_keys": [
+    "id",
+    "source_text",
+    "latent"
+  ],
+  "exact_mixed_prior_slot_and_geometry_rows": 168,
+  "findings": [],
+  "independent_blinding": false,
+  "independent_statutory_gold": false,
+  "model_restores_forwards_updates": 0,
+  "model_state_JSON_parses": 0,
+  "new_population_details": {
+    "authored_dev": {
+      "max_chars": 234,
+      "max_tokens": 40,
+      "rows": 72
+    },
+    "authored_eval": {
+      "max_chars": 230,
+      "max_tokens": 40,
+      "rows": 72
+    },
+    "train": {
+      "max_chars": 239,
+      "max_tokens": 40,
+      "rows": 72
+    }
+  },
+  "new_split_source_ID_group_pair_provision_lexical_disjoint": true,
+  "passed": true,
+  "reference_builder_author_visible": true,
+  "resource_API_calls": 0,
+  "schema": "targeted-corpus-source-independent-review/v1",
+  "scope": "Independent declared occurrence geometry and fixed membership review; no legal meaning adjudication",
+  "shared_grammar": true,
+  "unchanged_rehearsal_rows": 96
+}

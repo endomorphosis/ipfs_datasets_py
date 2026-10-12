@@ -1,0 +1,46 @@
+{
+  "artifacts": [
+    {
+      "bytes": 29951,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-v02.xml",
+      "sha256": "45ed60f2717ea290522ee36b11bbdcf4f5bef0f112c4b932dccb2fce881ba2de"
+    },
+    {
+      "bytes": 224,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-v02.log",
+      "sha256": "79699fd20005fbb2c511a175947560ad64ddb060b07c1653dd8f4ee2aad12d98"
+    },
+    {
+      "bytes": 7278,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/combined-pure-tests-v01.log",
+      "sha256": "8eac348d1b1d1db1f7a02c85a732707f75291f828d0b2983ff68c60fbbc63679"
+    },
+    {
+      "bytes": 4569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/run_inert_tests.py",
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    }
+  ],
+  "checkpoint_JSON_parses": 0,
+  "compiler_calls": 0,
+  "elapsed_seconds": 13.56,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "harness": "Unchanged inert wrapper with numerical/network/process denial; -c /dev/null --noconftest -o addopts=; existing authenticated authored-export fixtures",
+  "initial_failed_attempt": "v01 stopped in explicitly configured AnyIO/Trio plugin before tests because process denial blocked ldconfig; no implementation changes; failure log retained",
+  "numerical_imports": 0,
+  "passed": true,
+  "real_model_calls": 0,
+  "schema": "targeted-loss-combined-inert-tests/v1",
+  "scope": "Pure corpus, policy, scalar/vector fake and trace contracts only; actual numerical behavior requires separate guarded run",
+  "skipped": 0,
+  "source_modules": [
+    "matched_temporal_curriculum",
+    "legal_span_curriculum",
+    "targeted_loss_curriculum",
+    "legal_span_targeted_loss"
+  ],
+  "subtests_passed": 266,
+  "tests_passed": 156
+}
