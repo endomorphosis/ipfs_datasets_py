@@ -1,0 +1,44 @@
+{
+  "Lake_executed": false,
+  "architecture": {
+    "active_trainable_scalars": 322,
+    "configured_dimension": 384,
+    "feature_paths": 2,
+    "frozen_tensors": 34,
+    "latent_enabled": false,
+    "stored_trainable_scalars": 1096,
+    "total_tensors": 37,
+    "trainable_tensors": 3
+  },
+  "broader_logic_families_qualified": false,
+  "checkpoint": {
+    "bytes": 6461726,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/cell-checkpoint.json",
+    "sha256": "a56ad426a802ce80f11568e0fa72a777ff8da38b5fa0fe0f54bca303a63a8384"
+  },
+  "default_promotion": false,
+  "evaluation": {
+    "bytes": 26724,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/public-result-summary-v01.json",
+    "sha256": "a7ad258dfe7a110f82f082543e75b065f7758da6d4e5c86093bfe55146fdaa1b"
+  },
+  "failed_prior_attempt": {
+    "inference_source_forwards": 704,
+    "optimizer_updates": 0,
+    "retained_claim_bytes": 200000000
+  },
+  "genuine_latent_semantics_qualified": false,
+  "historical_control_new_optimizer_updates": 0,
+  "historical_control_release": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/0a89f3bfaa9db3ff028801b06fe6ee68ad73be19/releases/20261013-temporal-adapter-v1",
+  "independent_statutory_gold": false,
+  "release_prefix": "releases/20261013-temporal-attention-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "temporal-attention-Hub-release-manifest/v1",
+  "semantic_accuracy": null,
+  "successful_attempt": {
+    "inference_source_forwards": 1760,
+    "optimizer_updates": 32,
+    "total_model_forwards": 1792,
+    "training_source_occurrences": 384
+  }
+}
