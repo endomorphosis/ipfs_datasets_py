@@ -1,0 +1,64 @@
+{
+  "causal_training_effect_identified": false,
+  "findings": [],
+  "freeze_path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-output-freeze-v04.json",
+  "input_pins": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-fresh_dev-raw.json": {
+      "bytes": 807379,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-fresh_dev-raw.json",
+      "sha256": "a874f342251afed27aab9055c7b8b5f4df81812f4e38a958d163c8c60f7c5327"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-fresh_test-raw.json": {
+      "bytes": 803034,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-fresh_test-raw.json",
+      "sha256": "02ca1a5a38c75be298866c5f2f8fd25cb568e5d4b6e195ccd545644d2350a100"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-old_tune-raw.json": {
+      "bytes": 2289509,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-old_tune-raw.json",
+      "sha256": "b16dc69491f75ac30b529e9d35789d690383ae106ce9ce44dbf0f81720fc43b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-fresh_dev-raw.json": {
+      "bytes": 807387,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-fresh_dev-raw.json",
+      "sha256": "d180d8140cd88aa692441670041ed363556eed9da7a95a9ca6addac77ea139c4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-fresh_test-raw.json": {
+      "bytes": 803043,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-fresh_test-raw.json",
+      "sha256": "be83b09ec083c968506073ec66162f60432793425b944edbac5de3152f392324"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-old_tune-raw.json": {
+      "bytes": 2289511,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/uniform-old_tune-raw.json",
+      "sha256": "0428f72b7034096802c32337306159487e4aa577be77256609cc1c1c7cebe8b8"
+    }
+  },
+  "model_calls": 0,
+  "optimizer_updates": 0,
+  "panels": [
+    {
+      "argmax_presence_decisions_different": 0,
+      "binary32_temporal_logit_rows_different": 36,
+      "max_absolute_temporal_logit_difference": 0.0012526512145996094,
+      "panel": "fresh_dev",
+      "rows": 36
+    },
+    {
+      "argmax_presence_decisions_different": 0,
+      "binary32_temporal_logit_rows_different": 36,
+      "max_absolute_temporal_logit_difference": 0.0005922317504882812,
+      "panel": "fresh_test",
+      "rows": 36
+    },
+    {
+      "argmax_presence_decisions_different": 0,
+      "binary32_temporal_logit_rows_different": 96,
+      "max_absolute_temporal_logit_difference": 0.0013103485107421875,
+      "panel": "old_tune",
+      "rows": 96
+    }
+  ],
+  "passed": true,
+  "schema": "temporal-attention-uniform-numerical-comparison/v1"
+}

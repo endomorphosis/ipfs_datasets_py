@@ -1,0 +1,741 @@
+{
+  "all_downloads_byte_exact": true,
+  "all_old_identities_exact": true,
+  "chunks": [
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 19,
+      "old_identities_exact": true,
+      "parent_revision": "0a89f3bfaa9db3ff028801b06fe6ee68ad73be19",
+      "revision": "4235275ce97148e72ffbb6cb4d2189758933d34f"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "old_identities_exact": true,
+      "parent_revision": "4235275ce97148e72ffbb6cb4d2189758933d34f",
+      "revision": "0cd702e0f4ea5dd23d61a36332852181e95d9933"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 11,
+      "old_identities_exact": true,
+      "parent_revision": "0cd702e0f4ea5dd23d61a36332852181e95d9933",
+      "revision": "8300e31d79f890b73a053bebaea8b3e0ae615981"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 22,
+      "old_identities_exact": true,
+      "parent_revision": "8300e31d79f890b73a053bebaea8b3e0ae615981",
+      "revision": "5cfbc0bb537b0499cd655c82027a7954a845ff33"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 46,
+      "old_identities_exact": true,
+      "parent_revision": "5cfbc0bb537b0499cd655c82027a7954a845ff33",
+      "revision": "e822f566d1e7eedaf9d7c9675cf689fddeb2dc36"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 22,
+      "old_identities_exact": true,
+      "parent_revision": "e822f566d1e7eedaf9d7c9675cf689fddeb2dc36",
+      "revision": "3440e82e07555b9f7e1d2608cac762ef66eecae4"
+    }
+  ],
+  "default_promotion": false,
+  "downloads": {
+    "releases/20261013-temporal-attention-v1/README.md": {
+      "bytes": 3584,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/README.md",
+      "sha256": "1bddbe76c7e9630dae2a9f78d7fbd5d730312c673eff29809eaccbc0684c95dc"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/plan.json": {
+      "bytes": 45849,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/plan.json",
+      "sha256": "1dc68107c10019276a12681cf74e6efe3c1d117151a657b0c1fe70af643ae60f"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015301,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_dev-joint.json",
+      "sha256": "8b7c51e7667291b9284e1e9b08de429bdbe59293c2c73b1c105b4d9e953314da"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1431718,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_dev-raw.json",
+      "sha256": "5f3f2e4484c0ab67e77346ca2703ec1a9a3796d41db85cab54175cf422b51a2e"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023670,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_eval-joint.json",
+      "sha256": "8c1e198af8022562e4b556c8bc01355762ecd5608549b2e51c1c202dc0759806"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1430466,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-authored_eval-raw.json",
+      "sha256": "d93d2f8831af17e945134e3e8d579e75679096f6df5c9fe4815616ad970674da"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_challenge-joint.json",
+      "sha256": "b8234288705c31d6344bb209d8aa662c64fddcf0dc26f9ef0e1cf4ce8d2f0759"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 681138,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_challenge-raw.json",
+      "sha256": "f802d22d682e54dc01b9579ffd7d664ae21cb70f3689f67e4759197669e98aba"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523012,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_dev-joint.json",
+      "sha256": "2d21c9619966298ac634e9c1de53af23b333d235c847d4dc4d420ef016662e8e"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 807383,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_dev-raw.json",
+      "sha256": "154595a91cfe7a815cf35bcc827d3833a98f4ef13c4e6656a266d6b6d6bb2b04"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 459663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_test-joint.json",
+      "sha256": "b68cca718ebe18942401fb0d9600f1ed59f5f22eec8339e8a9e9fd0248c12829"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 803038,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_test-raw.json",
+      "sha256": "b21b5bd91e53c7d1af84d28ecd837a7a9bf14e3cab28faa097dd2db0df79e6eb"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509061,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_tune-joint.json",
+      "sha256": "5ba009380f0a23ff3edd1e9b47d668b1cc87568c463270ea960d6197c89a2779"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 628904,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-fresh_tune-raw.json",
+      "sha256": "ff95017a67be93cc8dff22401086ebde2dd079e23bc3a9e1f869999b5a63bea2"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-law-joint.json": {
+      "bytes": 107524,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-law-joint.json",
+      "sha256": "1fcc677ab07e2c43843aaae4b38c788720980a98b8099900078c9f9c61d9be56"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-law-raw.json": {
+      "bytes": 284358,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-law-raw.json",
+      "sha256": "ed4e21c72c060cb1b19fe8ded252073f555924c78f74121eafe255f7dea561de"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_authored_eval-joint.json",
+      "sha256": "b927d831ffb47eb33b8b8dc6d71d51ab94981404ed8addd29f97c3d7838b2af6"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1453639,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_authored_eval-raw.json",
+      "sha256": "5e553116b4f2b45197c60d687056b8d257ccee44f3042d773f3d4d91fe4faa86"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456855,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_tune-joint.json",
+      "sha256": "c0a78e2c5e6c9f142d46141d6fb2b1e12ecf8aa0e4ad774e7644643a5182b731"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2289348,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/baseline-old_tune-raw.json",
+      "sha256": "202fa56330685c39e955f1b346db9b24612383e5b9283fdc2ec258c06b492399"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/cell-checkpoint.json": {
+      "bytes": 6461726,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/cell-checkpoint.json",
+      "sha256": "a56ad426a802ce80f11568e0fa72a777ff8da38b5fa0fe0f54bca303a63a8384"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/cell-training.json": {
+      "bytes": 1079081,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/cell-training.json",
+      "sha256": "ce4e871016a13f65eb32f4f10a5ea0fbacd7a03ca9af207bc8fe891a282ad2ab"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_dev-joint.json": {
+      "bytes": 523019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_dev-joint.json",
+      "sha256": "3887812a25509a4888b12c46369bbd026eae8609aae850576b10013bf8461611"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_dev-raw.json": {
+      "bytes": 806455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_dev-raw.json",
+      "sha256": "3d3820b04a8fd3aafafec8be41eee972f30f555404f1967ede315f4c98fbaafa"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_test-joint.json": {
+      "bytes": 459661,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_test-joint.json",
+      "sha256": "6e7fdae67682b0da7a71b4b147cc5a3006e0f3b559c77821bbf20c5ad0b992d4"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_test-raw.json": {
+      "bytes": 802107,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-fresh_test-raw.json",
+      "sha256": "3f6be2c04953ba9d443c5c5c114b2dbae80d34438e7f950b8509e6fe8f650f7c"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-protected-head-retention.json": {
+      "bytes": 18297,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/historical-control-protected-head-retention.json",
+      "sha256": "04c0206aae04d10b3efc8210964ddd813b55a80683a8ac8a5ff46c6bf102dab5"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parent-head-parity.json": {
+      "bytes": 190074,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parent-head-parity.json",
+      "sha256": "45c35f0cf2013a93dff04cfd76d540ab5b4f8dd29c3be3ae85a1484a41c050de"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-alternate_placeholders.json",
+      "sha256": "07113c0c4f6f88cd64a6c5f422e39a49228449fe715124f7686d14ae496497fb"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-disabled.json": {
+      "bytes": 22219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-disabled.json",
+      "sha256": "574a98a38ad0e2d7493196e640cd2a29188445b3f7225bb7055e1f62ec599506"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22217,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-rotated_placeholders.json",
+      "sha256": "ffdd3d232778c04bc42cca37501393b1dbf64654ebbb5a23e8aa24d2d4c84e6f"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-zeros.json": {
+      "bytes": 22215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity-zeros.json",
+      "sha256": "e58bb124eb8cbaab7db7d0704e8dc842754bd093cef7b30d636fe191e6af8e4f"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity.json": {
+      "bytes": 2073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-parity.json",
+      "sha256": "bbb20003174e4766109e1ed11683a170295ece8066657c9831ec8d7fc119e476"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-training168-joint.json": {
+      "bytes": 2485989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-training168-joint.json",
+      "sha256": "a8e7dacc0076d6a6bc93f9f75e8e8a35ddd64bcb8a5b2742bbf4a3acfdc20277"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-training168-raw.json": {
+      "bytes": 3590595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/initial-training168-raw.json",
+      "sha256": "c696b414045420df1be9899b48ac04a5fbad317a539019db70179fb9ec4f74a9"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523012,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_dev-joint.json",
+      "sha256": "2d21c9619966298ac634e9c1de53af23b333d235c847d4dc4d420ef016662e8e"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 805384,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_dev-raw.json",
+      "sha256": "545ceae2e41d1554eb8bcd1bea7ec3b6f5729876bde3f726b05082bfe0f049d1"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 459663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_test-joint.json",
+      "sha256": "b68cca718ebe18942401fb0d9600f1ed59f5f22eec8339e8a9e9fd0248c12829"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 801039,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-fresh_test-raw.json",
+      "sha256": "bfd55668a56e7a7cca06f66bcac609144edbb0f9a4cbf063e96f17d16ead4e95"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-training168-joint.json": {
+      "bytes": 2485989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-training168-joint.json",
+      "sha256": "a8e7dacc0076d6a6bc93f9f75e8e8a35ddd64bcb8a5b2742bbf4a3acfdc20277"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-training168-raw.json": {
+      "bytes": 3588586,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/parent-training168-raw.json",
+      "sha256": "96f58e4339ed84cc7df9c3584ec2e9649fef60a3d29b3d92fb816df78b81d967"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/summary.json": {
+      "bytes": 64470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/summary.json",
+      "sha256": "2d433be55d00ac313c1b824824005f9d34b4227c7fa9be99ad4512299d9d73c7"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1013791,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_dev-joint.json",
+      "sha256": "49eeb386a03aedeab2cce84a5662d732ba5342818e41ba7609181aa3d6601e83"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1431552,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_dev-raw.json",
+      "sha256": "a39c29535fb0b15af0be7dad9b5fb246a7b5ff64fed49293e2d1ca54db61e4d5"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1022767,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_eval-joint.json",
+      "sha256": "841cfd258f0ade5bedce9dd39b019aff6c6b7c5fef5f080347123680d21058ed"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1432556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-authored_eval-raw.json",
+      "sha256": "d5f870d60bfda43593cfc94a793a080c62cd804e879ffdb28e391554aaaa6f0a"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526637,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_challenge-joint.json",
+      "sha256": "2bb940080dea2a12ee66a21b39348f956cbb87c3634f493193d5f9c942e8a0ef"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 681128,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_challenge-raw.json",
+      "sha256": "5e7c5685b5d5b9fe5c7124cd17cd1f8bb36b8bc3afc686465afae9400e713c29"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 523013,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_dev-joint.json",
+      "sha256": "a58bf35ac82978977f769761b32a29cdf443814cdae2db157ffbadd5e80492f4"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 807379,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_dev-raw.json",
+      "sha256": "a874f342251afed27aab9055c7b8b5f4df81812f4e38a958d163c8c60f7c5327"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 459659,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_test-joint.json",
+      "sha256": "64cbf76b48f7079d21f65f1fb33b30e70936446940c011b37549b8a3df9a0804"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 803034,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_test-raw.json",
+      "sha256": "02ca1a5a38c75be298866c5f2f8fd25cb568e5d4b6e195ccd545644d2350a100"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_tune-joint.json",
+      "sha256": "4f8e5430e5d009a2cdd534fe0a122cbef0d80570ebee63573ff4fdc1c3a979e0"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 628902,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-fresh_tune-raw.json",
+      "sha256": "78b3896a54849554880436c7a8618332340eead61491ba888c7ecd4de7a222ed"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170292,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-frozen-head-retention.json",
+      "sha256": "6d93e27ea867929cee65a6bf0a821050ca0ef3094b3597e0d09cf2653c9ff65a"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-law-joint.json": {
+      "bytes": 107526,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-law-joint.json",
+      "sha256": "b29189d15135e2172a3883045e540cad15026f51da5518f3c2f70861ba30a126"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-law-raw.json": {
+      "bytes": 284357,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-law-raw.json",
+      "sha256": "ecf341e6f47d8a5a49416e1798774af3cf0436e84d86005bb356800baed8c31b"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1040874,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_authored_eval-joint.json",
+      "sha256": "b0b5ec2a68286fe37ee0c8ce2552da05419c5bc1360695626de1d0839e47b8a0"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1455440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_authored_eval-raw.json",
+      "sha256": "b32ac260f467519b0435e6d1cf93a02be35ab3c02ecb0208f30e78970c935e41"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1458343,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_tune-joint.json",
+      "sha256": "3db9e4ab186e9068e24b868c6987064d39980666508d0fd3be540393c72fdabc"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2289509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-old_tune-raw.json",
+      "sha256": "b16dc69491f75ac30b529e9d35789d690383ae106ce9ce44dbf0f81720fc43b3"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 22216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-alternate_placeholders.json",
+      "sha256": "c970a82b10c85dd7c7301c3e081c8b87e663d08d7793b69a68791e02034a1ad6"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-disabled.json": {
+      "bytes": 22220,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-disabled.json",
+      "sha256": "ee9fa22b0d640da5987fc4b261d3a33331d0e59a3dad5f08f61d05458848987e"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 22218,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-rotated_placeholders.json",
+      "sha256": "263327d003cdd1adefd1345f67bec6371fd23fac16c48065390c883c6bfe131b"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-zeros.json": {
+      "bytes": 22216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity-zeros.json",
+      "sha256": "b5216904508230b32b3baa58161bae4ad793b48ae21bbf1d8065ea5616fd62a2"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity.json": {
+      "bytes": 2073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-parity.json",
+      "sha256": "2507733a015e541f645f2e1d410b8dca037a40b94f10772c5d2e71f68da85237"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-training168-joint.json": {
+      "bytes": 2485996,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-training168-joint.json",
+      "sha256": "c43b0b252ff2b10028718c4790defd15d78761b5f3920719eff9b60a1ebfeb15"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-training168-raw.json": {
+      "bytes": 3590612,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/trained-training168-raw.json",
+      "sha256": "d9307ebef1d595802280be4ab8151d59c0ad96151c72fd1bd07afb3df2c389f2"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_dev-joint.json": {
+      "bytes": 523021,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_dev-joint.json",
+      "sha256": "7474ff91ad3bec4362b924881c08662ea8ef05236e40e0a3811a6b6eca3d5aae"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_dev-raw.json": {
+      "bytes": 807387,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_dev-raw.json",
+      "sha256": "d180d8140cd88aa692441670041ed363556eed9da7a95a9ca6addac77ea139c4"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_test-joint.json": {
+      "bytes": 459662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_test-joint.json",
+      "sha256": "2927a5e282fc67680608ade35cb8069cf69e11f7e5baa594b89f7e6942aea895"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_test-raw.json": {
+      "bytes": 803043,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-fresh_test-raw.json",
+      "sha256": "be83b09ec083c968506073ec66162f60432793425b944edbac5de3152f392324"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-old_tune-joint.json": {
+      "bytes": 1458334,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-old_tune-joint.json",
+      "sha256": "c5b12e89844e0979ae662638f075985ba00f71899c429c929b069e5b7c954dcb"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-old_tune-raw.json": {
+      "bytes": 2289511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-old_tune-raw.json",
+      "sha256": "0428f72b7034096802c32337306159487e4aa577be77256609cc1c1c7cebe8b8"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-protected-head-retention.json": {
+      "bytes": 42540,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/uniform-protected-head-retention.json",
+      "sha256": "55fc17d47b8da611dd2a6a01a5357c33d9b727675a895485b1cc6580cae878dd"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child-exit.json",
+      "sha256": "02bff447e26a2a91e12cef0134854cdd76b0fcf39a71e7c883c22ecdb13852e4"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child-identity.json",
+      "sha256": "ae964b3e4f17df4b3dca0924d53e6f648123dc80808b3c393750b99472b5ad1e"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child.log": {
+      "bytes": 108,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/child.log",
+      "sha256": "30cee576218ca891a136936b97605636cc038aef9782f6f5c5681b7c99435c7c"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/command.json": {
+      "bytes": 1093,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/command.json",
+      "sha256": "6a0f9b69c773ad465865479a908804c7a10ce134abe9621301df5b49832449f1"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 42473,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/group-rss-observations.jsonl",
+      "sha256": "6715ed381e7b433ef993ffbad9dad595118e1666dc0a6f16f30ec1ff472257be"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/group-rss-summary.json": {
+      "bytes": 1754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/group-rss-summary.json",
+      "sha256": "6100a3fb26e42cbd8c4a2ca46c8568a9ce4ee2ff0ad11091660f238360ab8870"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/guardian-exit.json",
+      "sha256": "04df8da0ced036835bc8262b4b740a75d8264425f81c7bc46f6600e4caba9d43"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/lease-binding.json",
+      "sha256": "2c4c3f508b91e6f536489a9efa76bbf8b537d6bf7a83196bd8d4a1baf73c9d77"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/lease-observations.jsonl": {
+      "bytes": 89116,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/lease-observations.jsonl",
+      "sha256": "92d4d9fa4213a3b2148976d8ea66c02c530e92c67b190ecd83614f3c98fa4610"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/owned-group-final.json",
+      "sha256": "e207187d0cb41c985abf16f1979a00d83033e7982528d57fef1d57d7f4b86ee3"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/pre-admission.json": {
+      "bytes": 8020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/pre-admission.json",
+      "sha256": "1baa4c8b669e684a3a9dcc43c941b9450dabb79f7df3eb60dcb049ee3e3a04df"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/resource-observations.json": {
+      "bytes": 2626,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/resource-observations.json",
+      "sha256": "11f6a0b86950420232856b33ee031077ba2e2200e253aec730c81be617c8a8f5"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/runtime/scheduler-adoption.json",
+      "sha256": "0505503f2706c8a6f5539fe22f86169de645795dd330b9f71f6e088140a8ae31"
+    },
+    "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/training-review.json": {
+      "bytes": 40306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/training-review.json",
+      "sha256": "0964bc291e47df7acc8ffb6e82de0bb7d0179527482c1866097e9b8dc436fa4c"
+    },
+    "releases/20261013-temporal-attention-v1/data/fresh-reference-packet-v01.json": {
+      "bytes": 100802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/data/fresh-reference-packet-v01.json",
+      "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+    },
+    "releases/20261013-temporal-attention-v1/data/fresh-source-export-v01.json": {
+      "bytes": 434236,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/data/fresh-source-export-v01.json",
+      "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+    },
+    "releases/20261013-temporal-attention-v1/data/training-source-export.json": {
+      "bytes": 4675279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/data/training-source-export.json",
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/analysis-pure-controls-v03.json": {
+      "bytes": 7144,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/analysis-pure-controls-v03.json",
+      "sha256": "6eee10e305f306370395dd4b172f74ac63fe07be877b3c65d824d040efbaf0b4"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/analyzer-source-independent-review-v01.json": {
+      "bytes": 13040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/analyzer-source-independent-review-v01.json",
+      "sha256": "7ad6bbc520cfee865c7cdac5d080e1c14bdb50b372e2e884b5cdedb11c28158f"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/attention-terminal-resource-source-independent-review-v03.json": {
+      "bytes": 4139,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/attention-terminal-resource-source-independent-review-v03.json",
+      "sha256": "37eca04c7dda00aedae9708974c2b18f7e1a40947079c4433611cf25d84a93cb"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/attention-zero-update-recovery-source-independent-review-v01.json": {
+      "bytes": 9892,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/attention-zero-update-recovery-source-independent-review-v01.json",
+      "sha256": "afc7059d977eadf5f52c8b9fbdfb36d1c3e69f10c4e875b3f4f09b7cccb2a85b"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 3537,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/evaluation-contract-v01.json",
+      "sha256": "c6d843b39cc7e99209e4e7fd3a59e4b87e001aef5d9cbaac6e7e132034287409"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/fresh-reference-construction-audit-v01.json": {
+      "bytes": 173725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/fresh-reference-construction-audit-v01.json",
+      "sha256": "bcb04ea5fe6102f569afdf0b54ede2940c89ceb9cc3a8a363084f05fe308dcff"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/fresh-reference-independent-review-v01.json": {
+      "bytes": 3473,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/fresh-reference-independent-review-v01.json",
+      "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/hf-helper-detached-pure-controls-v01.json": {
+      "bytes": 5985,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/hf-helper-detached-pure-controls-v01.json",
+      "sha256": "e3c3fa0310bd37c5c46b9b694c50bf6281c952c53883952910c829b040c38055"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/history-continuation-independent-review-v01.json": {
+      "bytes": 42674,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/history-continuation-independent-review-v01.json",
+      "sha256": "4083db3f94ec7038dbada96e22f5f2b8033ae2809584bbd5ee1c51be41417d86"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/independent-recount-synthetic-controls-v04.json": {
+      "bytes": 5412,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/independent-recount-synthetic-controls-v04.json",
+      "sha256": "db559c3629c8a78ab28cad068d7d7ca21005d4fac4bd0b964d5ffdfa3578e938"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/next-experiment-gaps-v01.json": {
+      "bytes": 7346,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/next-experiment-gaps-v01.json",
+      "sha256": "01de766b3b7b0e18ae570fc3be03032956edb43a539e684d29c857de1e5b8a33"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 26724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/public-result-summary-v01.json",
+      "sha256": "a7ad258dfe7a110f82f082543e75b065f7758da6d4e5c86093bfe55146fdaa1b"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/recount-source-independent-review-v01.json": {
+      "bytes": 8174,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/recount-source-independent-review-v01.json",
+      "sha256": "7fd9df2421908ee9e16a16fb595a469e25c6f2c060fa8caf81ca027e6e4b1588"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/resource-baseline-v02.json": {
+      "bytes": 93710,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/resource-baseline-v02.json",
+      "sha256": "8eb2350116ff1b468d4e9ad03efbbfd959de712150ef8c1461031a65a2ee1491"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 103281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/result-independent-review-v01.json",
+      "sha256": "db3a8546cb3299ecc9ba043970fe694ad48a4372e4c2ab931b853c167b83c61f"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 10338,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/runner-preparer-source-independent-review-v02.json",
+      "sha256": "4cc7aed5c61cac295b6ccf1ae1c1ed9a38a0dd3e4e34f923db9960c414a9be10"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/runner-preparer-source-review-correction-v01.json": {
+      "bytes": 2964,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/runner-preparer-source-review-correction-v01.json",
+      "sha256": "10065c6b340e538b3f993e91a2a01a5de132019a808d103d527175eae82b1c2d"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/runtime-freeze-source-independent-review-v04.json": {
+      "bytes": 6986,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/runtime-freeze-source-independent-review-v04.json",
+      "sha256": "4eafba276e436f08c559a5048d0a0067ca927336cbfdefa389ccaeabb35ce0e0"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/runtime-independent-review-v04.json": {
+      "bytes": 61121,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/runtime-independent-review-v04.json",
+      "sha256": "d26525aeab72ae1ba3ad68a12a3dd1991120ad78659a3e6e44060bf0dad07d18"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/sampler-source-independent-review-v02.json": {
+      "bytes": 2794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/sampler-source-independent-review-v02.json",
+      "sha256": "b61a80d6e3cf03eb999c92e352cde1adfc60312510f27f4bd708e97dd7f09626"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/temporal-attention-ce-terminal-resource-audit-v03.json": {
+      "bytes": 30449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/temporal-attention-ce-terminal-resource-audit-v03.json",
+      "sha256": "eb7314f3789618ee172ddccf3d85bbe94984dc8fe64ca9c8568caf130068c3a1"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/temporal-attention-output-freeze-v04.json": {
+      "bytes": 25674,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/temporal-attention-output-freeze-v04.json",
+      "sha256": "6b108995b792e70dc4e9816466cb12c087c582836a21031df9a4319266621e15"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/temporal-attention-result-analysis-v01.json": {
+      "bytes": 5065973,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/temporal-attention-result-analysis-v01.json",
+      "sha256": "36679c2ebe57e4e44ca39b5883c7d91202576643f4b3b9bf86103f72da8c43a5"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/trainer-source-independent-review-v02.json": {
+      "bytes": 5679,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/trainer-source-independent-review-v02.json",
+      "sha256": "0aa0342942dcef79fa15019a43f31ee808e44e57adc01927d724f898e4320712"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/training-design-v01.json": {
+      "bytes": 2512,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/training-design-v01.json",
+      "sha256": "aca45e607883527b8b854aaa9ad1bdd5115ddfb7d4d00f4f7fc8df147023989e"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/uniform-numerical-comparison-v01.json": {
+      "bytes": 4259,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/uniform-numerical-comparison-v01.json",
+      "sha256": "00ee188d252ce5d8cc89b5af9bdd76ddfbae92b84b1307c9149fdc51053869d9"
+    },
+    "releases/20261013-temporal-attention-v1/evidence/upstream-owner-compatibility-independent-review-v01.json": {
+      "bytes": 11326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/evidence/upstream-owner-compatibility-independent-review-v01.json",
+      "sha256": "fb24d7bc81393bda3073a9c73a8b52cd85dcc20dc439395b38f519ffff1e129a"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/analyze_temporal_attention.py": {
+      "bytes": 55520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/analyze_temporal_attention.py",
+      "sha256": "aed798f9fa1e008de4d0cd9826b67cfa5ab2d45ce7ed1a2c5e046e5905960d60"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/archive_temporal_attention_hf.py": {
+      "bytes": 19240,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/archive_temporal_attention_hf.py",
+      "sha256": "d04e7edaf194ea14fd54df0a6f8895e0b8ce2077198cb43773f6b9c3a479c555"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/attention_analysis_pure_controls_v01.py": {
+      "bytes": 14623,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/attention_analysis_pure_controls_v01.py",
+      "sha256": "407067c6ad0a77fb9f582964ef6736855322fd09b240b407d616d4b275bbc03b"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/audit_attention_terminal_resources_v03.py": {
+      "bytes": 37490,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/audit_attention_terminal_resources_v03.py",
+      "sha256": "664e9338a9a82ee297d4031edd551209a282ec2edd0cb1c20fefdd5de32f5dcf"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/build_fresh_authored_temporal_reference_v02.py": {
+      "bytes": 22511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/build_fresh_authored_temporal_reference_v02.py",
+      "sha256": "a56564a568b06bb358f0a2f9794e345570a3d9cdbf51e3d0cdc3c4e508ba3180"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/capture_attention_endpoints_v02.py": {
+      "bytes": 6297,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/capture_attention_endpoints_v02.py",
+      "sha256": "e490f5154a4f712069f9fe41c81cee9f1db03898d5d2d6eff86e6c9882822501"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/freeze_temporal_attention_outputs_v04.py": {
+      "bytes": 12511,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/freeze_temporal_attention_outputs_v04.py",
+      "sha256": "180b7dd3e4cd5aa275076590ddb0fea7b16b400cba88bc729bcd0af3001be7ca"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/independent_temporal_attention_recount_v02.py": {
+      "bytes": 44471,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/independent_temporal_attention_recount_v02.py",
+      "sha256": "2b777cc8341c806cbbd336747dc6f7017ea0d567c932d77868919a3faebdde98"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/prepare_temporal_attention_v02.py": {
+      "bytes": 11972,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/prepare_temporal_attention_v02.py",
+      "sha256": "a6f9f93d413d7563f9ccc6740f5b940ef2e4fac96f61a664accff9898268300a"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/review_attention_archive_pure_controls_v01.py": {
+      "bytes": 8770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/review_attention_archive_pure_controls_v01.py",
+      "sha256": "8908d9fc7a0a45d3184666114eb673191956c751db9f7c19a89e992b9e4b9295"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/review_attention_zero_update_recovery_v01.py": {
+      "bytes": 28994,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/review_attention_zero_update_recovery_v01.py",
+      "sha256": "6ef5f48971fe5116c98630c2f36fc2f4e98cbce82da913918a883c3a75583764"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261013-temporal-attention-v1/recipe/run_temporal_attention_v02.py": {
+      "bytes": 29626,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/recipe/run_temporal_attention_v02.py",
+      "sha256": "6db67dac8116e0334be7a1061f554a76f1bb106dcc73a0cb47a4d45adf667435"
+    },
+    "releases/20261013-temporal-attention-v1/release-manifest.json": {
+      "bytes": 1758,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/release-manifest.json",
+      "sha256": "9502d6b4606932ad0634ee99dbab20e225064068c0520ce387e2497712a0a386"
+    },
+    "releases/20261013-temporal-attention-v1/source/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/source/legal_span_temporal_attention.py",
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "releases/20261013-temporal-attention-v1/source/test_legal_span_temporal_attention_contracts.py": {
+      "bytes": 40725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-verified-download-v01/releases/20261013-temporal-attention-v1/source/test_legal_span_temporal_attention_contracts.py",
+      "sha256": "c56a9d49f60c32bba0e4f7e44e271815e42c523e75977fa60cea96d32325834f"
+    }
+  },
+  "findings": [],
+  "new_files": 136,
+  "old_files_preserved": 4495,
+  "parent_revision": "0a89f3bfaa9db3ff028801b06fe6ee68ad73be19",
+  "passed": true,
+  "release_prefix": "releases/20261013-temporal-attention-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "3440e82e07555b9f7e1d2608cac762ef66eecae4",
+  "schema": "temporal-attention-Hub-verification/v1",
+  "semantic_accuracy": null
+}

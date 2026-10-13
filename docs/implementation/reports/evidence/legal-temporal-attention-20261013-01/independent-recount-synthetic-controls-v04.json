@@ -1,0 +1,212 @@
+{
+  "actual_output_or_reference_reads": 0,
+  "actual_recount_main_executed": false,
+  "checkpoint_JSON_parses": 0,
+  "controls_source": {
+    "bytes": 11325,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/independent_attention_recount_controls_v03.py",
+    "sha256": "cda4a30eeaa6d0fcd73dcacd7c432ca53442c60cfc9207ca477fd186233f0954"
+  },
+  "count": 37,
+  "findings": [],
+  "model_or_encoder_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-13T08:48:01.344519+00:00",
+  "observer": {
+    "bytes": 44471,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/independent_temporal_attention_recount_v02.py",
+    "sha256": "2b777cc8341c806cbbd336747dc6f7017ea0d567c932d77868919a3faebdde98"
+  },
+  "passed": true,
+  "private_resource_body_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "temporal-attention-independent-recount-synthetic-controls/v1",
+  "tests": [
+    {
+      "expected": "pass",
+      "name": "exact74 includes opaque checkpoint and all latent controls",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "exact paired IR and all permission views",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "fresh broad group counts independently aggregate",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "raw argmax differs from guarded near-tie readout",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "exact tie exposed with false raw argmax and guarded ambiguity",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "temporal false positive and false negative independently counted",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "single role error changes raw exact IR only",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "greedy abstention and permission abstention counted",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "joint abstention counted",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "status with nonnull IR refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "source hash mismatch refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "token span geometry mismatch refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "incomplete pair refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "pair class mismatch refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "pair broad group mismatch refused",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "full initial parent parity accepts exact saved payload",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "protected final parity permits only temporal presence changes",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "full initial parity refuses temporal change",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "protected final parity refuses start-head change",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "binary32 parity distinguishes signed zero",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "full initial parity checks greedy reason",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "paired recoveries and regressions retain source IDs",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "paired ID reorder refused",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "development strict improvement with no regression eligible",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "development exact tie ineligible",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "development one improved metric cannot hide another regression",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "technical failure ineligible",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "legacy regression ineligible",
+      "passed": true
+    },
+    {
+      "expected": "pass",
+      "name": "permission regression ineligible",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "private snapshot path refused before filesystem access",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "boolean byte descriptor refused",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "audit refuses model",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "audit refuses network",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "audit refuses lock",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "audit refuses foreign write",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "audit refuses reference access before durable freeze",
+      "passed": true
+    },
+    {
+      "expected": "refusal",
+      "name": "binary32 scalar refuses nonrepresentable saved value",
+      "passed": true
+    }
+  ]
+}

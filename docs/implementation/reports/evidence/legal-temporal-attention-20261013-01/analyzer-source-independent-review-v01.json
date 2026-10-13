@@ -1,0 +1,181 @@
+{
+  "admitted": false,
+  "analysis_main_executed": false,
+  "analyzer": {
+    "bytes": 55520,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analyze_temporal_attention.py",
+    "sha256": "aed798f9fa1e008de4d0cd9826b67cfa5ab2d45ce7ed1a2c5e046e5905960d60"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analyze_temporal_adapter.py": {
+      "bytes": 45115,
+      "sha256": "08707ad592dfa62a0a6b0bfaa1f593625bd86d1617b2a304e37df611d5c1650d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/evaluation-contract-v01.json": {
+      "bytes": 27955,
+      "sha256": "07a55d285882cac62207fb7008bbca55746c86a56c7aa3cd4a96374fdd6bf87e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/final-integration-independent-review-v01.json": {
+      "bytes": 274169,
+      "sha256": "5c25eb3eca9a6bf1011e7b8baffa67c0f29c7c453ac0a8bb51259ddefbe1c729"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/result-independent-review-v01.json": {
+      "bytes": 139520,
+      "sha256": "50abcbd7e5dc870cce5cd3a8442808228cef2211e53ded30fffa9a6c39bff7e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-adapter-result-analysis-v01.json": {
+      "bytes": 4092908,
+      "sha256": "3ae5a34286687bc35344c1ffaa09aa3b60d108d46604d983282168566f9302db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json": {
+      "bytes": 4675279,
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analysis-pure-controls-v02.json": {
+      "bytes": 7144,
+      "sha256": "6eee10e305f306370395dd4b172f74ac63fe07be877b3c65d824d040efbaf0b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analysis-pure-controls-v03.json": {
+      "bytes": 7144,
+      "sha256": "6eee10e305f306370395dd4b172f74ac63fe07be877b3c65d824d040efbaf0b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analyze_temporal_attention.py": {
+      "bytes": 55520,
+      "sha256": "aed798f9fa1e008de4d0cd9826b67cfa5ab2d45ce7ed1a2c5e046e5905960d60"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention_analysis_pure_controls_v01.py": {
+      "bytes": 14623,
+      "sha256": "407067c6ad0a77fb9f582964ef6736855322fd09b240b407d616d4b275bbc03b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/evaluation-contract-v01.json": {
+      "bytes": 3537,
+      "sha256": "c6d843b39cc7e99209e4e7fd3a59e4b87e001aef5d9cbaac6e7e132034287409"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/rerun_attention_analysis_pure_controls_v03.py": {
+      "bytes": 1272,
+      "sha256": "d97c2ad4b51f422921ea1e057c77abbec7157b3544025aaa5ec2e8a69e075a4d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v02.json": {
+      "bytes": 93710,
+      "sha256": "8eb2350116ff1b468d4e9ad03efbbfd959de712150ef8c1461031a65a2ee1491"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-detached-controls-v02.json": {
+      "bytes": 6388,
+      "sha256": "49cc7a95716c90baf786c73b87f6e1c18cfd30dd281488d87b8059431844bf42"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 10338,
+      "sha256": "4cc7aed5c61cac295b6ccf1ae1c1ed9a38a0dd3e4e34f923db9960c414a9be10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-review-correction-v01.json": {
+      "bytes": 2964,
+      "sha256": "10065c6b340e538b3f993e91a2a01a5de132019a808d103d527175eae82b1c2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json": {
+      "bytes": 45849,
+      "sha256": "1dc68107c10019276a12681cf74e6efe3c1d117151a657b0c1fe70af643ae60f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v02.json": {
+      "bytes": 40306,
+      "sha256": "0964bc291e47df7acc8ffb6e82de0bb7d0179527482c1866097e9b8dc436fa4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/trainer-source-independent-review-v02.json": {
+      "bytes": 5679,
+      "sha256": "0aa0342942dcef79fa15019a43f31ee808e44e57adc01927d724f898e4320712"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/training-design-v01.json": {
+      "bytes": 2512,
+      "sha256": "aca45e607883527b8b854aaa9ad1bdd5115ddfb7d4d00f4f7fc8df147023989e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "checks": {
+    "accounting": "Successful attempt summary contract1760 inference+32 training=1792 forwards,384 training occurrences. Corrected root runner separately preserves prior failed704 inference/0updates; source qualification binds corrected plan/recovery metadata.",
+    "candidate_lineage": "Exact initial/trained checkpoint/model/policy/branch metadata per capture; unchanged same-forward greedy verification and pure joint decision replay; CPU source-only capture flags and counts validated.",
+    "checkpoint_and_private_body_parsing_denied": true,
+    "final_protection": "All632 including168 training sources: modality, all start/end vectors and three non-temporal presence heads compared binary32; only temporal presence may change.",
+    "freeze_gate": "Independent source review exact analyzer pin; complete readonly74-file results inventory; successful durable released guardian terminal; clean independent runtime review; FREEZE_PASSED set only after these checks.",
+    "gold_boundary": "Current fresh packet and reference-review opens denied before FREEZE_PASSED. All scoring and old/fresh gold joins occur after full frozen bundle qualification. Source qualification artifact closure deliberately excludes these pre-freeze guarded fresh gold/review files.",
+    "inference_controls": "Uniform query same checkpoint/policy protected heads checked on168; dormant four controls in both phases compare canonical observations and latent provenance, with no genuine latent semantics claim.",
+    "initial_full_parity": "All632 raw full-head binary32 vectors, tokens and original greedy/joint decisions independently compared against parent captures; recorded old392/new240 receipts joined to recount, optimizer_updates_before_gate0.",
+    "metrics": "Inherited exact scorer checks source/token/score/joint hashes and typed literal gold geometry. Guarded temporal TP/TN/FP/FN plus ambiguity, signed float32 margins, separate unguarded argmax/ties, fullIR, per-role spans, modality confusion, permissions, abstention reasons, pairwise and broad-group counts.",
+    "numerical_and_production_imports_denied": true,
+    "output_write": "One exclusive owned analysis output, fsync then0444; no other filesystem mutations permitted by audit.",
+    "selection": "Technical parity success plus96/96 greedy+joint and all32 permission preservation; freshdev temporal correctness and joint fullIR both no worse than fixed historical CE, at least one strictly better. Test excluded; no fitted threshold/hyperparameters; automatic/default promotion false.",
+    "source_and_history": "Fixed N6 analysis/source/export/result/final-anchor pins plus exact already qualified actualretryplanV02 bound in source artifacts. EXPECTED/OBSERVED conflict checks prevent substituting freeze.plan or historical control custody.",
+    "source_population": "Old392 source projections joined to source-only export; fresh36dev/36test source projection and reviewed packet metadata joined by ID/SHA/modality/temporal label; three broad groups per split disjoint; all632 source IDs/texts distinct; original168 train gold joined to retained export.",
+    "standard_library_only": true,
+    "training": "Source-bound fixed CE policy and37/34/3 partition; exact32 updates,168-row1729/batch12 schedule,384 visits; objective and frozen-branch chains joined to training IDs/typed span coordinates; first query gradient zero; no checkpoint/Adam replay.",
+    "unknown_and_law": "Temporal ambiguity retained as separate unknown count; law8 have no gold and no exactIR/temporal accuracy scoring, reported UNSCORED_UNREVIEWED_STATUTORY8. Typed validity is structural only."
+  },
+  "control_source": {
+    "bytes": 14623,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention_analysis_pure_controls_v01.py",
+    "sha256": "407067c6ad0a77fb9f582964ef6736855322fd09b240b407d616d4b275bbc03b"
+  },
+  "default_promotion": false,
+  "findings": [],
+  "limitations": [
+    "This is source and synthetic-control qualification; no actual new result was analyzed and no accuracy or eligibility conclusion is established.",
+    "Root must provide the complete successful durably frozen74-output bundle and independently qualified runtime receipt before analyzer execution.",
+    "Source-bound tensor/gradient/moment diagnostics are independently checked as scalar/source metadata; actual tensors and Adam moments remain opaque.",
+    "Historical CE comparison is a fixed completed prior checkpoint with0 new control updates, not a fresh randomized or equal-compute comparison.",
+    "Successful attempt counts must remain separate from the preserved failed attempt704 inference/0updates; resource reconciliation remains root-owned.",
+    "Fresh author/root engineering review does not provide independent legal/statutory gold or semantic-template independence.",
+    "No semantic, legal, genuine8D/384D/768D, broad-family, Lake, default-promotion or publication authority is conferred."
+  ],
+  "network_or_Git_calls": 0,
+  "new_result_bodies_opened": 0,
+  "numerical_or_model_calls": 0,
+  "observed_at_utc": "2026-10-13T08:27:56.352928+00:00",
+  "passed": true,
+  "private_global_body_reads": 0,
+  "pure_control_replay": {
+    "checks_passed": 42,
+    "command": "python -B rerun_attention_analysis_pure_controls_v03.py",
+    "detached_source_count": 9,
+    "exit_code": 0,
+    "mutation": "Exactly one AST OUTPUT string literal changed from analysis-pure-controls-v02.json to v03; original source bytes unchanged.",
+    "receipt": {
+      "bytes": 7144,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analysis-pure-controls-v03.json",
+      "sha256": "6eee10e305f306370395dd4b172f74ac63fe07be877b3c65d824d040efbaf0b4"
+    },
+    "same_receipt_content_as_author_v02": true,
+    "wrapper": {
+      "bytes": 1272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/rerun_attention_analysis_pure_controls_v03.py",
+      "sha256": "d97c2ad4b51f422921ea1e057c77abbec7157b3544025aaa5ec2e8a69e075a4d"
+    }
+  },
+  "qualified": false,
+  "reference_gold_JSON_parses": 0,
+  "resource_API_or_admission_calls": 0,
+  "schema": "temporal-attention-analyzer-source-independent-review/v1",
+  "scope": "Read all754 analyzer and233 control-source lines; selected fixed N6/N2/T scorer/helper source reviewed. Independently reran42 synthetic pure controls to uniqueV03 only. No new output scoring or reference gold body reading.",
+  "semantic_accuracy": null
+}
