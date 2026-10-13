@@ -39,14 +39,20 @@ def _digest(value):
 
 
 def _filter(value, name):
-    if value is not None and (type(value) is not str or not value
-                              or len(value.encode("utf-8")) > 512):
-        raise NumericalObligationRetrievalError("bounded exact " + name + " filter required")
+    if value is not None:
+        if type(value) is not str or not value:
+            raise NumericalObligationRetrievalError("bounded exact " + name + " filter required")
+        try:
+            size = len(value.encode("utf-8"))
+        except UnicodeError as exc:
+            raise NumericalObligationRetrievalError("bounded exact " + name + " filter required") from exc
+        if size > 512:
+            raise NumericalObligationRetrievalError("bounded exact " + name + " filter required")
     return value
 
 
 def page_numerical_obligations(*, report, source_text, path, cursor=None,
-                               function_id=None, kind=None, limit=8, max_bytes=8192):
+                               function_id=None, kind=None, obligation_id=None, limit=8, max_bytes=8192):
     """Return whole pending rows after exact source/report replay.
 
     Rows retain native order. Exact filters may match no rows; ``total_count``
@@ -54,6 +60,8 @@ def page_numerical_obligations(*, report, source_text, path, cursor=None,
     account for matched rows outside this page. A changed source, report,
     filter, limit or byte budget invalidates old cursors. Cursor offsets must
     be reachable by repeatedly paging the same immutable query from zero.
+    ``obligation_id`` is an exact conjunctive filter, not a pattern or proof
+    claim. Its query key is omitted when unset to preserve historical pages.
 
     ``binding.report_id`` is the native report's self identity, whereas
     ``binding.report_sha256`` hashes its complete canonical UTF-8 JSON. A
@@ -68,6 +76,7 @@ def page_numerical_obligations(*, report, source_text, path, cursor=None,
         raise NumericalObligationRetrievalError("bounded positive integer max_bytes required")
     function_id = _filter(function_id, "function_id")
     kind = _filter(kind, "kind")
+    obligation_id = _filter(obligation_id, "obligation_id")
     if type(path) is not str or not path or len(path.encode("utf-8")) > 4096:
         raise NumericalObligationRetrievalError("bounded exact report path required")
     if type(source_text) is not str:
@@ -88,11 +97,14 @@ def page_numerical_obligations(*, report, source_text, path, cursor=None,
     binding = dict(path=path, source_sha256=native["source_sha256"],
                    report_id=native["report_sha256"], report_sha256=_digest(native))
     query = dict(function_id=function_id, kind=kind, limit=limit, max_bytes=max_bytes)
+    if obligation_id is not None:
+        query["obligation_id"] = obligation_id
     request_sha256 = _digest(dict(schema=PAGE_SCHEMA, binding=binding, query=query))
     all_rows = native["pending_obligations"]
     rows = [row for row in all_rows
             if (function_id is None or function_id in row["function_ids"])
-            and (kind is None or row["kind"] == kind)]
+            and (kind is None or row["kind"] == kind)
+            and (obligation_id is None or row["obligation_id"] == obligation_id)]
 
     def continuation(offset):
         return dict(schema=CURSOR_SCHEMA, request_sha256=request_sha256, offset=offset)
