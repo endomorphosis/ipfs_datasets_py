@@ -1,0 +1,50 @@
+{
+  "checkpoints_copied": false,
+  "destination": "source",
+  "files": [
+    {
+      "bytes": 2306,
+      "file": "diagnostic-plan-v01.json",
+      "sha256": "b870c9aa48354c9b71b2f98eb051a1ce5ed5c3116b7ad3be7b38c207557c07a1"
+    },
+    {
+      "bytes": 21835,
+      "file": "analyze_presence_routing.py",
+      "sha256": "9a6cfdecafa3f4df584e8f80ed04045ccd8c3718bc66ebc9f42010f37329480e"
+    },
+    {
+      "bytes": 427659,
+      "file": "presence-routing-summary-v01.json",
+      "sha256": "20ad1a1ff78e0146085c1273548a94d480e3e337ecb97b560c6ebf3c7cbdf852"
+    },
+    {
+      "bytes": 102106,
+      "file": "presence-routing-independent-review-v01.json",
+      "sha256": "6d05160aa9cc3ab19fd49a22ea91fb5f94f89ec6117a3685731ee33bdea4bf66"
+    },
+    {
+      "bytes": 10585,
+      "file": "temporal-presence-training-proposal-v02.md",
+      "sha256": "138b962c85519be7a9a364a2e2ac3d9ce01d04fdfc571f1b2dc3fa81ca1adce8"
+    },
+    {
+      "bytes": 2456,
+      "file": "test-observation-v01.json",
+      "sha256": "473d090b4ea86bd459b9df1ea0575180ae07ad6d3686250e4a319ac49e6fc11d"
+    },
+    {
+      "bytes": 18203,
+      "file": "code-and-plan-independent-review-v01.json",
+      "sha256": "cc6c8728020b58d46c07d46e766b2fb951d7a63f5f72838001df6a15f95f10e6"
+    },
+    {
+      "bytes": 16524,
+      "file": "review_presence_code_and_plan_v01.py",
+      "sha256": "608375d3fafcc47d87435429faa95189db47a80d5008e4d49ac0ec60f224dede"
+    }
+  ],
+  "full_analysis_body_copied": false,
+  "private_global_bodies_copied": false,
+  "schema": "legal-temporal-presence-finite-evidence-copy/v1",
+  "total_copied_bytes": 601674
+}

@@ -1,0 +1,20 @@
+{
+  "actual_model_calls": 0,
+  "command": [
+    "/home/barberb/.local/bin/python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/tests/unit/logic/legal_ir/test_presence_routing.py"
+  ],
+  "exit_code": 0,
+  "known_parameterized_subtest_count": 45,
+  "numerical_imports_blocked_by_test_finder": true,
+  "schema": "legal-presence-routing-test-observation/v1",
+  "stderr": "test_all_optional_fields_and_canonical_subsets (__main__.PresenceRoutingTests.test_all_optional_fields_and_canonical_subsets) ... ok\ntest_digest_binds_both_donors_and_composed_occurrence (__main__.PresenceRoutingTests.test_digest_binds_both_donors_and_composed_occurrence) ... ok\ntest_duration_in_actor_parent_false_positive_is_preserved_and_may_abstain (__main__.PresenceRoutingTests.test_duration_in_actor_parent_false_positive_is_preserved_and_may_abstain) ... ok\ntest_every_unrouted_head_retains_binary32_payload (__main__.PresenceRoutingTests.test_every_unrouted_head_retains_binary32_payload) ... ok\ntest_full_validation_includes_unused_parent_and_adapted_heads (__main__.PresenceRoutingTests.test_full_validation_includes_unused_parent_and_adapted_heads) ... ok\ntest_inputs_outputs_and_provenance_are_fully_detached (__main__.PresenceRoutingTests.test_inputs_outputs_and_provenance_are_fully_detached) ... ok\ntest_invalid_field_profiles_reject (__main__.PresenceRoutingTests.test_invalid_field_profiles_reject) ... ok\ntest_late_temporal_restoration_keeps_adapted_boundaries_and_modality (__main__.PresenceRoutingTests.test_late_temporal_restoration_keeps_adapted_boundaries_and_modality) ... ok\ntest_malformed_occurrence_and_scores_reject (__main__.PresenceRoutingTests.test_malformed_occurrence_and_scores_reject) ... ok\ntest_signed_zero_tie_is_preserved_and_joint_abstains (__main__.PresenceRoutingTests.test_signed_zero_tie_is_preserved_and_joint_abstains) ... ok\ntest_source_identity_and_complete_tokens_reject (__main__.PresenceRoutingTests.test_source_identity_and_complete_tokens_reject) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.082s\n\nOK\n",
+  "stdout": "",
+  "test_count": 11,
+  "test_source": {
+    "bytes": 15252,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/tests/unit/logic/legal_ir/test_presence_routing.py",
+    "sha256": "7141544d69df89d275e4a98e2e48d049c139554061bd5f0869ced321982b0f4c"
+  }
+}
