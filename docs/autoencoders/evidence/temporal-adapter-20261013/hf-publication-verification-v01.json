@@ -1,0 +1,817 @@
+{
+  "all_downloads_byte_exact": true,
+  "all_old_identities_exact": true,
+  "chunks": [
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 16,
+      "parent_revision": "70525bcf70e801e78f4882b4834494d67ec0d2b6",
+      "revision": "8cf0e1a200f6a1a4269e0ab6e1729ce87b387f85"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 21,
+      "parent_revision": "8cf0e1a200f6a1a4269e0ab6e1729ce87b387f85",
+      "revision": "e2515dd3b44ac0a3846fff9bf3264ec087028956"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 30,
+      "parent_revision": "e2515dd3b44ac0a3846fff9bf3264ec087028956",
+      "revision": "595495babd8f192e29b5afa33ad90cb86bd32b0e"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 10,
+      "parent_revision": "595495babd8f192e29b5afa33ad90cb86bd32b0e",
+      "revision": "39516d64977b441bd5d4195cdb016bf082ebc062"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 29,
+      "parent_revision": "39516d64977b441bd5d4195cdb016bf082ebc062",
+      "revision": "d839ce6b56c11e7d98115bb7afc90a9aa9967b89"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 45,
+      "parent_revision": "d839ce6b56c11e7d98115bb7afc90a9aa9967b89",
+      "revision": "0a89f3bfaa9db3ff028801b06fe6ee68ad73be19"
+    }
+  ],
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/0a89f3bfaa9db3ff028801b06fe6ee68ad73be19",
+  "default_promotion": false,
+  "downloads": {
+    "releases/20261013-temporal-adapter-v1/README.md": {
+      "bytes": 4442,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/README.md",
+      "sha256": "ac3b824a25c1200114337920a81d8ed8c56a86cbb849ea273750deec9f6315c4"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/plan.json": {
+      "bytes": 41227,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/plan.json",
+      "sha256": "724481784454a37a0bcf073a51bfb29703da79b104e2d1b5fb49a428f6dbb20e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_dev-joint.json",
+      "sha256": "3c134f0a445f8565ffce8b9372f6a510722508f347466bdca44ff04003778dc3"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_dev-raw.json": {
+      "bytes": 1430794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_dev-raw.json",
+      "sha256": "c98cc03432e31ee20c98cef7e95dc763238afee6dfbd464ca7d5eceba10d7c91"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023668,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_eval-joint.json",
+      "sha256": "9d22c1fe4be5260871cd8ab32395614239b006aa0448366dae1de3638ce4e9d1"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_eval-raw.json": {
+      "bytes": 1429542,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-authored_eval-raw.json",
+      "sha256": "7a6d40157b5354c1352d8c44950cdb06cbed04e1ee90699d23b2d30a41765799"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526644,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_challenge-joint.json",
+      "sha256": "f62a83f0f94029ceec6b09e28bc829517aaf4ddc0df5e23e3edb5ef6c33d35bc"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 680214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_challenge-raw.json",
+      "sha256": "9ac42bd9a7c891fa9f26c361b88eef74b2a8c91553d16834472acc0e14f300ec"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509059,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_tune-joint.json",
+      "sha256": "822be3854940cbd318f338451043b4c66e6130be41fbde9863127271dd01be47"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627980,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-fresh_tune-raw.json",
+      "sha256": "3cb604887f85cb1dda732e97a0ab70b40a04d2c4654202e4a982aa985cfd2d82"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-law-joint.json": {
+      "bytes": 107522,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-law-joint.json",
+      "sha256": "43704dd558b91d7d312de80362e61303e3bb01d88759e293b3b1dceb36077241"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-law-raw.json": {
+      "bytes": 283440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-law-raw.json",
+      "sha256": "21d0e703d70b70f2ea4761593ccb4fbf7723dda29ddb02148fc86b48af700a41"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043447,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_authored_eval-joint.json",
+      "sha256": "c020250aad7499af03574ebffc8767e05ae1cce748a64a51ce57f1f7def1820c"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452715,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_authored_eval-raw.json",
+      "sha256": "01dd68cabe38c61a3277f80afddbf14176f136c487ac6b7ca99af301198f5505"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_tune-joint.json": {
+      "bytes": 1456853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_tune-joint.json",
+      "sha256": "15b69c60e0fac9ba906507d6061eeb133797f3ab1d18572408eadb728e038b2a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_tune-raw.json": {
+      "bytes": 2288424,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/baseline-old_tune-raw.json",
+      "sha256": "e209883f315a409f9a68f90d4e5b6675f48012302e3f2eeccf217724ed487e56"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/cell-checkpoint.json": {
+      "bytes": 6443558,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/cell-checkpoint.json",
+      "sha256": "adaafb917e41978f3beafe84bc57ee2772dbc576de83b03505f801f6156d5fb5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/cell-training.json": {
+      "bytes": 1120003,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/cell-training.json",
+      "sha256": "90ec04faa54d82bd08a6b73ba255967af44a7658d9d774dd71cdd8ca8af0f6b7"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parent-head-parity.json": {
+      "bytes": 124464,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parent-head-parity.json",
+      "sha256": "175b564589991d407b3c4cf7d19e4dfb7d3de65202e91b2ad4ad03adbf77cae0"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 21428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-alternate_placeholders.json",
+      "sha256": "bb0dc79e2b2f4366f3ef98b44a6cb1efd70fdc4ae58a794c2e9210a3f911b658"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-disabled.json": {
+      "bytes": 21432,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-disabled.json",
+      "sha256": "580646adfc95e5fc1e15c0487df08ce224c7453742f47ef0883b188f38f6beec"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 21430,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-rotated_placeholders.json",
+      "sha256": "ee6dac3aa869288b1b46f66c899fa7237aa8497e139680f1dd66c2026f3236cc"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-zeros.json": {
+      "bytes": 21428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity-zeros.json",
+      "sha256": "7405490e4071cdf5645bf1af98cab25d9abe14f245832f14050047e767e52080"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity.json": {
+      "bytes": 1960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/initial-parity.json",
+      "sha256": "e871d81eb6bb1d5149392ab860aaa62230d85d598b7ae535b1d53cca5c331def"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/summary.json": {
+      "bytes": 52249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/summary.json",
+      "sha256": "598c4271383f54e524d610d188e6480dd6c6e3cd0d98362fd8907397e1ac6d7a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_dev-joint.json": {
+      "bytes": 1013762,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_dev-joint.json",
+      "sha256": "c91db8d5ce6d80e6bfd406a2af633cb07c47f4e410919ffb711aba159fedec70"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_dev-raw.json": {
+      "bytes": 1430622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_dev-raw.json",
+      "sha256": "919e41944933ca236261873bee04c28608aa0dd3cb88d112509c00f921772b02"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_eval-joint.json": {
+      "bytes": 1022735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_eval-joint.json",
+      "sha256": "8c64526e6d623084e2007d656768be0149c4582e98f3a0fa7ad23670b172508a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_eval-raw.json": {
+      "bytes": 1431607,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-authored_eval-raw.json",
+      "sha256": "6590e4f79e9bc56cda18c468f3d90f9f4eabbe39e1dcb82ede6b1f9308724c88"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526629,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_challenge-joint.json",
+      "sha256": "b41dda0412ba2d70d94f95c105592562c882aabe3af0184a04a8aec246260526"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_challenge-raw.json": {
+      "bytes": 680203,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_challenge-raw.json",
+      "sha256": "f5a8a227b125cae2012acefd53eed82306d419b8056d91937bf7757b718ac9cb"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_tune-joint.json": {
+      "bytes": 509067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_tune-joint.json",
+      "sha256": "d0341e6ad2d7921d9991de1f48d6fefa3dfcd99a4101196bc3e6ee93384f03c6"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_tune-raw.json": {
+      "bytes": 627976,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-fresh_tune-raw.json",
+      "sha256": "d0f031e8d03b8c2fb018e9e17cb104b08ae55c88d98a894bedeecbd09d3752cd"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-frozen-head-retention.json": {
+      "bytes": 124474,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-frozen-head-retention.json",
+      "sha256": "b7ebf8a04f61f23ea13682f9a1df83ff028c8cb49d5e7cade93919e2eb1ca3a5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-law-joint.json": {
+      "bytes": 107522,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-law-joint.json",
+      "sha256": "a264e6f75d6017c293acfe0eb93fc06f95a0465caa8cba628322435a505c2921"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-law-raw.json": {
+      "bytes": 283438,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-law-raw.json",
+      "sha256": "f79db8c327031920cd67cbfe2851c76c3cb4b46c036dd39c65f3608278a02381"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1040881,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_authored_eval-joint.json",
+      "sha256": "2e366c06e62a0c8eeea16da613fb1bbafff4a8edf1da99874033332ea1dba57e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1454521,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_authored_eval-raw.json",
+      "sha256": "b1fe432aa7e4e7b32f8a398f2b12b0de25850351cacf6de98ec6d02513cf8add"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_tune-joint.json": {
+      "bytes": 1458346,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_tune-joint.json",
+      "sha256": "320759c067a8a488d281c6c6f1a2dd8a7d55de39f7d4e0b69071827ebd6f1b1b"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_tune-raw.json": {
+      "bytes": 2288595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-old_tune-raw.json",
+      "sha256": "3fcba21b43d06da0f2a304448eb54919b7453e58707c8e717b8a0885f1d62c6e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 21425,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-alternate_placeholders.json",
+      "sha256": "8a978578e8cce1e082c6d4f0d799e4640523f2300b2d8a29de26c3d143e017b2"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-disabled.json": {
+      "bytes": 21429,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-disabled.json",
+      "sha256": "261efa4ac18dd9bcb4e9b6974fd2d5ed36cd35856d6fe2115953761addf8c190"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 21427,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-rotated_placeholders.json",
+      "sha256": "14eab8a16c2619c57d55bc0313149bd52e473bc238cd66336d63b75eca72da2b"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-zeros.json": {
+      "bytes": 21425,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity-zeros.json",
+      "sha256": "2c747e5cbbb8be5e307e6f1d168281796661bf68003a5ae4159675ef6aed89ef"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity.json": {
+      "bytes": 1960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-parity.json",
+      "sha256": "d4b6bb9d497a78ab3def52f3bd2240d5cd997e38b1e234b512e1f86bc700dfa3"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-training168-raw.json": {
+      "bytes": 3589674,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/results/trained-training168-raw.json",
+      "sha256": "293b3e0d37fceb0944e4ecbcfc60fc5448156dda59fcba3bdcd8248674cba042"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child-exit.json": {
+      "bytes": 105,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child-exit.json",
+      "sha256": "e1b8088e2bf7787c9ac8a06cd6eca50040b5cbe1993d61be44605ff39146a426"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child-identity.json",
+      "sha256": "d58fc9ab8a89607c06457c52baeb3f26dedf6cfd648addd2692eab67e7c5086a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child.log": {
+      "bytes": 73,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/child.log",
+      "sha256": "fe2c1199e1750b288916e5775b792e62be8ca4470955bcf6fc717971d62119a5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/command.json": {
+      "bytes": 1079,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/command.json",
+      "sha256": "65f3db8fb8a5e2f1aceb7553d3ed639b10e5f3489488e811850deaeae00543f1"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/group-rss-observations.jsonl": {
+      "bytes": 30494,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/group-rss-observations.jsonl",
+      "sha256": "d66f1dcffc25dfe600d6550c61a07ff00fff6483d1a2e9687ff159828f5463ec"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/group-rss-summary.json": {
+      "bytes": 1755,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/group-rss-summary.json",
+      "sha256": "2a64994b37b5a4c8d78ecfc42e6576b69cd6985c449ab29120b597aa55b0f62b"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/guardian-exit.json",
+      "sha256": "ccd87c9fb4418b105cedaaedb97f3ebe0e9360be200c02b58d10b451efb7ab42"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/lease-binding.json",
+      "sha256": "e1e7d12fb1e78acbbf32910a2b1cb9ddb946fe97bc4c2f1d42063acb3f640e84"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/lease-observations.jsonl": {
+      "bytes": 63902,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/lease-observations.jsonl",
+      "sha256": "a2545d684beb8172ca680ab4272e45a631706223aaf30c9e6f40bc28efb41414"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/owned-group-final.json",
+      "sha256": "d13280f8bc99e90694d45fd6f8d4a7608ce4f099e89ad3aa046d4143d317e5b6"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/pre-admission.json": {
+      "bytes": 8008,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/pre-admission.json",
+      "sha256": "69983d4150bfb452de33ed8e00afee916d9d0805e112cd94a79f41f16e9de73d"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/resource-observations.json": {
+      "bytes": 1748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/resource-observations.json",
+      "sha256": "aceb224fdcaab6d36bbeaf41ddab3e8c1f7076e2fb2b29bddeff1e154ae3e778"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/runtime/scheduler-adoption.json",
+      "sha256": "925d9a44bdf66505bba4ce885cc9d8873ceda8261be3d77e6ab2f1a062c1f7c0"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/training-protocol-review.json": {
+      "bytes": 28517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-anchor-margin/training-protocol-review.json",
+      "sha256": "8910f3853a83f31c1e5085c9666e0f486d8411e30324f1bad648cc7559faf719"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/plan.json": {
+      "bytes": 41221,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/plan.json",
+      "sha256": "b1ce884884419ded434c7abe1f24d0348df01104366f3e435684573070a2417d"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_dev-joint.json",
+      "sha256": "3c134f0a445f8565ffce8b9372f6a510722508f347466bdca44ff04003778dc3"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_dev-raw.json": {
+      "bytes": 1430788,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_dev-raw.json",
+      "sha256": "ada18cf04f17738b0485a626dad1d055d82ce2f53c57acb84b04e4e537a5e670"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023668,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_eval-joint.json",
+      "sha256": "9d22c1fe4be5260871cd8ab32395614239b006aa0448366dae1de3638ce4e9d1"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_eval-raw.json": {
+      "bytes": 1429536,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-authored_eval-raw.json",
+      "sha256": "fb2e76a35b4261f58aec3303a84591784f890b167f5de26ef497822b5d50a2d6"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526644,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_challenge-joint.json",
+      "sha256": "f62a83f0f94029ceec6b09e28bc829517aaf4ddc0df5e23e3edb5ef6c33d35bc"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 680208,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_challenge-raw.json",
+      "sha256": "c25811ec61a42265e1289af80ed44e9acfe60cbb4060648037db6ec8445ee41d"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509059,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_tune-joint.json",
+      "sha256": "822be3854940cbd318f338451043b4c66e6130be41fbde9863127271dd01be47"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627974,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-fresh_tune-raw.json",
+      "sha256": "7a5444203a6591c9e89f280bb9f92134221ea8f2ac653156f9b07ac0e3284bb9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-law-joint.json": {
+      "bytes": 107522,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-law-joint.json",
+      "sha256": "43704dd558b91d7d312de80362e61303e3bb01d88759e293b3b1dceb36077241"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-law-raw.json": {
+      "bytes": 283434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-law-raw.json",
+      "sha256": "6c6a823a7de841f0576369b2179de23f7ecad23615e69e8c4d4fc5596c1b7821"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043447,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_authored_eval-joint.json",
+      "sha256": "c020250aad7499af03574ebffc8767e05ae1cce748a64a51ce57f1f7def1820c"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452709,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_authored_eval-raw.json",
+      "sha256": "e65755db5ff5dfde5abf546d593e4bbc9dc2c878fa56950de0975e261146b82c"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_tune-joint.json": {
+      "bytes": 1456853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_tune-joint.json",
+      "sha256": "15b69c60e0fac9ba906507d6061eeb133797f3ab1d18572408eadb728e038b2a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_tune-raw.json": {
+      "bytes": 2288418,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/baseline-old_tune-raw.json",
+      "sha256": "e0f4963f7c2ff6619d7e3d746b4028dd6f3e5797c431a42a2a0089fde679b5df"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/cell-checkpoint.json": {
+      "bytes": 6443616,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/cell-checkpoint.json",
+      "sha256": "7358314558c0af9edb945e4815580f59af90748f2c10efb54bc326685a8eb36e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/cell-training.json": {
+      "bytes": 1119902,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/cell-training.json",
+      "sha256": "b04690ef52e4394eec1c1b220f0de6fbe4a4446d368cfa862c95b7659f0a34b8"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parent-head-parity.json": {
+      "bytes": 124464,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parent-head-parity.json",
+      "sha256": "175b564589991d407b3c4cf7d19e4dfb7d3de65202e91b2ad4ad03adbf77cae0"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 21422,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-alternate_placeholders.json",
+      "sha256": "c0712ee3082b3dcb24e24e7fc2674028a67ad7713986c639ecac3e3419d144c5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-disabled.json": {
+      "bytes": 21426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-disabled.json",
+      "sha256": "4c5a074850310bb0b080307d67ab999da059c6677480024d0e37c835a550a4e1"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 21424,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-rotated_placeholders.json",
+      "sha256": "accd9ebde8ea6ef7862172c71e02c1816d28e52e212cd0beb7ec9f0c8d6f03da"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-zeros.json": {
+      "bytes": 21422,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity-zeros.json",
+      "sha256": "bb131550c9baa06f945240af0db04fc9ed4a1a51a9500af5592d7ebd02d589f6"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity.json": {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/initial-parity.json",
+      "sha256": "2554c37896919f500f41ec7edff93788ef5aa9664464d34421469e8f3cc886b2"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/summary.json": {
+      "bytes": 52134,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/summary.json",
+      "sha256": "c5e7ba46a15bcbc3f78162a4e17dad7adf99f4aec8137c91dbeef359ccc584f7"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_dev-joint.json": {
+      "bytes": 1013777,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_dev-joint.json",
+      "sha256": "f9ddb9d2df2f86952b7f573ac2fc4d070a5164bae0e4db55d1e1764d76a08dc2"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_dev-raw.json": {
+      "bytes": 1430609,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_dev-raw.json",
+      "sha256": "d3072e5c9db261c1b7b7b9b166f928511a2d56a46e5dbef5527258b97c3a1b3d"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_eval-joint.json": {
+      "bytes": 1022739,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_eval-joint.json",
+      "sha256": "65d656618f34920bc3919a831da3ba4800140ad6496470655f945bd5b788be28"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_eval-raw.json": {
+      "bytes": 1431596,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-authored_eval-raw.json",
+      "sha256": "6db92b1a0dce48e7b1576954d5fa97c0130626740676c95679b667fffb253496"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526631,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_challenge-joint.json",
+      "sha256": "5ec8335ed03f0a85d2a6ca6fe2d7f6c64e4629594a1ba987c4b3ecff831b182e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_challenge-raw.json": {
+      "bytes": 680198,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_challenge-raw.json",
+      "sha256": "3c766bcbe6dcfb6e4ade3acd29a6a92a4e7465914c5cbc6fd73183930db48a12"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_tune-joint.json": {
+      "bytes": 509057,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_tune-joint.json",
+      "sha256": "bb13900f62bca19f44ea144e0d9556690bcb9c6eefa31673539891a7a64f5340"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_tune-raw.json": {
+      "bytes": 627966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-fresh_tune-raw.json",
+      "sha256": "410bcf702938f42fb813296c268df86488e5379a6ba36f61ac14cc238dce02b7"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-frozen-head-retention.json": {
+      "bytes": 124474,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-frozen-head-retention.json",
+      "sha256": "b7ebf8a04f61f23ea13682f9a1df83ff028c8cb49d5e7cade93919e2eb1ca3a5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-law-joint.json": {
+      "bytes": 107519,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-law-joint.json",
+      "sha256": "59cb533203aefc936fdffae037ee87a4fa09d7c1585864d6bdff7cac44abf632"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-law-raw.json": {
+      "bytes": 283428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-law-raw.json",
+      "sha256": "b195a575b2d7f0ada698b4a657c6472cd9f3f66cd33e8b2947090ef10874bcfb"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1042386,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_authored_eval-joint.json",
+      "sha256": "7630f8346f1bdd66a672149c046d0fb44747f1f6c18b961c2acafbf1eb46ab4f"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1454660,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_authored_eval-raw.json",
+      "sha256": "3f72d31b3367c1d18b68156527c70c1a95a096f05e34ffb98363d7f4ae454710"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_tune-joint.json": {
+      "bytes": 1458357,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_tune-joint.json",
+      "sha256": "435b6e935517be9fdb13f5b4afabcf084f8499e6bd14d6ef23b35132df16d80b"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_tune-raw.json": {
+      "bytes": 2288609,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-old_tune-raw.json",
+      "sha256": "3cffe9e95d53790b06a3230bdb2ddbbd8cab7d3f34ea5ca8b966e0e48d5befc9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 21422,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-alternate_placeholders.json",
+      "sha256": "129b32499302e6080f79cab9afafe6b2824da39951c338f4f4256c8ba131366a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-disabled.json": {
+      "bytes": 21426,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-disabled.json",
+      "sha256": "0a5202b193ea80d6791a86db6441b24273376d3271e904acda5487fb8963e385"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 21424,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-rotated_placeholders.json",
+      "sha256": "816ba1e85fcbd99bed123542da28800f6f15b359d443f279c464b0ffccfc4927"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-zeros.json": {
+      "bytes": 21422,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity-zeros.json",
+      "sha256": "d19e283cb19c657717c36e92ce5bde71a188dd6fe21a8ff55903f0e80ed81057"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity.json": {
+      "bytes": 1948,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-parity.json",
+      "sha256": "25419c0b1b9d5f2c61ca1fe061eca0945da3dc4a7dee3854e73aa07c0281ee6e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-training168-raw.json": {
+      "bytes": 3589667,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/results/trained-training168-raw.json",
+      "sha256": "225eabf992c94d8cb9ae62cf9b777f6389b649aa2212680fb1e32d5ea2c58cf9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child-exit.json",
+      "sha256": "5c6a6c0d1e4c7e222c0dfd3506274eff2872f5fadb061c06da466762f234013f"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child-identity.json",
+      "sha256": "0d213e3b85ff02bd038af4ff32d8041922eca92f7cc8abeb6e4b85169dc19da9"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child.log": {
+      "bytes": 70,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/child.log",
+      "sha256": "7e9d6bf28ceccf63c18e2cf80de6144bc9c811f36013d5f835ebd497a24fbb97"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/command.json": {
+      "bytes": 1073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/command.json",
+      "sha256": "95908774fe573aee5524da76c05e91c86c5fdef3c1edae3bf9d5a40ebeb8d94a"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/group-rss-observations.jsonl": {
+      "bytes": 30498,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/group-rss-observations.jsonl",
+      "sha256": "6a95dcc6a93824fb8914744c9f700b21da027b95fddf6b09548be09e25013d21"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/group-rss-summary.json": {
+      "bytes": 1755,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/group-rss-summary.json",
+      "sha256": "3ba239fc38adec34d47620044699a045864be987343cf2775b8d063689e907d5"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/guardian-exit.json",
+      "sha256": "6dd6fce6ab791fd0bf91f9f9ea048f0d81c2ef7152e38dea85dbaee3b3ef6c2e"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/lease-binding.json",
+      "sha256": "b0ff79bd06c8d0856d66ab8e38c302fd98b8d01d35cd80c1fe5aed43daa95e7c"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/lease-observations.jsonl": {
+      "bytes": 62960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/lease-observations.jsonl",
+      "sha256": "781d608a65f99463f46599052e3530dac03779d916ef6a0b33c45b7559b9f5d4"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/owned-group-final.json",
+      "sha256": "ebc37c91a846b3ad2ad5444dae1da6254113826c897470c76db4f74bb6c5cc8f"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/pre-admission.json": {
+      "bytes": 8002,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/pre-admission.json",
+      "sha256": "3c9e86171a54fc3170f19f8b48f291aa33db09d2dd95e473ab3e5f2dad893209"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/resource-observations.json": {
+      "bytes": 1750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/resource-observations.json",
+      "sha256": "c78a9eba89d78e438046d6b0ec458f601ebf71ca81efa7524476e2c6fbc8fbdc"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/runtime/scheduler-adoption.json",
+      "sha256": "eccd6df6a96a324f856626b8e9408cd048e51161ca055742f371b4a44a833084"
+    },
+    "releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/training-protocol-review.json": {
+      "bytes": 28512,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/cells/temporal-ce-control/training-protocol-review.json",
+      "sha256": "3a61bcaa52bbd8e60542405cd9e87141fd4adac65d06574766fb41fc5fd5ea85"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/analysis-pure-controls-v01.json": {
+      "bytes": 930,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/analysis-pure-controls-v01.json",
+      "sha256": "e3152a357abe0a979d5f1ac5673913099b4bea503113e797cf57aef7b1259382"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/analyzer-source-independent-review-v01.json": {
+      "bytes": 21053,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/analyzer-source-independent-review-v01.json",
+      "sha256": "57f75b24e58af195eb468b2e1c91e3ce9b3a4a05a3f8a2206cf8422ef6dcbe5d"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 27955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/evaluation-contract-v01.json",
+      "sha256": "07a55d285882cac62207fb7008bbca55746c86a56c7aa3cd4a96374fdd6bf87e"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/evaluation-source-independent-review-v01.json": {
+      "bytes": 14822,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/evaluation-source-independent-review-v01.json",
+      "sha256": "d52635e6cb9415dca25816c6b99d76b7a70a28e7f078cd189cd76bddb054cd12"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/hf-helper-source-independent-review-v02.json": {
+      "bytes": 131949,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/hf-helper-source-independent-review-v02.json",
+      "sha256": "7470cc977266a525aa918d46e7355aef04b6ec02cdb4fa7df2555364f7efeeb6"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/hf-publisher-scope-controls-v01.json": {
+      "bytes": 1209,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/hf-publisher-scope-controls-v01.json",
+      "sha256": "876a3820353a4707036e60edee548b0c643c9044af5d831ecacb5664169e80d5"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/hf-release-spec-v03.json": {
+      "bytes": 7932,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/hf-release-spec-v03.json",
+      "sha256": "16d9b474655cd05eed2d805cfdfe89bbd1d804aeaa484236dccbbc970ec7b21b"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/hf-temporal-adapter-helper-controls-v02.json": {
+      "bytes": 4156,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/hf-temporal-adapter-helper-controls-v02.json",
+      "sha256": "2d2403e2c62681ddeda473f4868c4301d8e88a4a78dc19fdc79793ccff8f356f"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/inert-tests-observation-v01.json": {
+      "bytes": 1436,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/inert-tests-observation-v01.json",
+      "sha256": "2d9c73be4bfae3fa16fcb2f75c9c4d597a3b626357148b412b073561f9ee8559"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/next-experiment-gaps-v01.json": {
+      "bytes": 2926,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/next-experiment-gaps-v01.json",
+      "sha256": "ea104536e104a7a8556215f6c63024b2a38e2b49a376984c4d36bd46d25267d4"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 10621,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/public-result-summary-v01.json",
+      "sha256": "bd18bb5785829ecd5dbc5d5cd325194cb6e295e7835c373a28f145dfbcdad061"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 139520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/result-independent-review-v01.json",
+      "sha256": "50abcbd7e5dc870cce5cd3a8442808228cef2211e53ded30fffa9a6c39bff7e2"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/runtime-independent-review-v01.json": {
+      "bytes": 114840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/runtime-independent-review-v01.json",
+      "sha256": "c5115eee7e2da9a23eea52a2393d0f30eb4406a3b944169feea590231360ffbf"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/temporal-feature-next-experiment-proposal-v01.json": {
+      "bytes": 22020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/temporal-feature-next-experiment-proposal-v01.json",
+      "sha256": "0bca90009a6968a492e7131f563e2a04b365d82b577d0160e373a5eeba57044e"
+    },
+    "releases/20261013-temporal-adapter-v1/evidence/two-cell-output-freeze-v01.json": {
+      "bytes": 33740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/evidence/two-cell-output-freeze-v01.json",
+      "sha256": "a074501402f7c5f8e1dcbded4daa326989a5449507af1b1464ab5aef56978728"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/analyze_temporal_adapter.py": {
+      "bytes": 45115,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/analyze_temporal_adapter.py",
+      "sha256": "08707ad592dfa62a0a6b0bfaa1f593625bd86d1617b2a304e37df611d5c1650d"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/audit_adapter_terminal_v03.py": {
+      "bytes": 36615,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/audit_adapter_terminal_v03.py",
+      "sha256": "bf16e4b004ab800154c7536c575c27babea63b40b745590c2f9fcfde41eeadc4"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/freeze_adapter_outputs.py": {
+      "bytes": 6149,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/freeze_adapter_outputs.py",
+      "sha256": "ef7090359c3769f1a7995bc4a6e1239df3e017f965fca33964f036a6dc53f632"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/hf_publisher_scope_controls_v01.py": {
+      "bytes": 5809,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/hf_publisher_scope_controls_v01.py",
+      "sha256": "8f32e4f8a33794613a952f996d0369605187f282eacefe368099d9a1f5678cc7"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/hf_temporal_adapter_helpers_controls_v02.py": {
+      "bytes": 11545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/hf_temporal_adapter_helpers_controls_v02.py",
+      "sha256": "506c9f5c0ed84c446951ea6c525c7dcf440abcfba7439e4a05ae9120a6bd5870"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/independent_temporal_adapter_recount_v01.py": {
+      "bytes": 23282,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/independent_temporal_adapter_recount_v01.py",
+      "sha256": "18dd516428af7755e298d1610d52a645b79fd156131403a637199bbe6947b8b3"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/prepare_hf_temporal_adapter_release_v02.py": {
+      "bytes": 25117,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/prepare_hf_temporal_adapter_release_v02.py",
+      "sha256": "4c2c3296c40792a78b421091299a77bed367d53657bfd12b19fd728709caff03"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/prepare_temporal_adapter.py": {
+      "bytes": 10233,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/prepare_temporal_adapter.py",
+      "sha256": "4f06c907f73e0fcd8b49c03a42165600dc539e3f22a9ba45eedcbeac99bd9fd1"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/publish_hf_temporal_adapter_release_v02.py": {
+      "bytes": 20153,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/publish_hf_temporal_adapter_release_v02.py",
+      "sha256": "b06a5a1dadc7cc90ba43839e1f80a45de6dff56a407eeddb4f09d0e27ae16d19"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/review_adapter_runtime_v02.py": {
+      "bytes": 13640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/review_adapter_runtime_v02.py",
+      "sha256": "fb034f140b780379f4ea9ecc7511c5457a224168779008d193663acafb641af1"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261013-temporal-adapter-v1/recipe/run_temporal_adapter.py": {
+      "bytes": 23767,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/recipe/run_temporal_adapter.py",
+      "sha256": "51fc99fa25a0c2c7636c34f1d569651ba0a545562a3ca26723280104384d5c3b"
+    },
+    "releases/20261013-temporal-adapter-v1/release-manifest.json": {
+      "bytes": 65344,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/release-manifest.json",
+      "sha256": "7de71ae860203870f28b7b76b42f7649eb6f3de1a0c419217587c17242c1ead1"
+    },
+    "releases/20261013-temporal-adapter-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "releases/20261013-temporal-adapter-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_temporal_adapter_contracts.py": {
+      "bytes": 22757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-verified-download-v01/releases/20261013-temporal-adapter-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_temporal_adapter_contracts.py",
+      "sha256": "6b5e96094f0b24d8524479d227ba42d8bb6bfdd48c4f6def94e80415ed337b13"
+    }
+  },
+  "findings": [],
+  "new_files": 151,
+  "old_files_preserved": 4344,
+  "parent_revision": "70525bcf70e801e78f4882b4834494d67ec0d2b6",
+  "passed": true,
+  "release_prefix": "releases/20261013-temporal-adapter-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "0a89f3bfaa9db3ff028801b06fe6ee68ad73be19",
+  "schema": "temporal-adapter-Hub-verification/v1",
+  "semantic_accuracy": null
+}

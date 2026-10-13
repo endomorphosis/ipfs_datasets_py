@@ -1,0 +1,52 @@
+{
+  "basis": {
+    "bytes": 10621,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/public-result-summary-v01.json",
+    "sha256": "bd18bb5785829ecd5dbc5d5cd325194cb6e295e7835c373a28f145dfbcdad061"
+  },
+  "completed": {
+    "fixed_cells": 2,
+    "inert_contract_tests": 16,
+    "result_recount": "PASS",
+    "runtime_recount": "PASS",
+    "updates": 64
+  },
+  "default_promotion": false,
+  "next_steps": [
+    {
+      "constraints": "No ID-specific inference exceptions, threshold fitting to this exposed row, or test-target injection.",
+      "priority": 1,
+      "work": "Inspect the remaining temporal-presence error and paired modality changes from saved source/output evidence. Compare representation and training coverage before choosing a new architecture."
+    },
+    {
+      "constraints": "Freeze source/template/title-aware partitions and reviewer adjudication before model selection. Treat supplied law cache as source material until reference independence is established.",
+      "priority": 2,
+      "work": "Prepare independently reviewed source-grounded statutory references with subsection context, definitions, exceptions, cross-references and citations."
+    },
+    {
+      "constraints": "Declare changed parameter budget, source visits, objective and independent development selection before admission; preserve permission and frozen-head regressions.",
+      "priority": 3,
+      "work": "Compare a temporal head with explicitly source-grounded temporal pooling or a narrowly trainable feature adapter, against a matched frozen-head control."
+    },
+    {
+      "constraints": "Assess syntax, binding, types, semantics and abstention separately; never equate build success with legal truth.",
+      "priority": 4,
+      "work": "Train a typed LegalIR or logic-family AST decoder with grammar constraints and deterministic family-specific renderers."
+    },
+    {
+      "constraints": "Use actual generated outputs, fixed toolchain and fresh compilation results; report unsupported families and failures.",
+      "priority": 5,
+      "work": "Run proof/compilation qualification on emitted legal targets, including lake build legal in a pinned Lean project."
+    },
+    {
+      "constraints": "Bind real encoder provenance/checkpoints and split boundaries; quantify decoder dependence and semantic performance rather than placeholder parity.",
+      "priority": 6,
+      "work": "Compare genuine8D,384D and768D latent-conditioned decoders with source-only, shuffled/zero/disabled latent controls."
+    }
+  ],
+  "no_additional_training_authorized_by_this_document": true,
+  "schema": "temporal-adapter-next-experiment-gaps/v1",
+  "storage": {
+    "policy": "Preserve prior weights and other agents histories. Archive bounded additions under a unique release prefix, with parent CAS and immutable byte readback. Do not raise shared caps or expire unrelated claims."
+  }
+}
