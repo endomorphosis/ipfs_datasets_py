@@ -1,0 +1,222 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/capture_permission_terminal.py": {
+      "bytes": 3641,
+      "sha256": "1c04058ccc4c763e94553012b73e332bc16dae2c7258a4584a2a9038abe72c15"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/cell-review-helper-independent-review-v01.json": {
+      "bytes": 2230,
+      "sha256": "1adbc339b2377d2c25c0b14f4efed88e5455a4c1c2b683c4ba6da77c445f61df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/cell-review-helper-pure-controls-v01.json": {
+      "bytes": 1239,
+      "sha256": "6977272560023f2cc3a9dd0f2ecd65498a963cc420216cfb7951571d7060a4c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-observation-v01.json": {
+      "bytes": 3369,
+      "sha256": "a48a475b00ddacb419cb0820f1a52df72a4ff15a56fa40b672c90606f5ce1b48"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v02.log": {
+      "bytes": 245,
+      "sha256": "cb3b5c0de5383028180057bd756ecf3e3ed8a2a29373b4dcb03e0b2c02e1f0fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v02.xml": {
+      "bytes": 23009,
+      "sha256": "0f496861ad947ab82cb651d1a092ccdaa3613d431518b951886908cef186564a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_permission_retention_contracts.py": {
+      "bytes": 19165,
+      "sha256": "c7b4e36b6eb0d6fd0717804b12eb2aa9fbb0f98ea89391a0e0f30d4b9b0f07e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/freeze_two_cell_outputs_v01.py": {
+      "bytes": 4929,
+      "sha256": "e577d6d123802eb93749245678acf65a054269c1b33e8b909d05b4f3ce9ccb38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 11169,
+      "sha256": "99e586397e2db4bf12d3ffdd88cda994502fd7bb8490db3e72f515fb72482b7f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission-hub-source-controls-observation-v01.json": {
+      "bytes": 4807,
+      "sha256": "4c24c51f5fd8364cffd6b58621eec875a73caad05aeb8e9165ff7c458a9791d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission-hub-source-controls-observation-v02.json": {
+      "bytes": 4807,
+      "sha256": "7daf520212ee5ad9c51811c38c46389dff54605934437678fdc59912ddda37a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission_hub_source_review_controls_v01.py": {
+      "bytes": 9569,
+      "sha256": "93d7cbb04b3e9954170761cc04dd9e25d2b53c6dbb8f6239a8b070bf1f0f32d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission_hub_source_review_controls_v02.py": {
+      "bytes": 9569,
+      "sha256": "78ecd8227acae41347cb440888396801feeb8febf12f1a9636210bfe505d97a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/prepare_hf_permission_release_v01.py": {
+      "bytes": 13387,
+      "sha256": "03099b38cd504b09b3e3492e52c4c60127e3b24cf8483c77d4b01ab4f52ce09d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/prepare_hf_permission_release_v02.py": {
+      "bytes": 13387,
+      "sha256": "6a422edae3fa1b604c63789d91cc5bc743e88bea68380e09f61ab2dd44cf278a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/prepare_permission_retention.py": {
+      "bytes": 10747,
+      "sha256": "4fda0cec7b90c12fb3c4021b1eabed271d896570b771850dac8c5a7425f92d24"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/publish_hf_permission_release_v01.py": {
+      "bytes": 13842,
+      "sha256": "38a99fbdbc71292f8eba446d1bdf77c1172ee44cd90e9d646958cbb8db0052f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/publish_hf_permission_release_v02.py": {
+      "bytes": 13842,
+      "sha256": "3d99568134d8d0ee02053f65cd55fa7fe9736fcdc4b0ca07c6b7c3114f47bb30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/registration-v01.json": {
+      "bytes": 60459,
+      "sha256": "b9c2accf814ef4e31de9c2a83c0714e5e853f5065f6cd2613036d40ecc3ef27d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/review_permission_cell_v01.py": {
+      "bytes": 23470,
+      "sha256": "5edebcbe8b75c0abc6cb1940a38886365db496a1a75300dc727c5e0c6c81dd34"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/review_permission_science_v01.py": {
+      "bytes": 18314,
+      "sha256": "c1a51700765aae43ba3b7d5252c57b3d7426d3fda052168f4d9a82ef2e49748a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/root-science-source-independent-review-v01.json": {
+      "bytes": 4821,
+      "sha256": "3c7e4e3b0e08ec1461b8ba3dc90ab5758b710a2aaf6042be545625e6dad24ab6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/root_cell_helper_controls_v01.py": {
+      "bytes": 3778,
+      "sha256": "748327db1f3205bca25f59b0f8a3c18abeb06a833040e77b42c180e6725e3c7c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_permission_retention.py": {
+      "bytes": 37094,
+      "sha256": "ce43a7fa1d44459ea22120a7366c0b5ebb9c499228e5ec31efa84b7d58084a0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/trainer-author-pure-contract-observation-v01.json": {
+      "bytes": 1027,
+      "sha256": "9913fb67e2ae40f2773631e435821edf42b55a87d56bee5e7897369d49d5279e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/trainer-source-independent-review-v01.json": {
+      "bytes": 6319,
+      "sha256": "30d943212071aa403f1a4c6d97a3d0d5c2cac6f3eb2bd23a18b98d384a5ccda5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/training-export-v01.json": {
+      "bytes": 5052701,
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 8898,
+      "sha256": "b3d8d3f5c98176cc609a4ba95a2a8ffa3b0489a0bebcf1c085279d3ed12d4907"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/prepare_hf_targeted_release_v01.py": {
+      "bytes": 13435,
+      "sha256": "574baf11af82f9b4cf6896fdc6d0e5b8892359be005982502b66c9ec8e6b2b54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/publish_hf_targeted_release_v01.py": {
+      "bytes": 13841,
+      "sha256": "6cf17157cfdd5cbc488caa130d1eeac3d56ec0e2035e2e498d5efb4a2846ce88"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "author_is_reviewer": false,
+  "checks": {
+    "actual_total_updates_required": 64,
+    "all_download_lengths_and_SHA256s_required": true,
+    "both_retained": true,
+    "captured_consumed_review_and_freeze_pins": true,
+    "closed_two_cells": true,
+    "complete_old_and_prior_owned_identity_fences": true,
+    "copied_raw_bytes_match_approved_identity": true,
+    "copy_sources_require_independent_artifact_bindings": true,
+    "durable_preupload_created_verified_receipts": true,
+    "every_operation_adds_an_absent_prefix_path": true,
+    "immutable_prefix_CLI_readback_without_explicit_filename": true,
+    "max_chunk_files": 48,
+    "max_chunk_raw_bytes": 16000000,
+    "max_payload_bytes": 200000000,
+    "optimization_safe_guards": true,
+    "parent_CAS_every_chunk": true,
+    "private_global_runtime_bodies_excluded": true,
+    "publication_review_recurring_fence": true,
+    "pure_controls": {
+      "negative": 26,
+      "positive": 12
+    },
+    "raw_checkpoint_bytes_opaque": true,
+    "single_public_artifact_bytes_strictly_less_than": 10000000,
+    "unknown_outcome_stops_without_automatic_retry": true
+  },
+  "findings": [],
+  "helper_author": "/root",
+  "limitations": [
+    "The exact two source adapters preserve the previous independently qualified source custody fixes; this source review does not authorize a concrete upload. A separate exact prepared payload review is required before publication.",
+    "Future freeze, actual result/runtime analyses/reviews, runtime wrappers, reference packet bytes, analyzer/auditor and model-card content need their own independent artifact bindings before assembly.",
+    "Parent compare-and-swap and old-file identity checks must be observed on actual immutable Hub results; no actual remote outcome is claimed here.",
+    "No reviewed statutory fidelity, genuine latent conditioning, broader-family, Lean compilation or default promotion follows from archive publication."
+  ],
+  "observed_at_utc": "2026-10-12T23:43:16.121972+00:00",
+  "passed": true,
+  "release_prefix": "releases/20261012-permission-retention-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "reviewer": "/root/permission_protocol_review",
+  "schema": "permission-retention-Hub-helper-source-independent-review/v1",
+  "scope": {
+    "SDK_or_helper_module_imported": false,
+    "additional_artifact_pins_are_copy_provenance_and_upstream_review_bindings": true,
+    "checkpoint_or_reference_packet_JSON_read": false,
+    "concrete_payload_authorization": false,
+    "network_or_Hub_API_performed": false,
+    "numerical_models_or_resource_APIs_used": false,
+    "read_only_Hub_baseline_snapshot_allowed_after_source_review": true,
+    "source_review_only": true,
+    "uploads_performed": false
+  },
+  "source_review": [
+    "prepare_hf_permission_release_v02.py",
+    "publish_hf_permission_release_v02.py"
+  ],
+  "version_scope": "v02 substitutes independently qualified terminal observer recipe and matching helper-review/preparer/publisher role filenames; no scientific or publication-policy change"
+}

@@ -1,0 +1,41 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/cell-review-helper-pure-controls-v01.json": {
+      "bytes": 1239,
+      "sha256": "6977272560023f2cc3a9dd0f2ecd65498a963cc420216cfb7951571d7060a4c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/review_permission_cell_v01.py": {
+      "bytes": 23470,
+      "sha256": "5edebcbe8b75c0abc6cb1940a38886365db496a1a75300dc727c5e0c6c81dd34"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/root_cell_helper_controls_v01.py": {
+      "bytes": 3778,
+      "sha256": "748327db1f3205bca25f59b0f8a3c18abeb06a833040e77b42c180e6725e3c7c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_permission_retention.py": {
+      "bytes": 37094,
+      "sha256": "ce43a7fa1d44459ea22120a7366c0b5ebb9c499228e5ec31efa84b7d58084a0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "numerical_imports": 0,
+  "passed": true,
+  "positive_controls": 2,
+  "reference_packet_reads": 0,
+  "refusal_controls": 12,
+  "resource_API_calls": 0,
+  "reviewer": "root; independent of helper author",
+  "schema": "permission-cell-review-helper-source-independent-review/v1",
+  "source_findings": [
+    "Extracts only fixed metadata runner predicates under exact raw source identity; no model/package/resource clients.",
+    "Requires closed two-cell fixedobjective32-update plan, byte-identical copied data, old31+new1 sources, exactsource/test reviews and fresh guardian check.",
+    "Preserves original526 body map and every fresh opening body, immutable first review plus only authenticated baseline additions, unchanged cap/config/root identities and absent exact attempt.",
+    "READ_PINS binds parsed payloads to captured immutable identities through closing fence; source review payloads cannot be re-pinned as a replacement.",
+    "Writes only exclusive ownreview; no reservations or numerical authority."
+  ]
+}

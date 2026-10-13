@@ -1,0 +1,45 @@
+{
+  "analyzer": {
+    "bytes": 69075,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/analyze_permission_retention_v01.py",
+    "sha256": "4e74c5fc209187b37ed573facd606a57ecd2fe020ad36924f00f32bf0e6912b4"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/analyze_permission_retention_v01.py": {
+      "bytes": 69075,
+      "sha256": "4e74c5fc209187b37ed573facd606a57ecd2fe020ad36924f00f32bf0e6912b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/analyzer-root-pure-controls-v01.json": {
+      "bytes": 1195,
+      "sha256": "7114e4e38a3453bd118c9d88a34eac8430f44e5583050da06ee129cecdea30e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission-analyzer-author-source-observation-v01.json": {
+      "bytes": 2623,
+      "sha256": "f07a45234a6ba5dee173aaa714b22d6f748a8097feaba5dba3eb0144fde69e44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/root_analyzer_controls_v01.py": {
+      "bytes": 4350,
+      "sha256": "399f3d18261d71528a64b328a7656041370c1a270ceb69d0ebfa131684634ef4"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "independent_pure_controls_positive": 8,
+  "independent_pure_controls_refused": 6,
+  "model_forwards": 0,
+  "model_restores": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "reference_packet_reads": 0,
+  "resource_API_calls": 0,
+  "reviewer": "root independent of analyzer author",
+  "schema": "permission-retention-analyzer-source-independent-review/v1",
+  "source_findings": [
+    "Complete exact53+34 output inventories and source/plan/guardian/baseline/32-update trace joins precede any reference packet access. Reference packet was previously scored, exposed panels remain engineering diagnostics.",
+    "Raw-pin bound JSON and AST parse exactly the hashed bytes; immutable sources, bundles, parent control captures and full reference identities are fenced after scoring. Checkpoint JSON stays opaque.",
+    "Replays unchanged pure greedy/joint/span scoring from source-pinned retained predicates, validates all source IDs/hashes and child-source-only authored-eval fields.",
+    "Validates exact23/all versus6/trainable+17/frozen partition and source-joined32 returned freeze entries/384 training occurrences; independently recomputes all392 saved three-way binary32 modality vectors.",
+    "Reports all head argmax confusions alongside decoded P-to-O/P-to-F/abstention counts. No invented law targets. Frozen modality alone does not imply full IR retention.",
+    "Compares complete saved control scores/decisions to prior OFF/presence1 control, reports regressions/recoveries and old96 raw/joint permission gate without automatic selection or promotion."
+  ]
+}

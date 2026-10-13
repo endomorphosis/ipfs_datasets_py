@@ -1,0 +1,88 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/capture_permission_terminal.py": {
+      "bytes": 3641,
+      "sha256": "1c04058ccc4c763e94553012b73e332bc16dae2c7258a4584a2a9038abe72c15"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/freeze_two_cell_outputs_v01.py": {
+      "bytes": 4929,
+      "sha256": "e577d6d123802eb93749245678acf65a054269c1b33e8b909d05b4f3ce9ccb38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/prepare_permission_retention.py": {
+      "bytes": 10747,
+      "sha256": "4fda0cec7b90c12fb3c4021b1eabed271d896570b771850dac8c5a7425f92d24"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/review_permission_science_v01.py": {
+      "bytes": 18314,
+      "sha256": "c1a51700765aae43ba3b7d5252c57b3d7426d3fda052168f4d9a82ef2e49748a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_permission_retention.py": {
+      "bytes": 37094,
+      "sha256": "ce43a7fa1d44459ea22120a7366c0b5ebb9c499228e5ec31efa84b7d58084a0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "author_is_reviewer": false,
+  "controls": {
+    "execution": "Detached exact-source metadata guards and output-inventory loops; no full recipe import or execution",
+    "independent_positive": 4,
+    "independent_refused_negative": 23,
+    "negative_cases": [
+      "unknown_policy",
+      "wrong_identity",
+      "actor_auxiliary",
+      "presence_weight",
+      "bool_presence",
+      "modality_weight",
+      "seed",
+      "bool_seed",
+      "latent",
+      "dimension",
+      "encoder",
+      "gold",
+      "holdout",
+      "promotion",
+      "Lake",
+      "seconds",
+      "resources",
+      "gate",
+      "reference_exclusion",
+      "reference_artifact",
+      "evaluation_reference",
+      "partial_baseline",
+      "new_field"
+    ]
+  },
+  "findings": [],
+  "limitations": [
+    "Synthetic guards/inventory controls and static API review do not qualify numerical execution. Exact concrete per-cell independent phase review, fresh guardian admission and actual terminal/result audits remain required.",
+    "All existing authored panels are exposed engineering regressions; law8 is unreviewed. No blind legal gold, broader-family, Lean, real latent conditioning or automatic promotion is established.",
+    "The32-second training limit is soft before batches; sampled watchdog evidence is not a kernel hard cap or continuous custody. All partial/failure artifacts must be retained."
+  ],
+  "observed_at_utc": "2026-10-12T23:37:57.693233+00:00",
+  "passed": true,
+  "reviewer": "/root/permission_protocol_review",
+  "schema": "permission-retention-root-science-source-independent-review/v1",
+  "scope": [
+    "Closed two-cell all-parameters/span-heads-only comparison fixes original400 parent, same168 rows/order, seed1729/batch12/32returned updates, actorOFF/presence1/modality2, disabled384 and unchanged guardian envelope.",
+    "Preparation preserves31 old producers, adds one new trainer, copies exact N2 exposed export, retains forbidden-reference paths and descriptor-only deferred packet. First arm creates zero-update baseline; second authenticates complete baseline reuse from admitted first plan and successful released terminal.",
+    "Runner requires authoritative new outer/policy/returned index-ID-loss traces; saves checkpoint/report before refusing partial completion. It captures all392 source heads, unchanged K8joint readout and actual float32 modality vector equality for facet-only arm.",
+    "Freezer requires both durable released completed32 terminals and exact53+34 saved result paths, raw-hashes checkpoints, copies reference descriptor without parsing it and states references were previously exposed. Private capture writes exclusive0700 directories/0400 raw copies with stable source hashes and truthful sampled-only custody."
+  ],
+  "source_only": true
+}
