@@ -1,0 +1,81 @@
+{
+  "automatic_hyperparameter_sweep": false,
+  "based_on": {
+    "bytes": 66176,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-independent-review-v01.json",
+    "sha256": "cbdb152024208bc621827207e34a9fd90c4a4ed20ff43cfab078b4d60888d2a0"
+  },
+  "new_default_promotion": false,
+  "new_training_executed": false,
+  "next_protocol": [
+    {
+      "priority": 1,
+      "proposal": "Actor feature adaptation using the prior temporal-attention design and this copied boundary head",
+      "reason": "Head-only CE and fixed compatible-span hinge leave the same actor-duration-name failures; all training gold actors already survive top8. Test representation capacity with initial632-source parity and explicit frozen nonactor protection.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "priority": 2,
+      "proposal": "Separate source-context modality and optional-presence corrections",
+      "reason": "Six selected training rules have incorrect frozen modalities; actor-only parameters cannot repair fixed decisions. Compare matched budgets and report all seven IR fields.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "priority": 3,
+      "proposal": "Broader role candidate coverage and structured assignment objective",
+      "reason": "Fresh development/test completeIR and retained full gold assignments remain0/36each; an actor-only loss cannot establish complete candidate coverage.",
+      "status": "PROPOSED_NOT_RUN"
+    },
+    {
+      "priority": 4,
+      "proposal": "Independent statutory references and family-specific parser/type/proof checks",
+      "reason": "All scored populations are exposed authored fixtures. Keep USCode fidelity, broader family compliance, lake build legal, and genuine8D/384D/768D latent tests separate from these engineering metrics.",
+      "status": "PROPOSED_NOT_RUN"
+    }
+  ],
+  "observations": {
+    "authored_eval_joint_complete_IR": [
+      33,
+      72
+    ],
+    "fresh_dev_and_test_full_IR": [
+      0,
+      36
+    ],
+    "fresh_full_gold_assignments_retained": 0,
+    "no_complete_IR_gain_over_CE": true,
+    "remaining_selected_training_patterns": {
+      "abstention": 1,
+      "actor_object_exceptions": 1,
+      "actor_only": 5,
+      "conditions_only": 2,
+      "modality_and_actor": 6
+    },
+    "training_actor_rank_sum_CE": 206,
+    "training_actor_rank_sum_hinge": 208,
+    "training_complete_IR": [
+      153,
+      168
+    ],
+    "training_filtered_hinge_mean_CE": 0.2569550673166911,
+    "training_filtered_hinge_mean_ranking": 0.2554120279493786,
+    "training_hinge_active_occurrences": [
+      30,
+      384
+    ],
+    "training_rank_improved_vs_CE_ids": [],
+    "training_rank_worsened_vs_CE_ids": [
+      "matched-temporal-train-actor_duration_name-0-o-absent",
+      "matched-temporal-train-actor_duration_name-0-o-present"
+    ],
+    "training_top1": [
+      156,
+      168
+    ],
+    "training_top8": [
+      168,
+      168
+    ]
+  },
+  "schema": "actor-ranking-next-measured-gaps/v1"
+}

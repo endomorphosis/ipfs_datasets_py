@@ -1,0 +1,235 @@
+{
+  "attempt_name": "actor-ranking-20261013-actor-ranking-hinge-01",
+  "candidate": {
+    "active_head_rows": [
+      0
+    ],
+    "active_trainable_scalars": 130,
+    "checkpoint_schema": "bounded-actor-ranking-adapter-checkpoint/v1",
+    "class": "SpanActorRankingAdapterDecoder",
+    "feature_policy": "Unchanged frozen N4 modality/span feature branches; no new modal/quote features in this head-only pilot.",
+    "hidden_dimension": 64,
+    "inactive_head_rows": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "inactive_stored_scalars": 650,
+    "initialization": "Copy the same exact completed N4 split34 and full6x64 start/end matrices plus six biases into four independent actor tensors; fresh Adam owns only those four tensors. Do not resume trained N8 CE weights or moments. Only actor row0 enters returned actor scores; full6 projection preserves parent arithmetic geometry. Require632-source binary32 parity before any update.",
+    "lineage_id": "bounded_actor_ranking_adapter_v1",
+    "model_tensor_count": 38,
+    "new_optimizer_updates": 32,
+    "objective": "actor-ranking-hinge",
+    "original_frozen_tensors": 34,
+    "stored_trainable_scalars": 780,
+    "trainable_names": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias"
+    ],
+    "trainable_tensor_count": 4
+  },
+  "cell": "actor-ranking-hinge",
+  "common_parent_checkpoint_sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035",
+  "common_parent_model_state_sha256": "fb63e61c7e2591259d40492b5ac5c020ae77f64c08e409d16b372ff7229b9aa5",
+  "comparison": {
+    "common_initialization": "Same exact authenticated N4 split checkpoint, not the trained N8 CE child.",
+    "equal_FLOPs_claimed": false,
+    "reference": "Frozen completed N8 actor-boundary CE output evidence",
+    "reference_analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "reference_new_model_forwards": 0,
+    "reference_new_optimizer_updates": 0,
+    "reference_phase": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01",
+    "reference_readout_after_N9_durable_freeze_only": true,
+    "same_declared_training_budget": "32 updates and384 source-row occurrences each"
+  },
+  "derivation": {
+    "new_closed_policy": "Only actor-ranking-hinge objective accepted; rankingON coefficient0.25/margin1 existing filtered domain.",
+    "outer_trace_binding": "Reject internally valid targeted diagnostics when hinge_applied is OFF; retain full completed batch/objective/freeze traces.",
+    "strategy": "Versioned standalone N8-derived outer; no monkeypatching or modification of measured owners.",
+    "unchanged_function_AST_contracts": [
+      "_finite_shape",
+      "_trainable_shapes",
+      "_initial_state",
+      "_inactive_state",
+      "_all_zero",
+      "_partition",
+      "_source",
+      "_training_records",
+      "_branch_digests",
+      "_model",
+      "_state_digest",
+      "_configure_parameters",
+      "_validate_optimizer_state",
+      "_origin",
+      "_validated",
+      "_restore",
+      "_frozen_head_digest",
+      "_row_invariants",
+      "_validate_freeze_entry"
+    ]
+  },
+  "detached_controls": {
+    "actual_models": 0,
+    "checkpoint_JSON_parses": 0,
+    "limits": "AST and stdlib scalar/vector fakes qualify source contracts only; no numerical kernel or accuracy claim.",
+    "numerical_library_imports": 0,
+    "optimizer_updates": 0,
+    "production_module_imports": 0,
+    "result": "PASS",
+    "tests": 18
+  },
+  "evaluation": {
+    "all_diagnostics_previously_exposed": true,
+    "candidate_diagnostic_source_forwards": 928,
+    "candidate_training_capture_call_sizes": [
+      128,
+      40
+    ],
+    "candidate_training_capture_source_forwards": 336,
+    "complete_initial_gate": "All632 sources: raw modality/presence/start/end binary32 parity and unchanged source/readout observations before any update.",
+    "diagnostic_populations": {
+      "authored_dev": 72,
+      "authored_eval": 72,
+      "fresh_challenge": 36,
+      "fresh_dev": 36,
+      "fresh_test": 36,
+      "fresh_tune": 36,
+      "law": 8,
+      "old_authored_eval": 72,
+      "old_tune": 96
+    },
+    "dormant_control_source_forwards": 16,
+    "final_protected_head_sources": 632,
+    "initial_and_final_training_capture_sources": 168,
+    "initial_parent_parity_sources": 632,
+    "model_report_max_capture_sources_per_call": 128,
+    "new_CE_control_model_forwards": 0,
+    "new_CE_control_optimizer_updates": 0,
+    "parent_extra_source_forwards": 240,
+    "parent_training_capture_call_sizes": [
+      128,
+      40
+    ],
+    "protected_final_gate": "All632 sources: original34 and inactive copied actor rows unchanged; modality/presence/nonactor raw heads exactly preserved. Actor logits may change joint selection, overlap resolution or abstention.",
+    "reference_labels_in_model_child": false,
+    "successful_output_files": 62,
+    "total_actual_model_forwards": 1552,
+    "total_inference_source_forwards": 1520,
+    "total_source_occurrences": 1904,
+    "training_batch_forwards": 32,
+    "training_labels_available_only_for_authenticated_training168": true,
+    "training_source_occurrences": 384
+  },
+  "interpretation_limits": [
+    "Full IR is exact equality of modality plus actor/action/object/conditions/exceptions/temporal; actor-role improvement alone is not complete-IR improvement.",
+    "Frozen modality decisions cannot repair selected wrong-modality outputs through actor logits alone.",
+    "Actor logits can alter joint overlap resolution and abstention, including selected nonactor spans despite bit-exact nonactor logits.",
+    "All464 diagnostics, including N7 fresh72, are exposed engineering diagnostics and support no new blind generalization claim.",
+    "This design records a bounded pilot; technical source/resource gates do not create a new user permission requirement.",
+    "Ranking may change actor selection and joint nonactor coupling; higher training accuracy is a question to measure after durable freeze, not a preregistered conclusion. No lambda1 or wider-domain experiment is included."
+  ],
+  "resource_contract": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "deadline_seconds": 300,
+    "failed_N7_retained_claim_preserved": true,
+    "foreign_claims_preserved": true,
+    "global_storage_cap_bytes": 145000000000,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000
+  },
+  "schema": "actor-ranking-training-design/v1",
+  "scope": {
+    "Lake_executed": false,
+    "checkpoint_selection_executed": false,
+    "configured_dimension": 384,
+    "default_promotion": false,
+    "equal_FLOPs_claimed": false,
+    "external_encoders": 0,
+    "genuine_latent_semantics": false,
+    "independent_statutory_gold": false,
+    "latent_enabled": false,
+    "semantic_accuracy": null
+  },
+  "source_bindings": {
+    "new_contracts": {
+      "bytes": 31640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_ranking_contracts.py",
+      "sha256": "ccd620770cc38155b2c484a68d454bf2de90e2fe9f96742909ba4c4a89bb58bd"
+    },
+    "new_model": {
+      "bytes": 50602,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py",
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "retained_actor_CE": {
+      "bytes": 49894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "retained_targeted_loss": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "reuse_audit": {
+      "bytes": 17900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/next-ranking-reuse-audit-v01.json",
+      "sha256": "5ec54ae9a7558816258f89601dc84b479eb7e196d863185f1d3bd8c010b2feeb"
+    }
+  },
+  "source_worktree": {
+    "branch": "codex/legal-actor-ranking-20261013-01",
+    "initial_head": "c9d0f016a9fcfa327346e056e38e2ffa3b25ffa0",
+    "intake": {
+      "bytes": 1526,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/phase-intake-v01.json",
+      "sha256": "b6d9781d0070b9f21b51e52c752f991e457d29ec12e6afce072d867cb6cfb0ba"
+    },
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets"
+  },
+  "status": "PREREGISTERED_SOURCE_READY_NOT_RUN",
+  "training": {
+    "added_training_rows": 0,
+    "batch_order_seed": 1729,
+    "batch_size": 12,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "exact_completed_updates_required": 32,
+    "exact_training_row_occurrences_required": 384,
+    "examples": 168,
+    "foreach": false,
+    "fresh_Adam": true,
+    "gradient_clip": 5.0,
+    "inactive_gradients_and_moments": "Exact zero rows1 through5 before and after every completed update; original34 gradients None and values unchanged.",
+    "inherited_moments": false,
+    "learning_rate": 0.001,
+    "max_seconds_per_training_call": 32,
+    "objective": "Unchanged targeted main CE plus0.25*mean_actor_hinge; only actor start/end row0 has connected gradients. Frozen-role, presence and modality terms remain constant in the reported scalar. Reuse the existing margin1 compatible-span hinge, domain, detached argmax, differentiable wrong/gold scores and closed diagnostics without modification.",
+    "ranking": {
+      "actor_ranking_enabled": true,
+      "argmax": "Detached vectorized complete-domain scores; exact ties use earliest row-major coordinates; selected wrong and gold scores are recomputed or retained with gradients.",
+      "coefficient": 0.25,
+      "empty_domain": "Differentiable zero on valid actor logits; all rows remain in the batch mean.",
+      "inference": "Existing topK-before-compatibility readout unchanged; no new candidate-coverage guarantee.",
+      "margin": 1.0,
+      "negative_domain": "Complete row-major source-token spans left<=right, excluding exact gold actor and every span overlapping present GOLD nonactor facets; training labels only.",
+      "presence_ce_weight": 1,
+      "score": "CPU float32 start[left]+end[right]"
+    },
+    "result_dependent_sweeps": false,
+    "seed": 1729,
+    "weight_decay": 0.0
+  }
+}
