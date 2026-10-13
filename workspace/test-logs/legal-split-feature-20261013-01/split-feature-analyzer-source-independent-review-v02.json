@@ -1,0 +1,226 @@
+{
+  "Git_mutations": 0,
+  "actual_freezer_v02_bound": true,
+  "actual_reference_packet_reads": 0,
+  "actual_result_body_reads": 0,
+  "actual_retained_objective_validator_source_route_verified": true,
+  "all392_modal_binary32_recount_required": true,
+  "analyzer": {
+    "bytes": 75056,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+    "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+  },
+  "analyzer_main_executed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/analyze_permission_retention_v01.py": {
+      "bytes": 69075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/analyze_permission_retention_v01.py",
+      "sha256": "4e74c5fc209187b37ed573facd606a57ecd2fe020ad36924f00f32bf0e6912b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py": {
+      "bytes": 34453,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+      "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v03.py": {
+      "bytes": 75094,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v03.py",
+      "sha256": "6cfc8dde931dc56d8f9108d5c12c9c765ec245867bd7081f56b7101630f1603a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py": {
+      "bytes": 75056,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+      "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/freeze_split_outputs_v02.py": {
+      "bytes": 5841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/freeze_split_outputs_v02.py",
+      "sha256": "cd9fcaf43603dc182a7f89a9660d2a53b6b749f4286c45e0a6884166e23ea3ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_result_source_controls_v02.py": {
+      "bytes": 19136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_result_source_controls_v02.py",
+      "sha256": "192624ff0646aaf4a65c18e0dbd96c77e45a8d7b0eaf89dcbd595b1b04630097"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py",
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-findings-v01.json": {
+      "bytes": 1509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-findings-v01.json",
+      "sha256": "a0222845f08ab3f2de429fd9a21f394594aa3f8053e020e142144de4d777af58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v01.json": {
+      "bytes": 11044,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v01.json",
+      "sha256": "114a9a4aa280daf0b69e15957a158098919eddfab7491f788769b81399b9fe72"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-author-controls-v04.json": {
+      "bytes": 3827,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-author-controls-v04.json",
+      "sha256": "808143c8a67385cf3427a199259af1584df0c2163baa1823ccb082928fa63e4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-retained-summary-shape-controls-v01.json": {
+      "bytes": 1462,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-retained-summary-shape-controls-v01.json",
+      "sha256": "48c722b19d318b03b6069de0d5e857ee7ad3720c49bff244c82bdca789311eb8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_result_author_controls_v04.py": {
+      "bytes": 15916,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_result_author_controls_v04.py",
+      "sha256": "bf73856bc084c5cddeaec03547f1fecd46d5372145431df3abc5921305bf587a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_retained_summary_shape_controls_v01.py": {
+      "bytes": 4127,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_retained_summary_shape_controls_v01.py",
+      "sha256": "c49c9cc20cab8d5e5179f231543aa822169ec9150e92475720940958057821ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json": {
+      "bytes": 4970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+      "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py",
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    }
+  },
+  "author_objective_stub_disclosed": true,
+  "checkpoint_JSON_parsed": false,
+  "checkpoint_opaque": true,
+  "default_promotion": false,
+  "exact_new53_retained87_source33_closures": true,
+  "findings": [],
+  "full_source_read_completed": true,
+  "hybrid_summary_shape_repair_independently_replayed": true,
+  "independent_author_detached_controls_replayed": true,
+  "initial392_four_head_token_greedy_joint_parity_required": true,
+  "model_calls": 0,
+  "negative_control_count": 66,
+  "negative_controls": [
+    "independent_replay: empty reported loaded map",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_split_features",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.logic.legal_ir.joint_span_selection",
+    "independent_replay: missing required loaded owner ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture",
+    "independent_replay: loaded source raw identity differs",
+    "independent_replay: opening closing loaded maps differ",
+    "independent_replay: combined34 hash cannot equal parent23",
+    "independent_replay: frozen17 anchor differs",
+    "independent_replay: branch initialization copy mismatch",
+    "independent_replay: final normalized frozen modality path differs",
+    "independent_replay: combined final summary differs",
+    "independent_replay: initial outer previous hash differs",
+    "independent_replay: opaque checkpoint raw hash differs",
+    "independent_replay: batch index corruption",
+    "independent_replay: optimizer step corruption",
+    "independent_replay: reported optimizer order reversed",
+    "independent_replay: freeze source hash corruption",
+    "independent_replay: freeze branch continuity corruption",
+    "independent_replay: signed zero modality bit change",
+    "independent_replay: trainable changed frozen parameter",
+    "independent_replay: constant CE contribution corruption",
+    "independent_replay: constant gradient connection asserted",
+    "independent_replay: constant trace ID corruption",
+    "independent_replay: tuning rows mistaken for batch forwards",
+    "independent_replay: training feature forwards undercounted",
+    "independent_replay: semantic training authority asserted",
+    "independent_replay: same-length replaced bytes",
+    "independent_replay: duplicate JSON keys",
+    "independent_replay: checkpoint parser boundary",
+    "independent_replay: private runtime parser boundary",
+    "independent_replay: nonfinite NaN",
+    "independent_replay: nonfinite Infinity",
+    "independent_replay: nonfinite -Infinity",
+    "independent_replay: nonfinite 1e999",
+    "independent_replay: allocation exceeds recorded bound",
+    "saved_score_int",
+    "saved_score_bool",
+    "saved_score_NaN",
+    "saved_score_nonbinary32",
+    "saved_score_overflow",
+    "incomplete_presence_logits",
+    "incomplete_start_logits",
+    "incomplete_end_logits",
+    "all392_signed_zero",
+    "all392_source",
+    "all392_id",
+    "all392_receipt_row",
+    "all392_IR_claim",
+    "all392_authority",
+    "all392_count",
+    "freezer_qualification_failed",
+    "freezer_qualification_summary_join",
+    "freezer_qualification_producer_join",
+    "freezer_qualification_freezer_pin",
+    "freezer_qualification_runner_pin",
+    "empty_loaded_owner_map",
+    "missing_loaded_ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture",
+    "missing_loaded_ipfs_datasets_py.logic.legal_ir.joint_span_selection",
+    "missing_loaded_ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+    "missing_loaded_ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+    "missing_loaded_ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_split_features",
+    "missing_loaded_ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss",
+    "v03_dropped_score_rows_shape_reproduces_refusal"
+  ],
+  "network_calls": 0,
+  "passed": true,
+  "positive_control_count": 34,
+  "positive_controls": [
+    "independent_replay: all six loaded producers joined to declared sources",
+    "independent_replay: exact34/17/17 partition and17optimizer order",
+    "independent_replay: fixed32updates384rowoccurrences schedule",
+    "independent_replay: complete32 metadata trace with8 tuning batches",
+    "independent_replay: opaque optimizer moments never claimed replayed",
+    "independent_replay: exact old96 necessary gate accepted without selection",
+    "independent_replay: old95 gate remains false",
+    "independent_replay: old93 gate remains false",
+    "independent_replay: permission regression rejects gate",
+    "independent_replay: same consumed metadata bytes are parsed",
+    "four_head_complete_binary32_bytes",
+    "signed_zero_kept_in_modal_bytes",
+    "full392_modal_independent_receipt_recount",
+    "actual_objective_validator_not_author_stub",
+    "actual_source_only_AST_no_production_imports",
+    "actual_repaired_freezer_custody_qualification",
+    "freezer_actual_v02_and_actual_freeze_raw_bound",
+    "every_freezer_approval_artifact_registered",
+    "required_six_in_declared33",
+    "actual_envelope_calls_required_owner_validator",
+    "exact_narrow_v03_to_v04_source_repair",
+    "v04_exact28_summary_with_six_authored_score_rows",
+    "qualified_original_hybrid_producer_retains_score_rows",
+    "exact53_result_names",
+    "prior_all87_verified",
+    "all33_source_owners",
+    "source_fence_before_reference",
+    "initial_complete_heads_and_joint",
+    "no_independent_optimizer_claim",
+    "no_tensor_replay_claim",
+    "no_default_selection",
+    "unscored_law",
+    "closing_all_sources",
+    "checkpoint_JSON_denial"
+  ],
+  "prior_v03_approval_preserved": true,
+  "resource_API_calls": 0,
+  "reviewed_at": "2026-10-13T01:02:45.848879+00:00",
+  "schema": "split-feature-analyzer-source-independent-review/v1",
+  "semantic_accuracy": null,
+  "versioned_repair_verified": true
+}

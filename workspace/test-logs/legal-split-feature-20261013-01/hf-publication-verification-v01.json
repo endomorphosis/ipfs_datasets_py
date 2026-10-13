@@ -1,0 +1,548 @@
+{
+  "all_downloads_byte_exact": true,
+  "all_old_identities_exact": true,
+  "chunks": [
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 21,
+      "parent_revision": "c1aa22e1677a7887ece53aac7caa52cef23ca8d7",
+      "revision": "bf88bfdbd5b2dd5b284570aa498258d505d7e196"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 26,
+      "parent_revision": "bf88bfdbd5b2dd5b284570aa498258d505d7e196",
+      "revision": "bb90bd86d4e57533bbfc389b31efb732bd561b7e"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 48,
+      "parent_revision": "bb90bd86d4e57533bbfc389b31efb732bd561b7e",
+      "revision": "7cb4c1e78690a95dbbe4d9f91c526bfacafc20e9"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 5,
+      "parent_revision": "7cb4c1e78690a95dbbe4d9f91c526bfacafc20e9",
+      "revision": "70525bcf70e801e78f4882b4834494d67ec0d2b6"
+    }
+  ],
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/70525bcf70e801e78f4882b4834494d67ec0d2b6",
+  "default_promotion": false,
+  "downloads": {
+    "releases/20261013-split-feature-v1/README.md": {
+      "bytes": 5955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/README.md",
+      "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/plan.json": {
+      "bytes": 79455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/plan.json",
+      "sha256": "b743a59e9d09c8efb47e430d936c66f8fb8f55bd3f6632403164fcc3e39d2b8e"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-joint.json": {
+      "bytes": 951744,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-joint.json",
+      "sha256": "5a1c27d086492d779cb4cfcc85f99723643d0c17f074ceff30426e4032f54711"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-raw.json": {
+      "bytes": 1367935,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-raw.json",
+      "sha256": "612d34f4c076e775b18ffccf0b003f19dea36e2e69d955cf7d28e79bf2c91d26"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-score.json": {
+      "bytes": 104536,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_dev-score.json",
+      "sha256": "cc2b7ea7f6a5416418d8a6a73f8c7cbe8ede8536a8df3e2d2a502841f7f94ff3"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_eval-joint.json": {
+      "bytes": 990989,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_eval-joint.json",
+      "sha256": "47221a33c2b6f6f3eb2fe367f0694b697ec5e0c4f2ddb11ad5eefa2f332350ab"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_eval-raw.json": {
+      "bytes": 1369757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-authored_eval-raw.json",
+      "sha256": "196df6b3a5a5463dff37f60bca8688ecbca345a7e49afe1c1db0bd3aa10094a1"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506510,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-joint.json",
+      "sha256": "c52d038ea7e70ed826d809a0cf071e81a6b00b29c040b3282c38ec552a16906a"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 643842,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-raw.json",
+      "sha256": "808e314fdda980804c10369f555e6ae51617567a353f8bb0d6e991d41d250c10"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_challenge-score.json",
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491374,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-joint.json",
+      "sha256": "57893b93204fcfcb010be61a3b822f0ce35a48edbcec7c03b1f53f7b270075ee"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-raw.json": {
+      "bytes": 606055,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-raw.json",
+      "sha256": "abe6802c38a0b69de561d041b0a2a5b5d421c8853ad04616747d7f740e9aad10"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-fresh_tune-score.json",
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-law-joint.json": {
+      "bytes": 103538,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-law-joint.json",
+      "sha256": "b16f9310c07dc21236d677511c6eda31dd6f564f89468fffb5567e07034bfbd3"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-law-raw.json": {
+      "bytes": 281020,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-law-raw.json",
+      "sha256": "ff03f2682b5bf3bd98ccae310fba396c9ebb1fb9085f979eb98753dab1159c60"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1032310,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-joint.json",
+      "sha256": "77f4f367e978ed0a8e5055c6807477b9bf0bce846b9ff36a15bb843424999413"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1409767,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-raw.json",
+      "sha256": "607cc04f48c42c9454f2561f6b69ab3ee0df21cf5b973645892936efe0c27c04"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-score.json": {
+      "bytes": 105562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_authored_eval-score.json",
+      "sha256": "d8a62b799b84a4ac9a301c97673fe3a926c4b3bcef3293129444de72a0a9b0c7"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-joint.json": {
+      "bytes": 1459768,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-joint.json",
+      "sha256": "41d839f5f2a5321805ffda48e5a2bd2dbb7b7ecd06202a7a338efe46e880db84"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-raw.json": {
+      "bytes": 2288990,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-raw.json",
+      "sha256": "a42f6c857ccba4695f8dfca4962c793811fe53fdebc6a6efeff92b9ecefb4749"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/baseline-old_tune-score.json",
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/cell-checkpoint.json": {
+      "bytes": 3592389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/cell-checkpoint.json",
+      "sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/cell-training.json": {
+      "bytes": 1276971,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/cell-training.json",
+      "sha256": "cae8c745dfcd176070eebce09d18566ba34b2bf3b2f2c3a1d94dd967d5ba71b2"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 18780,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-alternate_placeholders.json",
+      "sha256": "68f375b94f4e8c18c1b6d1028e150720e782411676ac4f487cccf03b1d14d231"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-disabled.json": {
+      "bytes": 18784,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-disabled.json",
+      "sha256": "dc7151a55b803efbda3d14e82d75d87834a9e1f16ced05fc5a4878d635390b99"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 18782,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-rotated_placeholders.json",
+      "sha256": "a0cc6750465f7a94c19385511501821e5b14bc1f939e3d1847c501a89a324a24"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-zeros.json": {
+      "bytes": 18780,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/initial-parity-zeros.json",
+      "sha256": "41ef6857a0e1a4f51522a278a81f5d93e1fb0a40458fa64797865a346deb97e0"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/initial-parity.json": {
+      "bytes": 1793,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/initial-parity.json",
+      "sha256": "db350111ca4c385160f27d1b165b5cd700695ee85e9f8a5112fa59b32b3b686b"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/summary.json": {
+      "bytes": 67866,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/summary.json",
+      "sha256": "361540164e3f073d61ff85f05bd971d2554b398615e797b4889fd5be78210c1f"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-joint.json": {
+      "bytes": 1015303,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-joint.json",
+      "sha256": "ef1bad86305dcba16d811e0c8f41784187f70b9cf4bf6514ad411503dc1c0b57"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-raw.json": {
+      "bytes": 1429719,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-raw.json",
+      "sha256": "fb77893a0e1dc730d529361d3d35a07af283b7d4cfef2ad8e06e64fb08164257"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-score.json": {
+      "bytes": 104017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_dev-score.json",
+      "sha256": "8f6107282a88f8a9d3aafbc4e2685762cbd779b399b13f643d04a8bda7fa9a2a"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_eval-joint.json": {
+      "bytes": 1023672,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_eval-joint.json",
+      "sha256": "4eb2c5f64ca4ec779620eaccfa65796b3e167592eb9d5597086c10da3a09b223"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_eval-raw.json": {
+      "bytes": 1428467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-authored_eval-raw.json",
+      "sha256": "79565ba2c8db6c65d88c798613d804f24986185ab2f1f3ad094cb16f37cc6773"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526648,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-joint.json",
+      "sha256": "37b7e84482ed582da2eeb56b44356cef368d065f6e5c008996cd1263b317450f"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679139,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-raw.json",
+      "sha256": "91f995e5da8826ed968891aaa30bc5b42a469aced1ec14531e9f2a424e7c5e28"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-score.json": {
+      "bytes": 53516,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_challenge-score.json",
+      "sha256": "11183c66cceab71f2c02a62d96412379a72c867f4a6fbbdb41bc7f788e0c612a"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-joint.json": {
+      "bytes": 509063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-joint.json",
+      "sha256": "835e7f57902fcc4a19361e9eb9ad245ce75062a5d27fe4a733eb2c33a8e880b4"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-raw.json": {
+      "bytes": 626905,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-raw.json",
+      "sha256": "4d4b8f8126830331c2ed73d9b5e37709be13124e4570c19feccebe4912c45c04"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-score.json": {
+      "bytes": 53254,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-fresh_tune-score.json",
+      "sha256": "c616bfa1fcb1c846f6895f0ffc5146c5f91c84815fc6d9cb44e9ef98989bac4d"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-law-joint.json": {
+      "bytes": 107526,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-law-joint.json",
+      "sha256": "3fb0adf6bb1abc32d930b86ee044b93dcb13fcea18432ab43f780ed989b5b856"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-law-raw.json": {
+      "bytes": 282369,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-law-raw.json",
+      "sha256": "63308d7218c72f44fc08bef52fcb4d11ccb2b8146e9ef946cc368d29a987a6eb"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-modality-retention.json": {
+      "bytes": 164190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-modality-retention.json",
+      "sha256": "1f33040a0494aa44e5645fa3bbc0b1abcb6a5f307b6b6c6e4c975d2dd29737ca"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1043451,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-joint.json",
+      "sha256": "451cb16ec8eb1a5087478de5253e61e38a04d8312e8dc71f4afe5eb622ac5107"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-raw.json",
+      "sha256": "b357db638f3dab765d19cee0f279c0a10df41039e2a9586de8caed9b6ef03894"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-score.json": {
+      "bytes": 105191,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_authored_eval-score.json",
+      "sha256": "92a614b2bac9187fe691ccb34a20fdb8b96e7f9742d6a68e19d3561296f929f8"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-joint.json": {
+      "bytes": 1456857,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-joint.json",
+      "sha256": "b5099cf640e7e6014f8878ab9a3586a211d39ca27605950420fd47786c54040f"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-raw.json": {
+      "bytes": 2287349,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-raw.json",
+      "sha256": "b6e45110f179418041223ed02291ea9669ef7d6df2182ec53ce8b64e32af89c4"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-score.json": {
+      "bytes": 101542,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-old_tune-score.json",
+      "sha256": "add92565ec7f9df00a5feb988db8339498d05319efc332801f4c0ee373746189"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-alternate_placeholders.json",
+      "sha256": "7d654c656fa66cdebb469e633c7552f7437cf2c581709cc32967449587f966df"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-disabled.json": {
+      "bytes": 20662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-disabled.json",
+      "sha256": "bc5b03956b01d9d20ac2f5aad53bdef106fc9a4b4fea60f2e0f19d910fe0229c"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20660,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-rotated_placeholders.json",
+      "sha256": "323c770436546ed3334d6f3133f6dc38fa3e08e8086bf54d2ea157a5f63b36c9"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-zeros.json": {
+      "bytes": 20658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-parity-zeros.json",
+      "sha256": "87d762ac7361e54dc03d40d7ccfd5f4afb19e0b744809bd55015c692ee80c7d9"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/results/trained-parity.json": {
+      "bytes": 1793,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/results/trained-parity.json",
+      "sha256": "ce09d486a312c1bc80609be8b9bef26424d70a97034b89749569a40f847f3a4e"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/child-exit.json",
+      "sha256": "e16d7a37e86a600f8fe3c299926507c5a27bfb60aa2f708c3ecb26741bfbf1c3"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/child-identity.json",
+      "sha256": "5586b96e5dfccfc0a2db02da1bb3cff4da552f2a02e6c459a4bb0349a7669894"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/child.log": {
+      "bytes": 65,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/child.log",
+      "sha256": "f9ad3c0f15c089df1eeb327ee50296d4de94ec2f7366fa6463793e694dcd062e"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/command.json": {
+      "bytes": 1046,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/command.json",
+      "sha256": "c13cc76650fc23417192649ad03bc4a85aaba90b62dcee58df733638ce506cfb"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/group-rss-observations.jsonl": {
+      "bytes": 25931,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/group-rss-observations.jsonl",
+      "sha256": "35ef88eca672d162e3574b94fbe8009b10a2720d30183f7fab7b30ddf373d5ec"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/group-rss-summary.json": {
+      "bytes": 1747,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/group-rss-summary.json",
+      "sha256": "60b5fa4fc2a08a7186b531eb6f040eb0979d9038f759c3006376dc463f2120c7"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/guardian-exit.json",
+      "sha256": "8b4bef1c84307bf9ec5007d4ead53e25da8f5277a2912a1463dfaa34f9d75b9e"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/lease-binding.json",
+      "sha256": "93f152e0e7a244dd6b650767511f15965916cdb1ccc7fe04eff881b215349bbe"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/lease-observations.jsonl": {
+      "bytes": 54901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/lease-observations.jsonl",
+      "sha256": "652f2dffdc6ff921dc0a29b0123801ca5201e01bb90112e298ab18e2a594f4f8"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/owned-group-final.json",
+      "sha256": "c2f2994c8d8718e8c3dad390281203923b9fa7084992c37572e2c937302e13c6"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/pre-admission.json": {
+      "bytes": 8000,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/pre-admission.json",
+      "sha256": "adf5a538bbe79dfec882bf0d902506ab74740e698a7dc27c6b94a0e52a01790f"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/resource-observations.json": {
+      "bytes": 1749,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/resource-observations.json",
+      "sha256": "187ac2295e404fd98c74eb3a7fd66ac84e7577f9595f33e367897c642dcd5559"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/runtime/scheduler-adoption.json",
+      "sha256": "ea1029228c9ff719365f27997df7d282946a3453cebd80fc945be7305ecd493d"
+    },
+    "releases/20261013-split-feature-v1/cells/split-features/training-protocol-review.json": {
+      "bytes": 158972,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/cells/split-features/training-protocol-review.json",
+      "sha256": "8ef9a3a011f7a242318cab40691f281e6c094ba3a4d3faed1127ed2110a075e7"
+    },
+    "releases/20261013-split-feature-v1/evidence/combined-pure-tests-observation-v01.json": {
+      "bytes": 3151,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/combined-pure-tests-observation-v01.json",
+      "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+    },
+    "releases/20261013-split-feature-v1/evidence/combined-pure-tests-v01.log": {
+      "bytes": 635,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/combined-pure-tests-v01.log",
+      "sha256": "740d2a752a6a68103aa2634a5114bd21353d5622411da303c0a1e1e111d08015"
+    },
+    "releases/20261013-split-feature-v1/evidence/combined-pure-tests-v01.xml": {
+      "bytes": 25026,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/combined-pure-tests-v01.xml",
+      "sha256": "c7ccde722ca625060d56b3c2e37456764be6ca8aa7e6cedd00705041e396c8de"
+    },
+    "releases/20261013-split-feature-v1/evidence/hf-helper-source-independent-review-v02.json": {
+      "bytes": 16152,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/hf-helper-source-independent-review-v02.json",
+      "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+    },
+    "releases/20261013-split-feature-v1/evidence/registration-v01.json": {
+      "bytes": 78040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/registration-v01.json",
+      "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+    },
+    "releases/20261013-split-feature-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/result-independent-review-v01.json",
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "releases/20261013-split-feature-v1/evidence/root-science-source-independent-review-v01.json": {
+      "bytes": 4600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/root-science-source-independent-review-v01.json",
+      "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+    },
+    "releases/20261013-split-feature-v1/evidence/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/runtime-independent-review-v01.json",
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "releases/20261013-split-feature-v1/evidence/saved-score-hybrid-source-independent-review-v02.json": {
+      "bytes": 3464,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/saved-score-hybrid-source-independent-review-v02.json",
+      "sha256": "b06f1914c11589395f92ba8a6934d397696db6f1f5c0d787ec254c2164da2032"
+    },
+    "releases/20261013-split-feature-v1/evidence/split-feature-analyzer-source-independent-review-v02.json": {
+      "bytes": 13205,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/split-feature-analyzer-source-independent-review-v02.json",
+      "sha256": "88d16d9d3aae166d80fcee563aa669bff6c9b7f9cd30140f5ffa2a2017dc8f16"
+    },
+    "releases/20261013-split-feature-v1/evidence/split-feature-evaluation-contract-v01.json": {
+      "bytes": 9047,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/split-feature-evaluation-contract-v01.json",
+      "sha256": "2e9f213f87fd755b3bb22658e08516b12f8e43a0c5b42e5c345dacdd1a8559c0"
+    },
+    "releases/20261013-split-feature-v1/evidence/split-feature-gaps-v01.md": {
+      "bytes": 5893,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/split-feature-gaps-v01.md",
+      "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+    },
+    "releases/20261013-split-feature-v1/evidence/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/split-feature-output-freeze-v01.json",
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "releases/20261013-split-feature-v1/evidence/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/split-feature-result-analysis-v01.json",
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    },
+    "releases/20261013-split-feature-v1/evidence/terminal-copy-freeze-source-independent-review-v02.json": {
+      "bytes": 4970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/terminal-copy-freeze-source-independent-review-v02.json",
+      "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+    },
+    "releases/20261013-split-feature-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 4901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/trainer-source-independent-review-v01.json",
+      "sha256": "a3af6e3a87cb5a6741d8538fbeabe0575d277d6ce54126b5f9e18ea5cb52cf62"
+    },
+    "releases/20261013-split-feature-v1/evidence/training-export-v01.json": {
+      "bytes": 5052701,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/evidence/training-export-v01.json",
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "releases/20261013-split-feature-v1/recipe/analyze_saved_score_hybrid_v02.py": {
+      "bytes": 34453,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/analyze_saved_score_hybrid_v02.py",
+      "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+    },
+    "releases/20261013-split-feature-v1/recipe/analyze_split_feature_results_v04.py": {
+      "bytes": 75056,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/analyze_split_feature_results_v04.py",
+      "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+    },
+    "releases/20261013-split-feature-v1/recipe/audit_split_terminal_v01.py": {
+      "bytes": 84271,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/audit_split_terminal_v01.py",
+      "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+    },
+    "releases/20261013-split-feature-v1/recipe/capture_split_terminal_v01.py": {
+      "bytes": 2735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/capture_split_terminal_v01.py",
+      "sha256": "2b02d8333d52beeb7a9c0a0c095a58688a177eaa5e1a58391c39a6bff08b9803"
+    },
+    "releases/20261013-split-feature-v1/recipe/freeze_split_outputs_v02.py": {
+      "bytes": 5841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/freeze_split_outputs_v02.py",
+      "sha256": "cd9fcaf43603dc182a7f89a9660d2a53b6b749f4286c45e0a6884166e23ea3ce"
+    },
+    "releases/20261013-split-feature-v1/recipe/prepare_hf_split_feature_release_v04.py": {
+      "bytes": 20415,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/prepare_hf_split_feature_release_v04.py",
+      "sha256": "22f569d15f4c8005aa4a340c1632b8f3c5f2e76b1942e2f0853422f149d62377"
+    },
+    "releases/20261013-split-feature-v1/recipe/prepare_split_features.py": {
+      "bytes": 11887,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/prepare_split_features.py",
+      "sha256": "52e589dfe1a63b6310f54abc1b4cc511cf8fcc0e75a5be0242820bfc99255d3b"
+    },
+    "releases/20261013-split-feature-v1/recipe/publish_hf_split_feature_release_v04.py": {
+      "bytes": 17268,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/publish_hf_split_feature_release_v04.py",
+      "sha256": "5e4ccb14bbd8a3f37fc2a7baea4d66798247d2154fa5936f147d35e19cb2852e"
+    },
+    "releases/20261013-split-feature-v1/recipe/review_split_cell_v03.py": {
+      "bytes": 25548,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/review_split_cell_v03.py",
+      "sha256": "71fd7b3f416029cc0d8622a28686780ee3e59e0696ffb5beb795833782210090"
+    },
+    "releases/20261013-split-feature-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261013-split-feature-v1/recipe/run_split_features.py": {
+      "bytes": 38053,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/recipe/run_split_features.py",
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "releases/20261013-split-feature-v1/release-manifest.json": {
+      "bytes": 40805,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/release-manifest.json",
+      "sha256": "15239a1419b2c66742c83a6909278921a4753b39c19c0fd270a85ba34f06f0d4"
+    },
+    "releases/20261013-split-feature-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "releases/20261013-split-feature-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py": {
+      "bytes": 20011,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-verified-download-v01/releases/20261013-split-feature-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py",
+      "sha256": "a66720be2df8fa991cfe2d1690115bad2a4b5d814ca818e9f295ea7bcf4988f0"
+    }
+  },
+  "findings": [],
+  "new_files": 100,
+  "old_files_preserved": 4244,
+  "parent_revision": "c1aa22e1677a7887ece53aac7caa52cef23ca8d7",
+  "passed": true,
+  "release_prefix": "releases/20261013-split-feature-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "70525bcf70e801e78f4882b4834494d67ec0d2b6",
+  "schema": "split-feature-Hub-verification/v1",
+  "semantic_accuracy": null
+}

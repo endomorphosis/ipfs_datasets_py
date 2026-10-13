@@ -1,0 +1,46 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-split-actual-author-controls-v01.json": {
+      "bytes": 4996,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-split-actual-author-controls-v01.json",
+      "sha256": "6bcaa30c86619cefa3f3e05207b6ca4e85742be5a2aa3aff14f4902890d4de05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf_split_actual_author_controls_v01.py": {
+      "bytes": 17802,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf_split_actual_author_controls_v01.py",
+      "sha256": "902b02e27b3602877bf6d3f5f1e3fef30fb57f19ad460740293ed25f7c9d56ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py": {
+      "bytes": 22024,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+      "sha256": "a6b1fd86bbd641afda3812b3bc4214202cfc940ce2d2d6ff8bc8fdbc712ac813"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Actual main awaits completed publication",
+    "No model/compiler/resource API, Hub request, checkpoint/reference JSON parse or private global body read in qualification"
+  ],
+  "observer": {
+    "bytes": 22024,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+    "sha256": "a6b1fd86bbd641afda3812b3bc4214202cfc940ce2d2d6ff8bc8fdbc712ac813"
+  },
+  "passed": true,
+  "retained_author_controls": {
+    "positive_count": 36,
+    "refusal_count": 63
+  },
+  "root_pure_controls": {
+    "negative_count": 4,
+    "positive_count": 2,
+    "refusals": [
+      "boolean bytes",
+      "invalid SHA",
+      "altered Git raw bytes",
+      "altered LFS raw bytes"
+    ]
+  },
+  "schema": "split-feature-Hub-actual-observer-source-independent-review/v1",
+  "scope": "Full observer draft read plus exact dynamic helper-approval successor joins; captured public metadata and private-reference guards reviewed before actual main"
+}

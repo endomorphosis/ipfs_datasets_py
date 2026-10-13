@@ -1,0 +1,163 @@
+{
+  "Git_mutations": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json": {
+      "bytes": 3151,
+      "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md": {
+      "bytes": 5893,
+      "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md": {
+      "bytes": 5955,
+      "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    }
+  },
+  "checkpoint_JSON_parsed": false,
+  "checkpoint_identity_from_qualified_metadata": {
+    "bytes": 3592389,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/cell-checkpoint.json",
+    "sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035"
+  },
+  "checkpoint_raw_body_read": false,
+  "checks": {
+    "experimental_additive_archive_no_default_promotion": true,
+    "exposed_authored_targets_disclosed": true,
+    "future_gap_proposals_not_presented_as_completed": true,
+    "initial392_complete_output_parity": true,
+    "law8_unscored": true,
+    "no_latent_or_broader_family_or_Lake_qualification": true,
+    "old96_gate_failure_disclosed": true,
+    "one_seed_and32_updates_disclosed": true,
+    "parent_modality_errors_disclosed": true,
+    "qualified_result_review_raw_join": true,
+    "reported34_tensors17trainable17frozen": true,
+    "runtime_evidence_raw_join": true,
+    "trained392_modality_binary32_parity": true,
+    "two_feature_paths_and_no_equal_compute_claim": true
+  },
+  "default_promotion": false,
+  "documents": {
+    "gap_doc": {
+      "bytes": 5893,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+      "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+    },
+    "model_card": {
+      "bytes": 5955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+      "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+    }
+  },
+  "findings": [],
+  "full_document_read_completed": true,
+  "matched_saved_output_tables": {
+    "all-parameters": [
+      [
+        93,
+        93
+      ],
+      [
+        40,
+        42
+      ],
+      [
+        19,
+        22
+      ]
+    ],
+    "baseline": [
+      [
+        96,
+        96
+      ],
+      [
+        0,
+        0
+      ],
+      [
+        6,
+        6
+      ]
+    ],
+    "saved-score-hybrid": [
+      [
+        96,
+        96
+      ],
+      [
+        39,
+        39
+      ],
+      [
+        25,
+        27
+      ]
+    ],
+    "span-heads-only": [
+      [
+        96,
+        96
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        6,
+        6
+      ]
+    ],
+    "split-features": [
+      [
+        94,
+        94
+      ],
+      [
+        44,
+        45
+      ],
+      [
+        26,
+        32
+      ]
+    ]
+  },
+  "model_calls": 0,
+  "network_calls": 0,
+  "nonblocking_clarifications": [
+    {
+      "detail": "Checkpoint path results/cell-checkpoint.json is relative to the cell bundle; release-relative path is cells/split-features/results/cell-checkpoint.json. Root source docs/guide will state the full release path."
+    },
+    {
+      "detail": "Evaluation object45/72 denotes joint object matches; greedy object matches are38/72. Root source docs/guide will explicitly label this distinction."
+    }
+  ],
+  "passed": true,
+  "reference_packet_read": false,
+  "resource_API_calls": 0,
+  "reviewed_at": "2026-10-13T01:13:52.740881+00:00",
+  "schema": "split-feature-model-card-gap-independent-review/v1",
+  "semantic_accuracy": null
+}

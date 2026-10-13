@@ -1,0 +1,57 @@
+{
+  "Hub_mutations": 0,
+  "baseline_preserved": {
+    "bytes": 1218529,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-before-file-identities-v01.json",
+    "sha256": "c72c81937246daa97dcac3c1f018a9d149ad8250745d011261af1625a4c94943"
+  },
+  "executed_preparer": {
+    "bytes": 20415,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v03.py",
+    "sha256": "d401ad5185a23e283da344150a02147171c843c772dc48a03e150b0a18a18059"
+  },
+  "missing_qualification_closure_artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_result_source_controls_v02.py": {
+      "bytes": 19136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_result_source_controls_v02.py",
+      "sha256": "192624ff0646aaf4a65c18e0dbd96c77e45a8d7b0eaf89dcbd595b1b04630097"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-findings-v01.json": {
+      "bytes": 1509,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-findings-v01.json",
+      "sha256": "a0222845f08ab3f2de429fd9a21f394594aa3f8053e020e142144de4d777af58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-author-controls-v04.json": {
+      "bytes": 3827,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-author-controls-v04.json",
+      "sha256": "808143c8a67385cf3427a199259af1584df0c2163baa1823ccb082928fa63e4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-retained-summary-shape-controls-v01.json": {
+      "bytes": 1462,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-retained-summary-shape-controls-v01.json",
+      "sha256": "48c722b19d318b03b6069de0d5e857ee7ad3720c49bff244c82bdca789311eb8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_result_author_controls_v04.py": {
+      "bytes": 15916,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_result_author_controls_v04.py",
+      "sha256": "bf73856bc084c5cddeaec03547f1fecd46d5372145431df3abc5921305bf587a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_retained_summary_shape_controls_v01.py": {
+      "bytes": 4127,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split_feature_retained_summary_shape_controls_v01.py",
+      "sha256": "c49c9cc20cab8d5e5179f231543aa822169ec9150e92475720940958057821ec"
+    }
+  },
+  "model_calls": 0,
+  "preparation_receipt_created": false,
+  "reason": "source qualification closure absent from approved payload provenance",
+  "remediation": "Add exact qualified analyzer closure to a successor source approval; preserve v03 and v01 approval, use source-qualified v04 helpers",
+  "returncode": 1,
+  "schema": "split-feature-Hub-preparation-refusal/v1",
+  "source_approval": {
+    "bytes": 7262,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v01.json",
+    "sha256": "c8645d7c10a7e7eaf95f82f79cc3aea1bface6559db2327034db4b7ce749af80"
+  },
+  "upload_tree_created": false
+}

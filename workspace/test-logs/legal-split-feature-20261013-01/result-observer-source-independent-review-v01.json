@@ -1,0 +1,57 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py": {
+      "bytes": 39653,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+      "sha256": "ac6b30f3c61596f7e662b63f8aeea50fa938a4a7a72a9047ecee6e246ad2b9a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md": {
+      "bytes": 5893,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+      "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md": {
+      "bytes": 5955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+      "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-result-observer-author-pure-controls-v03.json": {
+      "bytes": 1808,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-result-observer-author-pure-controls-v03.json",
+      "sha256": "8d7701466665b310cee677f2654b71c2e0f6d94c035a6ce69fe46899e4594231"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Synthetic source checks only; actual result main has not yet run",
+    "No model, compiler, reference packet, private global body, or resource API access in source qualification"
+  ],
+  "observer": {
+    "bytes": 39653,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+    "sha256": "ac6b30f3c61596f7e662b63f8aeea50fa938a4a7a72a9047ecee6e246ad2b9a7"
+  },
+  "passed": true,
+  "retained_author_controls": {
+    "negative_count": 34,
+    "positive_count": 5
+  },
+  "reviewed_successor_changes": [
+    "Exact actual runtime and result analysis pins before parse",
+    "Legacy gate numeric and full permission map joins to independent direct recount"
+  ],
+  "root_pure_controls": {
+    "negative_controls": [
+      "bool",
+      "nan",
+      "inf",
+      "vector_length",
+      "vector_int",
+      "nonbinary32"
+    ],
+    "negative_count": 6,
+    "positive_count": 3
+  },
+  "schema": "split-feature-result-observer-source-independent-review/v1",
+  "scope": "Full v01 source review retained; exact v01 to final v03 diff reviewed; direct independent result recount qualified before main"
+}

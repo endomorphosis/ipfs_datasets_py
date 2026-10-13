@@ -1,0 +1,41 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py": {
+      "bytes": 23554,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+      "sha256": "fef225eade0d15fddb209b6b2fbed9a024077996f5f9d9ece72b8c000a342e76"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Actual concrete payload main has not run",
+    "No model/compiler/resource API, Hub request, checkpoint/reference JSON parse or private body access"
+  ],
+  "observer": {
+    "bytes": 23554,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+    "sha256": "fef225eade0d15fddb209b6b2fbed9a024077996f5f9d9ece72b8c000a342e76"
+  },
+  "passed": true,
+  "root_pure_controls": {
+    "negative_controls": [
+      "duplicate",
+      "nan",
+      "overflow",
+      "previous parsed bytes drift",
+      "opaque checkpoint",
+      "reference packet"
+    ],
+    "negative_count": 6,
+    "positive_controls": [
+      "strict captured metadata",
+      "full brief normalization",
+      "stable closing source join",
+      "private endpoint classification",
+      "private references never raw-pinned and retain runtime join"
+    ],
+    "positive_count": 5
+  },
+  "schema": "split-feature-Hub-payload-observer-source-independent-review/v1",
+  "scope": "Full concrete observer source read; metadata-only qualified private endpoints and brief/full card identity repair reviewed; bounded detached controls passed"
+}

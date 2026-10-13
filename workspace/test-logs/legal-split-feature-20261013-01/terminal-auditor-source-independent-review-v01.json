@@ -1,0 +1,37 @@
+{
+  "actual_main_executed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/audit_permission_terminal_v02.py": {
+      "bytes": 66312,
+      "sha256": "d9a5921e02538c88ece510de225d63846eac8f4ab11c80f1fafd705c9fd13ca6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/audit_split_terminal_v01.py": {
+      "bytes": 84271,
+      "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/resource-baseline-audit-design-v01.json": {
+      "bytes": 70534,
+      "sha256": "15995dc220ac449e6ce667d28f7728a3be5ba3b30b515914b73d1c77378d9cb5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-terminal-author-pure-controls-v02.json": {
+      "bytes": 6076,
+      "sha256": "7306e5d92aecff4417665d7fd252586fdf2ffaaf38b66a939d59c002dffdb8c2"
+    }
+  },
+  "auditor": {
+    "bytes": 84271,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/audit_split_terminal_v01.py",
+    "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "model_calls": 0,
+  "negative_controls": 8,
+  "passed": true,
+  "positive_controls": 4,
+  "prior_harness_syntax_error_before_receipt": true,
+  "prior_main_refused_missing_source_approval_before_audit": true,
+  "resource_API_calls": 0,
+  "review_method": "Full changed/new predicates and main read;15 retained predicates verified AST-identical to qualified N3 auditor; final source/contract checks and detached raw/branch/original528 custody controls.",
+  "schema": "split-feature-terminal-auditor-source-independent-review/v1"
+}
