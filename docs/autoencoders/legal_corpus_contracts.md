@@ -125,6 +125,13 @@ composition-bound symbols and native ASTs, and emits candidate `DEFINES` and
 `USES_DEFINITION` links. This profile encodes the caller's declaration; source
 review, authenticity, context closure and Lean compilation remain unverified.
 
+The [graph-bound Lean preparer](legal_corpus_lake.md) now delegates a complete
+independently pinned candidate population to the existing definition/norm Lake
+owner. It maps source occurrences, typed graph assertions and definition-use
+edges to every generated joint module, preserving the native project bytes.
+Its exact local readback remains preparation evidence: shared-definition
+deduplication, reviewed statutory meaning and an actual corpus build remain open.
+
 ## Import and validation behavior
 
 Importing these public modules no longer constructs `autoformal.SESSION`.
