@@ -118,6 +118,13 @@ regenerates source geometry and retains original graph identities/ordered ASTs
 through candidate export. The two coordinate profiles remain distinct; no
 view-to-view equivalence or semantic definition encoding is inferred.
 
+The separately supported [definition/norm adapter](legal_corpus_definition_norm_adapter.md)
+now regenerates explicit section-local unary definitions and universally guarded
+norms through their existing owner. It preserves all supporting paragraphs,
+composition-bound symbols and native ASTs, and emits candidate `DEFINES` and
+`USES_DEFINITION` links. This profile encodes the caller's declaration; source
+review, authenticity, context closure and Lean compilation remain unverified.
+
 ## Import and validation behavior
 
 Importing these public modules no longer constructs `autoformal.SESSION`.
