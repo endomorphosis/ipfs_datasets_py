@@ -15,6 +15,7 @@ import re
 
 from . import source_embeddings_384 as embeddings
 from . import structured_source_384 as structured
+from . import intent_action_checkpoint_384 as checkpoint_owner
 from ...intent_ir.formalize import action_contracts as codec
 from ....optimizers.logic_theorem_optimizer import autoencoder_embedding_runtime as producer
 
@@ -37,7 +38,7 @@ def _sha(value):
 
 def _pins():
     from . import portable_source_pins as pins
-    modules = (importlib.import_module(__name__), codec, embeddings, producer, structured, pins)
+    modules = (importlib.import_module(__name__), codec, embeddings, producer, structured, checkpoint_owner, pins)
     return {module.__name__: pins.pin_imported_module(module) for module in modules}
 
 
@@ -66,7 +67,7 @@ def prepare_intent_action_inference(instruction, *, checkpoint_path, expected_sh
         "checkpoint_path": str(checkpoint_path), "checkpoint_sha256": expected_sha256,
         "snapshot_path": None if snapshot_path is None else str(snapshot_path),
         "dimension": 384, "raw_candidate_ir": None, "native_intent_ir": None,
-        "binding": None, "inference": None, "embedding_sha256": None,
+        "binding": None, "inference": None, "embedding_sha256": None, "checkpoint_compatibility": None,
         "embedding_provenance": None, "producer_pins": None,
         "producer_pin_scope": "direct_modules_loaded_functions_and_disk_not_full_environment",
         "model_inference_executed": False, "continue_planning": True,
@@ -80,8 +81,9 @@ def prepare_intent_action_inference(instruction, *, checkpoint_path, expected_sh
     else:
         try:
             before = _pins()
-            reader = structured.load_checkpoint(checkpoint_path, expected_sha256=expected_sha256,
-                                                expected_domain="intent_ir")
+            reader, compatibility = checkpoint_owner.load_intent_action_checkpoint_384(
+                checkpoint_path, expected_sha256=expected_sha256)
+            report["checkpoint_compatibility"] = compatibility
             snapshot, assets = producer._snapshot_assets(snapshot_path or producer.DEFAULT_SNAPSHOT_PATH)
             vectors = embeddings.embed_texts([instruction], snapshot_path=snapshot)
             report["embedding_sha256"] = _sha(_raw(vectors[0]))

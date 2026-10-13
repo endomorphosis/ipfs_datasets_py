@@ -22,7 +22,8 @@ def setup(tmp_path, monkeypatch):
         assert set(rows[0]) == {"id", "source_text", "embedding"}
         return {"rows": [{"candidate_ir": deepcopy(candidate)}]}
     monkeypatch.setattr(runtime, "_pins", lambda: {"test_transport": "unchanged"})
-    monkeypatch.setattr(runtime.structured, "load_checkpoint", lambda *args, **kw: SimpleNamespace(infer=infer))
+    monkeypatch.setattr(runtime.checkpoint_owner, "load_intent_action_checkpoint_384",
+        lambda *args, **kw: (SimpleNamespace(infer=infer), {"test_transport_only": True}))
     monkeypatch.setattr(runtime.producer, "_snapshot_assets", lambda path: (tmp_path, [{"asset": "pinned"}]))
     monkeypatch.setattr(runtime.embeddings, "embed_texts", lambda texts, **kw: [[0.0] * 384 for text in texts])
     return {"checkpoint_path": str(checkpoint), "expected_sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
@@ -37,6 +38,7 @@ def test_predicted_native_effects_remain_distinct_from_exact_source_provenance(s
     assert report["raw_candidate_ir"] == candidate == before
     assert report["native_intent_ir"]["actions"][0]["effect_ids"] == ["effect:equation", "effect:returned"]
     assert report["binding"]["changed_paths"] == ["/document/sources/0"]
+    assert report["checkpoint_compatibility"] == {"test_transport_only": True}
     assert all(report[key] is False for key in runtime.FALSE)
     assert runtime.verify_intent_action_inference(report, SOURCE, **options) == report
     assert len(observed) == 2  # validation actually recomputes numerical readout
@@ -44,7 +46,7 @@ def test_predicted_native_effects_remain_distinct_from_exact_source_provenance(s
 
 @pytest.mark.parametrize("path", [("native_intent_ir", "title"), ("checkpoint_sha256",),
     ("raw_candidate_ir", "document", "title"), ("proof_authority",), ("source_sha256",),
-    ("embedding_sha256",), ("report_sha256",)])
+    ("embedding_sha256",), ("report_sha256",), ("checkpoint_compatibility",)])
 def test_saved_report_mutation_requires_replay(setup, path):
     options, _, _ = setup
     report = runtime.prepare_intent_action_inference(SOURCE, **options)
@@ -88,7 +90,7 @@ def test_missing_checkpoint_fails_open_without_download(setup, monkeypatch):
     options, _, _ = setup
     def missing(*args, **kw):
         raise OSError("local checkpoint unavailable")
-    monkeypatch.setattr(runtime.structured, "load_checkpoint", missing)
+    monkeypatch.setattr(runtime.checkpoint_owner, "load_intent_action_checkpoint_384", missing)
     report = runtime.prepare_intent_action_inference(SOURCE, **options)
     assert report["status"] == "fail_open_unavailable"
     assert report["continue_planning"] and not report["model_inference_executed"]

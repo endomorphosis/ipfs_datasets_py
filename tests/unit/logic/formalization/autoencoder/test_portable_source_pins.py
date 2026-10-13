@@ -75,7 +75,8 @@ def test_intent_pin_population_includes_the_portable_checker():
     from ipfs_datasets_py.logic.formalization.autoencoder import intent_action_runtime_384 as runtime
     pins = runtime._pins()
     assert pins[original.__name__] == hashlib.sha256(Path(original.__file__).read_bytes()).hexdigest()
-    assert len(pins) == 6
+    assert pins[runtime.checkpoint_owner.__name__] == hashlib.sha256(Path(runtime.checkpoint_owner.__file__).read_bytes()).hexdigest()
+    assert len(pins) == 7
 
 
 def test_gitless_helper_import_and_pin_work_in_an_isolated_fresh_interpreter(package):
