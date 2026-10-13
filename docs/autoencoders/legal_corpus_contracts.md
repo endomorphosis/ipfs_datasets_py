@@ -110,6 +110,14 @@ complete graph envelopes through hash-bound Parquet and supplies a local
 validator CLI. Both retain candidate-only status; typed semantic projection,
 source review and a unified Lean release remain separate work.
 
+The [legacy source-join ledger](legal_corpus_legacy_source_join.md) now retains
+every exact stored-Parquet occurrence candidate without selecting a historical
+producer occurrence. The [proposed-graph bridge](legal_corpus_proposed_graph_adapter.md)
+reuses the existing graph and official HTML selector owners, independently
+regenerates source geometry and retains original graph identities/ordered ASTs
+through candidate export. The two coordinate profiles remain distinct; no
+view-to-view equivalence or semantic definition encoding is inferred.
+
 ## Import and validation behavior
 
 Importing these public modules no longer constructs `autoformal.SESSION`.
