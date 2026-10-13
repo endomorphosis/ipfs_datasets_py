@@ -1,0 +1,59 @@
+{
+  "admitted": false,
+  "affected_reviews": [
+    {
+      "bytes": 11573,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "0497c0a4d6fcc1275ea163cc3183f248ed9c211dec46bf06e553bf7a78b8bad3"
+    },
+    {
+      "bytes": 31081,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v01.json",
+      "sha256": "d0928416662d26b7c2201df12bb28cc82c773d3c4cc72eca3bc5ab8712193fab"
+    }
+  ],
+  "analyzer_qualification": "Paused pending corrected runner/plan pins; analyzer main and new result scoring not executed by reviewer.",
+  "checkpoint_JSON_parses": 0,
+  "existing_artifacts_modified": false,
+  "findings": [
+    {
+      "id": "N7-RUNNER-03",
+      "implication": "The parent-training168 capture cannot return, so the initial632 gate and any training cannot be reached on this code path.",
+      "inherited_decoder_line": 609,
+      "required_fix": "New versioned runner must preserve all168 ordered rows via safe128+40 chunk captures, with complete combined occurrence/readout/accounting checks; use a new immutable attempt and new plan/reviews.",
+      "review_error": "Earlier independent runner API qualification overlooked the inherited decoder bound. The existing frozen source/training review files are preserved as historical evidence, not a successful-runtime claim.",
+      "runner_line": 295,
+      "severity": "blocking_runtime_contract",
+      "summary": "V01 calls inherited split.captured_inference on all168 training rows; the inherited SpanSplitFeatureDecoder accepts at most128 sources."
+    }
+  ],
+  "model_execution": false,
+  "observed_at_utc": "2026-10-13T07:52:54.601919+00:00",
+  "passed": false,
+  "private_global_body_reads": 0,
+  "promotion_performed": false,
+  "qualified": false,
+  "reference_gold_JSON_parses": 0,
+  "resource_API_or_admission_calls": 0,
+  "root_reported_failed_attempt": {
+    "candidate_optimizer_updates": 0,
+    "independently_recounted": false,
+    "inference_source_forwards": 704,
+    "reference_scoring": false
+  },
+  "root_reported_resource_status": "Owned failed claim retained200M; explicit reconciliation pending. No foreign claim mutation authorized.",
+  "schema": "temporal-attention-source-review-correction/v1",
+  "source_pins": [
+    {
+      "bytes": 26498,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_temporal_attention.py",
+      "sha256": "310888bb04803d4114900d4ab6c41309cad18029f8e230245494d71d52bcccaa"
+    },
+    {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    }
+  ],
+  "status": "v01_runner_API_qualification_corrected"
+}

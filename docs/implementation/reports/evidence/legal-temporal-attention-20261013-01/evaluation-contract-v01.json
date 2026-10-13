@@ -1,0 +1,75 @@
+{
+  "attention_control": {
+    "ablation": "uniform",
+    "default": "learned",
+    "new_optimizer_updates_for_ablation": 0
+  },
+  "default_promotion": false,
+  "engineering_selection": {
+    "candidate_selection_only_after_freeze_and_scoring": true,
+    "default_promotion": false,
+    "development_gate": "Freshdev temporal correct and joint full-IR correct both no worse than historical control, at least one strictly better.",
+    "legacy_gate": "96/96 exact greedy and joint, all32P remainP with0PtoO/F/abstentions",
+    "technical_gate": "All632 initial full-head and final protected-head vectors binary32-exact; original34 and inactive head rows fixed.",
+    "test_used_for_selection": false,
+    "threshold_or_hyperparameters_fitted": false
+  },
+  "evidence_limits": [
+    "Fresh construction groups are disjoint between development/test, but semantic concepts and some role-order patterns overlap older training.",
+    "Agent-authored/root-reviewed engineering references are not independently reviewed US Code gold.",
+    "The expanded head also changes optimization/capacity; learned-query ablation measures dependence without isolating causal training contributions.",
+    "No genuine8D/384D/768D, broad-family or Lake qualification from this training comparison."
+  ],
+  "fresh72_authored_engineering_only": true,
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "law8_unscored": true,
+  "metrics": [
+    "Temporal presence TP/TN/FP/FN, signed binary32 margins and ambiguous/tied outputs.",
+    "Full-rule exact LegalIR, per-role exact spans, greedy/joint abstentions and typed structural validity separately.",
+    "Modality confusion and all32 legacy permission preservation.",
+    "Within-construction modality/time pairs and broad-group results.",
+    "Initial and final168 training temporal/head/full-IR measurements separately from dev/test.",
+    "Learned vs uniform-query inference on legacy96/fresh72 to assess attention dependence, not causal training attribution."
+  ],
+  "old392_previously_exposed": true,
+  "populations": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96
+  },
+  "references_parent_only": true,
+  "schema": "temporal-attention-evaluation-contract/v1",
+  "score_only_after_complete_frozen_bundle": true,
+  "semantic_accuracy": null,
+  "source_only_controls": [
+    "zero placeholders",
+    "alternate placeholders",
+    "latent disabled",
+    "rotated placeholders"
+  ],
+  "training_design": {
+    "bytes": 2512,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/training-design-v01.json",
+    "sha256": "aca45e607883527b8b854aaa9ad1bdd5115ddfb7d4d00f4f7fc8df147023989e"
+  }
+}

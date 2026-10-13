@@ -1,0 +1,66 @@
+{
+  "candidate": {
+    "active_trainable_scalars": 322,
+    "attention": "Masked softmax(q.dot(token)/sqrt64), no target spans, no ID inputs, learned source-token pooling. First-step query gradient is zero; subsequent steps may learn.",
+    "hidden_dimension": 64,
+    "initialization": "Copied full8 mean block/bias, zero attention block and zero query; full8 separate contiguous8x64 projections; parent outputs must compare binary32 before any update.",
+    "new_optimizer_updates": 32,
+    "objective": "temporal-attention-ce",
+    "original_frozen_tensors": 34,
+    "stored_trainable_scalars": 1096,
+    "trainable_names": [
+      "temporal_attention.query",
+      "temporal_presence.weight",
+      "temporal_presence.bias"
+    ]
+  },
+  "common_parent_checkpoint_sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035",
+  "evaluation": {
+    "final_protected_head_sources": 632,
+    "fresh_authored_sources": 72,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "historical_control_new_source_forwards": 72,
+    "initial_and_final_training_capture_sources": 168,
+    "initial_parent_parity_sources": 632,
+    "old_exposed_sources": 392,
+    "parent_extra_source_forwards": 240,
+    "reference_labels_in_model_child": false,
+    "total_actual_model_forwards": 1792,
+    "total_inference_source_forwards": 1760,
+    "total_source_occurrences": 2144,
+    "training_batch_forwards": 32,
+    "training_source_occurrences": 384,
+    "uniform_query_source_forwards": 168
+  },
+  "historical_control": {
+    "cell": "temporal-ce-control",
+    "comparison": "Fixed immutable historical control, not a new same-run randomized comparison.",
+    "completed_prior_optimizer_updates": 32,
+    "new_optimizer_updates": 0
+  },
+  "schema": "temporal-attention-training-design/v1",
+  "scope": {
+    "Lake_executed": false,
+    "configured_dimension": 384,
+    "default_promotion": false,
+    "equal_FLOPs_claimed": false,
+    "external_encoders": 0,
+    "genuine_latent_semantics": false,
+    "independent_statutory_gold": false,
+    "latent_enabled": false
+  },
+  "training": {
+    "added_training_rows": 0,
+    "batch_order_seed": 1729,
+    "batch_size": 12,
+    "examples": 168,
+    "fresh_Adam": true,
+    "gradient_clip": 5.0,
+    "inherited_moments": false,
+    "learning_rate": 0.001,
+    "objective": "Existing actor-off/presence1/modality2 loss with sole trainable temporal CE contribution; no new margin, threshold fitting or hyperparameter search.",
+    "seed": 1729,
+    "weight_decay": 0.0
+  }
+}

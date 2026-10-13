@@ -1,0 +1,458 @@
+{
+  "absolute_peak_measured": false,
+  "all_previous532_record_bodies_unchanged": true,
+  "all_ten_resource_producer_pins_unchanged": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/audit_adapter_terminal_v03.py": {
+      "bytes": 36615,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/audit_adapter_terminal_v03.py",
+      "sha256": "bf16e4b004ab800154c7536c575c27babea63b40b745590c2f9fcfde41eeadc4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/capture_adapter_endpoints_v03.py": {
+      "bytes": 6315,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/capture_adapter_endpoints_v03.py",
+      "sha256": "781d8bd8408413933ca772eb81ab303e263758afe2bfb2f36718ad6b22b09f06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/final-integration-independent-review-v01.json": {
+      "bytes": 274169,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/final-integration-independent-review-v01.json",
+      "sha256": "5c25eb3eca9a6bf1011e7b8baffa67c0f29c7c453ac0a8bb51259ddefbe1c729"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/resource-baseline-v01.json": {
+      "bytes": 72479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/resource-baseline-v01.json",
+      "sha256": "b21491593178b7f14ad7133db75f2e81a0a4ad694a59687582e4c4d864d6145a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/review_adapter_runtime_v02.py": {
+      "bytes": 13640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/review_adapter_runtime_v02.py",
+      "sha256": "fb034f140b780379f4ea9ecc7511c5457a224168779008d193663acafb641af1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 114840,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/runtime-independent-review-v01.json",
+      "sha256": "c5115eee7e2da9a23eea52a2393d0f30eb4406a3b944169feea590231360ffbf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-anchor-margin-terminal-resource-audit-v02.json": {
+      "bytes": 133019,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-anchor-margin-terminal-resource-audit-v02.json",
+      "sha256": "a3cc79b26bd2a8e23cb83289ce1693c09232e769a496c268a3ff812977141859"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-inputs-v03.json": {
+      "bytes": 6610,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-inputs-v03.json",
+      "sha256": "423560c09eaa5683fe6f88850ca542c5d3e046a19a56f3c781b60781b116af97"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-source-independent-review-v03.json": {
+      "bytes": 4139,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-source-independent-review-v03.json",
+      "sha256": "37eca04c7dda00aedae9708974c2b18f7e1a40947079c4433611cf25d84a93cb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-zero-update-recovery-inputs-v02.json": {
+      "bytes": 11336,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-zero-update-recovery-inputs-v02.json",
+      "sha256": "56dc37ca1769ccc1dbfa80ebf326f701b5c45bbea646e7395660be64eb15e78f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-zero-update-recovery-source-independent-review-v01.json": {
+      "bytes": 9892,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-zero-update-recovery-source-independent-review-v01.json",
+      "sha256": "afc7059d977eadf5f52c8b9fbdfb36d1c3e69f10c4e875b3f4f09b7cccb2a85b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/audit_attention_terminal_resources_v03.py": {
+      "bytes": 37490,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/audit_attention_terminal_resources_v03.py",
+      "sha256": "664e9338a9a82ee297d4031edd551209a282ec2edd0cb1c20fefdd5de32f5dcf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/capture_attention_endpoints_v01.py": {
+      "bytes": 6297,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/capture_attention_endpoints_v01.py",
+      "sha256": "61ffbe684296652e5037de18f90d98f020cc91989999429562b3679f04562c1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/capture_attention_endpoints_v02.py": {
+      "bytes": 6297,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/capture_attention_endpoints_v02.py",
+      "sha256": "e490f5154a4f712069f9fe41c81cee9f1db03898d5d2d6eff86e6c9882822501"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/pre-admission-check-v01.json": {
+      "bytes": 6800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/pre-admission-check-v01.json",
+      "sha256": "cf77a05a53c40318f8ef753efc27aca86a41946105547e70bd7db0fb5a9c2bf3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/pre-admission-check-v03.json": {
+      "bytes": 6800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/pre-admission-check-v03.json",
+      "sha256": "4b19d43a08529c059130963e80828310e277e8db33e57d4e4cafd9fe547c4b39"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/prior-resource-continuation-independent-review-v01.json": {
+      "bytes": 7885,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/prior-resource-continuation-independent-review-v01.json",
+      "sha256": "724d99c687ec8dc9dc813626d8bd999e1a2e205ec620a813537e0f21cd02e29d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-source-independent-review-v02.json": {
+      "bytes": 3273,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-source-independent-review-v02.json",
+      "sha256": "ecec96c3611b0858fa7a4bcbdf4bca8536bf22824d546e8199d4ca5d76c3d148"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v01.json": {
+      "bytes": 74135,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v01.json",
+      "sha256": "138307065ea2b9544b3c518df073341c41b4822a65db695e1371ad169cf9921c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v02.json": {
+      "bytes": 93710,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v02.json",
+      "sha256": "8eb2350116ff1b468d4e9ad03efbbfd959de712150ef8c1461031a65a2ee1491"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_resource_baseline_v02.py": {
+      "bytes": 22060,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_resource_baseline_v02.py",
+      "sha256": "666e5c64ed8ea7b26125e22541a43fda4677bd80ec922e465554744cff2f5d75"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_zero_update_recovery_v01.py": {
+      "bytes": 28994,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_zero_update_recovery_v01.py",
+      "sha256": "6ef5f48971fe5116c98630c2f36fc2f4e98cbce82da913918a883c3a75583764"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_temporal_attention.py": {
+      "bytes": 26498,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_temporal_attention.py",
+      "sha256": "310888bb04803d4114900d4ab6c41309cad18029f8e230245494d71d52bcccaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 11573,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "0497c0a4d6fcc1275ea163cc3183f248ed9c211dec46bf06e553bf7a78b8bad3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/sampler-source-independent-review-v02.json": {
+      "bytes": 2794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/sampler-source-independent-review-v02.json",
+      "sha256": "b61a80d6e3cf03eb999c92e352cde1adfc60312510f27f4bd708e97dd7f09626"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v01.json": {
+      "bytes": 45837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v01.json",
+      "sha256": "4203f43020163e988e8cbae693e0ea02844a1773a421c66a35108be7540a5949"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json": {
+      "bytes": 45849,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json",
+      "sha256": "1dc68107c10019276a12681cf74e6efe3c1d117151a657b0c1fe70af643ae60f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v01.json": {
+      "bytes": 31081,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v01.json",
+      "sha256": "d0928416662d26b7c2201df12bb28cc82c773d3c4cc72eca3bc5ab8712193fab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v02.json": {
+      "bytes": 40306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v02.json",
+      "sha256": "0964bc291e47df7acc8ffb6e82de0bb7d0179527482c1866097e9b8dc436fa4c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/adopt_shared_scheduler.py": {
+      "bytes": 11206,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/adopt_shared_scheduler.py",
+      "sha256": "4956baa1e41abe53fc83a2d4ae7709b3be13ebc1c775b44571a33903b8f70b1f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py",
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/owned_lease_watchdog.py": {
+      "bytes": 20712,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/owned_lease_watchdog.py",
+      "sha256": "f1b9f71e375cf5ed4004e023bbef2d6f7f61e1ecb588078a1094d7b1982609b3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/child-exit.json",
+      "sha256": "02bff447e26a2a91e12cef0134854cdd76b0fcf39a71e7c883c22ecdb13852e4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/child-identity.json",
+      "sha256": "ae964b3e4f17df4b3dca0924d53e6f648123dc80808b3c393750b99472b5ad1e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/command.json": {
+      "bytes": 1093,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/command.json",
+      "sha256": "6a0f9b69c773ad465865479a908804c7a10ce134abe9621301df5b49832449f1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/group-rss-observations.jsonl": {
+      "bytes": 42473,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/group-rss-observations.jsonl",
+      "sha256": "6715ed381e7b433ef993ffbad9dad595118e1666dc0a6f16f30ec1ff472257be"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/group-rss-summary.json": {
+      "bytes": 1754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/group-rss-summary.json",
+      "sha256": "6100a3fb26e42cbd8c4a2ca46c8568a9ce4ee2ff0ad11091660f238360ab8870"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/guardian-exit.json": {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/guardian-exit.json",
+      "sha256": "04df8da0ced036835bc8262b4b740a75d8264425f81c7bc46f6600e4caba9d43"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/lease-binding.json",
+      "sha256": "2c4c3f508b91e6f536489a9efa76bbf8b537d6bf7a83196bd8d4a1baf73c9d77"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/lease-observations.jsonl": {
+      "bytes": 89116,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/lease-observations.jsonl",
+      "sha256": "92d4d9fa4213a3b2148976d8ea66c02c530e92c67b190ecd83614f3c98fa4610"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/owned-group-final.json",
+      "sha256": "e207187d0cb41c985abf16f1979a00d83033e7982528d57fef1d57d7f4b86ee3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/pre-admission.json": {
+      "bytes": 8020,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/pre-admission.json",
+      "sha256": "1baa4c8b669e684a3a9dcc43c941b9450dabb79f7df3eb60dcb049ee3e3a04df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/resource-observations.json": {
+      "bytes": 2626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/resource-observations.json",
+      "sha256": "11f6a0b86950420232856b33ee031077ba2e2200e253aec730c81be617c8a8f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/scheduler-adoption.json",
+      "sha256": "0505503f2706c8a6f5539fe22f86169de645795dd330b9f71f6e088140a8ae31"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "baseline": {
+    "bytes": 93710,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/resource-baseline-v02.json",
+    "sha256": "8eb2350116ff1b468d4e9ad03efbbfd959de712150ef8c1461031a65a2ee1491"
+  },
+  "cell": "temporal-attention-ce",
+  "checkpoint_JSON_parses_by_reviewer": 0,
+  "closing_record_body_hash_map_sha256": "67f785c52f4eadd79f54fa54375aacb482f83e261345725e2cabdef438bef41d",
+  "closing_record_count": 533,
+  "closing_record_status_counts": {
+    "released": 432,
+    "retained": 101
+  },
+  "continuous_coverage_claimed": false,
+  "counted_root_metadata": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 524352,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "findings": [],
+  "full_nonreleased_claim_bytes": 44381777216,
+  "global_cap_bytes": 145000000000,
+  "global_endpoint_body_reads_by_reviewer": 0,
+  "individual_prior_records_published": false,
+  "input_manifest": {
+    "bytes": 6610,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-inputs-v03.json",
+    "sha256": "423560c09eaa5683fe6f88850ca542c5d3e046a19a56f3c781b60781b116af97"
+  },
+  "kernel_hard_memory_cap": false,
+  "metadata_check": {
+    "bytes": 6800,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/pre-admission-check-v03.json",
+    "sha256": "4b19d43a08529c059130963e80828310e277e8db33e57d4e4cafd9fe547c4b39"
+  },
+  "model_or_encoder_calls_by_reviewer": 0,
+  "model_phase_RSS_sample_count": 68,
+  "model_phase_wall_seconds": 69.7748493719846,
+  "observed_at_utc": "2026-10-13T08:33:42.535935+00:00",
+  "observer": {
+    "bytes": 37490,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/audit_attention_terminal_resources_v03.py",
+    "sha256": "664e9338a9a82ee297d4031edd551209a282ec2edd0cb1c20fefdd5de32f5dcf"
+  },
+  "only_new_own_claim": {
+    "attempt_directory": {
+      "device": 66306,
+      "inode": 90067552,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02"
+    },
+    "child": {
+      "birth": "89797605",
+      "pid": 1143979
+    },
+    "final_total_charged_bytes": 71087506,
+    "record_body_sha256": "b3588631ec8a5e6e73cc234340231ad5f2c4bb6ff29b800cbd36ef41ecca4030",
+    "released_at": 1791880001.667862,
+    "reservation_id": "a1459da697794f77b3540ec7f28b65d0",
+    "status": "released",
+    "storage_bytes": 200000000
+  },
+  "opening_record_count": 532,
+  "opening_record_status_counts": {
+    "released": 431,
+    "retained": 101
+  },
+  "own_scheduler_lease_absent": true,
+  "passed": true,
+  "phase": "terminal",
+  "plan": {
+    "bytes": 45849,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json",
+    "sha256": "1dc68107c10019276a12681cf74e6efe3c1d117151a657b0c1fe70af643ae60f"
+  },
+  "preserved_prior_record_count": 532,
+  "prior_observer_source_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/audit_adapter_terminal_v03.py": {
+      "bytes": 36615,
+      "sha256": "bf16e4b004ab800154c7536c575c27babea63b40b745590c2f9fcfde41eeadc4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/review_adapter_runtime_v02.py": {
+      "bytes": 13640,
+      "sha256": "fb034f140b780379f4ea9ecc7511c5457a224168779008d193663acafb641af1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/capture_attention_endpoints_v01.py": {
+      "bytes": 6297,
+      "sha256": "61ffbe684296652e5037de18f90d98f020cc91989999429562b3679f04562c1f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_resource_baseline_v02.py": {
+      "bytes": 22060,
+      "sha256": "666e5c64ed8ea7b26125e22541a43fda4677bd80ec922e465554744cff2f5d75"
+    }
+  },
+  "prior_record_body_hash_map_sha256": "d6399bda619e0f001a4d6b14ad56396b7013c9d703b3af699a72ca9dd432834a",
+  "private_endpoint_pin_descriptors": [
+    {
+      "bytes": 6206245,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/phase-temporal-attention-ce-v02/ledger.json",
+      "sha256": "b61eebc0fc8d1f69bbc14a8898fb6f8a3c717efdeb57fcff40b7ef32af5d1bac"
+    },
+    {
+      "bytes": 1401,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/phase-temporal-attention-ce-v02/scheduler.json",
+      "sha256": "8084a4639f500ec13e52e82dc602b1b28a5d488bf9593b527edf22df94a2989f"
+    },
+    {
+      "bytes": 6208579,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/terminal-temporal-attention-ce-v03/ledger.json",
+      "sha256": "245ebdf6b6daee3678d5d6d76027ca1c016affee4ad48f41a4caaa0e21bdcad7"
+    },
+    {
+      "bytes": 1672,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/terminal-temporal-attention-ce-v03/scheduler.json",
+      "sha256": "cbfbb90cf0e9d41b927f88765e5a5a479a2b14833e9a8da97be071eb8c43f02a"
+    }
+  ],
+  "private_owned_resource_wrapper_pin_descriptors": {
+    "resources-final.json": {
+      "bytes": 6319,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/resources-final.json",
+      "sha256": "15107455031cf97bd12b48af7994d6a929af8f10c52620a3da945dda6a5f6833"
+    },
+    "resources-start.json": {
+      "bytes": 2559,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/resources-start.json",
+      "sha256": "b7d15f55ec70d5506a3cab354a1838855ce2694eda959ef88317c1dc6a8b6502"
+    }
+  },
+  "private_record_bodies_published": false,
+  "private_sample_receipts": {
+    "phase": {
+      "bytes": 1483,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/phase-temporal-attention-ce-v02/snapshot-receipt-v01.json",
+      "sha256": "f28e0c232fa93e9ed41b9b7e228995948278f0db729004d585dce8b4f8efe208"
+    },
+    "terminal": {
+      "bytes": 2050,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/private-runtime-snapshots/terminal-temporal-attention-ce-v03/snapshot-receipt-v01.json",
+      "sha256": "f8c154f31c5392f2500849739cc1bf4648df315dbf9443171cc85915aa3b67b8"
+    }
+  },
+  "reference_packet_reads_by_reviewer": 0,
+  "resource_API_calls_by_reviewer": 0,
+  "reviewer": "/root/attention_terminal_audit_n7",
+  "run_root_identity": {
+    "device": 66306,
+    "inode": 74367713,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01"
+  },
+  "sampled_coverage_only": true,
+  "sampled_model_phase_peak_rss_bytes": 767127552,
+  "saved_lease_observations": 88,
+  "scheduler_config_sha256": "76d10cc42015c9e4cbdad0fabd6a64f706320e14a8fb507f16262d42dd1d5856",
+  "scheduler_lease_count": 0,
+  "scheduler_waiter_count": 0,
+  "schema": "temporal-attention-terminal-resource-audit/v1",
+  "semantic_qualification": false,
+  "shared_state_modified_by_reviewer": false,
+  "shared_tree_censuses_by_reviewer": 0,
+  "source_qualification": {
+    "bytes": 4139,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/attention-terminal-resource-source-independent-review-v03.json",
+    "sha256": "37eca04c7dda00aedae9708974c2b18f7e1a40947079c4433611cf25d84a93cb"
+  },
+  "training_review": {
+    "bytes": 40306,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v02.json",
+    "sha256": "0964bc291e47df7acc8ffb6e82de0bb7d0179527482c1866097e9b8dc436fa4c"
+  }
+}

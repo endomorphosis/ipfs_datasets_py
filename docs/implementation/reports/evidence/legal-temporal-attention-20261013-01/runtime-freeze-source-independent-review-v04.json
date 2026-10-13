@@ -1,0 +1,105 @@
+{
+  "Git_operations": 0,
+  "actual_result_or_runtime_body_reads": 0,
+  "actual_runtime_reviewed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/freeze_temporal_attention_outputs_v03.py": {
+      "bytes": 12081,
+      "sha256": "e2a6f671a14dec1e3e97be35e40bf74704e7437f6de88a5b336ae543ec39bbc1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/freeze_temporal_attention_outputs_v04.py": {
+      "bytes": 12511,
+      "sha256": "180b7dd3e4cd5aa275076590ddb0fea7b16b400cba88bc729bcd0af3001be7ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/review_attention_freezer_owner_controls_v04.py": {
+      "bytes": 5978,
+      "sha256": "e7b1861475807a932d0e16e3538e4170cf095375513c3f79ad44c9ff4590386a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/run_temporal_attention_v02.py": {
+      "bytes": 29626,
+      "sha256": "6db67dac8116e0334be7a1061f554a76f1bb106dcc73a0cb47a4d45adf667435"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 10338,
+      "sha256": "4cc7aed5c61cac295b6ccf1ae1c1ed9a38a0dd3e4e34f923db9960c414a9be10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-freeze-owner-pure-controls-v04.json": {
+      "bytes": 2608,
+      "sha256": "fb32cf82174d56383cb53d02087449b0fb3b399cbc7047f07c533cdc5340409a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-freeze-source-independent-review-v03.json": {
+      "bytes": 6280,
+      "sha256": "24439c68d4f718019ac923fcad1921f9585146217f8c38ef42be7bf4353b46d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-plan-v02.json": {
+      "bytes": 45849,
+      "sha256": "1dc68107c10019276a12681cf74e6efe3c1d117151a657b0c1fe70af643ae60f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-ce-training-review-v02.json": {
+      "bytes": 40306,
+      "sha256": "0964bc291e47df7acc8ffb6e82de0bb7d0179527482c1866097e9b8dc436fa4c"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "checks": {
+    "correction_to_prior_v03_assumption": "The loaded observed map is a subset of the complete admitted source closure, rather than equal to it. Root reports14 loaded out of35 pinned; actual summary not opened by this reviewer.",
+    "exact_v03_copy_except_three_owned_filenames_and_loaded_owner_predicate": true,
+    "freeze": "Unchanged exact flat74-file inventory, checkpoint opaque raw hash, bounded source/summary/report metadata, successful durable released guardian and admission bindings, all consumed public raw identities closed before chmod0444 and two exclusive V04 receipts.",
+    "full_source_closure": "All35 raw package-source pins remain bound through the complete plan.artifacts opening loop and all artifact closing raw fence; no loaded unqualified owner is allowed.",
+    "loaded_owner_predicate": "Opening and closing maps equal; every observed owner exactly equals its closed plan descriptor; all six expected trainer module names must be observed.",
+    "preserved_gate": "No data/model/training change; exact32 already completed updates retained, no retraining; initial/final632 source gates,37/34/3 geometry and1760/32/1792/2144 successful-scope accounting still required.",
+    "retained_owner_origins_source_inspected": "N4 run_split_features.py lines198+: iterates loaded ipfs_datasets_py modules with __file__, rejects any unplanned module or raw pin mismatch, returns the loaded subset; four base trainers mandatory.",
+    "terminal_custody": "Unchanged exact source-qualified terminal V03 observer/input/resource joins;532 prior records preserved,533 closing, owned claim released, zero saved scheduler occupancy; actual body validation remains root execution."
+  },
+  "final_source_rows_required": 632,
+  "findings": [],
+  "freezer_main_executed": false,
+  "initial_source_rows_required": 632,
+  "limitations": [
+    "Source-only qualification; actual successful result/runtime bodies, references and private bodies were not read or executed by this reviewer.",
+    "The prior V03 source assumption equating loaded owners with all declared producer pins was incorrect. V03 and its qualification are preserved; V04 corrects that API interpretation without changing source pin closure or completed candidate weights.",
+    "Root must execute V04 once against the already completed retry02; candidate training must not run again.",
+    "Exact source-bound metadata checks establish no independent kernel trace, continuous resource custody, legal semantics, genuine latent/family qualification or default promotion."
+  ],
+  "model_or_encoder_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-13T08:40:25.515556+00:00",
+  "observer": {
+    "bytes": 12511,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/freeze_temporal_attention_outputs_v04.py",
+    "sha256": "180b7dd3e4cd5aa275076590ddb0fea7b16b400cba88bc729bcd0af3001be7ca"
+  },
+  "outputs_expected": 74,
+  "owner_predicate_controls": {
+    "command": "python -B review_attention_freezer_owner_controls_v04.py",
+    "count": 10,
+    "exit_code": 0,
+    "meaningful_regression": "Old full35 equality refuses valid synthetic14-loaded subset; V04 accepts it. Equal opening/closing maps with unplanned owner or changed pin refuse; missing mandatory trainer, changed closing map and empty map refuse. Actual retained function independently returns14 and refuses unqualified/changed source.",
+    "passed": true,
+    "receipt": {
+      "bytes": 2608,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-freeze-owner-pure-controls-v04.json",
+      "sha256": "fb32cf82174d56383cb53d02087449b0fb3b399cbc7047f07c533cdc5340409a"
+    }
+  },
+  "passed": true,
+  "prior_source_qualification": {
+    "bytes": 6280,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-freeze-source-independent-review-v03.json",
+    "sha256": "24439c68d4f718019ac923fcad1921f9585146217f8c38ef42be7bf4353b46d1"
+  },
+  "private_resource_body_reads": 0,
+  "reference_packet_reads": 0,
+  "reviewer": "/root/temporal_attention_source_review_n7",
+  "runtime_admissions": 0,
+  "schema": "temporal-attention-runtime-freeze-source-independent-review/v1"
+}

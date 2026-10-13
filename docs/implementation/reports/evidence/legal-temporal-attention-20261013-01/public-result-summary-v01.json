@@ -1,0 +1,1121 @@
+{
+  "Lake_executed": false,
+  "all_attempts": {
+    "actual_model_forwards": 2496,
+    "inference_source_forwards": 2464,
+    "optimizer_updates": 32
+  },
+  "analysis": {
+    "bytes": 5065973,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-result-analysis-v01.json",
+    "sha256": "36679c2ebe57e4e44ca39b5883c7d91202576643f4b3b9bf86103f72da8c43a5"
+  },
+  "broader_logic_families_qualified": false,
+  "completed_attempt": {
+    "actual_model_forwards": 1792,
+    "inference_source_forwards": 1760,
+    "new_control_updates": 0,
+    "optimizer_updates": 32,
+    "training_source_occurrences": 384
+  },
+  "default_promotion": false,
+  "engineering_selection": {
+    "at_least_one_development_metric_strictly_better": false,
+    "automatic_default_promotion": false,
+    "both_development_metrics_no_worse": true,
+    "candidate_fresh_dev": {
+      "joint_exact_ir": 0,
+      "temporal_presence_correct": 25
+    },
+    "comparison": "Fixed completed N6 CE historical checkpoint, with zero new control optimizer updates",
+    "default_promotion": false,
+    "eligible": false,
+    "fresh_development_gate_passed": false,
+    "historical_CE_fresh_dev": {
+      "joint_exact_ir": 0,
+      "temporal_presence_correct": 25
+    },
+    "legacy_gate_passed": false,
+    "selected_cell": null,
+    "technical_gate_passed": true,
+    "test_used_for_selection": false,
+    "threshold_or_hyperparameters_fitted": false
+  },
+  "failed_prior_attempt": {
+    "inference_source_forwards": 704,
+    "optimizer_updates": 0,
+    "retained_storage_claim_bytes": 200000000
+  },
+  "freeze": {
+    "bytes": 25674,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-output-freeze-v04.json",
+    "sha256": "6b108995b792e70dc4e9816466cb12c087c582836a21031df9a4319266621e15"
+  },
+  "genuine_latent_semantics_qualified": false,
+  "independent_result_review": {
+    "bytes": 103281,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/result-independent-review-v01.json",
+    "sha256": "db3a8546cb3299ecc9ba043970fe694ad48a4372e4c2ab931b853c167b83c61f"
+  },
+  "independent_statutory_gold": false,
+  "next_gaps": {
+    "bytes": 7346,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/next-experiment-gaps-v01.json",
+    "sha256": "01de766b3b7b0e18ae570fc3be03032956edb43a539e684d29c857de1e5b8a33"
+  },
+  "panels": [
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 94,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "initial",
+      "temporal_presence_correct": 94
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 6,
+      "raw_exact_ir": 48,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial",
+      "temporal_presence_correct": 72
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial",
+      "temporal_presence_correct": 69
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 15,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial",
+      "temporal_presence_correct": 69
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "permission_outcomes": null,
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "initial",
+      "temporal_presence_correct": null
+    },
+    {
+      "joint_abstentions": 2,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 2
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 10
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 9
+        }
+      },
+      "raw_abstentions": 27,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 11,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 1
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 7
+        },
+        "joint": {
+          "P_abstentions": 2,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 5
+        }
+      },
+      "raw_abstentions": 32,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "trained",
+      "temporal_presence_correct": 95
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 49,
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 5,
+      "raw_exact_ir": 47,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained",
+      "temporal_presence_correct": 70
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained",
+      "temporal_presence_correct": 70
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained",
+      "temporal_presence_correct": 68
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "permission_outcomes": null,
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "trained",
+      "temporal_presence_correct": null
+    },
+    {
+      "joint_abstentions": 2,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 2
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 10
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 9
+        }
+      },
+      "raw_abstentions": 27,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 11,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 1
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 7
+        },
+        "joint": {
+          "P_abstentions": 2,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 5
+        }
+      },
+      "raw_abstentions": 32,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 153,
+      "panel": "training168",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 2,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 54
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 56
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 55
+        }
+      },
+      "raw_abstentions": 2,
+      "raw_exact_ir": 153,
+      "reference_scored": true,
+      "row_count": 168,
+      "state": "initial",
+      "temporal_presence_correct": 168
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 153,
+      "panel": "training168",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 2,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 54
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 56
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 55
+        }
+      },
+      "raw_abstentions": 2,
+      "raw_exact_ir": 153,
+      "reference_scored": true,
+      "row_count": 168,
+      "state": "trained",
+      "temporal_presence_correct": 168
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 153,
+      "panel": "training168",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 2,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 54
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 56
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 55
+        }
+      },
+      "raw_abstentions": 2,
+      "raw_exact_ir": 153,
+      "reference_scored": true,
+      "row_count": 168,
+      "state": "parent",
+      "temporal_presence_correct": 168
+    },
+    {
+      "joint_abstentions": 2,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 2
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 10
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 9
+        }
+      },
+      "raw_abstentions": 27,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "parent",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_abstentions": 2,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 2
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 10
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 9
+        }
+      },
+      "raw_abstentions": 27,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "historical_CE",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 11,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 1
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 7
+        },
+        "joint": {
+          "P_abstentions": 2,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 5
+        }
+      },
+      "raw_abstentions": 32,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "parent",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 11,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 1
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 7
+        },
+        "joint": {
+          "P_abstentions": 2,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 5
+        }
+      },
+      "raw_abstentions": 32,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "historical_CE",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "uniform",
+      "temporal_presence_correct": 95
+    },
+    {
+      "joint_abstentions": 2,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 2
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 10
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 2,
+          "P_to_P": 9
+        }
+      },
+      "raw_abstentions": 27,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "uniform",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 11,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 1
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 7
+        },
+        "joint": {
+          "P_abstentions": 2,
+          "P_to_F": 1,
+          "P_to_O": 4,
+          "P_to_P": 5
+        }
+      },
+      "raw_abstentions": 32,
+      "raw_exact_ir": 0,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "uniform",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "historical_CE",
+      "temporal_presence_correct": 95
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "historical_CE",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "historical_CE",
+      "temporal_presence_correct": 33
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 50,
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 5,
+      "raw_exact_ir": 48,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "historical_CE",
+      "temporal_presence_correct": 71
+    },
+    {
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "historical_CE",
+      "temporal_presence_correct": 70
+    },
+    {
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "historical_CE",
+      "temporal_presence_correct": 68
+    },
+    {
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "permission_outcomes": null,
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "historical_CE",
+      "temporal_presence_correct": null
+    }
+  ],
+  "protected_head_rows": {
+    "initial": 632,
+    "trained": 632
+  },
+  "runtime_review": {
+    "bytes": 61121,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-independent-review-v04.json",
+    "sha256": "d26525aeab72ae1ba3ad68a12a3dd1991120ad78659a3e6e44060bf0dad07d18"
+  },
+  "schema": "temporal-attention-public-result-summary/v1",
+  "semantic_accuracy": null,
+  "training": {
+    "remaining_joint_actor_errors": 13,
+    "remaining_joint_errors": 15,
+    "rows": 168,
+    "temporal_after": 168,
+    "temporal_before": 168,
+    "whole_IR_after": 153,
+    "whole_IR_before": 153
+  },
+  "uniform_comparison": {
+    "bytes": 4259,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/uniform-numerical-comparison-v01.json",
+    "sha256": "00ee188d252ce5d8cc89b5af9bdd76ddfbae92b84b1307c9149fdc51053869d9"
+  }
+}
