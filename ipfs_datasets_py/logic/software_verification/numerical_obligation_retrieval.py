@@ -73,7 +73,12 @@ def page_numerical_obligations(*, report, source_text, path, cursor=None,
     if type(source_text) is not str:
         raise NumericalObligationRetrievalError("exact source text required")
     try:
-        native = numerical_logic.validate_numerical_logic_report(report, source_text, path=path)
+        owner = numerical_logic
+        if (type(report) is dict and report.get("profile") == "python-numerical-guarded-structure@2"
+                and report.get("schema") == "numerical-source-logic/v2"):
+            from . import numerical_logic_v2
+            owner = numerical_logic_v2
+        native = owner.validate_numerical_logic_report(report, source_text, path=path)
     except (KeyError, TypeError, ValueError, UnicodeError, RecursionError) as exc:
         raise NumericalObligationRetrievalError("numerical report failed exact source replay") from exc
     binding = dict(path=path, source_sha256=native["source_sha256"],

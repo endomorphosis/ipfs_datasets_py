@@ -1,0 +1,26 @@
+{
+  "exception": "UnboundLocalError",
+  "location": "main:196",
+  "network_requests": 0,
+  "new_model_calls": 0,
+  "publisher": {
+    "bytes": 20033,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/publish_hf_temporal_adapter_release_v01.py",
+    "sha256": "ee78130b4f0cb3337c95eef6f45d02e0cef065b730253e3af00a7354852d85da"
+  },
+  "reason": "The later local identity dictionary owned shadows the source-validation function of the same name.",
+  "receipt": {
+    "bytes": 141308,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-preparation-receipt-v01.json",
+    "sha256": "dd80981b1bccf5dd3684d6b8d8879d3480f0c7569a9377f7181a7917acc2f9b1"
+  },
+  "remote_mutations": 0,
+  "retry_of_unchanged_publisher_performed": false,
+  "review": {
+    "bytes": 142168,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/hf-publication-independent-review-v01.json",
+    "sha256": "c615a3dce68fee510c3144805ff2c23d58855eeb925235ea39c7a6cfffdc8435"
+  },
+  "schema": "temporal-adapter-Hub-publisher-local-refusal/v1",
+  "stopped_before_SDK_import": true
+}

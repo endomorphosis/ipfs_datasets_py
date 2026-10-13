@@ -1,0 +1,551 @@
+{
+  "N4_trained_reference_captures": {
+    "authored_dev": {
+      "joint": {
+        "bytes": 1015303,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-joint.json",
+        "sha256": "ef1bad86305dcba16d811e0c8f41784187f70b9cf4bf6514ad411503dc1c0b57"
+      },
+      "raw": {
+        "bytes": 1429719,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-raw.json",
+        "sha256": "fb77893a0e1dc730d529361d3d35a07af283b7d4cfef2ad8e06e64fb08164257"
+      }
+    },
+    "authored_eval": {
+      "joint": {
+        "bytes": 1023672,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-joint.json",
+        "sha256": "4eb2c5f64ca4ec779620eaccfa65796b3e167592eb9d5597086c10da3a09b223"
+      },
+      "raw": {
+        "bytes": 1428467,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-raw.json",
+        "sha256": "79565ba2c8db6c65d88c798613d804f24986185ab2f1f3ad094cb16f37cc6773"
+      }
+    },
+    "fresh_challenge": {
+      "joint": {
+        "bytes": 526648,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-joint.json",
+        "sha256": "37b7e84482ed582da2eeb56b44356cef368d065f6e5c008996cd1263b317450f"
+      },
+      "raw": {
+        "bytes": 679139,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-raw.json",
+        "sha256": "91f995e5da8826ed968891aaa30bc5b42a469aced1ec14531e9f2a424e7c5e28"
+      }
+    },
+    "fresh_tune": {
+      "joint": {
+        "bytes": 509063,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-joint.json",
+        "sha256": "835e7f57902fcc4a19361e9eb9ad245ce75062a5d27fe4a733eb2c33a8e880b4"
+      },
+      "raw": {
+        "bytes": 626905,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-raw.json",
+        "sha256": "4d4b8f8126830331c2ed73d9b5e37709be13124e4570c19feccebe4912c45c04"
+      }
+    },
+    "law": {
+      "joint": {
+        "bytes": 107526,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-joint.json",
+        "sha256": "3fb0adf6bb1abc32d930b86ee044b93dcb13fcea18432ab43f780ed989b5b856"
+      },
+      "raw": {
+        "bytes": 282369,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-raw.json",
+        "sha256": "63308d7218c72f44fc08bef52fcb4d11ccb2b8146e9ef946cc368d29a987a6eb"
+      }
+    },
+    "old_authored_eval": {
+      "joint": {
+        "bytes": 1043451,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-joint.json",
+        "sha256": "451cb16ec8eb1a5087478de5253e61e38a04d8312e8dc71f4afe5eb622ac5107"
+      },
+      "raw": {
+        "bytes": 1451640,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-raw.json",
+        "sha256": "b357db638f3dab765d19cee0f279c0a10df41039e2a9586de8caed9b6ef03894"
+      }
+    },
+    "old_tune": {
+      "joint": {
+        "bytes": 1456857,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-joint.json",
+        "sha256": "b5099cf640e7e6014f8878ab9a3586a211d39ca27605950420fd47786c54040f"
+      },
+      "raw": {
+        "bytes": 2287349,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-raw.json",
+        "sha256": "b6e45110f179418041223ed02291ea9669ef7d6df2182ec53ce8b64e32af89c4"
+      }
+    }
+  },
+  "architecture": {
+    "active_new_head_rows": [
+      6,
+      7
+    ],
+    "adapter": "Deep copy full existing8-output presence Linear with independent storage and no random reinitialization; use temporal rows6:8 only",
+    "combined_tensor_count": 36,
+    "external_encoder_calls": 0,
+    "feature_source": "Frozen learned span pooled features, not parent/modality pooled features",
+    "frozen_completed_split_tensor_count": 34,
+    "inactive_new_head_rows": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "latent_dimension_configuration": 384,
+    "latent_enabled": false,
+    "new_encoder_paths": 0,
+    "optional_field_order": [
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "output_keys": [
+      "modality",
+      "presence",
+      "start",
+      "end"
+    ],
+    "real_latent_dimension_qualification": false,
+    "trainable_parameter_names": [
+      "temporal_presence.weight",
+      "temporal_presence.bias"
+    ],
+    "unrouted_presence_source": "Original frozen completed split presence head"
+  },
+  "authored_reference_rows_per_cell_per_state": 384,
+  "cells": [
+    {
+      "actor_ranking_enabled": false,
+      "anchor_margin_enabled": false,
+      "id": "temporal-ce-control",
+      "modality_loss_weight": 2,
+      "presence_ce_weight": 1
+    },
+    {
+      "actor_ranking_enabled": false,
+      "anchor_margin_enabled": true,
+      "id": "temporal-anchor-margin",
+      "modality_loss_weight": 2,
+      "presence_ce_weight": 1
+    }
+  ],
+  "child_data_boundary": {
+    "diagnostic_gold_or_metadata_allowed": false,
+    "diagnostic_source_only_fields": [
+      "id",
+      "source_text",
+      "latent"
+    ],
+    "diagnostic_source_only_population_sha256": {
+      "authored_dev": "29fa05bc74927628552b1a35396d96c75f2dbe39f20095ff59338ffcbb316041",
+      "authored_eval": "c86b24da70b65d9cdacee52ee137ab4adf7b817f2b06ca01b9cf0f24d292f9fd",
+      "fresh_challenge": "5c2baca93bc56ac64e5fc96d2e838fc40e78148b42773e361a48d81b45ff38a3",
+      "fresh_tune": "c52d51086e3f6662b65fd056e91be259f7944cb230add0f332e9365df43bb560",
+      "law": "191daa039c1f837253445527e61a8f19e9d0a20fd6236c6857f81bdd38a3159b",
+      "old_authored_eval": "813313af5aa04365162a30ce13c4caaaad4de116343497e00470dbb3cf5d28b4",
+      "old_tune": "b67cb48af5b872c918236a1f9a18ff09cca0554ee55b16adaf83dfc045f7850d"
+    },
+    "diagnostic_source_only_projection_sha256": "224c04c91306dba3d41128fd23f51cfcc8e1b36bfb914e092d2cd3d842fe866e",
+    "forbidden_child_inputs": [
+      "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/training-export-v01.json",
+      "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/authored-reference-packet-v01.json"
+    ],
+    "no_diagnostic_reference_used_for_updates_routing_weighting_or_teacher_gate": true,
+    "reference_scoring_location": "Pure outside-child analysis after both completed bundles are frozen",
+    "training_gold_and_metadata_allowed": true,
+    "tuning_examples_passed_to_trainer": false
+  },
+  "closing_raw_pins_unchanged": true,
+  "created_at_utc": "2026-10-13T04:06:34.959480+00:00",
+  "default_promotion": false,
+  "eligibility": {
+    "all_source_and_invariance_qualifications_required": true,
+    "greedy_exact_IR_required": 96,
+    "joint_exact_IR_required": 96,
+    "legacy_panel": "old_tune",
+    "legacy_permission_rows": 32,
+    "legacy_rows": 96,
+    "passing_meaning": "Engineering eligibility only, not independent legal fidelity or automatic promotion",
+    "permission_requirements_each_of_head_greedy_joint": {
+      "P_abstentions": 0,
+      "P_to_F": 0,
+      "P_to_O": 0,
+      "P_to_P": 32
+    }
+  },
+  "engineering_selection": {
+    "automatic_default_promotion": false,
+    "coefficient_or_checkpoint_search": false,
+    "development_previously_exposed": true,
+    "eligible_cells_only": true,
+    "evaluation_challenge_or_law_used_for_selection": false,
+    "exact_tie_winner": "temporal-ce-control",
+    "first": "Maximize authored_dev joint exact IR among eligible cells",
+    "no_eligible_cells": "Report no eligible candidate",
+    "predeclared": true,
+    "second": "Maximize authored_dev greedy exact IR",
+    "selection_claim": "Retrospective exposed engineering comparison only"
+  },
+  "final_qualification": {
+    "joint_decoded_boundaries_may_change": true,
+    "must_remain_binary32_identical": [
+      "all3 modality logits",
+      "all6 full start arrays",
+      "all6 full end arrays",
+      "object/conditions/exceptions presence vectors"
+    ],
+    "no_checkpoint_JSON_parse_by_external_reviewer": true,
+    "reference_state": "N4 trained split-features and own verified initial capture",
+    "required_for_each_cell": true,
+    "rows": 392,
+    "temporal_presence": "Only temporal presence may change; report all changes, margins and confusions"
+  },
+  "final_training_head_capture": {
+    "actual_additional_model_source_forwards_per_cell": 168,
+    "included_in_392_diagnostic_count": false,
+    "no_external_encoder_calls": true,
+    "output_role": "Separate source-only final-training168 raw capture, no joint search required",
+    "report": [
+      "Temporal presence positive/negative/ambiguous confusion and logits/margins for all four training strata",
+      "Per-class authored negative false positives",
+      "Per-row temporal score change and provenance"
+    ],
+    "required_per_cell": true,
+    "rows": 168,
+    "source_join": "Authenticated original168 training IDs/source hashes/tokens in exact order",
+    "teacher_forcing_or_target_access_during_capture": false
+  },
+  "fixed_training": {
+    "Adam": {
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "foreach": false,
+      "lr": 0.001,
+      "weight_decay": 0
+    },
+    "CE_supervises_all_training_strata": true,
+    "R": "batch_mean[(7/4)*legacy_training_temporal_positive*max(0,1-z)+(7/3)*authored_training_temporal_negative*max(0,1+z)]",
+    "anchor_group_definition": "Membership from authenticated original96 training prefix and training-only temporal gold, never failing IDs or diagnostic labels",
+    "authored_negative_class_counts": {
+      "actor_duration_name": 6,
+      "condition_duration": 6,
+      "condition_exception_duration": 6,
+      "exception_duration": 6,
+      "object_duration_title": 6,
+      "plain_deadline": 6
+    },
+    "auxiliary_L0_normalized_coefficient": 0.0625,
+    "auxiliary_relative_coefficient": 0.5,
+    "batch_order_seed": 1729,
+    "batch_size": 12,
+    "control_objective": "L0=(2*modality+sum(six_legacy_facets))/8 with actor hinge OFF; only temporal CE/8 has a trainable gradient when base34 are frozen",
+    "eligible_count_batch_renormalization": false,
+    "fresh_Adam_parameter_names": [
+      "temporal_presence.weight",
+      "temporal_presence.bias"
+    ],
+    "global_weighted_mass_each_group": 84,
+    "gradient_clip_norm": 5,
+    "hinge_margin": 1,
+    "legacy_prefix_rows": 96,
+    "legacy_prefix_sha256": "4f78bd92f4f5cac93f69eddc1e9d713d08f3eee70372ee7729cccc60792e6995",
+    "margin_objective": "L0+(0.5/8)*R",
+    "missing_anchor_group": "Keep fixed global factors; no eligible groups returns differentiable zero",
+    "negative_anchor_factor": [
+      7,
+      3
+    ],
+    "negative_anchor_global_count": 36,
+    "new_optimizer_updates_per_cell": 32,
+    "no_added_rows": true,
+    "no_oversampling": true,
+    "no_teacher_forward_or_KL": true,
+    "no_threshold_search": true,
+    "positive_anchor_factor": [
+      7,
+      4
+    ],
+    "positive_anchor_global_count": 48,
+    "seed": 1729,
+    "signed_margin": "z=temporal_present_logit-temporal_absent_logit",
+    "training_metadata_sha256": "513767201c72524369cb1b6988efe5092c514835653c0353990e36ca5a919560",
+    "training_population_sha256": "afa0deeebf4052831883c046104a8808342b67a7c8dc2e58de2f9208a9287c34",
+    "training_rows": 168,
+    "training_stratum_counts": {
+      "authored_negative": 36,
+      "authored_positive": 36,
+      "legacy_negative": 48,
+      "legacy_positive": 48
+    }
+  },
+  "initial_qualification": {
+    "combined_model_digest_equals_parent_required": false,
+    "combined_model_digest_note": "36-key model and34-key source differ structurally; normalized frozen-base34 digest must match source_model_state",
+    "comparison": "Exact IEEE754 binary32 payload equality for every head scalar, preserving signed zero; exact canonical JSON for token geometry and joint result",
+    "distinct_storage_and_RNG": "Constructor/restore/capture preserve ambient CPU RNG; all36 parameter storage objects distinct, with the new8-row head equal to old presence at initialization",
+    "match": [
+      "ordered panel IDs",
+      "source text SHA256",
+      "complete token texts and character offsets",
+      "all3 modality logits",
+      "all4 optional presence2-logit arrays",
+      "all6 complete start/end arrays",
+      "greedy status and canonical IR",
+      "complete unchanged joint result at fixed8/50000"
+    ],
+    "reference_state": "N4 trained split-features",
+    "required_for_each_cell": true,
+    "rows": 392
+  },
+  "limitations": [
+    "All384 authored references are already exposed and share templates; no fresh holdout or blinding claim.",
+    "Law8 remain unreviewed and unscored.",
+    "All tensor/storage/gradient/moment numerical facts require truthful checks inside the authorized unchanged guardian; this declaration executes none.",
+    "No independent US Code legal-semantic fidelity, real8D/384D/768D latent semantics, broader logic-family support or lake build legal qualification follows from this comparison.",
+    "No new numerical work, checkpoint parsing, model/compiler/resource/Git/HF mutation was performed to write this evaluation contract."
+  ],
+  "output_custody": {
+    "actual_model_forward_counts_include_training168_capture_and_all_diagnostic_and_parity_controls": true,
+    "closing_raw_pin_replay_required": true,
+    "consumed_bytes_must_match_pins": true,
+    "freeze_both_cell_bundles_before_any_posttraining_reference_scoring": true,
+    "own_source_old_source_and_parent_model_state_digests_distinct": true,
+    "raw_byte_pins_required_before_JSON_parse": true,
+    "source_recipes_and_captures_have_exact_finite_joined_inventories": true,
+    "summary_does_not_substitute_for_saved_head_replay": true
+  },
+  "panels": [
+    {
+      "name": "old_tune",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 96
+    },
+    {
+      "name": "fresh_tune",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 36
+    },
+    {
+      "name": "fresh_challenge",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 36
+    },
+    {
+      "name": "old_authored_eval",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 72
+    },
+    {
+      "name": "authored_dev",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 72
+    },
+    {
+      "name": "authored_eval",
+      "reference_scope": "previously_exposed_authored_shared_template_engineering_target",
+      "reference_scored": true,
+      "rows": 72
+    },
+    {
+      "name": "law",
+      "reference_scope": "unreviewed_law_source_without_targets",
+      "reference_scored": false,
+      "rows": 8
+    }
+  ],
+  "per_update_metadata_qualification": {
+    "do_not_claim_inactive_slices_are_grad_None_frozen_parameters": true,
+    "external_evidence_scope": "Source-reviewed trainer-observed metadata and saved-head byte replay; no independent opaque tensor/moment recount outside guardian",
+    "required": [
+      "Authenticated batch indices/IDs and seed/cursor schedule",
+      "Exact2-parameter Adam membership/order and truthful completed step numbers",
+      "All frozen34 tensors have grad=None and source-normalized digest unchanged before/after every returned step",
+      "New weight/bias tensors genuinely receive finite nonNone gradients through temporal rows",
+      "Inactive new-head rows0:6 retain byte-identical values and exactly zero gradients",
+      "Inactive-row Adam first/second moments remain exactly zero",
+      "Frozen-base/inactive-row digest continuity from initial through final",
+      "Objective trace joins batch membership, all four training strata, CE, positive/negative hinges, weighted auxiliary and total loss"
+    ],
+    "returned_updates_per_cell": 32
+  },
+  "posthoc_metrics": {
+    "law_metrics": "Source/head/readout status changes only; all exactness/semantic-correctness scores remain null and law references are forbidden",
+    "matched_comparisons": [
+      "Each candidate versus N4 trained split",
+      "Each candidate versus its own verified initial state",
+      "Anchor-margin versus CE-control",
+      "Descriptive only versus N5 parent-temporal and parent-all-optional saved-score routes"
+    ],
+    "required_for_each_cell_each_authored_panel": [
+      "Exact full canonical IR for greedy and joint",
+      "Six-role exactness and modality exactness separately",
+      "Greedy/joint abstentions with reason counts",
+      "Temporal head positive/negative/ambiguous confusion and signed margins",
+      "Modality-head O/P/F/ambiguous confusion separately from greedy/joint decoded O/P/F/abstention confusion",
+      "Permission P-to-P/P-to-O/P-to-F/P-abstention counts separately for head,greedy,joint",
+      "Class counts and authored temporal-pair consistency",
+      "Ordered IDs/source hashes of regressions and recoveries"
+    ]
+  },
+  "proposal": {
+    "bytes": 10585,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/temporal-presence-training-proposal-v02.md",
+    "sha256": "138b962c85519be7a9a364a2e2ac3d9ce01d04fdfc571f1b2dc3fa81ca1adce8"
+  },
+  "purpose": "Compare two fixed temporal-only adapters while preserving the completed split model geometry and modality. Training is already user-authorized; this is a technical evaluation contract, not an additional permission flow.",
+  "raw_artifact_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json": {
+      "bytes": 78040,
+      "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/training-export-v01.json": {
+      "bytes": 5052701,
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/code-and-plan-independent-review-v01.json": {
+      "bytes": 18203,
+      "sha256": "cc6c8728020b58d46c07d46e766b2fb951d7a63f5f72838001df6a15f95f10e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/final-integration-independent-review-v01.json": {
+      "bytes": 124591,
+      "sha256": "2f3b4cccef03db9b9b136c57af60b8d9bcbb29fffd8035f490bce02dd3e1be41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/presence-routing-independent-review-v01.json": {
+      "bytes": 102106,
+      "sha256": "6d05160aa9cc3ab19fd49a22ea91fb5f94f89ec6117a3685731ee33bdea4bf66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/temporal-presence-training-proposal-v02.md": {
+      "bytes": 10585,
+      "sha256": "138b962c85519be7a9a364a2e2ac3d9ce01d04fdfc571f1b2dc3fa81ca1adce8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1015303,
+      "sha256": "ef1bad86305dcba16d811e0c8f41784187f70b9cf4bf6514ad411503dc1c0b57"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1429719,
+      "sha256": "fb77893a0e1dc730d529361d3d35a07af283b7d4cfef2ad8e06e64fb08164257"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1023672,
+      "sha256": "4eb2c5f64ca4ec779620eaccfa65796b3e167592eb9d5597086c10da3a09b223"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1428467,
+      "sha256": "79565ba2c8db6c65d88c798613d804f24986185ab2f1f3ad094cb16f37cc6773"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526648,
+      "sha256": "37b7e84482ed582da2eeb56b44356cef368d065f6e5c008996cd1263b317450f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679139,
+      "sha256": "91f995e5da8826ed968891aaa30bc5b42a469aced1ec14531e9f2a424e7c5e28"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509063,
+      "sha256": "835e7f57902fcc4a19361e9eb9ad245ce75062a5d27fe4a733eb2c33a8e880b4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 626905,
+      "sha256": "4d4b8f8126830331c2ed73d9b5e37709be13124e4570c19feccebe4912c45c04"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-joint.json": {
+      "bytes": 107526,
+      "sha256": "3fb0adf6bb1abc32d930b86ee044b93dcb13fcea18432ab43f780ed989b5b856"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-raw.json": {
+      "bytes": 282369,
+      "sha256": "63308d7218c72f44fc08bef52fcb4d11ccb2b8146e9ef946cc368d29a987a6eb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1043451,
+      "sha256": "451cb16ec8eb1a5087478de5253e61e38a04d8312e8dc71f4afe5eb622ac5107"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451640,
+      "sha256": "b357db638f3dab765d19cee0f279c0a10df41039e2a9586de8caed9b6ef03894"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456857,
+      "sha256": "b5099cf640e7e6014f8878ab9a3586a211d39ca27605950420fd47786c54040f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-raw.json": {
+      "bytes": 2287349,
+      "sha256": "b6e45110f179418041223ed02291ea9669ef7d6df2182ec53ce8b64e32af89c4"
+    }
+  },
+  "schema": "temporal-presence-adapter-evaluation-contract/v1",
+  "semantic_accuracy": null,
+  "source_model": {
+    "checkpoint_body_parsed_by_contract": false,
+    "historical_optimizer_moments_resumed": false,
+    "initialization": "Completed N4 split-features model, never the original400-step model",
+    "source_parent_optimizer_steps": 400,
+    "source_split_checkpoint": {
+      "bytes": 3592389,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/cell-checkpoint.json",
+      "sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035"
+    },
+    "source_split_model_state_sha256": "fb63e61c7e2591259d40492b5ac5c020ae77f64c08e409d16b372ff7229b9aa5",
+    "source_split_optimizer_steps": 32
+  },
+  "source_occurrences_per_cell_per_diagnostic_state": 392,
+  "status": "declared_before_new_numerical_execution",
+  "unchanged_readout": {
+    "ambiguity_guard": 1e-07,
+    "greedy": "Retained legacy sequential readout; reconstructed results are labelled separately from actual owner reports",
+    "joint_boundary_coupling": "Changing temporal presence may change selected spans of other roles or cause abstention even when all boundary arrays are byte-identical",
+    "joint_selector": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "max_search_nodes": 50000,
+    "no_threshold_or_selector_change": true,
+    "presence_and_modality_fixed_before_joint_search": true,
+    "top_k": 8
+  },
+  "unreviewed_law_rows_per_cell_per_state": 8
+}

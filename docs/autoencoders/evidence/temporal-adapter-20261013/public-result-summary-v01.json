@@ -1,0 +1,399 @@
+{
+  "actual_updates_per_cell": 32,
+  "actual_updates_total": 64,
+  "analysis": {
+    "bytes": 4092908,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-adapter-result-analysis-v01.json",
+    "sha256": "3ae5a34286687bc35344c1ffaa09aa3b60d108d46604d983282168566f9302db"
+  },
+  "default_promotion": false,
+  "external_encoder_calls": 0,
+  "final_protected_head_retention_rows_per_cell": 392,
+  "frozen_base_tensors": 34,
+  "full_rule_training_accuracy_claimed": false,
+  "independent_result_review": {
+    "bytes": 139520,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/result-independent-review-v01.json",
+    "sha256": "50abcbd7e5dc870cce5cd3a8442808228cef2211e53ded30fffa9a6c39bff7e2"
+  },
+  "initial_parent_parity_rows_per_cell": 392,
+  "initial_training_head_scores_captured": false,
+  "latent_enabled": false,
+  "legacy_gate": {
+    "temporal-anchor-margin": {
+      "eligible": false,
+      "joint_exact_ir": 95,
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_exact_ir": 95
+    },
+    "temporal-ce-control": {
+      "eligible": false,
+      "joint_exact_ir": 95,
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_exact_ir": 95
+    }
+  },
+  "limits": [
+    "All scored diagnostic references were previously exposed and share authored templates; these are engineering diagnostics.",
+    "Eight real-law sources have no reviewed reference labels and remain unscored.",
+    "Final 168/168 measures only temporal-presence training classification, not whole-rule correctness or generalization.",
+    "Whole-rule authored development/evaluation joint correctness remains45/72 and32/72.",
+    "Neither candidate passes96/96 legacy retention; no candidate was selected or promoted.",
+    "No Lake compilation, broader logic-family or genuine8D/384D/768D latent conditioning qualification."
+  ],
+  "model_tensors": 36,
+  "panel_results": [
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact_ir": 94,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_abstentions": 6,
+      "raw_exact_ir": 48,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "raw_abstentions": 15,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 50,
+      "panel": "old_authored_eval",
+      "raw_abstentions": 5,
+      "raw_exact_ir": 48,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact_ir": 94,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_abstentions": 6,
+      "raw_exact_ir": 48,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "raw_abstentions": 15,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "panel": "old_tune",
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "reference_scored": true,
+      "row_count": 96,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "reference_scored": true,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 49,
+      "panel": "old_authored_eval",
+      "raw_abstentions": 5,
+      "raw_exact_ir": 47,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "panel": "authored_eval",
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "reference_scored": true,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_abstentions": 6,
+      "raw_exact_ir": null,
+      "reference_scored": false,
+      "row_count": 8,
+      "state": "trained"
+    }
+  ],
+  "schema": "temporal-adapter-public-result-summary/v1",
+  "selected_cell": null,
+  "trainable_tensors": 2,
+  "training_accuracy_gain_claimed": false,
+  "training_rows_per_cell": 168,
+  "training_temporal_presence_correct_per_cell": 168
+}
