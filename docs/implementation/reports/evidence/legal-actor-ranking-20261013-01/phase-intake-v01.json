@@ -1,0 +1,44 @@
+{
+  "canonical_raw_anchors": [
+    {
+      "raw": {
+        "HEAD": {
+          "bytes": 37,
+          "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+        },
+        "index": {
+          "bytes": 692628,
+          "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+        }
+      },
+      "repository": "/home/barberb/lift_coding"
+    },
+    {
+      "raw": {
+        "HEAD": {
+          "bytes": 21,
+          "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+        },
+        "index": {
+          "bytes": 3799757,
+          "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+        }
+      },
+      "repository": "/home/barberb/lift_coding/external/ipfs_datasets"
+    }
+  ],
+  "default_promotion": false,
+  "existing_actor_hinge_coefficient": 0.25,
+  "existing_actor_hinge_margin": 1,
+  "existing_negative_domain_unchanged": true,
+  "new_control_updates": 0,
+  "planned_new_optimizer_updates": 32,
+  "prior_Hub_revision": "fa37360840c070f9318d6ad2baef87d785eac504",
+  "prior_final_review_sha256": "b478dbc9a2964b88cbaef40d36380fbad4c761ff3828dea44052be6bd5807eec",
+  "prior_root_merge": "4586d7e1068c0f2758a430ebc54461525d5eb11e",
+  "prior_source_merge": "c9d0f016a9fcfa327346e056e38e2ffa3b25ffa0",
+  "root_remote_main": "e18ce337cb622d424395448b4d4fe2c666087eb1",
+  "schema": "actor-ranking-phase-intake/v1",
+  "semantic_accuracy": null,
+  "source_remote_main": "c9d0f016a9fcfa327346e056e38e2ffa3b25ffa0"
+}
