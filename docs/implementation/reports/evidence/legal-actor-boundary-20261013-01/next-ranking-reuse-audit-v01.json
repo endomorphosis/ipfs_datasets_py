@@ -1,0 +1,368 @@
+{
+  "artifacts": {
+    "analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "evaluation_contract": {
+      "bytes": 3863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/evaluation-contract-v02.json",
+      "sha256": "910a2e86e831e0eade8aa1b0ea90e5d42fd6314a005d102537bba627010a0a89"
+    },
+    "independent_result_review": {
+      "bytes": 89023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/result-independent-review-v01.json",
+      "sha256": "872be4d00b59b6b3177dc91f71c30151c11bae545611982edb3e69601ce2178f"
+    },
+    "plan": {
+      "bytes": 44754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+      "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+    },
+    "sealed_gaps": {
+      "bytes": 10697,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/next-experiment-gaps-v01.json",
+      "sha256": "68c7a750df5c3b5cd90a92351bd0a467b10696d4dc8633b11a3ee9db8d178505"
+    }
+  },
+  "completed_N8_CE": {
+    "actor_source": {
+      "bytes": 49894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "closed_outer_policy": "Actor _validate_policy regenerates the single CE policy and rejects changing the nested switch silently.",
+    "completed_analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "completed_design": {
+      "bytes": 5172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/training-design-v02.json",
+      "sha256": "8f42f7cd882060e6a3bc124e865cce222dc5c4f64020ae1105b89d2ac68af280"
+    },
+    "function_locations": [
+      {
+        "AST_sha256": "e343ccceb3a03079e70a02c466fd130b5a9f3df3743b3a80566b8bf788b578ef",
+        "end_line": 84,
+        "line": 76,
+        "name": "_partition"
+      },
+      {
+        "AST_sha256": "60cf694ae33ab56df12b9ddf611dba972503afc25f77690f10eadb511b6ed227",
+        "end_line": 106,
+        "line": 86,
+        "name": "_policy"
+      },
+      {
+        "AST_sha256": "6c0a6842474572981dc2d3c4a779f1119186c732075a7cfd9dee3970c6b69328",
+        "end_line": 112,
+        "line": 108,
+        "name": "_validate_policy"
+      },
+      {
+        "AST_sha256": "c2f97d33b864bc25eed88880173ee84db56ac1e76b7d1d2e055e992c6c90508e",
+        "end_line": 346,
+        "line": 337,
+        "name": "_loss"
+      },
+      {
+        "AST_sha256": "340fd5df0b89c867090b8e88a56b43dab27b8d518534fa14c39fea45bf64e67a",
+        "end_line": 372,
+        "line": 348,
+        "name": "_validate_objective_entry"
+      }
+    ],
+    "mechanism": "Actor _policy supplies targeted._policy(actor_ranking_enabled=False,presence_ce_weight=1). Actor _loss reuses targeted._loss through a lambda returning already computed outputs. The targeted path records the counterfactual hinge diagnostics even when OFF, but _combine_total_loss returns the CE main loss unchanged.",
+    "parameter_scope": "Only actor start/end row0 is active; original 34 and inactive 650 copied actor scalars remain frozen. Calling the broad targeted trainer directly would not establish this actor-only partition.",
+    "ranking_enabled": false,
+    "supported_objectives": [
+      "actor-boundary-ce"
+    ]
+  },
+  "existing_controls_source_review": {
+    "actor_test_locations": [
+      {
+        "AST_sha256": "984ea4a5867906714b1c726571e64a6d67a8c423b3558d137a55ab74f6d22819",
+        "end_line": 261,
+        "line": 240,
+        "name": "test_closed_source_context_authority_training_and_policy"
+      }
+    ],
+    "actor_tests": {
+      "bytes": 20807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_boundary_contracts.py",
+      "sha256": "2a557b3d1630677c57a047576d6c9e010042037bc4f1c722b13ce7fce4c87184"
+    },
+    "coverage_seen_in_source": [
+      "Fixed 0.25/1 policy and policy drift rejection.",
+      "OFF returns exact inherited main loss; weighted ON gradient coefficient 0.25.",
+      "Forward-coordinate, exact-gold/nonactor-overlap/padding exclusion and128-token bound.",
+      "Exact ties and detached vectorized argmax; both selected wrong and gold score gradients.",
+      "Differentiable zero domain and inactive hinge.",
+      "Closed objective diagnostics and source/ID/completed-batch trace joins."
+    ],
+    "no_new_test_pass_claim": true,
+    "test_locations": [
+      {
+        "AST_sha256": "3e43d1c61ba0351ddd66e08c79b54ffb93fb383fee87838c52f895e0b307841e",
+        "end_line": 263,
+        "line": 243,
+        "name": "test_four_closed_policies_and_fixed_recipe"
+      },
+      {
+        "AST_sha256": "272f8e88dcd3b32f6b20c8938553d16c6eb5df96fff1da54fbbbfba0ecf297c1",
+        "end_line": 278,
+        "line": 265,
+        "name": "test_policy_rejects_coercion_and_policy_drift"
+      },
+      {
+        "AST_sha256": "ed7508beae42d022d8b57e1606accb1baf4571249255746f67744657a8e98bc9",
+        "end_line": 291,
+        "line": 280,
+        "name": "test_OFF_presence1_exact_legacy_modality2_expression_and_ast"
+      },
+      {
+        "AST_sha256": "a7833abf9c049713256641bb900f452684786230aa31948067b4bfa680afe58f",
+        "end_line": 307,
+        "line": 293,
+        "name": "test_presence_weight_changes_only_two_presence_means_and_normalization"
+      },
+      {
+        "AST_sha256": "0e5930eb672bf61561f0c42990f5965982a32e4b2ed23c55495e4d6ac4cdfc4a",
+        "end_line": 359,
+        "line": 357,
+        "name": "test_source129_rejected_without_truncation"
+      },
+      {
+        "AST_sha256": "4c70fc8f1c15dd8b16b6a3d35eaf099c0ac451d934867bd47f128d1a1f735a36",
+        "end_line": 370,
+        "line": 361,
+        "name": "test_detached_reference_argmax_ties_and_padding"
+      },
+      {
+        "AST_sha256": "7f7e647991ad71946badf75f8dbfd7cb90737b840c334a945fffe6b05cf86f74",
+        "end_line": 386,
+        "line": 372,
+        "name": "test_actual_aux_vectorized_detached_choice_and_both_score_gradients"
+      },
+      {
+        "AST_sha256": "d25df130fde35513198b6473420d03f357b21370b5897346f8322098fa377d5d",
+        "end_line": 403,
+        "line": 388,
+        "name": "test_actual_aux_tie_order_zero_domain_and_inactive_hinge"
+      },
+      {
+        "AST_sha256": "2aeccaf43d0a52b22a935e17faa8842f9441616b5e10187e4a8c05a3c7d6aedd",
+        "end_line": 411,
+        "line": 405,
+        "name": "test_aux_rejects_score_width_above128_or_non_CPU_float32"
+      },
+      {
+        "AST_sha256": "da475f87733ffc2a584c4fe6bf219044b86a5cfda794b3e2c2f4a922141ba4ae",
+        "end_line": 439,
+        "line": 421,
+        "name": "test_objective_diagnostics_close_domain_scores_and_authority"
+      },
+      {
+        "AST_sha256": "5d908d765a76dce346bd64904bcfe7ae698c6038277d1aa30642c30bcf0edafb",
+        "end_line": 459,
+        "line": 441,
+        "name": "test_objective_trace_after_returned_step_joins_ID_and_source"
+      },
+      {
+        "AST_sha256": "a7b553754a6e5b08722585991e86f30242a86de1002b750aa0074ad953a29257",
+        "end_line": 475,
+        "line": 461,
+        "name": "test_OFF_mean_and_total_associations_and_rounding_bound"
+      },
+      {
+        "AST_sha256": "3f547e40721bdf73a54c83b8d9cd95f1e0272cdac447e3bc89f80b810c7ca35a",
+        "end_line": 497,
+        "line": 477,
+        "name": "test_same168_seed1729_actual32_update_schedule_and_trace"
+      }
+    ],
+    "tests": {
+      "bytes": 32960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py",
+      "sha256": "66ccda4c13ce0e7f4c9e26fe03ad9383bc39d2c724a6c90a5dfda4aa38c103b8"
+    },
+    "tests_executed_by_this_audit": false
+  },
+  "existing_implementation": {
+    "actor_span_score": "CPU float32 start[left]+end[right].",
+    "argmax_and_gradient": "Vectorized gather/sum over the complete compatible wrong domain; detached argmax with exact ties resolved by first row-major coordinates. Recompute the chosen wrong score with its gradient and retain gold score gradient.",
+    "combination": "main + 0.25*mean_actor_hinge when enabled; return main unchanged when disabled.",
+    "diagnostic_custody": "Policy, objective diagnostics and completed-update trace validators bind coefficient 0.25, margin 1, source/IDs, domain hash, detached choice, hinge/total scalar and applied switch. Coefficient is hardcoded in both arithmetic and validators.",
+    "empty_domain": "Differentiable zero on valid actor logits; no max over an empty domain.",
+    "function_locations": [
+      {
+        "AST_sha256": "a14194aa0843a5dc7f70a6b77dd21f568f3111aba419333e4a4bf4996543979e",
+        "end_line": 90,
+        "line": 53,
+        "name": "_policy"
+      },
+      {
+        "AST_sha256": "5e4203fd2306e4dd53eed5eb6186cae7893a65859fecd4d77f1256931098adfe",
+        "end_line": 100,
+        "line": 93,
+        "name": "_validate_policy"
+      },
+      {
+        "AST_sha256": "e5876813e5f3b1dc54de1aae488e475f2e53dc964d1d9d9f3febd1588acc0167",
+        "end_line": 118,
+        "line": 116,
+        "name": "_combine_total_loss"
+      },
+      {
+        "AST_sha256": "e061570e0a5e9babdf0d56473084454b56cd7ff9f0bd314f8afdd0543bd5e35d",
+        "end_line": 254,
+        "line": 241,
+        "name": "_actor_domain"
+      },
+      {
+        "AST_sha256": "e11b8ffc3683f46d89ecdf5c9b3fb5b09017baa046a623c48794649bea727e3d",
+        "end_line": 281,
+        "line": 257,
+        "name": "_actor_record"
+      },
+      {
+        "AST_sha256": "bdb6743a5d908a0c594bacbb92e65e54f100195e61779481819f863a952dd626",
+        "end_line": 318,
+        "line": 296,
+        "name": "_choose_actor_wrong"
+      },
+      {
+        "AST_sha256": "6951707e9d6f430a52f30ed6c64f84fa87c88aa14523e1655777a1844cedecf1",
+        "end_line": 370,
+        "line": 321,
+        "name": "_actor_auxiliary"
+      },
+      {
+        "AST_sha256": "9efcf5ec1d96262059628acfb120a0060e0cb1d22b439aa57362d4f751f046f9",
+        "end_line": 449,
+        "line": 373,
+        "name": "_validate_objective_diagnostics"
+      },
+      {
+        "AST_sha256": "cdc652d29e65ba593fc5ec38d087a0d12558826cfe48a2d56797bbdd214480ac",
+        "end_line": 483,
+        "line": 466,
+        "name": "_objective_trace_summary"
+      },
+      {
+        "AST_sha256": "069fca3b541e86ee4cb37946516c2ad4c63eae3794e00a7cc2019b09c25d2b63",
+        "end_line": 626,
+        "line": 592,
+        "name": "_loss"
+      }
+    ],
+    "hinge": "relu(1 + chosen_wrong_score - gold_score).",
+    "inference_unchanged": "The training filter precedes argmax; inference still retains topK candidates before compatibility. Existing code explicitly does not guarantee inference candidate coverage.",
+    "negative_domain": "Complete row-major valid source-token spans left<=right, excluding exact gold actor AND every span overlapping any present gold nonactor facet.",
+    "policy": {
+      "actor_ranking_enabled": "Explicit boolean switch; existing targeted policy supports both False and True.",
+      "batch_order_seed": 1729,
+      "batch_size": 12,
+      "coefficient": 0.25,
+      "initialization_seed": 1729,
+      "margin": 1.0,
+      "max_source_tokens": 128,
+      "row_mean": "All batch rows including differentiable zero for empty negative domains."
+    },
+    "source": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "training_authority": "Gold nonactor compatibility is teacher-forced training-only, using authenticated training labels. It is not predictive compatibility, held-out gold or legal proof."
+  },
+  "findings": [],
+  "observed_at_utc": "2026-10-13T18:14:10.434075+00:00",
+  "passed": true,
+  "proposal_differences": [
+    {
+      "axis": "Coefficient",
+      "effect": "At the same hinge scalar this is four times the existing auxiliary contribution; it is an intentional objective change, not reuse of the closed existing coefficient.",
+      "existing": 0.25,
+      "required_for_lambda1": "Version and qualify the closed policy, arithmetic, objective diagnostics and traces together; update source controls. Do not change the scalar after validation or label coefficient 1 as 0.25.",
+      "sealed_gaps_proposal": 1.0
+    },
+    {
+      "axis": "Negative domain",
+      "effect": "The proposed wording includes nonactor-overlapping candidates that the existing hinge intentionally removes. This changes the negative-selection objective and cannot be treated as the same method.",
+      "existing": "Exclude spans overlapping present gold nonactor facets.",
+      "required_for_wider_domain": "Explicitly version/predeclare the domain, its source-coordinate authority and hashes, compatibility/filter-order interpretation, deterministic ties and controls.",
+      "sealed_gaps_proposal": "All valid actor spans except exact gold."
+    },
+    {
+      "axis": "Outer actor adapter policy",
+      "effect": "Even reuse 0.25 requires a new qualified outer protocol; silently toggling current checkpoint policy is rejected.",
+      "existing": "N8 actor-boundary-ce only, ranking OFF.",
+      "minimal_reuse_extension": "Add one explicitly named, closed actor ranking objective with ranking ON, retaining targeted coefficient 0.25/margin 1/domain unchanged and actor-only frozen parameter partition."
+    }
+  ],
+  "recommended_next_protocol": {
+    "budget": {
+      "completed_CE_updates": 32,
+      "equal_FLOPs_claimed": false,
+      "proposed_ranking_updates": 32,
+      "result_dependent_sweeps": false,
+      "training_row_occurrences_each": 384
+    },
+    "common_parent_data_recipe": "Same authenticated N4 parent, training168, seed/order1729,batch12,fresh Adam/learning rate0.001/clip5 and active 130 actor scalars.",
+    "lambda1_option": "A later intentionally versioned coefficient 1/domain experiment remains possible after its own preregistered protocol and qualification; no preference or accuracy gain is established by this audit.",
+    "recommendation": "Prefer the already implemented coefficient 0.25/margin 1 compatible-span hinge in one new actor-only closed objective, compared against the completed CE reference. Reuse targeted functions and controls; do not duplicate the domain/argmax/hinge implementation.",
+    "required_controls": [
+      "Inherited targeted policy/domain/tie/gradient/zero-domain/diagnostic controls plus new outer-policy ranking ON/OFF binding.",
+      "Existing actual production-bootstrap smoke and source owner custody.",
+      "Initial complete 632 parity and final protected 632 equality; original 34 and inactive copied rows exact.",
+      "Completed32 trace, actor-only parameter/moment partition and authenticated training-source joins.",
+      "Parent-only fullIR including modality, actor/rank/coverage/abstention, nonactor coupling and blocker overlap after durable output freeze."
+    ],
+    "status": "DESIGN_RECOMMENDATION_ONLY_NOT_RUN",
+    "unchanged_limits": [
+      "Ranking does not train frozen modality/presence/nonactor heads and does not solve their blockers.",
+      "Training gold actor top8 was already 168/168; no new ranking result has run here.",
+      "Current exposed panels do not establish blind generalization or semantic accuracy.",
+      "Default promotion stays false; statutory8 remain unscored, and independent legal gold/family/Lake prerequisites remain separate."
+    ]
+  },
+  "result": "The hard-negative actor hinge already exists in legal_span_targeted_loss.py. Reuse its fixed coefficient 0.25/margin 1 and training-domain implementation before proposing a distinct coefficient 1 or wider-domain objective.",
+  "reviewer": "/root/attention_result_analysis_n7",
+  "schema": "actor-boundary-next-ranking-reuse-source-audit/v1",
+  "scope": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_parses": 0,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "new_output_or_reference_scoring": 0,
+    "numerical_library_imports": 0,
+    "optimizer_updates": 0,
+    "private_body_reads": 0,
+    "production_module_imports": 0,
+    "resource_API_calls": 0,
+    "sealed_release_payload_changes": 0,
+    "source_only": true,
+    "tests_executed": 0
+  },
+  "sealed_release_preservation": {
+    "gaps": {
+      "bytes": 10697,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/next-experiment-gaps-v01.json",
+      "sha256": "68c7a750df5c3b5cd90a92351bd0a467b10696d4dc8633b11a3ee9db8d178505"
+    },
+    "interpretation": "The sealed gaps document is a proposal, not an executed ranking result. Its lambda 1/all-valid-span design differs from the existing fixed hinge; this source audit records that distinction for the next protocol and Git guide.",
+    "no_retroactive_rewrite": true,
+    "public_summary": {
+      "bytes": 21518,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/public-result-summary-v01.json",
+      "sha256": "60aeb010ef6f1c8bf50ee710fcc457fecb3aad318c502b22b949ff8c27d65e4d"
+    },
+    "this_audit_outside_current135_file_HF_release": true,
+    "unchanged": true
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "all_previous533_record_bodies_unchanged": true,
+  "baseline": {
+    "bytes": 79833,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-baseline-v02.json",
+    "sha256": "f8fcc274170d7b46e6c659e465f0eeba059913c42d3135db6712c4dbe4714aa4"
+  },
+  "baseline_record_count": 534,
+  "captured_output_files": 0,
+  "cause": "Unused permission-retention module was required in the loaded subset despite not being imported.",
+  "encoder_forwards": 0,
+  "failed_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01",
+  "failed_public_evidence": {
+    "failed_child_failure": {
+      "bytes": 562,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/results/child-failure.json",
+      "sha256": "de054ea9361822cd31401914ab10f8899c9882ad8939778a146a52915254ddb6"
+    },
+    "failed_child_identity": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/child-identity.json",
+      "sha256": "08b2a698ea2028c19aeb0894baf8ace1a1cdcd4a61ce0d9cefdaf7b11d7cb33b"
+    },
+    "failed_guardian": {
+      "bytes": 4381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/guardian-exit.json",
+      "sha256": "d7ccac6016e098fcba81300092c5b41155d113ff290cb62344d42df48bdd1f6a"
+    },
+    "failed_plan": {
+      "bytes": 43486,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v01.json",
+      "sha256": "5d464ab07fdba897c2b6c679df20e09262a814b74e52cf4aed8f33723223b8b1"
+    },
+    "failed_pre_admission": {
+      "bytes": 7992,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/pre-admission.json",
+      "sha256": "26659317430ad3360012d5dd3f9c8735ed944c5dbefd4ac48d02513a58a06bcf"
+    },
+    "failed_runner": {
+      "bytes": 29604,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v01.py",
+      "sha256": "e767c4f57fa0556b1fe6176ee1657d0d681360ae174ff3ce4301f7222f929232"
+    },
+    "failed_training_review": {
+      "bytes": 27750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-training-review-v01.json",
+      "sha256": "6fa846eecf15daf673f6e5cf1deab84b7524d58d8beec803d5afebbc894d4a25"
+    }
+  },
+  "failed_stage": "preflight",
+  "findings": [],
+  "in_progress_updates_unknown": false,
+  "inference_source_forwards": 0,
+  "limits": [
+    "Zero work follows the authenticated preflight source position, child state and sole failure output; no checkpoint or numerical output replay.",
+    "Failed own cached claim is matched to the new private ledger snapshot. Private failure resource wrappers are not reopened.",
+    "Failed retained claim is preserved and fully charged. No release, transfer, expiry or global cap increase."
+  ],
+  "model_forwards": 0,
+  "model_or_numeric_replay_executed": false,
+  "optimizer_updates": 0,
+  "passed": true,
+  "previous_record_count": 533,
+  "retained_claim": {
+    "record_body_sha256": "63cbb539d211fa47bf9a19d9b50c45dd4f2f4f8075d3d27b7597466c5174386c",
+    "reservation_id": "893d4ed80ab3497f95b1490080e3caa3",
+    "status": "retained",
+    "storage_bytes": 200000000
+  },
+  "schema": "actor-boundary-zero-update-recovery/v1",
+  "shared_state_modified_by_reviewer": false
+}

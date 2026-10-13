@@ -1,0 +1,134 @@
+{
+  "attempt_name": "actor-boundary-20261013-actor-boundary-ce-02",
+  "candidate": {
+    "active_head_rows": [
+      0
+    ],
+    "active_trainable_scalars": 130,
+    "feature_policy": "Unchanged frozen N4 modality/span feature branches; no new modal/quote features in this head-only pilot.",
+    "hidden_dimension": 64,
+    "inactive_head_rows": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "inactive_stored_scalars": 650,
+    "initialization": "Copy full6x64 start/end matrices and six biases from completed N4 split34; four fresh Adam tensor states. Only actor row0 enters returned actor scores; full6 projection preserves parent arithmetic geometry. Require632-source binary32 parity before any update.",
+    "model_tensor_count": 38,
+    "new_optimizer_updates": 32,
+    "objective": "actor-boundary-ce",
+    "original_frozen_tensors": 34,
+    "stored_trainable_scalars": 780,
+    "trainable_names": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias"
+    ],
+    "trainable_tensor_count": 4
+  },
+  "cell": "actor-boundary-ce",
+  "common_parent_checkpoint_sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035",
+  "common_parent_model_state_sha256": "fb63e61c7e2591259d40492b5ac5c020ae77f64c08e409d16b372ff7229b9aa5",
+  "evaluation": {
+    "all_diagnostics_previously_exposed": true,
+    "candidate_diagnostic_source_forwards": 928,
+    "candidate_training_capture_call_sizes": [
+      128,
+      40
+    ],
+    "candidate_training_capture_source_forwards": 336,
+    "diagnostic_populations": {
+      "authored_dev": 72,
+      "authored_eval": 72,
+      "fresh_challenge": 36,
+      "fresh_dev": 36,
+      "fresh_test": 36,
+      "fresh_tune": 36,
+      "law": 8,
+      "old_authored_eval": 72,
+      "old_tune": 96
+    },
+    "dormant_control_source_forwards": 16,
+    "final_protected_head_sources": 632,
+    "initial_and_final_training_capture_sources": 168,
+    "initial_parent_parity_sources": 632,
+    "parent_extra_source_forwards": 240,
+    "parent_training_capture_call_sizes": [
+      128,
+      40
+    ],
+    "reference_labels_in_model_child": false,
+    "successful_output_files": 62,
+    "total_actual_model_forwards": 1552,
+    "total_inference_source_forwards": 1520,
+    "total_source_occurrences": 1904,
+    "training_batch_forwards": 32,
+    "training_labels_available_only_for_authenticated_training168": true,
+    "training_source_occurrences": 384
+  },
+  "interpretation_limits": [
+    "Full IR is exact equality of modality plus actor/action/object/conditions/exceptions/temporal; actor-role improvement alone is not complete-IR improvement.",
+    "Frozen modality decisions cannot repair selected wrong-modality outputs through actor logits alone.",
+    "Actor logits can alter joint overlap resolution and abstention, including selected nonactor spans despite bit-exact nonactor logits.",
+    "All464 diagnostics, including N7 fresh72, are exposed engineering diagnostics and support no new blind generalization claim.",
+    "This design records a bounded pilot; technical source/resource gates do not create a new user permission requirement."
+  ],
+  "resource_contract": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "deadline_seconds": 300,
+    "failed_N7_retained_claim_preserved": true,
+    "foreign_claims_preserved": true,
+    "global_storage_cap_bytes": 145000000000,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000
+  },
+  "schema": "actor-boundary-training-design/v1",
+  "scope": {
+    "Lake_executed": false,
+    "checkpoint_selection_executed": false,
+    "configured_dimension": 384,
+    "default_promotion": false,
+    "equal_FLOPs_claimed": false,
+    "external_encoders": 0,
+    "genuine_latent_semantics": false,
+    "independent_statutory_gold": false,
+    "latent_enabled": false,
+    "semantic_accuracy": null
+  },
+  "technical_retry": {
+    "failed_claim_preserved": true,
+    "prior_failed_attempt_inference_source_forwards": 0,
+    "prior_failed_attempt_model_forwards": 0,
+    "prior_failed_attempt_new_optimizer_updates": 0,
+    "source_correction": {
+      "bytes": 3952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runner-preparer-source-correction-v01.json",
+      "sha256": "a7ef1c2f55b955860e9ce26bdc5e343bed681deae10924a43a68e10d9422b1ae"
+    },
+    "successful_outputs_unchanged": 62
+  },
+  "training": {
+    "added_training_rows": 0,
+    "batch_order_seed": 1729,
+    "batch_size": 12,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "examples": 168,
+    "foreach": false,
+    "fresh_Adam": true,
+    "gradient_clip": 5.0,
+    "inactive_gradients_and_moments": "Exact zero rows1 through5 before and after every completed update; original34 gradients None and values unchanged.",
+    "inherited_moments": false,
+    "learning_rate": 0.001,
+    "objective": "Inherited actor-ranking-off/presence1/modality2 CE scalar; only actor start/end row0 contributions have trainable gradients. Frozen-role, presence and modality terms remain in the reported scalar. No new hinge, threshold fitting or hyperparameter search.",
+    "seed": 1729,
+    "weight_decay": 0.0
+  }
+}

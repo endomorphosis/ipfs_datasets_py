@@ -1,0 +1,34 @@
+{
+  "actual_resource_producer_count": 10,
+  "additional_failed_attempt_public_metadata_count": 4,
+  "additional_failed_attempt_public_metadata_paths": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/pre-admission.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/results/child-failure.json"
+  ],
+  "corrected_prefix_match_count": 14,
+  "correction": "Earlier11/one-extra summary was incomplete. The prefix matched ten resource producer .py files plus four failed-attempt public metadata files. V04 uses a closed exactten path/byte/SHA map and excludes all four metadata files.",
+  "model_or_encoder_calls": 0,
+  "new_optimizer_updates": 0,
+  "observed_at_utc": "2026-10-13T17:50:18.095893+00:00",
+  "old_evidence_modified": false,
+  "prior_refusal": {
+    "bytes": 1698,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/postrun-terminal-refusal-v01.json",
+    "sha256": "7242c405f207339188672e55c02648cbbe4bcc75affb895522ce301190348d06"
+  },
+  "private_endpoint_body_reads_for_this_correction": 0,
+  "resource_API_calls": 0,
+  "root_public_extraction_review": {
+    "bytes": 1600,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-producer-extraction-root-review-v01.json",
+    "sha256": "fd545966cb77da91ea65e7f2ad705501a4bb5e425147a031dae84e5d60fe109b"
+  },
+  "schema": "actor-boundary-postrun-terminal-refusal-correction/v1",
+  "source_observer": {
+    "bytes": 45324,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v04.py",
+    "sha256": "b694cef6b82f250d7280e9cb9b3c03656a3eaf06bd19a30a7ee623b6921caa0c"
+  }
+}

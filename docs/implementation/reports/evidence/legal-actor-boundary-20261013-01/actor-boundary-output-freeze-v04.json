@@ -1,0 +1,286 @@
+{
+  "actual_returned_optimizer_updates": 32,
+  "all_outputs_frozen": true,
+  "authorizes_authored_eval_scoring": true,
+  "checkpoint_JSON_parses": 0,
+  "default_promotion": false,
+  "evaluation_contract": {
+    "bytes": 3863,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/evaluation-contract-v02.json",
+    "sha256": "910a2e86e831e0eade8aa1b0ea90e5d42fd6314a005d102537bba627010a0a89"
+  },
+  "guardian_terminal": {
+    "bytes": 521,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/guardian-exit.json",
+    "sha256": "7114a2c482be3382309864d8ffe8696dfe39566036f877d53b9f8830dc509ac4"
+  },
+  "model_or_encoder_calls": 0,
+  "plan": {
+    "bytes": 44754,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+    "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+  },
+  "results": {
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015297,
+      "sha256": "1c8e8e87ee7700ecea0028afab68c45e37465b6d737283f4daeda967cc19712a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-authored_dev-raw.json": {
+      "bytes": 1430972,
+      "sha256": "d66fe4225ba1058b3054b81c2e245e1005fab5abb2374c6f62399a5d07d4f46c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023666,
+      "sha256": "0b1162e2db17846836e51c2c61a19e692d47443d82ff340d52327a154efa97aa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-authored_eval-raw.json": {
+      "bytes": 1429720,
+      "sha256": "81b8ab8494486015ab221b53301bd818618ccc83614611d1fbaf51c493eac05c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526642,
+      "sha256": "facfd531e95e80883234440f7fc6c3883427b0aa089fe0c9184cf8cc883292f8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 680392,
+      "sha256": "9b5b033910189e2e29e70b6a42b90601b99e0174add07b9492fe2c0de7552689"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523008,
+      "sha256": "068153c90e05b10eacb53794ffec3700a6f0341ea0338d432dcab7e67b7303db"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_dev-raw.json": {
+      "bytes": 806637,
+      "sha256": "0ec4f74a18258c0529cb963b41287fbe65a05796270d8cfdea4a8742e3841f4d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_test-joint.json": {
+      "bytes": 459659,
+      "sha256": "1bb2a8ea25bfebe4722d2633de853cbc3461139f97a3a59b46bc65de6dcdf1da"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_test-raw.json": {
+      "bytes": 802292,
+      "sha256": "23126a49fe6c21ed94189f42171f3f86f4ff9c48292b6c82915a28b25ff4f2c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509057,
+      "sha256": "a042d59539e378a4329e3ad8365ddee6eb86cfc64b1152ddd8a7bae2aacec38b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-fresh_tune-raw.json": {
+      "bytes": 628158,
+      "sha256": "86da64a283b11e3bccc88cd04277030e4ed1617d2a8e19ab8afc3f62afd0e785"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-law-joint.json": {
+      "bytes": 107520,
+      "sha256": "3764551df12ff0eba8d9631f70d95ad74afd5f0c5cd2de0ab45dbf6bbe9b7264"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-law-raw.json": {
+      "bytes": 283612,
+      "sha256": "97a347317a067c2b3bf0864f6f66881458fa67d2fe3e33d7c010fc06381edcb0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043445,
+      "sha256": "4765a4d3698051fb1f8235f88a7d5a87b0dc3dc01b16a75af447c459ed83f2b4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452893,
+      "sha256": "d96ce16136d9523bf488fc835c2caef0e4dfbbd67bafb15c0b78f4292d7c8768"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-old_tune-joint.json": {
+      "bytes": 1456851,
+      "sha256": "03d0ff96c88c68fea6668aadb990cfc406f536079af569288ba0cd72f49d75c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/baseline-old_tune-raw.json": {
+      "bytes": 2288602,
+      "sha256": "1162d4ea6037f2dcecad22dc50b0ec1555939a903e1302a8e6e462961137ef36"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/cell-checkpoint.json": {
+      "bytes": 6450800,
+      "sha256": "14aad029259bb52d58ea56e320306590546c58c3e4e4a8b568f8982e2a9252d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/cell-training.json": {
+      "bytes": 1078883,
+      "sha256": "f80e0669a1edf59919c65b458cd3079640297ba5029a9a6f5f9793e48d632ffb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parent-head-parity.json": {
+      "bytes": 190070,
+      "sha256": "33278d5be5eda47745615047545eb8c37a9516359d81a2ac1cc41a203d0f0e72"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 21582,
+      "sha256": "945ad34b75b5df860bae29fdcb2ee6d28637194f993b1bc6f4ad9ea28a05ce08"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parity-disabled.json": {
+      "bytes": 21586,
+      "sha256": "108f30a079f8d43d86ad03e67d12e806b656b50f63d75b0f7e1ae79fe4fb8b06"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 21584,
+      "sha256": "4991c3f776c1342a7bbd99671188e0b44b057401d31a0f2a8b6c3e01697e89d7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parity-zeros.json": {
+      "bytes": 21582,
+      "sha256": "6e10735de12e13df2a0f34c1894429411d80edee6aa8075fadf54f6cf4165b16"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-parity.json": {
+      "bytes": 1932,
+      "sha256": "ed752341ab93ce81d84dc72e186090270065d32c974d45d42ef830515fd40bdd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-training168-joint.json": {
+      "bytes": 2485985,
+      "sha256": "fe251c78555c746fb8e012b318cbe6d6a6d9a8dfb2a36a2298f86c9b5a8659a5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/initial-training168-raw.json": {
+      "bytes": 3589849,
+      "sha256": "d74a67d0352274b277981425751404b183fad30f505c609a3ffdc87d3dde8d81"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-fresh_dev-joint.json": {
+      "bytes": 523008,
+      "sha256": "068153c90e05b10eacb53794ffec3700a6f0341ea0338d432dcab7e67b7303db"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-fresh_dev-raw.json": {
+      "bytes": 805384,
+      "sha256": "545ceae2e41d1554eb8bcd1bea7ec3b6f5729876bde3f726b05082bfe0f049d1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-fresh_test-joint.json": {
+      "bytes": 459659,
+      "sha256": "1bb2a8ea25bfebe4722d2633de853cbc3461139f97a3a59b46bc65de6dcdf1da"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-fresh_test-raw.json": {
+      "bytes": 801039,
+      "sha256": "bfd55668a56e7a7cca06f66bcac609144edbb0f9a4cbf063e96f17d16ead4e95"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-training168-joint.json": {
+      "bytes": 2485985,
+      "sha256": "fe251c78555c746fb8e012b318cbe6d6a6d9a8dfb2a36a2298f86c9b5a8659a5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/parent-training168-raw.json": {
+      "bytes": 3588586,
+      "sha256": "96f58e4339ed84cc7df9c3584ec2e9649fef60a3d29b3d92fb816df78b81d967"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/summary.json": {
+      "bytes": 58202,
+      "sha256": "cbc7732943fd8db38dbf98695bdeaf076c9601f3b144c34cf96b3e288c3b4f43"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-authored_dev-joint.json": {
+      "bytes": 1015267,
+      "sha256": "94951092a131546f3b1c4993eb0772f984334eb914a8d0fca88bd1981ebdcf16"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-authored_dev-raw.json": {
+      "bytes": 1430996,
+      "sha256": "76557acc6ee309a62c09c236c21d9dc672a91a3d6924ce12fa054ddfa713ce74"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-authored_eval-joint.json": {
+      "bytes": 1025629,
+      "sha256": "b9d416dddeaa50827117bd61ab6aaa163500d11815b4cb4837222fc51ccfe1e6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-authored_eval-raw.json": {
+      "bytes": 1433033,
+      "sha256": "d45b8af38c305f5308a8500a20ffa3276ee5dd2ffac061f31b5324a459e2e324"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526648,
+      "sha256": "d0a425784d8f72c73ef53f84e0b1e5aa716bdadabf3a61bfee71ea1b74ec07ae"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_challenge-raw.json": {
+      "bytes": 680393,
+      "sha256": "89c20c18c79c1ce065d503cc84ad4857873dc87620627c2a9b87218868e2f6ee"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_dev-joint.json": {
+      "bytes": 523005,
+      "sha256": "b01565674a0b507a2c6529f683a30175f7b1b423f539cf3350d731f6db4550b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_dev-raw.json": {
+      "bytes": 806587,
+      "sha256": "47af9793d1f20100756024563e0cd1176c58516e93a5f13a6b370119a0047838"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_test-joint.json": {
+      "bytes": 464033,
+      "sha256": "6f6e83202bf00efbf86adc677af251b1fcda7f6510dae274b1495f214b18d852"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_test-raw.json": {
+      "bytes": 807263,
+      "sha256": "b7042ac389e2d0ca82d44ba29f1d473b8e387876a78541f3668dbcdbf2ac37a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_tune-joint.json": {
+      "bytes": 509104,
+      "sha256": "d5cf3a2a18b84f985974cdbdaa6f13d44422ecce793a8fcf834b7d7aa2043d19"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-fresh_tune-raw.json": {
+      "bytes": 628204,
+      "sha256": "564bca4db299f4ed65a9365d1776c76018a1a998f48a51dcdd6664033fa713b9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-frozen-head-retention.json": {
+      "bytes": 170395,
+      "sha256": "e45ad70209eda4b052b3e8ab41a55b68d7c19a94810cc945e6fae0d0e35d3977"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-law-joint.json": {
+      "bytes": 107524,
+      "sha256": "26badc955642af5c164af19b5108d058f208b56119690468bd8b871f47cb780a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-law-raw.json": {
+      "bytes": 283665,
+      "sha256": "d26a90e757c0c198a6bdc50ead77359e8e02adea4421f3d78f4980a75a93d6e8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044639,
+      "sha256": "e520df338d63315012d71c924f07d016fdf53f9bfd47637b0a3cfc217bb3aef8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1453672,
+      "sha256": "fa33fea59d2ca53163bc3b7bcd614c186ff6a6db3708656a3bc57c1f2eaeefd6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-old_tune-joint.json": {
+      "bytes": 1456913,
+      "sha256": "1d95d9b86315d5b543c41305526cf1da0e86d605849bc47bea712daa10777e61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-old_tune-raw.json": {
+      "bytes": 2288617,
+      "sha256": "377aded527bb824ed54a502081d2181133cc570a6bc6c891e18a476e7b79e910"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 21591,
+      "sha256": "0f53814ff2b2e37195e8870e65e00af058538fd1c3a5498c6b2c950313cdd0b7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-parity-disabled.json": {
+      "bytes": 21595,
+      "sha256": "b426f0d7937c3d67f0e1623d3f73bd5fc25b7eaf2591731173f558d347fb46b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 21593,
+      "sha256": "6e79874a2c4c2ff6dd873fce4ca4db0e413aa03c0c7d501e74dc19b64416a240"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-parity-zeros.json": {
+      "bytes": 21591,
+      "sha256": "0567f388d8d555cf1449a1145382756f73c396d5cfce1bfd1578f824435193ff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-parity.json": {
+      "bytes": 1932,
+      "sha256": "bd31a1f35129f6b01e752dbf9084ed3e77002000ce0f6ec87a4a762daee93623"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-training168-joint.json": {
+      "bytes": 2485878,
+      "sha256": "481121c45bf585e55e086b6f8d305c948508610b268e1126a648ad7563d07243"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/trained-training168-raw.json": {
+      "bytes": 3589679,
+      "sha256": "a5ea04b050a1de8cf5b8af39eeda8a1070e8f2c3bc1a43875f8919749351d6b6"
+    }
+  },
+  "runtime_review": {
+    "bytes": 75763,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runtime-independent-review-v04.json",
+    "sha256": "504d0bd5a8757b7a1050b56cc568d49993986cdd7a6275dd3fe361f84e2a45b5"
+  },
+  "schema": "actor-boundary-output-freeze/v1",
+  "semantic_accuracy": null,
+  "statutory_reference_scoring_authorized": false,
+  "summary": {
+    "bytes": 58202,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/summary.json",
+    "sha256": "cbc7732943fd8db38dbf98695bdeaf076c9601f3b144c34cf96b3e288c3b4f43"
+  }
+}

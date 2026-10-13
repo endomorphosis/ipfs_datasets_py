@@ -1,0 +1,257 @@
+{
+  "base_commit": "7e60814a93fb81604092a0e0627fbc1996e644b7",
+  "canonical_git_calls": 0,
+  "findings": [],
+  "model_calls": 0,
+  "new_actor_source_exact": 1,
+  "passed": true,
+  "retained_source_blobs_exact": 34,
+  "schema": "actor-boundary-source-owner-preintegration-preservation/v1",
+  "source_owners": [
+    {
+      "bytes": 29148,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_source_cache",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    {
+      "bytes": 28040,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.arbitrary_native_span_runtime",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    {
+      "bytes": 37249,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.contextual_legal_ir_runtime",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    {
+      "bytes": 28444,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.dimension_source_inputs",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    {
+      "bytes": 15959,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.gte_multilingual_profile",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    {
+      "bytes": 24439,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.legal_native_conditioning",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    {
+      "bytes": 17966,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    {
+      "bytes": 13375,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    {
+      "bytes": 9556,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.formalization.autoencoder.source_embeddings_768_complete",
+      "repository_path": "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    {
+      "bytes": 109257,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_contracts",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    {
+      "bytes": 9794,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_decoder_preflight",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    {
+      "bytes": 6017,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_source_guards",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    {
+      "bytes": 21764,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.canonical_span_decoder",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    {
+      "bytes": 16730,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.joint_span_selection",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    {
+      "bytes": 39619,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.matched_temporal_curriculum",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py",
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    {
+      "bytes": 43299,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.targeted_loss_curriculum",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py",
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    {
+      "bytes": 15813,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.logic.legal_ir.temporal_role_contrast_corpus",
+      "repository_path": "ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py",
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    {
+      "bytes": 27947,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_corpus_manifest",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    {
+      "bytes": 26219,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_production",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    {
+      "bytes": 19364,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_embedding_runtime",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    {
+      "bytes": 7896,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_native_pool",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    {
+      "bytes": 100140,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.autoencoder_training_worker",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    {
+      "bytes": 14622,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    {
+      "bytes": 42137,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    {
+      "bytes": 146870,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    {
+      "bytes": 49894,
+      "kind": "new_actor_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_actor_boundary",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    {
+      "bytes": 14165,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    {
+      "bytes": 35294,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    {
+      "bytes": 40092,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_permission_retention",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py",
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    {
+      "bytes": 52067,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_split_features",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    {
+      "bytes": 49658,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    {
+      "bytes": 48506,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_temporal_adapter",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    {
+      "bytes": 21228,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.modal_autoencoder_adaptive_optimizer",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    {
+      "bytes": 38995,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator",
+      "repository_path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    {
+      "bytes": 4428,
+      "kind": "retained_source",
+      "module": "ipfs_datasets_py.utils.cid_utils",
+      "repository_path": "ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  ]
+}

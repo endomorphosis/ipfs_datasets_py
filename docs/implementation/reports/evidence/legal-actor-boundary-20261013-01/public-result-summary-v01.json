@@ -1,0 +1,701 @@
+{
+  "accounting": {
+    "inference_source_forwards": 1520,
+    "returned_optimizer_updates": 32,
+    "total_model_forwards": 1552,
+    "total_source_occurrences": 1904,
+    "training_batch_forwards": 32,
+    "training_source_occurrences": 384
+  },
+  "actor_gold_coverage": [
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 160,
+        "rank_sum": 215,
+        "top1": 156,
+        "top8": 168
+      },
+      "panel": "training168",
+      "rank_improved": 5,
+      "rank_worsened": 0,
+      "rows": 168,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 160,
+        "rank_sum": 206,
+        "top1": 156,
+        "top8": 168
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 94,
+        "rank_sum": 96,
+        "top1": 96,
+        "top8": 96
+      },
+      "panel": "old_tune",
+      "rank_improved": 0,
+      "rank_worsened": 0,
+      "rows": 96,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 94,
+        "rank_sum": 96,
+        "top1": 96,
+        "top8": 96
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 20,
+        "rank_sum": 320,
+        "top1": 29,
+        "top8": 30
+      },
+      "panel": "fresh_tune",
+      "rank_improved": 7,
+      "rank_worsened": 0,
+      "rows": 36,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 20,
+        "rank_sum": 250,
+        "top1": 30,
+        "top8": 30
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 26,
+        "rank_sum": 192,
+        "top1": 30,
+        "top8": 30
+      },
+      "panel": "fresh_challenge",
+      "rank_improved": 6,
+      "rank_worsened": 0,
+      "rows": 36,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 26,
+        "rank_sum": 158,
+        "top1": 30,
+        "top8": 30
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 54,
+        "rank_sum": 148,
+        "top1": 60,
+        "top8": 67
+      },
+      "panel": "old_authored_eval",
+      "rank_improved": 10,
+      "rank_worsened": 0,
+      "rows": 72,
+      "top8_gained": 2,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 55,
+        "rank_sum": 126,
+        "top1": 62,
+        "top8": 69
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 48,
+        "rank_sum": 136,
+        "top1": 59,
+        "top8": 69
+      },
+      "panel": "authored_dev",
+      "rank_improved": 9,
+      "rank_worsened": 0,
+      "rows": 72,
+      "top8_gained": 3,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 50,
+        "rank_sum": 116,
+        "top1": 59,
+        "top8": 72
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 50,
+        "rank_sum": 105,
+        "top1": 60,
+        "top8": 72
+      },
+      "panel": "authored_eval",
+      "rank_improved": 8,
+      "rank_worsened": 0,
+      "rows": 72,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 50,
+        "rank_sum": 91,
+        "top1": 64,
+        "top8": 72
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 0,
+        "rank_sum": 327,
+        "top1": 28,
+        "top8": 30
+      },
+      "panel": "fresh_dev",
+      "rank_improved": 5,
+      "rank_worsened": 0,
+      "rows": 36,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 0,
+        "rank_sum": 312,
+        "top1": 28,
+        "top8": 30
+      }
+    },
+    {
+      "initial": {
+        "full_gold_assignment_survives_retained_domain": 0,
+        "rank_sum": 1790,
+        "top1": 9,
+        "top8": 13
+      },
+      "panel": "fresh_test",
+      "rank_improved": 6,
+      "rank_worsened": 12,
+      "rows": 36,
+      "top8_gained": 0,
+      "top8_lost": 0,
+      "trained": {
+        "full_gold_assignment_survives_retained_domain": 0,
+        "rank_sum": 1785,
+        "top1": 9,
+        "top8": 13
+      }
+    }
+  ],
+  "artifacts": {
+    "N7_full_IR_modality_audit": {
+      "bytes": 933868,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/n7-training168-full-ir-modality-audit-v01.json",
+      "sha256": "9cff6f563e42537c1a626d50f0ef4ba56f9b423c564ec0b045dbd1df42b0c535"
+    },
+    "analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "analyzer": {
+      "bytes": 63873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/analyze_actor_boundary_v04.py",
+      "sha256": "e02f5e6246f0b22dd97e07ff0549a408352ce8a4b6321b165b45b05090f8e924"
+    },
+    "analyzer_source_review": {
+      "bytes": 53018,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/analyzer-source-independent-review-v04.json",
+      "sha256": "0fe32bbbb19f355bedf232ac8f3ac4b84375436fab3ee80ebb01caf334c6572c"
+    },
+    "evaluation_contract": {
+      "bytes": 3863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/evaluation-contract-v02.json",
+      "sha256": "910a2e86e831e0eade8aa1b0ea90e5d42fd6314a005d102537bba627010a0a89"
+    },
+    "freeze": {
+      "bytes": 21180,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-output-freeze-v04.json",
+      "sha256": "6605e75a3d041d5e3ecdca09c057e1d1939f216641a29715fb8b70c4180eec8d"
+    },
+    "independent_result_review": {
+      "bytes": 89023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/result-independent-review-v01.json",
+      "sha256": "872be4d00b59b6b3177dc91f71c30151c11bae545611982edb3e69601ce2178f"
+    },
+    "plan": {
+      "bytes": 44754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+      "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+    },
+    "runtime_review": {
+      "bytes": 75763,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runtime-independent-review-v04.json",
+      "sha256": "504d0bd5a8757b7a1050b56cc568d49993986cdd7a6275dd3fe361f84e2a45b5"
+    },
+    "training_design": {
+      "bytes": 5172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/training-design-v02.json",
+      "sha256": "8f42f7cd882060e6a3bc124e865cce222dc5c4f64020ae1105b89d2ac68af280"
+    }
+  },
+  "coupling": {
+    "explanation": "Raw nonactor exactness changes on these two rows reflect recovered decoding status; actor logits can affect nonoverlap and abstention despite fixed nonactor scores.",
+    "joint_status_changes": 0,
+    "no_nonactor_value_changes_when_both_initial_and_trained_outputs_selected": true,
+    "nonactor_head_vectors_frozen": true,
+    "raw_abstention_to_decoded_rows": {
+      "authored_eval": 1,
+      "fresh_test": 1
+    }
+  },
+  "evidence_limits": [
+    "All inherited panels and N7 fresh72 are previously exposed authored engineering diagnostics.",
+    "Training actor top8 coverage was already complete; improved rank totals did not produce a training actor or whole-IR gain.",
+    "Actor-only objectives cannot repair frozen wrong modality or presence decisions; complete-IR blockers also include other roles and joint assignment scores.",
+    "Top8 gold coverage and retained-domain feasibility do not guarantee that greedy or joint decoding selects the gold assignment.",
+    "No new semantic accuracy, broad-family, Lake, independent statutory-gold, latent-semantics or promotion claim."
+  ],
+  "exposed_full_IR_gained_unique_ids": [
+    "targeted-loss-authored_eval-actor_duration_name-0-o-absent"
+  ],
+  "exposed_full_IR_gains": [
+    {
+      "gain_ids": [
+        "targeted-loss-authored_eval-actor_duration_name-0-o-absent"
+      ],
+      "gains": 1,
+      "losses": 0,
+      "panel": "authored_eval",
+      "route": "joint"
+    },
+    {
+      "gain_ids": [
+        "targeted-loss-authored_eval-actor_duration_name-0-o-absent"
+      ],
+      "gains": 1,
+      "losses": 0,
+      "panel": "authored_eval",
+      "route": "raw"
+    }
+  ],
+  "fresh72": {
+    "all_listed_values_unchanged_from_initial": true,
+    "dev": {
+      "actor_gold_top8": 30,
+      "full_gold_assignment_survives_retained_domain": 0,
+      "joint_actor_exact": 26,
+      "joint_full_IR": 0,
+      "raw_full_IR": 0,
+      "rows": 36
+    },
+    "test": {
+      "actor_gold_top8": 13,
+      "full_gold_assignment_survives_retained_domain": 0,
+      "joint_actor_exact": 9,
+      "joint_full_IR": 0,
+      "raw_full_IR": 0,
+      "rows": 36
+    },
+    "test_actor_rank_improved": 6,
+    "test_actor_rank_worsened": 12,
+    "test_actor_top8_gains_or_losses": 0
+  },
+  "legacy96": {
+    "all96_full_IR_retention_diagnostic_passed": false,
+    "head_and_both_routes_all32_permission_rows_retained": true,
+    "joint_full_IR": 94,
+    "raw_full_IR": 94,
+    "temporal_mismatches": 2,
+    "used_for_selection": false
+  },
+  "metrics": {
+    "actor": "Exact copied actor span; abstentions count as nonmatches.",
+    "coverage": "Post-freeze reference-dependent diagnostic from saved score arrays; no gold inserted into model or selector.",
+    "full_IR": "Exact equality of the entire canonical rule, including modality and actor/action/object/conditions/exceptions/temporal.",
+    "role_map": "Six-role decomposition; modality is separately reported and is included in full IR.",
+    "temporal_presence": "Retained scorer decision with preregistered 1e-7 ambiguity guard; no threshold fitting."
+  },
+  "paired_metric_losses_across_reported_panels": 0,
+  "panel_counts": {
+    "authored_scored_state_panels": 21,
+    "diagnostic_source_rows": 464,
+    "fresh_parent_state_panels": 2,
+    "frozen_model_output_files": 62,
+    "paired_initial_to_trained_authored_panels": 9,
+    "scored_state_panel_summaries": 23,
+    "training_parent_state_panels": 1,
+    "training_source_rows": 168,
+    "unscored_statutory_state_panels": 2
+  },
+  "panel_metrics": [
+    {
+      "initial": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 96,
+        "joint_exact_ir": 94,
+        "joint_modality_exact": 96,
+        "modality_exact": 96,
+        "raw_abstentions": 0,
+        "raw_actor_exact": 96,
+        "raw_exact_ir": 94,
+        "temporal_presence_correct": 94
+      },
+      "panel": "old_tune",
+      "rows": 96,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 96,
+        "joint_exact_ir": 94,
+        "joint_modality_exact": 96,
+        "modality_exact": 96,
+        "raw_abstentions": 0,
+        "raw_actor_exact": 96,
+        "raw_exact_ir": 94,
+        "temporal_presence_correct": 94
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 26,
+        "joint_exact_ir": 19,
+        "joint_modality_exact": 29,
+        "modality_exact": 10,
+        "raw_abstentions": 24,
+        "raw_actor_exact": 11,
+        "raw_exact_ir": 8,
+        "temporal_presence_correct": 33
+      },
+      "panel": "fresh_tune",
+      "rows": 36,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 27,
+        "joint_exact_ir": 19,
+        "joint_modality_exact": 29,
+        "modality_exact": 10,
+        "raw_abstentions": 24,
+        "raw_actor_exact": 11,
+        "raw_exact_ir": 8,
+        "temporal_presence_correct": 33
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 30,
+        "joint_exact_ir": 25,
+        "joint_modality_exact": 33,
+        "modality_exact": 31,
+        "raw_abstentions": 3,
+        "raw_actor_exact": 28,
+        "raw_exact_ir": 25,
+        "temporal_presence_correct": 33
+      },
+      "panel": "fresh_challenge",
+      "rows": 36,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 0,
+        "joint_actor_exact": 30,
+        "joint_exact_ir": 25,
+        "joint_modality_exact": 33,
+        "modality_exact": 31,
+        "raw_abstentions": 3,
+        "raw_actor_exact": 28,
+        "raw_exact_ir": 25,
+        "temporal_presence_correct": 33
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 59,
+        "joint_exact_ir": 51,
+        "joint_modality_exact": 59,
+        "modality_exact": 56,
+        "raw_abstentions": 6,
+        "raw_actor_exact": 54,
+        "raw_exact_ir": 48,
+        "temporal_presence_correct": 72
+      },
+      "panel": "old_authored_eval",
+      "rows": 72,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 61,
+        "joint_exact_ir": 51,
+        "joint_modality_exact": 59,
+        "modality_exact": 56,
+        "raw_abstentions": 6,
+        "raw_actor_exact": 56,
+        "raw_exact_ir": 48,
+        "temporal_presence_correct": 72
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 8,
+        "joint_actor_exact": 55,
+        "joint_exact_ir": 45,
+        "joint_modality_exact": 55,
+        "modality_exact": 51,
+        "raw_abstentions": 14,
+        "raw_actor_exact": 50,
+        "raw_exact_ir": 44,
+        "temporal_presence_correct": 69
+      },
+      "panel": "authored_dev",
+      "rows": 72,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 8,
+        "joint_actor_exact": 55,
+        "joint_exact_ir": 45,
+        "joint_modality_exact": 55,
+        "modality_exact": 51,
+        "raw_abstentions": 14,
+        "raw_actor_exact": 50,
+        "raw_exact_ir": 44,
+        "temporal_presence_correct": 69
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 60,
+        "joint_exact_ir": 32,
+        "joint_modality_exact": 55,
+        "modality_exact": 43,
+        "raw_abstentions": 15,
+        "raw_actor_exact": 47,
+        "raw_exact_ir": 26,
+        "temporal_presence_correct": 69
+      },
+      "panel": "authored_eval",
+      "rows": 72,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 63,
+        "joint_exact_ir": 33,
+        "joint_modality_exact": 55,
+        "modality_exact": 44,
+        "raw_abstentions": 14,
+        "raw_actor_exact": 51,
+        "raw_exact_ir": 27,
+        "temporal_presence_correct": 69
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 2,
+        "joint_actor_exact": 26,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 32,
+        "modality_exact": 7,
+        "raw_abstentions": 27,
+        "raw_actor_exact": 6,
+        "raw_exact_ir": 0,
+        "temporal_presence_correct": 25
+      },
+      "panel": "fresh_dev",
+      "rows": 36,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 2,
+        "joint_actor_exact": 26,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 32,
+        "modality_exact": 7,
+        "raw_abstentions": 27,
+        "raw_actor_exact": 6,
+        "raw_exact_ir": 0,
+        "temporal_presence_correct": 25
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 8,
+        "joint_actor_exact": 9,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 18,
+        "modality_exact": 3,
+        "raw_abstentions": 32,
+        "raw_actor_exact": 3,
+        "raw_exact_ir": 0,
+        "temporal_presence_correct": 19
+      },
+      "panel": "fresh_test",
+      "rows": 36,
+      "scope": "PREVIOUSLY_EXPOSED_AUTHORED_ENGINEERING_DIAGNOSTIC_ONLY",
+      "trained": {
+        "joint_abstentions": 8,
+        "joint_actor_exact": 9,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 18,
+        "modality_exact": 3,
+        "raw_abstentions": 31,
+        "raw_actor_exact": 3,
+        "raw_exact_ir": 0,
+        "temporal_presence_correct": 19
+      }
+    },
+    {
+      "initial": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 155,
+        "joint_exact_ir": 153,
+        "joint_modality_exact": 161,
+        "modality_exact": 160,
+        "raw_abstentions": 2,
+        "raw_actor_exact": 155,
+        "raw_exact_ir": 153,
+        "temporal_presence_correct": 168
+      },
+      "panel": "training168",
+      "rows": 168,
+      "scope": "TRAINING_AUTHORED_ENGINEERING_ONLY",
+      "trained": {
+        "joint_abstentions": 1,
+        "joint_actor_exact": 155,
+        "joint_exact_ir": 153,
+        "joint_modality_exact": 161,
+        "modality_exact": 160,
+        "raw_abstentions": 2,
+        "raw_actor_exact": 155,
+        "raw_exact_ir": 153,
+        "temporal_presence_correct": 168
+      }
+    }
+  ],
+  "parity": {
+    "actor_vectors_changed_rows": 632,
+    "dormant_controls_do_not_qualify_genuine_latent_semantics": true,
+    "dormant_controls_invariant": true,
+    "dormant_rows_per_control": 2,
+    "dormant_source_only_controls_per_state": 4,
+    "excluded_final_components_only": [
+      "start_logits.actor",
+      "end_logits.actor"
+    ],
+    "final_protected_components": "Modality, all presence vectors and start/end vectors for the other five roles.",
+    "final_protected_head_binary32_equal_rows": 632,
+    "initial_parent_complete_head_binary32_equal_rows": 632
+  },
+  "prior_failed_preflight": {
+    "inference_source_forwards": 0,
+    "model_forwards": 0,
+    "optimizer_updates": 0,
+    "recovery_receipt": {
+      "bytes": 3807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-zero-update-recovery-v01.json",
+      "sha256": "3ab4fd1ba42eeb8fe86c15d8c460824213a950e4805c897f1778cd3bbfff6916"
+    },
+    "stage": "preflight",
+    "successful_attempt_accounting_kept_separate": true
+  },
+  "result": "No training whole-IR or actor exactness gain after 32 updates; one previously exposed authored-evaluation row gains full IR on both decoding routes.",
+  "schema": "actor-boundary-public-result-summary/v1",
+  "status": {
+    "Lake_executed": false,
+    "N7_fresh72_previously_exposed": true,
+    "all464_diagnostic_sources_previously_exposed": true,
+    "analysis_passed": true,
+    "automatic_selection_or_promotion": false,
+    "broader_logic_families_qualified": false,
+    "default_promotion": false,
+    "genuine_latent_semantics_qualified": false,
+    "independent_result_comparisons": 837,
+    "independent_result_review_passed": true,
+    "independent_statutory_gold": false,
+    "new_blind_generalization_claim": false,
+    "semantic_accuracy": null,
+    "source_and_runtime_qualified": true,
+    "statutory8_unscored": true
+  },
+  "training168": {
+    "actor_gold_rank_sum": {
+      "initial": 215,
+      "trained": 206
+    },
+    "actor_gold_top1": {
+      "initial": 156,
+      "trained": 156
+    },
+    "actor_gold_top8": {
+      "initial": 168,
+      "trained": 168
+    },
+    "actor_rank_improvements": 5,
+    "actor_rank_worsenings": 0,
+    "all15_prior_full_IR_failure_ids_still_fail": true,
+    "full_gold_assignment_survives_retained_domain": {
+      "initial": 160,
+      "trained": 160
+    },
+    "joint_abstention_failures": 1,
+    "joint_abstentions": 1,
+    "joint_actor_exact": {
+      "initial": 155,
+      "trained": 155
+    },
+    "joint_full_IR": {
+      "initial": 153,
+      "trained": 153
+    },
+    "joint_full_IR_failures": 15,
+    "joint_modality_exact": 161,
+    "joint_selected_failure_partition": {
+      "actor_object_and_exceptions": 1,
+      "actor_only": 5,
+      "conditions_only": 2,
+      "modality_and_actor": 6
+    },
+    "modality_and_actor_nonmatches_including_joint_abstention": 7,
+    "one_changed_training_actor_still_wrong": true,
+    "raw_abstentions": 2,
+    "raw_actor_exact": {
+      "initial": 155,
+      "trained": 155
+    },
+    "raw_full_IR": {
+      "initial": 153,
+      "trained": 153
+    },
+    "raw_modality_exact": 160,
+    "rows": 168,
+    "selected_wrong_modality": {
+      "F_to_P": 2,
+      "O_to_P": 4,
+      "all_also_have_wrong_actor": true,
+      "count": 6
+    },
+    "training_nonactor_selected_values_and_statuses_unchanged": true
+  },
+  "training_scope": {
+    "active_trainable_actor_scalars": 130,
+    "batch_size": 12,
+    "completed_updates": 32,
+    "equal_FLOPs_claimed": false,
+    "evaluation_reference_gold_used_in_model_child": false,
+    "inactive650_copied_actor_scalars_frozen": true,
+    "no_threshold_or_hyperparameter_fit": true,
+    "objective": "actor-boundary-ce",
+    "original34_tensors_frozen": true,
+    "trainable_tensor_names": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias"
+    ],
+    "training_row_occurrences": 384,
+    "training_rows": 168
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "actual_public_baseline_count": 10,
+  "excluded_failed_attempt_metadata": [
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/child-identity.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/guardian-exit.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/pre-admission.json",
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-01/results/child-failure.json"
+  ],
+  "findings": [],
+  "four_tamper_controls_refused": [
+    "missing",
+    "sha256",
+    "bytes",
+    "path"
+  ],
+  "legacy_prefix_count": 14,
+  "model_calls": 0,
+  "observer": {
+    "bytes": 45324,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v04.py",
+    "sha256": "b694cef6b82f250d7280e9cb9b3c03656a3eaf06bd19a30a7ee623b6921caa0c"
+  },
+  "observer_main_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "root_probe_correction": "First probe incorrectly asserted legacy prefix count11; actual immutable public baseline contains14 including four failed-attempt metadata paths. Corrected expectation; no main or private reads occurred.",
+  "schema": "actor-boundary-resource-producer-extraction-root-review/v1"
+}
