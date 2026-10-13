@@ -147,8 +147,8 @@ def validate_record(record, *, schema, fields: Sequence[str]):
     return checked
 
 
-def load_record_bytes(raw, *, expected_sha256):
-    """Read exact digest-bound JSON; duplicate keys and oversized input refuse."""
+def load_json_bytes(raw, *, expected_sha256):
+    """Read exact digest-bound JSON, including opaque array/string AST payloads."""
     require_sha256(expected_sha256, "expected_sha256")
     if type(raw) is not bytes or len(raw) > MAX_RECORD_BYTES:
         raise CorpusContractError("bounded record bytes required")
@@ -172,6 +172,12 @@ def load_record_bytes(raw, *, expected_sha256):
         if isinstance(error, CorpusContractError):
             raise
         raise CorpusContractError("invalid record JSON bytes") from error
+    return clone_json(result)
+
+
+def load_record_bytes(raw, *, expected_sha256):
+    """Read an exact digest-bound JSON object; duplicate keys and oversize refuse."""
+    result = load_json_bytes(raw, expected_sha256=expected_sha256)
     if type(result) is not dict:
         raise CorpusContractError("record JSON must be an object")
-    return clone_json(result)
+    return result

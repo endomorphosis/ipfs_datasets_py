@@ -12,14 +12,14 @@ from ipfs_datasets_py.logic import autoformal
 def test_actual_public_imports_need_no_compiler_or_numerical_runtime():
     program = '''
 import json, sys
-from ipfs_datasets_py.logic.autoformal import corpus_contracts, corpus_graph, corpus_source, corpus_qualification
+from ipfs_datasets_py.logic.autoformal import corpus_contracts, corpus_graph, corpus_source, corpus_qualification, corpus_graph_exchange, corpus_span_adapter
 from ipfs_datasets_py.logic import autoformal
 assert "SESSION" not in vars(autoformal)
 assert "SESSION" in dir(autoformal)
-blocked = [name for name in sys.modules if name == "torch" or name == "transformers"
+blocked = [name for name in sys.modules if name in {"torch", "transformers", "pyarrow"}
            or name.endswith("canonical_compiler") or name.endswith("deontic_parser")]
 assert not blocked, blocked
-print(json.dumps([m.__file__ for m in (corpus_contracts, corpus_graph, corpus_source, corpus_qualification)]))
+print(json.dumps([m.__file__ for m in (corpus_contracts, corpus_graph, corpus_source, corpus_qualification, corpus_graph_exchange, corpus_span_adapter)]))
 '''
     result = subprocess.run([sys.executable, "-c", program], capture_output=True, text=True, check=True)
     root = Path(__file__).resolve().parents[5]

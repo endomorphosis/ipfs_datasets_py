@@ -107,6 +107,15 @@ def test_loader_checks_bytes_not_only_parsed_values():
         c.load_record_bytes(b'{ "a": 1 }', expected_sha256=hashlib.sha256(raw).hexdigest())
 
 
+@pytest.mark.parametrize("value", [["opaque", {"args": ["x", "x"]}], "O(retain(record))", {"x": 1}])
+def test_json_loader_preserves_opaque_ast_values_while_record_loader_stays_object_only(value):
+    raw = json.dumps(value).encode()
+    assert c.load_json_bytes(raw, expected_sha256=hashlib.sha256(raw).hexdigest()) == value
+    if type(value) is not dict:
+        with pytest.raises(c.CorpusContractError, match="object"):
+            c.load_record_bytes(raw, expected_sha256=hashlib.sha256(raw).hexdigest())
+
+
 @pytest.mark.parametrize("field", ["record_cid", "cid_scope"])
 def test_builders_do_not_accept_caller_owned_seal_fields(field):
     with pytest.raises(c.CorpusContractError):

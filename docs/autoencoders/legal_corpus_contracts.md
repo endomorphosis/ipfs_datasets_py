@@ -103,6 +103,13 @@ admission, formalization and source-semantic flags false. Scoped definition
 resolution, complete AST validation, external imports and authenticated release
 qualification are later pipeline contributions.
 
+The additive [paired-span adapter](legal_corpus_span_adapter.md) now retains
+source-bound or explicitly unresolved cache observations as opaque candidate
+interpretations. The [graph exchange](legal_corpus_graph_exchange.md) transports
+complete graph envelopes through hash-bound Parquet and supplies a local
+validator CLI. Both retain candidate-only status; typed semantic projection,
+source review and a unified Lean release remain separate work.
+
 ## Import and validation behavior
 
 Importing these public modules no longer constructs `autoformal.SESSION`.
