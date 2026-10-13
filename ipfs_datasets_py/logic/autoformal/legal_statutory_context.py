@@ -7,9 +7,11 @@ legal effect; distinguishing them from the codified body is not discarding them.
 """
 from __future__ import annotations
 
+import codecs
 import hashlib
 import json
 import re
+from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
 SCHEMA = "legal-official-statutory-context/v1"
@@ -32,6 +34,71 @@ def sha(text: str) -> str:
 
 def normalize(text: str) -> str:
     return " ".join(text.split())
+
+
+class _EncodingDeclarations(HTMLParser):
+    """Read actual markup declarations, excluding comments and script text."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.encodings = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag != "meta":
+            return
+        for name, value in attrs:
+            if name == "charset":
+                self.encodings.append(value)
+        if any(name == "http-equiv" and (value or "").strip().lower() == "content-type"
+               for name, value in attrs):
+            for name, value in attrs:
+                if name == "content":
+                    labels = re.findall(r"\bcharset\s*=\s*[\"']?([^;\s\"']+)",
+                                        value or "", re.I)
+                    if re.search(r"\bcharset\s*=", value or "", re.I) and not labels:
+                        raise ValueError("nonempty explicit source HTML encoding required")
+                    self.encodings.extend(labels)
+
+    def handle_pi(self, data):
+        if re.match(r"xml\s", data, re.I):
+            self.encodings.extend(re.findall(
+                r"\bencoding\s*=\s*[\"']([^\"']+)[\"']", data, re.I))
+
+
+def _decode_source_html(raw: bytes) -> str:
+    """Honor exact declared encodings; undeclared source must be valid UTF8.
+
+    Byte hashes retain the original input. A deterministic strict decode keeps
+    optional detector packages from changing source text and occurrence offsets.
+    Contradictory declarations, unsupported codecs and malformed bytes abstain.
+    """
+    bom, compatible = None, set()
+    for marker, encoding, aliases in (
+        (codecs.BOM_UTF32_LE, "utf-32", {"utf-32", "utf-32-le"}),
+        (codecs.BOM_UTF32_BE, "utf-32", {"utf-32", "utf-32-be"}),
+        (codecs.BOM_UTF16_LE, "utf-16", {"utf-16", "utf-16-le"}),
+        (codecs.BOM_UTF16_BE, "utf-16", {"utf-16", "utf-16-be"}),
+        (codecs.BOM_UTF8, "utf-8-sig", {"utf-8", "utf-8-sig"}),
+    ):
+        if raw.startswith(marker):
+            bom, compatible = encoding, aliases
+            break
+    try:
+        # Latin1 preserves ASCII declaration syntax without guessing body text.
+        declarations = _EncodingDeclarations()
+        declarations.feed(raw.decode(bom or "latin-1", errors="strict"))
+        declarations.close()
+        names = set()
+        for label in declarations.encodings:
+            if not isinstance(label, str) or not label.strip():
+                raise ValueError("nonempty explicit source HTML encoding required")
+            names.add(codecs.lookup(label.strip()).name)
+        if len(names) > 1 or bom and names and not names <= compatible:
+            raise ValueError("conflicting source HTML encoding declarations")
+        encoding = bom or next(iter(names), "utf-8")
+        return raw.decode(encoding, errors="strict")
+    except (LookupError, UnicodeError) as error:
+        raise ValueError("source HTML must strictly decode under its declared encoding or UTF8") from error
 
 
 def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> dict:
@@ -57,7 +124,7 @@ def extract_document(raw: bytes, *, url: str, edition: int, legal_id: str) -> di
     prefix = f"/content/pkg/USCODE-{edition}-title{title}/html/USCODE-{edition}-title{title}-"
     if not parsed_url.path.startswith(prefix) or not re.search(r"-sec" + re.escape(section) + r"(?:-[0-9]+)?\.htm$", parsed_url.path):
         raise ValueError("legal identity differs from edition, title or section URL")
-    soup = BeautifulSoup(raw, "html.parser")
+    soup = BeautifulSoup(_decode_source_html(raw), "html.parser")
     headings = soup.select("h3.section-head")
     if len(headings) != 1:
         raise ValueError("one unambiguous official section heading required")
