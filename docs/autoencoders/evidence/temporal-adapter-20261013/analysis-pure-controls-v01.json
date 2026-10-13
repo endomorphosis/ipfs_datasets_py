@@ -1,0 +1,28 @@
+{
+  "actual_reference_scoring": false,
+  "actual_trained_outputs_opened": false,
+  "analyzer": {
+    "bytes": 45115,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analyze_temporal_adapter.py",
+    "sha256": "08707ad592dfa62a0a6b0bfaa1f593625bd86d1617b2a304e37df611d5c1650d"
+  },
+  "checkpoint_JSON_parses": 0,
+  "controls": [
+    "Both actual source-bound policies/partition",
+    "Exact45-file result geometry",
+    "Signed-zero byte identity",
+    "Protected initial heads",
+    "Only final temporal may change",
+    "Foreign IDs/tokens refused",
+    "Final-training legacy/authored stratum grouping",
+    "Pinned source/header validator namespace binding"
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "positive_controls": 8,
+  "reference_packet_opened": false,
+  "refusal_controls": 5,
+  "schema": "temporal-adapter-analysis-pure-controls/v1"
+}

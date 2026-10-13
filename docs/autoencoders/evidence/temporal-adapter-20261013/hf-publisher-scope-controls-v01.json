@@ -1,0 +1,32 @@
+{
+  "SDK_imports": 0,
+  "actual_publication_main_executed": false,
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "historical_publisher": {
+    "bytes": 20033,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/publish_hf_temporal_adapter_release_v01.py",
+    "sha256": "ee78130b4f0cb3337c95eef6f45d02e0cef065b730253e3af00a7354852d85da"
+  },
+  "inert_real_main_prefix_executed": true,
+  "model_calls": 0,
+  "network_calls": 0,
+  "passed": true,
+  "positive_controls": [
+    "Real repaired main resolves global source-owner helper before SDK import"
+  ],
+  "positive_count": 1,
+  "private_body_reads": 0,
+  "refusal_controls": [
+    "Historical main reproduces UnboundLocalError before helper call",
+    "Synthetic reintroduced local owned assignment reproduces UnboundLocalError"
+  ],
+  "refusal_count": 2,
+  "repaired_publisher": {
+    "bytes": 20153,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/publish_hf_temporal_adapter_release_v02.py",
+    "sha256": "b06a5a1dadc7cc90ba43839e1f80a45de6dff56a407eeddb4f09d0e27ae16d19"
+  },
+  "resource_API_calls": 0,
+  "schema": "temporal-adapter-Hub-publisher-scope-independent-controls/v1"
+}

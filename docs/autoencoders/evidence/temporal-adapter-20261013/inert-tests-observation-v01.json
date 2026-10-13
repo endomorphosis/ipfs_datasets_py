@@ -1,0 +1,33 @@
+{
+  "checkpoint_JSON_parses": 0,
+  "command": [
+    "python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_temporal_adapter_contracts.py"
+  ],
+  "earlier_pytest_launcher_attempt": {
+    "exit_code": 1,
+    "process_launched": false,
+    "reason": "An unrelated pytest plugin attempted ctypes.find_library subprocess resolution; the retained process-denial audit refused it.",
+    "tests_executed": 0,
+    "used_for_qualification": false
+  },
+  "exit_code": 0,
+  "model_calls": 0,
+  "qualification": "Direct standard-library contract suite with its own numerical import denial passed.",
+  "schema": "temporal-adapter-inert-tests-observation/v1",
+  "source_pins": [
+    {
+      "bytes": 48506,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    {
+      "bytes": 22757,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_temporal_adapter_contracts.py",
+      "sha256": "6b5e96094f0b24d8524479d227ba42d8bb6bfdd48c4f6def94e80415ed337b13"
+    }
+  ],
+  "tests_passed": 16,
+  "torch_numpy_imports": 0
+}

@@ -1,0 +1,3383 @@
+{
+  "all24_authored_row_sets_verified": true,
+  "all28_panel_summaries_verified": true,
+  "all42_matched_comparisons_verified": true,
+  "all_class_pair_modality_temporal_permission_and_abstention_counts_verified": true,
+  "analysis": {
+    "bytes": 4092908,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-adapter-result-analysis-v01.json",
+    "sha256": "3ae5a34286687bc35344c1ffaa09aa3b60d108d46604d983282168566f9302db"
+  },
+  "artifacts": {
+    "/home/barberb/.local/lib/python3.12/site-packages/cuda/pathfinder/_dynamic_libs/load_dl_linux.py": {
+      "bytes": 7953,
+      "sha256": "c83cfcc0d33e14cda10ec533a21a6443db36bb032d3bf5216f109e8811ac74e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json": {
+      "bytes": 78040,
+      "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-features-plan-v01.json": {
+      "bytes": 79455,
+      "sha256": "b743a59e9d09c8efb47e430d936c66f8fb8f55bd3f6632403164fcc3e39d2b8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/training-export-v01.json": {
+      "bytes": 5052701,
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/authored-reference-packet-v01.json": {
+      "bytes": 8262146,
+      "sha256": "b926dbbc459c8d21a51fd8876598c8b3830a979730b44a4b3c8d15d8f613676e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analysis-pure-controls-v01.json": {
+      "bytes": 930,
+      "sha256": "e3152a357abe0a979d5f1ac5673913099b4bea503113e797cf57aef7b1259382"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analyze_temporal_adapter.py": {
+      "bytes": 45115,
+      "sha256": "08707ad592dfa62a0a6b0bfaa1f593625bd86d1617b2a304e37df611d5c1650d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 21053,
+      "sha256": "57f75b24e58af195eb468b2e1c91e3ce9b3a4a05a3f8a2206cf8422ef6dcbe5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_temporal_adapter_contracts.py": {
+      "bytes": 22757,
+      "sha256": "6b5e96094f0b24d8524479d227ba42d8bb6bfdd48c4f6def94e80415ed337b13"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/evaluation-contract-v01.json": {
+      "bytes": 27955,
+      "sha256": "07a55d285882cac62207fb7008bbca55746c86a56c7aa3cd4a96374fdd6bf87e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/evaluation-source-independent-review-v01.json": {
+      "bytes": 14822,
+      "sha256": "d52635e6cb9415dca25816c6b99d76b7a70a28e7f078cd189cd76bddb054cd12"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/independent_temporal_adapter_recount_v01.py": {
+      "bytes": 23282,
+      "sha256": "18dd516428af7755e298d1610d52a645b79fd156131403a637199bbe6947b8b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/prepare_temporal_adapter.py": {
+      "bytes": 10233,
+      "sha256": "4f06c907f73e0fcd8b49c03a42165600dc539e3f22a9ba45eedcbeac99bd9fd1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/resource-baseline-v01.json": {
+      "bytes": 72479,
+      "sha256": "b21491593178b7f14ad7133db75f2e81a0a4ad694a59687582e4c4d864d6145a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_temporal_adapter.py": {
+      "bytes": 23767,
+      "sha256": "51fc99fa25a0c2c7636c34f1d569651ba0a545562a3ca26723280104384d5c3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-adapter-result-analysis-v01.json": {
+      "bytes": 4092908,
+      "sha256": "3ae5a34286687bc35344c1ffaa09aa3b60d108d46604d983282168566f9302db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-anchor-margin-plan-v01.json": {
+      "bytes": 41227,
+      "sha256": "724481784454a37a0bcf073a51bfb29703da79b104e2d1b5fb49a428f6dbb20e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-ce-control-plan-v01.json": {
+      "bytes": 41221,
+      "sha256": "b1ce884884419ded434c7abe1f24d0348df01104366f3e435684573070a2417d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json": {
+      "bytes": 4675279,
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/two-cell-output-freeze-v01.json": {
+      "bytes": 33740,
+      "sha256": "a074501402f7c5f8e1dcbded4daa326989a5449507af1b1464ab5aef56978728"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/code-and-plan-independent-review-v01.json": {
+      "bytes": 18203,
+      "sha256": "cc6c8728020b58d46c07d46e766b2fb951d7a63f5f72838001df6a15f95f10e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/final-integration-independent-review-v01.json": {
+      "bytes": 124591,
+      "sha256": "2f3b4cccef03db9b9b136c57af60b8d9bcbb29fffd8035f490bce02dd3e1be41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/presence-routing-analysis-v01.json": {
+      "bytes": 5157031,
+      "sha256": "284040c26ed56e3dbff94e88108d9635d49344a48be794cf7b53e1684f7d9226"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/presence-routing-independent-review-v01.json": {
+      "bytes": 102106,
+      "sha256": "6d05160aa9cc3ab19fd49a22ea91fb5f94f89ec6117a3685731ee33bdea4bf66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/temporal-presence-training-proposal-v02.md": {
+      "bytes": 10585,
+      "sha256": "138b962c85519be7a9a364a2e2ac3d9ce01d04fdfc571f1b2dc3fa81ca1adce8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/cell-checkpoint.json": {
+      "bytes": 3592389,
+      "sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/cell-training.json": {
+      "bytes": 1276971,
+      "sha256": "cae8c745dfcd176070eebce09d18566ba34b2bf3b2f2c3a1d94dd967d5ba71b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/summary.json": {
+      "bytes": 67866,
+      "sha256": "361540164e3f073d61ff85f05bd971d2554b398615e797b4889fd5be78210c1f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1015303,
+      "sha256": "ef1bad86305dcba16d811e0c8f41784187f70b9cf4bf6514ad411503dc1c0b57"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1429719,
+      "sha256": "fb77893a0e1dc730d529361d3d35a07af283b7d4cfef2ad8e06e64fb08164257"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1023672,
+      "sha256": "4eb2c5f64ca4ec779620eaccfa65796b3e167592eb9d5597086c10da3a09b223"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1428467,
+      "sha256": "79565ba2c8db6c65d88c798613d804f24986185ab2f1f3ad094cb16f37cc6773"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526648,
+      "sha256": "37b7e84482ed582da2eeb56b44356cef368d065f6e5c008996cd1263b317450f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679139,
+      "sha256": "91f995e5da8826ed968891aaa30bc5b42a469aced1ec14531e9f2a424e7c5e28"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509063,
+      "sha256": "835e7f57902fcc4a19361e9eb9ad245ce75062a5d27fe4a733eb2c33a8e880b4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 626905,
+      "sha256": "4d4b8f8126830331c2ed73d9b5e37709be13124e4570c19feccebe4912c45c04"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-joint.json": {
+      "bytes": 107526,
+      "sha256": "3fb0adf6bb1abc32d930b86ee044b93dcb13fcea18432ab43f780ed989b5b856"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-raw.json": {
+      "bytes": 282369,
+      "sha256": "63308d7218c72f44fc08bef52fcb4d11ccb2b8146e9ef946cc368d29a987a6eb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1043451,
+      "sha256": "451cb16ec8eb1a5087478de5253e61e38a04d8312e8dc71f4afe5eb622ac5107"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451640,
+      "sha256": "b357db638f3dab765d19cee0f279c0a10df41039e2a9586de8caed9b6ef03894"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456857,
+      "sha256": "b5099cf640e7e6014f8878ab9a3586a211d39ca27605950420fd47786c54040f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-raw.json": {
+      "bytes": 2287349,
+      "sha256": "b6e45110f179418041223ed02291ea9669ef7d6df2182ec53ce8b64e32af89c4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "ccd87c9fb4418b105cedaaedb97f3ebe0e9360be200c02b58d10b451efb7ab42"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015299,
+      "sha256": "3c134f0a445f8565ffce8b9372f6a510722508f347466bdca44ff04003778dc3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1430794,
+      "sha256": "c98cc03432e31ee20c98cef7e95dc763238afee6dfbd464ca7d5eceba10d7c91"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023668,
+      "sha256": "9d22c1fe4be5260871cd8ab32395614239b006aa0448366dae1de3638ce4e9d1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1429542,
+      "sha256": "7a6d40157b5354c1352d8c44950cdb06cbed04e1ee90699d23b2d30a41765799"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526644,
+      "sha256": "f62a83f0f94029ceec6b09e28bc829517aaf4ddc0df5e23e3edb5ef6c33d35bc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 680214,
+      "sha256": "9ac42bd9a7c891fa9f26c361b88eef74b2a8c91553d16834472acc0e14f300ec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509059,
+      "sha256": "822be3854940cbd318f338451043b4c66e6130be41fbde9863127271dd01be47"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627980,
+      "sha256": "3cb604887f85cb1dda732e97a0ab70b40a04d2c4654202e4a982aa985cfd2d82"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-law-joint.json": {
+      "bytes": 107522,
+      "sha256": "43704dd558b91d7d312de80362e61303e3bb01d88759e293b3b1dceb36077241"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-law-raw.json": {
+      "bytes": 283440,
+      "sha256": "21d0e703d70b70f2ea4761593ccb4fbf7723dda29ddb02148fc86b48af700a41"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043447,
+      "sha256": "c020250aad7499af03574ebffc8767e05ae1cce748a64a51ce57f1f7def1820c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452715,
+      "sha256": "01dd68cabe38c61a3277f80afddbf14176f136c487ac6b7ca99af301198f5505"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456853,
+      "sha256": "15b69c60e0fac9ba906507d6061eeb133797f3ab1d18572408eadb728e038b2a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2288424,
+      "sha256": "e209883f315a409f9a68f90d4e5b6675f48012302e3f2eeccf217724ed487e56"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/cell-checkpoint.json": {
+      "bytes": 6443558,
+      "sha256": "adaafb917e41978f3beafe84bc57ee2772dbc576de83b03505f801f6156d5fb5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/cell-training.json": {
+      "bytes": 1120003,
+      "sha256": "90ec04faa54d82bd08a6b73ba255967af44a7658d9d774dd71cdd8ca8af0f6b7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parent-head-parity.json": {
+      "bytes": 124464,
+      "sha256": "175b564589991d407b3c4cf7d19e4dfb7d3de65202e91b2ad4ad03adbf77cae0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 21428,
+      "sha256": "bb0dc79e2b2f4366f3ef98b44a6cb1efd70fdc4ae58a794c2e9210a3f911b658"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parity-disabled.json": {
+      "bytes": 21432,
+      "sha256": "580646adfc95e5fc1e15c0487df08ce224c7453742f47ef0883b188f38f6beec"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 21430,
+      "sha256": "ee6dac3aa869288b1b46f66c899fa7237aa8497e139680f1dd66c2026f3236cc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parity-zeros.json": {
+      "bytes": 21428,
+      "sha256": "7405490e4071cdf5645bf1af98cab25d9abe14f245832f14050047e767e52080"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/initial-parity.json": {
+      "bytes": 1960,
+      "sha256": "e871d81eb6bb1d5149392ab860aaa62230d85d598b7ae535b1d53cca5c331def"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/summary.json": {
+      "bytes": 52249,
+      "sha256": "598c4271383f54e524d610d188e6480dd6c6e3cd0d98362fd8907397e1ac6d7a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1013762,
+      "sha256": "c91db8d5ce6d80e6bfd406a2af633cb07c47f4e410919ffb711aba159fedec70"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1430622,
+      "sha256": "919e41944933ca236261873bee04c28608aa0dd3cb88d112509c00f921772b02"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1022735,
+      "sha256": "8c64526e6d623084e2007d656768be0149c4582e98f3a0fa7ad23670b172508a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1431607,
+      "sha256": "6590e4f79e9bc56cda18c468f3d90f9f4eabbe39e1dcb82ede6b1f9308724c88"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526629,
+      "sha256": "b41dda0412ba2d70d94f95c105592562c882aabe3af0184a04a8aec246260526"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 680203,
+      "sha256": "f5a8a227b125cae2012acefd53eed82306d419b8056d91937bf7757b718ac9cb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509067,
+      "sha256": "d0341e6ad2d7921d9991de1f48d6fefa3dfcd99a4101196bc3e6ee93384f03c6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 627976,
+      "sha256": "d0f031e8d03b8c2fb018e9e17cb104b08ae55c88d98a894bedeecbd09d3752cd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-frozen-head-retention.json": {
+      "bytes": 124474,
+      "sha256": "b7ebf8a04f61f23ea13682f9a1df83ff028c8cb49d5e7cade93919e2eb1ca3a5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-law-joint.json": {
+      "bytes": 107522,
+      "sha256": "a264e6f75d6017c293acfe0eb93fc06f95a0465caa8cba628322435a505c2921"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-law-raw.json": {
+      "bytes": 283438,
+      "sha256": "f79db8c327031920cd67cbfe2851c76c3cb4b46c036dd39c65f3608278a02381"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1040881,
+      "sha256": "2e366c06e62a0c8eeea16da613fb1bbafff4a8edf1da99874033332ea1dba57e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1454521,
+      "sha256": "b1fe432aa7e4e7b32f8a398f2b12b0de25850351cacf6de98ec6d02513cf8add"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_tune-joint.json": {
+      "bytes": 1458346,
+      "sha256": "320759c067a8a488d281c6c6f1a2dd8a7d55de39f7d4e0b69071827ebd6f1b1b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_tune-raw.json": {
+      "bytes": 2288595,
+      "sha256": "3fcba21b43d06da0f2a304448eb54919b7453e58707c8e717b8a0885f1d62c6e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 21425,
+      "sha256": "8a978578e8cce1e082c6d4f0d799e4640523f2300b2d8a29de26c3d143e017b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-parity-disabled.json": {
+      "bytes": 21429,
+      "sha256": "261efa4ac18dd9bcb4e9b6974fd2d5ed36cd35856d6fe2115953761addf8c190"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 21427,
+      "sha256": "14eab8a16c2619c57d55bc0313149bd52e473bc238cd66336d63b75eca72da2b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-parity-zeros.json": {
+      "bytes": 21425,
+      "sha256": "2c747e5cbbb8be5e307e6f1d168281796661bf68003a5ae4159675ef6aed89ef"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-parity.json": {
+      "bytes": 1960,
+      "sha256": "d4b6bb9d497a78ab3def52f3bd2240d5cd997e38b1e234b512e1f86bc700dfa3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-training168-raw.json": {
+      "bytes": 3589674,
+      "sha256": "293b3e0d37fceb0944e4ecbcfc60fc5448156dda59fcba3bdcd8248674cba042"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "6dd6fce6ab791fd0bf91f9f9ea048f0d81c2ef7152e38dea85dbaee3b3ef6c2e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015299,
+      "sha256": "3c134f0a445f8565ffce8b9372f6a510722508f347466bdca44ff04003778dc3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1430788,
+      "sha256": "ada18cf04f17738b0485a626dad1d055d82ce2f53c57acb84b04e4e537a5e670"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023668,
+      "sha256": "9d22c1fe4be5260871cd8ab32395614239b006aa0448366dae1de3638ce4e9d1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1429536,
+      "sha256": "fb2e76a35b4261f58aec3303a84591784f890b167f5de26ef497822b5d50a2d6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526644,
+      "sha256": "f62a83f0f94029ceec6b09e28bc829517aaf4ddc0df5e23e3edb5ef6c33d35bc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 680208,
+      "sha256": "c25811ec61a42265e1289af80ed44e9acfe60cbb4060648037db6ec8445ee41d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509059,
+      "sha256": "822be3854940cbd318f338451043b4c66e6130be41fbde9863127271dd01be47"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627974,
+      "sha256": "7a5444203a6591c9e89f280bb9f92134221ea8f2ac653156f9b07ac0e3284bb9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-law-joint.json": {
+      "bytes": 107522,
+      "sha256": "43704dd558b91d7d312de80362e61303e3bb01d88759e293b3b1dceb36077241"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-law-raw.json": {
+      "bytes": 283434,
+      "sha256": "6c6a823a7de841f0576369b2179de23f7ecad23615e69e8c4d4fc5596c1b7821"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043447,
+      "sha256": "c020250aad7499af03574ebffc8767e05ae1cce748a64a51ce57f1f7def1820c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452709,
+      "sha256": "e65755db5ff5dfde5abf546d593e4bbc9dc2c878fa56950de0975e261146b82c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456853,
+      "sha256": "15b69c60e0fac9ba906507d6061eeb133797f3ab1d18572408eadb728e038b2a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2288418,
+      "sha256": "e0f4963f7c2ff6619d7e3d746b4028dd6f3e5797c431a42a2a0089fde679b5df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/cell-checkpoint.json": {
+      "bytes": 6443616,
+      "sha256": "7358314558c0af9edb945e4815580f59af90748f2c10efb54bc326685a8eb36e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/cell-training.json": {
+      "bytes": 1119902,
+      "sha256": "b04690ef52e4394eec1c1b220f0de6fbe4a4446d368cfa862c95b7659f0a34b8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parent-head-parity.json": {
+      "bytes": 124464,
+      "sha256": "175b564589991d407b3c4cf7d19e4dfb7d3de65202e91b2ad4ad03adbf77cae0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 21422,
+      "sha256": "c0712ee3082b3dcb24e24e7fc2674028a67ad7713986c639ecac3e3419d144c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parity-disabled.json": {
+      "bytes": 21426,
+      "sha256": "4c5a074850310bb0b080307d67ab999da059c6677480024d0e37c835a550a4e1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 21424,
+      "sha256": "accd9ebde8ea6ef7862172c71e02c1816d28e52e212cd0beb7ec9f0c8d6f03da"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parity-zeros.json": {
+      "bytes": 21422,
+      "sha256": "bb131550c9baa06f945240af0db04fc9ed4a1a51a9500af5592d7ebd02d589f6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/initial-parity.json": {
+      "bytes": 1948,
+      "sha256": "2554c37896919f500f41ec7edff93788ef5aa9664464d34421469e8f3cc886b2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/summary.json": {
+      "bytes": 52134,
+      "sha256": "c5e7ba46a15bcbc3f78162a4e17dad7adf99f4aec8137c91dbeef359ccc584f7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1013777,
+      "sha256": "f9ddb9d2df2f86952b7f573ac2fc4d070a5164bae0e4db55d1e1764d76a08dc2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1430609,
+      "sha256": "d3072e5c9db261c1b7b7b9b166f928511a2d56a46e5dbef5527258b97c3a1b3d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1022739,
+      "sha256": "65d656618f34920bc3919a831da3ba4800140ad6496470655f945bd5b788be28"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1431596,
+      "sha256": "6db92b1a0dce48e7b1576954d5fa97c0130626740676c95679b667fffb253496"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526631,
+      "sha256": "5ec8335ed03f0a85d2a6ca6fe2d7f6c64e4629594a1ba987c4b3ecff831b182e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 680198,
+      "sha256": "3c766bcbe6dcfb6e4ade3acd29a6a92a4e7465914c5cbc6fd73183930db48a12"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509057,
+      "sha256": "bb13900f62bca19f44ea144e0d9556690bcb9c6eefa31673539891a7a64f5340"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 627966,
+      "sha256": "410bcf702938f42fb813296c268df86488e5379a6ba36f61ac14cc238dce02b7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-frozen-head-retention.json": {
+      "bytes": 124474,
+      "sha256": "b7ebf8a04f61f23ea13682f9a1df83ff028c8cb49d5e7cade93919e2eb1ca3a5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-law-joint.json": {
+      "bytes": 107519,
+      "sha256": "59cb533203aefc936fdffae037ee87a4fa09d7c1585864d6bdff7cac44abf632"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-law-raw.json": {
+      "bytes": 283428,
+      "sha256": "b195a575b2d7f0ada698b4a657c6472cd9f3f66cd33e8b2947090ef10874bcfb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1042386,
+      "sha256": "7630f8346f1bdd66a672149c046d0fb44747f1f6c18b961c2acafbf1eb46ab4f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1454660,
+      "sha256": "3f72d31b3367c1d18b68156527c70c1a95a096f05e34ffb98363d7f4ae454710"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_tune-joint.json": {
+      "bytes": 1458357,
+      "sha256": "435b6e935517be9fdb13f5b4afabcf084f8499e6bd14d6ef23b35132df16d80b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_tune-raw.json": {
+      "bytes": 2288609,
+      "sha256": "3cffe9e95d53790b06a3230bdb2ddbbd8cab7d3f34ea5ca8b966e0e48d5befc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 21422,
+      "sha256": "129b32499302e6080f79cab9afafe6b2824da39951c338f4f4256c8ba131366a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-parity-disabled.json": {
+      "bytes": 21426,
+      "sha256": "0a5202b193ea80d6791a86db6441b24273376d3271e904acda5487fb8963e385"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 21424,
+      "sha256": "816ba1e85fcbd99bed123542da28800f6f15b359d443f279c464b0ffccfc4927"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-parity-zeros.json": {
+      "bytes": 21422,
+      "sha256": "d19e283cb19c657717c36e92ce5bde71a188dd6fe21a8ff55903f0e80ed81057"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-parity.json": {
+      "bytes": 1948,
+      "sha256": "25419c0b1b9d5f2c61ca1fe061eca0945da3dc4a7dee3854e73aa07c0281ee6e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-training168-raw.json": {
+      "bytes": 3589667,
+      "sha256": "225eabf992c94d8cb9ae62cf9b777f6389b649aa2212680fb1e32d5ea2c58cf9"
+    },
+    "/usr/lib/aarch64-linux-gnu/libdl.so.2": {
+      "bytes": 67440,
+      "sha256": "97387fb55ccfc0cc109dfe99b81de2b7bbaac723d1c215107dc69a068c4b1fae"
+    },
+    "/usr/lib/python3.12/ctypes/util.py": {
+      "bytes": 14584,
+      "sha256": "9cddec0d3640c812f023cf850107e38705a040fb22213181a8cd30cdd49ea0d1"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "closing_raw_pins_unchanged": true,
+  "compiler_calls": 0,
+  "default_promotion": false,
+  "engineering_selected_cell": null,
+  "final_source_rows_per_cell": 392,
+  "findings": [],
+  "independent_source_review": {
+    "bytes": 21053,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/analyzer-source-independent-review-v01.json",
+    "sha256": "57f75b24e58af195eb468b2e1c91e3ce9b3a4a05a3f8a2206cf8422ef6dcbe5d"
+  },
+  "independent_statutory_gold": false,
+  "initial_source_rows_per_cell": 392,
+  "law_unscored": [
+    {
+      "cell": "temporal-ce-control",
+      "correctness_assessed": false,
+      "joint_abstentions": 0,
+      "raw_abstentions": 6,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "correctness_assessed": false,
+      "joint_abstentions": 0,
+      "raw_abstentions": 6,
+      "state": "trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "correctness_assessed": false,
+      "joint_abstentions": 0,
+      "raw_abstentions": 6,
+      "state": "initial"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "correctness_assessed": false,
+      "joint_abstentions": 0,
+      "raw_abstentions": 6,
+      "state": "trained"
+    }
+  ],
+  "legacy_gate": {
+    "temporal-anchor-margin": {
+      "eligible": false,
+      "joint_exact_ir": 95,
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_exact_ir": 95
+    },
+    "temporal-ce-control": {
+      "eligible": false,
+      "joint_exact_ir": 95,
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_exact_ir": 95
+    }
+  },
+  "limitations": [
+    "Previously exposed authored shared-template targets only; law8 unreviewed and unscored.",
+    "No tensor/gradient/Adam-moment replay or current resource qualification is performed by this observer.",
+    "Joint policy execution is independently replayed by the qualified producer analysis; this observer independently recounts its immutable saved readouts."
+  ],
+  "matched_changes": [
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "native-tuning-calendula-t6-q7-o"
+      ],
+      "joint_regressions": [],
+      "panel": "old_tune",
+      "raw_recoveries": [
+        "native-tuning-calendula-t6-q7-o"
+      ],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "native-tuning-calendula-t6-q7-o"
+      ],
+      "joint_regressions": [],
+      "panel": "old_tune",
+      "raw_recoveries": [
+        "native-tuning-calendula-t6-q7-o"
+      ],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "old_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present",
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present"
+      ],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present"
+      ],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "own_initial_equal_N4_trained"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [],
+      "raw_regressions": [],
+      "reference": "temporal-ce-control"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "panel": "old_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "panel": "old_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "panel": "old_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [],
+      "joint_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "panel": "old_tune",
+      "raw_recoveries": [],
+      "raw_regressions": [
+        "native-tuning-calendula-t6-q7-p"
+      ],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "temporal-contrast-tuning-condition_duration-0-o-absent",
+        "temporal-contrast-tuning-condition_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_duration-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "joint_regressions": [
+        "temporal-contrast-tuning-exception_duration-0-p-present"
+      ],
+      "panel": "fresh_tune",
+      "raw_recoveries": [
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "temporal-contrast-tuning-plain_deadline-0-o-absent",
+        "temporal-contrast-tuning-plain_deadline-0-o-present",
+        "temporal-contrast-tuning-plain_deadline-0-p-absent",
+        "temporal-contrast-tuning-plain_deadline-0-p-present",
+        "temporal-contrast-tuning-condition_duration-0-o-absent",
+        "temporal-contrast-tuning-condition_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_duration-0-f-absent",
+        "temporal-contrast-tuning-object_duration_title-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "joint_regressions": [
+        "temporal-contrast-tuning-exception_duration-0-p-present"
+      ],
+      "panel": "fresh_tune",
+      "raw_recoveries": [
+        "temporal-contrast-tuning-plain_deadline-0-o-absent",
+        "temporal-contrast-tuning-plain_deadline-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "temporal-contrast-tuning-condition_duration-0-o-absent",
+        "temporal-contrast-tuning-condition_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_duration-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "joint_regressions": [
+        "temporal-contrast-tuning-exception_duration-0-p-present"
+      ],
+      "panel": "fresh_tune",
+      "raw_recoveries": [
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "temporal-contrast-tuning-plain_deadline-0-o-absent",
+        "temporal-contrast-tuning-plain_deadline-0-o-present",
+        "temporal-contrast-tuning-plain_deadline-0-p-absent",
+        "temporal-contrast-tuning-plain_deadline-0-p-present",
+        "temporal-contrast-tuning-condition_duration-0-o-absent",
+        "temporal-contrast-tuning-condition_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_duration-0-f-absent",
+        "temporal-contrast-tuning-object_duration_title-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "joint_regressions": [
+        "temporal-contrast-tuning-exception_duration-0-p-present"
+      ],
+      "panel": "fresh_tune",
+      "raw_recoveries": [
+        "temporal-contrast-tuning-plain_deadline-0-o-absent",
+        "temporal-contrast-tuning-plain_deadline-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-p-absent",
+        "temporal-contrast-tuning-object_duration_title-0-f-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-p-absent",
+        "temporal-contrast-tuning-condition_exception_duration-0-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "temporal-contrast-challenge-plain_deadline-0-o-present",
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-present",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-present",
+        "temporal-contrast-challenge-object_duration_title-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-f-present"
+      ],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [
+        "temporal-contrast-challenge-plain_deadline-0-o-present",
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-present",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-present",
+        "temporal-contrast-challenge-object_duration_title-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-f-present"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "temporal-contrast-challenge-plain_deadline-0-o-present",
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-present",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-present",
+        "temporal-contrast-challenge-object_duration_title-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-f-present"
+      ],
+      "joint_regressions": [],
+      "panel": "fresh_challenge",
+      "raw_recoveries": [
+        "temporal-contrast-challenge-plain_deadline-0-o-present",
+        "temporal-contrast-challenge-condition_duration-0-o-absent",
+        "temporal-contrast-challenge-condition_duration-0-p-absent",
+        "temporal-contrast-challenge-condition_duration-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-absent",
+        "temporal-contrast-challenge-object_duration_title-0-o-present",
+        "temporal-contrast-challenge-object_duration_title-0-p-absent",
+        "temporal-contrast-challenge-object_duration_title-0-p-present",
+        "temporal-contrast-challenge-object_duration_title-0-f-absent",
+        "temporal-contrast-challenge-object_duration_title-0-f-present"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-present",
+        "matched-temporal-authored_eval-object_duration_title-0-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-p-present",
+        "matched-temporal-authored_eval-object_duration_title-0-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-f-present",
+        "matched-temporal-authored_eval-object_duration_title-1-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-p-present",
+        "matched-temporal-authored_eval-object_duration_title-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-f-present",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-present",
+        "matched-temporal-authored_eval-object_duration_title-0-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-p-present",
+        "matched-temporal-authored_eval-object_duration_title-0-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-f-present",
+        "matched-temporal-authored_eval-object_duration_title-1-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-p-present",
+        "matched-temporal-authored_eval-object_duration_title-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-f-present",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present",
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present"
+      ],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-present",
+        "matched-temporal-authored_eval-object_duration_title-0-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-p-present",
+        "matched-temporal-authored_eval-object_duration_title-0-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-f-present",
+        "matched-temporal-authored_eval-object_duration_title-1-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-p-present",
+        "matched-temporal-authored_eval-object_duration_title-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-f-present",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present",
+        "matched-temporal-authored_eval-exception_duration-0-f-present"
+      ],
+      "panel": "old_authored_eval",
+      "raw_recoveries": [
+        "matched-temporal-authored_eval-condition_duration-0-o-absent",
+        "matched-temporal-authored_eval-condition_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_duration-0-f-absent",
+        "matched-temporal-authored_eval-condition_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_duration-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-o-present",
+        "matched-temporal-authored_eval-object_duration_title-0-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-p-present",
+        "matched-temporal-authored_eval-object_duration_title-0-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-0-f-present",
+        "matched-temporal-authored_eval-object_duration_title-1-p-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-p-present",
+        "matched-temporal-authored_eval-object_duration_title-1-f-absent",
+        "matched-temporal-authored_eval-object_duration_title-1-f-present",
+        "matched-temporal-authored_eval-condition_exception_duration-0-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-o-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-p-absent",
+        "matched-temporal-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [
+        "matched-temporal-authored_eval-exception_duration-0-p-present"
+      ],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "targeted-loss-authored_dev-plain_deadline-0-f-absent",
+        "targeted-loss-authored_dev-plain_deadline-0-f-present",
+        "targeted-loss-authored_dev-plain_deadline-1-o-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-o-present",
+        "targeted-loss-authored_dev-plain_deadline-1-p-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-f-absent",
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-0-p-present",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-o-present",
+        "targeted-loss-authored_dev-object_duration_title-0-p-present",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-present",
+        "targeted-loss-authored_dev-object_duration_title-1-o-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-o-present",
+        "targeted-loss-authored_dev-object_duration_title-1-p-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-p-present",
+        "targeted-loss-authored_dev-object_duration_title-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-f-present",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [
+        "targeted-loss-authored_dev-plain_deadline-0-f-absent",
+        "targeted-loss-authored_dev-plain_deadline-0-f-present",
+        "targeted-loss-authored_dev-plain_deadline-1-o-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-o-present",
+        "targeted-loss-authored_dev-plain_deadline-1-p-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-f-absent",
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-0-p-present",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-o-present",
+        "targeted-loss-authored_dev-object_duration_title-0-p-present",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-present",
+        "targeted-loss-authored_dev-object_duration_title-1-o-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-o-present",
+        "targeted-loss-authored_dev-object_duration_title-1-p-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-p-present",
+        "targeted-loss-authored_dev-object_duration_title-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-f-present",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "targeted-loss-authored_dev-plain_deadline-0-f-absent",
+        "targeted-loss-authored_dev-plain_deadline-0-f-present",
+        "targeted-loss-authored_dev-plain_deadline-1-o-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-o-present",
+        "targeted-loss-authored_dev-plain_deadline-1-p-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-f-absent",
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-0-p-present",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-o-present",
+        "targeted-loss-authored_dev-object_duration_title-0-p-present",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-present",
+        "targeted-loss-authored_dev-object_duration_title-1-o-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-o-present",
+        "targeted-loss-authored_dev-object_duration_title-1-p-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-p-present",
+        "targeted-loss-authored_dev-object_duration_title-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-f-present",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_dev",
+      "raw_recoveries": [
+        "targeted-loss-authored_dev-plain_deadline-0-f-absent",
+        "targeted-loss-authored_dev-plain_deadline-0-f-present",
+        "targeted-loss-authored_dev-plain_deadline-1-o-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-o-present",
+        "targeted-loss-authored_dev-plain_deadline-1-p-absent",
+        "targeted-loss-authored_dev-plain_deadline-1-f-absent",
+        "targeted-loss-authored_dev-condition_duration-0-o-absent",
+        "targeted-loss-authored_dev-condition_duration-0-p-absent",
+        "targeted-loss-authored_dev-condition_duration-0-f-absent",
+        "targeted-loss-authored_dev-condition_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_duration-1-p-absent",
+        "targeted-loss-authored_dev-condition_duration-1-f-absent",
+        "targeted-loss-authored_dev-exception_duration-0-p-present",
+        "targeted-loss-authored_dev-exception_duration-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-o-present",
+        "targeted-loss-authored_dev-object_duration_title-0-p-present",
+        "targeted-loss-authored_dev-object_duration_title-0-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-0-f-present",
+        "targeted-loss-authored_dev-object_duration_title-1-o-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-o-present",
+        "targeted-loss-authored_dev-object_duration_title-1-p-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-p-present",
+        "targeted-loss-authored_dev-object_duration_title-1-f-absent",
+        "targeted-loss-authored_dev-object_duration_title-1-f-present",
+        "targeted-loss-authored_dev-condition_exception_duration-1-o-absent",
+        "targeted-loss-authored_dev-condition_exception_duration-1-p-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-0-o-present",
+        "targeted-loss-authored_eval-object_duration_title-0-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-1-o-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-0-o-present",
+        "targeted-loss-authored_eval-object_duration_title-0-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-1-o-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_temporal_presence"
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-0-o-present",
+        "targeted-loss-authored_eval-object_duration_title-0-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-1-o-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "joint_regressions": [],
+      "panel": "authored_eval",
+      "raw_recoveries": [
+        "targeted-loss-authored_eval-condition_duration-1-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-0-o-present",
+        "targeted-loss-authored_eval-object_duration_title-0-f-absent",
+        "targeted-loss-authored_eval-object_duration_title-1-o-absent",
+        "targeted-loss-authored_eval-condition_exception_duration-1-f-absent"
+      ],
+      "raw_regressions": [],
+      "reference": "parent_all_optional_presence"
+    }
+  ],
+  "methodology": "Independent standard-library recount directly from immutable source/raw/joint JSON; no producer analyzer or scorer functions imported. Producer analysis separately performs unchanged joint-algorithm replay. This observer independently verifies saved-readout metrics and protected heads.",
+  "model_calls": 0,
+  "network_requests": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-13T04:45:33.758600+00:00",
+  "observer": {
+    "bytes": 23282,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/independent_temporal_adapter_recount_v01.py",
+    "sha256": "18dd516428af7755e298d1610d52a645b79fd156131403a637199bbe6947b8b3"
+  },
+  "optimizer_updates": 0,
+  "panel_summaries": [
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 94,
+      "joint_role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 94
+      },
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 94,
+      "role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 94
+      },
+      "row_count": 96,
+      "state": "initial",
+      "temporal_false_negatives": 2,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 26,
+        "conditions": 35,
+        "exceptions": 29,
+        "object": 27,
+        "temporal": 33
+      },
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "role_exact_counts": {
+        "action": 12,
+        "actor": 11,
+        "conditions": 12,
+        "exceptions": 12,
+        "object": 11,
+        "temporal": 11
+      },
+      "row_count": 36,
+      "state": "initial",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 30,
+        "conditions": 32,
+        "exceptions": 36,
+        "object": 36,
+        "temporal": 33
+      },
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "role_exact_counts": {
+        "action": 33,
+        "actor": 28,
+        "conditions": 31,
+        "exceptions": 33,
+        "object": 33,
+        "temporal": 32
+      },
+      "row_count": 36,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 51,
+      "joint_role_exact_counts": {
+        "action": 71,
+        "actor": 59,
+        "conditions": 66,
+        "exceptions": 70,
+        "object": 70,
+        "temporal": 71
+      },
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 6,
+      "raw_exact_ir": 48,
+      "role_exact_counts": {
+        "action": 66,
+        "actor": 54,
+        "conditions": 61,
+        "exceptions": 66,
+        "object": 66,
+        "temporal": 66
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "joint_role_exact_counts": {
+        "action": 64,
+        "actor": 55,
+        "conditions": 55,
+        "exceptions": 64,
+        "object": 62,
+        "temporal": 61
+      },
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "role_exact_counts": {
+        "action": 58,
+        "actor": 50,
+        "conditions": 53,
+        "exceptions": 58,
+        "object": 58,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "joint_role_exact_counts": {
+        "action": 69,
+        "actor": 60,
+        "conditions": 65,
+        "exceptions": 69,
+        "object": 45,
+        "temporal": 68
+      },
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 15,
+      "raw_exact_ir": 26,
+      "role_exact_counts": {
+        "action": 56,
+        "actor": 47,
+        "conditions": 52,
+        "exceptions": 55,
+        "object": 38,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "joint_role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "row_count": 96,
+      "state": "trained",
+      "temporal_false_negatives": 1,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 26,
+        "conditions": 35,
+        "exceptions": 29,
+        "object": 27,
+        "temporal": 33
+      },
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "role_exact_counts": {
+        "action": 12,
+        "actor": 11,
+        "conditions": 12,
+        "exceptions": 12,
+        "object": 11,
+        "temporal": 11
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 30,
+        "conditions": 32,
+        "exceptions": 36,
+        "object": 36,
+        "temporal": 33
+      },
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "role_exact_counts": {
+        "action": 33,
+        "actor": 28,
+        "conditions": 31,
+        "exceptions": 33,
+        "object": 33,
+        "temporal": 32
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 50,
+      "joint_role_exact_counts": {
+        "action": 71,
+        "actor": 59,
+        "conditions": 66,
+        "exceptions": 70,
+        "object": 70,
+        "temporal": 70
+      },
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 5,
+      "raw_exact_ir": 48,
+      "role_exact_counts": {
+        "action": 67,
+        "actor": 55,
+        "conditions": 62,
+        "exceptions": 67,
+        "object": 67,
+        "temporal": 66
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 1,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "joint_role_exact_counts": {
+        "action": 64,
+        "actor": 55,
+        "conditions": 55,
+        "exceptions": 64,
+        "object": 62,
+        "temporal": 62
+      },
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "role_exact_counts": {
+        "action": 58,
+        "actor": 50,
+        "conditions": 53,
+        "exceptions": 58,
+        "object": 58,
+        "temporal": 56
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 2
+    },
+    {
+      "cell": "temporal-ce-control",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "joint_role_exact_counts": {
+        "action": 69,
+        "actor": 60,
+        "conditions": 65,
+        "exceptions": 69,
+        "object": 45,
+        "temporal": 67
+      },
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "role_exact_counts": {
+        "action": 57,
+        "actor": 48,
+        "conditions": 53,
+        "exceptions": 56,
+        "object": 38,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 4,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 94,
+      "joint_role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 94
+      },
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 94,
+      "role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 94
+      },
+      "row_count": 96,
+      "state": "initial",
+      "temporal_false_negatives": 2,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 26,
+        "conditions": 35,
+        "exceptions": 29,
+        "object": 27,
+        "temporal": 33
+      },
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "role_exact_counts": {
+        "action": 12,
+        "actor": 11,
+        "conditions": 12,
+        "exceptions": 12,
+        "object": 11,
+        "temporal": 11
+      },
+      "row_count": 36,
+      "state": "initial",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 30,
+        "conditions": 32,
+        "exceptions": 36,
+        "object": 36,
+        "temporal": 33
+      },
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "role_exact_counts": {
+        "action": 33,
+        "actor": 28,
+        "conditions": 31,
+        "exceptions": 33,
+        "object": 33,
+        "temporal": 32
+      },
+      "row_count": 36,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 51,
+      "joint_role_exact_counts": {
+        "action": 71,
+        "actor": 59,
+        "conditions": 66,
+        "exceptions": 70,
+        "object": 70,
+        "temporal": 71
+      },
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 6,
+      "raw_exact_ir": 48,
+      "role_exact_counts": {
+        "action": 66,
+        "actor": 54,
+        "conditions": 61,
+        "exceptions": 66,
+        "object": 66,
+        "temporal": 66
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "joint_role_exact_counts": {
+        "action": 64,
+        "actor": 55,
+        "conditions": 55,
+        "exceptions": 64,
+        "object": 62,
+        "temporal": 61
+      },
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "role_exact_counts": {
+        "action": 58,
+        "actor": 50,
+        "conditions": 53,
+        "exceptions": 58,
+        "object": 58,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "joint_role_exact_counts": {
+        "action": 69,
+        "actor": 60,
+        "conditions": 65,
+        "exceptions": 69,
+        "object": 45,
+        "temporal": 68
+      },
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 15,
+      "raw_exact_ir": 26,
+      "role_exact_counts": {
+        "action": 56,
+        "actor": 47,
+        "conditions": 52,
+        "exceptions": 55,
+        "object": 38,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "initial",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 95,
+      "joint_role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "panel": "old_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 32
+        }
+      },
+      "raw_abstentions": 0,
+      "raw_exact_ir": 95,
+      "role_exact_counts": {
+        "action": 96,
+        "actor": 96,
+        "conditions": 96,
+        "exceptions": 96,
+        "object": 96,
+        "temporal": 95
+      },
+      "row_count": 96,
+      "state": "trained",
+      "temporal_false_negatives": 1,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 19,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 26,
+        "conditions": 35,
+        "exceptions": 29,
+        "object": 27,
+        "temporal": 33
+      },
+      "panel": "fresh_tune",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 8,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 4
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 24,
+      "raw_exact_ir": 8,
+      "role_exact_counts": {
+        "action": 12,
+        "actor": 11,
+        "conditions": 12,
+        "exceptions": 12,
+        "object": 11,
+        "temporal": 11
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_false_negatives": 3,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 0,
+      "joint_exact_ir": 25,
+      "joint_role_exact_counts": {
+        "action": 36,
+        "actor": 30,
+        "conditions": 32,
+        "exceptions": 36,
+        "object": 36,
+        "temporal": 33
+      },
+      "panel": "fresh_challenge",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 1,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 11
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 12
+        }
+      },
+      "raw_abstentions": 3,
+      "raw_exact_ir": 25,
+      "role_exact_counts": {
+        "action": 33,
+        "actor": 28,
+        "conditions": 31,
+        "exceptions": 33,
+        "object": 33,
+        "temporal": 32
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 3
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 49,
+      "joint_role_exact_counts": {
+        "action": 71,
+        "actor": 59,
+        "conditions": 66,
+        "exceptions": 70,
+        "object": 70,
+        "temporal": 69
+      },
+      "panel": "old_authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        }
+      },
+      "raw_abstentions": 5,
+      "raw_exact_ir": 47,
+      "role_exact_counts": {
+        "action": 67,
+        "actor": 55,
+        "conditions": 62,
+        "exceptions": 67,
+        "object": 67,
+        "temporal": 65
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 2,
+      "temporal_false_positives": 0
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 8,
+      "joint_exact_ir": 45,
+      "joint_role_exact_counts": {
+        "action": 64,
+        "actor": 55,
+        "conditions": 55,
+        "exceptions": 64,
+        "object": 62,
+        "temporal": 62
+      },
+      "panel": "authored_dev",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 4,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 20
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 24
+        },
+        "joint": {
+          "P_abstentions": 3,
+          "P_to_F": 0,
+          "P_to_O": 0,
+          "P_to_P": 21
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 44,
+      "role_exact_counts": {
+        "action": 58,
+        "actor": 50,
+        "conditions": 53,
+        "exceptions": 58,
+        "object": 58,
+        "temporal": 56
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 0,
+      "temporal_false_positives": 2
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "joint_abstentions": 1,
+      "joint_exact_ir": 32,
+      "joint_role_exact_counts": {
+        "action": 69,
+        "actor": 60,
+        "conditions": 65,
+        "exceptions": 69,
+        "object": 45,
+        "temporal": 67
+      },
+      "panel": "authored_eval",
+      "permission_outcomes": {
+        "greedy": {
+          "P_abstentions": 5,
+          "P_to_F": 4,
+          "P_to_O": 3,
+          "P_to_P": 12
+        },
+        "head": {
+          "P_abstentions": 0,
+          "P_to_F": 6,
+          "P_to_O": 4,
+          "P_to_P": 14
+        },
+        "joint": {
+          "P_abstentions": 1,
+          "P_to_F": 5,
+          "P_to_O": 4,
+          "P_to_P": 14
+        }
+      },
+      "raw_abstentions": 14,
+      "raw_exact_ir": 26,
+      "role_exact_counts": {
+        "action": 57,
+        "actor": 48,
+        "conditions": 53,
+        "exceptions": 56,
+        "object": 38,
+        "temporal": 55
+      },
+      "row_count": 72,
+      "state": "trained",
+      "temporal_false_negatives": 4,
+      "temporal_false_positives": 0
+    }
+  ],
+  "passed": true,
+  "protected_head_recounts": [
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "old_tune",
+      "rows": 96,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "fresh_tune",
+      "rows": 36,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "fresh_challenge",
+      "rows": 36,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "old_authored_eval",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "authored_dev",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "authored_eval",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "law",
+      "rows": 8,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "old_tune",
+      "rows": 96,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "fresh_tune",
+      "rows": 36,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "fresh_challenge",
+      "rows": 36,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "old_authored_eval",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "authored_dev",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "authored_eval",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-ce-control",
+      "panel": "law",
+      "rows": 8,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "old_tune",
+      "rows": 96,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "fresh_tune",
+      "rows": 36,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "fresh_challenge",
+      "rows": 36,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "old_authored_eval",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "authored_dev",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "authored_eval",
+      "rows": 72,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "law",
+      "rows": 8,
+      "state": "initial"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "old_tune",
+      "rows": 96,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "fresh_tune",
+      "rows": 36,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "fresh_challenge",
+      "rows": 36,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "old_authored_eval",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "authored_dev",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "authored_eval",
+      "rows": 72,
+      "state": "trained"
+    },
+    {
+      "all_required_binary32_components_equal": true,
+      "cell": "temporal-anchor-margin",
+      "panel": "law",
+      "rows": 8,
+      "state": "trained"
+    }
+  ],
+  "resource_API_calls": 0,
+  "reviewer": "permission_eval_design",
+  "schema": "temporal-adapter-result-independent-review/v1",
+  "semantic_accuracy": null,
+  "training168_per_cell": [
+    {
+      "cell": "temporal-ce-control",
+      "groups": {
+        "absent": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 84,
+          "signed_margin_max": -0.9800962209701538,
+          "signed_margin_mean_float64": -7.289562023821331,
+          "signed_margin_min": -13.043296813964844,
+          "true_negative": 84,
+          "true_positive": 0
+        },
+        "actor_duration_name": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 8.705183029174805,
+          "signed_margin_mean_float64": 0.25891586144765216,
+          "signed_margin_min": -9.850085258483887,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "authored_negative": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 36,
+          "signed_margin_max": -0.9800962209701538,
+          "signed_margin_mean_float64": -5.674111968941158,
+          "signed_margin_min": -13.043296813964844,
+          "true_negative": 36,
+          "true_positive": 0
+        },
+        "authored_positive": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 36,
+          "signed_margin_max": 10.133357048034668,
+          "signed_margin_mean_float64": 6.267105188634661,
+          "signed_margin_min": 2.0244555473327637,
+          "true_negative": 0,
+          "true_positive": 36
+        },
+        "condition_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 9.570409774780273,
+          "signed_margin_mean_float64": 0.6690865556399027,
+          "signed_margin_min": -6.568842887878418,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "condition_exception_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 7.251450538635254,
+          "signed_margin_mean_float64": 1.7105169296264648,
+          "signed_margin_min": -4.251798629760742,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "exception_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 7.927518367767334,
+          "signed_margin_mean_float64": -0.303822656472524,
+          "signed_margin_min": -6.669873237609863,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "legacy_authored": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 96,
+          "signed_margin_max": 10.687515258789062,
+          "signed_margin_mean_float64": -1.0200257847706478,
+          "signed_margin_min": -11.069658279418945,
+          "true_negative": 48,
+          "true_positive": 48
+        },
+        "legacy_negative": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 48,
+          "signed_margin_max": -5.5553388595581055,
+          "signed_margin_mean_float64": -8.50114956498146,
+          "signed_margin_min": -11.069658279418945,
+          "true_negative": 48,
+          "true_positive": 0
+        },
+        "legacy_positive": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 48,
+          "signed_margin_max": 10.687515258789062,
+          "signed_margin_mean_float64": 6.4610979954401655,
+          "signed_margin_min": 2.1151809692382812,
+          "true_negative": 0,
+          "true_positive": 48
+        },
+        "object_duration_title": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 10.133357048034668,
+          "signed_margin_mean_float64": 1.4516915480295818,
+          "signed_margin_min": -6.080990314483643,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "plain_deadline": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 8.639704704284668,
+          "signed_margin_mean_float64": -2.0074085791905723,
+          "signed_margin_min": -13.043296813964844,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "present": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 84,
+          "signed_margin_max": 10.687515258789062,
+          "signed_margin_mean_float64": 6.377958221094949,
+          "signed_margin_min": 2.0244555473327637,
+          "true_negative": 0,
+          "true_positive": 84
+        }
+      },
+      "rows": 168
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "groups": {
+        "absent": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 84,
+          "signed_margin_max": -1.0628960132598877,
+          "signed_margin_mean_float64": -7.31453214656739,
+          "signed_margin_min": -13.076065063476562,
+          "true_negative": 84,
+          "true_positive": 0
+        },
+        "actor_duration_name": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 8.577844619750977,
+          "signed_margin_mean_float64": 0.18399604161580405,
+          "signed_margin_min": -9.83163833618164,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "authored_negative": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 36,
+          "signed_margin_max": -1.0628960132598877,
+          "signed_margin_mean_float64": -5.718040896786584,
+          "signed_margin_min": -13.076065063476562,
+          "true_negative": 36,
+          "true_positive": 0
+        },
+        "authored_positive": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 36,
+          "signed_margin_max": 10.00833797454834,
+          "signed_margin_mean_float64": 6.147428386741215,
+          "signed_margin_min": 1.8478477001190186,
+          "true_negative": 0,
+          "true_positive": 36
+        },
+        "condition_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 9.482765197753906,
+          "signed_margin_mean_float64": 0.6306477387746176,
+          "signed_margin_min": -6.525993824005127,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "condition_exception_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 7.170165538787842,
+          "signed_margin_mean_float64": 1.6489682793617249,
+          "signed_margin_min": -4.232691764831543,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "exception_duration": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 7.780029296875,
+          "signed_margin_mean_float64": -0.4261194666226705,
+          "signed_margin_min": -6.7231125831604,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "legacy_authored": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 96,
+          "signed_margin_max": 10.564204216003418,
+          "signed_margin_mean_float64": -1.0810422922174137,
+          "signed_margin_min": -11.06795597076416,
+          "true_negative": 48,
+          "true_positive": 48
+        },
+        "legacy_negative": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 48,
+          "signed_margin_max": -5.655113697052002,
+          "signed_margin_mean_float64": -8.511900583902994,
+          "signed_margin_min": -11.06795597076416,
+          "true_negative": 48,
+          "true_positive": 0
+        },
+        "legacy_positive": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 48,
+          "signed_margin_max": 10.564204216003418,
+          "signed_margin_mean_float64": 6.349815999468167,
+          "signed_margin_min": 2.0237457752227783,
+          "true_negative": 0,
+          "true_positive": 48
+        },
+        "object_duration_title": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 10.00833797454834,
+          "signed_margin_mean_float64": 1.3321965138117473,
+          "signed_margin_min": -6.187119483947754,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "plain_deadline": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 12,
+          "signed_margin_max": 8.54564380645752,
+          "signed_margin_mean_float64": -2.0815266370773315,
+          "signed_margin_min": -13.076065063476562,
+          "true_negative": 6,
+          "true_positive": 6
+        },
+        "present": {
+          "ambiguous": 0,
+          "false_negative": 0,
+          "false_positive": 0,
+          "rows": 84,
+          "signed_margin_max": 10.564204216003418,
+          "signed_margin_mean_float64": 6.263078451156616,
+          "signed_margin_min": 1.8478477001190186,
+          "true_negative": 0,
+          "true_positive": 84
+        }
+      },
+      "rows": 168
+    }
+  ]
+}

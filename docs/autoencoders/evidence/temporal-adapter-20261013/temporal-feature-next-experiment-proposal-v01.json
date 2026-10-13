@@ -1,0 +1,485 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/result-independent-review-v01.json": {
+      "bytes": 139520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/result-independent-review-v01.json",
+      "sha256": "50abcbd7e5dc870cce5cd3a8442808228cef2211e53ded30fffa9a6c39bff7e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-ce-control-plan-v01.json": {
+      "bytes": 41221,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/temporal-ce-control-plan-v01.json",
+      "sha256": "b1ce884884419ded434c7abe1f24d0348df01104366f3e435684573070a2417d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json": {
+      "bytes": 4675279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/two-cell-output-freeze-v01.json": {
+      "bytes": 33740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/two-cell-output-freeze-v01.json",
+      "sha256": "a074501402f7c5f8e1dcbded4daa326989a5449507af1b1464ab5aef56978728"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2288424,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/baseline-old_tune-raw.json",
+      "sha256": "e209883f315a409f9a68f90d4e5b6675f48012302e3f2eeccf217724ed487e56"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_tune-raw.json": {
+      "bytes": 2288595,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-old_tune-raw.json",
+      "sha256": "3fcba21b43d06da0f2a304448eb54919b7453e58707c8e717b8a0885f1d62c6e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-training168-raw.json": {
+      "bytes": 3589674,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-anchor-margin-01/results/trained-training168-raw.json",
+      "sha256": "293b3e0d37fceb0944e4ecbcfc60fc5448156dda59fcba3bdcd8248674cba042"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2288418,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/baseline-old_tune-raw.json",
+      "sha256": "e0f4963f7c2ff6619d7e3d746b4028dd6f3e5797c431a42a2a0089fde679b5df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_tune-raw.json": {
+      "bytes": 2288609,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-old_tune-raw.json",
+      "sha256": "3cffe9e95d53790b06a3230bdb2ddbbd8cab7d3f34ea5ca8b966e0e48d5befc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-training168-raw.json": {
+      "bytes": 3589667,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-adapter-20261013-temporal-ce-control-01/results/trained-training168-raw.json",
+      "sha256": "225eabf992c94d8cb9ae62cf9b777f6389b649aa2212680fb1e32d5ea2c58cf9"
+    }
+  },
+  "author": "/root/permission_protocol_review",
+  "default_promotion": false,
+  "existing_exposed_diagnostic_sources": [
+    {
+      "id": "native-tuning-calendula-t6-q7-o",
+      "source_sha256": "75e3dd9ef479bdf28c1f4ba5c4eb063d738991617130418216f1d2a9b795cca9",
+      "source_text": "As provided in section 8102(d), Calendula Regional Board has a duty to retain the certified calendula public register before 2072-02-02 if the calendula registration application has been accepted unless the calendula preservation notice remains effective."
+    },
+    {
+      "id": "native-tuning-calendula-t6-q7-p",
+      "source_sha256": "3da45e78d0a8111d9c6d05fa93103c73a053da36fc7c416924cc4c93afb25077",
+      "source_text": "As provided in section 8102(d), Calendula Regional Board has permission to retain the certified calendula public register before 2072-02-02 if the calendula registration application has been accepted unless the calendula preservation notice remains effective."
+    },
+    {
+      "id": "native-tuning-calendula-t6-q7-f",
+      "source_sha256": "c04c6a704a5e9143e92fb8ea5c8e0e2e966e40dde766a96ffc35a4bd255a6c1a",
+      "source_text": "As provided in section 8102(d), Calendula Regional Board is forbidden to retain the certified calendula public register before 2072-02-02 if the calendula registration application has been accepted unless the calendula preservation notice remains effective."
+    }
+  ],
+  "existing_train_only_structural_analog": [
+    {
+      "expected_temporal_present": true,
+      "id": "structured-train-bramble-t6-q7-p",
+      "source_sha256": "14b18f127233bf9e0cc1d3a0e47d8ad5b635eb52cc42b3e29442b2d01f564315",
+      "source_text": "As provided in section 902(c), Bramble Records Board has permission to retain the bramble permit file before 2041-02-02 if the bramble license remains valid unless the bramble network is unavailable."
+    }
+  ],
+  "final_training_temporal_head_observations": [
+    {
+      "cell": "temporal-ce-control",
+      "full_rule_training_accuracy_assessed": false,
+      "initial_training_capture_exists": false,
+      "maximum_negative_present_minus_absent": -0.9800962209701538,
+      "minimum_positive_present_minus_absent": 2.0244555473327637,
+      "rows": 168,
+      "strata": {
+        "authored_negative": 36,
+        "authored_positive": 36,
+        "legacy_negative": 48,
+        "legacy_positive": 48
+      },
+      "temporal_presence_correct": 168,
+      "training_perfect_threshold_open_interval": [
+        -0.9800962209701538,
+        2.0244555473327637
+      ]
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "full_rule_training_accuracy_assessed": false,
+      "initial_training_capture_exists": false,
+      "maximum_negative_present_minus_absent": -1.0628960132598877,
+      "minimum_positive_present_minus_absent": 1.8478477001190186,
+      "rows": 168,
+      "strata": {
+        "authored_negative": 36,
+        "authored_positive": 36,
+        "legacy_negative": 48,
+        "legacy_positive": 48
+      },
+      "temporal_presence_correct": 168,
+      "training_perfect_threshold_open_interval": [
+        -1.0628960132598877,
+        1.8478477001190186
+      ]
+    }
+  ],
+  "findings": [
+    "Both cells classify all168 training temporal-presence labels correctly, but no initial168 training capture exists: this is a final training measurement, not a demonstrated training-accuracy gain.",
+    "The held-exposed permission variant moves farther into absent territory (-0.405558 initially to -0.478626 CE/-0.493177 margin), while the otherwise paired obligation variant crosses to present (-0.020266 to +0.071098/+0.025659). Head updates are input-dependent, not a uniform bias shift.",
+    "The existing training set already contains permission/obligation/prohibition wording with positive and negative temporal labels, and one nearly identical permission/before-date/if/unless template. An entirely unseen permission phrase is not the explanation.",
+    "The trainable temporal head receives a mean of frozen contextual span-token features. Contextual/lexical feature interactions and coverage are plausible generalization limitations, but saved output logits do not establish feature-space separability or prove that the frozen encoder is incapable.",
+    "A range of thresholds remains perfect on training. The failing exposed permission margin lies inside that unconstrained training gap, so training-perfect accuracy neither identifies a unique threshold nor rules out calibration. A threshold chosen to fix that known row would be exposed-target fitting.",
+    "The margin arm leaves the same legacy error and unchanged development/evaluation whole-rule counts, with additional earlier-evaluation regressions. There is no evidence to promote it or to claim that more updates on these168 rows will resolve fidelity."
+  ],
+  "no_checkpoint_JSON_parses": true,
+  "no_model_or_resource_API_calls": true,
+  "no_new_model_forwards": true,
+  "no_new_reference_packet_reads": true,
+  "no_new_training": true,
+  "no_reference_threshold_fitted": true,
+  "observed_at_utc": "2026-10-13T05:00:07.458982+00:00",
+  "paired_saved_score_observations": [
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-o",
+      "present_minus_absent_float32": -0.020265744999051094,
+      "source_sha256": "75e3dd9ef479bdf28c1f4ba5c4eb063d738991617130418216f1d2a9b795cca9",
+      "state": "baseline",
+      "temporal_logits": [
+        0.0338493287563324,
+        0.013583583757281303
+      ],
+      "token_count": 44
+    },
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-p",
+      "present_minus_absent_float32": -0.40555816888809204,
+      "source_sha256": "3da45e78d0a8111d9c6d05fa93103c73a053da36fc7c416924cc4c93afb25077",
+      "state": "baseline",
+      "temporal_logits": [
+        0.10272875428199768,
+        -0.30282941460609436
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-f",
+      "present_minus_absent_float32": 2.141543388366699,
+      "source_sha256": "c04c6a704a5e9143e92fb8ea5c8e0e2e966e40dde766a96ffc35a4bd255a6c1a",
+      "state": "baseline",
+      "temporal_logits": [
+        -1.0246217250823975,
+        1.1169215440750122
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-o",
+      "present_minus_absent_float32": 0.07109808921813965,
+      "source_sha256": "75e3dd9ef479bdf28c1f4ba5c4eb063d738991617130418216f1d2a9b795cca9",
+      "state": "trained",
+      "temporal_logits": [
+        -0.011832445859909058,
+        0.05926564335823059
+      ],
+      "token_count": 44
+    },
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-p",
+      "present_minus_absent_float32": -0.47862595319747925,
+      "source_sha256": "3da45e78d0a8111d9c6d05fa93103c73a053da36fc7c416924cc4c93afb25077",
+      "state": "trained",
+      "temporal_logits": [
+        0.13926275074481964,
+        -0.3393631875514984
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-ce-control",
+      "id": "native-tuning-calendula-t6-q7-f",
+      "present_minus_absent_float32": 2.0803043842315674,
+      "source_sha256": "c04c6a704a5e9143e92fb8ea5c8e0e2e966e40dde766a96ffc35a4bd255a6c1a",
+      "state": "trained",
+      "temporal_logits": [
+        -0.9940022826194763,
+        1.0863021612167358
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-o",
+      "present_minus_absent_float32": -0.020265744999051094,
+      "source_sha256": "75e3dd9ef479bdf28c1f4ba5c4eb063d738991617130418216f1d2a9b795cca9",
+      "state": "baseline",
+      "temporal_logits": [
+        0.0338493287563324,
+        0.013583583757281303
+      ],
+      "token_count": 44
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-p",
+      "present_minus_absent_float32": -0.40555816888809204,
+      "source_sha256": "3da45e78d0a8111d9c6d05fa93103c73a053da36fc7c416924cc4c93afb25077",
+      "state": "baseline",
+      "temporal_logits": [
+        0.10272875428199768,
+        -0.30282941460609436
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-f",
+      "present_minus_absent_float32": 2.141543388366699,
+      "source_sha256": "c04c6a704a5e9143e92fb8ea5c8e0e2e966e40dde766a96ffc35a4bd255a6c1a",
+      "state": "baseline",
+      "temporal_logits": [
+        -1.0246217250823975,
+        1.1169215440750122
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-o",
+      "present_minus_absent_float32": 0.02565881982445717,
+      "source_sha256": "75e3dd9ef479bdf28c1f4ba5c4eb063d738991617130418216f1d2a9b795cca9",
+      "state": "trained",
+      "temporal_logits": [
+        0.010887101292610168,
+        0.03654592111706734
+      ],
+      "token_count": 44
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-p",
+      "present_minus_absent_float32": -0.4931766986846924,
+      "source_sha256": "3da45e78d0a8111d9c6d05fa93103c73a053da36fc7c416924cc4c93afb25077",
+      "state": "trained",
+      "temporal_logits": [
+        0.14653803408145905,
+        -0.34663867950439453
+      ],
+      "token_count": 43
+    },
+    {
+      "cell": "temporal-anchor-margin",
+      "id": "native-tuning-calendula-t6-q7-f",
+      "present_minus_absent_float32": 2.005390167236328,
+      "source_sha256": "c04c6a704a5e9143e92fb8ea5c8e0e2e966e40dde766a96ffc35a4bd255a6c1a",
+      "state": "trained",
+      "temporal_logits": [
+        -0.9565452337265015,
+        1.0488450527191162
+      ],
+      "token_count": 43
+    }
+  ],
+  "proposed_comparison": {
+    "acceptance": "Evaluate temporal false negatives/false positives, ambiguous decisions, permissions, exact full-rule IR and authored regressions separately; no default promotion unless the declared96/96 legacy gate and independent fresh development criteria pass.",
+    "candidate": "Frozen span-token encoder plus a new temporal-only attention query and binary classifier over concatenated global mean and attention-pooled token features.",
+    "common_parent": "Immutable N4 split-feature checkpoint95bd50a7\u2026 / frozen34-statefb63e61c\u2026; each cell starts independently from the same parent.",
+    "control": "Current frozen-feature mean-pool binary temporal head with CE; original34 frozen, two trainable tensors, rows0:6 inactive.",
+    "data": "Only authenticated training labels enter optimization. Expand training coverage with adjudicated modality-paired dates/durations across varying noun-phrase length, clauses, positions and genuine temporal negatives; exclude exposed diagnostic sources and their target-bearing reference containers from training.",
+    "formula": "z=softmax(q^T*h_i/sqrt(hidden_dim)) weighted sum of valid source-token h_i; temporal logits=W*[mean(h),z]+b. No supplied gold span, ID feature, target injection or ID-specific branch at inference.",
+    "initialization": "q=0; classifier global-mean block copies parent temporal rows, attention block=0, bias copies parent. Assert exact392-source full-head equality before training rather than assume algebra implies binary32 parity.",
+    "invariants": "No external/latent encoders; original34 gradientsNone and value digests fixed; true three-tensor optimizer subset; exact initial parent parity and final all392 protected-head vectors; immutable outputs and finite resource evidence.",
+    "limits": "Learned token attention is source-grounded but not a semantic proof. Real US Code references, family-specific typed AST/renderers, lake build legal, and genuine8D/384D/768D conditioning remain separate qualification work.",
+    "matched_budget": "Preregister batch ordering, source occurrences, optimizer updates, seed and wall/RSS/storage envelope; report extra token-attention work explicitly instead of claiming equal compute.",
+    "objective": "Same temporal CE; no new margin or inference threshold tuning in this first feature comparison. Fixed native decision/tie/abstention rules.",
+    "parameter_budget": "Declare exact names/shapes before implementation: frozen original34 plus temporal query/classifier weight/classifier bias (three trainable tensors). Report scalar counts and changed compute; the control has two trainable tensors.",
+    "purpose": "Test whether learnable source-token pooling improves temporal evidence extraction while protecting all other heads; distinguish this from selecting a threshold for an exposed error.",
+    "split_and_selection": "Freeze new source/template/title-aware development/test partitions and reference adjudication before training or selection. Prior392 references stay explicitly exposed engineering diagnostics. Use fresh development for any calibration; never the known remaining row or test targets."
+  },
+  "schema": "temporal-adapter-saved-evidence-feature-proposal/v1",
+  "semantic_qualification": false,
+  "status": "PROPOSED_NOT_EXECUTED",
+  "training_phrase_coverage": [
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "P",
+          "rows": 4
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "P",
+          "rows": 4
+        }
+      ],
+      "phrase": "has permission to",
+      "training_rows": 8
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "O",
+          "rows": 4
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "O",
+          "rows": 4
+        }
+      ],
+      "phrase": "has a duty to",
+      "training_rows": 8
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "F",
+          "rows": 4
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "F",
+          "rows": 4
+        }
+      ],
+      "phrase": "is forbidden to",
+      "training_rows": 8
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "F",
+          "rows": 2
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "F",
+          "rows": 2
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "O",
+          "rows": 2
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "O",
+          "rows": 2
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "P",
+          "rows": 2
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "P",
+          "rows": 2
+        }
+      ],
+      "phrase": "As provided in section",
+      "training_rows": 12
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": true,
+          "modality": "F",
+          "rows": 8
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "O",
+          "rows": 8
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "P",
+          "rows": 8
+        }
+      ],
+      "phrase": "before ",
+      "training_rows": 24
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "F",
+          "rows": 12
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "F",
+          "rows": 12
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "O",
+          "rows": 12
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "O",
+          "rows": 12
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "P",
+          "rows": 12
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "P",
+          "rows": 12
+        }
+      ],
+      "phrase": "unless ",
+      "training_rows": 72
+    },
+    {
+      "counts": [
+        {
+          "expected_temporal_present": false,
+          "modality": "F",
+          "rows": 10
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "F",
+          "rows": 9
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "O",
+          "rows": 10
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "O",
+          "rows": 9
+        },
+        {
+          "expected_temporal_present": false,
+          "modality": "P",
+          "rows": 10
+        },
+        {
+          "expected_temporal_present": true,
+          "modality": "P",
+          "rows": 9
+        }
+      ],
+      "phrase": " if ",
+      "training_rows": 57
+    }
+  ]
+}
