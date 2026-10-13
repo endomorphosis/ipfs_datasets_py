@@ -8,6 +8,7 @@ legal effect; distinguishing them from the codified body is not discarding them.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from urllib.parse import urlsplit
 
@@ -168,3 +169,202 @@ def inspect_prediction(source: dict, prediction: dict) -> dict:
             "context_resolution_verified": False, "reference_accuracy": None,
             "source_semantics_verified": False, "training_qualified": False,
             "limitations": "Literal cue accounting is incomplete and can neither prove nor disprove legal equivalence."}
+
+
+# Additive v2 contracts. The v1 extraction dictionary and validation entry point
+# above intentionally retain their original schema and output.
+VIEW_SCHEMA = "legal-statutory-normalized-document-view/v2"
+SELECTOR_SCHEMA = "legal-statutory-view-occurrence-selector/v2"
+CONTEXT_PACKET_SCHEMA = "legal-statutory-context-obligations/v2"
+NORMALIZATION_PROFILE = "govinfo-visible-paragraph-whitespace-collapse-lf/v1"
+DEPENDENCY_KINDS = ("definition", "authority", "antecedent", "shared_qualifier",
+                    "temporal_origin", "referenced_provision")
+MAX_CONTEXT_PACKET_BYTES = 32 * 1024 * 1024
+MAX_SELECTOR_BYTES = 64 * 1024
+MAX_OCCURRENCES = 4096
+_VIEW_ID = re.compile(r"legal-normalized-view:sha256:[0-9a-f]{64}\Z")
+_REQUEST_KEYS = {"kind", "availability", "locator", "expected_view_id", "candidate_selector"}
+_SELECTOR_KEYS = {"schema", "view_id", "document_id", "char_start", "char_end", "utf8_byte_start",
+                  "utf8_byte_end", "text", "text_sha256", "occurrence_id"}
+
+
+def _require(value, message):
+    if not value:
+        raise ValueError(message)
+
+
+def _context_wire(value) -> bytes:
+    try:
+        encoded = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                             separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError, RecursionError, UnicodeError) as error:
+        raise ValueError("bounded finite UTF8 JSON context required") from error
+    _require(len(encoded) <= MAX_CONTEXT_PACKET_BYTES, "context packet byte bound exceeded")
+    return encoded
+
+
+def _context_digest(value) -> str:
+    return hashlib.sha256(_context_wire(value)).hexdigest()
+
+
+def normalized_document_view(document: dict, raw: bytes) -> dict:
+    """Authenticate v1 extraction and name its immutable normalized text view.
+
+    Both selector units refer exclusively to the extracted ``document_text``.
+    The HTML digest binds custody; it is never an HTML byte-offset mapping.
+    """
+    _require(type(document) is dict and document.get("schema") == SCHEMA
+             and all(key in document for key in ("source_url", "edition", "legal_id")),
+             "v1 official document extraction required")
+    expected = extract_document(raw, url=document["source_url"], edition=document["edition"],
+                                legal_id=document["legal_id"])
+    _require(_context_wire(document) == _context_wire(expected),
+             "document differs from exact immutable normalized extraction")
+    text = document["document_text"]
+    identity = {"schema": VIEW_SCHEMA, "normalization_profile": NORMALIZATION_PROFILE,
+                **{key: document[key] for key in ("document_id", "legal_id", "edition", "source_url",
+                                                  "html_sha256", "document_text_sha256")}}
+    return {**identity, "view_id": "legal-normalized-view:sha256:" + _context_digest(identity),
+            "unicode_code_points": len(text), "utf8_bytes": len(text.encode("utf-8")),
+            "char_coordinate_system": "Unicode code points in document_text; half-open",
+            "byte_coordinate_system": "UTF8 bytes of document_text; half-open",
+            "raw_html_coordinate_mapping_verified": False}
+
+
+def _selector(document: dict, view: dict, char_start: int, char_end: int) -> dict:
+    text = document["document_text"]
+    _require(type(char_start) is int and type(char_end) is int
+             and 0 <= char_start < char_end <= len(text), "bounded nonempty character selector required")
+    selected = text[char_start:char_end]
+    _require(len(selected.encode("utf-8")) <= MAX_SELECTOR_BYTES, "selected source byte bound exceeded")
+    identity = {"schema": SELECTOR_SCHEMA, "view_id": view["view_id"],
+                "document_id": document["document_id"], "char_start": char_start, "char_end": char_end,
+                "utf8_byte_start": len(text[:char_start].encode("utf-8")),
+                "utf8_byte_end": len(text[:char_end].encode("utf-8")),
+                "text": selected, "text_sha256": sha(selected)}
+    return {**identity, "occurrence_id": "legal-view-occurrence:sha256:" + _context_digest(identity)}
+
+
+def source_selector(document: dict, raw: bytes, *, char_start: int, char_end: int) -> dict:
+    """Create an exact physical occurrence selector, preserving repeated text."""
+    view = normalized_document_view(document, raw)
+    return _selector(document, view, char_start, char_end)
+
+
+def _validate_selector(selector: dict, document: dict, view: dict) -> None:
+    _require(type(selector) is dict and set(selector) == _SELECTOR_KEYS,
+             "closed source occurrence selector required")
+    expected = _selector(document, view, selector["char_start"], selector["char_end"])
+    _require(_context_wire(selector) == _context_wire(expected),
+             "selector identity, character or UTF8 byte coordinates differ")
+
+
+def validate_source_selector(selector: dict, document: dict, raw: bytes) -> None:
+    _validate_selector(selector, document, normalized_document_view(document, raw))
+
+
+def exact_view_occurrences(document: dict, raw: bytes, *, text: str,
+                           max_occurrences: int = MAX_OCCURRENCES) -> list[dict]:
+    """Enumerate every exact match, including overlap, or refuse the bound.
+
+    This function performs no text normalization and chooses no occurrence.
+    Absence and multiple occurrences remain explicit to the caller.
+    """
+    view = normalized_document_view(document, raw)
+    _require(type(text) is str and text and len(text.encode("utf-8")) <= MAX_SELECTOR_BYTES,
+             "bounded nonempty exact source text required")
+    _require(type(max_occurrences) is int and 0 < max_occurrences <= MAX_OCCURRENCES,
+             "bounded exact occurrence limit required")
+    matches, position = [], 0
+    while (start := document["document_text"].find(text, position)) >= 0:
+        _require(len(matches) < max_occurrences, "exact occurrence bound exceeded; inventory incomplete")
+        matches.append(_selector(document, view, start, start + len(text)))
+        position = start + 1
+    return matches
+
+
+def _dependency_slots(document: dict, view: dict, origin: dict, requests: list | None) -> list[dict]:
+    if requests is None:
+        requests = [{"kind": kind, "availability": "missing", "locator": None,
+                     "expected_view_id": None, "candidate_selector": None} for kind in DEPENDENCY_KINDS]
+    _require(type(requests) is list and len(requests) == len(DEPENDENCY_KINDS),
+             "one explicit open obligation for each context dependency kind required")
+    by_kind = {}
+    for request in requests:
+        _require(type(request) is dict and set(request) == _REQUEST_KEYS, "closed context dependency request required")
+        kind = request["kind"]
+        _require(type(kind) is str and kind in DEPENDENCY_KINDS and kind not in by_kind,
+                 "unknown or duplicate context dependency kind")
+        _require(request["availability"] in ("missing", "unavailable", "available"),
+                 "explicit context content availability required")
+        locator, expected_id, candidate = request["locator"], request["expected_view_id"], request["candidate_selector"]
+        _require(locator is None or type(locator) is str and 0 < len(locator.encode("utf-8")) <= 4096,
+                 "bounded context locator or null required")
+        _require(expected_id is None or type(expected_id) is str and _VIEW_ID.fullmatch(expected_id),
+                 "exact expected normalized view identity or null required")
+        stale = expected_id is not None and expected_id != view["view_id"]
+        if candidate is not None:
+            _require(request["availability"] == "available" and not stale,
+                     "candidate content cannot be missing, unavailable or stale")
+            _validate_selector(candidate, document, view)
+        if stale:
+            status = "open_stale"
+        elif request["availability"] == "unavailable":
+            status = "open_unavailable"
+        elif candidate is not None:
+            status = "open_content_available"
+        elif locator is not None:
+            status = "open_locator_only"
+        else:
+            status = "open_missing"
+        slot = {**request, "status": status, "open": True, "attachments": [],
+                "semantic_attachment_verified": False}
+        slot["slot_id"] = "legal-context-slot:sha256:" + _context_digest(
+            {"origin_occurrence_id": origin["occurrence_id"], "request": request})
+        by_kind[kind] = slot
+    return [by_kind[kind] for kind in DEPENDENCY_KINDS]
+
+
+def build_context_packet(document: dict, raw: bytes, *, char_start: int, char_end: int,
+                         dependency_requests: list | None = None) -> dict:
+    """Prepare source geometry and open context obligations without admission.
+
+    Candidate selectors in this bounded profile address the same authenticated
+    document view. External locators remain open; a cross-document content
+    binding needs a separately versioned profile. ``expected_view_id`` names
+    that same local view; another identity flags stale local custody, not an
+    independently established fact about an external source. Slot categories
+    are a review checklist, not an exhaustive inferred dependency inventory.
+    """
+    view = normalized_document_view(document, raw)
+    selection = _selector(document, view, char_start, char_end)
+    slots = _dependency_slots(document, view, selection, dependency_requests)
+    body = {"schema": CONTEXT_PACKET_SCHEMA, "source_document": document,
+            "normalized_view": view, "selection": selection, "dependency_slots": slots,
+            "dependency_inventory_exhaustive": False, "context_closure_verified": False,
+            "source_semantics_verified": False, "independently_reviewed": False,
+            "training_qualified": False, "proof_authority": False,
+            "semantic_attachments_inferred": False, "raw_html_coordinate_mapping_verified": False}
+    # Detach caller-owned dictionaries so later edits cannot mutate a packet.
+    body = json.loads(_context_wire(body))
+    return {**body, "packet_id": "legal-context-packet:sha256:" + _context_digest(body)}
+
+
+def validate_context_packet(packet: dict, document: dict, raw: bytes, *, expected_selector: dict,
+                            dependency_requests: list | None = None) -> dict:
+    """Replay trusted source occurrence and explicit dependency request set.
+
+    A separately supplied selector prevents a self-consistent rewritten packet
+    from choosing a different identical-text occurrence on the caller's behalf.
+    """
+    _require(type(packet) is dict and type(packet.get("selection")) is dict, "versioned context packet required")
+    validate_source_selector(expected_selector, document, raw)
+    expected = build_context_packet(document, raw, char_start=expected_selector["char_start"],
+                                    char_end=expected_selector["char_end"], dependency_requests=dependency_requests)
+    _require(_context_wire(packet) == _context_wire(expected),
+             "context packet differs from source geometry or open dependency obligations")
+    return {"schema": "legal-statutory-context-obligations-validation/v2",
+            "packet_id": packet["packet_id"], "view_id": packet["normalized_view"]["view_id"],
+            "source_geometry_verified": True, "open_dependency_slots": len(DEPENDENCY_KINDS),
+            "context_closure_verified": False, "semantic_attachments_verified": False,
+            "source_semantics_verified": False, "training_qualified": False, "proof_authority": False}

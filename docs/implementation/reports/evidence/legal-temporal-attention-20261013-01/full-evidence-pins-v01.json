@@ -1,0 +1,130 @@
+{
+  "Git_scope_exclusions": [
+    {
+      "immutable_HF_source_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/blob/3440e82e07555b9f7e1d2608cac762ef66eecae4/releases/20261013-temporal-attention-v1/recipe/independent_temporal_attention_recount_v02.py",
+      "preserved_local_copy": {
+        "bytes": 44471,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/omitted-Git-recipe-copies-v01/independent_temporal_attention_recount_v02.py",
+        "sha256": "2b777cc8341c806cbbd336747dc6f7017ea0d567c932d77868919a3faebdde98"
+      },
+      "reason": "Frozen source has an extra blank line at EOF. Omitted the byte-identical Git recipe copy to retain clean default git diff --check; original artifact and immutable HF source bytes remain unchanged.",
+      "source": {
+        "bytes": 44471,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/independent_temporal_attention_recount_v02.py",
+        "sha256": "2b777cc8341c806cbbd336747dc6f7017ea0d567c932d77868919a3faebdde98"
+      }
+    }
+  ],
+  "actual_independent_HF_review": {
+    "bytes": 464801,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-publication-actual-independent-review-v01.json",
+    "sha256": "8a3ae60d779cb91a51bb64e028b3561c7485fe9a644408ca56f6982177377dbe"
+  },
+  "additional_Git_only_evidence": [
+    {
+      "bytes": 26222,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/authored-training-error-review-v02.json",
+      "sha256": "297c0d92b1045f2d7a8012c0b5159a0738e03a38643ed423280cc54ff50c7a61"
+    }
+  ],
+  "checkpoint_and_raw_capture_bodies_copied_to_Git": false,
+  "default_promotion": false,
+  "full_evidence": [
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/temporal-attention-output-freeze-v04.json",
+      "source": {
+        "bytes": 25674,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-output-freeze-v04.json",
+        "sha256": "6b108995b792e70dc4e9816466cb12c087c582836a21031df9a4319266621e15"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/runtime-independent-review-v04.json",
+      "source": {
+        "bytes": 61121,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/runtime-independent-review-v04.json",
+        "sha256": "d26525aeab72ae1ba3ad68a12a3dd1991120ad78659a3e6e44060bf0dad07d18"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/temporal-attention-result-analysis-v01.json",
+      "source": {
+        "bytes": 5065973,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-result-analysis-v01.json",
+        "sha256": "36679c2ebe57e4e44ca39b5883c7d91202576643f4b3b9bf86103f72da8c43a5"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/result-independent-review-v01.json",
+      "source": {
+        "bytes": 103281,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/result-independent-review-v01.json",
+        "sha256": "db3a8546cb3299ecc9ba043970fe694ad48a4372e4c2ab931b853c167b83c61f"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/recipe/analyze_temporal_attention.py",
+      "source": {
+        "bytes": 55520,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/analyze_temporal_attention.py",
+        "sha256": "aed798f9fa1e008de4d0cd9826b67cfa5ab2d45ce7ed1a2c5e046e5905960d60"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/recipe/independent_temporal_attention_recount_v02.py",
+      "source": {
+        "bytes": 44471,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/independent_temporal_attention_recount_v02.py",
+        "sha256": "2b777cc8341c806cbbd336747dc6f7017ea0d567c932d77868919a3faebdde98"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/public-result-summary-v01.json",
+      "source": {
+        "bytes": 26724,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/public-result-summary-v01.json",
+        "sha256": "a7ad258dfe7a110f82f082543e75b065f7758da6d4e5c86093bfe55146fdaa1b"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/evidence/next-experiment-gaps-v01.json",
+      "source": {
+        "bytes": 7346,
+        "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/next-experiment-gaps-v01.json",
+        "sha256": "01de766b3b7b0e18ae570fc3be03032956edb43a539e684d29c857de1e5b8a33"
+      }
+    },
+    {
+      "Hub_path": "releases/20261013-temporal-attention-v1/cells/temporal-attention-ce/results/cell-training.json",
+      "source": {
+        "bytes": 1079081,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/cell-training.json",
+        "sha256": "ce4e871016a13f65eb32f4f10a5ea0fbacd7a03ca9af207bc8fe891a282ad2ab"
+      }
+    }
+  ],
+  "immutable_revision": "3440e82e07555b9f7e1d2608cac762ef66eecae4",
+  "immutable_tree_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/tree/3440e82e07555b9f7e1d2608cac762ef66eecae4/releases/20261013-temporal-attention-v1",
+  "latest_upstream_owner_compatibility": {
+    "in_sealed_HF_spec": false,
+    "retained_owner_count": 34,
+    "review": {
+      "bytes": 31215,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/upstream-owner-compatibility-independent-review-v02.json",
+      "sha256": "25ebb1bb38a14e77cbb1cbaedd9c83be41aa66df50c3bb318857171329a49c3a"
+    },
+    "source_Git_evidence_path": "docs/implementation/reports/evidence/legal-temporal-attention-20261013-01/upstream-owner-compatibility-independent-review-v02.json",
+    "source_upstream_commit": "28b9ef1f0b9da51e87b1e68ee565b43681397109"
+  },
+  "private_resource_bodies_copied_to_Git": false,
+  "publication_status": "PUBLISHED_IMMUTABLE_CLI_VERIFIED",
+  "publication_verification": {
+    "bytes": 60962,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/hf-publication-verification-v01.json",
+    "sha256": "e4135c017aaad4812453caf5efdb61d29349e7c1f559c69d0dc2faff64d0c183"
+  },
+  "release_prefix": "releases/20261013-temporal-attention-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "schema": "temporal-attention-Git-compact-evidence-pins/v1",
+  "semantic_accuracy": null
+}

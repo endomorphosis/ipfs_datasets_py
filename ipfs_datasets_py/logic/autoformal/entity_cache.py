@@ -25,6 +25,9 @@ DATASET_ID = "justicedao/ipfs_uscode"
 MAX_LABEL = 2_000
 MAX_PROPERTIES = 8_192
 MAX_BATCH = 512
+PROPOSED_GRAPH_SCHEMA = "entity-cache-source-graph-proposals/v1"
+MAX_GRAPH_OCCURRENCES = 64
+MAX_PROPOSED_GRAPH_BYTES = 8 * 1024 * 1024
 
 _DDL = """
 CREATE TABLE IF NOT EXISTS entity_queue (
@@ -1352,6 +1355,126 @@ class EntityCache:
                 parsed.append(context)
             yield parsed
             after = page[-1][0]
+
+    @_owned_method
+    def build_proposed_graphs(self, entity_id: str, *, document: dict, raw_html: bytes,
+                             document_revision: str, scope: dict, occurrences: list,
+                             expected_population: list) -> dict[str, Any]:
+        """Build proposed source-bound graphs from an independent occurrence list.
+
+        ``expected_population`` is a trusted, ordered upstream inventory of
+        ``{source_span_id, occurrence_id, source_sha256}``. It is never derived
+        from legacy ``contained_span_ids`` or sealed/admitted/formalized flags.
+        Each occurrence supplies those span/hash fields, an exact v2 selector,
+        an AST/profile (or both null for a retained unresolved gap), and optional
+        arguments for ``legal_semantic_graph.build_graph``. This read-only
+        adapter neither stores graphs in legacy context JSON nor changes queue,
+        claim, admission, or resume state. Supplied-population completeness does
+        not establish full-section or whole-corpus coverage. Direct SpanCache
+        ``rule_json`` conversion and the Hub's separate materialized KG-index
+        schema require explicit caller adapters; neither is inferred here.
+        """
+        from . import legal_semantic_graph as graphs
+
+        _string(entity_id, 1024, 'graph section entity id')
+        _string(document_revision, 2048, 'graph document revision')
+        self._binding()  # Unbound legacy queues cannot manufacture custody.
+        self._require_bound_context()
+        row = self._db.execute(
+            "SELECT entity_type,label,properties_json,source_sha256,status,context_json "
+            "FROM entity_queue WHERE entity_id=?", [entity_id]).fetchone()
+        _require(row is not None and row[0] == 'section' and row[4] == 'prepared',
+                 'graph input requires an unclaimed prepared section')
+        context = _object(row[5], MAX_CONTEXT_BYTES, 'graph section context')
+        _require(context.get('span_legal_id') == document.get('legal_id')
+                 and bool(context.get('span_legal_id')), 'graph document differs from prepared section legal identity')
+        _require(type(scope) is dict and type(scope.get('edition')) is int
+                 and scope['edition'] == document.get('edition'), 'graph scope/document edition differs')
+        _require(type(occurrences) is list and 0 < len(occurrences) <= MAX_GRAPH_OCCURRENCES,
+                 'bounded nonempty graph occurrence population required')
+        _require(type(expected_population) is list and len(expected_population) == len(occurrences),
+                 'exact independent graph occurrence population required')
+        _require(len(_json(occurrences).encode('utf-8')) <= MAX_PROPOSED_GRAPH_BYTES,
+                 'graph occurrence input byte bound exceeded')
+        observed, result_rows, seen_spans, seen_occurrences = [], [], set(), set()
+        for expected, occurrence in zip(expected_population, occurrences):
+            _require(type(expected) is dict and set(expected) == {
+                'source_span_id', 'occurrence_id', 'source_sha256'}, 'closed expected graph occurrence required')
+            _require(type(occurrence) is dict and {
+                'source_span_id', 'source_sha256', 'selector', 'ast', 'profile'} <= set(occurrence)
+                and set(occurrence) <= {'source_span_id', 'source_sha256', 'source_text', 'selector', 'ast', 'profile',
+                    'semantic_declarations', 'dependency_refs', 'evidence_refs', 'scope_request',
+                    'sealed', 'admitted', 'formalized', 'status'}, 'closed graph occurrence request required')
+            span_id = _string(occurrence['source_span_id'], 2048, 'graph source span id')
+            source = graphs.bind_source_occurrence(document, raw_html, selector=occurrence['selector'],
+                                                   document_revision=document_revision)
+            selector = source['selector']
+            if 'source_text' in occurrence:
+                _require(occurrence['source_text'] == selector['text'],
+                         'graph source text differs from exact source selector')
+            identity = {'source_span_id': span_id, 'occurrence_id': selector['occurrence_id'],
+                        'source_sha256': selector['text_sha256']}
+            _require(occurrence['source_sha256'] == identity['source_sha256']
+                     and _json(expected) == _json(identity),
+                     'graph occurrence differs from exact expected source population')
+            _require(span_id not in seen_spans and identity['occurrence_id'] not in seen_occurrences,
+                     'duplicate graph occurrence or span binding')
+            seen_spans.add(span_id)
+            seen_occurrences.add(identity['occurrence_id'])
+            observed.append(identity)
+            graph_arguments = {key: occurrence[key] for key in (
+                'semantic_declarations', 'dependency_refs', 'evidence_refs', 'scope_request') if key in occurrence}
+            if occurrence['ast'] is None:
+                _require(occurrence['profile'] is None and not any(graph_arguments.values()),
+                         'unresolved graph occurrence cannot silently discard declarations or references')
+                graph, disposition = None, 'unresolved_no_typed_ast'
+            else:
+                graph = graphs.build_graph(occurrence['ast'], profile=occurrence['profile'], source=source,
+                                           scope=scope, **graph_arguments)
+                disposition = 'proposed_unreviewed_graph'
+            result_rows.append({**identity, 'source_binding': source, 'graph': graph, 'disposition': disposition})
+        binding = self._binding()
+        report = {'schema': PROPOSED_GRAPH_SCHEMA, 'entity_id': entity_id,
+                  'entity_source_sha256': row[3], 'entity_input_id': binding['input_id'],
+                  'prepared_context': context, 'prepared_context_sha256': _sha(_json(context)),
+                  'document_revision': document_revision, 'scope': scope,
+                  'expected_population': expected_population, 'observed_population': observed,
+                  'population_sha256': _sha(_json(expected_population)),
+                  'rows': result_rows, 'occurrence_count': len(result_rows),
+                  'unresolved_occurrence_ids': [item['occurrence_id'] for item in result_rows if item['graph'] is None],
+                  'population_complete': True, 'coverage_scope': 'exact_supplied_occurrence_population_only',
+                  'complete_section_coverage_verified': False, 'legacy_admission_flags_used': False,
+                  'source_semantics_verified': False, 'global_consistency_verified': False,
+                  'independently_reviewed': False, 'training_qualified': False, 'proof_authority': False,
+                  'admitted': False, 'formalized': False}
+        encoded = _json(report)
+        _require(len(encoded.encode('utf-8')) <= MAX_PROPOSED_GRAPH_BYTES, 'proposed graph output byte bound exceeded')
+        report = json.loads(encoded)  # Detach every caller-owned AST/scope/list.
+        report['proposal_sha256'] = _sha(encoded)
+        _require(len(_json(report).encode('utf-8')) <= MAX_PROPOSED_GRAPH_BYTES,
+                 'proposed graph sealed output byte bound exceeded')
+        return report
+
+    @_owned_method
+    def validate_proposed_graphs(self, report: dict, entity_id: str, **trusted_inputs) -> dict[str, Any]:
+        """Revalidate exported/imported proposals against trusted complete inputs."""
+        expected = self.build_proposed_graphs(entity_id, **trusted_inputs)
+        _require(_json(report) == _json(expected), 'entity graph proposal differs from trusted regeneration')
+        return expected
+
+    @_owned_method
+    def export_proposed_graphs(self, report: dict, entity_id: str, **trusted_inputs) -> str:
+        """Return bounded JSON after validation; no legacy cache persistence."""
+        checked = self.validate_proposed_graphs(report, entity_id, **trusted_inputs)
+        encoded = _json(checked)
+        _require(len(encoded.encode('utf-8')) <= MAX_PROPOSED_GRAPH_BYTES, 'proposed graph export byte bound exceeded')
+        return encoded
+
+    @_owned_method
+    def import_proposed_graphs(self, payload: str, entity_id: str, **trusted_inputs) -> dict[str, Any]:
+        """Import as a proposal only; aliases, duplicate JSON keys and promotion fail."""
+        report = _object(payload, MAX_PROPOSED_GRAPH_BYTES, 'proposed graph import')
+        return self.validate_proposed_graphs(report, entity_id, **trusted_inputs)
 
     @_owned_method
     def list_inconsistencies(self) -> list[dict[str, Any]]:

@@ -1,0 +1,182 @@
+{
+  "Lake_executed": false,
+  "analysis": {
+    "bytes": 5065973,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-result-analysis-v01.json",
+    "sha256": "36679c2ebe57e4e44ca39b5883c7d91202576643f4b3b9bf86103f72da8c43a5"
+  },
+  "completed_attempt": {
+    "inference_source_forwards": 1760,
+    "model_forwards": 1792,
+    "optimizer_updates": 32,
+    "training_source_occurrences": 384
+  },
+  "default_promotion": false,
+  "engineering_selection": {
+    "at_least_one_development_metric_strictly_better": false,
+    "automatic_default_promotion": false,
+    "both_development_metrics_no_worse": true,
+    "candidate_fresh_dev": {
+      "joint_exact_ir": 0,
+      "temporal_presence_correct": 25
+    },
+    "comparison": "Fixed completed N6 CE historical checkpoint, with zero new control optimizer updates",
+    "default_promotion": false,
+    "eligible": false,
+    "fresh_development_gate_passed": false,
+    "historical_CE_fresh_dev": {
+      "joint_exact_ir": 0,
+      "temporal_presence_correct": 25
+    },
+    "legacy_gate_passed": false,
+    "selected_cell": null,
+    "technical_gate_passed": true,
+    "test_used_for_selection": false,
+    "threshold_or_hyperparameters_fitted": false
+  },
+  "evidence": [
+    "Training temporal presence was already168/168 in N4 parent and remained168/168; this experiment establishes the previously missing initial training baseline.",
+    "Training complete IR stayed153/168;13of15 joint failures have wrong actor spans.",
+    "Freshdevelopment25/36 andtest19/36 temporal accuracy match fixedN6CE; wholeIR0/36each.",
+    "Learnedquery versus uniform changed no temporal-correct/fullIR outcomes on legacy96+fresh72; this does not isolate causal trainingeffects.",
+    "Oldauthored evaluation jointIR49/72 versus historicalCE50/72; no defaultpromotion."
+  ],
+  "failed_attempt": {
+    "artifacts_preserved": true,
+    "inference_source_forwards": 704,
+    "optimizer_updates": 0,
+    "status": "retained",
+    "storage_claim_bytes": 200000000
+  },
+  "freeze": {
+    "bytes": 25674,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-output-freeze-v04.json",
+    "sha256": "6b108995b792e70dc4e9816466cb12c087c582836a21031df9a4319266621e15"
+  },
+  "genuine_latent_semantics_qualified": false,
+  "measured_components": [
+    {
+      "joint_exact_ir": 0,
+      "joint_role_exact_counts": {
+        "action": 34,
+        "actor": 26,
+        "conditions": 6,
+        "exceptions": 24,
+        "object": 18,
+        "temporal": 8
+      },
+      "panel": "fresh_dev",
+      "raw_exact_ir": 0,
+      "role_exact_counts": {
+        "action": 9,
+        "actor": 6,
+        "conditions": 3,
+        "exceptions": 9,
+        "object": 8,
+        "temporal": 4
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 25
+    },
+    {
+      "joint_exact_ir": 0,
+      "joint_role_exact_counts": {
+        "action": 13,
+        "actor": 9,
+        "conditions": 6,
+        "exceptions": 9,
+        "object": 7,
+        "temporal": 8
+      },
+      "panel": "fresh_test",
+      "raw_exact_ir": 0,
+      "role_exact_counts": {
+        "action": 3,
+        "actor": 3,
+        "conditions": 2,
+        "exceptions": 1,
+        "object": 2,
+        "temporal": 1
+      },
+      "row_count": 36,
+      "state": "trained",
+      "temporal_presence_correct": 19
+    },
+    {
+      "joint_exact_ir": 153,
+      "joint_role_exact_counts": {
+        "action": 167,
+        "actor": 155,
+        "conditions": 165,
+        "exceptions": 166,
+        "object": 166,
+        "temporal": 167
+      },
+      "panel": "training168",
+      "raw_exact_ir": 153,
+      "role_exact_counts": {
+        "action": 166,
+        "actor": 155,
+        "conditions": 164,
+        "exceptions": 166,
+        "object": 166,
+        "temporal": 166
+      },
+      "row_count": 168,
+      "state": "trained",
+      "temporal_presence_correct": 168
+    }
+  ],
+  "next_experiment": {
+    "architecture": "Opt-in actor start/end readout initialized from the common N4 parent; preserve original modality and otherheads. Compare same-data head-only correction first.",
+    "evaluation": "Retain complete initial+final training anddiagnostic captures. Require legacy96/P32 preservation; keep newdevelopment/test sourcegroups separate. Existing72 fresh examples are now exposed engineering diagnostics, not future blind tests.",
+    "objective": "Correct actor boundaries before adding more temporal pooling capacity.",
+    "prerequisites": [
+      "Review all15 training wholeIR failures for label/span ambiguity before optimization.",
+      "Preregister actor-only tensor/row/moment policy and actual objective/batchcompute budget.",
+      "Extend boundary fixtures for conditions/exceptions interrupting actor/action/object and semicolon applicability.",
+      "Add independent USCode source/context review before asserting statutory semantics.",
+      "Qualify actual emitted outputs through appropriate logic-family parsers and a separately bounded lake build legal compiler run."
+    ],
+    "status": "DESIGN_ONLY_NO_ADMISSION_OR_TRAINING",
+    "training_examples": "Reuse authenticated168 authored training rows for first bounded pilot; build extra source-role interruption curriculum separately if necessary."
+  },
+  "schema": "temporal-attention-measured-next-gaps/v1",
+  "semantic_accuracy": null,
+  "technical_gate_passed": true,
+  "training_actor_error_ids": [
+    "matched-temporal-train-plain_deadline-1-p-present",
+    "matched-temporal-train-actor_duration_name-0-o-absent",
+    "matched-temporal-train-actor_duration_name-0-o-present",
+    "matched-temporal-train-actor_duration_name-0-p-absent",
+    "matched-temporal-train-actor_duration_name-0-p-present",
+    "matched-temporal-train-actor_duration_name-0-f-absent",
+    "matched-temporal-train-actor_duration_name-0-f-present",
+    "matched-temporal-train-actor_duration_name-1-o-absent",
+    "matched-temporal-train-actor_duration_name-1-o-present",
+    "matched-temporal-train-actor_duration_name-1-p-absent",
+    "matched-temporal-train-actor_duration_name-1-p-present",
+    "matched-temporal-train-actor_duration_name-1-f-absent",
+    "matched-temporal-train-actor_duration_name-1-f-present"
+  ],
+  "training_actor_joint_errors": 13,
+  "training_error_ids": [
+    "matched-temporal-train-plain_deadline-1-p-present",
+    "matched-temporal-train-actor_duration_name-0-o-absent",
+    "matched-temporal-train-actor_duration_name-0-o-present",
+    "matched-temporal-train-actor_duration_name-0-p-absent",
+    "matched-temporal-train-actor_duration_name-0-p-present",
+    "matched-temporal-train-actor_duration_name-0-f-absent",
+    "matched-temporal-train-actor_duration_name-0-f-present",
+    "matched-temporal-train-actor_duration_name-1-o-absent",
+    "matched-temporal-train-actor_duration_name-1-o-present",
+    "matched-temporal-train-actor_duration_name-1-p-absent",
+    "matched-temporal-train-actor_duration_name-1-p-present",
+    "matched-temporal-train-actor_duration_name-1-f-absent",
+    "matched-temporal-train-actor_duration_name-1-f-present",
+    "matched-temporal-train-condition_exception_duration-0-p-absent",
+    "matched-temporal-train-condition_exception_duration-0-p-present"
+  ],
+  "training_joint_errors": 15
+}

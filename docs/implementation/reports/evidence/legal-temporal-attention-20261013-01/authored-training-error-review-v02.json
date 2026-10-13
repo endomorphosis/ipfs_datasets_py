@@ -1,0 +1,748 @@
+{
+  "analysis": {
+    "bytes": 5065973,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-result-analysis-v01.json",
+    "sha256": "36679c2ebe57e4e44ca39b5883c7d91202576643f4b3b9bf86103f72da8c43a5"
+  },
+  "categories": {
+    "abstention": 1,
+    "actor_boundary": 12,
+    "condition_boundary": 2
+  },
+  "default_promotion": false,
+  "detailed_review": {
+    "bytes": 221366,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/authored-training-error-review-v01.json",
+    "sha256": "7b128e027af5275a70a65396bf994bb845adc17be98c7889a5e48779ee505bf4"
+  },
+  "findings": [],
+  "freeze": {
+    "bytes": 25674,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/temporal-attention-output-freeze-v04.json",
+    "sha256": "6b108995b792e70dc4e9816466cb12c087c582836a21031df9a4319266621e15"
+  },
+  "independent_statutory_gold": false,
+  "input_pins": [
+    {
+      "bytes": 4675279,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    {
+      "bytes": 2485996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/temporal-attention-20261013-temporal-attention-ce-02/results/trained-training168-joint.json",
+      "sha256": "c43b0b252ff2b10028718c4790defd15d78761b5f3920719eff9b60a1ebfeb15"
+    }
+  ],
+  "latent_or_model_calls": 0,
+  "observations": [
+    "All12 selected actor-boundary failures belong to two long named-actor constructions (6 O/P/F and temporal\u00b1 cases each).",
+    "Ten actor outputs truncate at Office; two choose an internal quoted-name fragment, one of which also misses object/exception.",
+    "The two remaining selected outputs miss condition boundaries in the same guarded-duration construction; one complete prediction abstains.",
+    "Thus13 actor-role nonmatches in the aggregate include12 selected boundary errors and the one overall abstention.",
+    "Next actor experiment should examine source-local modal/quote boundary features and grammar candidate coverage, with a head-only control; freeze original modality and preserve permission outcomes."
+  ],
+  "optimizer_updates": 0,
+  "passed": true,
+  "row_count": 15,
+  "rows": [
+    {
+      "category": "abstention",
+      "id": "matched-temporal-train-plain_deadline-1-p-present",
+      "joint_prediction": {
+        "canonical_ir": null,
+        "reason": "no_compatible_assignment_in_retained_domain",
+        "status": "abstained"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh0 Office",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the junipermarsh0 filing packet",
+            "temporal": [
+              "within 2122 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": false,
+        "actor": false,
+        "conditions": false,
+        "exceptions": false,
+        "object": false,
+        "temporal": false
+      },
+      "source_text": "the Junipermarsh0 Office may archive the junipermarsh0 filing packet within 2122 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-o-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the indigoport3 register",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the indigoport3 register",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d shall inspect the indigoport3 register."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-o-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the indigoport3 register",
+              "temporal": [
+                "within 2401 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the indigoport3 register",
+            "temporal": [
+              "within 2401 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d shall inspect the indigoport3 register within 2401 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-p-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the indigoport3 register",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the indigoport3 register",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d may inspect the indigoport3 register."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-p-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the indigoport3 register",
+              "temporal": [
+                "within 2401 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the indigoport3 register",
+            "temporal": [
+              "within 2401 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d may inspect the indigoport3 register within 2401 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-f-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "the indigoport3 register",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the indigoport3 register",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d shall not inspect the indigoport3 register."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-0-f-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "F",
+              "object": "the indigoport3 register",
+              "temporal": [
+                "within 2401 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the indigoport3 register",
+            "temporal": [
+              "within 2401 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport3 Office for Licensed Records and Public Archive Custody named \u201cwithin 2402 days\u201d shall not inspect the indigoport3 register within 2401 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-o-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "the Junipermarsh3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the junipermarsh3 filing packet",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d shall archive the junipermarsh3 filing packet."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-o-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "the Junipermarsh3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the junipermarsh3 filing packet",
+              "temporal": [
+                "within 2422 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "O",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": [
+              "within 2422 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d shall archive the junipermarsh3 filing packet within 2422 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-p-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "Licensed Records and Public Archive Custody\u201d",
+              "conditions": [],
+              "exceptions": [
+                "the junipermarsh3 filing packet"
+              ],
+              "modality": "P",
+              "object": "the Junipermarsh3 Office named \u201cwithin 2423 days for",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": false,
+        "object": false,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d may archive the junipermarsh3 filing packet."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-p-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "the Junipermarsh3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the junipermarsh3 filing packet",
+              "temporal": [
+                "within 2422 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "P",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": [
+              "within 2422 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d may archive the junipermarsh3 filing packet within 2422 days."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-f-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "Licensed Records and Public Archive Custody",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the junipermarsh3 filing packet",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d shall not archive the junipermarsh3 filing packet."
+    },
+    {
+      "category": "actor_boundary",
+      "id": "matched-temporal-train-actor_duration_name-1-f-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "archive",
+              "actor": "the Junipermarsh3 Office",
+              "conditions": [],
+              "exceptions": [],
+              "modality": "P",
+              "object": "the junipermarsh3 filing packet",
+              "temporal": [
+                "within 2422 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "archive",
+            "actor": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d",
+            "conditions": [],
+            "exceptions": [],
+            "modality": "F",
+            "object": "the junipermarsh3 filing packet",
+            "temporal": [
+              "within 2422 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": false,
+        "conditions": true,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Junipermarsh3 Office named \u201cwithin 2423 days for Licensed Records and Public Archive Custody\u201d shall not archive the junipermarsh3 filing packet within 2422 days."
+    },
+    {
+      "category": "condition_boundary",
+      "id": "matched-temporal-train-condition_exception_duration-0-p-absent",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport5 Office",
+              "conditions": [
+                "the \u201cindigoport5 application"
+              ],
+              "exceptions": [
+                "the indigoport5 waiver notice states \u201cwithin 2602 days\u201d"
+              ],
+              "modality": "P",
+              "object": "the indigoport5 register",
+              "temporal": []
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport5 Office",
+            "conditions": [
+              "the \u201cindigoport5 application\u201d was received within 2601 days of publication"
+            ],
+            "exceptions": [
+              "the indigoport5 waiver notice states \u201cwithin 2602 days\u201d"
+            ],
+            "modality": "P",
+            "object": "the indigoport5 register",
+            "temporal": []
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": true,
+        "conditions": false,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport5 Office may inspect the indigoport5 register if the \u201cindigoport5 application\u201d was received within 2601 days of publication unless the indigoport5 waiver notice states \u201cwithin 2602 days\u201d."
+    },
+    {
+      "category": "condition_boundary",
+      "id": "matched-temporal-train-condition_exception_duration-0-p-present",
+      "joint_prediction": {
+        "canonical_ir": {
+          "rules": [
+            {
+              "action": "inspect",
+              "actor": "the Indigoport5 Office",
+              "conditions": [
+                "the \u201cindigoport5 application"
+              ],
+              "exceptions": [
+                "the indigoport5 waiver notice states \u201cwithin 2602 days\u201d"
+              ],
+              "modality": "P",
+              "object": "the indigoport5 register",
+              "temporal": [
+                "within 2603 days"
+              ]
+            }
+          ]
+        },
+        "reason": null,
+        "status": "selected"
+      },
+      "reference_ir": {
+        "rules": [
+          {
+            "action": "inspect",
+            "actor": "the Indigoport5 Office",
+            "conditions": [
+              "the \u201cindigoport5 application\u201d was received within 2601 days of publication"
+            ],
+            "exceptions": [
+              "the indigoport5 waiver notice states \u201cwithin 2602 days\u201d"
+            ],
+            "modality": "P",
+            "object": "the indigoport5 register",
+            "temporal": [
+              "within 2603 days"
+            ]
+          }
+        ]
+      },
+      "review_scope": "Root inspected source and actor/condition scope against authored training reference; no legal-expert or statutory review.",
+      "role_exact": {
+        "action": true,
+        "actor": true,
+        "conditions": false,
+        "exceptions": true,
+        "object": true,
+        "temporal": true
+      },
+      "source_text": "the Indigoport5 Office may inspect the indigoport5 register within 2603 days if the \u201cindigoport5 application\u201d was received within 2601 days of publication unless the indigoport5 waiver notice states \u201cwithin 2602 days\u201d."
+    }
+  ],
+  "schema": "temporal-attention-authored-training-error-review/v1",
+  "semantic_accuracy": null
+}
