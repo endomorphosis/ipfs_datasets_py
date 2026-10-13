@@ -168,7 +168,7 @@ source population. They live under
 `artifacts/legal-autoformalization-source-custody-20261013-01` in the workspace.
 
 Focused checks passed: 60 provenance cases, 41 official-custody cases and six
-cross-owner integration cases, totaling 107, plus 41 supervisor control cases.
+cross-owner integration cases, totaling 107, plus 42 supervisor control cases.
 Native campaign qualification and independent post-merge replay are pending at
 this guide's preparation. The later completion receipt is authoritative for
 qualification status; passing preparatory tests does not accept legal content.
