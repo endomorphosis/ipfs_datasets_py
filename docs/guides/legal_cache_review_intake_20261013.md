@@ -27,6 +27,14 @@ candidate is checked against the same complete source text. Multiple physical
 matches stay ambiguous; no first match, whitespace normalization, label alias,
 cropping or absent-status-to-sealed fallback selects a meaning.
 
+Official HTML is decoded strictly using a compatible BOM and actual declared
+meta/XML charset, or UTF8 when neither is present. Conflicting declarations,
+invalid bytes, unsupported/non-text codecs and `unicode_escape` /
+`raw_unicode_escape` transformations are rejected instead of guessing or replacing
+source characters. SHA256 still addresses the original raw HTML; character and
+UTF8-byte selectors address the normalized Unicode view. Decoding preserves these
+source identities, without granting semantic review or training qualification.
+
 `prepare_entity_cache_graphs` delegates to the existing prepared EntityCache only
 when the whole population has exact supported proposals in one section/scope.
 Any unresolved or repeated physical binding retains the complete intake instead
