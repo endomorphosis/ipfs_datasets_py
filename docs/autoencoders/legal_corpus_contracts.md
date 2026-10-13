@@ -132,6 +132,13 @@ edges to every generated joint module, preserving the native project bytes.
 Its exact local readback remains preparation evidence: shared-definition
 deduplication, reviewed statutory meaning and an actual corpus build remain open.
 
+The additive [shared-definition profile](legal_corpus_shared_lake.md) now emits
+one module for each exactly matching scoped/source-bound definition and imports
+it from its original norms, preserving every candidate's provenance. Its
+bounded build boundary covers the exact shared package and conditional
+definition-use theorems. Legal source qualification remains separate from
+kernel compilation and those explicit-premise obligations.
+
 ## Import and validation behavior
 
 Importing these public modules no longer constructs `autoformal.SESSION`.

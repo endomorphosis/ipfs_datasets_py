@@ -264,7 +264,7 @@ def validate_definition_norm_corpus(preparation, *, candidate_inputs, expected_p
     return preparation
 
 
-def _read_files(directory, expected_names):
+def _read_files(directory, expected_names, *, maximum_files=MAX_FILES):
     """Read the closed two-level generated project without following symlinks."""
     root = _path(directory)
     _check_directories(root)
@@ -291,7 +291,7 @@ def _read_files(directory, expected_names):
                 for entry in entries:
                     observed.add(entry.name)
                     if (entry.is_symlink() or entry.name not in expected_by_directory[name]
-                            or len(observed) > MAX_FILES + 1):
+                            or len(observed) > maximum_files + 1):
                         _fail("unexpected or linked corpus project entry")
             if observed != expected_by_directory[name]:
                 _fail("incomplete corpus project entries")
@@ -341,6 +341,17 @@ def write_definition_norm_corpus(preparation, directory, *, candidate_inputs,
     checked = validate_definition_norm_corpus(
         preparation, candidate_inputs=candidate_inputs,
         expected_population=expected_population, toolchain=toolchain)
+
+    def readback(root, manifest_raw):
+        load_definition_norm_corpus(
+            root, expected_manifest_sha256=_sha(manifest_raw), candidate_inputs=candidate_inputs,
+            expected_population=expected_population, toolchain=toolchain)
+
+    return _write_project(checked, directory, readback=readback)
+
+
+def _write_project(checked, directory, *, readback, maximum_files=MAX_FILES):
+    """Shared two-level closed-project transport, after profile validation."""
     root = _path(directory)
     _check_directories(root.parent, allow_missing=True)
     root.mkdir(mode=0o700, parents=True, exist_ok=False)
@@ -358,15 +369,13 @@ def write_definition_norm_corpus(preparation, directory, *, candidate_inputs,
             _write_new_file(descriptors[dirname], basename, body.encode("utf-8"))
         for fd in descriptors.values():
             os.fsync(fd)
-        if _read_files(root, {name for name, _ in checked.files}) != {
+        if _read_files(root, {name for name, _ in checked.files}, maximum_files=maximum_files) != {
                 name: body.encode("utf-8") for name, body in checked.files}:
             _fail("generated corpus source failed pre-manifest readback")
         manifest_raw = checked.manifest_json.encode("utf-8")
         _write_new_file(root_fd, MANIFEST_FILE, manifest_raw)
         os.fsync(root_fd)
-        load_definition_norm_corpus(
-            root, expected_manifest_sha256=_sha(manifest_raw), candidate_inputs=candidate_inputs,
-            expected_population=expected_population, toolchain=toolchain)
+        readback(root, manifest_raw)
         _check_directories(root, root_fd)
     finally:
         for fd in reversed(list(descriptors.values())):

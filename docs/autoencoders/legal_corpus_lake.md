@@ -106,3 +106,7 @@ statutory corpus. Shared definition generation, dependency partitioning,
 actual pinned builds, composition obligations and incremental invalidation
 remain downstream milestones. An actual build must consume the exact bound
 project and verify complete module coverage through the existing native gates.
+
+The additive [shared-definition profile](legal_corpus_shared_lake.md) supplies
+the next narrow preparation/build path. It preserves this joint-module profile
+and its original input and native identity restrictions.
