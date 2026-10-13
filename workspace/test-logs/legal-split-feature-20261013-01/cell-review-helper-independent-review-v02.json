@@ -1,0 +1,46 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v01.json": {
+      "bytes": 1956,
+      "sha256": "d67af29bbc2fa2763a42d473367af0311c2f52709fa60a8dd1cd674263ac50e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/resource-baseline-audit-design-v01.json": {
+      "bytes": 70534,
+      "sha256": "15995dc220ac449e6ce667d28f7728a3be5ba3b30b515914b73d1c77378d9cb5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_cell_v03.py": {
+      "bytes": 25548,
+      "sha256": "71fd7b3f416029cc0d8622a28686780ee3e59e0696ffb5beb795833782210090"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-cell-helper-author-pure-controls-v02.json": {
+      "bytes": 1396,
+      "sha256": "f3923fa1002c72ea02a7dc11dcbc73a5ff54bc97ddd64bb9d197ab0a375686b9"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "model_calls": 0,
+  "negative_controls": 6,
+  "passed": true,
+  "positive_controls": 3,
+  "prior_observer_refusal": "split-cell-review-refusal-v01.json",
+  "resource_API_calls": 0,
+  "reviewed_custody": [
+    "strict captured metadata bytes and repeated-read identity",
+    "schema-specific root/trainer/helper approvals with closed full/brief descriptors",
+    "hard-pinned actual baseline and unchanged guardian",
+    "33producer/exposed168data/parent392reference closure",
+    "original528 complete body hash map and empty scheduler/config/cap joins",
+    "all consumed and approved artifacts fenced at closing; private bodies excluded"
+  ],
+  "schema": "split-cell-review-helper-source-independent-review/v1",
+  "scope": "Previously qualified full v01/narrow v02 semantics plus independently verified exact v03 filename-only changes; v02 refusal preserved. Main unexecuted."
+}

@@ -1,0 +1,236 @@
+{
+  "Git_mutations": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/final-permission-retention-integration-independent-review-v01.json": {
+      "bytes": 115893,
+      "sha256": "b863307c5e6852eb6f6f9f4a7a7fa7629862a9b7982888441317aae2b62c6f87"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/result-independent-review-v01.json": {
+      "bytes": 87546,
+      "sha256": "002bbe70e45d1c3b38b27adcc4328d05d640beab5f069b1826b7af55d32fa21e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/two-cell-output-freeze-v01.json": {
+      "bytes": 33463,
+      "sha256": "2a268b4b3f5c03cedb29d8d1df6d5718778fc54da9473fabfb5c2eaefde7d46b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/experiment-design-v01.json": {
+      "bytes": 3794,
+      "sha256": "d4185fe7e02df4bc8629c536bf27c8be375b1609fc871276d68a0a7e662ffc50"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-span-heads-only-01/results/cell-training.json": {
+      "bytes": 1146319,
+      "sha256": "ccb7667c15efb637206016328c8aa54c3da87a014956ff6bae7d35103dc3f97e"
+    }
+  },
+  "capture_accounting": {
+    "configured_latent_dimension384": true,
+    "equal_FLOPs_claimed": false,
+    "feature_paths_per_source_forward": 2,
+    "latent_enabled": false,
+    "latent_encoder_calls": 0,
+    "modality_encoder_forwards": "N source forwards per capture",
+    "source_model_forwards": "N source forwards per capture",
+    "span_encoder_forwards": "N source forwards per capture"
+  },
+  "checkpoint_JSON_parses": 0,
+  "final_parity": {
+    "all392_modality_vectors_equal_parent_bytes": true,
+    "full_IR_retention_not_implied_by_modal_parity": true,
+    "full_arm_numeric_training_reproduction_expected": false,
+    "including_raw_and_joint_abstentions": true,
+    "including_unreviewed_law8": true,
+    "span_scores_allowed_to_change": true
+  },
+  "initial_parity": {
+    "all_four_saved_score_heads_binary32_equal_to_N3_parent": true,
+    "combined_state_hash_equality_to_parent_required": false,
+    "expected_initial_frozen17_state_sha256": "83c5d0760e869cc817c979ce5fc928a8bd6d67e12ef9d5a6cfe24937bf054d8d",
+    "expected_initial_modality_path_state_sha256": "83c5d0760e869cc817c979ce5fc928a8bd6d67e12ef9d5a6cfe24937bf054d8d",
+    "feature_hash_normalization": "Map span_ prefixed copied parameter keys to original parent keys before digest; each copy independently stored",
+    "greedy_and_joint_decisions_equal_to_parent": true,
+    "initial_modality_and_span_feature_digests_equal": true,
+    "panels": [
+      "old_tune",
+      "fresh_tune",
+      "fresh_challenge",
+      "old_authored_eval",
+      "authored_dev",
+      "authored_eval",
+      "law"
+    ],
+    "parent_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+    "source_ID_text_hash_tokens_and_offsets_exact": true,
+    "source_occurrences": 392
+  },
+  "numerical_or_model_calls": 0,
+  "observed_at_utc": "2026-10-13T00:35:03.180077+00:00",
+  "parameter_geometry": {
+    "combined34_state_hash_is_not_original23_parent_hash": true,
+    "frozen_parameter_names": [
+      "byte_embedding.weight",
+      "token_projection.weight",
+      "token_projection.bias",
+      "encoder.weight_ih_l0",
+      "encoder.weight_hh_l0",
+      "encoder.bias_ih_l0",
+      "encoder.bias_hh_l0",
+      "encoder.weight_ih_l0_reverse",
+      "encoder.weight_hh_l0_reverse",
+      "encoder.bias_ih_l0_reverse",
+      "encoder.bias_hh_l0_reverse",
+      "modality.weight",
+      "modality.bias",
+      "latent_down.weight",
+      "latent_down.bias",
+      "latent_up.weight",
+      "latent_up.bias"
+    ],
+    "model_parameter_names": [
+      "byte_embedding.weight",
+      "token_projection.weight",
+      "token_projection.bias",
+      "encoder.weight_ih_l0",
+      "encoder.weight_hh_l0",
+      "encoder.bias_ih_l0",
+      "encoder.bias_hh_l0",
+      "encoder.weight_ih_l0_reverse",
+      "encoder.weight_hh_l0_reverse",
+      "encoder.bias_ih_l0_reverse",
+      "encoder.bias_hh_l0_reverse",
+      "modality.weight",
+      "modality.bias",
+      "presence.weight",
+      "presence.bias",
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias",
+      "latent_down.weight",
+      "latent_down.bias",
+      "latent_up.weight",
+      "latent_up.bias",
+      "span_byte_embedding.weight",
+      "span_token_projection.weight",
+      "span_token_projection.bias",
+      "span_encoder.weight_ih_l0",
+      "span_encoder.weight_hh_l0",
+      "span_encoder.bias_ih_l0",
+      "span_encoder.bias_hh_l0",
+      "span_encoder.weight_ih_l0_reverse",
+      "span_encoder.weight_hh_l0_reverse",
+      "span_encoder.bias_ih_l0_reverse",
+      "span_encoder.bias_hh_l0_reverse"
+    ],
+    "optimizer_parameter_order": [
+      "span_byte_embedding.weight",
+      "span_token_projection.weight",
+      "span_token_projection.bias",
+      "span_encoder.weight_ih_l0",
+      "span_encoder.weight_hh_l0",
+      "span_encoder.bias_ih_l0",
+      "span_encoder.bias_hh_l0",
+      "span_encoder.weight_ih_l0_reverse",
+      "span_encoder.weight_hh_l0_reverse",
+      "span_encoder.bias_ih_l0_reverse",
+      "span_encoder.bias_hh_l0_reverse",
+      "presence.weight",
+      "presence.bias",
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias"
+    ],
+    "parameters_or_storage_shared_between_feature_copies": false,
+    "trainable_parameter_names": [
+      "span_byte_embedding.weight",
+      "span_token_projection.weight",
+      "span_token_projection.bias",
+      "span_encoder.weight_ih_l0",
+      "span_encoder.weight_hh_l0",
+      "span_encoder.bias_ih_l0",
+      "span_encoder.bias_hh_l0",
+      "span_encoder.weight_ih_l0_reverse",
+      "span_encoder.weight_hh_l0_reverse",
+      "span_encoder.bias_ih_l0_reverse",
+      "span_encoder.bias_hh_l0_reverse",
+      "presence.weight",
+      "presence.bias",
+      "start.weight",
+      "start.bias",
+      "end.weight",
+      "end.bias"
+    ]
+  },
+  "readout_policy": {
+    "greedy_policy_unchanged": true,
+    "joint_top_k": 8,
+    "max_search_nodes": 50000,
+    "old96_gate": "Exact96 raw and joint with zero decoded P-to-O; necessary engineering gate only",
+    "permission_reporting": [
+      "head_first_argmax",
+      "raw_decoded",
+      "joint_decoded"
+    ],
+    "presence_and_modality_heads_fixed_by_saved_logits": true,
+    "separate_permission_outcomes": [
+      "P_to_P",
+      "P_to_O",
+      "P_to_F",
+      "P_abstentions"
+    ],
+    "target_based_decoding_overrides": false
+  },
+  "remaining_inference": "A split feature model may protect the parent modality path while adapting spans, but it retains the parent modality errors and need not reproduce the posthoc hybrid because its trainable feature branch lacks modality-CE gradients.",
+  "resource_API_calls": 0,
+  "result_boundary": {
+    "Lake_executed": false,
+    "all_actual_output_files_frozen_before_trained_comparison": true,
+    "authored_targets384": true,
+    "broader_logic_families_qualified": false,
+    "compare_to": [
+      "N3 parent",
+      "N3 unrestricted full",
+      "N3 frozen features",
+      "N4 posthoc saved-score hybrid"
+    ],
+    "default_promotion": false,
+    "genuine_latent_families": false,
+    "independent_statutory_gold": false,
+    "no_target_selection_of_checkpoint": true,
+    "reference_panels_previously_exposed": true,
+    "semantic_accuracy": null,
+    "shared_authored_templates": true,
+    "unreviewed_law8_unscored": true
+  },
+  "reviewer": "/root/permission_eval_design",
+  "schema": "split-feature-preregistered-evaluation-contract/v1",
+  "source_review_scope": "Evaluation design and pinned source reading only; trainer numerical behavior not independently executed",
+  "training_evidence": {
+    "actor_ranking_enabled": false,
+    "all32_frozen_state_boundaries_equal_N3_frozen17_sha256": true,
+    "all32_normalized_branch_before_after_and_interstep_continuity": true,
+    "batch_size": 12,
+    "branch_digest_fields": [
+      "modality_feature_state_sha256",
+      "span_feature_state_sha256",
+      "modality_path_state_sha256",
+      "span_path_state_sha256",
+      "dormant_latent_state_sha256"
+    ],
+    "completed_batch_IDs_indices_objective_and_constant_CE_trace_joined": true,
+    "fresh_Adam_only_ordered17_trainable_tensors": true,
+    "independent_tensor_or_gradient_replay": false,
+    "inherited_moments": false,
+    "main_loss_denominator": 8,
+    "modality_CE_constant_no_span_gradient_connection": true,
+    "modality_ce_weight": 2,
+    "presence_ce_weight": 1,
+    "returned_updates": 32,
+    "seed_and_order1729": true,
+    "training_rows168": true
+  }
+}

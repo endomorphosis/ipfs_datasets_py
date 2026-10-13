@@ -1,0 +1,93 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py": {
+      "bytes": 20011,
+      "sha256": "a66720be2df8fa991cfe2d1690115bad2a4b5d814ca818e9f295ea7bcf4988f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_feature_math_v01.py": {
+      "bytes": 4422,
+      "sha256": "7e6bcfeb9978bc7d8a5d21ed5ff9f52efde7868f15ea57035bf488360abcba16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_feature_independent_controls_v01.py": {
+      "bytes": 3594,
+      "sha256": "5647e344a2de84197e80942a4524eebcda2a48cf251b325017adc6be16a4fc65"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-independent-feature-math-controls-v01.json": {
+      "bytes": 1340,
+      "sha256": "9903ed0f536c3632c0d859e65677085cd99a6c311e38f7bcd684b33f0e9f3891"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-independent-pure-contract-observation-v01.json": {
+      "bytes": 4580,
+      "sha256": "c85cc6df831f186147516b8607660b4be0985ef349641ca694339f5973ce2f6c"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "compiler_calls": 0,
+  "findings": [],
+  "limitations": {
+    "Lake_build_qualified": false,
+    "actual_numerical_behavior_observed": false,
+    "automatic_selection_or_promotion": false,
+    "latent_autoencoder_semantics_qualified": false,
+    "logic_family_qualified": false,
+    "statutory_gold": false,
+    "trained_semantic_accuracy_verified": false
+  },
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "qualified_contract": {
+    "actual392_final_modality_parity_required": true,
+    "actual392_initial_score_parity_required": true,
+    "actual_guarded_Torch_qualification_required": true,
+    "actual_model_parameter_count": 34,
+    "constant_CE_contribution": "2*CE/8",
+    "equal_compute_budget_claimed": false,
+    "feature_paths_per_source_forward": 2,
+    "frozen_parameter_count": 17,
+    "immutable_parent_zero_update_child": true,
+    "independent_feature_copies": 11,
+    "modality_CE_constant": true,
+    "modality_CE_span_gradient_connection": false,
+    "modality_original_path_no_grad": true,
+    "optimizer_order": "copied_feature11_then_presence_start_end6",
+    "original_parameter_names_retained": 23,
+    "parameter_and_storage_aliases_refused": true,
+    "source_only384_dormant_latent": true,
+    "trainable_parameter_count": 17
+  },
+  "resource_API_calls": 0,
+  "review_method": [
+    "Full frozen module and test source read; retained model and targeted loss/packing dependency review.",
+    "Independent replay of15 frozen inert unit tests and58 subtests: zero failures/errors/skips; denial hooks prohibit numerical/producer imports, model/checkpoint/resource/network execution.",
+    "Additional exact legacy feature-operation AST comparison, one positive and seven expected mutation refusals."
+  ],
+  "reviewer": "permission_protocol_review; independent of trainer and test author",
+  "schema": "split-feature-trainer-source-independent-review/v1",
+  "source": {
+    "bytes": 52067,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+    "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+  },
+  "tests_source": {
+    "bytes": 20011,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py",
+    "sha256": "a66720be2df8fa991cfe2d1690115bad2a4b5d814ca818e9f295ea7bcf4988f0"
+  }
+}

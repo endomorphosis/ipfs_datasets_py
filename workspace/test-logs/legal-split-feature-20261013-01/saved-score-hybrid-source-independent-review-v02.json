@@ -1,0 +1,63 @@
+{
+  "actual_reference_packet_access": false,
+  "actual_scoring_performed": false,
+  "analyzer": {
+    "bytes": 34453,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+    "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v01.py": {
+      "bytes": 33986,
+      "sha256": "9308ca5e1b0120e82945bd8c1f8b63dbfa1491c3869c74ed0c8d3974e0780a9a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py": {
+      "bytes": 34453,
+      "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_saved_hybrid_controls_v02.py": {
+      "bytes": 9246,
+      "sha256": "92e73bf01362786d5b3c4fcd20d8f287e70b2de753d2df2f089358a5d7328977"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-independent-controls-v02.json": {
+      "bytes": 2319,
+      "sha256": "0c1eff15a032dfd0dd783539eae4079e976192ff09b7b1ef60e7e2dac957e52e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-independent-replayed-controls-v02.json": {
+      "bytes": 2241,
+      "sha256": "2fe33806a622761c5fda910439a75cf2a2aab96520a2564f38bf7272c1396178"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved_score_hybrid_author_controls_v02.py": {
+      "bytes": 9027,
+      "sha256": "912d6c9943f538a1316169d7df88c5900033b6d903998229034b945eb8042c5a"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "limitations": {
+    "automatic_selection_or_promotion": false,
+    "blinded_holdout": false,
+    "independent_statutory_gold": false,
+    "lake_build_qualified": false,
+    "latent_autoencoder_semantics_qualified": false,
+    "logic_family_qualified": false,
+    "posthoc_engineering_diagnostic": true,
+    "trained_model": false
+  },
+  "numerical_or_model_calls": 0,
+  "passed": true,
+  "qualified_scope": [
+    "Exact saved-source IDs, source hashes, tokens and offsets join both donors; parent modality and adapted presence/start/end components retained separately with original captures and binary32 provenance.",
+    "All87 frozen outputs,32 source owners and exact qualified N3 reports are raw-bound before exposed reference access; parsed bytes are tied to expected opening identities and closing fences.",
+    "Existing21 panel results must reproduce qualified N3 analysis before seven recombined panels are interpreted.",
+    "Only stdlib saved-score recombination and retained greedy/joint/scoring functions are qualified; exact v02 main may produce the new diagnostic output."
+  ],
+  "resource_API_calls": 0,
+  "review_method": [
+    "Full frozen v01 source read, retained source function dependency review, and exact two-change v02 diff read.",
+    "Independently replayed author detached controls against frozen v02: 8 positive and 39 expected refusals.",
+    "Additional independent synthetic donor-isolation, signed-zero, expected/observed raw-byte custody, and denied-operation controls: 8 positive and 25 expected refusals."
+  ],
+  "reviewer": "permission_protocol_review; independent of analyzer author",
+  "schema": "saved-score-hybrid-source-independent-review/v1"
+}

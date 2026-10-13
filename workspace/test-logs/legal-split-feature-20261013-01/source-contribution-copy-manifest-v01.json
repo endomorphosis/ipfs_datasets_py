@@ -1,0 +1,1088 @@
+{
+  "HF_checks": {
+    "actual_analyzer_source_and_approval_bound": true,
+    "all_current_baseline_identities_exact": true,
+    "all_downloads_byte_exact": true,
+    "all_new_immutable_remote_blob_identities_exact": true,
+    "all_public_copied_source_provenance_exact": true,
+    "bounded_chunks": true,
+    "default_promotion": false,
+    "full_private_global_bodies_excluded": true,
+    "new_files": 100,
+    "no_unknown_outcomes": true,
+    "old_files_preserved": 4244,
+    "payload_bytes": 43262631,
+    "prior_N3_release_files_preserved": 142,
+    "qualified_cards_byte_exact": true,
+    "root_attributes_unchanged": true,
+    "serial_parent_CAS_chunks": 4,
+    "single_opaque_split_checkpoint_retained": true
+  },
+  "actual_HF_release_revision": "70525bcf70e801e78f4882b4834494d67ec0d2b6",
+  "all_copies_byte_equal": true,
+  "all_originals_and_consumed_metadata_unchanged_at_closing": true,
+  "consumed_raw_metadata_and_source_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py": {
+      "bytes": 34453,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+      "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py": {
+      "bytes": 75056,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+      "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/audit_split_terminal_v01.py": {
+      "bytes": 84271,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/audit_split_terminal_v01.py",
+      "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/bootstrap_inert.py": {
+      "bytes": 1208,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/bootstrap_inert.py",
+      "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/capture_split_terminal_v01.py": {
+      "bytes": 2735,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/capture_split_terminal_v01.py",
+      "sha256": "2b02d8333d52beeb7a9c0a0c095a58688a177eaa5e1a58391c39a6bff08b9803"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json": {
+      "bytes": 2291,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+      "sha256": "a397cfdd9bc8ea84bf77fa14c1949073403149282ec274d398f4f7c38c7e3b94"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json": {
+      "bytes": 3151,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json",
+      "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.log": {
+      "bytes": 635,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.log",
+      "sha256": "740d2a752a6a68103aa2634a5114bd21353d5622411da303c0a1e1e111d08015"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.xml": {
+      "bytes": 25026,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.xml",
+      "sha256": "c7ccde722ca625060d56b3c2e37456764be6ca8aa7e6cedd00705041e396c8de"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/docs/autoencoders/legal_split_feature_training_20261013_v02.md": {
+      "bytes": 4627,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/docs/autoencoders/legal_split_feature_training_20261013_v02.md",
+      "sha256": "62f90e2926cdae086c76578ac2ee0b6150dd0f167c77826c550872da6dbbb639"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py": {
+      "bytes": 20011,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py",
+      "sha256": "a66720be2df8fa991cfe2d1690115bad2a4b5d814ca818e9f295ea7bcf4988f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/experiment-design-v01.json": {
+      "bytes": 3794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/experiment-design-v01.json",
+      "sha256": "d4185fe7e02df4bc8629c536bf27c8be375b1609fc871276d68a0a7e662ffc50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/freeze_split_outputs_v02.py": {
+      "bytes": 5841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/freeze_split_outputs_v02.py",
+      "sha256": "cd9fcaf43603dc182a7f89a9660d2a53b6b749f4286c45e0a6884166e23ea3ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/git-opening-preservation-independent-review-v01.json": {
+      "bytes": 117137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/git-opening-preservation-independent-review-v01.json",
+      "sha256": "55cb7975979ff3c11f4bcbf1fdd1b4dca72296cd1f61b104f091d7ffdbb69a0d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json": {
+      "bytes": 2084,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json",
+      "sha256": "e55b1a68809a91b332161a1a4819be9c5175e4b76314818e4da18db34ef49999"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-publication-independent-review-v01.json": {
+      "bytes": 191754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-publication-independent-review-v01.json",
+      "sha256": "885c366d78e9549f899f9cec037109da9a369d65b04dc339de694dfb97c63b3e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json": {
+      "bytes": 16152,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+      "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json": {
+      "bytes": 1560,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json",
+      "sha256": "413cdc12a0ee7476040bd89c1c7fbf9fbe3a10de362db713572e79eefbca5697"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-preparation-refusal-v01.json": {
+      "bytes": 3460,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-preparation-refusal-v01.json",
+      "sha256": "6ec4651d9e12d21c878f0f0c2bff39d92b457817f57c08abafa3482f5d517ab8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-independent-review-v01.json": {
+      "bytes": 168003,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-independent-review-v01.json",
+      "sha256": "f2fccde5f4e522ef35e629d98336d7f241142e7c1e03d6828ab5993d3bfd2e51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-verification-v01.json": {
+      "bytes": 42488,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-verification-v01.json",
+      "sha256": "c01e9dd171c44d72d701f25ff0e707cb8384da58d1155e392033c50c14d10e25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py": {
+      "bytes": 39653,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+      "sha256": "ac6b30f3c61596f7e662b63f8aeea50fa938a4a7a72a9047ecee6e246ad2b9a7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/model-card-gap-independent-review-v01.json": {
+      "bytes": 5112,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/model-card-gap-independent-review-v01.json",
+      "sha256": "76b93e5b6740daca9656131cdccbe679b1ce886a43254816ddbd5d3c316374eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v04.py": {
+      "bytes": 20415,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v04.py",
+      "sha256": "22f569d15f4c8005aa4a340c1632b8f3c5f2e76b1942e2f0853422f149d62377"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_split_features.py": {
+      "bytes": 11887,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_split_features.py",
+      "sha256": "52e589dfe1a63b6310f54abc1b4cc511cf8fcc0e75a5be0242820bfc99255d3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/publish_hf_split_feature_release_v04.py": {
+      "bytes": 17268,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/publish_hf_split_feature_release_v04.py",
+      "sha256": "5e4ccb14bbd8a3f37fc2a7baea4d66798247d2154fa5936f147d35e19cb2852e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json": {
+      "bytes": 78040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json",
+      "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json",
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json": {
+      "bytes": 2613,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json",
+      "sha256": "6651c4ce5a2ef5deadb886ee4ab347dc906f372b6a3dd24e4e08944c4cfd7ea5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py": {
+      "bytes": 22024,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+      "sha256": "a6b1fd86bbd641afda3812b3bc4214202cfc940ce2d2d6ff8bc8fdbc712ac813"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py": {
+      "bytes": 23554,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+      "sha256": "fef225eade0d15fddb209b6b2fbed9a024077996f5f9d9ece72b8c000a342e76"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_cell_v03.py": {
+      "bytes": 25548,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_cell_v03.py",
+      "sha256": "71fd7b3f416029cc0d8622a28686780ee3e59e0696ffb5beb795833782210090"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json": {
+      "bytes": 4600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+      "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_inert_tests.py",
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py": {
+      "bytes": 38053,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py",
+      "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json",
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json": {
+      "bytes": 3464,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json",
+      "sha256": "b06f1914c11589395f92ba8a6934d397696db6f1f5c0d787ec254c2164da2032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/source-contribution-copy-plan-v02.json": {
+      "bytes": 25977,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/source-contribution-copy-plan-v02.json",
+      "sha256": "b606a166a3813f63f6f34db4ec1cfe65440ac4dae9ccc16074f0e323bb2c4708"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json": {
+      "bytes": 13205,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json",
+      "sha256": "88d16d9d3aae166d80fcee563aa669bff6c9b7f9cd30140f5ffa2a2017dc8f16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-evaluation-contract-v01.json": {
+      "bytes": 9047,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-evaluation-contract-v01.json",
+      "sha256": "2e9f213f87fd755b3bb22658e08516b12f8e43a0c5b42e5c345dacdd1a8559c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md": {
+      "bytes": 5893,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+      "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md": {
+      "bytes": 5955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+      "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json",
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json",
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-terminal-audit-v01.json": {
+      "bytes": 33171,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-terminal-audit-v01.json",
+      "sha256": "f74c6fbd3fcc74e71ded9c0e9dbfa3f221675e30f5a9445cb06e1dbe70ea7eef"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-features-training-protocol-independent-review-v01.json": {
+      "bytes": 158972,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-features-training-protocol-independent-review-v01.json",
+      "sha256": "8ef9a3a011f7a242318cab40691f281e6c094ba3a4d3faed1127ed2110a075e7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json": {
+      "bytes": 1776,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json",
+      "sha256": "4c9734cd64cb7a6e9ef118d4e71516a1ca06f2a1ecd589f2f01151941cb8b1a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json": {
+      "bytes": 4970,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+      "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/trainer-source-independent-review-v01.json": {
+      "bytes": 4901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/trainer-source-independent-review-v01.json",
+      "sha256": "a3af6e3a87cb5a6741d8538fbeabe0575d277d6ce54126b5f9e18ea5cb52cf62"
+    }
+  },
+  "copied_bytes": 5086702,
+  "copied_file_count": 47,
+  "destination_prefix": "workspace/test-logs/legal-split-feature-20261013-01",
+  "files": [
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 11887,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/prepare_split_features.py",
+        "sha256": "52e589dfe1a63b6310f54abc1b4cc511cf8fcc0e75a5be0242820bfc99255d3b"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/prepare_split_features.py",
+      "original": {
+        "bytes": 11887,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_split_features.py",
+        "sha256": "52e589dfe1a63b6310f54abc1b4cc511cf8fcc0e75a5be0242820bfc99255d3b"
+      },
+      "qualification_receipt": {
+        "bytes": 4600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+        "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 38053,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/run_split_features.py",
+        "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/run_split_features.py",
+      "original": {
+        "bytes": 38053,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py",
+        "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+      },
+      "qualification_receipt": {
+        "bytes": 4600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+        "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 38281,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/run_scope_guardian.py",
+        "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/run_scope_guardian.py",
+      "original": {
+        "bytes": 38281,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_scope_guardian.py",
+        "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+      },
+      "qualification_receipt": {
+        "bytes": 2291,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+        "sha256": "a397cfdd9bc8ea84bf77fa14c1949073403149282ec274d398f4f7c38c7e3b94"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 25548,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/review_split_cell_v03.py",
+        "sha256": "71fd7b3f416029cc0d8622a28686780ee3e59e0696ffb5beb795833782210090"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/review_split_cell_v03.py",
+      "original": {
+        "bytes": 25548,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_split_cell_v03.py",
+        "sha256": "71fd7b3f416029cc0d8622a28686780ee3e59e0696ffb5beb795833782210090"
+      },
+      "qualification_receipt": {
+        "bytes": 2291,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+        "sha256": "a397cfdd9bc8ea84bf77fa14c1949073403149282ec274d398f4f7c38c7e3b94"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 2735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/capture_split_terminal_v01.py",
+        "sha256": "2b02d8333d52beeb7a9c0a0c095a58688a177eaa5e1a58391c39a6bff08b9803"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/capture_split_terminal_v01.py",
+      "original": {
+        "bytes": 2735,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/capture_split_terminal_v01.py",
+        "sha256": "2b02d8333d52beeb7a9c0a0c095a58688a177eaa5e1a58391c39a6bff08b9803"
+      },
+      "qualification_receipt": {
+        "bytes": 4970,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+        "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 5841,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/freeze_split_outputs_v02.py",
+        "sha256": "cd9fcaf43603dc182a7f89a9660d2a53b6b749f4286c45e0a6884166e23ea3ce"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/freeze_split_outputs_v02.py",
+      "original": {
+        "bytes": 5841,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/freeze_split_outputs_v02.py",
+        "sha256": "cd9fcaf43603dc182a7f89a9660d2a53b6b749f4286c45e0a6884166e23ea3ce"
+      },
+      "qualification_receipt": {
+        "bytes": 4970,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+        "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 84271,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/audit_split_terminal_v01.py",
+        "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/audit_split_terminal_v01.py",
+      "original": {
+        "bytes": 84271,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/audit_split_terminal_v01.py",
+        "sha256": "ecbc5b7e5590873b88279dd573ce15ad397460c9d785003f518863b19138a1fe"
+      },
+      "qualification_receipt": {
+        "bytes": 1776,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json",
+        "sha256": "4c9734cd64cb7a6e9ef118d4e71516a1ca06f2a1ecd589f2f01151941cb8b1a3"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 34453,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+        "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+      "original": {
+        "bytes": 34453,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_saved_score_hybrid_v02.py",
+        "sha256": "bb1cf7a857e6aff04bfb1567256689257956f7c597201d570820d278e0a724a4"
+      },
+      "qualification_receipt": {
+        "bytes": 3464,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json",
+        "sha256": "b06f1914c11589395f92ba8a6934d397696db6f1f5c0d787ec254c2164da2032"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 75056,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+        "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+      "original": {
+        "bytes": 75056,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/analyze_split_feature_results_v04.py",
+        "sha256": "64214a1983af4057da658b7339afb55c4ce5562ff4b517f3d74547939c283306"
+      },
+      "qualification_receipt": {
+        "bytes": 13205,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json",
+        "sha256": "88d16d9d3aae166d80fcee563aa669bff6c9b7f9cd30140f5ffa2a2017dc8f16"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 39653,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+        "sha256": "ac6b30f3c61596f7e662b63f8aeea50fa938a4a7a72a9047ecee6e246ad2b9a7"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+      "original": {
+        "bytes": 39653,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/independent_split_result_review_v03.py",
+        "sha256": "ac6b30f3c61596f7e662b63f8aeea50fa938a4a7a72a9047ecee6e246ad2b9a7"
+      },
+      "qualification_receipt": {
+        "bytes": 2613,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json",
+        "sha256": "6651c4ce5a2ef5deadb886ee4ab347dc906f372b6a3dd24e4e08944c4cfd7ea5"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 20415,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v04.py",
+        "sha256": "22f569d15f4c8005aa4a340c1632b8f3c5f2e76b1942e2f0853422f149d62377"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v04.py",
+      "original": {
+        "bytes": 20415,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/prepare_hf_split_feature_release_v04.py",
+        "sha256": "22f569d15f4c8005aa4a340c1632b8f3c5f2e76b1942e2f0853422f149d62377"
+      },
+      "qualification_receipt": {
+        "bytes": 16152,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+        "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 17268,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/publish_hf_split_feature_release_v04.py",
+        "sha256": "5e4ccb14bbd8a3f37fc2a7baea4d66798247d2154fa5936f147d35e19cb2852e"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/publish_hf_split_feature_release_v04.py",
+      "original": {
+        "bytes": 17268,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/publish_hf_split_feature_release_v04.py",
+        "sha256": "5e4ccb14bbd8a3f37fc2a7baea4d66798247d2154fa5936f147d35e19cb2852e"
+      },
+      "qualification_receipt": {
+        "bytes": 16152,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+        "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 23554,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+        "sha256": "fef225eade0d15fddb209b6b2fbed9a024077996f5f9d9ece72b8c000a342e76"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+      "original": {
+        "bytes": 23554,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_payload_v01.py",
+        "sha256": "fef225eade0d15fddb209b6b2fbed9a024077996f5f9d9ece72b8c000a342e76"
+      },
+      "qualification_receipt": {
+        "bytes": 1560,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json",
+        "sha256": "413cdc12a0ee7476040bd89c1c7fbf9fbe3a10de362db713572e79eefbca5697"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 22024,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+        "sha256": "a6b1fd86bbd641afda3812b3bc4214202cfc940ce2d2d6ff8bc8fdbc712ac813"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+      "original": {
+        "bytes": 22024,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/review_hf_split_actual_v01.py",
+        "sha256": "a6b1fd86bbd641afda3812b3bc4214202cfc940ce2d2d6ff8bc8fdbc712ac813"
+      },
+      "qualification_receipt": {
+        "bytes": 2084,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json",
+        "sha256": "e55b1a68809a91b332161a1a4819be9c5175e4b76314818e4da18db34ef49999"
+      },
+      "qualification_scope": "source approval"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 1208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/bootstrap_inert.py",
+        "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/bootstrap_inert.py",
+      "original": {
+        "bytes": 1208,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/bootstrap_inert.py",
+        "sha256": "030ac4f55adf5bf305bab0fcef9e33daa27c8fd083ddd474eac623e754246da1"
+      },
+      "qualification_receipt": {
+        "bytes": 92760,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json",
+        "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+      },
+      "qualification_scope": "qualified unchanged wrapper raw binding and completed inert/runtime evidence"
+    },
+    {
+      "category": "recipe",
+      "copy": {
+        "bytes": 4569,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/run_inert_tests.py",
+        "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/run_inert_tests.py",
+      "original": {
+        "bytes": 4569,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_inert_tests.py",
+        "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+      },
+      "qualification_receipt": {
+        "bytes": 3151,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json",
+        "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+      },
+      "qualification_scope": "qualified unchanged wrapper raw binding and completed inert/runtime evidence"
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 3794,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/experiment-design-v01.json",
+        "sha256": "d4185fe7e02df4bc8629c536bf27c8be375b1609fc871276d68a0a7e662ffc50"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/experiment-design-v01.json",
+      "original": {
+        "bytes": 3794,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/experiment-design-v01.json",
+        "sha256": "d4185fe7e02df4bc8629c536bf27c8be375b1609fc871276d68a0a7e662ffc50"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 78040,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/registration-v01.json",
+        "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/registration-v01.json",
+      "original": {
+        "bytes": 78040,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json",
+        "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 9047,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-evaluation-contract-v01.json",
+        "sha256": "2e9f213f87fd755b3bb22658e08516b12f8e43a0c5b42e5c345dacdd1a8559c0"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-evaluation-contract-v01.json",
+      "original": {
+        "bytes": 9047,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-evaluation-contract-v01.json",
+        "sha256": "2e9f213f87fd755b3bb22658e08516b12f8e43a0c5b42e5c345dacdd1a8559c0"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 20150,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json",
+        "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json",
+      "original": {
+        "bytes": 20150,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json",
+        "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 3104129,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json",
+        "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json",
+      "original": {
+        "bytes": 3104129,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json",
+        "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 92760,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/runtime-independent-review-v01.json",
+        "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/runtime-independent-review-v01.json",
+      "original": {
+        "bytes": 92760,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json",
+        "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 515593,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/result-independent-review-v01.json",
+        "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/result-independent-review-v01.json",
+      "original": {
+        "bytes": 515593,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json",
+        "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 158972,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-features-training-protocol-independent-review-v01.json",
+        "sha256": "8ef9a3a011f7a242318cab40691f281e6c094ba3a4d3faed1127ed2110a075e7"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-features-training-protocol-independent-review-v01.json",
+      "original": {
+        "bytes": 158972,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-features-training-protocol-independent-review-v01.json",
+        "sha256": "8ef9a3a011f7a242318cab40691f281e6c094ba3a4d3faed1127ed2110a075e7"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 33171,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-terminal-audit-v01.json",
+        "sha256": "f74c6fbd3fcc74e71ded9c0e9dbfa3f221675e30f5a9445cb06e1dbe70ea7eef"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-terminal-audit-v01.json",
+      "original": {
+        "bytes": 33171,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-terminal-audit-v01.json",
+        "sha256": "f74c6fbd3fcc74e71ded9c0e9dbfa3f221675e30f5a9445cb06e1dbe70ea7eef"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 4901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/trainer-source-independent-review-v01.json",
+        "sha256": "a3af6e3a87cb5a6741d8538fbeabe0575d277d6ce54126b5f9e18ea5cb52cf62"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/trainer-source-independent-review-v01.json",
+      "original": {
+        "bytes": 4901,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/trainer-source-independent-review-v01.json",
+        "sha256": "a3af6e3a87cb5a6741d8538fbeabe0575d277d6ce54126b5f9e18ea5cb52cf62"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 4600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+        "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+      "original": {
+        "bytes": 4600,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/root-science-source-independent-review-v01.json",
+        "sha256": "b4da413e726b42270d1dee025c5be9fed65c9c8d57d91f55af12fbaa970d3ab9"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 2291,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+        "sha256": "a397cfdd9bc8ea84bf77fa14c1949073403149282ec274d398f4f7c38c7e3b94"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+      "original": {
+        "bytes": 2291,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/cell-review-helper-independent-review-v02.json",
+        "sha256": "a397cfdd9bc8ea84bf77fa14c1949073403149282ec274d398f4f7c38c7e3b94"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 4970,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+        "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+      "original": {
+        "bytes": 4970,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-copy-freeze-source-independent-review-v02.json",
+        "sha256": "2c1caba2c13c6c71eb9009eee1b66f996763ea57f950b40b7b7dac4a0ff09489"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 1776,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json",
+        "sha256": "4c9734cd64cb7a6e9ef118d4e71516a1ca06f2a1ecd589f2f01151941cb8b1a3"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json",
+      "original": {
+        "bytes": 1776,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/terminal-auditor-source-independent-review-v01.json",
+        "sha256": "4c9734cd64cb7a6e9ef118d4e71516a1ca06f2a1ecd589f2f01151941cb8b1a3"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 3464,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json",
+        "sha256": "b06f1914c11589395f92ba8a6934d397696db6f1f5c0d787ec254c2164da2032"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json",
+      "original": {
+        "bytes": 3464,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/saved-score-hybrid-source-independent-review-v02.json",
+        "sha256": "b06f1914c11589395f92ba8a6934d397696db6f1f5c0d787ec254c2164da2032"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 13205,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json",
+        "sha256": "88d16d9d3aae166d80fcee563aa669bff6c9b7f9cd30140f5ffa2a2017dc8f16"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json",
+      "original": {
+        "bytes": 13205,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-analyzer-source-independent-review-v02.json",
+        "sha256": "88d16d9d3aae166d80fcee563aa669bff6c9b7f9cd30140f5ffa2a2017dc8f16"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 2613,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json",
+        "sha256": "6651c4ce5a2ef5deadb886ee4ab347dc906f372b6a3dd24e4e08944c4cfd7ea5"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json",
+      "original": {
+        "bytes": 2613,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-observer-source-independent-review-v01.json",
+        "sha256": "6651c4ce5a2ef5deadb886ee4ab347dc906f372b6a3dd24e4e08944c4cfd7ea5"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 5955,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+        "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+      "original": {
+        "bytes": 5955,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-model-card-v01.md",
+        "sha256": "c43f1924f327e6cd95bcbd1ef6923ea91bfa704788dd35f512c7e452bd007c4a"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 5893,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+        "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+      "original": {
+        "bytes": 5893,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-gaps-v01.md",
+        "sha256": "e277e134da68e0ea2d295fb3d7d497baaa1a5d87fd740c6952ca52d53fb6acdd"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 5112,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/model-card-gap-independent-review-v01.json",
+        "sha256": "76b93e5b6740daca9656131cdccbe679b1ce886a43254816ddbd5d3c316374eb"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/model-card-gap-independent-review-v01.json",
+      "original": {
+        "bytes": 5112,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/model-card-gap-independent-review-v01.json",
+        "sha256": "76b93e5b6740daca9656131cdccbe679b1ce886a43254816ddbd5d3c316374eb"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 3151,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json",
+        "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json",
+      "original": {
+        "bytes": 3151,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-observation-v01.json",
+        "sha256": "d4a60976f12548f34777eaa32c289756e06176e9f80ac996fe896982f3979c77"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 635,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-v01.log",
+        "sha256": "740d2a752a6a68103aa2634a5114bd21353d5622411da303c0a1e1e111d08015"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-v01.log",
+      "original": {
+        "bytes": 635,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.log",
+        "sha256": "740d2a752a6a68103aa2634a5114bd21353d5622411da303c0a1e1e111d08015"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 25026,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-v01.xml",
+        "sha256": "c7ccde722ca625060d56b3c2e37456764be6ca8aa7e6cedd00705041e396c8de"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/combined-pure-tests-v01.xml",
+      "original": {
+        "bytes": 25026,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/combined-pure-tests-v01.xml",
+        "sha256": "c7ccde722ca625060d56b3c2e37456764be6ca8aa7e6cedd00705041e396c8de"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 117137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/git-opening-preservation-independent-review-v01.json",
+        "sha256": "55cb7975979ff3c11f4bcbf1fdd1b4dca72296cd1f61b104f091d7ffdbb69a0d"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/git-opening-preservation-independent-review-v01.json",
+      "original": {
+        "bytes": 117137,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/git-opening-preservation-independent-review-v01.json",
+        "sha256": "55cb7975979ff3c11f4bcbf1fdd1b4dca72296cd1f61b104f091d7ffdbb69a0d"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 16152,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+        "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+      "original": {
+        "bytes": 16152,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-helper-source-independent-review-v02.json",
+        "sha256": "aecdc13454862a556d5607e39b610ef4d2813a9e48b5617d12b8145de328bc54"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 168003,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-publication-independent-review-v01.json",
+        "sha256": "f2fccde5f4e522ef35e629d98336d7f241142e7c1e03d6828ab5993d3bfd2e51"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-publication-independent-review-v01.json",
+      "original": {
+        "bytes": 168003,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-independent-review-v01.json",
+        "sha256": "f2fccde5f4e522ef35e629d98336d7f241142e7c1e03d6828ab5993d3bfd2e51"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 1560,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json",
+        "sha256": "413cdc12a0ee7476040bd89c1c7fbf9fbe3a10de362db713572e79eefbca5697"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json",
+      "original": {
+        "bytes": 1560,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-payload-observer-source-independent-review-v01.json",
+        "sha256": "413cdc12a0ee7476040bd89c1c7fbf9fbe3a10de362db713572e79eefbca5697"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 2084,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json",
+        "sha256": "e55b1a68809a91b332161a1a4819be9c5175e4b76314818e4da18db34ef49999"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json",
+      "original": {
+        "bytes": 2084,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-observer-source-independent-review-v01.json",
+        "sha256": "e55b1a68809a91b332161a1a4819be9c5175e4b76314818e4da18db34ef49999"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 191754,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-actual-publication-independent-review-v01.json",
+        "sha256": "885c366d78e9549f899f9cec037109da9a369d65b04dc339de694dfb97c63b3e"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-actual-publication-independent-review-v01.json",
+      "original": {
+        "bytes": 191754,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-actual-publication-independent-review-v01.json",
+        "sha256": "885c366d78e9549f899f9cec037109da9a369d65b04dc339de694dfb97c63b3e"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 42488,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-publication-verification-v01.json",
+        "sha256": "c01e9dd171c44d72d701f25ff0e707cb8384da58d1155e392033c50c14d10e25"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-publication-verification-v01.json",
+      "original": {
+        "bytes": 42488,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-publication-verification-v01.json",
+        "sha256": "c01e9dd171c44d72d701f25ff0e707cb8384da58d1155e392033c50c14d10e25"
+      }
+    },
+    {
+      "category": "evidence",
+      "copy": {
+        "bytes": 3460,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/workspace/test-logs/legal-split-feature-20261013-01/hf-preparation-refusal-v01.json",
+        "sha256": "6ec4651d9e12d21c878f0f0c2bff39d92b457817f57c08abafa3482f5d517ab8"
+      },
+      "destination_relative_path": "workspace/test-logs/legal-split-feature-20261013-01/hf-preparation-refusal-v01.json",
+      "original": {
+        "bytes": 3460,
+        "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/hf-preparation-refusal-v01.json",
+        "sha256": "6ec4651d9e12d21c878f0f0c2bff39d92b457817f57c08abafa3482f5d517ab8"
+      }
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Copies preserve qualified raw identities and existing reported evidence; no new model or compiler execution occurs.",
+    "Runtime and result claims retain the scopes of their separately qualified receipts.",
+    "The split experiment remains opt-in and fails the old96 full-IR gate."
+  ],
+  "manifest_copy_included_as_additional_file": true,
+  "passed": true,
+  "plan": {
+    "bytes": 25977,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/source-contribution-copy-plan-v02.json",
+    "sha256": "b606a166a3813f63f6f34db4ec1cfe65440ac4dae9ccc16074f0e323bb2c4708"
+  },
+  "schema": "split-feature-source-contribution-copy-manifest/v1",
+  "scope": {
+    "Git_mutations": false,
+    "canonical_git_status_or_index_refresh": false,
+    "checkpoint_JSON_parses": 0,
+    "commit": false,
+    "compiler_calls": 0,
+    "finite_own_files_only": true,
+    "full_hybrid_or_training_export_or_individual_result_outputs_copied": false,
+    "model_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "private_global_bodies_or_canonical_intake_copied": false,
+    "resource_API_calls": 0,
+    "staging": false
+  },
+  "separate_source_test_document_files": [
+    {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    {
+      "bytes": 20011,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_split_features_contracts.py",
+      "sha256": "a66720be2df8fa991cfe2d1690115bad2a4b5d814ca818e9f295ea7bcf4988f0"
+    },
+    {
+      "bytes": 4627,
+      "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets/docs/autoencoders/legal_split_feature_training_20261013_v02.md",
+      "sha256": "62f90e2926cdae086c76578ac2ee0b6150dd0f167c77826c550872da6dbbb639"
+    }
+  ],
+  "source_base": "b95938c2a816075466f8dc84f339cf622414030d",
+  "source_worktree": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/datasets"
+}

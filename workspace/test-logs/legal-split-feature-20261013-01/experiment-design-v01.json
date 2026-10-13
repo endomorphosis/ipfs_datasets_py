@@ -1,0 +1,87 @@
+{
+  "Lake_execution_planned": false,
+  "actual_training": {
+    "actor_ranking_enabled": false,
+    "batch_order_seed": 1729,
+    "batch_size": 12,
+    "configured_latent_dimension": 384,
+    "equal_FLOPs_claimed": false,
+    "feature_paths_per_source_forward": 2,
+    "fresh_Adam": true,
+    "frozen_tensors": 17,
+    "latent_enabled": false,
+    "latent_encoder_calls_planned": 0,
+    "learning_rate": 0.001,
+    "modality_CE_has_trainable_span_gradient": false,
+    "modality_ce_weight": 2,
+    "model_tensors": 34,
+    "original_parent_updates": 400,
+    "policy": "split-features",
+    "presence_ce_weight": 1,
+    "seed": 1729,
+    "source_parent_model_state_sha256": "54e745f0dc75a79c11828048ad5deb44b0f07dcac5b9083bde17948b5206bfcb",
+    "trainable_tensors": 17,
+    "training_rows": 168,
+    "training_seconds": 32,
+    "updates": 32
+  },
+  "automatic_selection": false,
+  "broader_logic_family_qualification": false,
+  "default_promotion": false,
+  "diagnostic": {
+    "hyperparameters_changed": false,
+    "kind": "posthoc_saved_score_recombination",
+    "modality_source": "exact parent N3 baseline",
+    "model_calls": 0,
+    "selection_or_promotion": false,
+    "span_source": "N3 all-parameters after32 updates",
+    "trained_model": false
+  },
+  "genuine_8D_384D_768D_qualification": false,
+  "independent_USCode_fidelity_claimed": false,
+  "outputs": {
+    "all_outputs_frozen_before_new_trained_comparison": true,
+    "authored_scored_rows": 384,
+    "initial_and_final_raw_and_joint": true,
+    "law_rows_unscored": 8,
+    "references_previously_exposed": true,
+    "source_rows": 392
+  },
+  "prior_final_review": {
+    "bytes": 115893,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/final-permission-retention-integration-independent-review-v01.json",
+    "sha256": "b863307c5e6852eb6f6f9f4a7a7fa7629862a9b7982888441317aae2b62c6f87"
+  },
+  "prior_gaps": {
+    "bytes": 4671,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission-retention-gaps-v01.md",
+    "sha256": "e4cc1cf2b99773080617f0af30af939fe78de3b1e4a97fc4d5b6a8febb2fad2a"
+  },
+  "prior_result_review": {
+    "bytes": 87546,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/result-independent-review-v01.json",
+    "sha256": "002bbe70e45d1c3b38b27adcc4328d05d640beab5f069b1826b7af55d32fa21e"
+  },
+  "purpose": "Test whether independent trainable span features improve adaptation while frozen parent modality features retain predictions.",
+  "reference_scope": "Previously exposed caller-authored shared-template engineering; no independent statutory gold or blind holdout.",
+  "registered_at_utc": "2026-10-13T00:23:18.181160+00:00",
+  "required_checks": [
+    "All392 actual initial four-head score payloads equal exact parent captures.",
+    "All392 trained three-way modality vectors bit-equal parent; include abstentions and unscored law rows.",
+    "Every returned update has actual frozen-state and gradient evidence and exact17-name Adam membership.",
+    "Fresh zero, alternate, disabled and rotated latent controls give exact source-only decision parity.",
+    "Raw/joint exact IR by panel, old regressions and recoveries, and P-to-O/P-to-F/abstentions separately.",
+    "Legacy96 raw/joint exact96 and zero P-to-O is necessary engineering gate; no automatic selection."
+  ],
+  "resources": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "ledger_cap_bytes": 145000000000,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000,
+    "wall_seconds": 300
+  },
+  "schema": "split-feature-experiment-design/v1",
+  "semantic_accuracy": null,
+  "status": "Design registered before new diagnostic or training execution; final exact source and resource plans require independent review."
+}
