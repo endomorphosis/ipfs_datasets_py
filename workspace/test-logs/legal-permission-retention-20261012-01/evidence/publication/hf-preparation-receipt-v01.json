@@ -1,0 +1,748 @@
+{
+  "additive_only": true,
+  "baseline_pin": {
+    "bytes": 1188284,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-before-file-identities-v01.json",
+    "sha256": "10525e74a9cfdc5965e78b657687920b3ca4021d888be57ee3f977b5c05eadcc"
+  },
+  "complete_upload_files": {
+    "releases/20261012-permission-retention-v1/README.md": {
+      "bytes": 3239,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/README.md",
+      "sha256": "20a2cb64063db570fa6defd22e3cde2c0cab9a8d57c40b518b543135123c1ade"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/plan.json": {
+      "bytes": 61702,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/plan.json",
+      "sha256": "b310e6948347159301d54e87d72633fb1c9f4d8996db21b230772a3a42d0b19b"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-joint.json": {
+      "bytes": 951751,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-joint.json",
+      "sha256": "17c4c8d2c008b2e45ca109c67f430cab2800f82a9360f903765f1de5fd74b333"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-raw.json": {
+      "bytes": 1366027,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-raw.json",
+      "sha256": "c7e00743dd6a74cf266f66792bb409ba6e2fb950a7fb3fefbd92ee341369b2c4"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-score.json": {
+      "bytes": 104536,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_dev-score.json",
+      "sha256": "cc2b7ea7f6a5416418d8a6a73f8c7cbe8ede8536a8df3e2d2a502841f7f94ff3"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_eval-joint.json": {
+      "bytes": 990996,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_eval-joint.json",
+      "sha256": "526b9786756d54273aa8676548dc99691288b6747173b53cb40cd2bdbf42d2be"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_eval-raw.json": {
+      "bytes": 1367849,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-authored_eval-raw.json",
+      "sha256": "2bd21e9e69c64ce21fdd3f7ce681c726a58c6e37ac3273f174e75bbe34c28533"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-joint.json",
+      "sha256": "3e3d1696454fbe533479290a325ff3df3675bd8ebbb39f327da0721813d117c6"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 641934,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-raw.json",
+      "sha256": "ccef4299f1717539df06f1814cf8eec5c6ee128f9893d5085912a68515b3c65a"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_challenge-score.json",
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-joint.json": {
+      "bytes": 491381,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-joint.json",
+      "sha256": "95e7669803e402e2b25d8b670c85d53b765cebc05759ad4e5ece9e83d6ec1e51"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-raw.json": {
+      "bytes": 604147,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-raw.json",
+      "sha256": "df2c4387c426445add959280fccfe754ecb38f7061d1fd4add18308ac31e392a"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-fresh_tune-score.json",
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-law-joint.json": {
+      "bytes": 103545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-law-joint.json",
+      "sha256": "b7640d03d3803085a83d558e708e86e6db19954bd24d80a9bbd4707a052ee3be"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-law-raw.json": {
+      "bytes": 279118,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-law-raw.json",
+      "sha256": "666300e24afdfe9aaf2428c528f348843ed08c0ab3e8fb9e431c6e1ab9f27a76"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1032317,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-joint.json",
+      "sha256": "c146ea023b22cdf5f06d90e2355d03c7673ddd8899ce39dc79bd1de623fc6221"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1407859,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-raw.json",
+      "sha256": "45ff720691b98ce004a00795280e9baa987d67e090fb3bcce6569b46f4d95083"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-score.json": {
+      "bytes": 105562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_authored_eval-score.json",
+      "sha256": "d8a62b799b84a4ac9a301c97673fe3a926c4b3bcef3293129444de72a0a9b0c7"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-joint.json": {
+      "bytes": 1459775,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-joint.json",
+      "sha256": "ec72974aa4254cad66ed732af3916463ccc03da98723056bfaa2b28ec8691368"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-raw.json": {
+      "bytes": 2287082,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-raw.json",
+      "sha256": "17ea4766c105244b7ec9f6eaabd74d4885917bdab8c29af8810aa7e7c32bfcb5"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/baseline-old_tune-score.json",
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/cell-checkpoint.json": {
+      "bytes": 3284334,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/cell-checkpoint.json",
+      "sha256": "341761d8a68ac6e29f0f5dbc473cc07c106c687f0cef3928a64e159db7325762"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/cell-training.json": {
+      "bytes": 1181005,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/cell-training.json",
+      "sha256": "ae3c659a04ddb07d414e0a27526dc8c9ae495f3abe1c87bbcb50aaaf36e524bb"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 17212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-alternate_placeholders.json",
+      "sha256": "69686b49ad074c78e3f6ca7ba77d8773f1cf530d219d4b0ee5112cb483e4e0fc"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-disabled.json": {
+      "bytes": 17216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-disabled.json",
+      "sha256": "6e43d77633b2dea2c5b8bf0b5beefb00d7e6f5bf5e3eaa8f86e92616009a7925"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 17214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-rotated_placeholders.json",
+      "sha256": "5819009339e6600c630690a630b798b9ec193449fc5d69e170cb051c82bc668d"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-zeros.json": {
+      "bytes": 17212,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity-zeros.json",
+      "sha256": "9ccaf654aebc00b776725278c0a0a4dd02a2afe70c607c301db0d6f8f8c398ff"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity.json": {
+      "bytes": 1821,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/initial-parity.json",
+      "sha256": "8192ef8a1c9b358698921cccc7b7efdc8894d83902d75ff3b5d462012d1038d2"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/summary.json": {
+      "bytes": 55907,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/summary.json",
+      "sha256": "6861267ec449f210add8f5526074bec040c690c1bd73652bde5f68e48017b73b"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-joint.json": {
+      "bytes": 978863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-joint.json",
+      "sha256": "b6e7cdcf3008f8740861b4b5f64a6363f17bead6e8692aca75de5238ab78bd56"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-raw.json": {
+      "bytes": 1403136,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-raw.json",
+      "sha256": "b9d4a057d46c2c00deac3fb45fedee31d8b597662e832efc1fc660bd7c526dae"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-score.json": {
+      "bytes": 104126,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_dev-score.json",
+      "sha256": "c5c01604f8c845e10a9bfe9918f9a96c27fe02bc76f3f1d6917689d05d19a017"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_eval-joint.json": {
+      "bytes": 1018992,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_eval-joint.json",
+      "sha256": "765ce804e72a4b974776f0423d915a5a3c661952cc68e376ffa17da74602f9fa"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_eval-raw.json": {
+      "bytes": 1406048,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-authored_eval-raw.json",
+      "sha256": "c40d0a7141a86a263f6bbed8032453a61cb2e2a9915c43806df32bfababbc568"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-joint.json": {
+      "bytes": 529788,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-joint.json",
+      "sha256": "d2bd15cf1e3d3899677e54d0f5d30e4785d1c2421cc53a0ae7fce65bd314c9cb"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-raw.json": {
+      "bytes": 671443,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-raw.json",
+      "sha256": "219d9f12cd2f0a8ea9fa330e196253ce7692e136bb89284a1179586c7180bc48"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-score.json": {
+      "bytes": 53550,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_challenge-score.json",
+      "sha256": "98fda1a4588319b563c9428e3fa8d6dc98323e67f78afce33bae6fdde5328a89"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-joint.json": {
+      "bytes": 503545,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-joint.json",
+      "sha256": "d9b4d8d2778294b7dc2c5c175f7c23d1705a3895f843dcd6003861d3d34579e7"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-raw.json": {
+      "bytes": 609949,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-raw.json",
+      "sha256": "3c7963e936e1594195ab577acdc511f7f2f922662e8040bce3f3d3efa984a8f0"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-score.json": {
+      "bytes": 53299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-fresh_tune-score.json",
+      "sha256": "9eb615a05242e1387a4f16290b3d431279d991188ac4b6aa0007f7f923b7a647"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-law-joint.json": {
+      "bytes": 107769,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-law-joint.json",
+      "sha256": "b9e2eb96a1eb138390868e1aaf389d038bae539c8d7b4dcea0400d2794a725ad"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-law-raw.json": {
+      "bytes": 281166,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-law-raw.json",
+      "sha256": "625eb674d54e26762da59b91c73478866f56312cc548f0c8f91dad7ca412da8c"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-modality-retention.json": {
+      "bytes": 164582,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-modality-retention.json",
+      "sha256": "cf7777ea899daa4e5ae512274b95834a94783417ecc87d41da7ef4274284ffe7"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1039517,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-joint.json",
+      "sha256": "d82a7d4f01b892562567f0e36d9213b5dd634cfcbefcd3dbcb3ac7febbd02da9"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1442974,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-raw.json",
+      "sha256": "cc126142fbb204aad7e05610f7298d1bd60a32bb8ce6aeb5d55bd6860f44dff5"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-score.json": {
+      "bytes": 105203,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_authored_eval-score.json",
+      "sha256": "3bf5960033b113c87620010d2f3e25c31fe39b4be914c42ed8ec8790e68193de"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-joint.json": {
+      "bytes": 1459990,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-joint.json",
+      "sha256": "5a0a5f4cd837ec7140557cdc4aec94a912b015762e19b25cd8783ef471ee2a6f"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-raw.json": {
+      "bytes": 2285981,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-raw.json",
+      "sha256": "f3e4e61efe1786a1e96e82c3aa5a258618445aab9327a5def6b76a87d987404f"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-score.json": {
+      "bytes": 101544,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-old_tune-score.json",
+      "sha256": "34f522f50005c8b858a6d24f59cf1d1a57fbe3e39506b763fcff52761e78b3fb"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 17206,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-alternate_placeholders.json",
+      "sha256": "8f255ab07bc1b1cdb0931bb210edcac96cecbbe7aa91d73cae43f0a10bb9cd1b"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-disabled.json": {
+      "bytes": 17210,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-disabled.json",
+      "sha256": "c974e5f8abaa5876f025ceec82bb89b30e83029f7a9bb87adb01a14a0f2c197a"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 17208,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-rotated_placeholders.json",
+      "sha256": "d56763dc0bc1fe273cbbfc7aa967d132789a71a862796081b468aa03684160ab"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-zeros.json": {
+      "bytes": 17206,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity-zeros.json",
+      "sha256": "16b526a696293eb638d1896544a186a6660e4bfa971401f83a0c00c24e399bfa"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity.json": {
+      "bytes": 1821,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/results/trained-parity.json",
+      "sha256": "4ac5037a941755ead131dc49c8e30cdf60aade4359b5278003f5333907f119d7"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child-exit.json",
+      "sha256": "31831bf2535c4f153f37da3cdd2e4c149980b90dea88acb2d26e896b6dd45a1d"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child-identity.json": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child-identity.json",
+      "sha256": "9a972242e04f7c7a90357a9e5ccef3984feaadff4addfdac3d6613fca2010489"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child.log": {
+      "bytes": 65,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/child.log",
+      "sha256": "9c5401fcee70656231494ead9c922a3eb969d375d391b44a77fd9381b08a45d1"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/command.json": {
+      "bytes": 1087,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/command.json",
+      "sha256": "ad5ae1c0f4128bc4120d261dbc61ee9603cdcdfa5ce36e6e16c80337f24d9f4e"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/group-rss-observations.jsonl": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/group-rss-observations.jsonl",
+      "sha256": "c3d36fdaf5545c0462ddacc281b144f43f585c385c39696b4cb3aafcc90c9ba6"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/group-rss-summary.json": {
+      "bytes": 1753,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/group-rss-summary.json",
+      "sha256": "0e818b56e6cf354cab414a156bbefcb3a5486c4dd6665f7cfbf8f2afb44d7997"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/guardian-exit.json",
+      "sha256": "4747337f580278257704287c518fdc872184b6a2ea82f746690922402f7e4ec6"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/lease-binding.json": {
+      "bytes": 691,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/lease-binding.json",
+      "sha256": "488943a6a91d1bec727e5b1198ed8f910173401ca1e0538141eee97261522631"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/lease-observations.jsonl": {
+      "bytes": 37617,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/lease-observations.jsonl",
+      "sha256": "8db953fb12358d138025502a362807bd3c128a07a80d4ea7fd88d0e88dfafd1e"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/owned-group-final.json": {
+      "bytes": 189,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/owned-group-final.json",
+      "sha256": "7bf5dca00434476e49bc28f9bf11ad9f5ffdf9428c8d143dabce537ecaca75bc"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/pre-admission.json": {
+      "bytes": 8034,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/pre-admission.json",
+      "sha256": "6c6c4bcbdada9db1154e433eb4a833dabde4a47d1db3825bdae435c767605ab3"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/resource-observations.json",
+      "sha256": "f0f6c95b7c02af38173c3dd3ad583cda514f2608ce9ce8601a17ee1774e81016"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/runtime/scheduler-adoption.json": {
+      "bytes": 4645,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/runtime/scheduler-adoption.json",
+      "sha256": "c9610568e1ee0e9914e1a64dad1f926fcbb8f9519916f8ae557781786c8f5275"
+    },
+    "releases/20261012-permission-retention-v1/cells/all-parameters/training-protocol-review.json": {
+      "bytes": 140807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/all-parameters/training-protocol-review.json",
+      "sha256": "be7257813a2f8f8c15ecf62edfb0ecb183d7bf193c7498533c75a2b26be0e44f"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/plan.json": {
+      "bytes": 69396,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/plan.json",
+      "sha256": "e48219b34e720142e2a9413aa3594fed81af1c17e63e74a145a2ac8374437c88"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/cell-checkpoint.json": {
+      "bytes": 2513633,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/cell-checkpoint.json",
+      "sha256": "e43ca5018f3d6c2eb4c67c5499563b6680bbcaa5767dbe8042258b64d0ba864d"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/cell-training.json": {
+      "bytes": 1146319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/cell-training.json",
+      "sha256": "ccb7667c15efb637206016328c8aa54c3da87a014956ff6bae7d35103dc3f97e"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 16819,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-alternate_placeholders.json",
+      "sha256": "75b95cad9e42acf94f54eff042bb89056315af8b38e7036da6b9daad94b6c8c5"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-disabled.json": {
+      "bytes": 16823,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-disabled.json",
+      "sha256": "d462d59671b540d12817911b5007a7f6cc730629b6e2318d78d776b44b45ef87"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 16821,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-rotated_placeholders.json",
+      "sha256": "6c188e61f187e2b0e23edee3ae41945b19e99a9549291fe156523bc591a1f5a4"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-zeros.json": {
+      "bytes": 16819,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity-zeros.json",
+      "sha256": "4ebcf139c42056b887b824921b6b33d5acb97af6df58d984c7de89b5b387b06e"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity.json": {
+      "bytes": 1825,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/initial-parity.json",
+      "sha256": "6ca09fdacb2a15855c30f959517c176529d9bb33095e636ad6f1532b9b15ecfe"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/summary.json": {
+      "bytes": 55721,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/summary.json",
+      "sha256": "328930e84189576f505db04fc08cbabc02e6c41d400175a1868f145e926105de"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-joint.json": {
+      "bytes": 967657,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-joint.json",
+      "sha256": "e881569d116ead1b6e68b02ad24f0e3a76f4e3d7d2ce0091404034c41fa97cee"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-raw.json": {
+      "bytes": 1370069,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-raw.json",
+      "sha256": "c4f72b1f5bc0281776add0b71fa93d81b08c19a1f6af6a639222320b2dd35762"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-score.json": {
+      "bytes": 104498,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_dev-score.json",
+      "sha256": "ecd120f7a6eb27e4846aebd7c74388ea26ebdd96f88c061af4ce153bdc7d7a05"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_eval-joint.json": {
+      "bytes": 990748,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_eval-joint.json",
+      "sha256": "b417d3883442f848458959ac6519b3b78b7205b499edbbd8dcdac414ee5070b4"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_eval-raw.json": {
+      "bytes": 1370662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-authored_eval-raw.json",
+      "sha256": "df3ce4393b8a80ee2b10ed11fc5f70cbd45a32fe9e2daa54ec3302ae4b3cda91"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-joint.json": {
+      "bytes": 522219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-joint.json",
+      "sha256": "0ff50041f4f6a3b64a47232c8ef7227d32f7e182417160889929f7c574c0d96e"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-raw.json": {
+      "bytes": 646219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-raw.json",
+      "sha256": "62a43daa4e4a8cafbaf47f3b8f399faa3a2d1ee01299371da20ff65c83bb3724"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-score.json": {
+      "bytes": 53716,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_challenge-score.json",
+      "sha256": "284454485b9a84239e2cee0c2b83a2bab66099eee32adb2bf78059f3e5c6eeef"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-joint.json": {
+      "bytes": 490443,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-joint.json",
+      "sha256": "0313cd21c14d1c39cdd3f538eb6ccb567ba3b6a7f3674b9fd424f317fee3033f"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-raw.json": {
+      "bytes": 608498,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-raw.json",
+      "sha256": "094d177f7449a230b24b9da252edcf12414254dcf7333fe2c4ca57be3155231a"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-score.json": {
+      "bytes": 53379,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-fresh_tune-score.json",
+      "sha256": "4ff96b63d31a6d04fa9ce8bc572096785d671fe700c50cfb5bd5d4b98aefc213"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-law-joint.json": {
+      "bytes": 104139,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-law-joint.json",
+      "sha256": "e1a73cad7a3e899ffb705c6029a359ccdeeaaee3f30b282bc194b82fa1b0f3d1"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-law-raw.json": {
+      "bytes": 278921,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-law-raw.json",
+      "sha256": "ed601a187a77bb66c94ea7338844a1a22e8842d65707599adc8fc4ddaa22a57a"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-modality-retention.json": {
+      "bytes": 164199,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-modality-retention.json",
+      "sha256": "0e1dfdd9a90dc68245004cbf9f366af6560f8df85bf4bdced9e7355f00c65469"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1027343,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-joint.json",
+      "sha256": "b12eb63173ac687d7626fb9ffdbf6b0c3458bd26b350fa15d0224bc25b4ec011"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1407741,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-raw.json",
+      "sha256": "5d1710a67d10330349a689e5ad797df9167ad5d84f4f63de4211bf0a3ee6b53a"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-score.json": {
+      "bytes": 105531,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_authored_eval-score.json",
+      "sha256": "909c948a359251275b3b7e75297da8a0c574720f91d1ec9335523fa0fba2403c"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-joint.json": {
+      "bytes": 1459849,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-joint.json",
+      "sha256": "bfa1711e458e45fbb573b18ca896c5b91aaff13f7a9d4cac92013c899d27d081"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-raw.json": {
+      "bytes": 2286835,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-raw.json",
+      "sha256": "909075265035e880338e239a07a7bbbfb863f2e3eb2d20c07fe6fca20bab1e79"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-score.json": {
+      "bytes": 101532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-old_tune-score.json",
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 16841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-alternate_placeholders.json",
+      "sha256": "bfbf97f5fbad7cbdb7b08eed6c9bc72362625fe661f4c5feee7c9b1147976fe6"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-disabled.json": {
+      "bytes": 16845,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-disabled.json",
+      "sha256": "b3d654c5938d12bfa84122018db30b090bb353c6026edc9e776c306de6d0b5cd"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 16843,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-rotated_placeholders.json",
+      "sha256": "077b3e84a525062f09d1b4ff02d75307029e91e5677dfc99b07df37243a06802"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-zeros.json": {
+      "bytes": 16841,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity-zeros.json",
+      "sha256": "f994168c01da63dbd140d6371bb4f02dc2a86128d0ce639225194b1f06cf5d18"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity.json": {
+      "bytes": 1825,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/results/trained-parity.json",
+      "sha256": "fe08c6aeb1786a6b81b525b1d0753c777988630eb88b4e9b286503103d3dd53e"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child-exit.json": {
+      "bytes": 105,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child-exit.json",
+      "sha256": "5421a8ab99b0965847df8dfe28232f749b030ce987c440024b7e00b49ee06bb3"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child-identity.json": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child-identity.json",
+      "sha256": "250530be87701766fe3f3bafa897ebd0590f45b02e2f54022a5a4fe558c3a763"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child.log": {
+      "bytes": 66,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/child.log",
+      "sha256": "5509047bf58f839499029ffd40768380bc80fd78a28802e906bf713615347660"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/command.json": {
+      "bytes": 1089,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/command.json",
+      "sha256": "11b88cbd2a4011acaa233e48904b52678a5764b6e67f10344b611c4dc2e7c25f"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/group-rss-observations.jsonl": {
+      "bytes": 15980,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/group-rss-observations.jsonl",
+      "sha256": "5bf2c387b8c2d5de1ca65c9aaca9d1c3d0d61a2135cb522a0eeb8413d49a9ba9"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/group-rss-summary.json": {
+      "bytes": 1752,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/group-rss-summary.json",
+      "sha256": "7093e3095f2e1b21b1413330e3df832e439b7f2088f9f425d4c138265dac0b3a"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/guardian-exit.json",
+      "sha256": "e565f1c1ce1e796fdd7568cf6d40110b3e9169de2bbdcc0ffe4401e8fa0e023f"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/lease-binding.json",
+      "sha256": "8fc43834508e5747480470bc8b1b9c1f99ac0a1e3b81a42ebce5095af67c427f"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/lease-observations.jsonl": {
+      "bytes": 32707,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/lease-observations.jsonl",
+      "sha256": "376d95335d462154ef8844bd153a241af050028b7d2356ac01e7e99fe5eb2899"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/owned-group-final.json": {
+      "bytes": 189,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/owned-group-final.json",
+      "sha256": "f8ac4201fbad7793c35a4904071b2df60fa62dcdb3eb62390a844597970ce4ca"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/pre-admission.json": {
+      "bytes": 8036,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/pre-admission.json",
+      "sha256": "e31f0e3510ccc1a2b65d422a0b0b9f1104e7816490fd3301acf2d7fba3974839"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/resource-observations.json",
+      "sha256": "ecbdc0127f960dcceeea6a5b0a303b3c308ab711ef52fdfad6f5f3f7a8566151"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/scheduler-adoption.json": {
+      "bytes": 4643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/runtime/scheduler-adoption.json",
+      "sha256": "679d19075a1ee44afae547c4d28f6fb22729d96001518cdb1f4121db89040708"
+    },
+    "releases/20261012-permission-retention-v1/cells/span-heads-only/training-protocol-review.json": {
+      "bytes": 148884,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/cells/span-heads-only/training-protocol-review.json",
+      "sha256": "eca10a37b0e4a44254f009fd901227ec5ed61d75de5b02634822806740d72cce"
+    },
+    "releases/20261012-permission-retention-v1/evidence/authored-reference-packet-v01.json": {
+      "bytes": 8262146,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/authored-reference-packet-v01.json",
+      "sha256": "b926dbbc459c8d21a51fd8876598c8b3830a979730b44a4b3c8d15d8f613676e"
+    },
+    "releases/20261012-permission-retention-v1/evidence/combined-pure-tests-observation-v01.json": {
+      "bytes": 3369,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/combined-pure-tests-observation-v01.json",
+      "sha256": "a48a475b00ddacb419cb0820f1a52df72a4ff15a56fa40b672c90606f5ce1b48"
+    },
+    "releases/20261012-permission-retention-v1/evidence/combined-pure-tests-v02.log": {
+      "bytes": 245,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/combined-pure-tests-v02.log",
+      "sha256": "cb3b5c0de5383028180057bd756ecf3e3ed8a2a29373b4dcb03e0b2c02e1f0fb"
+    },
+    "releases/20261012-permission-retention-v1/evidence/combined-pure-tests-v02.xml": {
+      "bytes": 23009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/combined-pure-tests-v02.xml",
+      "sha256": "0f496861ad947ab82cb651d1a092ccdaa3613d431518b951886908cef186564a"
+    },
+    "releases/20261012-permission-retention-v1/evidence/permission-retention-result-analysis-v01.json": {
+      "bytes": 1638365,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/permission-retention-result-analysis-v01.json",
+      "sha256": "b8db48da856b2cc6308b75b2d456dc2e7fe92e876659b98f19846456c6d84e15"
+    },
+    "releases/20261012-permission-retention-v1/evidence/registration-v01.json": {
+      "bytes": 60459,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/registration-v01.json",
+      "sha256": "b9c2accf814ef4e31de9c2a83c0714e5e853f5065f6cd2613036d40ecc3ef27d"
+    },
+    "releases/20261012-permission-retention-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 87546,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/result-independent-review-v01.json",
+      "sha256": "002bbe70e45d1c3b38b27adcc4328d05d640beab5f069b1826b7af55d32fa21e"
+    },
+    "releases/20261012-permission-retention-v1/evidence/root-science-source-independent-review-v01.json": {
+      "bytes": 4821,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/root-science-source-independent-review-v01.json",
+      "sha256": "3c7e4e3b0e08ec1461b8ba3dc90ab5758b710a2aaf6042be545625e6dad24ab6"
+    },
+    "releases/20261012-permission-retention-v1/evidence/runtime-independent-review-v01.json": {
+      "bytes": 59468,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/runtime-independent-review-v01.json",
+      "sha256": "eb3dc46a2924941e06837351606a080225cd1c01d951d27603f5e3e6bbe3f2a0"
+    },
+    "releases/20261012-permission-retention-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 6319,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/trainer-source-independent-review-v01.json",
+      "sha256": "30d943212071aa403f1a4c6d97a3d0d5c2cac6f3eb2bd23a18b98d384a5ccda5"
+    },
+    "releases/20261012-permission-retention-v1/evidence/training-export-v01.json": {
+      "bytes": 5052701,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/training-export-v01.json",
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "releases/20261012-permission-retention-v1/evidence/two-cell-output-freeze-v01.json": {
+      "bytes": 33463,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/evidence/two-cell-output-freeze-v01.json",
+      "sha256": "2a268b4b3f5c03cedb29d8d1df6d5718778fc54da9473fabfb5c2eaefde7d46b"
+    },
+    "releases/20261012-permission-retention-v1/recipe/analyze_permission_retention_v01.py": {
+      "bytes": 69075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/analyze_permission_retention_v01.py",
+      "sha256": "4e74c5fc209187b37ed573facd606a57ecd2fe020ad36924f00f32bf0e6912b4"
+    },
+    "releases/20261012-permission-retention-v1/recipe/audit_permission_terminal_v02.py": {
+      "bytes": 66312,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/audit_permission_terminal_v02.py",
+      "sha256": "d9a5921e02538c88ece510de225d63846eac8f4ab11c80f1fafd705c9fd13ca6"
+    },
+    "releases/20261012-permission-retention-v1/recipe/freeze_two_cell_outputs_v01.py": {
+      "bytes": 4929,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/freeze_two_cell_outputs_v01.py",
+      "sha256": "e577d6d123802eb93749245678acf65a054269c1b33e8b909d05b4f3ce9ccb38"
+    },
+    "releases/20261012-permission-retention-v1/recipe/prepare_hf_permission_release_v02.py": {
+      "bytes": 13387,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/prepare_hf_permission_release_v02.py",
+      "sha256": "6a422edae3fa1b604c63789d91cc5bc743e88bea68380e09f61ab2dd44cf278a"
+    },
+    "releases/20261012-permission-retention-v1/recipe/prepare_permission_retention.py": {
+      "bytes": 10747,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/prepare_permission_retention.py",
+      "sha256": "4fda0cec7b90c12fb3c4021b1eabed271d896570b771850dac8c5a7425f92d24"
+    },
+    "releases/20261012-permission-retention-v1/recipe/publish_hf_permission_release_v02.py": {
+      "bytes": 13842,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/publish_hf_permission_release_v02.py",
+      "sha256": "3d99568134d8d0ee02053f65cd55fa7fe9736fcdc4b0ca07c6b7c3114f47bb30"
+    },
+    "releases/20261012-permission-retention-v1/recipe/review_permission_cell_v01.py": {
+      "bytes": 23470,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/review_permission_cell_v01.py",
+      "sha256": "5edebcbe8b75c0abc6cb1940a38886365db496a1a75300dc727c5e0c6c81dd34"
+    },
+    "releases/20261012-permission-retention-v1/recipe/run_permission_retention.py": {
+      "bytes": 37094,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/run_permission_retention.py",
+      "sha256": "ce43a7fa1d44459ea22120a7366c0b5ebb9c499228e5ec31efa84b7d58084a0a"
+    },
+    "releases/20261012-permission-retention-v1/recipe/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/recipe/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "releases/20261012-permission-retention-v1/release-manifest.json": {
+      "bytes": 60037,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/release-manifest.json",
+      "sha256": "41c765d9d29bfa6561fa01ae45ab9ac7db9fb7b98448503a40659c77a02623e2"
+    },
+    "releases/20261012-permission-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py",
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "releases/20261012-permission-retention-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_permission_retention_contracts.py": {
+      "bytes": 19165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01/releases/20261012-permission-retention-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_permission_retention_contracts.py",
+      "sha256": "c7b4e36b6eb0d6fd0717804b12eb2aa9fbb0f98ea89391a0e0f30d4b9b0f07e8"
+    }
+  },
+  "default_promotion": false,
+  "expected_parent_revision": "0958f81330fb7bb7664a8ce85355413d289932b7",
+  "freeze_manifest": {
+    "bytes": 33463,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/two-cell-output-freeze-v01.json",
+    "sha256": "2a268b4b3f5c03cedb29d8d1df6d5718778fc54da9473fabfb5c2eaefde7d46b"
+  },
+  "helper_review": {
+    "bytes": 12668,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-helper-source-independent-review-v02.json",
+    "sha256": "8faa0a3e95b77505b8a156177bcf0ccc5def976eef648305aaefa6f758d48820"
+  },
+  "payload_bytes": 67107397,
+  "payload_files": 142,
+  "release_prefix": "releases/20261012-permission-retention-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "result_review": {
+    "bytes": 87546,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/result-independent-review-v01.json",
+    "sha256": "002bbe70e45d1c3b38b27adcc4328d05d640beab5f069b1826b7af55d32fa21e"
+  },
+  "runtime_review": {
+    "bytes": 59468,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/runtime-independent-review-v01.json",
+    "sha256": "eb3dc46a2924941e06837351606a080225cd1c01d951d27603f5e3e6bbe3f2a0"
+  },
+  "schema": "permission-retention-Hub-preparation/v1",
+  "upload_root": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/hf-upload-v01"
+}

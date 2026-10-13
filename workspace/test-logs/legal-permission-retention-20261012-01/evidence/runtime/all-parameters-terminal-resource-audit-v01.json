@@ -1,0 +1,548 @@
+{
+  "HF_mutation": false,
+  "Lake_executed": false,
+  "absolute_peak_measured": false,
+  "actual_loaded_source_producer_count": 12,
+  "all14_guardian_wrappers_bound": true,
+  "all_immediate_opening_record_bodies_unchanged": true,
+  "all_original526_record_bodies_unchanged": true,
+  "artifacts": {
+    "child-exit.json": {
+      "bytes": 104,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/child-exit.json",
+      "sha256": "31831bf2535c4f153f37da3cdd2e4c149980b90dea88acb2d26e896b6dd45a1d"
+    },
+    "child-identity.json": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/child-identity.json",
+      "sha256": "9a972242e04f7c7a90357a9e5ccef3984feaadff4addfdac3d6613fca2010489"
+    },
+    "child.log": {
+      "bytes": 65,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/child.log",
+      "sha256": "9c5401fcee70656231494ead9c922a3eb969d375d391b44a77fd9381b08a45d1"
+    },
+    "command.json": {
+      "bytes": 1087,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/command.json",
+      "sha256": "ad5ae1c0f4128bc4120d261dbc61ee9603cdcdfa5ce36e6e16c80337f24d9f4e"
+    },
+    "group-rss-observations.jsonl": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/group-rss-observations.jsonl",
+      "sha256": "c3d36fdaf5545c0462ddacc281b144f43f585c385c39696b4cb3aafcc90c9ba6"
+    },
+    "group-rss-summary.json": {
+      "bytes": 1753,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/group-rss-summary.json",
+      "sha256": "0e818b56e6cf354cab414a156bbefcb3a5486c4dd6665f7cfbf8f2afb44d7997"
+    },
+    "guardian-exit.json": {
+      "bytes": 520,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/guardian-exit.json",
+      "sha256": "4747337f580278257704287c518fdc872184b6a2ea82f746690922402f7e4ec6"
+    },
+    "lease-binding.json": {
+      "bytes": 691,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/lease-binding.json",
+      "sha256": "488943a6a91d1bec727e5b1198ed8f910173401ca1e0538141eee97261522631"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 37617,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/lease-observations.jsonl",
+      "sha256": "8db953fb12358d138025502a362807bd3c128a07a80d4ea7fd88d0e88dfafd1e"
+    },
+    "owned-group-final.json": {
+      "bytes": 189,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/owned-group-final.json",
+      "sha256": "7bf5dca00434476e49bc28f9bf11ad9f5ffdf9428c8d143dabce537ecaca75bc"
+    },
+    "pre-admission.json": {
+      "bytes": 8034,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/pre-admission.json",
+      "sha256": "6c6c4bcbdada9db1154e433eb4a833dabde4a47d1db3825bdae435c767605ab3"
+    },
+    "resource-observations.json": {
+      "bytes": 873,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/resource-observations.json",
+      "sha256": "f0f6c95b7c02af38173c3dd3ad583cda514f2608ce9ce8601a17ee1774e81016"
+    },
+    "resources-final.json": {
+      "bytes": 6300,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/resources-final.json",
+      "sha256": "319b72f426ba4fd7791e106bd93aaac70605ed9932548b3c882dfc96fd817bae"
+    },
+    "resources-start.json": {
+      "bytes": 2548,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/resources-start.json",
+      "sha256": "40a61218ae7d1631c55a3ceff94dcfe761b7f5e05356d2fadf70cfabb1a68820"
+    },
+    "results/baseline-authored_dev-joint.json": {
+      "bytes": 951751,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-authored_dev-joint.json",
+      "sha256": "17c4c8d2c008b2e45ca109c67f430cab2800f82a9360f903765f1de5fd74b333"
+    },
+    "results/baseline-authored_dev-raw.json": {
+      "bytes": 1366027,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-authored_dev-raw.json",
+      "sha256": "c7e00743dd6a74cf266f66792bb409ba6e2fb950a7fb3fefbd92ee341369b2c4"
+    },
+    "results/baseline-authored_dev-score.json": {
+      "bytes": 104536,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-authored_dev-score.json",
+      "sha256": "cc2b7ea7f6a5416418d8a6a73f8c7cbe8ede8536a8df3e2d2a502841f7f94ff3"
+    },
+    "results/baseline-authored_eval-joint.json": {
+      "bytes": 990996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-authored_eval-joint.json",
+      "sha256": "526b9786756d54273aa8676548dc99691288b6747173b53cb40cd2bdbf42d2be"
+    },
+    "results/baseline-authored_eval-raw.json": {
+      "bytes": 1367849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-authored_eval-raw.json",
+      "sha256": "2bd21e9e69c64ce21fdd3f7ce681c726a58c6e37ac3273f174e75bbe34c28533"
+    },
+    "results/baseline-fresh_challenge-joint.json": {
+      "bytes": 506517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_challenge-joint.json",
+      "sha256": "3e3d1696454fbe533479290a325ff3df3675bd8ebbb39f327da0721813d117c6"
+    },
+    "results/baseline-fresh_challenge-raw.json": {
+      "bytes": 641934,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_challenge-raw.json",
+      "sha256": "ccef4299f1717539df06f1814cf8eec5c6ee128f9893d5085912a68515b3c65a"
+    },
+    "results/baseline-fresh_challenge-score.json": {
+      "bytes": 53748,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_challenge-score.json",
+      "sha256": "89a2ef512280abf58718cd33cebc06b0603e9fd4445ae39dbecad18b8b3f61c9"
+    },
+    "results/baseline-fresh_tune-joint.json": {
+      "bytes": 491381,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_tune-joint.json",
+      "sha256": "95e7669803e402e2b25d8b670c85d53b765cebc05759ad4e5ece9e83d6ec1e51"
+    },
+    "results/baseline-fresh_tune-raw.json": {
+      "bytes": 604147,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_tune-raw.json",
+      "sha256": "df2c4387c426445add959280fccfe754ecb38f7061d1fd4add18308ac31e392a"
+    },
+    "results/baseline-fresh_tune-score.json": {
+      "bytes": 53408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-fresh_tune-score.json",
+      "sha256": "0c4926e285700c1717cd7faff68766ea2547628f764cd392d64eee498ee944c2"
+    },
+    "results/baseline-law-joint.json": {
+      "bytes": 103545,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-law-joint.json",
+      "sha256": "b7640d03d3803085a83d558e708e86e6db19954bd24d80a9bbd4707a052ee3be"
+    },
+    "results/baseline-law-raw.json": {
+      "bytes": 279118,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-law-raw.json",
+      "sha256": "666300e24afdfe9aaf2428c528f348843ed08c0ab3e8fb9e431c6e1ab9f27a76"
+    },
+    "results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1032317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_authored_eval-joint.json",
+      "sha256": "c146ea023b22cdf5f06d90e2355d03c7673ddd8899ce39dc79bd1de623fc6221"
+    },
+    "results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1407859,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_authored_eval-raw.json",
+      "sha256": "45ff720691b98ce004a00795280e9baa987d67e090fb3bcce6569b46f4d95083"
+    },
+    "results/baseline-old_authored_eval-score.json": {
+      "bytes": 105562,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_authored_eval-score.json",
+      "sha256": "d8a62b799b84a4ac9a301c97673fe3a926c4b3bcef3293129444de72a0a9b0c7"
+    },
+    "results/baseline-old_tune-joint.json": {
+      "bytes": 1459775,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_tune-joint.json",
+      "sha256": "ec72974aa4254cad66ed732af3916463ccc03da98723056bfaa2b28ec8691368"
+    },
+    "results/baseline-old_tune-raw.json": {
+      "bytes": 2287082,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_tune-raw.json",
+      "sha256": "17ea4766c105244b7ec9f6eaabd74d4885917bdab8c29af8810aa7e7c32bfcb5"
+    },
+    "results/baseline-old_tune-score.json": {
+      "bytes": 101532,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/baseline-old_tune-score.json",
+      "sha256": "a721d6226d373ad4ca060a822fe19c700537514b355990a4ce9b20d54f6fba92"
+    },
+    "results/cell-checkpoint.json": {
+      "bytes": 3284334,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/cell-checkpoint.json",
+      "sha256": "341761d8a68ac6e29f0f5dbc473cc07c106c687f0cef3928a64e159db7325762"
+    },
+    "results/cell-training.json": {
+      "bytes": 1181005,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/cell-training.json",
+      "sha256": "ae3c659a04ddb07d414e0a27526dc8c9ae495f3abe1c87bbcb50aaaf36e524bb"
+    },
+    "results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "results/initial-parity-alternate_placeholders.json": {
+      "bytes": 17212,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/initial-parity-alternate_placeholders.json",
+      "sha256": "69686b49ad074c78e3f6ca7ba77d8773f1cf530d219d4b0ee5112cb483e4e0fc"
+    },
+    "results/initial-parity-disabled.json": {
+      "bytes": 17216,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/initial-parity-disabled.json",
+      "sha256": "6e43d77633b2dea2c5b8bf0b5beefb00d7e6f5bf5e3eaa8f86e92616009a7925"
+    },
+    "results/initial-parity-rotated_placeholders.json": {
+      "bytes": 17214,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/initial-parity-rotated_placeholders.json",
+      "sha256": "5819009339e6600c630690a630b798b9ec193449fc5d69e170cb051c82bc668d"
+    },
+    "results/initial-parity-zeros.json": {
+      "bytes": 17212,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/initial-parity-zeros.json",
+      "sha256": "9ccaf654aebc00b776725278c0a0a4dd02a2afe70c607c301db0d6f8f8c398ff"
+    },
+    "results/initial-parity.json": {
+      "bytes": 1821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/initial-parity.json",
+      "sha256": "8192ef8a1c9b358698921cccc7b7efdc8894d83902d75ff3b5d462012d1038d2"
+    },
+    "results/summary.json": {
+      "bytes": 55907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/summary.json",
+      "sha256": "6861267ec449f210add8f5526074bec040c690c1bd73652bde5f68e48017b73b"
+    },
+    "results/trained-authored_dev-joint.json": {
+      "bytes": 978863,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-authored_dev-joint.json",
+      "sha256": "b6e7cdcf3008f8740861b4b5f64a6363f17bead6e8692aca75de5238ab78bd56"
+    },
+    "results/trained-authored_dev-raw.json": {
+      "bytes": 1403136,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-authored_dev-raw.json",
+      "sha256": "b9d4a057d46c2c00deac3fb45fedee31d8b597662e832efc1fc660bd7c526dae"
+    },
+    "results/trained-authored_dev-score.json": {
+      "bytes": 104126,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-authored_dev-score.json",
+      "sha256": "c5c01604f8c845e10a9bfe9918f9a96c27fe02bc76f3f1d6917689d05d19a017"
+    },
+    "results/trained-authored_eval-joint.json": {
+      "bytes": 1018992,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-authored_eval-joint.json",
+      "sha256": "765ce804e72a4b974776f0423d915a5a3c661952cc68e376ffa17da74602f9fa"
+    },
+    "results/trained-authored_eval-raw.json": {
+      "bytes": 1406048,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-authored_eval-raw.json",
+      "sha256": "c40d0a7141a86a263f6bbed8032453a61cb2e2a9915c43806df32bfababbc568"
+    },
+    "results/trained-fresh_challenge-joint.json": {
+      "bytes": 529788,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_challenge-joint.json",
+      "sha256": "d2bd15cf1e3d3899677e54d0f5d30e4785d1c2421cc53a0ae7fce65bd314c9cb"
+    },
+    "results/trained-fresh_challenge-raw.json": {
+      "bytes": 671443,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_challenge-raw.json",
+      "sha256": "219d9f12cd2f0a8ea9fa330e196253ce7692e136bb89284a1179586c7180bc48"
+    },
+    "results/trained-fresh_challenge-score.json": {
+      "bytes": 53550,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_challenge-score.json",
+      "sha256": "98fda1a4588319b563c9428e3fa8d6dc98323e67f78afce33bae6fdde5328a89"
+    },
+    "results/trained-fresh_tune-joint.json": {
+      "bytes": 503545,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_tune-joint.json",
+      "sha256": "d9b4d8d2778294b7dc2c5c175f7c23d1705a3895f843dcd6003861d3d34579e7"
+    },
+    "results/trained-fresh_tune-raw.json": {
+      "bytes": 609949,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_tune-raw.json",
+      "sha256": "3c7963e936e1594195ab577acdc511f7f2f922662e8040bce3f3d3efa984a8f0"
+    },
+    "results/trained-fresh_tune-score.json": {
+      "bytes": 53299,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-fresh_tune-score.json",
+      "sha256": "9eb615a05242e1387a4f16290b3d431279d991188ac4b6aa0007f7f923b7a647"
+    },
+    "results/trained-law-joint.json": {
+      "bytes": 107769,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-law-joint.json",
+      "sha256": "b9e2eb96a1eb138390868e1aaf389d038bae539c8d7b4dcea0400d2794a725ad"
+    },
+    "results/trained-law-raw.json": {
+      "bytes": 281166,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-law-raw.json",
+      "sha256": "625eb674d54e26762da59b91c73478866f56312cc548f0c8f91dad7ca412da8c"
+    },
+    "results/trained-modality-retention.json": {
+      "bytes": 164582,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-modality-retention.json",
+      "sha256": "cf7777ea899daa4e5ae512274b95834a94783417ecc87d41da7ef4274284ffe7"
+    },
+    "results/trained-old_authored_eval-joint.json": {
+      "bytes": 1039517,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_authored_eval-joint.json",
+      "sha256": "d82a7d4f01b892562567f0e36d9213b5dd634cfcbefcd3dbcb3ac7febbd02da9"
+    },
+    "results/trained-old_authored_eval-raw.json": {
+      "bytes": 1442974,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_authored_eval-raw.json",
+      "sha256": "cc126142fbb204aad7e05610f7298d1bd60a32bb8ce6aeb5d55bd6860f44dff5"
+    },
+    "results/trained-old_authored_eval-score.json": {
+      "bytes": 105203,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_authored_eval-score.json",
+      "sha256": "3bf5960033b113c87620010d2f3e25c31fe39b4be914c42ed8ec8790e68193de"
+    },
+    "results/trained-old_tune-joint.json": {
+      "bytes": 1459990,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_tune-joint.json",
+      "sha256": "5a0a5f4cd837ec7140557cdc4aec94a912b015762e19b25cd8783ef471ee2a6f"
+    },
+    "results/trained-old_tune-raw.json": {
+      "bytes": 2285981,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_tune-raw.json",
+      "sha256": "f3e4e61efe1786a1e96e82c3aa5a258618445aab9327a5def6b76a87d987404f"
+    },
+    "results/trained-old_tune-score.json": {
+      "bytes": 101544,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-old_tune-score.json",
+      "sha256": "34f522f50005c8b858a6d24f59cf1d1a57fbe3e39506b763fcff52761e78b3fb"
+    },
+    "results/trained-parity-alternate_placeholders.json": {
+      "bytes": 17206,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-parity-alternate_placeholders.json",
+      "sha256": "8f255ab07bc1b1cdb0931bb210edcac96cecbbe7aa91d73cae43f0a10bb9cd1b"
+    },
+    "results/trained-parity-disabled.json": {
+      "bytes": 17210,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-parity-disabled.json",
+      "sha256": "c974e5f8abaa5876f025ceec82bb89b30e83029f7a9bb87adb01a14a0f2c197a"
+    },
+    "results/trained-parity-rotated_placeholders.json": {
+      "bytes": 17208,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-parity-rotated_placeholders.json",
+      "sha256": "d56763dc0bc1fe273cbbfc7aa967d132789a71a862796081b468aa03684160ab"
+    },
+    "results/trained-parity-zeros.json": {
+      "bytes": 17206,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-parity-zeros.json",
+      "sha256": "16b526a696293eb638d1896544a186a6660e4bfa971401f83a0c00c24e399bfa"
+    },
+    "results/trained-parity.json": {
+      "bytes": 1821,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/results/trained-parity.json",
+      "sha256": "4ac5037a941755ead131dc49c8e30cdf60aade4359b5278003f5333907f119d7"
+    },
+    "scheduler-adoption.json": {
+      "bytes": 4645,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01/scheduler-adoption.json",
+      "sha256": "c9610568e1ee0e9914e1a64dad1f926fcbb8f9519916f8ae557781786c8f5275"
+    }
+  },
+  "artifacts_durable_asserted": true,
+  "attempt_name": "permission-retention-20261012-all-parameters-01",
+  "attempt_terminal_bytes": 33002281,
+  "audit_checkpoint_JSON_parses": 0,
+  "audit_checkpoint_restore": false,
+  "audit_claims_modified": false,
+  "audit_eval_reference_packet_access": false,
+  "audit_limits_modified": false,
+  "audit_locks_acquired": 0,
+  "audit_model_calls": 0,
+  "audit_optimizer_updates": 0,
+  "audit_resource_API_calls": 0,
+  "auditor": {
+    "bytes": 66312,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/audit_permission_terminal_v02.py",
+    "sha256": "d9a5921e02538c88ece510de225d63846eac8f4ab11c80f1fafd705c9fd13ca6"
+  },
+  "baseline": {
+    "bytes": 69751,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/resource-baseline-audit-design-v01.json",
+    "sha256": "2839a28f9152f112c5d26019c63190c75410eec91d30bdcf54a78f5dbbb8b31a"
+  },
+  "cap_unchanged": true,
+  "cell": {
+    "actor_ranking_enabled": false,
+    "id": "all-parameters",
+    "modality_loss_weight": 2,
+    "presence_ce_weight": 1,
+    "trainable_parameter_policy": "all-parameters"
+  },
+  "child_launch_through_reap_wall_seconds": 33.49796813400462,
+  "child_returncode": 0,
+  "closing_ledger_sample": {
+    "bytes": 6195529,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/private-runtime-snapshots/all-parameters/ledger.json",
+    "sha256": "f3ec3b628156b468cfd199957866a2671cceba46e7b0270280be823538d7ddc9"
+  },
+  "closing_record_count": 527,
+  "closing_scheduler_sample": {
+    "bytes": 1425,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/private-runtime-snapshots/all-parameters/scheduler.json",
+    "sha256": "095cbc8b2e210978e80049154061a90dff90e025073a06a1808f29b51fcd62e1"
+  },
+  "continuous_custody_claimed": false,
+  "current_owned_group": {
+    "available": true,
+    "live_processes": 0,
+    "rss_bytes": 0
+  },
+  "declared_source_producer_count": 32,
+  "diagnostic_custody": [
+    {
+      "name": "old_tune",
+      "rows": 96,
+      "saved_reference_score": true
+    },
+    {
+      "name": "fresh_tune",
+      "rows": 36,
+      "saved_reference_score": true
+    },
+    {
+      "name": "fresh_challenge",
+      "rows": 36,
+      "saved_reference_score": true
+    },
+    {
+      "name": "old_authored_eval",
+      "rows": 72,
+      "saved_reference_score": true
+    },
+    {
+      "name": "authored_dev",
+      "rows": 72,
+      "saved_reference_score": true
+    },
+    {
+      "name": "authored_eval",
+      "rows": 72,
+      "saved_reference_score": false
+    },
+    {
+      "name": "law",
+      "rows": 8,
+      "saved_reference_score": false
+    }
+  ],
+  "diagnostic_panel_count": 7,
+  "diagnostic_source_rows": 392,
+  "exactly_one_new_owned_claim": true,
+  "final_accounting_excludes_later_terminal_receipts": true,
+  "final_reserved_attempt_bytes": 32994684,
+  "final_total_charged_bytes": 32994684,
+  "findings": [],
+  "full_record_bodies_published": false,
+  "group_RSS_observation_count": 36,
+  "guardian_configured_RSS_gap_ceiling_claimed": false,
+  "guardian_elapsed_seconds": 62.74867077602539,
+  "guardian_returncode": 0,
+  "guardian_wrapper_count": 14,
+  "kernel_hard_cap": false,
+  "leader_reaped": true,
+  "lease_id": "2971c4bac87542dea5c922e919658ae2",
+  "lease_observation_count": 37,
+  "live_global_endpoints_not_requalified": true,
+  "modality_retention": {
+    "all_seven_panels_replayed": true,
+    "bit_equal_rows": 0,
+    "full_IR_retention_implied": false,
+    "includes_abstentions_and_unscored_law": true,
+    "schema": "permission-retention-saved-modal-byte-audit/v1",
+    "source_rows": 392
+  },
+  "model_RSS_sample_count": 19,
+  "model_phase_wall_seconds": 18.442263131029904,
+  "observed_RSS_gap_qualification_ceiling_seconds": 5,
+  "observed_at_utc": "2026-10-12T23:46:08.977791+00:00",
+  "opening_record_count": 526,
+  "original_record_count": 526,
+  "own_record_body_sha256": "91b640c3feab778ec836a0807de21638fe265ea1929794ea1fcdce8b37f252ff",
+  "own_record_status": "released",
+  "own_reservation_id": "2cfc66bb8f624fa59984aab2b160480a",
+  "owned_lease_absent_in_terminal_sample": true,
+  "passed": true,
+  "phase_review": {
+    "bytes": 140807,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/all-parameters-training-protocol-independent-review-v01.json",
+    "sha256": "be7257813a2f8f8c15ecf62edfb0ecb183d7bf193c7498533c75a2b26be0e44f"
+  },
+  "physical_attempt": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/permission-retention-20261012-all-parameters-01",
+  "plan": {
+    "bytes": 61702,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/all-parameters-plan-v01.json",
+    "sha256": "b310e6948347159301d54e87d72633fb1c9f4d8996db21b230772a3a42d0b19b"
+  },
+  "resources": {
+    "admission_timeout_seconds": 120,
+    "child_deadline_seconds": 300,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "ledger_lock_timeout_seconds": 60,
+    "memory_mb": 1536,
+    "storage_bytes": 200000000
+  },
+  "result_file_count": 53,
+  "root_identities_unchanged": true,
+  "sampled_endpoints_only": true,
+  "sampled_model_phase_peak_rss_bytes": 746795008,
+  "sampled_peak_only": true,
+  "scheduler_config_unchanged": true,
+  "schema": "permission-retention-terminal-resource-audit/v1",
+  "semantic_accuracy": null,
+  "snapshot_receipt": {
+    "bytes": 1857,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/private-runtime-snapshots/all-parameters/snapshot-receipt-v01.json",
+    "sha256": "f9e5314fb8c56d51f010edea3e6928d2a5636897ad5b406dbf1dae3871c8c630"
+  },
+  "source_producer_count": 32,
+  "source_review": {
+    "bytes": 15658,
+    "path": "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/permission-terminal-auditor-source-independent-review-v01.json",
+    "sha256": "9502b8a5dad67275f9be300f78a0f20b2c8a74f1ff315e9804f89877ddd3a921"
+  },
+  "trace": {
+    "batches_sha256": "6374ccb271304d295f2f7b717875c289e92c931f6c16f9cd423de7d8bdcb6abb",
+    "declared_sampler_independently_reproduced": true,
+    "final_progress": {
+      "epochs_completed": 2,
+      "optimizer_steps": 32,
+      "row_cursor": 48
+    },
+    "freeze_metadata": {
+      "batches_sha256": "0c4be502ddd5695b8f8facc6aa30890668f0b3e384f4c86b6113e20c3a35487f",
+      "completed_updates": 32,
+      "frozen_parameter_count": 0,
+      "frozen_parameters_sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "independent_tensor_or_gradient_replay": false,
+      "same_batch_modality_equal_occurrences": 0,
+      "schema": "permission-retention-freeze-recorded-metadata-audit/v1",
+      "trainable_parameter_count": 23,
+      "trainer_observations_only": true,
+      "training_row_occurrences": 384
+    },
+    "objective_metadata": {
+      "batches_sha256": "8f4d7d251d7f909b1a562a2d3bb68b23add79130deddc187b615676a651f3e34",
+      "completed_updates": 32,
+      "evaluation_reference_access": false,
+      "independent_argmax_or_gradient_replay": false,
+      "objective_training_row_occurrences": 384,
+      "schema": "targeted-objective-recorded-metadata-audit/v1",
+      "semantic_compatibility_verified": false,
+      "teacher_forced_only": true
+    },
+    "returned_optimizer_updates": 32,
+    "trace_scope": "Returned completed batch/objective/freeze reports; no independent tensor, gradient or numerical kernel replay",
+    "training_policy_sha256": "0335690c0725c5142d4ef5c8de40ad7036219327187fa627a69ee814187bcf84"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v01.log": {
+      "bytes": 787,
+      "sha256": "0c839235d073ce3c0a802b2ef2ea6e15ea4ce83e0f10499450ae3ebc829dcbf0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v01.xml": {
+      "bytes": 39742,
+      "sha256": "0c06435a3944ea255c6f532ee120bdcec06efc5bed10ab7fa4d417f985307d5b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v02.log": {
+      "bytes": 245,
+      "sha256": "cb3b5c0de5383028180057bd756ecf3e3ed8a2a29373b4dcb03e0b2c02e1f0fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/combined-pure-tests-v02.xml": {
+      "bytes": 23009,
+      "sha256": "0f496861ad947ab82cb651d1a092ccdaa3613d431518b951886908cef186564a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/logic/legal_ir/test_matched_temporal_curriculum.py": {
+      "bytes": 16173,
+      "sha256": "b1cecde739051c18a276023d5e09521a7949c171da21a8a1e3ca8716773f80e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/logic/legal_ir/test_targeted_loss_curriculum.py": {
+      "bytes": 20942,
+      "sha256": "d1fc5316d2548bf5041193a368ddf4779d66ff555c1470be469c0160d204cf06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_curriculum_contracts.py": {
+      "bytes": 33707,
+      "sha256": "177096d9c145a17190e407f1a9664e9a941833132122842f0761062539b03af6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_permission_retention_contracts.py": {
+      "bytes": 19165,
+      "sha256": "c7b4e36b6eb0d6fd0717804b12eb2aa9fbb0f98ea89391a0e0f30d4b9b0f07e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_targeted_loss_contracts.py": {
+      "bytes": 32960,
+      "sha256": "66ccda4c13ce0e7f4c9e26fe03ad9383bc39d2c724a6c90a5dfda4aa38c103b8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/run_inert_tests.py": {
+      "bytes": 4569,
+      "sha256": "024475419c8c632510d0560ddbbb659b616f13bb55e1e991bea7a61b603a4c30"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "compiler_calls": 0,
+  "elapsed_seconds": 13.74,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "harness": "Unchanged inert wrapper denies numerical/network/process imports; -c /dev/null --noconftest -o addopts= -p no:cacheprovider; both prior-export fixture variables bound to immutable T/export1992f1c3",
+  "initial_incomplete_attempt": "v01 omitted fixture environment:131 passed48skipped325subtests; retained, corrected harness only; v02complete179+325",
+  "numerical_imports": 0,
+  "passed": true,
+  "real_model_calls": 0,
+  "schema": "permission-retention-combined-inert-tests/v1",
+  "scope": "Pure authored-corpus, partition, scalar/fake and trace contracts; numerical completion requires separate guarded run",
+  "skipped": 0,
+  "subtests_passed": 325,
+  "tests_passed": 179
+}

@@ -1,0 +1,101 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_permission_retention_contracts.py": {
+      "bytes": 19165,
+      "sha256": "c7b4e36b6eb0d6fd0717804b12eb2aa9fbb0f98ea89391a0e0f30d4b9b0f07e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/review_permission_science_v01.py": {
+      "bytes": 18314,
+      "sha256": "c1a51700765aae43ba3b7d5252c57b3d7426d3fda052168f4d9a82ef2e49748a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-permission-retention-20261012-01/trainer-author-pure-contract-observation-v01.json": {
+      "bytes": 1027,
+      "sha256": "9913fb67e2ae40f2773631e435821edf42b55a87d56bee5e7897369d49d5279e"
+    }
+  },
+  "author_is_reviewer": false,
+  "controls": {
+    "independent_positive": 2,
+    "independent_pure_subtests": 59,
+    "independent_pure_tests": 23,
+    "independent_refused_negative": 34,
+    "negative_cases": [
+      "frozen_value_byte_embedding.weight",
+      "frozen_value_token_projection.weight",
+      "frozen_value_token_projection.bias",
+      "frozen_value_encoder.weight_ih_l0",
+      "frozen_value_encoder.weight_hh_l0",
+      "frozen_value_encoder.bias_ih_l0",
+      "frozen_value_encoder.bias_hh_l0",
+      "frozen_value_encoder.weight_ih_l0_reverse",
+      "frozen_value_encoder.weight_hh_l0_reverse",
+      "frozen_value_encoder.bias_ih_l0_reverse",
+      "frozen_value_encoder.bias_hh_l0_reverse",
+      "frozen_value_modality.weight",
+      "frozen_value_modality.bias",
+      "frozen_value_latent_down.weight",
+      "frozen_value_latent_down.bias",
+      "frozen_value_latent_up.weight",
+      "frozen_value_latent_up.bias",
+      "frozen_moment_byte_embedding.weight",
+      "frozen_moment_token_projection.weight",
+      "frozen_moment_token_projection.bias",
+      "frozen_moment_encoder.weight_ih_l0",
+      "frozen_moment_encoder.weight_hh_l0",
+      "frozen_moment_encoder.bias_ih_l0",
+      "frozen_moment_encoder.bias_hh_l0",
+      "frozen_moment_encoder.weight_ih_l0_reverse",
+      "frozen_moment_encoder.weight_hh_l0_reverse",
+      "frozen_moment_encoder.bias_ih_l0_reverse",
+      "frozen_moment_encoder.bias_hh_l0_reverse",
+      "frozen_moment_modality.weight",
+      "frozen_moment_modality.bias",
+      "frozen_moment_latent_down.weight",
+      "frozen_moment_latent_down.bias",
+      "frozen_moment_latent_up.weight",
+      "frozen_moment_latent_up.bias"
+    ]
+  },
+  "findings": [],
+  "limitations": [
+    "Detached fake contracts/static review do not establish real kernels, gradients/moments/freezing, all392 saved-logit retention, exact32 completion or accuracy; guarded actual evidence is required.",
+    "Frozen digest/modal traces are trainer observations, not independent tensor custody. Deadlines are soft before batches; exceptions may leave unreturned partial updates unknown.",
+    "All references are exposed authored/shared-template engineering diagnostics. No independent legal gold, genuine8D/384D/768D latent conditioning, broader-family, Lake or automatic promotion is qualified."
+  ],
+  "observed_at_utc": "2026-10-12T23:37:57.689102+00:00",
+  "passed": true,
+  "reviewer": "/root/permission_protocol_review",
+  "schema": "permission-retention-trainer-source-independent-review/v1",
+  "scope": [
+    "Exact new authoritative outer owns true fresh/resumed Adam over ordered23 or6 named tensors; immutable initial warm child remains zero-update only. Unchanged legacy reader/producer schemas are preserved.",
+    "Facet-only arm freezes all17 byte/token projection/GRU/modality/latent tensors; only presence/start/end six tensors enter Adam. All frozen gradients remainNone and trainable gradients finite/nonNone; actual after-returned-update digest/modal evidence is explicit.",
+    "Objective exactly delegates qualified actorOFF/presence1/modality2 targeted loss, same168 rows, batch12/seed1729/32bound, original400 parent and disabled384. Every tensor/moment and initial-boundary guard was reviewed statically and with detached fakes.",
+    "Own inference adapter delegates unchanged span._decode without fabricated old optimizer moments. Same-forward hooks capture target-free CPU float32 heads and verify greedy reconstruction, model/hooks/RNG/source fences; parity uses actual zero/alternate/disabled/rotated placeholders.",
+    "Joint selector fixes modality before compatible search. Frozen-path modality retention does not guarantee complete decoded IR; external raw96/joint96 exact and zero permission-to-obligation gates remain required."
+  ],
+  "source_only": true
+}

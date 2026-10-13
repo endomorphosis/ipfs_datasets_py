@@ -1,0 +1,46 @@
+{
+  "additions": 142,
+  "chunks": [
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 21,
+      "parent_revision": "0958f81330fb7bb7664a8ce85355413d289932b7",
+      "revision": "2c121e5e20377dface3c857c848464ad045f4bdc"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 26,
+      "parent_revision": "2c121e5e20377dface3c857c848464ad045f4bdc",
+      "revision": "fe361b81588452beb166b06e563d40466cd98d72"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 46,
+      "parent_revision": "fe361b81588452beb166b06e563d40466cd98d72",
+      "revision": "8f456bbd174eedaba73cf67c7956486ee49aab5c"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 29,
+      "parent_revision": "8f456bbd174eedaba73cf67c7956486ee49aab5c",
+      "revision": "d66ed24b0ef2fba95bbec23cf6c3cb63201b14cc"
+    },
+    {
+      "all_old_and_prior_owned_identities_exact": true,
+      "new_byte_identities_exact": true,
+      "new_files": 20,
+      "parent_revision": "d66ed24b0ef2fba95bbec23cf6c3cb63201b14cc",
+      "revision": "c1aa22e1677a7887ece53aac7caa52cef23ca8d7"
+    }
+  ],
+  "commit_url": "https://huggingface.co/Publicus/legal-ir-autoencoder/commit/c1aa22e1677a7887ece53aac7caa52cef23ca8d7",
+  "default_promotion": false,
+  "parent_revision": "0958f81330fb7bb7664a8ce85355413d289932b7",
+  "release_prefix": "releases/20261012-permission-retention-v1",
+  "repo": "Publicus/legal-ir-autoencoder",
+  "revision": "c1aa22e1677a7887ece53aac7caa52cef23ca8d7"
+}
