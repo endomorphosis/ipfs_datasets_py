@@ -179,3 +179,18 @@ def test_comment_and_script_content_do_not_declare_source_encoding():
                    '<script>const example = \'<meta charset="windows-1252">\';</script>')
     _, document = _encoded_document("café", declaration=declaration)
     assert document["document_text"] == "café"
+
+
+@pytest.mark.parametrize("encoding", ["unicode_escape", "raw_unicode_escape"])
+def test_text_transformation_codecs_cannot_rewrite_literal_source_escapes(encoding):
+    with pytest.raises(ValueError, match="transformation.*encoding"):
+        _encoded_document(r"Preserve literal \x41 and \u0042.",
+                          declaration=f'<meta charset="{encoding}">')
+
+
+@pytest.mark.parametrize("declaration", ["", '<meta charset="utf-8">'])
+def test_utf8_preserves_literal_backslash_escapes(declaration):
+    text = r"Preserve literal \x41 and \u0042."
+    raw, document = _encoded_document(text, declaration=declaration)
+    assert document["document_text"] == text
+    assert document["html_sha256"] == hashlib.sha256(raw).hexdigest()

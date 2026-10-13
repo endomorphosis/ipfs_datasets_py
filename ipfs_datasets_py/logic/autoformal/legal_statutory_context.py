@@ -92,7 +92,10 @@ def _decode_source_html(raw: bytes) -> str:
         for label in declarations.encodings:
             if not isinstance(label, str) or not label.strip():
                 raise ValueError("nonempty explicit source HTML encoding required")
-            names.add(codecs.lookup(label.strip()).name)
+            name = codecs.lookup(label.strip()).name
+            if name in {"unicode-escape", "raw-unicode-escape"}:
+                raise ValueError("text transformation codecs are not source HTML encodings")
+            names.add(name)
         if len(names) > 1 or bom and names and not names <= compatible:
             raise ValueError("conflicting source HTML encoding declarations")
         encoding = bom or next(iter(names), "utf-8")
