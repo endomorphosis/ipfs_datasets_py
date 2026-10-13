@@ -1,0 +1,118 @@
+{
+  "control_count": 15,
+  "controls": [
+    {
+      "expected": "reject",
+      "name": "unknown_role",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "zero_index",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "large_index",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "boolean_index",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "opening_with_cell",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "phase_without_cell",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "terminal_without_cell",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "old_cell",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "valid_terminal_predicate_only",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "nonzero_guard",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "nonzero_child",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "bool_guard",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "bool_child",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "not_durable",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "not_released",
+      "passed": true
+    }
+  ],
+  "exactly_two_declared_substitutions": true,
+  "execution": {
+    "endpoint_reads": 0,
+    "model_calls": 0,
+    "numerical_imports": 0,
+    "private_global_body_reads": 0,
+    "resource_API_calls": 0,
+    "source_edits": 0,
+    "valid_sampler_main_executed": false
+  },
+  "findings": [],
+  "limitations": [
+    "Source-only review does not establish current resource availability, endpoint continuity or admission.",
+    "Root separately owns valid live sampling and current baseline qualification."
+  ],
+  "passed": true,
+  "prior_sampler": {
+    "bytes": 6285,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/capture_actor_endpoints_v01.py",
+    "sha256": "9ef01662846b8870e126c84461f85dfbb9bc5f3412f85d98c8774ccbca6ab202"
+  },
+  "prior_source_review": {
+    "bytes": 2594,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/sampler-source-independent-review-v01.json",
+    "sha256": "c244c253f6715704309e991812096e3ac5c7b5c39c5cdbdbf7fc867b821be734"
+  },
+  "sample_contract": "Only new0700 private directory and0400 copies/receipt; stable raw physical source identity at open/close; exclusive output; no resource client, lock, census or shared writes.",
+  "sampler": {
+    "bytes": 6285,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/capture_actor_endpoints_v02.py",
+    "sha256": "354cd4b77cf695d924dc1991992d501b43841848b57c88ce2725f51c33bb47a4"
+  },
+  "schema": "actor-boundary-private-endpoint-sampler-source-independent-review/v2",
+  "substitutions": [
+    "terminal plan-v01 to plan-v02",
+    "terminal attempt-01 to attempt-02"
+  ],
+  "terminal_contract": "Exact actor-boundary-ce plan-v02 and attempt02; integer0 guardian and child; durable and released before terminal sampling."
+}

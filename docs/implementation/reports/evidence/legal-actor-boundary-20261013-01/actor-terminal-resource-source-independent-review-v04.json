@@ -1,0 +1,191 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-author-controls-v04.json": {
+      "bytes": 12216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-author-controls-v04.json",
+      "sha256": "bf972c4f6244ab412692d762b6dccc393b77a1fca424a81cb145ea65405dc594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-reviewer-controls-v04.json": {
+      "bytes": 12216,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-reviewer-controls-v04.json",
+      "sha256": "30f8c5f957c0d157fe0fc5a106c663688f2402d6173c652a4a93f9dfbb63012c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-source-independent-review-v02.json": {
+      "bytes": 7723,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-source-independent-review-v02.json",
+      "sha256": "2c8cf5c03960bddfeedba97d9fa39f11fad0228ad6df264b58bba4cc4aba3de7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-source-independent-review-v03.json": {
+      "bytes": 9904,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-source-independent-review-v03.json",
+      "sha256": "819eec75e2bf8d747ec9b90d07db0a4e2f98e5f352bbf900b09552fcca9ca4f8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-zero-update-recovery-v01.json": {
+      "bytes": 3807,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-zero-update-recovery-v01.json",
+      "sha256": "3ab4fd1ba42eeb8fe86c15d8c460824213a950e4805c897f1778cd3bbfff6916"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor_terminal_resource_controls_v04.py": {
+      "bytes": 23950,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor_terminal_resource_controls_v04.py",
+      "sha256": "1749dd844812c90dc65c5866f104f5310f3fd52b653409586659f79bf3bee3b2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v02.py": {
+      "bytes": 41692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v02.py",
+      "sha256": "d46abb6a3f6f16d286239ed22e02fffbca7f892977d66a6740328540f725b58e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v03.py": {
+      "bytes": 42271,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v03.py",
+      "sha256": "70eb1d982d21149d2ec09cbf837fd0be0d524e27c65cd962c8c6c3dbf97797be"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v04.py": {
+      "bytes": 45324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v04.py",
+      "sha256": "b694cef6b82f250d7280e9cb9b3c03656a3eaf06bd19a30a7ee623b6921caa0c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/capture_actor_endpoints_v02.py": {
+      "bytes": 6285,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/capture_actor_endpoints_v02.py",
+      "sha256": "354cd4b77cf695d924dc1991992d501b43841848b57c88ce2725f51c33bb47a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/freeze_actor_boundary_outputs_v02.py": {
+      "bytes": 18288,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/freeze_actor_boundary_outputs_v02.py",
+      "sha256": "71972befd484b77ca8933997fb77ea1d3262e66ffd3ed833a7510b9709915847"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/freeze_actor_boundary_outputs_v03.py": {
+      "bytes": 18288,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/freeze_actor_boundary_outputs_v03.py",
+      "sha256": "927269abb3d4aea679403a617fcd99c20cee08cb98688ccea2c98e2136e9c327"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/pre-admission-check-v02.json": {
+      "bytes": 6800,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/pre-admission-check-v02.json",
+      "sha256": "74eab1348265af8dcea2d75b5025c21a1d463d9af1474b1a319826512f4b357b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-baseline-v02.json": {
+      "bytes": 79833,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-baseline-v02.json",
+      "sha256": "f8fcc274170d7b46e6c659e465f0eeba059913c42d3135db6712c4dbe4714aa4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-observer-source-independent-review-v02.json": {
+      "bytes": 18446,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/resource-observer-source-independent-review-v02.json",
+      "sha256": "37c88a55fca1f0294b391a14e1cf32826fffe4d36bc2f9b660e51943b6e63202"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/review_actor_resource_baseline_v02.py": {
+      "bytes": 24749,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/review_actor_resource_baseline_v02.py",
+      "sha256": "4e85bce49132163dbf79f6b3000b3e0f2a05128fb9d2492cb09ac4e4aaae164a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v02.py": {
+      "bytes": 30270,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v02.py",
+      "sha256": "52580a59422a757a5e4ad05d85a4ddaaeb2ca06d2f60ae38fa7763bcd9a034ad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_scope_guardian.py": {
+      "bytes": 38281,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_scope_guardian.py",
+      "sha256": "10c7c7350a7dbb564ab0fb1299c905020f874c212765afb86d3c1752105184ed"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 21127,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runner-preparer-source-independent-review-v02.json",
+      "sha256": "c30828e68295ebb4d173ed2c0616e5b7a4541626f4c03807547bf6f3e5ec067d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/sampler-source-independent-review-v02.json": {
+      "bytes": 3250,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/sampler-source-independent-review-v02.json",
+      "sha256": "96ef6f51609a5dc9839f7cd2da12ba8ffb2565644e1178ddb136dfc2144ec053"
+    }
+  },
+  "author_control_receipt": {
+    "bytes": 12216,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-author-controls-v04.json",
+    "sha256": "bf972c4f6244ab412692d762b6dccc393b77a1fca424a81cb145ea65405dc594"
+  },
+  "control_count": 82,
+  "control_execution": "Sealed V04 control source AST executed with only OUTPUT assignment redirected to an exclusive reviewer receipt. Terminal controls include the exact actual PUBLIC baseline metadata selector. Full observer/freezer main and runtime/private bodies were not executed/read.",
+  "execution": {
+    "actual_freezer_main_executed": false,
+    "actual_observer_main_executed": false,
+    "actual_public_baseline_metadata_reads": 1,
+    "actual_public_check_metadata_reads": 1,
+    "checkpoint_JSON_parses": 0,
+    "git_mutations": 0,
+    "live_global_body_reads": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "private_body_reads": 0,
+    "resource_API_calls": 0,
+    "runtime_output_reads": 0,
+    "source_edits": 0
+  },
+  "findings": [],
+  "independently_reexecuted_detached_controls": {
+    "bytes": 12216,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-reviewer-controls-v04.json",
+    "sha256": "30f8c5f957c0d157fe0fc5a106c663688f2402d6173c652a4a93f9dfbb63012c"
+  },
+  "limitations": [
+    "Source and synthetic controls qualify sealed postrun observers; they do not establish successful training, actual resource release or durable runtime inventory. Root owns later approved actual execution."
+  ],
+  "narrow_change_scope": {
+    "actual_private_or_runtime_reads_by_reviewer": 0,
+    "actual_public_baseline_control": true,
+    "added_functions": [
+      "resource_producers"
+    ],
+    "changed_functions": [
+      "main"
+    ],
+    "new_constant": "RESOURCE_PRODUCER_PINS",
+    "unchanged_function_count": 24
+  },
+  "observer": {
+    "bytes": 45324,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/audit_actor_terminal_resources_v04.py",
+    "sha256": "b694cef6b82f250d7280e9cb9b3c03656a3eaf06bd19a30a7ee623b6921caa0c"
+  },
+  "passed": true,
+  "prior_source_qualification": {
+    "bytes": 9904,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-terminal-resource-source-independent-review-v03.json",
+    "sha256": "819eec75e2bf8d747ec9b90d07db0a4e2f98e5f352bbf900b09552fcca9ca4f8"
+  },
+  "reviewed_behavior": [
+    "Exact534 baseline and534\u2192535 conservation with both failed N7 and actor01 retained200MB bodies preserved and charged; only successful actor02 own record released.",
+    "Authenticated real opening2/terminal2 receipt and copied endpoint bodies are allowlisted with700/400 physical paths; live globals and unapproved reads/writes/API/import/process/network access are refused.",
+    "Exact public plan/training-review/runner/guardian/pre-admission/command joins, ten resource producers, scheduler config/idle occupancy, child identity/reap, own storage accounting and sampled lease/RSS evidence are checked.",
+    "Terminal public receipt emits prior hashes and own fields, excluding full foreign rows and private owned wrappers; phase-only mode records no admission guarantee.",
+    "V03 uses the exact existing baseline-bound opening-v02 receipt and its contemporaneous metadata check before copied bodies are opened. The original role=opening/cell=None/index2 is preserved; no retrospective phase sample or new model execution is claimed.",
+    "V04 replaces the broad test-log path-prefix filter with an exact ten-producer path/byte/SHA map authenticated by the existing public baseline and contemporaneous public guardian check. The real failed-actor01 guardian metadata remains preserved in baseline evidence but is excluded from producer selection. Missing, tampered, or extra public metadata cannot enlarge the producer set."
+  ],
+  "schema": "actor-boundary-terminal-resource-source-independent-review/v1",
+  "source_checks": {
+    "actual_PUBLIC_baseline_selection_excludes_failed_guardian": true,
+    "all_unchanged_V03_kernels_AST_exact": true,
+    "baseline_binding_before_private_copy_read": true,
+    "cap_roots_and_full_claims": true,
+    "closed_exact10_producer_paths_bytes_SHA_match_public_check": true,
+    "closed_public_custody": true,
+    "closing_consumed_pin_fences": true,
+    "exact534_to535": true,
+    "exact_baseline2_fixed": true,
+    "exact_baseline_snapshot_and_metadata_bound": true,
+    "exact_recovery_fixed": true,
+    "explicit_approved_read_allowlist": true,
+    "no_phase_snapshot_relabel": true,
+    "opening2_terminal2_samples": true,
+    "original_opening_role_and_none_cell": true,
+    "preserve_both_failed_claims": true,
+    "private700400_checks": true,
+    "public_receipt_omits_foreign_bodies": true,
+    "source_review_before_saved_inputs": true,
+    "strict_lease_and_sampled_RSS": true,
+    "unrelated_public_metadata_does_not_expand_producer_set": true
+  }
+}

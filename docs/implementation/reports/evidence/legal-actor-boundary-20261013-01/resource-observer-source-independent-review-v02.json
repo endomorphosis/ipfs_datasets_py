@@ -1,0 +1,592 @@
+{
+  "control_count": 79,
+  "controls": [
+    {
+      "expected": "accept",
+      "name": "reconstruct_and_preserve_532_plus_released_own_533",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "missing_prior_record",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "full reservation map required"
+    },
+    {
+      "expected": "reject",
+      "name": "modified_prior_record",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "a prior533 body was modified or removed"
+    },
+    {
+      "expected": "reject",
+      "name": "modified_released_N7_own_record",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "a prior533 body was modified or removed"
+    },
+    {
+      "expected": "reject",
+      "name": "changed_global_cap",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "global ledger cap/schema changed"
+    },
+    {
+      "expected": "reject",
+      "name": "changed_counted_roots",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "counted roots changed"
+    },
+    {
+      "expected": "reject",
+      "name": "terminal_prior_map_authentication_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "authenticated prior532 map mismatch"
+    },
+    {
+      "expected": "reject",
+      "name": "terminal_closing_map_authentication_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "authenticated terminal533 map mismatch"
+    },
+    {
+      "expected": "reject",
+      "name": "terminal_own_claim_not_released",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "released N7 own claim required"
+    },
+    {
+      "expected": "reject",
+      "name": "failed_claim_released_even_with_rebased_prior_hashes",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed N7 claim must remain retained and charged"
+    },
+    {
+      "expected": "reject",
+      "name": "failed_claim_undercharged_even_with_rebased_prior_hashes",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed N7 claim must remain retained and charged"
+    },
+    {
+      "expected": "reject",
+      "name": "insufficient_full_claim_headroom",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "insufficient full-claim headroom"
+    },
+    {
+      "expected": "accept",
+      "name": "exact_remaining_full_claim_headroom",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "negative_foreign_claim",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "valid full claims required"
+    },
+    {
+      "expected": "reject",
+      "name": "boolean_foreign_claim_bytes",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "valid full claims required"
+    },
+    {
+      "expected": "reject",
+      "name": "invalid_foreign_claim_status",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "valid full claims required"
+    },
+    {
+      "expected": "reject",
+      "name": "foreign_claim_body_key_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "valid full claims required"
+    },
+    {
+      "expected": "accept",
+      "name": "valid_new_foreign_records_preserved_and_nonreleased_fully_charged",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "deny_live_ledger_body_read",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "live global endpoint bodies forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_live_scheduler_body_read",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "live global endpoint bodies forbidden"
+    },
+    {
+      "expected": "accept",
+      "name": "allow_declared_private_snapshot-receipt-v01.json",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "allow_declared_private_ledger.json",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "allow_declared_private_scheduler.json",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "deny_other_private_file",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only declared new private copies allowed"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_other_private_opening",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only declared new private copies allowed"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_other_phase_private",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only declared new private copies allowed"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_declared_private_write",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only exclusive owned baseline/recovery receipts may be written"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_checkpoint_body",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "checkpoint/gold access forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_reference_packet_body",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "checkpoint/gold access forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_subprocess.Popen",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "process/network/lock/shared mutation forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_socket.connect",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "process/network/lock/shared mutation forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_os.kill",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "process/network/lock/shared mutation forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_fcntl.flock",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "process/network/lock/shared mutation forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_os.remove",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "process/network/lock/shared mutation forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_import_torch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "production/numerical/SDK import forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_import_numpy",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "production/numerical/SDK import forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_import_ipfs_datasets_py.resource_api",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "production/numerical/SDK import forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_import_huggingface_hub",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "production/numerical/SDK import forbidden"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_import_transformers",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "production/numerical/SDK import forbidden"
+    },
+    {
+      "expected": "accept",
+      "name": "allow_exclusive_owned_receipt_write",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "deny_foreign_output_write",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only exclusive owned baseline/recovery receipts may be written"
+    },
+    {
+      "expected": "accept",
+      "name": "allow_owned_receipt444",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "deny_owned_receipt_other_mode",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only owned receipt freeze allowed"
+    },
+    {
+      "expected": "reject",
+      "name": "deny_foreign_chmod",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "only owned receipt freeze allowed"
+    },
+    {
+      "expected": "accept",
+      "name": "zero_work_recovery_accepts_exact_owned_retained_claim",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_nonzero_updates",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_boolean_updates",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_training_stage",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_unknown_updates",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_wrong_child_detail",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_wrong_output_root",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact zero-work preflight failure required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_extra_schedule_output",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "no schedule/capture/checkpoint/training outputs may exist in zero-work attempt"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_extra_checkpoint_output",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "no schedule/capture/checkpoint/training outputs may exist in zero-work attempt"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_torch_before_preflight",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "preflight gate must precede data/numerical/model work"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_wrong_failed_runner_pin",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "qualified original failed runner required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_wrong_failed_plan_path",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact failed-own-attempt metadata path required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_guard_success",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "closed failed guardian/child required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_guard_claim_released",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "closed failed guardian/child required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_guard_child_still_live",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "closed failed guardian/child required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_guard_leader_not_reaped",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "closed failed guardian/child required"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_review_not_passed",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_review_plan_digest_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_review_runner_digest_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_review_wrong_phase",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_plan_wrong_attempt",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_admission_guardian_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "failed reviewed plan/runner/guardian join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_wrong_status",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_wrong_size",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_wrong_path",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_wrong_child_identity",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_wrong_reason",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_missing_in_new_ledger",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_retained_own_bodyhash_drift",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_new_ledger_record_count_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "expected533 plus one retained own failure required; unrelated changes need separate qualification"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_new_ledger_claims_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "expected533 plus one retained own failure required; unrelated changes need separate qualification"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_new_ledger_status_totals_mismatch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "expected533 plus one retained own failure required; unrelated changes need separate qualification"
+    },
+    {
+      "expected": "reject",
+      "name": "recovery_reject_scheduler_lease_not_locally_released",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "exact retained failed OWNclaim must match new private ledger copy"
+    },
+    {
+      "expected": "accept",
+      "name": "allow_exclusive_owned_recovery_write",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "allow_owned_recovery444",
+      "outcome": "accepted",
+      "passed": true
+    }
+  ],
+  "execution": {
+    "actual_main_executed": false,
+    "checkpoint_JSON_reads": 0,
+    "live_global_body_reads": 0,
+    "model_calls": 0,
+    "numeric_imports": 0,
+    "observer_source_modified": false,
+    "private_body_reads": 0,
+    "process_observations": 0,
+    "resource_API_calls": 0,
+    "synthetic_function_calls_only": true
+  },
+  "findings": [],
+  "limitations": [
+    "Synthetic controls qualify source behavior; they do not establish that current private samples or resource headroom satisfy the contract.",
+    "Root must run the qualified observer against pinned inputs; this source review grants no execution approval or resource admission."
+  ],
+  "observer": {
+    "bytes": 24749,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/review_actor_resource_baseline_v02.py",
+    "sha256": "4e85bce49132163dbf79f6b3000b3e0f2a05128fb9d2492cb09ac4e4aaae164a"
+  },
+  "passed": true,
+  "reviewed_behavior": [
+    "Authenticated N7 baseline532 plus released200MB own record reconstructs the terminal533 hash map.",
+    "Every prior533 record body remains hash-identical; all additional valid foreign bodies are preserved and every nonreleased claim is fully charged.",
+    "Failed N7 retained200MB claim,145GB cap,counted roots,scheduler config,ten producer source bodies and physical root identities are checked without relaxing prior contracts.",
+    "Only the declared new N8 opening receipt and ledger/scheduler copies may be read under private-runtime-snapshots; private modes700/400 and raw identity/hash fences are explicit.",
+    "Recovery requires exact failed preflight source position, zero updates, sole failure output, owned child identity, reviewed admission joins and retained200MB own body hash matching new ledger; old failure claim is never released.",
+    "Actual resource admission/census belongs to unchanged guardian; observer performs no resource API/model/SDK/subprocess/network mutation or ledger/scheduler body read."
+  ],
+  "schema": "actor-boundary-resource-observer-source-independent-review/v2",
+  "source_checks": {
+    "closing_consumed_raw_fences": true,
+    "guardian_exact_source_and_sampler_pin_checks": true,
+    "no_continuous_coverage_or_execution_approval": true,
+    "only_owned_exclusive_output": true,
+    "private700_and_body400_checks": true,
+    "private_only_new_opening_folder": true,
+    "root_device_inode_checks": true,
+    "scheduler_config_unchanged": true,
+    "scheduler_idle_sample_required": true,
+    "source_qualification_exact_observer_join": true,
+    "ten_unchanged_producer_bodies_required": true
+  }
+}

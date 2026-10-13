@@ -1,0 +1,725 @@
+{
+  "actual_production_bootstrap_smoke": {
+    "bytes": 7552,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-bootstrap-smoke-controls-v01.json",
+    "sha256": "dfe8bbad215a01ea4295c7444e99c90f565162a6d0c08a6af89eb64019800eba"
+  },
+  "author_controls": {
+    "bytes": 5900,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runtime-preparer-detached-controls-v02.json",
+    "sha256": "4f0c7d887faed4cb5a1ef16e9a28f2148530e24a3184b9d4e6010a5f509cd47d"
+  },
+  "control_count": 95,
+  "controls": [
+    {
+      "expected": "accept",
+      "name": "binary32_signed_zero_distinct",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "binary32_reject_nan",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Finite binary32 scores required"
+    },
+    {
+      "expected": "reject",
+      "name": "binary32_reject_infinity",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Finite binary32 scores required"
+    },
+    {
+      "expected": "reject",
+      "name": "binary32_reject_bool",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Finite binary32 scores required"
+    },
+    {
+      "expected": "reject",
+      "name": "binary32_reject_nonbinary32",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Capture is not exact binary32"
+    },
+    {
+      "expected": "accept",
+      "name": "closed_valid_plan",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_extra_field",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Closed actor plan required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_wrong_attempt",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact owned producers/attempt required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_parent_digest",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact completed N4 parent required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_parent_size",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact completed N4 parent required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_resource_envelope",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Unchanged training envelope required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_latent_on",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Fixed source-only training recipe required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_promote",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Fixed source-only training recipe required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_missing_panel",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "All464 source diagnostics required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_missing_reference",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "All392 saved parent references required"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_missing_admitted_data",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact input absent from admitted closure"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_reference_in_closure",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Reference labels in admitted closure"
+    },
+    {
+      "expected": "reject",
+      "name": "plan_reject_missing_runner",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Admitted producer missing"
+    },
+    {
+      "expected": "accept",
+      "name": "source_union_has632_unique_rows",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "source_reject_gold_field",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Fresh source must contain no references"
+    },
+    {
+      "expected": "reject",
+      "name": "source_reject_nonzero_latent",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Dormant zero384 placeholders required"
+    },
+    {
+      "expected": "reject",
+      "name": "source_reject_fresh_overlap",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Fresh source overlap"
+    },
+    {
+      "expected": "reject",
+      "name": "source_reject_missing_fresh",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact fresh36 panel required"
+    },
+    {
+      "expected": "accept",
+      "name": "legal_span_split_features_uses_exact128_40_chunks",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "legal_span_actor_boundary_uses_exact128_40_chunks",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "chunk_reject_count",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact complete training128/40 captures required"
+    },
+    {
+      "expected": "reject",
+      "name": "chunk_reject_checkpoint",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Training chunk producer, checkpoint, policy or branch identities differ"
+    },
+    {
+      "expected": "reject",
+      "name": "chunk_reject_order",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Training chunk source order or join differs"
+    },
+    {
+      "expected": "reject",
+      "name": "chunk_reject_missing_row",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact complete training128/40 captures required"
+    },
+    {
+      "expected": "accept",
+      "name": "full_initial_head_parity",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "initial_actor_change_rejected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "accept",
+      "name": "final_actor_change_allowed",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "final_presence_object_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_presence_conditions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_presence_exceptions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_presence_temporal_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_start_logits_action_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_start_logits_object_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_start_logits_conditions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_start_logits_exceptions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_start_logits_temporal_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_end_logits_action_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_end_logits_object_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_end_logits_conditions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_end_logits_exceptions_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_end_logits_temporal_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "final_modality_protected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "signed_zero_parity_rejected",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Required binary32 head parity failed"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_import_torch",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Numerical/SDK import prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_import_numpy",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Numerical/SDK import prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_import_transformers",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Numerical/SDK import prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_import_sentence_transformers",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Numerical/SDK import prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_import_huggingface_hub",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Numerical/SDK import prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_parse_checkpoint.json",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Checkpoint/reference JSON parsing prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_parse_reference-packet.json",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Checkpoint/reference JSON parsing prohibited in preparation"
+    },
+    {
+      "expected": "accept",
+      "name": "preparer_metadata_parse_allowed",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_subprocess.Popen",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Process/network/resource operations prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_socket.connect",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Process/network/resource operations prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_os.fork",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Process/network/resource operations prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_fcntl.flock",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Process/network/resource operations prohibited in preparation"
+    },
+    {
+      "expected": "reject",
+      "name": "preparer_reject_foreign_write",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Only exclusive new owned preparation output writes allowed"
+    },
+    {
+      "expected": "accept",
+      "name": "preparer_allow_owned_write",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_accept_exact_zero_work_recovery",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_optimizer_updates_1",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_optimizer_updates_False",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_inference_source_forwards_1",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_inference_source_forwards_False",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_model_forwards_1",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_model_forwards_False",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_encoder_forwards_1",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_reject_encoder_forwards_False",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_unpassed",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_findings",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_stage",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_attempt",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_old_bodies",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_count",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_claim_released",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_undercharged",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_recovery_reject_wrong_baseline",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Clean zero-model/update attempt01 recovery required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_plan_reject_nonzero_prior_updates",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact zero-model/update failed preflight provenance required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_plan_reject_boolean_prior_updates",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact zero-model/update failed preflight provenance required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_plan_reject_nonzero_prior_inference",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact zero-model/update failed preflight provenance required"
+    },
+    {
+      "expected": "reject",
+      "name": "retry_plan_reject_extra_prior_field",
+      "outcome": "rejected",
+      "passed": true,
+      "reason": "Exact zero-model/update failed preflight provenance required"
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_require",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_canonical",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_digest",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_validate_sources",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_binary",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_merged_training_capture",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_capture",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_compare_captures",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_AST_identity_completion",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_preparer_AST_identity_audit",
+      "outcome": "accepted",
+      "passed": true
+    },
+    {
+      "expected": "accept",
+      "name": "retry_preparer_AST_identity_metadata",
+      "outcome": "accepted",
+      "passed": true
+    }
+  ],
+  "execution": {
+    "actual_preparer_executed": false,
+    "actual_runner_main_executed": false,
+    "checkpoint_JSON_parses": 0,
+    "git_mutations": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "plan_emitted": false,
+    "private_body_reads": 0,
+    "resource_calls": 0,
+    "source_edits": 0,
+    "valid_model_calls": 0
+  },
+  "findings": [],
+  "limitations": [
+    "Source and synthetic controls qualify the sealed producers; actual emitted plan and full admitted artifact closure still need separate review.",
+    "Initial and final numerical parity gates remain runtime requirements; this receipt does not assert they have passed."
+  ],
+  "passed": true,
+  "preparer": {
+    "bytes": 14946,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/prepare_actor_boundary_v02.py",
+    "sha256": "0f7733fafad5defd22bd81f200fcee259fe212c4fd3d7927ffdde071c9a46446"
+  },
+  "prior_review_limitation": "V01 static/synthetic review missed a cold bootstrap import assumption; the preserved correction receipt and exact actual inert smoke now reproduce and close that gap.",
+  "runner": {
+    "bytes": 30270,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v02.py",
+    "sha256": "52580a59422a757a5e4ad05d85a4ddaaeb2ca06d2f60ae38fa7763bcd9a034ad"
+  },
+  "schema": "actor-boundary-runner-preparer-source-independent-review/v2",
+  "scope": {
+    "all_diagnostics_previously_exposed": true,
+    "candidate_and_parent_training_chunks": [
+      128,
+      40
+    ],
+    "configured_dimension": 384,
+    "diagnostic_panel_count": 9,
+    "diagnostic_sources": 464,
+    "expected_outputs": 62,
+    "final_protected_sources": 632,
+    "inference_source_forwards": 1520,
+    "initial_parent_parity_sources": 632,
+    "latent_enabled": false,
+    "law8_unscored": true,
+    "total_model_forwards": 1552,
+    "total_model_source_occurrences": 1904,
+    "training_batch_forwards": 32,
+    "training_source_occurrences": 384
+  },
+  "source_checks": {
+    "all9_panels": true,
+    "complete62_outputs": true,
+    "exact38_34_4_partition": true,
+    "final632_only_actor_pointer_excluded": true,
+    "initial632_complete_heads": true,
+    "initial_gate_before_training": true,
+    "no_N6_control_or_uniform_run": true,
+    "output_ref_scoring_false": true,
+    "public_source_closing_fences": true,
+    "qualified_resource_baseline_join": true,
+    "raw_checkpoint_pin_only_in_preparer": true,
+    "sealed_trainer_join": true,
+    "source_counts_balanced": true
+  }
+}

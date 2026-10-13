@@ -1,0 +1,82 @@
+{
+  "Lake_executed": false,
+  "all_scored_panels_exposed": true,
+  "analysis": {
+    "bytes": 427353,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+    "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+  },
+  "broader_logic_families_qualified": false,
+  "candidate": "actor-boundary-ce",
+  "checkpoint": {
+    "bytes": 6450800,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-boundary-20261013-actor-boundary-ce-02/results/cell-checkpoint.json",
+    "sha256": "14aad029259bb52d58ea56e320306590546c58c3e4e4a8b568f8982e2a9252d7"
+  },
+  "common_parent": {
+    "bytes": 3592389,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/cell-checkpoint.json",
+    "sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035"
+  },
+  "contract_tests": {
+    "bytes": 20807,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_boundary_contracts.py",
+    "sha256": "2a557b3d1630677c57a047576d6c9e010042037bc4f1c722b13ce7fce4c87184"
+  },
+  "default_promotion": false,
+  "exposed_authored_eval_complete_joint_IR_before_after": [
+    32,
+    33
+  ],
+  "failed_preflight_model_forwards": 0,
+  "failed_preflight_updates": 0,
+  "freeze": {
+    "bytes": 21180,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-output-freeze-v04.json",
+    "sha256": "6605e75a3d041d5e3ecdca09c057e1d1939f216641a29715fb8b70c4180eec8d"
+  },
+  "fresh_dev_complete_IR": 0,
+  "fresh_test_complete_IR": 0,
+  "frozen_output_bytes": 61920310,
+  "frozen_output_count": 62,
+  "genuine_latent_semantics_qualified": false,
+  "inference_source_forwards": 1520,
+  "model_card": {
+    "bytes": 4359,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/MODEL_CARD_v01.md",
+    "sha256": "b95c544073e2d31e200e2dc6c0effbf3629d42eb5666b0b6304aa6e52c93cbb4"
+  },
+  "new_blind_generalization_claim": false,
+  "plan": {
+    "bytes": 44754,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+    "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+  },
+  "release_prefix": "releases/20261013-actor-boundary-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "returned_optimizer_updates": 32,
+  "runtime_review": {
+    "bytes": 75763,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runtime-independent-review-v04.json",
+    "sha256": "504d0bd5a8757b7a1050b56cc568d49993986cdd7a6275dd3fe361f84e2a45b5"
+  },
+  "schema": "actor-boundary-release-manifest/v1",
+  "semantic_accuracy": null,
+  "source": {
+    "bytes": 49894,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+    "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+  },
+  "source_model_state_sha256": "fb63e61c7e2591259d40492b5ac5c020ae77f64c08e409d16b372ff7229b9aa5",
+  "statutory8_unscored": true,
+  "total_model_forwards": 1552,
+  "training_actor_before_after": [
+    155,
+    155
+  ],
+  "training_complete_IR_before_after": [
+    153,
+    153
+  ],
+  "training_row_occurrences": 384
+}
