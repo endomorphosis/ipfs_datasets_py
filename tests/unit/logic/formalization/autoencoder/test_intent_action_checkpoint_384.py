@@ -1,4 +1,9 @@
-"""Exact diagnostic compatibility, never checkpoint or validator migration."""
+"""Current-source strict loading and authored diagnostic compatibility fixtures.
+
+The explicit transition fixture authors old/new implementation maps. Its
+monkeypatch is unit-test input, not qualification of either source revision.
+The separate current-source test leaves implementation discovery unpatched.
+"""
 from copy import deepcopy
 import hashlib
 import os
@@ -16,7 +21,7 @@ def digest(value):
     return hashlib.sha256(api.structured._raw(value)).hexdigest()
 
 
-def checkpoint(*, historical=True):
+def checkpoint(*, historical=False, implementation=None):
     """Authored unit-vector classifier fixture, not trained or released weights."""
     target = codec.source_to_target(SOURCE)
     target["document"]["title"] = "a"
@@ -25,8 +30,7 @@ def checkpoint(*, historical=True):
     projection = {"projection_down.weight": [[0.] * 384], "projection_down.bias": [0.],
         "projection_up.weight": [[0.] for _ in range(384)], "projection_up.bias": [0.] * 384}
     state = dict(weights=[[1., -1.], *([[0., 0.]] * 383)], bias=[0., 0.])
-    implementation = api.structured._implementation()
-    assert api._tree_pin(implementation) == api.NEW_TREE_SHA256
+    implementation = deepcopy(api.structured._implementation() if implementation is None else implementation)
     if historical:
         implementation["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = api.OLD_TREE_SHA256
     manifests = []
@@ -60,9 +64,45 @@ def rows():
     return [dict(id="input", source_text=SOURCE, embedding=[1.] + [0.] * 383)]
 
 
+@pytest.fixture
+def authored_diagnostic_implementation(monkeypatch):
+    """Author a new-pin expectation without changing any production policy.
+
+    This lets the same transition and rejection cases run in a checkout with
+    either reviewed diagnostic revision. All other discovered pins stay exact;
+    the actual-current strict test below never requests this fixture.
+    """
+    actual = api.structured._implementation()
+    assert api._tree_pin(actual) in {api.OLD_TREE_SHA256, api.NEW_TREE_SHA256}
+    authored = deepcopy(actual)
+    authored["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = api.NEW_TREE_SHA256
+    monkeypatch.setattr(api.structured, "_implementation", lambda: deepcopy(authored))
+    return authored
+
+
+def test_actual_current_checkpoint_is_strict_and_preserves_numerical_output(tmp_path):
+    """Real current implementation pins; only numerical weights are authored."""
+    implementation = api.structured._implementation()
+    value = checkpoint(implementation=implementation)
+    path, checksum = write(tmp_path, value)
+    original = path.read_bytes()
+    strict = api.structured.load_checkpoint(path, expected_sha256=checksum, expected_domain="intent_ir")
+    runtime, receipt = api.load_intent_action_checkpoint_384(path, expected_sha256=checksum)
+    assert receipt["mode"] == "strict" and receipt["applied"] is False
+    assert receipt["changed_pins"] == []
+    assert receipt["original_implementation"] == receipt["runtime_implementation"] == implementation
+    assert runtime.checkpoint == value
+    assert all(receipt[key] == expected for key, expected in api.FALSE.items())
+    assert runtime.infer(rows()) == strict.infer(rows())
+    assert api.verify_intent_action_checkpoint_compatibility(receipt, path=path, expected_sha256=checksum) == receipt
+    assert api.structured._implementation() == implementation
+    assert path.read_bytes() == original
+
+
 @pytest.mark.parametrize("historical", [False, True])
-def test_explicit_runtime_view_preserves_artifact_components_and_numerical_output(tmp_path, historical):
-    value = checkpoint(historical=historical)
+def test_explicit_runtime_view_preserves_artifact_components_and_numerical_output(
+        tmp_path, historical, authored_diagnostic_implementation):
+    value = checkpoint(historical=historical, implementation=authored_diagnostic_implementation)
     path, checksum = write(tmp_path, value)
     original = path.read_bytes()
     if historical:
@@ -81,7 +121,7 @@ def test_explicit_runtime_view_preserves_artifact_components_and_numerical_outpu
     assert api.verify_intent_action_checkpoint_compatibility(receipt, path=path, expected_sha256=checksum) == receipt
     # Current-pinned authored fixture is an independent numerical comparator,
     # not a rewritten release artifact or a broadened strict loading policy.
-    current = checkpoint(historical=False)
+    current = checkpoint(implementation=authored_diagnostic_implementation)
     strict_path, strict_sha = write(tmp_path, current)
     strict = api.structured.load_checkpoint(strict_path, expected_sha256=strict_sha, expected_domain="intent_ir")
     assert runtime.infer(rows()) == strict.infer(rows())
@@ -90,8 +130,8 @@ def test_explicit_runtime_view_preserves_artifact_components_and_numerical_outpu
 
 @pytest.mark.parametrize("change", ["unknown_old", "unknown_current", "reverse", "missing_tree", "ui",
     "intent_decoder", "intent_schema", "numerical", "runtime", "extra_pin"])
-def test_every_other_pin_transition_is_rejected(tmp_path, monkeypatch, change):
-    value = checkpoint()
+def test_every_other_pin_transition_is_rejected(tmp_path, monkeypatch, change, authored_diagnostic_implementation):
+    value = checkpoint(historical=True, implementation=authored_diagnostic_implementation)
     old = value["implementation"]
     current = api.structured._implementation()
     if change == "unknown_old": old["shared_runtime"]["numerical"]["files"]["tree_pin.py"] = "b" * 64
@@ -115,8 +155,8 @@ def test_every_other_pin_transition_is_rejected(tmp_path, monkeypatch, change):
 
 
 @pytest.mark.parametrize("change", ["domain", "schema", "weight", "projection", "shape", "split", "authority", "extra"])
-def test_ordinary_structured_validation_still_applies(tmp_path, change):
-    value = checkpoint()
+def test_ordinary_structured_validation_still_applies(tmp_path, change, authored_diagnostic_implementation):
+    value = checkpoint(historical=True, implementation=authored_diagnostic_implementation)
     if change == "domain": value["domain_id"] = "security_ir"
     elif change == "schema": value["schema"] = "other/v1"
     elif change == "weight": value["head_state"]["weights"][0][0] = 99.
@@ -130,8 +170,8 @@ def test_ordinary_structured_validation_still_applies(tmp_path, change):
 
 
 @pytest.mark.parametrize("change", ["hash", "symlink", "missing", "oversized", "during_load", "swapped_symlink", "swapped_fifo", "same_bytes_replaced"])
-def test_exact_regular_artifact_and_endpoint_fences(tmp_path, monkeypatch, change):
-    path, checksum = write(tmp_path, checkpoint())
+def test_exact_regular_artifact_and_endpoint_fences(tmp_path, monkeypatch, change, authored_diagnostic_implementation):
+    path, checksum = write(tmp_path, checkpoint(historical=True, implementation=authored_diagnostic_implementation))
     if change == "hash": checksum = "f" * 64
     elif change == "symlink":
         link = tmp_path / "link.json"; link.symlink_to(path); path = link
@@ -154,8 +194,8 @@ def test_exact_regular_artifact_and_endpoint_fences(tmp_path, monkeypatch, chang
 
 
 @pytest.mark.parametrize("change", ["profile", "domain_id", "changed_pins", "unchanged_content_sha256", "artifact_modified", "extra"])
-def test_saved_receipt_requires_full_artifact_replay(tmp_path, change):
-    path, checksum = write(tmp_path, checkpoint())
+def test_saved_receipt_requires_full_artifact_replay(tmp_path, change, authored_diagnostic_implementation):
+    path, checksum = write(tmp_path, checkpoint(historical=True, implementation=authored_diagnostic_implementation))
     _, receipt = api.load_intent_action_checkpoint_384(path, expected_sha256=checksum)
     receipt[change] = [] if change == "changed_pins" else True if change == "artifact_modified" else "changed"
     with pytest.raises(ValueError, match="replay"):
