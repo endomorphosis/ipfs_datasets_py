@@ -78,6 +78,10 @@ def page_numerical_obligations(*, report, source_text, path, cursor=None,
                 and report.get("schema") == "numerical-source-logic/v2"):
             from . import numerical_logic_v2
             owner = numerical_logic_v2
+        elif (type(report) is dict and report.get("profile") == "python-numerical-control-structure@3"
+                and report.get("schema") == "numerical-source-logic/v3"):
+            from . import numerical_logic_v3
+            owner = numerical_logic_v3
         native = owner.validate_numerical_logic_report(report, source_text, path=path)
     except (KeyError, TypeError, ValueError, UnicodeError, RecursionError) as exc:
         raise NumericalObligationRetrievalError("numerical report failed exact source replay") from exc

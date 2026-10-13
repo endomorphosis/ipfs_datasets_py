@@ -44,11 +44,14 @@ def _sha(value):
     return hashlib.sha256(_wire(value)).hexdigest()
 
 
-def _pins(*, guarded=False):
+def _pins(*, guarded=False, controlled=False):
     modules = (units, scalar, numerical_source, numerical_logic)
     if guarded:
         from ..software_verification import numerical_source_v2, numerical_logic_v2
         modules += (numerical_source_v2, numerical_logic_v2)
+    if controlled:
+        from ..software_verification import numerical_source_v3, numerical_logic_v3
+        modules += (numerical_source_v3, numerical_logic_v3)
     return {Path(module.__file__).name: hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
             for module in modules} | {
                 Path(__file__).name: hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
@@ -120,9 +123,14 @@ def bind_function_unit_logic(*, source_bytes, unit_inventory, numerical_report):
         owner = numerical_logic
         guarded = (numerical_report.get("profile") == "python-numerical-guarded-structure@2"
                    and numerical_report.get("schema") == "numerical-source-logic/v2")
+        controlled = (numerical_report.get("profile") == "python-numerical-control-structure@3"
+                      and numerical_report.get("schema") == "numerical-source-logic/v3")
         if guarded:
             from ..software_verification import numerical_logic_v2
             owner = numerical_logic_v2
+        elif controlled:
+            from ..software_verification import numerical_logic_v3
+            owner = numerical_logic_v3
         native = owner.validate_numerical_logic_report(
             numerical_report, source_bytes.decode("utf-8"), path=path)
     except (KeyError, TypeError, ValueError, UnicodeError, RecursionError) as exc:
@@ -189,7 +197,7 @@ def bind_function_unit_logic(*, source_bytes, unit_inventory, numerical_report):
     report = dict(schema=SCHEMA, origin="deterministic_source_projection", path=path,
         source_sha256=digest, source_bytes=len(source_bytes),
         inventory_sha256=_sha(inventory), numerical_report_sha256=_sha(native),
-        numerical_report_id=native["report_sha256"], producer=_pins(guarded=guarded),
+        numerical_report_id=native["report_sha256"], producer=_pins(guarded=guarded or controlled, controlled=controlled),
         inventory_status=inventory["status"], inventory_frontier=inventory["frontier"],
         numerical_structural_status=structural["status"],
         import_context=dict(scope="whole_module_syntactic_bindings",
