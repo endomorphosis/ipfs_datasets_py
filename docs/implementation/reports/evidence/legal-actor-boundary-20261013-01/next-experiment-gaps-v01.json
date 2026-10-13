@@ -1,0 +1,197 @@
+{
+  "artifacts": {
+    "N7_full_IR_modality_audit": {
+      "bytes": 933868,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/n7-training168-full-ir-modality-audit-v01.json",
+      "sha256": "9cff6f563e42537c1a626d50f0ef4ba56f9b423c564ec0b045dbd1df42b0c535"
+    },
+    "analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "evaluation_contract": {
+      "bytes": 3863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/evaluation-contract-v02.json",
+      "sha256": "910a2e86e831e0eade8aa1b0ea90e5d42fd6314a005d102537bba627010a0a89"
+    },
+    "independent_result_review": {
+      "bytes": 89023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/result-independent-review-v01.json",
+      "sha256": "872be4d00b59b6b3177dc91f71c30151c11bae545611982edb3e69601ce2178f"
+    },
+    "plan": {
+      "bytes": 44754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+      "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+    },
+    "training_design": {
+      "bytes": 5172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/training-design-v02.json",
+      "sha256": "8f42f7cd882060e6a3bc124e865cce222dc5c4f64020ae1105b89d2ac68af280"
+    }
+  },
+  "current_claims": {
+    "Lake_executed": false,
+    "broader_logic_families_qualified": false,
+    "default_promotion": false,
+    "independent_statutory_gold": false,
+    "new_training_for_this_proposal": false,
+    "semantic_accuracy": null
+  },
+  "measured_gaps": [
+    {
+      "evidence": {
+        "rank_sum_initial": 215,
+        "rank_sum_trained": 206,
+        "top1_or_top8_count_change": 0,
+        "training_actor_exact": 155,
+        "training_actor_gold_top1": 156,
+        "training_actor_gold_top8": 168,
+        "training_rows": 168
+      },
+      "gap": "Actor ranking remains imperfect even when the gold actor is retained.",
+      "interpretation": "Independent start/end CE moved five gold span ranks but did not repair training actor selections. Ranking against a competing valid actor span is a testable next hypothesis, not an established gain."
+    },
+    {
+      "evidence": {
+        "F_to_P": 2,
+        "O_to_P": 4,
+        "fresh_dev_full_gold_assignment_retained": 0,
+        "fresh_dev_rows": 36,
+        "fresh_test_full_gold_assignment_retained": 0,
+        "fresh_test_rows": 36,
+        "joint_abstentions": 1,
+        "training_full_gold_assignment_retained": 160,
+        "training_rows": 168,
+        "training_selected_wrong_modality_and_actor": 6
+      },
+      "gap": "Frozen modality and presence decisions block complete IR.",
+      "interpretation": "An actor-only ranking objective does not change modality or presence heads. Full-domain retention additionally depends on all present gold role candidates and nonoverlap;0/36 does not attribute every fresh failure to modality."
+    },
+    {
+      "evidence": {
+        "fresh_dev_actor_gold_top8": 30,
+        "fresh_dev_joint_full_IR": 0,
+        "fresh_test_actor_gold_top8": 13,
+        "fresh_test_joint_full_IR": 0,
+        "fresh_test_rank_improved": 6,
+        "fresh_test_rank_worsened": 12,
+        "rows_each": 36
+      },
+      "gap": "Actor coverage and other-role behavior remain limited on exposed fresh constructions.",
+      "interpretation": "Better actor ranking alone does not imply complete-IR recovery. Conditions/object/exceptions and fixed temporal decisions need separate diagnosis."
+    },
+    {
+      "evidence": {
+        "legacy_rows": 96,
+        "permission_rows_retained": 32,
+        "raw_and_joint_full_IR": 94,
+        "temporal_mismatches": 2
+      },
+      "gap": "Legacy full-rule retention remains incomplete.",
+      "interpretation": "Preserved permission outcomes do not establish96/96 full-IR retention."
+    },
+    {
+      "evidence": {
+        "N7_fresh72_previously_exposed": true,
+        "all464_previously_exposed": true,
+        "semantic_accuracy": null,
+        "statutory_rows_unscored": 8
+      },
+      "gap": "Diagnostic coverage does not establish legal semantic generalization.",
+      "interpretation": "Independent statutory references and unexposed evaluation are prerequisites for legal accuracy claims."
+    }
+  ],
+  "next_bounded_comparison": {
+    "comparison": {
+      "candidate_batch_size": 12,
+      "candidate_training_row_occurrences": 384,
+      "candidate_training_rows": 168,
+      "candidate_updates": 32,
+      "common_start": "The same exact N4 parent checkpoint/modelstate as the completed CE run; do not continue training the CE child.",
+      "completed_reference": "This authenticated actor-boundary-ce32-update result.",
+      "equal_FLOPs_claimed": false,
+      "equal_training_occurrence_budget": true,
+      "equal_update_budget": true,
+      "no_retry_or_hyperparameter_search_based_on_metrics": true,
+      "proposed_candidate": "Actor CE plus one fixed hard-negative valid-span hinge term.",
+      "reference_updates": 32
+    },
+    "fixed_design": {
+      "active_actor_row": 0,
+      "active_scalars": 130,
+      "inactive_copied_actor_scalars_frozen": 650,
+      "no_external_encoders": true,
+      "no_inherited_optimizer_moments": true,
+      "no_latent_branch": true,
+      "original_frozen_tensors": 34,
+      "same_batch_order_seed": 1729,
+      "same_batch_size": 12,
+      "same_eps": 1e-08,
+      "same_fresh_Adam_betas": [
+        0.9,
+        0.999
+      ],
+      "same_gradient_clip": 5.0,
+      "same_learning_rate": 0.001,
+      "same_seed": 1729,
+      "same_training_source_export168": true,
+      "same_weight_decay": 0.0,
+      "trainable_tensor_names": [
+        "actor_start.weight",
+        "actor_start.bias",
+        "actor_end.weight",
+        "actor_end.bias"
+      ]
+    },
+    "hypothesis": "Adding a fixed hard-negative actor span ranking term to actor CE will improve the gold span margin/rank and may repair selected actor spans without changing protected heads.",
+    "interpretation_limits": [
+      "A ranking gain alone is not actor exactness, full IR or legal semantic accuracy.",
+      "The objective cannot repair six frozen selected modality mistakes, frozen presence blockers or absent nonactor gold candidates.",
+      "The completed CE and proposed candidate have equal 32-update/384-occurrence budgets; span enumeration changes compute, so equal-FLOPs is not claimed.",
+      "Comparisons on current authored/fresh panels remain exposed engineering diagnostics.",
+      "A fresh training comparison is proposed; no new training has run for this proposal."
+    ],
+    "parent_only_metrics_after_output_freeze": [
+      "Training168 raw/joint full IR including modality, actor exactness, modality, all other role exactness and abstentions.",
+      "Gold actor full-domain ranks/top1/top8, hardest-negative margin and paired gains/losses; all fixed-head decisions and full-gold retained-domain feasibility.",
+      "Per-ID actor/full IR changes and overlaps with modality/presence/other-role blockers.",
+      "Actual selected nonactor values/status changes against protected score-vector parity, especially conditions/object/exceptions.",
+      "Exposed 464 panel and broad-group diagnostics separately; legacy96 and all 32 P outcomes.",
+      "No automatic selection or promotion; genuine independent unexposed evaluation remains separate."
+    ],
+    "proposed_objective": {
+      "actor_span_score": "start_logit[left]+end_logit[right] for valid source-token spans left<=right.",
+      "candidate_ranking_domain_must_be_predeclared": "All valid source-token actor spans, with deterministic tie ordering and exact source offsets; no held-out references or selector candidates used as labels.",
+      "hard_negative": "Highest-scoring valid actor span other than the authenticated exact gold actor span, using only training168 labels.",
+      "loss": "Inherited CE scalar + lambda*max(0,margin + hardest_negative_score - gold_span_score).",
+      "margin_and_lambda_must_be_fixed_before_execution": true,
+      "no_modality_presence_or_other_role_training": true,
+      "no_negative_if_only_gold_valid_span": 0.0,
+      "proposed_fixed_lambda": 1.0,
+      "proposed_fixed_margin": 1.0,
+      "training_gold_remains_outside_inference_and_evaluation_model_inputs": true
+    },
+    "required_technical_controls": [
+      "Source-only detached controls for valid-span domain, gold exclusion, hardest-negative ties, hinge sign/zero cases and deterministic ordering.",
+      "Production bootstrap smoke for actual loaded-module owners before any child launch.",
+      "Initial 632 complete head/greedy/joint parity with the common parent before updates.",
+      "Final 632 protected head binary32 parity excluding only actor start/end; original 34 and inactive copied actor rows remain exact.",
+      "Explicit completed 32-update trace, 384 training row occurrences, inference accounting and frozen output inventory.",
+      "One planned candidate, no result-dependent threshold tuning, alternative margins/lambdas or hidden follow-on updates."
+    ],
+    "status": "PROPOSED_REQUIRES_FROZEN_PROTOCOL_AND_SOURCE_QUALIFICATION_BEFORE_EXECUTION"
+  },
+  "prerequisites_before_broader_accuracy_or_release_claims": {
+    "Lake": "Run and record the actual bounded Lake/theorem/validation workflow required by the intended claim; none has run here.",
+    "independent_statutory_gold": "Obtain independently reviewed source-linked statutory references covering modality and all roles; keep current law8 unscored.",
+    "logic_families": "Define and verify supported family-specific translation and validation on unexposed cases; current bounded actor pilot does not qualify broader logic families.",
+    "promotion": "Require a separately frozen promotion contract and independent result review; current default_promotion remains false.",
+    "semantic_accuracy": "Report only after independent legal gold and the relevant semantic validation prerequisites are met.",
+    "unexposed_generalization": "Freeze a new independent evaluation set and protocol before inference; current 464/N7 fresh72 are exposed."
+  },
+  "result_basis": "The completed 32-update actor CE pilot left training whole IR 153/168 and actor 155/168 unchanged. One exposed authored-evaluation ID improved full IR; fresh dev/test stayed 0/36.",
+  "schema": "actor-boundary-next-experiment-gaps/v1",
+  "status": "PROPOSAL_ONLY_NOT_RUN"
+}
