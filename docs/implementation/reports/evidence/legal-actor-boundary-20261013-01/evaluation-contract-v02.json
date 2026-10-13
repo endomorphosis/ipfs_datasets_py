@@ -1,0 +1,85 @@
+{
+  "N7_fresh72_previously_exposed": true,
+  "all464_previously_exposed_engineering_diagnostics": true,
+  "checkpoint_selection_executed": false,
+  "default_promotion": false,
+  "evidence_limits": [
+    "Agent-authored/root-reviewed references are engineering targets, not independently reviewed statutory semantic gold.",
+    "N7 fresh72 and all inherited diagnostics were already exposed; no fresh test selection or blind accuracy claim.",
+    "Frozen head logits do not guarantee unchanged jointly selected nonactor spans or full IR.",
+    "No genuine latent, broad-family or Lake qualification."
+  ],
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "independent_statutory_gold": false,
+  "law8_unscored": true,
+  "metrics": [
+    "Raw and joint whole canonical IR exact equality including modality and all six roles.",
+    "Actor span exactness and gold start/end ranking/top8 candidates from saved scores, with no new model forwards.",
+    "Per-role exactness, modality exactness/confusions, abstention counts and error-set overlaps; distinguish selected actor errors from actor nonmatches caused by abstention.",
+    "Full-IR regressions/recoveries and actor-span regressions/recoveries against frozen common N4 initial outputs.",
+    "Temporal-presence guard-margin1e-7 outcomes and all32 legacy permission outcomes as exposed retention diagnostics.",
+    "Initial/parent/trained168 metrics, exposed panel and paired-construction/broad-group changes separately."
+  ],
+  "no_new_blind_generalization_claim": true,
+  "old392_previously_exposed": true,
+  "populations": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96
+  },
+  "references_parent_only": true,
+  "required_frozen_output_count": 62,
+  "schema": "actor-boundary-evaluation-contract/v1",
+  "score_only_after_complete_frozen_bundle": true,
+  "semantic_accuracy": null,
+  "source_only_controls": [
+    "zero placeholders",
+    "alternate placeholders",
+    "latent disabled",
+    "rotated placeholders"
+  ],
+  "technical_gate": {
+    "final": "All632 modality and every presence vector plus five nonactor start/end vectors binary32 exact. Exclude ONLY actor start/end row0. Original34 tensors and inactive copied actor rows1 through5 fixed.",
+    "initial": "All632 parent/candidate complete head vectors binary32 exact, with greedy and joint parity, before any update.",
+    "initial_training_capture_call_sizes": [
+      128,
+      40
+    ],
+    "parent_training_capture_call_sizes": [
+      128,
+      40
+    ]
+  },
+  "technical_retry": {
+    "attempt": "actor-boundary-20261013-actor-boundary-ce-02",
+    "no_model_rerun": true,
+    "prior_attempt_inference_source_forwards": 0,
+    "prior_attempt_optimizer_updates": 0
+  },
+  "threshold_or_hyperparameters_fitted": false,
+  "training_design": {
+    "bytes": 5172,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/training-design-v02.json",
+    "sha256": "8f42f7cd882060e6a3bc124e865cce222dc5c4f64020ae1105b89d2ac68af280"
+  }
+}

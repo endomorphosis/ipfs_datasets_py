@@ -1,0 +1,72 @@
+{
+  "actual_inert_reproduction": {
+    "bytes": 7552,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-bootstrap-smoke-controls-v01.json",
+    "sha256": "dfe8bbad215a01ea4295c7444e99c90f565162a6d0c08a6af89eb64019800eba"
+  },
+  "checkpoint_JSON_parses": 0,
+  "corrected_runner": {
+    "bytes": 30270,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v02.py",
+    "sha256": "52580a59422a757a5e4ad05d85a4ddaaeb2ca06d2f60ae38fa7763bcd9a034ad"
+  },
+  "correction": "RunnerV02 requires only the five actually loaded trainer modules; all35 declared owner source bytes, including unused permission_retention, remain raw-pinned. No model/data/objective/resource-cap change.",
+  "loaded_owner_count": 13,
+  "mandatory_loaded_owner_count": 5,
+  "missed_coverage": "Author synthetic owner fixtures and original independent static review did not exercise the actual cold production bootstrap/import sequence. They incorrectly assumed the unused retained module would be loaded. The existing passed receipts remain preserved with their original limited scope.",
+  "model_calls_by_author": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-13T17:14:05.061804+00:00",
+  "old_evidence_modified": false,
+  "original_failure": "The original mandatory owner set included legal_span_permission_retention, a correctly pinned retained producer that the exact production bootstrap/import path never loads. The source gate therefore refused before data/numerical/model entry.",
+  "original_missing_loaded_owner": "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_permission_retention",
+  "private_body_reads": 0,
+  "recipe_and_training_source_unchanged": true,
+  "resource_API_calls": 0,
+  "retained_evidence": [
+    {
+      "bytes": 29604,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/run_actor_boundary_v01.py",
+      "sha256": "e767c4f57fa0556b1fe6176ee1657d0d681360ae174ff3ce4301f7222f929232"
+    },
+    {
+      "bytes": 12823,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/prepare_actor_boundary_v01.py",
+      "sha256": "475221d9b9ed37ebb7557dcea34074ea782232588ed2204304794a2696ccb45d"
+    },
+    {
+      "bytes": 14443,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "cb818e2f9fdd4f1fa943e458dd3a71fb4b75ee972eb26625ca19e93ba91e82dd"
+    },
+    {
+      "bytes": 12301,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/runtime-preparer-detached-controls-v01.json",
+      "sha256": "4809bded3c0e2e9cc6b1c72d2a45f925fddde46eb2b1b4e6bd7fcde8dd9139ad"
+    },
+    {
+      "bytes": 43486,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v01.json",
+      "sha256": "5d464ab07fdba897c2b6c679df20e09262a814b74e52cf4aed8f33723223b8b1"
+    },
+    {
+      "bytes": 27750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-training-review-v01.json",
+      "sha256": "6fa846eecf15daf673f6e5cf1deab84b7524d58d8beec803d5afebbc894d4a25"
+    }
+  ],
+  "root_reported_failed_attempt": {
+    "attempt_name": "actor-boundary-20261013-actor-boundary-ce-01",
+    "in_progress_updates_unknown": false,
+    "inference_source_forwards": 0,
+    "model_forwards": 0,
+    "observation_scope": "Parent root reported public guardian/failure evidence; author has not independently opened failed runtime wrappers or private claim bodies.",
+    "optimizer_updates": 0,
+    "reservation_id": "893d4ed80ab3497f95b1490080e3caa3",
+    "stage": "preflight",
+    "status": "retained",
+    "storage_bytes": 200000000
+  },
+  "schema": "actor-boundary-runner-preparer-source-correction/v1",
+  "status": "ORIGINAL_IMPORT_ASSUMPTION_REPRODUCED_AND_CORRECTED_SOURCE_ONLY"
+}
