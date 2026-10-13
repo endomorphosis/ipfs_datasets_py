@@ -1,0 +1,58 @@
+{
+  "Lake_executed": false,
+  "boundary_source": "split_features for every routed variant; all six learned start/end arrays retained",
+  "checkpoint_JSON_parses": 0,
+  "default_promotion": false,
+  "inputs": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/final-split-feature-integration-independent-review-v01.json": {
+      "bytes": 265366,
+      "sha256": "b175a524a0d7ed327df52190db5479b7d0b770b3a618629ac61a7f35a92a4c09"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/result-independent-review-v01.json": {
+      "bytes": 515593,
+      "sha256": "fb87afc1f852015c4ab28fd48f6322c49c8aba693ee0e2bef36a89d90a1a8e37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/runtime-independent-review-v01.json": {
+      "bytes": 92760,
+      "sha256": "455b0962c661d38c53ef6866940a9633d2aafdc6e6e9ef23da0cf2dc454b85f7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-result-analysis-v01.json": {
+      "bytes": 3104129,
+      "sha256": "5231142d39114f032f06ab17d1ebdbf9735601ab173c5b70220758dbebd076d3"
+    }
+  },
+  "joint_top_k": 8,
+  "legacy_gate": {
+    "joint_exact_IR": 96,
+    "permission_regressions": 0,
+    "raw_exact_IR": 96
+  },
+  "max_search_nodes": 50000,
+  "modality_source": "split_features for every routed variant; exactly parent logits retained",
+  "model_calls": 0,
+  "new_optimizer_updates": 0,
+  "numerical_imports": 0,
+  "reference_scope": "384 previously exposed authored shared-template targets; law8 unreviewed and unscored",
+  "routing_uses_references": false,
+  "schema": "legal-temporal-presence-saved-score-plan/v1",
+  "scope": "Fixed posthoc saved-score routing; no trained model or new checkpoint",
+  "source_occurrences_per_variant": 392,
+  "storage_budget_bytes": 10000000,
+  "variants": {
+    "parent": null,
+    "parent_all_optional_presence": [
+      "object",
+      "conditions",
+      "exceptions",
+      "temporal"
+    ],
+    "parent_temporal_presence": [
+      "temporal"
+    ],
+    "split_features": []
+  }
+}

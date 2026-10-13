@@ -1,0 +1,299 @@
+{
+  "actual_helper_replay": {
+    "additional_model_forwards": 0,
+    "all_donor_component_bytes_and_provenance_verified": true,
+    "all_scores_equal_independently_verified_diagnostic": true,
+    "by_panel": {
+      "authored_dev": {
+        "parent_all_optional_presence": 72,
+        "parent_temporal_presence": 72
+      },
+      "authored_eval": {
+        "parent_all_optional_presence": 72,
+        "parent_temporal_presence": 72
+      },
+      "fresh_challenge": {
+        "parent_all_optional_presence": 36,
+        "parent_temporal_presence": 36
+      },
+      "fresh_tune": {
+        "parent_all_optional_presence": 36,
+        "parent_temporal_presence": 36
+      },
+      "law": {
+        "parent_all_optional_presence": 8,
+        "parent_temporal_presence": 8
+      },
+      "old_authored_eval": {
+        "parent_all_optional_presence": 72,
+        "parent_temporal_presence": 72
+      },
+      "old_tune": {
+        "parent_all_optional_presence": 96,
+        "parent_temporal_presence": 96
+      }
+    },
+    "original_inputs_unchanged": true,
+    "routes": 2,
+    "row_route_pairs": 784,
+    "rows_per_route": 392
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/registration-v01.json": {
+      "bytes": 78040,
+      "sha256": "dd61fa85c1b6f74ae6680e202a7f93715a30e8f92e4275d053ef95c1d6821c47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/split-feature-output-freeze-v01.json": {
+      "bytes": 20150,
+      "sha256": "bcefd26d2b7ec9d96fd28d46ee3b6e69728d49a4cf13ababe50036a1d648c33b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/training-export-v01.json": {
+      "bytes": 5052701,
+      "sha256": "a75b4125078d81aafabe1dcbe0e704da7386d859a019c158aef7ef1f7bb71f62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/docs/autoencoders/legal_temporal_presence_routing_20261013.md": {
+      "bytes": 4432,
+      "sha256": "49f4f31a10937deadcaf06885dc1837f3c58ece8d3656764e7538df78fe1d6c1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/presence_routing.py": {
+      "bytes": 5564,
+      "sha256": "e443aa7e960f70da75665a08b7f699cf41828e35e6274e2bb5b62203865f2297"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/tests/unit/logic/legal_ir/test_presence_routing.py": {
+      "bytes": 15252,
+      "sha256": "7141544d69df89d275e4a98e2e48d049c139554061bd5f0869ced321982b0f4c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/presence-routing-analysis-v01.json": {
+      "bytes": 5157031,
+      "sha256": "284040c26ed56e3dbff94e88108d9635d49344a48be794cf7b53e1684f7d9226"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/presence-routing-independent-review-v01.json": {
+      "bytes": 102106,
+      "sha256": "6d05160aa9cc3ab19fd49a22ea91fb5f94f89ec6117a3685731ee33bdea4bf66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/review_presence_code_and_plan_v01.py": {
+      "bytes": 16524,
+      "sha256": "608375d3fafcc47d87435429faa95189db47a80d5008e4d49ac0ec60f224dede"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/temporal-presence-training-proposal-v02.md": {
+      "bytes": 10585,
+      "sha256": "138b962c85519be7a9a364a2e2ac3d9ce01d04fdfc571f1b2dc3fa81ca1adce8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/workspace/implementation_plan/docs/106-legal-temporal-presence-routing-2026-10-13.md": {
+      "bytes": 3158,
+      "sha256": "bfcaf4aef55f96e002381eec2963a2fb08baddca564add9c8001f32ea81a252c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1367935,
+      "sha256": "612d34f4c076e775b18ffccf0b003f19dea36e2e69d955cf7d28e79bf2c91d26"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1369757,
+      "sha256": "196df6b3a5a5463dff37f60bca8688ecbca345a7e49afe1c1db0bd3aa10094a1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 643842,
+      "sha256": "808e314fdda980804c10369f555e6ae51617567a353f8bb0d6e991d41d250c10"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 606055,
+      "sha256": "abe6802c38a0b69de561d041b0a2a5b5d421c8853ad04616747d7f740e9aad10"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-law-raw.json": {
+      "bytes": 281020,
+      "sha256": "ff03f2682b5bf3bd98ccae310fba396c9ebb1fb9085f979eb98753dab1159c60"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1409767,
+      "sha256": "607cc04f48c42c9454f2561f6b69ab3ee0df21cf5b973645892936efe0c27c04"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2288990,
+      "sha256": "a42f6c857ccba4695f8dfca4962c793811fe53fdebc6a6efeff92b9ecefb4749"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1429719,
+      "sha256": "fb77893a0e1dc730d529361d3d35a07af283b7d4cfef2ad8e06e64fb08164257"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1428467,
+      "sha256": "79565ba2c8db6c65d88c798613d804f24986185ab2f1f3ad094cb16f37cc6773"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679139,
+      "sha256": "91f995e5da8826ed968891aaa30bc5b42a469aced1ec14531e9f2a424e7c5e28"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 626905,
+      "sha256": "4d4b8f8126830331c2ed73d9b5e37709be13124e4570c19feccebe4912c45c04"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-law-raw.json": {
+      "bytes": 282369,
+      "sha256": "63308d7218c72f44fc08bef52fcb4d11ccb2b8146e9ef946cc368d29a987a6eb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451640,
+      "sha256": "b357db638f3dab765d19cee0f279c0a10df41039e2a9586de8caed9b6ef03894"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/split-feature-20261013-split-features-01/results/trained-old_tune-raw.json": {
+      "bytes": 2287349,
+      "sha256": "b6e45110f179418041223ed02291ea9669ef7d6df2182ec53ce8b64e32af89c4"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "closing_raw_pins_unchanged": true,
+  "compiler_calls": 0,
+  "default_promotion": false,
+  "findings": [],
+  "guide_review": {
+    "duration_false_positive_tradeoff_and_joint_coupling_accurately_described": true,
+    "law8_unscored_and_exposed_shared_templates_explicit": true,
+    "no_new_checkpoint_or_promotion_claim": true,
+    "source_and_root_tables_match_independently_recounted_results": true
+  },
+  "loaded_leaf_sources": {
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "ipfs_datasets_py.logic.legal_ir.presence_routing": {
+      "bytes": 5564,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/presence_routing.py",
+      "sha256": "e443aa7e960f70da75665a08b7f699cf41828e35e6274e2bb5b62203865f2297"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-presence-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "model_encoder_forwards": 0,
+  "network_requests": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-13T03:33:27.120331+00:00",
+  "optimizer_updates": 0,
+  "passed": true,
+  "proposal_review": {
+    "CE_supervises_all_training_rows": true,
+    "adapter_tensor_count": 2,
+    "authored_negative_class_counts": {
+      "actor_duration_name": 6,
+      "condition_duration": 6,
+      "condition_exception_duration": 6,
+      "exception_duration": 6,
+      "object_duration_title": 6,
+      "plain_deadline": 6
+    },
+    "auxiliary": "(0.5/8) * batch_mean[(7/4)*legacy_positive*relu(1-z) + (7/3)*authored_negative*relu(1+z)]",
+    "balanced_global_group_mass": 84,
+    "base_tensor_count": 34,
+    "combined_tensor_count": 36,
+    "inactive_adapter_rows": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "legacy_prefix_sha256": "4f78bd92f4f5cac93f69eddc1e9d713d08f3eee70372ee7729cccc60792e6995",
+    "no_current_batch_eligible_count_normalization": true,
+    "numerical_storage_gradient_moment_and_parity_claims": "requirements for a future qualified implementation, not executed or established by this review",
+    "selection_scope": "retrospective exposed development engineering only; no automatic promotion",
+    "status": "unimplemented_unexecuted_proposal",
+    "targeted_L0": "(2*modality + sum(six_legacy_facets))/8; only temporal CE/8 has an adapter gradient when all base34 tensors are frozen",
+    "trainable_adapter_rows": [
+      6,
+      7
+    ],
+    "training_IDs_disjoint_from_diagnostic_IDs": true,
+    "training_rows": 168,
+    "training_stratum_counts": {
+      "authored_negative": 36,
+      "authored_positive": 36,
+      "legacy_negative": 48,
+      "legacy_positive": 48
+    }
+  },
+  "resource_API_calls": 0,
+  "schema": "legal-temporal-presence-code-and-plan-independent-review/v1",
+  "semantic_accuracy": null,
+  "source_review": {
+    "detached_binary32_component_provenance": true,
+    "exact_source_ID_hash_token_validation": true,
+    "full_helper_test_and_both_guides_read": true,
+    "no_automatic_readout_or_default_routing": true,
+    "score_validation_does_not_authenticate_producer": true,
+    "unchanged_adapted_boundaries_modality_and_unrouted_presence": true
+  },
+  "test_review": {
+    "errors": 0,
+    "failures": 0,
+    "output": "test_all_optional_fields_and_canonical_subsets (independent_presence_test_recipe.PresenceRoutingTests.test_all_optional_fields_and_canonical_subsets) ... ok\ntest_digest_binds_both_donors_and_composed_occurrence (independent_presence_test_recipe.PresenceRoutingTests.test_digest_binds_both_donors_and_composed_occurrence) ... ok\ntest_duration_in_actor_parent_false_positive_is_preserved_and_may_abstain (independent_presence_test_recipe.PresenceRoutingTests.test_duration_in_actor_parent_false_positive_is_preserved_and_may_abstain) ... ok\ntest_every_unrouted_head_retains_binary32_payload (independent_presence_test_recipe.PresenceRoutingTests.test_every_unrouted_head_retains_binary32_payload) ... ok\ntest_full_validation_includes_unused_parent_and_adapted_heads (independent_presence_test_recipe.PresenceRoutingTests.test_full_validation_includes_unused_parent_and_adapted_heads) ... ok\ntest_inputs_outputs_and_provenance_are_fully_detached (independent_presence_test_recipe.PresenceRoutingTests.test_inputs_outputs_and_provenance_are_fully_detached) ... ok\ntest_invalid_field_profiles_reject (independent_presence_test_recipe.PresenceRoutingTests.test_invalid_field_profiles_reject) ... ok\ntest_late_temporal_restoration_keeps_adapted_boundaries_and_modality (independent_presence_test_recipe.PresenceRoutingTests.test_late_temporal_restoration_keeps_adapted_boundaries_and_modality) ... ok\ntest_malformed_occurrence_and_scores_reject (independent_presence_test_recipe.PresenceRoutingTests.test_malformed_occurrence_and_scores_reject) ... ok\ntest_signed_zero_tie_is_preserved_and_joint_abstains (independent_presence_test_recipe.PresenceRoutingTests.test_signed_zero_tie_is_preserved_and_joint_abstains) ... ok\ntest_source_identity_and_complete_tokens_reject (independent_presence_test_recipe.PresenceRoutingTests.test_source_identity_and_complete_tokens_reject) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.084s\n\nOK\n",
+    "successful_subtests": 45,
+    "tests": 11
+  }
+}
