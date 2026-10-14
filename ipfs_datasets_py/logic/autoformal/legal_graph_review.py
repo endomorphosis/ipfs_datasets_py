@@ -11,11 +11,12 @@ an accepted view. All semantic, corpus and Lean admission remains downstream.
 from __future__ import annotations
 
 import base64
-from copy import deepcopy
-from datetime import datetime
 import hashlib
 import json
 import re
+from copy import deepcopy
+from dataclasses import dataclass
+from datetime import datetime
 
 from . import legal_graph_dependencies as dependencies
 from . import legal_semantic_graph as graphs
@@ -177,7 +178,7 @@ def build_review_subject(graph, context_packet, dependency_manifest, *, expected
     return json.loads(wire(body))
 
 
-def _trust(registry, policy, expected_registry_sha256, expected_policy_sha256):
+def _trust(registry, policy, expected_registry_sha256, expected_policy_sha256, *, action=ACTION, audience=AUDIENCE):
     for selected, expected in ((registry, expected_registry_sha256), (policy, expected_policy_sha256)):
         _sha(expected); require(digest(selected) == expected, "independently pinned trust input differs")
     _closed(registry, {"schema", "mode", "process_id", "generation", "revocation_generation",
@@ -190,7 +191,7 @@ def _trust(registry, policy, expected_registry_sha256, expected_policy_sha256):
     for name in ("process_id",): _id(registry[name], name)
     _id(policy["policy_id"], "policy ID")
     require(policy["process_id"] == registry["process_id"] and policy["registry_sha256"] == expected_registry_sha256
-            and policy["action"] == ACTION and policy["audience"] == AUDIENCE
+            and policy["action"] == action and policy["audience"] == audience
             and wire(policy["required_roles"]) == wire(list(ROLES)), "review authority scope differs")
     for name in ("generation", "revocation_generation"):
         require(type(registry[name]) is int and 0 <= registry[name] <= 2147483647, "exact registry generation required")
@@ -231,18 +232,19 @@ def _trust(registry, policy, expected_registry_sha256, expected_policy_sha256):
 def _verify_signature(review, key):
     """Use the existing Profile G signing CID and detached EdDSA verifier."""
     try:
-        from ..profile_g import verify_ed25519_artifact, Ed25519PublicKey
+        from ..profile_g import Ed25519PublicKey, verify_ed25519_artifact
         if Ed25519PublicKey is None: return "backend_unavailable"
     except (ImportError, OSError, RuntimeError): return "backend_unavailable"
     return "valid" if verify_ed25519_artifact(review,
         lambda did: bytes.fromhex(key["public_key_hex"]) if did == key["signer_did"] else None) else "invalid"
 
 
-def _review(review, subject):
+def _review(review, subject, *, claim_schema=CLAIM_SCHEMA, action=ACTION, audience=AUDIENCE,
+            context_obligation_cap=32):
     _closed(review, {"schema", "action", "audience", "review_id", "key_id", "principal_id", "role",
         "registry_sha256", "policy_sha256", "issued_at_utc", "expires_at_utc", "subject", "interpretation",
         "context_closure", "signer_did", "signature_alg", "signature"}, "signed graph review")
-    require(review["schema"] == CLAIM_SCHEMA and review["action"] == ACTION and review["audience"] == AUDIENCE,
+    require(review["schema"] == claim_schema and review["action"] == action and review["audience"] == audience,
             "graph review signing domain differs")
     for name in ("review_id", "key_id", "principal_id"): _id(review[name], name)
     require(review["role"] in ROLES, "legal or formal review role required")
@@ -264,7 +266,7 @@ def _review(review, subject):
     closure = review["context_closure"]
     _closed(closure, {"status", "obligations", "unresolved"}, "signed context declaration")
     require(closure["status"] in ("declared_complete", "open") and type(closure["obligations"]) is list
-            and len(closure["obligations"]) <= 32 and type(closure["unresolved"]) is list
+            and len(closure["obligations"]) <= context_obligation_cap and type(closure["unresolved"]) is list
             and len(closure["unresolved"]) <= 32, "bounded signed context declaration required")
     for entry in closure["unresolved"]: _text(entry, "unresolved context")
     for obligation in closure["obligations"]:
@@ -302,25 +304,37 @@ def _subject(subject, manifest):
     _check_declared_dependencies(subject["graph_declared_dependency_refs"], reachable, artifacts)
 
 
-def assess_graph_reviews(subject, registry, policy, reviews, dependency_manifest, *, expected_subject_sha256,
+@dataclass(frozen=True)
+class _ReviewDomain:
+    """Internal fixed protocol configuration; never populated from review JSON."""
+
+    subject_schema: str
+    claim_schema: str
+    action: str
+    audience: str
+    assessment_schema: str
+    subject_validator: object
+    context_obligation_cap: int
+
+
+_GRAPH_DOMAIN = _ReviewDomain(SUBJECT_SCHEMA, CLAIM_SCHEMA, ACTION, AUDIENCE, SCHEMA, _subject, 32)
+
+
+def _assess_reviews(subject, registry, policy, reviews, dependency_manifest, *, domain,
+        expected_subject_sha256,
         expected_registry_sha256, expected_policy_sha256, expected_reviews_sha256,
         expected_manifest_sha256, at_time_utc, observed_artifact_sha256s, observed_pins, evidence_artifacts):
-    """Authenticate evidence and report named admission blockers; admit nothing.
-
-    A subject must be retained from ``build_review_subject`` under the caller's
-    independent pin. The evaluation clock and revocation snapshot are explicit
-    caller inputs, not authenticated by this dictionary API. Evidence bodies
-    are checked as exact bytes; their legal content is not inferred.
-    """
+    """Shared verifier called only by fixed-domain, source-replaying wrappers."""
     _sha(expected_subject_sha256); _sha(expected_reviews_sha256)
-    require(digest(subject) == expected_subject_sha256 and subject.get("schema") == SUBJECT_SCHEMA,
+    require(digest(subject) == expected_subject_sha256 and subject.get("schema") == domain.subject_schema,
             "independently pinned subject differs")
     require(type(reviews) is list and len(reviews) <= MAX_REVIEWS and digest(reviews) == expected_reviews_sha256,
             "independently pinned complete review population differs")
     require(subject["dependency_manifest_sha256"] == expected_manifest_sha256, "selected dependency generation differs")
     manifest = dependencies.validate_dependency_manifest(dependency_manifest, expected_manifest_sha256=expected_manifest_sha256)
-    _subject(subject, manifest)
-    keys, revoked = _trust(registry, policy, expected_registry_sha256, expected_policy_sha256)
+    domain.subject_validator(subject, manifest)
+    keys, revoked = _trust(registry, policy, expected_registry_sha256, expected_policy_sha256,
+                          action=domain.action, audience=domain.audience)
     evaluation = _time(at_time_utc)
     current = dependencies.invalidate_dependencies(dependency_manifest, expected_manifest_sha256=expected_manifest_sha256,
         observed_artifact_sha256s=observed_artifact_sha256s, observed_pins=observed_pins)
@@ -338,7 +352,8 @@ def assess_graph_reviews(subject, registry, policy, reviews, dependency_manifest
     if registry["mode"] == "unavailable": common.append("trust_registry_unavailable")
     rows, seen, associations = [], set(), set()
     for review in reviews:
-        _review(review, subject)
+        _review(review, subject, claim_schema=domain.claim_schema, action=domain.action,
+                audience=domain.audience, context_obligation_cap=domain.context_obligation_cap)
         require(review["review_id"] not in seen, "duplicate review identity")
         seen.add(review["review_id"])
         association = (review["principal_id"], review["role"])
@@ -405,7 +420,7 @@ def assess_graph_reviews(subject, registry, policy, reviews, dependency_manifest
         blockers.append("required_dependency_closure_not_current")
     prerequisites = not blockers
     blockers.extend(("downstream_semantic_validation_required", "downstream_Lean_kernel_admission_required"))
-    report = {"schema": SCHEMA, "subject_sha256": expected_subject_sha256, "registry_sha256": expected_registry_sha256,
+    report = {"schema": domain.assessment_schema, "subject_sha256": expected_subject_sha256, "registry_sha256": expected_registry_sha256,
         "policy_sha256": expected_policy_sha256, "reviews_sha256": expected_reviews_sha256,
         "dependency_manifest_sha256": expected_manifest_sha256, "dependency_invalidation_sha256": current["invalidation_sha256"],
         "evaluation_time_utc": at_time_utc, "evidence_artifact_sha256s": {key: hashlib.sha256(raw).hexdigest() for key, raw in sorted(evidence_artifacts.items())},
@@ -419,6 +434,24 @@ def assess_graph_reviews(subject, registry, policy, reviews, dependency_manifest
         "legal_dependency_inventory_exhaustive": False, "evaluation_clock_authenticated": False,
         "registry_identity_authenticated_by_this_api": False, **FALSE_AUTHORITY}
     return {**json.loads(wire(report)), "assessment_sha256": digest(report)}
+
+
+def assess_graph_reviews(subject, registry, policy, reviews, dependency_manifest, *, expected_subject_sha256,
+        expected_registry_sha256, expected_policy_sha256, expected_reviews_sha256,
+        expected_manifest_sha256, at_time_utc, observed_artifact_sha256s, observed_pins, evidence_artifacts):
+    """Authenticate evidence and report named admission blockers; admit nothing.
+
+    A subject must be retained from ``build_review_subject`` under the caller's
+    independent pin. The evaluation clock and revocation snapshot are explicit
+    caller inputs, not authenticated by this dictionary API. Evidence bodies
+    are checked as exact bytes; their legal content is not inferred.
+    """
+    return _assess_reviews(subject, registry, policy, reviews, dependency_manifest,
+        domain=_GRAPH_DOMAIN, expected_subject_sha256=expected_subject_sha256,
+        expected_registry_sha256=expected_registry_sha256, expected_policy_sha256=expected_policy_sha256,
+        expected_reviews_sha256=expected_reviews_sha256, expected_manifest_sha256=expected_manifest_sha256,
+        at_time_utc=at_time_utc, observed_artifact_sha256s=observed_artifact_sha256s,
+        observed_pins=observed_pins, evidence_artifacts=evidence_artifacts)
 
 
 def validate_review_assessment(report, *args, **kwargs):
