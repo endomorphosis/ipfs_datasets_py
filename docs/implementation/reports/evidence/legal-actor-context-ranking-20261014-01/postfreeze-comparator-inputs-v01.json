@@ -1,0 +1,129 @@
+{
+  "body_access_before_complete_F16_freeze": false,
+  "checkpoint_JSON_parses": 0,
+  "completed_frozen_N11": {
+    "analysis": {
+      "bytes": 2776304,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json",
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "freeze": {
+      "bytes": 21832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "independent_recount": {
+      "bytes": 2315880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-independent-recount-v01.json",
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "independent_review": {
+      "bytes": 112211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 52960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "public_summary": {
+      "bytes": 18392,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/public-result-summary-v01.json",
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "role": "Exact trained N11 donor and frozen sole comparator; zero new comparator forwards/updates.",
+    "runtime_review": {
+      "bytes": 78532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-runtime-review-v01.json",
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    }
+  },
+  "completed_frozen_parent": {
+    "Hub_actual_review": {
+      "bytes": 220073,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+      "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+    },
+    "analysis": {
+      "bytes": 2628958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-analysis-v01.json",
+      "sha256": "0ff16b30a6cf9910ed3e60c915998261a3c886cbfe74a5ce9f6c6a1ab08ea079"
+    },
+    "completion": {
+      "bytes": 5581,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/completion-review-v01.json",
+      "sha256": "af348479407e93ef63c724c66aff27e30028f2cd117df54b61843a2ae6788dbe"
+    },
+    "freeze": {
+      "bytes": 21456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json",
+      "sha256": "fcb0e01d212174c936c5a61c3efa7c8c229015097ff6eabde1fd3fdea61d72d9"
+    },
+    "independent_recount": {
+      "bytes": 2383890,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-independent-recount-v01.json",
+      "sha256": "72031f7093614d57329cd4fe7b93c948772f80da98d9812c839c1ebe46902ea8"
+    },
+    "independent_review": {
+      "bytes": 98977,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+      "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+    },
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 66306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json",
+      "sha256": "bc7facaba1d1bc78b8145bdd9fed2957e488cab22eb27f470ddd208b04aa5375"
+    },
+    "public_summary": {
+      "bytes": 9624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json",
+      "sha256": "f1984b7d2b641f727d6e079872e888f081c8f14e51ff287e4cc5348fa15441ab"
+    },
+    "role": "Exact trained F15 donor and frozen comparator; zero new comparator forwards or updates.",
+    "runtime_review": {
+      "bytes": 87286,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-runtime-review-v01.json",
+      "sha256": "f8d6b98215732ee8baf43646e065556a882729cb9ed6e0f2c1fb7e6872435e80"
+    }
+  },
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "model_calls": 0,
+  "private_body_reads": 0,
+  "schema": "actor-context-ranking-postfreeze-comparator-inputs/v1",
+  "source_export": {
+    "bytes": 4675279,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+    "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+  },
+  "source_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+  "source_parent": {
+    "bytes": 12230969,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+    "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+  },
+  "states": [
+    "frozen_N11",
+    "parent",
+    "initial",
+    "trained"
+  ]
+}

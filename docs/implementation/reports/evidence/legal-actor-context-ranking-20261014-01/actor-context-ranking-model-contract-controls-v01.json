@@ -1,0 +1,24 @@
+{
+  "actual_training_updates": 0,
+  "checkpoint_JSON_parses": 0,
+  "claims_acquired": 0,
+  "control_count": 11,
+  "findings": [],
+  "independent_qualification": false,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "output": "test_actor_ranking_reuses_loss_object_and_records_training_domain (detached_context_ranking_contracts.Contracts.test_actor_ranking_reuses_loss_object_and_records_training_domain) ... ok\ntest_all42_source_identity_map_and_exact_donor_pins_fail_closed (detached_context_ranking_contracts.Contracts.test_all42_source_identity_map_and_exact_donor_pins_fail_closed) ... ok\ntest_checkpoint_preserves_trained_query_gate_conditions_and_separates_frozen36 (detached_context_ranking_contracts.Contracts.test_checkpoint_preserves_trained_query_gate_conditions_and_separates_frozen36) ... ok\ntest_configuration_selects_exact6_independent_storages_and_freezes36 (detached_context_ranking_contracts.Contracts.test_configuration_selects_exact6_independent_storages_and_freezes36) ... ok\ntest_factory_keeps_actor_forward_differentiable_and_conditions_frozen_full8 (detached_context_ranking_contracts.Contracts.test_factory_keeps_actor_forward_differentiable_and_conditions_frozen_full8) ... ok\ntest_first_step_query_moments_allowed_inactive650_and_shapes_fail_closed (detached_context_ranking_contracts.Contracts.test_first_step_query_moments_allowed_inactive650_and_shapes_fail_closed) ... ok\ntest_fixed_schedule32_updates384_occurrences_and_bounds_before_restore (detached_context_ranking_contracts.Contracts.test_fixed_schedule32_updates384_occurrences_and_bounds_before_restore) ... ok\ntest_freeze_trace_allows_actor_changes_protects_F15_conditions_and_frozen36 (detached_context_ranking_contracts.Contracts.test_freeze_trace_allows_actor_changes_protects_F15_conditions_and_frozen36) ... ok\ntest_objective_joins_source_gold_domain_and_selected_hinge_trace (detached_context_ranking_contracts.Contracts.test_objective_joins_source_gold_domain_and_selected_hinge_trace) ... ok\ntest_policy_uses_trained_F15_six_tensor_fresh_Adam_and_fixed_ranking (detached_context_ranking_contracts.Contracts.test_policy_uses_trained_F15_six_tensor_fresh_Adam_and_fixed_ranking) ... ok\ntest_trained_first_query_gradient_change_nonzero_moments_accepted (detached_context_ranking_contracts.Contracts.test_trained_first_query_gradient_change_nonzero_moments_accepted) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.649s\n\nOK\n",
+  "passed": true,
+  "schema": "actor-context-ranking-model-contract-controls/v1",
+  "scope": "Detached stdlib/fake-interface source contracts only; no actual Torch, model weights or numerical parity.",
+  "source": {
+    "bytes": 57440,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+    "sha256": "061d12c63581aa91631903097d8c5d581fc679ee5bc0080c1a568c94ec6092f0"
+  },
+  "tests": {
+    "bytes": 25523,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_context_ranking_contracts.py",
+    "sha256": "0783d98906b1a6bce7436aef721f47706c0af3f2804fe77c0b6d1b8f1c3be530"
+  }
+}
