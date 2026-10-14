@@ -1,0 +1,1630 @@
+{
+  "all174_downloaded_bytes_independently_rehashed": true,
+  "all174_new_remote_byte_identities_exact": true,
+  "all_old_immutable_identities_exact": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-before-file-identities-v01.json": {
+      "bytes": 1363606,
+      "sha256": "96126500261cf0755747f9126715ecee0693ad8ad2f4820099d22f99f5d1ff44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 87783,
+      "sha256": "6fe30d71e38d14537d9c4504929cdca16bacf84ba33904b8347aa9289b0c58b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-preparation-receipt-v01.json": {
+      "bytes": 74287,
+      "sha256": "d18aa15f8ce98852e657e98331ba1c8cbb5f92d07d9fe3c849292a1eb5eb2b33"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-publication-independent-review-v01.json": {
+      "bytes": 56264,
+      "sha256": "5e64ec3bd2c551b63bfb1a2a3b49032d34ef36150a6599bb46705f0964ecaf90"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-publication-verification-v01.json": {
+      "bytes": 76994,
+      "sha256": "802d37766addc58979f28efd704055c5f19340fe3ee1f214f1d1a93d457c4c77"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-release-spec-v01.json": {
+      "bytes": 78636,
+      "sha256": "b708bc3e1496907b5c49c43327e421bf1eb49831d14206356b73a62638a89716"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/README.md": {
+      "bytes": 5231,
+      "sha256": "71a06ab50b331d67af053940ef3b973014745fa70699c12f5480795ed11f281d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015297,
+      "sha256": "2ca39deb0d299cb4c3193579f9ab8738a581af7c52a55235b8b1db02aec419f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1432654,
+      "sha256": "fb71ee393cbe30a5028b8bfdd101a6fd451d259291ca757f1fffbcb3f9e62793"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1023666,
+      "sha256": "ca171c62a657f94a8936c644edaf9e7dcd9acd15126fcc8a2abbd2924ac1e73f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431402,
+      "sha256": "e2e15bacba1c1930ca001579bf0274181553a880f989f12f39b886551892932c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526642,
+      "sha256": "211c7d0e55626d5bf77403c7631d9ec268e9bd6898a20e10fe1609eb9d491f5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 682074,
+      "sha256": "2219f995d88028dd109cc16ee6e3bb2d3be8584c21f1183de3da03e5fcf59886"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523008,
+      "sha256": "cb4cda5f129fc1850d9ff9314354fc1a478e1754462672f281c4682ea68f07d0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 808319,
+      "sha256": "f946527269998a14e43a46dee53cd0e340f524c0d0f4cf8b266e142a3bd1fe3a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 459659,
+      "sha256": "2f9b3fec576ba649bf9519080e4a165165b329e2f070a0fa256aa2e8c551e500"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 803974,
+      "sha256": "569eb80faa4c6c802e984e43b2b1844b47215a97fd07f86eba38c2c67d3981eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509057,
+      "sha256": "77c7f25b16b045a26ab9e7244e0e8de19c82ca140d91ce87c10f64884a0f5cbd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 629840,
+      "sha256": "207823e8e06b84628e8db63e913b80976aef84008a81321b7821f86b45520c7f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-law-joint.json": {
+      "bytes": 107520,
+      "sha256": "ba35bd0c8eee15725378d6509100a89e0c211f24c87d2653dd3f57fd36d247e9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-law-raw.json": {
+      "bytes": 285290,
+      "sha256": "2fe0d90ec35dbbc057e8171e61fe9aef34c7c3ec6231e9a89a5e338aa9ce1a69"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1043445,
+      "sha256": "b9734be1cb7e9c0e771e3c0f6ee75000152fccb48dc6dd1d2b90d8e2be5bdfca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1454575,
+      "sha256": "0af4f2882602fcd30457ff9d05a44193968d51c722969055b62444d442b19997"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456851,
+      "sha256": "94e0e72f70dec91729ee7c5110842ac4cde32a58d00c615b1e2adabf9e175206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2290284,
+      "sha256": "86f1c0db25ae12ff2f13847c0bdbffa480f34388101beb106bae31e94545ab01"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/cell-checkpoint.json": {
+      "bytes": 6464267,
+      "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/cell-training.json": {
+      "bytes": 1174220,
+      "sha256": "d695bcec10e8903c462b5967cffec9d293bc60a6be7b1b754eeed6a297ac4c70"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parent-head-parity.json": {
+      "bytes": 190070,
+      "sha256": "24f89c51c3c90369a29f5661df94a154502d4b32f2ed53b218145b7052cba04f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 22949,
+      "sha256": "bf9df11777866c9821595e4f6b650abc6d88a4e1c50f6aeb78ccbafde69f7bb1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-disabled.json": {
+      "bytes": 22953,
+      "sha256": "e2aba9f75ad489a259bd4b02a853bdc74a72bf839c3b3fefa43ae5d6f44c52a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 22951,
+      "sha256": "d7aab5d6b82be2414c1d2f0b06c53d0d46c059230c528e46e3facbd5142cc3c7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-zeros.json": {
+      "bytes": 22949,
+      "sha256": "61fd612e165dcce0eec8975ad11bc937bbcd75ec9f484bdb0cac648efaa8d0d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity.json": {
+      "bytes": 1932,
+      "sha256": "e2a14422f2e30fc9fbc23bbb8cae990b776ce8567f8643889bca7362e5b7d8e8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-training168-joint.json": {
+      "bytes": 2485985,
+      "sha256": "ed926ba33a83d9b52ace6dfe85e18dd5bbb44f83ebf6cfaed8f8ed875d4ccab2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-training168-raw.json": {
+      "bytes": 3591535,
+      "sha256": "380fb86e305e42ea2ffe61737a3bffb8d98d92cf99bf67e6b75457f6a7b5b255"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523008,
+      "sha256": "cb4cda5f129fc1850d9ff9314354fc1a478e1754462672f281c4682ea68f07d0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 805384,
+      "sha256": "545ceae2e41d1554eb8bcd1bea7ec3b6f5729876bde3f726b05082bfe0f049d1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 459659,
+      "sha256": "2f9b3fec576ba649bf9519080e4a165165b329e2f070a0fa256aa2e8c551e500"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 801039,
+      "sha256": "bfd55668a56e7a7cca06f66bcac609144edbb0f9a4cbf063e96f17d16ead4e95"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-training168-joint.json": {
+      "bytes": 2485985,
+      "sha256": "ed926ba33a83d9b52ace6dfe85e18dd5bbb44f83ebf6cfaed8f8ed875d4ccab2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-training168-raw.json": {
+      "bytes": 3588586,
+      "sha256": "96f58e4339ed84cc7df9c3584ec2e9649fef60a3d29b3d92fb816df78b81d967"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/summary.json": {
+      "bytes": 58591,
+      "sha256": "4e6f66bf20e93757e58f0b63234c33c64918c1272494d31c3680d237b8942ecf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1015279,
+      "sha256": "938c17b6d56ac764f71e1b4297ec67954588c830406faf5f12df1f0aa7f7e89c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1432689,
+      "sha256": "3e42db0dcf3068bd1e4eefb8ff1f49d97ef7dea4ea925efbe7842f2ca4608edb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1025609,
+      "sha256": "160469e6819031cc77e1734205615eeb754e6741711ad2713a5708f77c0a6b0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1434654,
+      "sha256": "dccaf49381abf088791b1943a7dac064fc1ca040ee8d92dbd93d83ed994524d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526638,
+      "sha256": "ab96eff7cc64bee80fd5d72b8064c533c9e1b3c7a7b1402424f6fe6341636a3f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 682077,
+      "sha256": "3cfb7aa8f25504e82c0cccbcdffd59a0a963d15cae4420df07b6f9211b3bb208"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509143,
+      "sha256": "bf98d9ade53bc45569f3529a9c86cb200740e244818854207dd978a75a0c0b14"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 629893,
+      "sha256": "34bd2c8cf5baecce11274b7848a5f8e52190e7055d1d696b010ae00d1bb29a55"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170395,
+      "sha256": "81dde5414cf835f31960fee4432d537ebe8850c53f6668043f780691ee406b74"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-law-joint.json": {
+      "bytes": 107524,
+      "sha256": "1f426e6b1355c235e683f6110fc9aa3ad93655ee4022c2d8208eb12b785f5898"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-law-raw.json": {
+      "bytes": 285343,
+      "sha256": "2df8a467d4e7f61e7ba410cc5d87f9d5c2b6c46b32a79e48ea44a8eec8deb51c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044660,
+      "sha256": "5fac83c0a011e8d26c69ceb2a70230062c0e1227dd2a89b2b8f3a398bf5d76c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1455362,
+      "sha256": "60ac4096a959f172edb2360c922125700015bb7f541edae5a61acb73145d51e3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1456873,
+      "sha256": "7dec58311fbc0fd8b3414b0c84344164686efa8209013b5beec7db034189d416"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2290351,
+      "sha256": "1bdb1dea54f08a19de0b1037bca31ff164d05b8e4bcab1070127fb78c327fa19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 22956,
+      "sha256": "c82a1c18acc3b7ddc18ca6ea98f63d749ee6f4a80b985c8aa47257212adb6245"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-disabled.json": {
+      "bytes": 22960,
+      "sha256": "101ab3602e6dd7b30eb79b8354716d274768edea08802079c9f043f8e92c6b24"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 22958,
+      "sha256": "5d81fc0a1a5ce131be280be446ce13690b4f830c8a625107193dd269a8af801a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-zeros.json": {
+      "bytes": 22956,
+      "sha256": "f87d615e6d1856bb77aee2db6094b247af158b7f7f4d972c96bbb2d6b4df76d6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity.json": {
+      "bytes": 1932,
+      "sha256": "a0fdd26044c7cb2dc2e5d49505b1506cada56f87c4496c6229509cd812d72d55"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child-exit.json": {
+      "bytes": 104,
+      "sha256": "b0dbb227706139587a83af2248a90cba989f49d284e489d06b7bdc767774d8cc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child-identity.json": {
+      "bytes": 43,
+      "sha256": "64aae49674cbbf2e4d393bbae349e5ebffc75e0a351e4082000a97b9955e8791"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child.log": {
+      "bytes": 78,
+      "sha256": "7e1ddbf7a56571112e8b4b31529bf495e7784137241dc39667279d7905dff0f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/command.json": {
+      "bytes": 1061,
+      "sha256": "7ee835e8aeba380804132bb7ce1c30ac74564d0b959435d740fbd9eb8243684e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 42831,
+      "sha256": "ddb298b69330039a556bfb38409d0d9339574db531623d55a983f2dd9670dfa5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/group-rss-summary.json": {
+      "bytes": 1749,
+      "sha256": "d1d89eba7a0ba41402c295d10cb2e42238c11e73ecb298ce3756a4d8cd90b778"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/guardian-exit.json": {
+      "bytes": 520,
+      "sha256": "34f3a91f8b5a3ad2dcb5296e346a442b8f172db0ffacddb1b4380767a1ad1fbd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/lease-binding.json": {
+      "bytes": 691,
+      "sha256": "557ad61cce67e52ca65c5478c8569f291d2d45f3fa698c5cd7abc5f789fdb10f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/lease-observations.jsonl": {
+      "bytes": 89031,
+      "sha256": "5f08cf544b74d6b4e8d6c92ad9219848225846fef64f8fd1d2733f369a01986d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/owned-group-final.json": {
+      "bytes": 189,
+      "sha256": "79c2b18a55c6440dd1707fd5cd3760e04ccb96d39c0c91faae61fa60722c5b9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/pre-admission.json": {
+      "bytes": 7916,
+      "sha256": "d5545d063933bdcc2bb51fb0c54f7a3fd1d5c68d749ed08e9afc8d3f59c43f87"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/resource-observations.json": {
+      "bytes": 2625,
+      "sha256": "547359c89dcc239193e3f38d00423db38ab4f9ed28416a10dc4210151a5e1768"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4645,
+      "sha256": "002fa9e23c6d168f2a120726fec171347dea5b3298048e06be922b9862f159bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-bootstrap-smoke-controls-v02.json": {
+      "bytes": 7838,
+      "sha256": "4d22116cd43abefef86e2779103b6562eb130030fc5b77053e32d7072afca1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-ce-plan-v02.json": {
+      "bytes": 46558,
+      "sha256": "f433954ab6e9f26510096f308e879cac1b027bf33aa94a5df7bf765045e555fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-ce-runtime-review-v01.json": {
+      "bytes": 84458,
+      "sha256": "f428248fe7f7d003a93125c1978007a9216bcdab968c28055fb9384fe5a3b2f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-ce-terminal-resource-audit-v02.json": {
+      "bytes": 35986,
+      "sha256": "5fe7cb02e3816f48784383d17d7df28d6e6297eb89e34097f7ba510af47d74cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-ce-training-review-v02.json": {
+      "bytes": 23906,
+      "sha256": "a94800afd1fcdb1509ab171d0931f61828f85a89db4974bd416fbdad0a675c9a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-independent-recount-v01.json": {
+      "bytes": 861265,
+      "sha256": "3afb425df0baf5da7296830eef873ad56dbef39b2418f123da9a1ba794edd53b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-output-freeze-v01.json": {
+      "bytes": 21187,
+      "sha256": "56abf07cfc80b79ef7eb48a0f0579310ae8f555e15cc9c49d1f6fe23bd687e2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-result-analysis-v01.json": {
+      "bytes": 4426986,
+      "sha256": "bc5c5d1e08750b8fe86e9fd3953f23531235fdcfb73b9bd5b0178c9e41bcba39"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-retained-claim-preflight-v01.json": {
+      "bytes": 20562,
+      "sha256": "13ccb471de2de244a3e8cc5f8d2cd1c617579c52ec499121355d4a9906a10850"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-retained-claim-reconciliation-v01.json": {
+      "bytes": 13906,
+      "sha256": "ad085ca7094c6e646d7385d8a6a003003fccbd2615762953b79236e178e06490"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-storage-diagnostic-v01.json": {
+      "bytes": 19988,
+      "sha256": "7e97f459a9187a401fa77213e67fd6be954080e86ce285dce95c20bf2378ffe8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-terminal-resource-inputs-v02.json": {
+      "bytes": 6423,
+      "sha256": "46720b0d0699950d4797944c52bd39d4d09036f6a0f8843c5f444f8e1e00133d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/actor-features-terminal-resource-source-independent-review-v03.json": {
+      "bytes": 14099,
+      "sha256": "48b5c7fa3dad5b235edbac53df3464de61c19cf8aced4604f091302c20fe9f5f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/analyzer-source-independent-review-v04.json": {
+      "bytes": 18111,
+      "sha256": "0e9037d2e40593e469e74561a541487d169ec02329abe3a6f2168e298abf5e48"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/evaluation-contract-root-review-v01.json": {
+      "bytes": 1243,
+      "sha256": "8102a26b23e3d32060d5cb24d418e9b26169b65d133c56eb0a965cf9c37cbe7a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 22072,
+      "sha256": "19fa0d2f587301b98331b3ce41869b424ee1e1b87bda92d8b321d65034a66e47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/hf-helper-commit-label-port-derivation-v03.json": {
+      "bytes": 1424,
+      "sha256": "aaa03bb18c4ad461f879867d8f2b10773fe1f4cfa0c415868a8950242cc2bba1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/history-preintegration-independent-review-v01.json": {
+      "bytes": 30488,
+      "sha256": "bc4088a3c7c33f45d701e5732d95b6e1afd08fc5a40af2377d864cde8fbfe145"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/next-experiment-gaps-v01.json": {
+      "bytes": 3242,
+      "sha256": "246a808f88a45137f5717c75f3b17cc3f64eaa59a741777daaea8ad3f5031b52"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/phase-intake-v01.json": {
+      "bytes": 2798,
+      "sha256": "dbadd15fc572a99a2dd781d4e63993c473bed83c687419f3d159c09824297575"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 204376,
+      "sha256": "c7349c862816d9f6bbc171ad685a17a53eb19f83547cd133b2ba16dcae0c4151"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/resource-baseline-inputs-v02.json": {
+      "bytes": 2353,
+      "sha256": "d37734d3e0ba521cd06bf380fd5f9c96ac60c5e8037f74dee4a9fdd39e2e708e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/resource-baseline-v02.json": {
+      "bytes": 85505,
+      "sha256": "1f32831b3dc3850bc890be37aeeb6429be3389b9142bfdcc7e4a3cd88a2163c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/resource-bridge-source-independent-review-v02.json": {
+      "bytes": 1961,
+      "sha256": "0a9f5e2da7b92ea585e4eca715cda268a2cf399c75e18654f735b766d9f9fe4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/resource-observer-source-independent-review-v02.json": {
+      "bytes": 10258,
+      "sha256": "af92cffe666b63f7efa6ca9f73548a6c2f71778beea7f33c3284f50f416d918f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 122326,
+      "sha256": "c0df4c577fe2563ec7a47f6d4d146c63d0f9f546db197c8a4e563ef2689fc306"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/result-recount-inputs-v02.json": {
+      "bytes": 584,
+      "sha256": "db94b23fb61efdf7277154bd9a6082cd5775d0ebd606be4f36eacfdc8c775645"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/result-recount-source-independent-review-v02.json": {
+      "bytes": 8398,
+      "sha256": "89e71bdf3138fde6f649fba6542c58a6f9dc07395037ed249aa15a9731e4f013"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/retained-claim-preflight-source-independent-review-v02.json": {
+      "bytes": 8054,
+      "sha256": "204ca77e565c6d5de44be09de6cc1f7a22cd5b61c9e8e62dcb0979ac2280a4b4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/retained-claim-reconciliation-execution-approval-v01.json": {
+      "bytes": 2057,
+      "sha256": "e3995b4728cb8405dae8e84b74e72abe051f2e17745f193e9c85a870f1e01b37"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/retained-claim-reconciliation-source-independent-review-v01.json": {
+      "bytes": 9116,
+      "sha256": "05f306c75176e8d30d7ae90fd6b553524ad1a5c63606a0e228e42195f770a598"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/retry-producer-port-derivation-v02.json": {
+      "bytes": 22072,
+      "sha256": "863e7d8bdda52c1b129960bd912c25c62626eaacb11d00160549132aa53df52c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 22240,
+      "sha256": "e79d7314be3be343b57c7f896a488ee8ba64e3321d4c4c6a7b85ad9b08ac1271"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/runtime-freeze-source-independent-review-v03.json": {
+      "bytes": 21160,
+      "sha256": "17e9b5d5eccc20faf1357c036476b48f34973ec041850c372a24c5d387e4c41f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/sampler-source-independent-review-v02.json": {
+      "bytes": 3036,
+      "sha256": "d1c8580d2d648f70551780e0126cecdfe421e1f07fd1dd6da04c4bf875006859"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/storage-diagnostic-source-independent-review-v01.json": {
+      "bytes": 6799,
+      "sha256": "0f714bd686151ce375b9245278efab0afe4b39dff0ff9f9efc6e0ef519c1d83f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/terminal-compatibility-port-derivation-v03.json": {
+      "bytes": 6826,
+      "sha256": "d61a53a0fde2632939be574705e59cfbd1d21e6111e8173dd623358e1be9214b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 36118,
+      "sha256": "84bf3fe7373f026828a4cafde64f2346097417a23e41b26c91bdb973cb00dce4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/evidence/training-design-v02.json": {
+      "bytes": 17749,
+      "sha256": "cd68c23949fdeb5f5cedb759736f4d682e9530506a6d74960156023f40740f1e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/failures/attempt01/child-exit.json": {
+      "bytes": 76,
+      "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/failures/attempt01/failure-primary.json": {
+      "bytes": 1367,
+      "sha256": "2c030d397b9e67c1700dd8de6692e1195ca71647b54474ffe242fe4cafa50a3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/failures/attempt01/guardian-exit.json": {
+      "bytes": 1764,
+      "sha256": "cc2ad9205145b7c48a1f1e2adadc1c8acc187a7215c0164b0fedcb72ce985a0b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/failures/attempt01/pre-admission.json": {
+      "bytes": 7916,
+      "sha256": "f87cb56fbc7b5879e39cdbde216a6fa781fa8e448ede6f824e0f7f74e4910fb6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/actor_features_bootstrap_smoke_controls_v02.py": {
+      "bytes": 7068,
+      "sha256": "be673d96eacf5043173233a09e7b53030e7fa0b3561cedaef6ffa772ddaff8a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/analyze_actor_features_v04.py": {
+      "bytes": 89265,
+      "sha256": "717e423cdc95b71cbc632f9026793a633553228e829afe6f57381979f9d4baa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/archive_actor_features_hf_v03.py": {
+      "bytes": 19160,
+      "sha256": "572fca3f6445ab2697ab32055f0504163ed7a2c1518dca25b76d36d9d6a0c5a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/audit_actor_features_terminal_resources_v03.py": {
+      "bytes": 48261,
+      "sha256": "3ac3a0b15434562fbb50e35f8883daad2bc674342d259269643bc9ee2cc0d22f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/build_actor_features_release_spec_v03.py": {
+      "bytes": 12765,
+      "sha256": "c16cf89b24a2caa30cecb9abee95b1b650af385170718a22bc27319cc03b30dd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/diagnose_actor_features_storage_v01.py": {
+      "bytes": 18475,
+      "sha256": "110873039eeeb5e61d02ff10ab959aa74a5af01f4e542871f0816588f753d81b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/freeze_actor_features_outputs_v03.py": {
+      "bytes": 18664,
+      "sha256": "1230a59f2a36424adfd79d635f62e6186281335fdb1e87c373ebc218fefd8588"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/prepare_actor_features_v02.py": {
+      "bytes": 15738,
+      "sha256": "f5110cb2c98c6a8b68cf9c21a8055e6ca8f1aa9ae32e355609111882c3c1fd3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/reconcile_actor_features_retained_claim_v01.py": {
+      "bytes": 16708,
+      "sha256": "6debcf28e6e15f5c95623e1e1c6cead5e73c8069d70222c6e9756355cc130049"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/review_actor_features_resource_baseline_v02.py": {
+      "bytes": 21828,
+      "sha256": "da0d04e5c12d2da47b38c28bb034681a0ab585ddbb6db9276b0d3973c67fab2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/review_actor_features_result_recount_v02.py": {
+      "bytes": 49955,
+      "sha256": "2af389d81a78c45f8dc28b0da5ff44c172d3fc2c18949bf04c2dccddeae05e3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/review_actor_features_retained_claim_preflight_v02.py": {
+      "bytes": 20792,
+      "sha256": "185bce2ddb2ec179368c22ca6bb89bf4b1561bb44cf9d5986c34d5afef0b13fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/run_actor_features_v02.py": {
+      "bytes": 37730,
+      "sha256": "23090332c18ce1b451a116381e072677aa1fef847518e0c08d1b67a60c52cb44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/recipes/sample_actor_features_private_resources_v02.py": {
+      "bytes": 6661,
+      "sha256": "1b2710c6c8e195f4bcc3f95c6e6369a4dc2f4cc9c18665ce6b54267f8dc81123"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-verified-download-v01/releases/20261013-actor-features-v1/source/test_legal_span_actor_features_contracts.py": {
+      "bytes": 39343,
+      "sha256": "2fce1a325218550bae160a58f9bba4fdd3c1b351d7bf2da320004905bb668ce0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/release-manifest-v01.json": {
+      "bytes": 77982,
+      "sha256": "67b8a4c28f2c3746283cbeac066c4687afe9455c54d679a6185db2b0bb7c55c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-independent-review-v01.json": {
+      "bytes": 122326,
+      "sha256": "c0df4c577fe2563ec7a47f6d4d146c63d0f9f546db197c8a4e563ef2689fc306"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "default_promotion": false,
+  "final_file_count": 5105,
+  "findings": [],
+  "live_revision_observed": "f91692a0a695d91b793a00936dd525fbe2bafcac",
+  "model_or_encoder_calls": 0,
+  "new_remote_file_identities": {
+    "releases/20261013-actor-features-v1/README.md": {
+      "blob_id": "48c8ce265b852b6a641fb3a3d82f372f17c9e981",
+      "lfs": null,
+      "size": 5231
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_dev-joint.json": {
+      "blob_id": "46e451a66378b2abac98a25da0c92d36a1d2ddfb",
+      "lfs": null,
+      "size": 1015297
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_dev-raw.json": {
+      "blob_id": "35189c4a43f4a0c6f36c03007a7fb8987cf526d2",
+      "lfs": null,
+      "size": 1432654
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_eval-joint.json": {
+      "blob_id": "e2baf8c06225922a8fc66731d91d918703b3bb87",
+      "lfs": null,
+      "size": 1023666
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-authored_eval-raw.json": {
+      "blob_id": "8a2a507983b8cf3d7d150f0755ff017b0cf7e85e",
+      "lfs": null,
+      "size": 1431402
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_challenge-joint.json": {
+      "blob_id": "1a1238b9fbdf574eecc0fc08e5e107049337d48c",
+      "lfs": null,
+      "size": 526642
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_challenge-raw.json": {
+      "blob_id": "fb804bf0d7b0015423b6c4de14feaacf03c76795",
+      "lfs": null,
+      "size": 682074
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_dev-joint.json": {
+      "blob_id": "67a6db063bb676dc7c8598ef78ea37f2ddd5e180",
+      "lfs": null,
+      "size": 523008
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_dev-raw.json": {
+      "blob_id": "908df6fd9fb5454cb7c1397802aef4a70748fb08",
+      "lfs": null,
+      "size": 808319
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_test-joint.json": {
+      "blob_id": "bb16257a68d7fb69ccfbef05f484d26aa283dee7",
+      "lfs": null,
+      "size": 459659
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_test-raw.json": {
+      "blob_id": "83031c35d0ea50cb627346e98b34cb3aca31d6b3",
+      "lfs": null,
+      "size": 803974
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_tune-joint.json": {
+      "blob_id": "c5102533231dc684852c07b4486cfda6550041bf",
+      "lfs": null,
+      "size": 509057
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-fresh_tune-raw.json": {
+      "blob_id": "d628bea7e90b287dfb553de2dbcbdf41b161620e",
+      "lfs": null,
+      "size": 629840
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-law-joint.json": {
+      "blob_id": "9cdac96ca5f6593703ba75bef04dcaf4460cbd7a",
+      "lfs": null,
+      "size": 107520
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-law-raw.json": {
+      "blob_id": "613b7c4e2f8923c160b328b99f7ea9376fa352cf",
+      "lfs": null,
+      "size": 285290
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_authored_eval-joint.json": {
+      "blob_id": "013d5debaf4d7c7917447a34085683cd47fdd37a",
+      "lfs": null,
+      "size": 1043445
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_authored_eval-raw.json": {
+      "blob_id": "0afc56050433c2558904474f52f87e041277e5b3",
+      "lfs": null,
+      "size": 1454575
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_tune-joint.json": {
+      "blob_id": "ce0636a5e1fab19a4b198cf398f3c95877edb3f5",
+      "lfs": null,
+      "size": 1456851
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/baseline-old_tune-raw.json": {
+      "blob_id": "50dab5c75294989e28ff2bffe595a019e6459b77",
+      "lfs": null,
+      "size": 2290284
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/cell-checkpoint.json": {
+      "blob_id": "036790e001dd0c8b94edb2ce7c951882c9a8508c",
+      "lfs": null,
+      "size": 6464267
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/cell-training.json": {
+      "blob_id": "edd299eab74d459370faeff1f29cb6c581265d22",
+      "lfs": null,
+      "size": 1174220
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/data-schedule-before-models.json": {
+      "blob_id": "36f14e2367dff6f9c29fcac121529c5668a162ae",
+      "lfs": null,
+      "size": 26725
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parent-head-parity.json": {
+      "blob_id": "16b8e04d1d56952dd3b2263b0464cc6639509b2b",
+      "lfs": null,
+      "size": 190070
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-alternate_placeholders.json": {
+      "blob_id": "6e6eaa795f6bfeee635763ad366db6cf9cc71d13",
+      "lfs": null,
+      "size": 22949
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-disabled.json": {
+      "blob_id": "1fde208df83bbb50d7853b8de0514c3a03ccf502",
+      "lfs": null,
+      "size": 22953
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-rotated_placeholders.json": {
+      "blob_id": "d49da0b8227b4ff2923647cfa356276aa042a282",
+      "lfs": null,
+      "size": 22951
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity-zeros.json": {
+      "blob_id": "9d12461dd02065789670bffe7f74e2e9fc7d5f42",
+      "lfs": null,
+      "size": 22949
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-parity.json": {
+      "blob_id": "8c103150ff3f45b08b0998f70e54249f443fdb6b",
+      "lfs": null,
+      "size": 1932
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-training168-joint.json": {
+      "blob_id": "60f9e608dbc8092b56c4c628882bd4f1e3a6da1c",
+      "lfs": null,
+      "size": 2485985
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/initial-training168-raw.json": {
+      "blob_id": "b5cffb80d86adf56112f9453c1d59fefe523e2bc",
+      "lfs": null,
+      "size": 3591535
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_dev-joint.json": {
+      "blob_id": "67a6db063bb676dc7c8598ef78ea37f2ddd5e180",
+      "lfs": null,
+      "size": 523008
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_dev-raw.json": {
+      "blob_id": "cea0e511c2c3c183238748abc62cb6ec1c45aa32",
+      "lfs": null,
+      "size": 805384
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_test-joint.json": {
+      "blob_id": "bb16257a68d7fb69ccfbef05f484d26aa283dee7",
+      "lfs": null,
+      "size": 459659
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-fresh_test-raw.json": {
+      "blob_id": "5ea4aa54bb67479bdda66ff98484181082f7df06",
+      "lfs": null,
+      "size": 801039
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-training168-joint.json": {
+      "blob_id": "60f9e608dbc8092b56c4c628882bd4f1e3a6da1c",
+      "lfs": null,
+      "size": 2485985
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/parent-training168-raw.json": {
+      "blob_id": "34c520efb1882756feac0b548af491a980c970a8",
+      "lfs": null,
+      "size": 3588586
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/summary.json": {
+      "blob_id": "e940cecf46a23b8a4993508fd0ed06bfbc1ffa0c",
+      "lfs": null,
+      "size": 58591
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_dev-joint.json": {
+      "blob_id": "201b9df0063cae21464185ddfd651d10bfa1c9b7",
+      "lfs": null,
+      "size": 1015279
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_dev-raw.json": {
+      "blob_id": "966308125e7060cd012f8fbeca3e76f9c8265cee",
+      "lfs": null,
+      "size": 1432689
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_eval-joint.json": {
+      "blob_id": "ea99631d0a7dd7b49e1229293bc62ea932988e6e",
+      "lfs": null,
+      "size": 1025609
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-authored_eval-raw.json": {
+      "blob_id": "128a9f8f3d5f33f920d4e0280604788ad884b9d7",
+      "lfs": null,
+      "size": 1434654
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_challenge-joint.json": {
+      "blob_id": "bf656daab99e319649ca864f64f2e71200bb36c1",
+      "lfs": null,
+      "size": 526638
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_challenge-raw.json": {
+      "blob_id": "b24972034b862c3f6463107f411ee19593ed1da5",
+      "lfs": null,
+      "size": 682077
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_dev-joint.json": {
+      "blob_id": "c05e63b7b9a7d2cb0ab651cb917e8ab4bbbb1789",
+      "lfs": null,
+      "size": 523004
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_dev-raw.json": {
+      "blob_id": "b17210673161eeb4d86984fa4529dc0b2712898b",
+      "lfs": null,
+      "size": 808276
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_test-joint.json": {
+      "blob_id": "45992c98fc03b8929b7a4ccd89152c9565164fae",
+      "lfs": null,
+      "size": 464070
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_test-raw.json": {
+      "blob_id": "6169f665ecf44df3c91bdf9f33bcbf594dcb2c21",
+      "lfs": null,
+      "size": 808912
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_tune-joint.json": {
+      "blob_id": "7226d3f5bc8ed9acb67047609c43d3e05e32cc06",
+      "lfs": null,
+      "size": 509143
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-fresh_tune-raw.json": {
+      "blob_id": "ee9b064451a723b3552fd75a908ffa5843373ab7",
+      "lfs": null,
+      "size": 629893
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-frozen-head-retention.json": {
+      "blob_id": "901286148055897af8798b96f6b1dbaa9cdbeb45",
+      "lfs": null,
+      "size": 170395
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-law-joint.json": {
+      "blob_id": "f58b41afa89138adc8ea41dc6abdd1983274810c",
+      "lfs": null,
+      "size": 107524
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-law-raw.json": {
+      "blob_id": "7d2a6c0bf6181d36fdbcc84d530a1bcf0e03cd03",
+      "lfs": null,
+      "size": 285343
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_authored_eval-joint.json": {
+      "blob_id": "4b61df03b9bf842d125d599a5587a922e5c923dd",
+      "lfs": null,
+      "size": 1044660
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_authored_eval-raw.json": {
+      "blob_id": "f7d0a75fa229c5e518de78a30c5a38f87b0d8a71",
+      "lfs": null,
+      "size": 1455362
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_tune-joint.json": {
+      "blob_id": "9e10030c214cfb1e3ddfdb05104b537c275897f6",
+      "lfs": null,
+      "size": 1456873
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-old_tune-raw.json": {
+      "blob_id": "38cac698ba9204ee71febc945f65e3da3dc0cc9e",
+      "lfs": null,
+      "size": 2290351
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-alternate_placeholders.json": {
+      "blob_id": "02d9dfdc74e1374ee88fd36c02ad0630176a85ca",
+      "lfs": null,
+      "size": 22956
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-disabled.json": {
+      "blob_id": "982168865cd26062aa124ff7ad7f200a08d07710",
+      "lfs": null,
+      "size": 22960
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-rotated_placeholders.json": {
+      "blob_id": "30c9e9d4af17d76856c644dde885286d18325886",
+      "lfs": null,
+      "size": 22958
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity-zeros.json": {
+      "blob_id": "ca6434094f81043ae327c9de08ddd09aa39f8afb",
+      "lfs": null,
+      "size": 22956
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-parity.json": {
+      "blob_id": "7c63d475556c24ab582a3a68b857e2b95b2124c1",
+      "lfs": null,
+      "size": 1932
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-training168-joint.json": {
+      "blob_id": "29316b989e5d9b5d6199fd8bd19def42d663d03b",
+      "lfs": null,
+      "size": 2485865
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/results/trained-training168-raw.json": {
+      "blob_id": "665dd9516aca1a56d8c39dc8656591027d99b09c",
+      "lfs": null,
+      "size": 3591408
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child-exit.json": {
+      "blob_id": "756a79d356074cd5f44f33c6e57f0d91ce723b02",
+      "lfs": null,
+      "size": 104
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child-identity.json": {
+      "blob_id": "091907ad543e7146ff4fd5c54dd6f93844e87a06",
+      "lfs": null,
+      "size": 43
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/child.log": {
+      "blob_id": "8d4937ac48d0e9fa643a2035fe74b6641dcbed40",
+      "lfs": null,
+      "size": 78
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/command.json": {
+      "blob_id": "94a8ecaed05deffefa463960c6cf1f5ebc42b6e8",
+      "lfs": null,
+      "size": 1061
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/group-rss-observations.jsonl": {
+      "blob_id": "63991ab2a9079f293cf380608c8f06c2f75a4097",
+      "lfs": null,
+      "size": 42831
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/group-rss-summary.json": {
+      "blob_id": "d9c819d9894b799cb4b96e5e7ad881737470164e",
+      "lfs": null,
+      "size": 1749
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/guardian-exit.json": {
+      "blob_id": "162570b39557423b593dc5d9c9714934a695c201",
+      "lfs": null,
+      "size": 520
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/lease-binding.json": {
+      "blob_id": "9b76e6c44d3f70bea2325854a207f8415394bb4d",
+      "lfs": null,
+      "size": 691
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/lease-observations.jsonl": {
+      "blob_id": "21abb37d383938a1bd4be164be693257e0caf0e8",
+      "lfs": null,
+      "size": 89031
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/owned-group-final.json": {
+      "blob_id": "73aa50d94c2b0008dbbf051914c61ab511079e7f",
+      "lfs": null,
+      "size": 189
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/pre-admission.json": {
+      "blob_id": "9a3d1f4acca87ece0c3c41afca648d14666c8fa2",
+      "lfs": null,
+      "size": 7916
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/resource-observations.json": {
+      "blob_id": "923e21a9b693c5c719f915793818eaec127b5b3b",
+      "lfs": null,
+      "size": 2625
+    },
+    "releases/20261013-actor-features-v1/cells/actor-features-ce/runtime/scheduler-adoption.json": {
+      "blob_id": "0f07a6b905ca237081c2e793ff23add59660e4b5",
+      "lfs": null,
+      "size": 4645
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-bootstrap-smoke-controls-v02.json": {
+      "blob_id": "0012ba541f67207878069bc2a0982a77c142a75b",
+      "lfs": null,
+      "size": 7838
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-ce-plan-v02.json": {
+      "blob_id": "db174cd6e0070c14f2f53b751c72e5f86fc0c981",
+      "lfs": null,
+      "size": 46558
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-ce-runtime-review-v01.json": {
+      "blob_id": "7fcba1e7b80592973e992fe57d82ae64d265f7d6",
+      "lfs": null,
+      "size": 84458
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-ce-terminal-resource-audit-v02.json": {
+      "blob_id": "78d8df51de3645f309b7aaac0fcb5b247d89ea88",
+      "lfs": null,
+      "size": 35986
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-ce-training-review-v02.json": {
+      "blob_id": "7f3de0c06993450694f0cc0c99ad23148ad8b456",
+      "lfs": null,
+      "size": 23906
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-independent-recount-v01.json": {
+      "blob_id": "6a58ec6e765f0868dda51ab40eecc497fceb9e93",
+      "lfs": null,
+      "size": 861265
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-output-freeze-v01.json": {
+      "blob_id": "1574a4a9aaca6fb8164b25a7d85d9d836cb782e8",
+      "lfs": null,
+      "size": 21187
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-result-analysis-v01.json": {
+      "blob_id": "73405fde7c543cfab8f31e00ed09d771fcba3477",
+      "lfs": null,
+      "size": 4426986
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-retained-claim-preflight-v01.json": {
+      "blob_id": "df9f4c93eef8479182d6bd62f51aa78f6fde56ca",
+      "lfs": null,
+      "size": 20562
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-retained-claim-reconciliation-v01.json": {
+      "blob_id": "61ffc5fb8cda7b5a5fdff1cca89803e03286f465",
+      "lfs": null,
+      "size": 13906
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-storage-diagnostic-v01.json": {
+      "blob_id": "fe744bf1c22ffefe6ecff0a12929642dff99bdfd",
+      "lfs": null,
+      "size": 19988
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-terminal-resource-inputs-v02.json": {
+      "blob_id": "a3b7e5bde863032596d4c4ae19cd8e3cd48c423e",
+      "lfs": null,
+      "size": 6423
+    },
+    "releases/20261013-actor-features-v1/evidence/actor-features-terminal-resource-source-independent-review-v03.json": {
+      "blob_id": "6518e67bf338cffce2d0e63ebf803561ead8b055",
+      "lfs": null,
+      "size": 14099
+    },
+    "releases/20261013-actor-features-v1/evidence/analyzer-source-independent-review-v04.json": {
+      "blob_id": "5abcec1cd09be1e1034fb30c7f9b80a05614aa43",
+      "lfs": null,
+      "size": 18111
+    },
+    "releases/20261013-actor-features-v1/evidence/evaluation-contract-root-review-v01.json": {
+      "blob_id": "3b6d4cc34bdbcdb3d35cc8de9e96a380c1de101b",
+      "lfs": null,
+      "size": 1243
+    },
+    "releases/20261013-actor-features-v1/evidence/evaluation-contract-v01.json": {
+      "blob_id": "c7b93a88760ee4037d774be9a58e89af34e323ec",
+      "lfs": null,
+      "size": 22072
+    },
+    "releases/20261013-actor-features-v1/evidence/hf-helper-commit-label-port-derivation-v03.json": {
+      "blob_id": "e8965fa40d4b7b2a235a3e015445131526f546f1",
+      "lfs": null,
+      "size": 1424
+    },
+    "releases/20261013-actor-features-v1/evidence/history-preintegration-independent-review-v01.json": {
+      "blob_id": "16769f1342f5eded25dd4c89373d4b6e0c64755e",
+      "lfs": null,
+      "size": 30488
+    },
+    "releases/20261013-actor-features-v1/evidence/next-experiment-gaps-v01.json": {
+      "blob_id": "dc5d33d3d5687106c092ca41a737cfdd1c768ac0",
+      "lfs": null,
+      "size": 3242
+    },
+    "releases/20261013-actor-features-v1/evidence/phase-intake-v01.json": {
+      "blob_id": "14a9869ad092f88ed09acdca41a5207a8be0ab94",
+      "lfs": null,
+      "size": 2798
+    },
+    "releases/20261013-actor-features-v1/evidence/public-result-summary-v01.json": {
+      "blob_id": "ab211ffee2f8c793f00a03d2d9547a79bd747423",
+      "lfs": null,
+      "size": 204376
+    },
+    "releases/20261013-actor-features-v1/evidence/resource-baseline-inputs-v02.json": {
+      "blob_id": "0d6534e3f512b4ec22d261f57a072f0bf4869d12",
+      "lfs": null,
+      "size": 2353
+    },
+    "releases/20261013-actor-features-v1/evidence/resource-baseline-v02.json": {
+      "blob_id": "23c33b64a4c797c3099a89e489ac0bebc60dff88",
+      "lfs": null,
+      "size": 85505
+    },
+    "releases/20261013-actor-features-v1/evidence/resource-bridge-source-independent-review-v02.json": {
+      "blob_id": "17958c134c11cd5875639a2f8341a21ac0d2e336",
+      "lfs": null,
+      "size": 1961
+    },
+    "releases/20261013-actor-features-v1/evidence/resource-observer-source-independent-review-v02.json": {
+      "blob_id": "dd37f49d74752de27650874da5b4fa0d8e40f209",
+      "lfs": null,
+      "size": 10258
+    },
+    "releases/20261013-actor-features-v1/evidence/result-independent-review-v01.json": {
+      "blob_id": "8b0f5a11fd03e90d3099aa07b0f3feffaaa86fd2",
+      "lfs": null,
+      "size": 122326
+    },
+    "releases/20261013-actor-features-v1/evidence/result-recount-inputs-v02.json": {
+      "blob_id": "eee8507c4108eda2ab0ebc8eda0f5581025a0bdc",
+      "lfs": null,
+      "size": 584
+    },
+    "releases/20261013-actor-features-v1/evidence/result-recount-source-independent-review-v02.json": {
+      "blob_id": "5a01b19913ea2d88b54c56a1aac15cccb0886643",
+      "lfs": null,
+      "size": 8398
+    },
+    "releases/20261013-actor-features-v1/evidence/retained-claim-preflight-source-independent-review-v02.json": {
+      "blob_id": "efadfbf87acd1484f084bb428305d0672c84e786",
+      "lfs": null,
+      "size": 8054
+    },
+    "releases/20261013-actor-features-v1/evidence/retained-claim-reconciliation-execution-approval-v01.json": {
+      "blob_id": "77f9b1ce9ca2db28162eed178f73f1a76303e9d1",
+      "lfs": null,
+      "size": 2057
+    },
+    "releases/20261013-actor-features-v1/evidence/retained-claim-reconciliation-source-independent-review-v01.json": {
+      "blob_id": "b095f6492c0737be67631e1179ea1ab870d53b6c",
+      "lfs": null,
+      "size": 9116
+    },
+    "releases/20261013-actor-features-v1/evidence/retry-producer-port-derivation-v02.json": {
+      "blob_id": "206b60742f8919db2520a9040435936f3265e307",
+      "lfs": null,
+      "size": 22072
+    },
+    "releases/20261013-actor-features-v1/evidence/runner-preparer-source-independent-review-v02.json": {
+      "blob_id": "45db5a3adbd2b1a578acde6fe41ce7bf13098b77",
+      "lfs": null,
+      "size": 22240
+    },
+    "releases/20261013-actor-features-v1/evidence/runtime-freeze-source-independent-review-v03.json": {
+      "blob_id": "599308c5b2847f2d5f59fc0a453a6d70da52989f",
+      "lfs": null,
+      "size": 21160
+    },
+    "releases/20261013-actor-features-v1/evidence/sampler-source-independent-review-v02.json": {
+      "blob_id": "a01d5df4c3059d9562fa61f5985203cff300fcae",
+      "lfs": null,
+      "size": 3036
+    },
+    "releases/20261013-actor-features-v1/evidence/storage-diagnostic-source-independent-review-v01.json": {
+      "blob_id": "333919ef8ede22172992e6e02663505229fb97aa",
+      "lfs": null,
+      "size": 6799
+    },
+    "releases/20261013-actor-features-v1/evidence/terminal-compatibility-port-derivation-v03.json": {
+      "blob_id": "f3a755f52b20e10901d1cab0a15a9e391355ee95",
+      "lfs": null,
+      "size": 6826
+    },
+    "releases/20261013-actor-features-v1/evidence/trainer-source-independent-review-v01.json": {
+      "blob_id": "f00366e6723eae8746991a91806ad45c5f812889",
+      "lfs": null,
+      "size": 36118
+    },
+    "releases/20261013-actor-features-v1/evidence/training-design-v02.json": {
+      "blob_id": "31b75b143506d359fe5ab656b767fe39dd7afbc2",
+      "lfs": null,
+      "size": 17749
+    },
+    "releases/20261013-actor-features-v1/failures/attempt01/child-exit.json": {
+      "blob_id": "fc84658076dbdd87b3cd6025c8aff357f82deb62",
+      "lfs": null,
+      "size": 76
+    },
+    "releases/20261013-actor-features-v1/failures/attempt01/failure-primary.json": {
+      "blob_id": "8e8afc32bf7d8e3882bf53661083c23fc5d8ed04",
+      "lfs": null,
+      "size": 1367
+    },
+    "releases/20261013-actor-features-v1/failures/attempt01/guardian-exit.json": {
+      "blob_id": "aa8b9bd171df5d8578a0a97c4fefae54a786e1ea",
+      "lfs": null,
+      "size": 1764
+    },
+    "releases/20261013-actor-features-v1/failures/attempt01/pre-admission.json": {
+      "blob_id": "d9738e8419090222afac04c2973cf563e2193532",
+      "lfs": null,
+      "size": 7916
+    },
+    "releases/20261013-actor-features-v1/recipes/actor_features_bootstrap_smoke_controls_v02.py": {
+      "blob_id": "9cc8dfaf5c4199e66f3467d45bc896425f8eb53b",
+      "lfs": null,
+      "size": 7068
+    },
+    "releases/20261013-actor-features-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "blob_id": "40b61ac11a7e1f7270768177887f0cea1ee015dc",
+      "lfs": null,
+      "size": 15101
+    },
+    "releases/20261013-actor-features-v1/recipes/analyze_actor_features_v04.py": {
+      "blob_id": "57adb9b2cb0d4743b5cb74233e3b12109c3f815e",
+      "lfs": null,
+      "size": 89265
+    },
+    "releases/20261013-actor-features-v1/recipes/archive_actor_features_hf_v03.py": {
+      "blob_id": "e3a148a4a9c0b3c7043aacd7312551b35d783c15",
+      "lfs": null,
+      "size": 19160
+    },
+    "releases/20261013-actor-features-v1/recipes/audit_actor_features_terminal_resources_v03.py": {
+      "blob_id": "9243811db2d78a98803a8eae8f0f75a7d0bf5283",
+      "lfs": null,
+      "size": 48261
+    },
+    "releases/20261013-actor-features-v1/recipes/build_actor_features_release_spec_v03.py": {
+      "blob_id": "9663982469f6188e1d72b38952ec494a08ecc8de",
+      "lfs": null,
+      "size": 12765
+    },
+    "releases/20261013-actor-features-v1/recipes/diagnose_actor_features_storage_v01.py": {
+      "blob_id": "beac9a6de0c91ab58316cedbaa8728a9802771e1",
+      "lfs": null,
+      "size": 18475
+    },
+    "releases/20261013-actor-features-v1/recipes/freeze_actor_features_outputs_v03.py": {
+      "blob_id": "e89f4f627fb449558d66fbda9ca444546dbf0ce4",
+      "lfs": null,
+      "size": 18664
+    },
+    "releases/20261013-actor-features-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "blob_id": "b9b17b0315624d328e8779755d90d7b0a43620a7",
+      "lfs": null,
+      "size": 24435
+    },
+    "releases/20261013-actor-features-v1/recipes/prepare_actor_features_v02.py": {
+      "blob_id": "ba68b8e65a55c5a73e3206cf3679abb4a96359fb",
+      "lfs": null,
+      "size": 15738
+    },
+    "releases/20261013-actor-features-v1/recipes/reconcile_actor_features_retained_claim_v01.py": {
+      "blob_id": "f4d6fe463364c420d7e2ceec5c4302d4ce726670",
+      "lfs": null,
+      "size": 16708
+    },
+    "releases/20261013-actor-features-v1/recipes/review_actor_features_resource_baseline_v02.py": {
+      "blob_id": "863172cd8ddc19ead0a2a324cd01b0fa3d3e8cfb",
+      "lfs": null,
+      "size": 21828
+    },
+    "releases/20261013-actor-features-v1/recipes/review_actor_features_result_recount_v02.py": {
+      "blob_id": "bf89c8078c63cc2630325347b15cbe7a61fb16d8",
+      "lfs": null,
+      "size": 49955
+    },
+    "releases/20261013-actor-features-v1/recipes/review_actor_features_retained_claim_preflight_v02.py": {
+      "blob_id": "f67e0750b6781ccb7b1e58563d40ec24625f72c6",
+      "lfs": null,
+      "size": 20792
+    },
+    "releases/20261013-actor-features-v1/recipes/run_actor_features_v02.py": {
+      "blob_id": "b3b5589d97e672bbb285b2525bbfa8e4bb8b9878",
+      "lfs": null,
+      "size": 37730
+    },
+    "releases/20261013-actor-features-v1/recipes/run_scope_guardian_v02.py": {
+      "blob_id": "e81d65929cf3b4de51f65f82fd5a731c05995899",
+      "lfs": null,
+      "size": 38449
+    },
+    "releases/20261013-actor-features-v1/recipes/sample_actor_features_private_resources_v02.py": {
+      "blob_id": "78387ae6218641ecb2ece877c590f84aabb537c6",
+      "lfs": null,
+      "size": 6661
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "blob_id": "82978c03d34ac25327538fd9714b7074b946bfb6",
+      "lfs": null,
+      "size": 29148
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "blob_id": "373c4207568b97be1932d778d71a32d07dc71e3d",
+      "lfs": null,
+      "size": 28040
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "blob_id": "fa542082edd89b213843c9d3f8d3c2312ef1d04a",
+      "lfs": null,
+      "size": 37249
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "blob_id": "f1c9efbae82ee2d639ec84cc5ba3578c00c9238a",
+      "lfs": null,
+      "size": 28444
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "blob_id": "6a326c6188bfa05383e143c2339603758576ca69",
+      "lfs": null,
+      "size": 15959
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "blob_id": "c74aed1afce161e349f512f36b6bcfd8db402d48",
+      "lfs": null,
+      "size": 24439
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "blob_id": "bae499db41a6cf10e8dc5636bf587a32845e2155",
+      "lfs": null,
+      "size": 17966
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "blob_id": "66fac7cce3155d0eaf515e63ff3ff46aba11ff5f",
+      "lfs": null,
+      "size": 13375
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "blob_id": "c67a8c7857ab3123038e849ce7a6ae7018037718",
+      "lfs": null,
+      "size": 9556
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "blob_id": "1bf4da481ff84ccb3554ae0dd1126dfc4cbffb6b",
+      "lfs": null,
+      "size": 109257
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "blob_id": "b863e55c257d6dcb24c721ba1981be8b69e3a284",
+      "lfs": null,
+      "size": 9794
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "blob_id": "af799a9fcf5699636e3e1dffce96dc1d3e2932ed",
+      "lfs": null,
+      "size": 6017
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "blob_id": "7ce3ed18ec40071f0c8b24457f74fdfb248ad93e",
+      "lfs": null,
+      "size": 21764
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "blob_id": "7b2e23b540f01ee952ff94057d7987257c33cdeb",
+      "lfs": null,
+      "size": 16730
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "blob_id": "363d638395d12240d5b403d80b69eb735b911c2e",
+      "lfs": null,
+      "size": 39619
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "blob_id": "c8e377f8a4e15fb02caf278bade4f06864983c4d",
+      "lfs": null,
+      "size": 43299
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "blob_id": "8c0296e65af3bccc72ffcbb281ea6c65c6518dd3",
+      "lfs": null,
+      "size": 15813
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "blob_id": "d4fda5e81f5393b3cd99266e03ea9a75612bb35f",
+      "lfs": null,
+      "size": 27947
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "blob_id": "3a56d4c2c31e60779ae4a41d6586934609cfc5f3",
+      "lfs": null,
+      "size": 26219
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "blob_id": "85eff000585407ffa7b689c574713df824c596a1",
+      "lfs": null,
+      "size": 19364
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "blob_id": "6eb9b3a5f5a5f56c3f2466aa7ae06b3ef24189ee",
+      "lfs": null,
+      "size": 7896
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "blob_id": "b00afcd281ba189b86e07de75854bb83f1a75e99",
+      "lfs": null,
+      "size": 100140
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "blob_id": "0e96d544c72999d1fe9bc4c03e2585addb4a331c",
+      "lfs": null,
+      "size": 14622
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "blob_id": "53d7123051e1a1b9737edeb8928dfe57a579286c",
+      "lfs": null,
+      "size": 42137
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "blob_id": "446ea6eb734d8586a060f64fc56bf198e312aabe",
+      "lfs": null,
+      "size": 146870
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "blob_id": "1d8df9d8d772720fd671b5431827c083013be798",
+      "lfs": null,
+      "size": 49894
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "blob_id": "0d4d7d8ed5670585d034f6bee17b453ea07e8d37",
+      "lfs": null,
+      "size": 50602
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "blob_id": "5c548f8f28085d2a86a9fdf3b4d6bf21ed94e8fe",
+      "lfs": null,
+      "size": 14165
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "blob_id": "f138ffb2285f7fc607fe3296f8abe5d6b7b9121a",
+      "lfs": null,
+      "size": 35294
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "blob_id": "8fd095b4c4d7e69dd16f9207ee44569ab5cdb814",
+      "lfs": null,
+      "size": 40092
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "blob_id": "b041195072f94cd75031ef729300b7c34d8e36f4",
+      "lfs": null,
+      "size": 52067
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "blob_id": "bf9fa544c180e42e889f6f48bfb1af07bb2774c6",
+      "lfs": null,
+      "size": 49658
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "blob_id": "1ebe9057048a31f2c514adec5b0b5722d05fb97e",
+      "lfs": null,
+      "size": 48506
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "blob_id": "9192b908d3afed67bf8fcec679b05613a1034e61",
+      "lfs": null,
+      "size": 21228
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "blob_id": "a0f72635842cdcb22b333ada6ff782f1fcbfd419",
+      "lfs": null,
+      "size": 38995
+    },
+    "releases/20261013-actor-features-v1/source/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "blob_id": "36944fb73c85e541b0b9c47531ebfd7b79791534",
+      "lfs": null,
+      "size": 4428
+    },
+    "releases/20261013-actor-features-v1/source/legal_span_actor_features.py": {
+      "blob_id": "3537eca84b252ca61157675c7987166efff59c58",
+      "lfs": null,
+      "size": 60367
+    },
+    "releases/20261013-actor-features-v1/source/test_legal_span_actor_features_contracts.py": {
+      "blob_id": "b079e45bc287603aab22682059a9e824c9724126",
+      "lfs": null,
+      "size": 39343
+    }
+  },
+  "observed_at_utc": "2026-10-14T01:25:03.908422+00:00",
+  "old_files_preserved": 4931,
+  "parent_revision": "3c430bdb412a6bd0871f813a944dfec5b2f4c8e9",
+  "passed": true,
+  "payload_bytes": 70312855,
+  "payload_files": 174,
+  "private_body_reads": 0,
+  "publication_verification": {
+    "bytes": 76994,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/hf-publication-verification-v01.json",
+    "sha256": "802d37766addc58979f28efd704055c5f19340fe3ee1f214f1d1a93d457c4c77"
+  },
+  "release_prefix": "releases/20261013-actor-features-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "revision": "f91692a0a695d91b793a00936dd525fbe2bafcac",
+  "schema": "actor-features-Hub-actual-publication-independent-review/v1",
+  "semantic_accuracy": null
+}

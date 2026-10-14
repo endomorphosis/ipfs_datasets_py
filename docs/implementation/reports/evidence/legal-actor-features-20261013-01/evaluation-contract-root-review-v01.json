@@ -1,0 +1,22 @@
+{
+  "actual_new_model_calls": 0,
+  "actual_new_results_read": 0,
+  "evaluation_contract": {
+    "bytes": 22072,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/evaluation-contract-v01.json",
+    "sha256": "19fa0d2f587301b98331b3ce41869b424ee1e1b87bda92d8b321d65034a66e47"
+  },
+  "findings": [],
+  "observed_at_utc": "2026-10-13T23:23:40.071564+00:00",
+  "passed": true,
+  "private_body_reads": 0,
+  "schema": "actor-features-evaluation-contract-root-review/v1",
+  "source_checks": [
+    "Complete recipe/objective/technicalgate/metrics/interpretationlimits and both frozencontrol definitions reviewed.",
+    "Exact common N4 parent and equal32/384 declared training budget; feature parameter sizes sourcebound before execution.",
+    "Only actor features/heads train; all34base+inactiveheadrows protected; full632 initial/final parity domains precise.",
+    "All scored references exposed authored fixtures; law8unscored; no semantic/Lake/family/latent/default claims.",
+    "WholeIR,actor rank,filteredmargin,tokencontrast,optionalhead versus selectedpresence metrics separated.",
+    "All frozencontrol analysis/analyzer/freeze/review/plan rawidentities verified; controls incur0newforwards/updates."
+  ]
+}

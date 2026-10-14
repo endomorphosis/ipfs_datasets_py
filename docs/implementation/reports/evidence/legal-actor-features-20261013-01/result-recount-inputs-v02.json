@@ -1,0 +1,15 @@
+{
+  "analysis": {
+    "bytes": 4426986,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-result-analysis-v01.json",
+    "sha256": "bc5c5d1e08750b8fe86e9fd3953f23531235fdcfb73b9bd5b0178c9e41bcba39"
+  },
+  "findings": [],
+  "freeze": {
+    "bytes": 21187,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-output-freeze-v01.json",
+    "sha256": "56abf07cfc80b79ef7eb48a0f0579310ae8f555e15cc9c49d1f6fe23bd687e2a"
+  },
+  "passed": true,
+  "schema": "actor-features-result-recount-inputs/v1"
+}

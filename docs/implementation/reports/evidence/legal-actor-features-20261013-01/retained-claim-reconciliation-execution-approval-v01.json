@@ -1,0 +1,33 @@
+{
+  "authorization_basis": "Continuing authorized training and storage work; administrative closeout only of the authenticated own failed zero-model/zero-update actor-boundary attempt.",
+  "authorize_exact_one_own_N8_claim_reconciliation": true,
+  "cap_increase_authorized": false,
+  "current_capacity_causality": "The latest read-only preflight already fits a new200M request after temporary foreign data declined; this closeout removes a proven unused own200M claim and is not asserted to be the sole cause of capacity recovery.",
+  "findings": [],
+  "foreign_reconciliation_authorized": false,
+  "new_model_calls": 0,
+  "new_training_updates": 0,
+  "observed_at_utc": "2026-10-14T00:33:13.977297+00:00",
+  "observer": {
+    "bytes": 16708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/reconcile_actor_features_retained_claim_v01.py",
+    "sha256": "6debcf28e6e15f5c95623e1e1c6cead5e73c8069d70222c6e9756355cc130049"
+  },
+  "outputs_deletion_authorized": false,
+  "passed": true,
+  "preflight": {
+    "bytes": 20562,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-preflight-v01.json",
+    "sha256": "13ccb471de2de244a3e8cc5f8d2cd1c617579c52ec499121355d4a9906a10850"
+  },
+  "preserved_output_bytes": 60697,
+  "preserved_outputs": 15,
+  "recovery_call_sha256": "7259366b2e68acd345ce36a04a1efb5cca6919f3c7285b388917e381c5cb298e",
+  "root_source_review": "Full sealed wrapper and unchanged retained API read. Exact same-lock536 opening/535otherrecord preservation plus exactone9-field targettransition. No fake owner identity, nestedlock, globalclasspatch, ownerenter or scheduleradmission.",
+  "schema": "actor-features-retained-claim-reconciliation-execution-approval/v1",
+  "source_qualification": {
+    "bytes": 9116,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retained-claim-reconciliation-source-independent-review-v01.json",
+    "sha256": "05f306c75176e8d30d7ae90fd6b553524ad1a5c63606a0e228e42195f770a598"
+  }
+}

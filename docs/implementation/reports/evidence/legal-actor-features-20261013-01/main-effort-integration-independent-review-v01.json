@@ -1,0 +1,333 @@
+{
+  "actions": {
+    "PR_mutations": 0,
+    "actual_training_result_reads": 0,
+    "canonical_Git_commands": 0,
+    "checkouts": 0,
+    "commits": 0,
+    "fetches_into_authorized_owned_refs": 2,
+    "gold_reads": 0,
+    "index_refreshes": 0,
+    "merges": 0,
+    "model_calls": 0,
+    "network_mutations": 0,
+    "owned_remote_refs_created": [
+      {
+        "object_id": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+        "ref": "refs/codex/legal-actor-features-20261013-01/integration-audit-main-v01",
+        "worktree": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets"
+      },
+      {
+        "object_id": "8c0e07e56c9604f5e5e2b11f78a1807583ff4a3e",
+        "ref": "refs/codex/legal-actor-features-20261013-01/integration-audit-main-v01",
+        "worktree": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/root"
+      }
+    ],
+    "private_body_reads": 0,
+    "pushes": 0,
+    "stages": 0
+  },
+  "canonical_raw4_before_and_after": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "path": "/home/barberb/lift_coding/.git/HEAD",
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "path": "/home/barberb/lift_coding/.git/index",
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_raw4_unchanged": true,
+  "commit_raw_object_pins": {
+    "root_initial": {
+      "bytes": 1267,
+      "object_id": "6ba624b9e1f40acdf11ed2cf69853d77bd66ede8",
+      "sha256": "c146657cf2702ab1459ceb691533caeccc19478e24865b5e4b5cf95d5d27b483"
+    },
+    "root_remote_main": {
+      "bytes": 283,
+      "object_id": "8c0e07e56c9604f5e5e2b11f78a1807583ff4a3e",
+      "sha256": "18d980d30a94c13152a9141e15d6d3bfa6a7a91b5e372e6d1126ef4b23774597"
+    },
+    "source_initial": {
+      "bytes": 298,
+      "object_id": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+      "sha256": "b156ec69e2291089d6da2622fad919ab24d28ccd1acea7d8035b622e3c6357b8"
+    },
+    "source_own_head": {
+      "bytes": 294,
+      "object_id": "0249660d9372bab41cb26d326e240c0627233e18",
+      "sha256": "cb36cc3f84fb4d1e1967dfa4a57dd2beef0851e0f5e70fd2ab96c6c023ab7fe6"
+    },
+    "source_remote_main": {
+      "bytes": 298,
+      "object_id": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+      "sha256": "b156ec69e2291089d6da2622fad919ab24d28ccd1acea7d8035b622e3c6357b8"
+    }
+  },
+  "findings": [],
+  "limitations": [
+    "Read-only integration snapshot except explicitly authorized fetching into two own ref namespaces and writing this report.",
+    "No merge or root fast-forward was performed. Actual remote refs can progress after this observation and must be checked again before final publication.",
+    "Hosted checks provide no code/test failure signal because CodeQL jobs did not start and other checks remain queued."
+  ],
+  "observed_at_utc": "2026-10-14T01:12:05.898203+00:00",
+  "passed": true,
+  "preservation": {
+    "integration_root_base": "8c0e07e56c9604f5e5e2b11f78a1807583ff4a3e",
+    "preserve_other_agent_root_paths": [
+      "artifacts/terminal-worker-signed-scope-publication-20261014/hosted-ci.json",
+      "artifacts/terminal-worker-signed-scope-publication-20261014/manifest.json",
+      "artifacts/terminal-worker-signed-scope-publication-20261014/merge-compatibility.json",
+      "artifacts/terminal-worker-signed-scope-publication-20261014/parent-checks.json",
+      "artifacts/terminal-worker-signed-scope-publication-20261014/publication_check_runner.py",
+      "external/ipfs_accelerate",
+      "implementation_plan/docs/117-supervisor-terminal-worker-signed-scope-2026-10-14.md"
+    ],
+    "preserve_other_submodule_gitlinks": true,
+    "requires_latest_main_recheck_before_final_push": true,
+    "source_merge_conflict_detected": false,
+    "source_own_paths_disjoint_from_incoming": true
+  },
+  "pull_request": {
+    "actionable_code_or_test_failures_found": false,
+    "administrative_blocker": "GitHub account billing lock prevented all four CodeQL matrix jobs from starting; other fifteen checks are queued.",
+    "base": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+    "changed_file_count": 15,
+    "draft": true,
+    "failure_count": 4,
+    "failures": [
+      {
+        "code_or_test_executed": false,
+        "messages": [
+          "The job was not started because your account is locked due to a billing issue."
+        ],
+        "name": "Analyze (actions)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488706480/job/115608522863",
+        "workflow": "CodeQL"
+      },
+      {
+        "code_or_test_executed": false,
+        "messages": [
+          "The job was not started because your account is locked due to a billing issue."
+        ],
+        "name": "Analyze (javascript-typescript)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488706480/job/115608522717",
+        "workflow": "CodeQL"
+      },
+      {
+        "code_or_test_executed": false,
+        "messages": [
+          "The job was not started because your account is locked due to a billing issue."
+        ],
+        "name": "Analyze (python)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488706480/job/115608522466",
+        "workflow": "CodeQL"
+      },
+      {
+        "code_or_test_executed": false,
+        "messages": [
+          "The job was not started because your account is locked due to a billing issue."
+        ],
+        "name": "Analyze (rust)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488706480/job/115608522700",
+        "workflow": "CodeQL"
+      }
+    ],
+    "head": "0249660d9372bab41cb26d326e240c0627233e18",
+    "merge_state": "UNSTABLE",
+    "mergeable": "MERGEABLE",
+    "number": 1299,
+    "queued_checks": [
+      {
+        "name": "arm64-system-info",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708570/job/115608526199",
+        "workflow": "ARM64 Self-Hosted Runner"
+      },
+      {
+        "name": "analyze-and-assign-copilot",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708433/job/115608526958",
+        "workflow": "Automated PR Review and Copilot Assignment"
+      },
+      {
+        "name": "cli-smoke-tests",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708562/job/115608526261",
+        "workflow": "CLI Tools Error Monitoring"
+      },
+      {
+        "name": "build-and-test (docker/Dockerfile.test, linux/amd64)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708521/job/115608526080",
+        "workflow": "Docker Build and Test"
+      },
+      {
+        "name": "enhanced-pr-monitor",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708553/job/115608526029",
+        "workflow": "Enhanced PR Completion Monitor with Progressive Copilot Assignment"
+      },
+      {
+        "name": "Setup Cache Infrastructure",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708446/job/115608525428",
+        "workflow": "Example Cached Workflow"
+      },
+      {
+        "name": "sdk-static-analysis",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708458/job/115608525456",
+        "workflow": "JavaScript SDK Error Monitoring"
+      },
+      {
+        "name": "dashboard-smoke-tests (3.12)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708586/job/115608526291",
+        "workflow": "MCP Dashboard Automated Tests"
+      },
+      {
+        "name": "discover-tool-categories",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708568/job/115608526217",
+        "workflow": "MCP Tools Error Monitoring"
+      },
+      {
+        "name": "check-pr-completion",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708407/job/115608525208",
+        "workflow": "PR Completion Monitor with Copilot Auto-Fix"
+      },
+      {
+        "name": "Build distribution \ud83d\udce6",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708484/job/115608526214",
+        "workflow": "Publish Python Package"
+      },
+      {
+        "name": "setup",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708406/job/115608525408",
+        "workflow": "Scraper Validation and Testing"
+      },
+      {
+        "name": "build-and-test (Dockerfile.mcp-minimal, linux/amd64)",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708521/job/115608525971",
+        "workflow": "Docker Build and Test"
+      },
+      {
+        "name": "test-docker-compose",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708521/job/115608526047",
+        "workflow": "Docker Build and Test"
+      },
+      {
+        "name": "build-multi-arch",
+        "url": "https://github.com/endomorphosis/ipfs_datasets_py/actions/runs/38488708521/job/115608526073",
+        "workflow": "Docker Build and Test"
+      }
+    ],
+    "state": "OPEN",
+    "status_counts": {
+      "COMPLETED": 4,
+      "QUEUED": 15
+    },
+    "url": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1299"
+  },
+  "reviewer": "/root/actor_ranking_model_n9",
+  "root": {
+    "acceleration_gitlink_to_preserve": "6eebad97a1b958bb0882df97c3bc4ea22ffdb861",
+    "changed_gitlinks": {
+      "external/ipfs_accelerate": {
+        "after": "6eebad97a1b958bb0882df97c3bc4ea22ffdb861",
+        "before": "fe8c314449b0da7fbcfa4b8a4341f9bc3b9f9d9f"
+      }
+    },
+    "current_gitlinks": {
+      "external/ipfs_accelerate": "6eebad97a1b958bb0882df97c3bc4ea22ffdb861",
+      "external/ipfs_datasets": "59561dd2979e49fd26aa3fcfed6a5edbca1f718f",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50"
+    },
+    "current_remote_main": "8c0e07e56c9604f5e5e2b11f78a1807583ff4a3e",
+    "datasets_gitlink_is_ancestor_of_current_source_main": true,
+    "incoming_commits": [
+      "8c0e07e56c9604f5e5e2b11f78a1807583ff4a3e Publish qualified signed Terminal worker selection handoff"
+    ],
+    "incoming_paths": [
+      {
+        "path": "artifacts/terminal-worker-signed-scope-publication-20261014/hosted-ci.json",
+        "status": "A"
+      },
+      {
+        "path": "artifacts/terminal-worker-signed-scope-publication-20261014/manifest.json",
+        "status": "A"
+      },
+      {
+        "path": "artifacts/terminal-worker-signed-scope-publication-20261014/merge-compatibility.json",
+        "status": "A"
+      },
+      {
+        "path": "artifacts/terminal-worker-signed-scope-publication-20261014/parent-checks.json",
+        "status": "A"
+      },
+      {
+        "path": "artifacts/terminal-worker-signed-scope-publication-20261014/publication_check_runner.py",
+        "status": "A"
+      },
+      {
+        "path": "external/ipfs_accelerate",
+        "status": "M"
+      },
+      {
+        "path": "implementation_plan/docs/117-supervisor-terminal-worker-signed-scope-2026-10-14.md",
+        "status": "A"
+      }
+    ],
+    "initial_gitlinks": {
+      "external/ipfs_accelerate": "fe8c314449b0da7fbcfa4b8a4341f9bc3b9f9d9f",
+      "external/ipfs_datasets": "59561dd2979e49fd26aa3fcfed6a5edbca1f718f",
+      "external/ipfs_kit": "8ac00bb1974b1378e12091d546d8425af34049e0",
+      "external/meta-wearables-dat-android": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "external/meta-wearables-dat-ios": "2b5695d16a710f3d2d7341f88570b86d01723d50"
+    },
+    "initial_main": "6ba624b9e1f40acdf11ed2cf69853d77bd66ede8",
+    "initial_main_ancestor_of_remote": true,
+    "owned_head": "6ba624b9e1f40acdf11ed2cf69853d77bd66ede8",
+    "owned_worktree": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/root",
+    "remote_checked_again_at_close": true,
+    "shared_local_main_ref": "2fa137229c84f48dd93dccf88f09f9b572c71ea1"
+  },
+  "schema": "actor-features-main-effort-integration-audit/v1",
+  "source": {
+    "conflicting_paths": [],
+    "current_remote_main": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+    "incoming_commits": [],
+    "incoming_paths": [],
+    "initial_main": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+    "initial_main_ancestor_of_remote": true,
+    "own_added_path_count": 15,
+    "own_added_paths": [
+      "docs/guides/legal_actor_features_training_20261013.md",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/actor-feature-contract-controls-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/actor-feature-math-independent-controls-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/actor-features-storage-diagnostic-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/attempt01-child-exit.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/attempt01-failure-primary.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/attempt01-guardian-exit.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/evaluation-contract-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/recipe/actor_feature_math_independent_controls_v01.py",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/recipe/diagnose_actor_features_storage_v01.py",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/storage-diagnostic-source-independent-review-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/trainer-source-independent-review-v01.json",
+      "docs/implementation/reports/evidence/legal-actor-features-20261013-01/training-design-v01.json",
+      "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_features_contracts.py"
+    ],
+    "owned_head": "0249660d9372bab41cb26d326e240c0627233e18",
+    "owned_worktree": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets",
+    "remote_checked_again_at_close": true,
+    "shared_local_main_ref": "d5238def256d1c352793ee7d977e6b17b6d8cbee"
+  }
+}
