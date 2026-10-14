@@ -15,7 +15,9 @@ hasher is used here.  Assembly has no persistence side effect.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
+from functools import lru_cache
 from types import MappingProxyType
 from typing import (
     Any,
@@ -278,6 +280,17 @@ def _load_structured_identity(
     if type(payload) is not dict:
         raise CorruptBlockError(f"block {cid} must be a JSON object")
 
+    if (type(cid) is str
+            and os.environ.get("IPFS_DATASETS_SEMANTIC_IDENTITY_REUSE") != "0"):
+        from multiformats import CID
+
+        if CID.decode(cid).codec.name == "dag-json":
+            # _read_verified_block has already proved canonical DAG-JSON and
+            # freshly recomputed its CID from these exact bytes. Repeat neither
+            # that canonical encoding nor its hash. This freshly parsed dict
+            # is detached on every call, including identical reader answers.
+            return payload
+
     # Preferred form: pure identity_payload (canonical, claim-free).
     try:
         if canonical_dag_json_bytes(payload) == data and cid_for_structured(payload) == cid:
@@ -298,17 +311,40 @@ def _load_structured_identity(
     return identity
 
 
-def _load_sorted_pair_index(
-    get_block: Callable[[str], bytes],
-    index_cid: str,
-) -> SortedPairIndex:
-    identity = _load_structured_identity(get_block, index_cid)
+_INDEX_CACHE_ENV: Final[str] = "IPFS_DATASETS_SEMANTIC_INDEX_CACHE"
+_MAX_CACHED_INDEX_BYTES: Final[int] = 1024 * 1024
+
+
+def _parse_sorted_pair_index(index_cid: str, raw: bytes) -> SortedPairIndex:
+    # The captured bytes must still prove their exact CID, canonical identity
+    # and native index schema before an immutable parsed value may be retained.
+    identity = _load_structured_identity(lambda _requested_cid: raw, index_cid)
     try:
         return SortedPairIndex.from_dict({**identity, "index_cid": index_cid})
     except SemanticStateModelError as exc:
         raise CorruptBlockError(
             f"sorted pair index {index_cid} failed schema reverify"
         ) from exc
+
+
+@lru_cache(maxsize=16)
+def _cached_sorted_pair_index(index_cid: str, raw: bytes) -> SortedPairIndex:
+    # Exceptions are not cached. Both exact CID and builtin bytes participate
+    # in the key; a new backend answer cannot select a previous parsed index.
+    return _parse_sorted_pair_index(index_cid, raw)
+
+
+def _load_sorted_pair_index(
+    get_block: Callable[[str], bytes],
+    index_cid: str,
+) -> SortedPairIndex:
+    # Always query the actual reader, including on a warm cache. Missing,
+    # corrupt, changed and non-bytes backend answers remain observable.
+    raw = _fetch_raw_block(get_block, index_cid)
+    if (os.environ.get(_INDEX_CACHE_ENV) != "0"
+            and len(raw) <= _MAX_CACHED_INDEX_BYTES):
+        return _cached_sorted_pair_index(index_cid, raw)
+    return _parse_sorted_pair_index(index_cid, raw)
 
 
 def _lookup_index(
