@@ -1,0 +1,39 @@
+{
+  "CAS_additions_only_chunks_prior_identity_and_immutable_download_verification_unchanged": true,
+  "actual_execution": false,
+  "algorithm_changed": false,
+  "concrete_spec_and_science_review_binding_required_before_prepare": true,
+  "destination": {
+    "bytes": 19258,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/archive_conditions_presence_hf_v01.py",
+    "sha256": "b6f5d433f8571c391889f4b45aaa9930aefbf295a21dd581ffe925764e97cd12"
+  },
+  "literal_substitutions": [
+    [
+      "20261013-actor-features-v1",
+      "20261014-conditions-presence-v1"
+    ],
+    [
+      "actor-features",
+      "conditions-presence"
+    ],
+    [
+      "legal_span_actor_features",
+      "legal_span_conditions_presence"
+    ],
+    [
+      "actor features",
+      "conditions presence"
+    ],
+    [
+      "actor context feature CE-only",
+      "conditions-presence CE-only"
+    ]
+  ],
+  "schema": "conditions-presence-Hub-helper-port-derivation/v1",
+  "source": {
+    "bytes": 19160,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/archive_actor_features_hf_v03.py",
+    "sha256": "572fca3f6445ab2697ab32055f0504163ed7a2c1518dca25b76d36d9d6a0c5a9"
+  }
+}

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
@@ -450,6 +452,11 @@ class SpanCache:
         if text_limits is not None and not isinstance(text_limits, SpanCacheTextLimits):
             raise SpanCacheError("text_limits must be SpanCacheTextLimits")
         self.text_limits = text_limits if text_limits is not None else SpanCacheTextLimits()
+        # The explicit fenced interface uses this connection's original owner.
+        # Legacy queue APIs retain their historical, unqualified contracts.
+        self._claim_owner_identity = (os.getpid(), threading.get_ident())
+        self._claim_owner_closed = False
+        self._fenced_claim_control = None
         import duckdb
 
         destination = Path(path)
@@ -523,7 +530,28 @@ class SpanCache:
         self._last_flush = int(self._meta("last_flush_sealed") or 0)
 
     def close(self) -> None:
+        if self._fenced_claim_control is not None:
+            self._fenced_claim_control.close()
         self._db.close()
+        self._claim_owner_closed = True
+
+    def fenced_claims(self, *, clock=None):
+        """Opt in to source-bound, durable claim fencing on this exact owner.
+
+        Existing ``claim_batch``, ``complete_claimed`` and ``release_claims``
+        are legacy helpers and do not satisfy the fenced completion contract.
+        This accessor neither changes their inputs nor silently upgrades them.
+        """
+
+        from .span_cache_claims import SpanCacheClaims, SpanClaimError
+
+        if self._claim_owner_closed or self._claim_owner_identity != (os.getpid(), threading.get_ident()):
+            raise SpanClaimError("foreign or closed span catalog owner")
+        if self._fenced_claim_control is None:
+            self._fenced_claim_control = SpanCacheClaims(self, clock=clock)
+        elif clock is not None and clock is not self._fenced_claim_control.clock:
+            raise SpanClaimError("the existing fenced owner's clock cannot be replaced")
+        return self._fenced_claim_control
 
     def checkpoint(self) -> dict[str, Any]:
         """Last committed parquet position. Resume starts after this document."""

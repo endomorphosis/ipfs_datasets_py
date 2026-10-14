@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib.util
 import re
 import sys
+import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
@@ -1014,7 +1015,27 @@ def _compile_text(
     return rows
 
 
-SESSION = AutoformalSession()
+_SESSION_LOCK = threading.RLock()
+
+
+def _get_session() -> AutoformalSession:
+    """Initialize compiler/session dependencies only for a session consumer."""
+    with _SESSION_LOCK:
+        session = globals().get("SESSION")
+        if session is None:
+            session = AutoformalSession()
+            globals()["SESSION"] = session
+        return session
+
+
+def __getattr__(name: str) -> Any:
+    if name == "SESSION":
+        return _get_session()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | {"SESSION"})
 
 
 def store_lake_attestation(
@@ -1059,7 +1080,8 @@ def store_lake_attestation(
 
 def reset_session() -> None:
     global SESSION
-    SESSION = AutoformalSession()
+    with _SESSION_LOCK:
+        SESSION = AutoformalSession()
 
 
 _CITATION_PREDICATES = frozenset({
@@ -1321,17 +1343,17 @@ def dispatch(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     """Five legal tools. None of them admits Lean."""
 
     if name == "clause_get":
-        return SESSION.clause_get(str(arguments.get("document_id") or ""), str(arguments.get("clause_id") or ""))
+        return _get_session().clause_get(str(arguments.get("document_id") or ""), str(arguments.get("clause_id") or ""))
     if name == "compile_clause":
-        return SESSION.compile_clause(
+        return _get_session().compile_clause(
             str(arguments.get("document_id") or ""),
             str(arguments.get("clause_id") or ""),
             frame_id=str(arguments.get("frame_id") or "unassigned"),
         )
     if name == "decompile_rule":
-        return SESSION.decompile_rule(str(arguments.get("document_id") or ""), str(arguments.get("clause_id") or ""))
+        return _get_session().decompile_rule(str(arguments.get("document_id") or ""), str(arguments.get("clause_id") or ""))
     if name == "rules_for_frame":
-        return SESSION.rules_for_frame(str(arguments.get("frame_id") or ""))
+        return _get_session().rules_for_frame(str(arguments.get("frame_id") or ""))
     if name == "coverage":
-        return SESSION.coverage(str(arguments.get("document_id") or ""))
+        return _get_session().coverage(str(arguments.get("document_id") or ""))
     return {"error": "unknown_tool", "name": name}

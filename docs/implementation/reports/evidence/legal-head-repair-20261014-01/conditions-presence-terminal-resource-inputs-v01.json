@@ -1,0 +1,109 @@
+{
+  "attempt_name": "conditions-presence-20261014-conditions-presence-ce-01",
+  "baseline": {
+    "bytes": 78307,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-v01.json",
+    "sha256": "6d7b895b3f86c0b920fa2dad25a6d6fcbe7408d6fb738089fe2dc334a63920cf"
+  },
+  "cell": "conditions-presence-ce",
+  "findings": [],
+  "metadata_check": {
+    "bytes": 6708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/guardian-check-v01.json",
+    "sha256": "859605c0becdc36808584765ea064fc03ed1fc0a6141672d5f1359e47dae127c"
+  },
+  "opening_snapshot": {
+    "bytes": 1413,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/private-runtime-snapshots/opening-v01/snapshot-receipt-v01.json",
+    "sha256": "cfd422ab121c679cfbc62b79d21f41016fe71e2ebbdaa76c4c5716e6cc91498c"
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 52960,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+    "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+  },
+  "runtime_artifacts": {
+    "child-exit.json": {
+      "bytes": 105,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/child-exit.json",
+      "sha256": "a5a1c471f64f417f9001a8b3bae9837452f70fac9571023d2538376d5ead4fc4"
+    },
+    "child-identity.json": {
+      "bytes": 44,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/child-identity.json",
+      "sha256": "a96b5f1f14d6443c5ac155a99c6ff3c0b34965c837f6f0eac364d00df89ab71e"
+    },
+    "command.json": {
+      "bytes": 1069,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/command.json",
+      "sha256": "4cba4fc4d89b224c2554cdca0d1af4b94694cca69641c649b28f9208f37b7e72"
+    },
+    "group-rss-observations.jsonl": {
+      "bytes": 51509,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/group-rss-observations.jsonl",
+      "sha256": "9442dac7ea6ede1720441762bede2a8bf62114a9dd9697ccca50974219f5fff6"
+    },
+    "group-rss-summary.json": {
+      "bytes": 1759,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/group-rss-summary.json",
+      "sha256": "6f9cc62bfe6bdae4bb4da7ce22a4124f8348a1ffe9c613458fb988393ad1e1e3"
+    },
+    "guardian-exit.json": {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/guardian-exit.json",
+      "sha256": "1a6faf0d6ad3905f18836d6665be53420343f7a6cb2f7cb244733e258240c40d"
+    },
+    "lease-binding.json": {
+      "bytes": 694,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/lease-binding.json",
+      "sha256": "bfb40c46b138f6815874ee784e32d6c6cc53be491573c4cf1b390f4750de5ec8"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 107304,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/lease-observations.jsonl",
+      "sha256": "8579d9a2496b6e992182b869623c78f396009a40b3f916a5ffc1029d0a8aeb5c"
+    },
+    "owned-group-final.json": {
+      "bytes": 190,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/owned-group-final.json",
+      "sha256": "4018fbbe91780acee6244d8c8e2b8b200323e47ae3d65361a10af52d5799b4c3"
+    },
+    "pre-admission.json": {
+      "bytes": 7907,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/pre-admission.json",
+      "sha256": "b02280772936dd3acf270507135f58d57d01175b2ca74065ece09b7efd84139c"
+    },
+    "resource-observations.json": {
+      "bytes": 2627,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/resource-observations.json",
+      "sha256": "4111c468f57342e6bb7598ee9814aca4a45f6734acff8df7476e2c8dfd1176bb"
+    },
+    "resources-final.json": {
+      "bytes": 6328,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/resources-final.json",
+      "sha256": "f9c8a8525d1b186722395a28463b66744b13f5f6897388ec06a7f135b81b34f9"
+    },
+    "resources-start.json": {
+      "bytes": 2561,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/resources-start.json",
+      "sha256": "b124d9ced503bb1ddb5ee20dbb1b725ca6944c8cd03c056732d1f76e4f69b6ba"
+    },
+    "scheduler-adoption.json": {
+      "bytes": 4646,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/scheduler-adoption.json",
+      "sha256": "9d3ed620eedca6c6035a9c652c5f416da58b0fb62c1eb5e59face6f10974f593"
+    }
+  },
+  "schema": "conditions-presence-terminal-resource-inputs/v1",
+  "terminal_snapshot": {
+    "bytes": 2036,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/private-runtime-snapshots/terminal-conditions-presence-ce-v01/snapshot-receipt-v01.json",
+    "sha256": "cd342027da91886f3f9943ba9115c30a783a6bd0f9c4123ab0bbfb499d7c5796"
+  },
+  "training_review": {
+    "bytes": 26740,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-training-review-v01.json",
+    "sha256": "befd64039b656fd69f87a8afd1e5a0101c62fe5614379f17d0a9ec3695c035b0"
+  }
+}

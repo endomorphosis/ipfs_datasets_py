@@ -1,0 +1,75 @@
+{
+  "actual_result": {
+    "authored_dev_complete_IR": [
+      46,
+      72
+    ],
+    "authored_eval_complete_IR": [
+      33,
+      72
+    ],
+    "conditions_head_FN_parent_to_trained": {
+      "authored_eval": [
+        5,
+        6
+      ],
+      "fresh_dev": [
+        0,
+        2
+      ],
+      "fresh_test": [
+        2,
+        3
+      ]
+    },
+    "raw_and_joint_complete_IR_losses_across9scopes": 0,
+    "training_complete_IR": [
+      154,
+      168
+    ],
+    "training_conditions_head_correct": [
+      168,
+      168
+    ],
+    "training_remaining_errors": {
+      "actor_duration_name": 12,
+      "conditions_boundary": 2
+    }
+  },
+  "decision": "archive_opt_in_experimental_candidate_without_default_promotion",
+  "default_promotion": false,
+  "evidence": {
+    "bytes": 112211,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+    "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+  },
+  "next_work": [
+    {
+      "acceptance": "Retain the two complete-IR gains while avoiding the additional condition false negatives; all32 permissions and unaffected logits must remain protected. Independent statutory validation is still required for deployment.",
+      "method": "Use the observed false-negative regressions as exposed diagnostics, not new training labels. Preregister one source-level attention or source-stratum-balanced conditions objective with positive/negative recall reported across all nine scopes and all paired seven-field gains/losses. Keep existing references out of the model child. Do not fit a threshold or sweep on those panels.",
+      "priority": 1,
+      "work": "Protect true-condition recall before promoting the presence repair"
+    },
+    {
+      "acceptance": "Actual seven-field complete-IR improvement with every regression reported; no actor-rank-only success claim.",
+      "method": "The gold-dependent fixed-pointer oracle and actual N11 run both reach154/168, leaving12 actor-duration spans and2 condition spans. A future isolated conditions-boundary head can test the two span failures; actor/modality overlap needs an explicitly joint plan before expecting complete-IR gains. Freeze and compare all unrelated outputs.",
+      "priority": 2,
+      "work": "Target the remaining span errors rather than more presence-only training"
+    },
+    {
+      "acceptance": "Bit-exact output round trip, source/state lineage checks and donor mismatch rejection; no deletion of pinned ancestors or cap increase.",
+      "method": "Current checkpoint recursively embeds the parent plus repeated continuation/state data. Preserve current opaque checkpoint and immutable Hub references. Design a flat tensor payload plus bounded manifest of parent checkpoint/state/implementation SHA256 identities, validated inside the guardian, so further heads do not repeatedly copy full ancestral weights and optimizer states.",
+      "priority": 3,
+      "work": "Flatten checkpoint lineage before stacking more adapters"
+    },
+    {
+      "acceptance": "Separate semantic fidelity, grammar/family acceptance and real Lean build results; no placeholder latent or compile-only legal-correctness claim.",
+      "method": "Treat justicedao/open-us-law-span-cache and uscode-autoformal-span-cache as source/provenance inputs until independently reviewed. Bind exact statute/context/quantifier/modality/exception/temporal decisions and document-level splits. Enumerate supported families, validate a typed canonical AST and reject unsupported constructs; run actual lake build legal in a pinned environment. Qualify actual8D/384D/768D donor embeddings with zero/rotation/disabled controls.",
+      "priority": 4,
+      "work": "Independent US Code, logic-family and true latent qualification"
+    }
+  ],
+  "schema": "conditions-presence-next-experiment-gaps/v1",
+  "semantic_accuracy": null,
+  "status": "design_only_no_followup_training_started"
+}

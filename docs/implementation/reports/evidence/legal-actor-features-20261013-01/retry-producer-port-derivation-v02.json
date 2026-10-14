@@ -1,0 +1,581 @@
+{
+  "actual_baseline_pin_pending": false,
+  "actual_baseline_raw_binding": {
+    "bytes": 85505,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v02.json",
+    "sha256": "1f32831b3dc3850bc890be37aeeb6429be3389b9142bfdcc7e4a3cd88a2163c3"
+  },
+  "actual_checkpoint_JSON_parses_by_author": 0,
+  "actual_model_calls_by_author": 0,
+  "actual_private_body_reads_by_author": 0,
+  "actual_producer_mains_by_author": 0,
+  "all_result_schemas_unchanged": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-preflight-v01.json": {
+      "bytes": 20562,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-preflight-v01.json",
+      "sha256": "13ccb471de2de244a3e8cc5f8d2cd1c617579c52ec499121355d4a9906a10850"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-reconciliation-v01.json": {
+      "bytes": 13906,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-reconciliation-v01.json",
+      "sha256": "ad085ca7094c6e646d7385d8a6a003003fccbd2615762953b79236e178e06490"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v02.py": {
+      "bytes": 7068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v02.py",
+      "sha256": "be673d96eacf5043173233a09e7b53030e7fa0b3561cedaef6ffa772ddaff8a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v02.py": {
+      "bytes": 88984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v02.py",
+      "sha256": "84f2911ace8c6c802549bbd0880229d1e99b71f63f5084696879b7a8cd73a5ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v02.py": {
+      "bytes": 48250,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v02.py",
+      "sha256": "2eb9b5951821690653929b3b82f0a334e6ec29d3fca9859fd9b256d4b9c3c4a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v02.py": {
+      "bytes": 18664,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v02.py",
+      "sha256": "f960b8f41cbeef2b53b334584afa2f3d023d7ff55ea70fc9db55868fdeb45dee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v02.py": {
+      "bytes": 15738,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v02.py",
+      "sha256": "f5110cb2c98c6a8b68cf9c21a8055e6ca8f1aa9ae32e355609111882c3c1fd3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v02.json": {
+      "bytes": 85505,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v02.json",
+      "sha256": "1f32831b3dc3850bc890be37aeeb6429be3389b9142bfdcc7e4a3cd88a2163c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-baseline-controls-v02.json": {
+      "bytes": 1857,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-baseline-controls-v02.json",
+      "sha256": "fb31e0dc0bb3ee9074910cf4415a308be1698e1ac1715d0c5dae1195e34a6eb3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry_producer_baseline_controls_v02.py": {
+      "bytes": 6990,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry_producer_baseline_controls_v02.py",
+      "sha256": "188872597b5ead8e642ba861da459a78ebcbf8327f1d3293276477208c4e54e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py": {
+      "bytes": 49955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py",
+      "sha256": "2af389d81a78c45f8dc28b0da5ff44c172d3fc2c18949bf04c2dccddeae05e3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py": {
+      "bytes": 37730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py",
+      "sha256": "23090332c18ce1b451a116381e072677aa1fef847518e0c08d1b67a60c52cb44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sample_actor_features_private_resources_v02.py": {
+      "bytes": 6661,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sample_actor_features_private_resources_v02.py",
+      "sha256": "1b2710c6c8e195f4bcc3f95c6e6369a4dc2f4cc9c18665ce6b54267f8dc81123"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json": {
+      "bytes": 14398,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json",
+      "sha256": "e17fabcfd38b6c34469ae67f581da009be7701a63555bbb04a33b314f7cd5656"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v02.json": {
+      "bytes": 17749,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v02.json",
+      "sha256": "cd68c23949fdeb5f5cedb759736f4d682e9530506a6d74960156023f40740f1e"
+    }
+  },
+  "author_synthetic_controls": 37,
+  "findings": [],
+  "model_and_recipe_unchanged": true,
+  "new_attempt": "actor-features-20261013-actor-features-ce-02",
+  "new_plan_filename": "actor-features-ce-plan-v02.json",
+  "passed": true,
+  "ports": [
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": false,
+      "derived": {
+        "bytes": 37730,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py",
+        "sha256": "23090332c18ce1b451a116381e072677aa1fef847518e0c08d1b67a60c52cb44"
+      },
+      "literal_changes": [
+        {
+          "after": "ATTEMPT = 'actor-features-20261013-' + CELL + '-02'",
+          "before": "ATTEMPT = 'actor-features-20261013-' + CELL + '-01'",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [],
+      "prior": {
+        "bytes": 37730,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py",
+        "sha256": "61268317c492662e3a729e45de18e9ae8eb7b924b72e177b3fd5071dc6e99d62"
+      },
+      "unchanged_function_AST_names": [
+        "binary",
+        "canonical",
+        "capture",
+        "compare_captures",
+        "completion",
+        "digest",
+        "legacy_runner",
+        "main",
+        "merged_training_capture",
+        "pin",
+        "qualify_actor_feature_trace",
+        "read",
+        "require",
+        "validate_plan",
+        "validate_sources",
+        "write"
+      ]
+    },
+    {
+      "added_function_AST_names": [
+        "qualify_retry_baseline"
+      ],
+      "additional_recovery_contract_changes": true,
+      "derived": {
+        "bytes": 15738,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v02.py",
+        "sha256": "f5110cb2c98c6a8b68cf9c21a8055e6ca8f1aa9ae32e355609111882c3c1fd3d"
+      },
+      "literal_changes": [
+        {
+          "after": "actor-features-ce-plan-v02.json",
+          "before": "actor-features-ce-plan-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "run_actor_features_v02.py",
+          "before": "run_actor_features_v01.py",
+          "occurrences": 5
+        },
+        {
+          "after": "training-design-v02.json",
+          "before": "training-design-v01.json",
+          "occurrences": 2
+        },
+        {
+          "after": "resource-baseline-v02.json",
+          "before": "resource-baseline-v01.json",
+          "occurrences": 2
+        },
+        {
+          "after": "actor-features-bootstrap-smoke-controls-v02.json",
+          "before": "actor-features-bootstrap-smoke-controls-v01.json",
+          "occurrences": 2
+        },
+        {
+          "after": "actor_features_bootstrap_smoke_controls_v02.py",
+          "before": "actor_features_bootstrap_smoke_controls_v01.py",
+          "occurrences": 1
+        },
+        {
+          "after": "runner-preparer-source-independent-review-v02.json",
+          "before": "runner-preparer-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "runner.CELL + '-plan-v02.json'",
+          "before": "runner.CELL + '-plan-v01.json'",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [
+        "audit",
+        "prepare"
+      ],
+      "prior": {
+        "bytes": 12845,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v01.py",
+        "sha256": "1518b62611706103274068dd0cff72623f9735c38c2ab32e1193690a2aedd388"
+      },
+      "unchanged_function_AST_names": [
+        "metadata"
+      ]
+    },
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": false,
+      "derived": {
+        "bytes": 7068,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v02.py",
+        "sha256": "be673d96eacf5043173233a09e7b53030e7fa0b3561cedaef6ffa772ddaff8a9"
+      },
+      "literal_changes": [
+        {
+          "after": "run_actor_features_v02.py",
+          "before": "run_actor_features_v01.py",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-bootstrap-smoke-controls-v02.json",
+          "before": "actor-features-bootstrap-smoke-controls-v01.json",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [],
+      "prior": {
+        "bytes": 7068,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v01.py",
+        "sha256": "c9e71e3b75126af0d6ea73562440a5f37e21a248f2c866f0a7bddfff6da8382a"
+      },
+      "unchanged_function_AST_names": [
+        "audit",
+        "main",
+        "mandatory",
+        "pin",
+        "require"
+      ]
+    },
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": false,
+      "derived": {
+        "bytes": 6661,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sample_actor_features_private_resources_v02.py",
+        "sha256": "1b2710c6c8e195f4bcc3f95c6e6369a4dc2f4cc9c18665ce6b54267f8dc81123"
+      },
+      "literal_changes": [
+        {
+          "after": "sampler-source-independent-review-v02.json",
+          "before": "sampler-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "args.cell+'-plan-v02.json'",
+          "before": "args.cell+'-plan-v01.json'",
+          "occurrences": 1
+        },
+        {
+          "after": "'actor-features-20261013-'+args.cell+'-02'",
+          "before": "'actor-features-20261013-'+args.cell+'-01'",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [
+        "main"
+      ],
+      "prior": {
+        "bytes": 6661,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sample_actor_features_private_resources_v01.py",
+        "sha256": "f1e356037c6e3643f6f9ca17746e0e3fc5d789708e46d578e5d325c2fd2c2d0a"
+      },
+      "unchanged_function_AST_names": [
+        "brief",
+        "pin",
+        "read",
+        "require",
+        "write"
+      ]
+    },
+    {
+      "added_function_AST_names": [
+        "qualify_retry_baseline"
+      ],
+      "additional_recovery_contract_changes": true,
+      "derived": {
+        "bytes": 48250,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v02.py",
+        "sha256": "2eb9b5951821690653929b3b82f0a334e6ec29d3fca9859fd9b256d4b9c3c4a4"
+      },
+      "literal_changes": [
+        {
+          "after": "The real post-reconciliation prelaunch opening witness",
+          "before": "The real prelaunch opening-v01 witness",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-20261013-actor-features-ce-02",
+          "before": "actor-features-20261013-actor-features-ce-01",
+          "occurrences": 1
+        },
+        {
+          "after": "resource-baseline-v02.json",
+          "before": "resource-baseline-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-terminal-resource-source-independent-review-v02.json",
+          "before": "actor-features-terminal-resource-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-terminal-resource-inputs-v02.json",
+          "before": "actor-features-terminal-resource-inputs-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-ce-terminal-resource-audit-v02.json",
+          "before": "actor-features-ce-terminal-resource-audit-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-opening-resource-inputs-v02.json",
+          "before": "actor-features-opening-resource-inputs-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-ce-opening-resource-audit-v02.json",
+          "before": "actor-features-ce-opening-resource-audit-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "run_actor_features_v02.py",
+          "before": "run_actor_features_v01.py",
+          "occurrences": 2
+        },
+        {
+          "after": "CELL + '-plan-v02.json'",
+          "before": "CELL + '-plan-v01.json'",
+          "occurrences": 1
+        },
+        {
+          "after": "CELL + '-training-review-v02.json'",
+          "before": "CELL + '-training-review-v01.json'",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [
+        "main",
+        "qualify_check",
+        "qualify_ledgers",
+        "qualify_phase_ledger",
+        "qualify_public_custody"
+      ],
+      "prior": {
+        "bytes": 45272,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v01.py",
+        "sha256": "980570fb3a9320eec893d889e985ab2cdcbe49e4533a52577a0e22cdf12c82ce"
+      },
+      "unchanged_function_AST_names": [
+        "audit",
+        "bind",
+        "canonical",
+        "descriptor",
+        "digest",
+        "lines",
+        "ordinary",
+        "pin",
+        "qualify_lease",
+        "qualify_opening_inputs",
+        "qualify_own",
+        "qualify_rss",
+        "qualify_schedulers",
+        "qualify_snapshot",
+        "read",
+        "require",
+        "resource_producers",
+        "root_identity",
+        "snapshot",
+        "strict_json",
+        "write_output"
+      ]
+    },
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": true,
+      "derived": {
+        "bytes": 18664,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v02.py",
+        "sha256": "f960b8f41cbeef2b53b334584afa2f3d023d7ff55ea70fc9db55868fdeb45dee"
+      },
+      "literal_changes": [
+        {
+          "after": "run_actor_features_v02.py",
+          "before": "run_actor_features_v01.py",
+          "occurrences": 2
+        },
+        {
+          "after": "runtime-freeze-source-independent-review-v02.json",
+          "before": "runtime-freeze-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "r.CELL + '-plan-v02.json'",
+          "before": "r.CELL + '-plan-v01.json'",
+          "occurrences": 1
+        },
+        {
+          "after": "r.CELL + '-training-review-v02.json'",
+          "before": "r.CELL + '-training-review-v01.json'",
+          "occurrences": 1
+        },
+        {
+          "after": "r.CELL + '-terminal-resource-audit-v02.json'",
+          "before": "r.CELL + '-terminal-resource-audit-v01.json'",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-terminal-resource-source-independent-review-v02.json",
+          "before": "actor-features-terminal-resource-source-independent-review-v01.json",
+          "occurrences": 2
+        },
+        {
+          "after": "audit_actor_features_terminal_resources_v02.py",
+          "before": "audit_actor_features_terminal_resources_v01.py",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-terminal-resource-inputs-v02.json",
+          "before": "actor-features-terminal-resource-inputs-v01.json",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [
+        "main"
+      ],
+      "prior": {
+        "bytes": 18507,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v01.py",
+        "sha256": "ad6d428a5c5326839b7712e8f54d7444b77fdd9660726f36a154468eb80b3479"
+      },
+      "unchanged_function_AST_names": [
+        "expected_names",
+        "qualify_gates",
+        "qualify_training_summary"
+      ]
+    },
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": false,
+      "derived": {
+        "bytes": 88984,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v02.py",
+        "sha256": "84f2911ace8c6c802549bbd0880229d1e99b71f63f5084696879b7a8cd73a5ce"
+      },
+      "literal_changes": [
+        {
+          "after": "analyzer-source-independent-review-v02.json",
+          "before": "analyzer-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "freeze_actor_features_outputs_v02.py",
+          "before": "freeze_actor_features_outputs_v01.py",
+          "occurrences": 1
+        },
+        {
+          "after": "actor-features-ce-plan-v02.json",
+          "before": "actor-features-ce-plan-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "Exact N10 plan V02 required",
+          "before": "Exact N10 plan V01 required",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [
+        "main"
+      ],
+      "prior": {
+        "bytes": 88984,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v01.py",
+        "sha256": "515494b398829598437a19f0ddd967c65b2f8f6a361fb77157e76dcd5a72f624"
+      },
+      "unchanged_function_AST_names": [
+        "actor_token_contrasts",
+        "binary",
+        "bind",
+        "canonical",
+        "compare_saved",
+        "coverage_changes",
+        "coverage_summary",
+        "decoded_coupling",
+        "descriptor",
+        "detached",
+        "digest",
+        "expected_names",
+        "f32",
+        "failure_overlap",
+        "fixed",
+        "frozen_control",
+        "gold_coverage",
+        "guarded_choice",
+        "hard_negative",
+        "independent_score_checks",
+        "modality_summary",
+        "optional_presence_confusion",
+        "paired_changes",
+        "panel_score",
+        "pin",
+        "private",
+        "projection",
+        "pure_predicates",
+        "read",
+        "references",
+        "require",
+        "require_map_pin",
+        "runtime_counts",
+        "source_projection",
+        "span_coverage",
+        "span_ranking",
+        "structural_validity",
+        "training_metadata",
+        "validate_capture",
+        "validate_freeze",
+        "validate_joint"
+      ]
+    },
+    {
+      "added_function_AST_names": [],
+      "additional_recovery_contract_changes": false,
+      "derived": {
+        "bytes": 49955,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py",
+        "sha256": "2af389d81a78c45f8dc28b0da5ff44c172d3fc2c18949bf04c2dccddeae05e3c"
+      },
+      "literal_changes": [
+        {
+          "after": "result-recount-source-independent-review-v02.json",
+          "before": "result-recount-source-independent-review-v01.json",
+          "occurrences": 1
+        },
+        {
+          "after": "result-recount-inputs-v02.json",
+          "before": "result-recount-inputs-v01.json",
+          "occurrences": 1
+        }
+      ],
+      "modified_function_AST_names": [],
+      "prior": {
+        "bytes": 49955,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v01.py",
+        "sha256": "081b5fce6a280d3e5cf832dddaf0b3229675c3ac54096fab93791506733cd29f"
+      },
+      "unchanged_function_AST_names": [
+        "actor_coverage",
+        "audit",
+        "authenticate_freeze",
+        "bits",
+        "choice",
+        "coordinates",
+        "coverage_summary",
+        "descriptor_read",
+        "digest",
+        "f32",
+        "identity",
+        "main",
+        "paired_coverage",
+        "paired_score",
+        "projection",
+        "qualify_feature_training",
+        "ranked",
+        "read",
+        "require"
+      ]
+    }
+  ],
+  "prior_sources_or_sources_v1_mutated": false,
+  "prior_sources_preserved": true,
+  "resource_API_calls_by_author": 0,
+  "schema": "actor-features-retry-producer-derivation/v1",
+  "source_qualification_scope": "Narrow source derivation and own synthetic controls; independent peer gates and root actual admission remain separate.",
+  "successful_logical_output_filenames_remain_v01": true
+}

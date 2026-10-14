@@ -1,0 +1,33 @@
+{
+  "actual_Hub_calls": 0,
+  "actual_result_reads": 0,
+  "checkpoint_JSON_parses": 0,
+  "derived": {
+    "bytes": 19160,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/archive_actor_features_hf_v03.py",
+    "sha256": "572fca3f6445ab2697ab32055f0504163ed7a2c1518dca25b76d36d9d6a0c5a9"
+  },
+  "findings": [],
+  "functional_changes": false,
+  "literal_changes": [
+    {
+      "after": "commit_message=f'Archive actor features part {index}/{len(groups)}'",
+      "before": "commit_message=f'Archive actor ranking part {index}/{len(groups)}'",
+      "occurrences": 1
+    }
+  ],
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T01:01:08.142212+00:00",
+  "passed": true,
+  "prior": {
+    "bytes": 19159,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/archive_actor_features_hf_v02.py",
+    "sha256": "f782af61a484015e0ae9a90445b8d4ad80e4ba97b7e6d5afd6649cf9603c569d"
+  },
+  "prior_baseline_reusable": true,
+  "private_body_reads": 0,
+  "reason": "Correct the remaining stale actor-ranking Hub commit message. Description already names the actor context feature CE-only candidate. No data/model/resource/CAS/chunk/readback logic changes.",
+  "schema": "actor-features-Hub-helper-commit-label-port-derivation/v1",
+  "source_gate": "Concrete final helper/source-spec preparation qualification required before prepare or publish main.",
+  "source_only": true
+}

@@ -1,0 +1,588 @@
+{
+  "actual_plan_binding_scope": "Exact raw identity only; root separately reviews and admits the actual plan. This review did not parse it.",
+  "actual_plan_raw_binding": {
+    "bytes": 44409,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-hinge-plan-v01.json",
+    "sha256": "0fb9d290844529ef1638e9c0f00d57c8d78ba6f9e487b2cb59a262cc1fc64897"
+  },
+  "analyzer": {
+    "bytes": 76309,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v03.py",
+    "sha256": "618e509c00d16fdc6993815f1272c8782ca152deb005624ccdb4e180d3d26edf"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-pure-controls-v01.json": {
+      "bytes": 12300,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-pure-controls-v01.json",
+      "sha256": "bffb74b2285373ef087fe0dfbc5e1a05488a9b766fc94d3fc6fce2a44760e2be"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-replay-controls-v01.json": {
+      "bytes": 4718,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-replay-controls-v01.json",
+      "sha256": "b513a45a2bb0d3c38e470364db6b52ca32ba0c1d542f17105578544d336d000e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-hinge-plan-v01.json": {
+      "bytes": 44409,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-hinge-plan-v01.json",
+      "sha256": "0fb9d290844529ef1638e9c0f00d57c8d78ba6f9e487b2cb59a262cc1fc64897"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v01.py": {
+      "bytes": 76309,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v01.py",
+      "sha256": "83039ddb8c2b5263501e773efb6b2c7bd616a94346cd0979c2313f3dbc5631ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v02.py": {
+      "bytes": 76309,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v02.py",
+      "sha256": "b39332a2b1ed536d1b9d53b81ab7471b74ed696ba9437616a6c568b86104c084"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v03.py": {
+      "bytes": 76309,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v03.py",
+      "sha256": "618e509c00d16fdc6993815f1272c8782ca152deb005624ccdb4e180d3d26edf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyzer-runtime-producer-derivation-v02.json": {
+      "bytes": 1421,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyzer-runtime-producer-derivation-v02.json",
+      "sha256": "ffbfa946beda536ee16cc42a17947ccca80bfcc8f734fdaf6573a2b50ff06d8d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyzer-runtime-producer-derivation-v03.json": {
+      "bytes": 1421,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyzer-runtime-producer-derivation-v03.json",
+      "sha256": "05b6c4816dd81e65fe668ad809b3976337d074ce4f0d6538e13e8372a6b586f6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py",
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py",
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py",
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py",
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py",
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py",
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py",
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py",
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py",
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py",
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py",
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py",
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py",
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py",
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py",
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py",
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py",
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py",
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py",
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py",
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py",
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_ranking_contracts.py": {
+      "bytes": 31640,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_ranking_contracts.py",
+      "sha256": "ccd620770cc38155b2c484a68d454bf2de90e2fe9f96742909ba4c4a89bb58bd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/evaluation-contract-root-review-v01.json": {
+      "bytes": 3109,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/evaluation-contract-root-review-v01.json",
+      "sha256": "c3b9218d48006cd87aafc2ff0147f0fbb4b0644d7901185cc1ea3b3463c0691b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/evaluation-contract-v02.json": {
+      "bytes": 16689,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/evaluation-contract-v02.json",
+      "sha256": "cdb22f6cf6e6d8fdb42a6bcaf5b7330c6c2f16e4d570785df5c446debd225bcb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/freeze_actor_ranking_outputs_v03.py": {
+      "bytes": 17662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/freeze_actor_ranking_outputs_v03.py",
+      "sha256": "ec9870d6cd670792b8b14e161a18fde1dbed47041a7ae9f5bbca8f91dd3a465b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/output-freezer-analyzer-joins-supplemental-review-v01.json": {
+      "bytes": 6891,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/output-freezer-analyzer-joins-supplemental-review-v01.json",
+      "sha256": "7bbac098dd405a944ca8c0281de4f9ad0a878b467a758280f70a782beacb3a65"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/output-freezer-foreign-occupancy-independent-controls-v01.json": {
+      "bytes": 3116,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/output-freezer-foreign-occupancy-independent-controls-v01.json",
+      "sha256": "7acc9f64670fcbc00d1fb48721d5479ae05fbfa341ecdfb73f3e5fbdc5125a68"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/prepare_actor_ranking_v03.py": {
+      "bytes": 12165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/prepare_actor_ranking_v03.py",
+      "sha256": "347e3cd6e8f4341bdc7c8ce18a2557112f9432fcd03d70e63207955cd4b5d69e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/run_actor_ranking_v02.py": {
+      "bytes": 32023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/run_actor_ranking_v02.py",
+      "sha256": "c4f9b70b466a71ac10742cbf8c4a9bc4a5170f40d6897852ffe9d31683472ed9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runner-preparer-source-independent-review-v03.json": {
+      "bytes": 32817,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runner-preparer-source-independent-review-v03.json",
+      "sha256": "fac84080b3cad7c0eb978a17ca79cf7120bd847e0d6759e19789609e2f75b425"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runtime-freeze-source-independent-review-v03.json": {
+      "bytes": 9077,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runtime-freeze-source-independent-review-v03.json",
+      "sha256": "8ed3192ef1b5dff81441e712041ddf22f51f8d4305a31db8be77e849e49019fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/trainer-source-independent-review-v01.json": {
+      "bytes": 36932,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/trainer-source-independent-review-v01.json",
+      "sha256": "71cf487750dd9d0c44608b468a62be8b0fd79f351b7b439b811c1aa690255bf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/training-design-v01.json": {
+      "bytes": 10872,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/training-design-v01.json",
+      "sha256": "941622f144d730afbafdeddbd9f5db21569420e6c4e3efa8d314267236894b9b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py": {
+      "bytes": 66275,
+      "path": "/home/barberb/lift_coding/artifacts/legal-targeted-loss-20261012-01/analyze_targeted_results_v01.py",
+      "sha256": "4274d682da303954689bbb318750a91a49b407961f26d718104e1890a0ae4d0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py": {
+      "bytes": 42637,
+      "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+      "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+    }
+  },
+  "execution": {
+    "Git_mutations": 0,
+    "actual_N9_result_reads": 0,
+    "actual_plan_JSON_parsed": false,
+    "analyzer_main_executed": false,
+    "checkpoint_JSON_parses": 0,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "optimizer_updates": 0,
+    "private_body_reads": 0,
+    "production_module_imports": 0,
+    "reference_body_reads": 0,
+    "resource_API_calls": 0,
+    "source_edits": 0,
+    "unchanged_control_reruns": 0
+  },
+  "findings": [],
+  "independent_pure_controls": {
+    "bytes": 12300,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-pure-controls-v01.json",
+    "sha256": "bffb74b2285373ef087fe0dfbc5e1a05488a9b766fc94d3fc6fce2a44760e2be"
+  },
+  "independent_replay_controls": {
+    "bytes": 4718,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-analyzer-independent-replay-controls-v01.json",
+    "sha256": "b513a45a2bb0d3c38e470364db6b52ca32ba0c1d542f17105578544d336d000e"
+  },
+  "limitations": [
+    "This qualifies sealed source and retained detached controls. Actual numerical gates, resource observations, runtime outputs and result interpretation remain separate root workflows.",
+    "Training diagnostics establish consistency of qualified saved metadata and source routing; they do not independently prove training-time numerical argmax or gradients.",
+    "Post-freeze saved-score filtered hinge diagnostics use authenticated authored gold and remain distinct from inference topK coverage, selected full IR, blind generalization or semantic legal accuracy.",
+    "The V03 observer accepts qualified ordinary foreign occupancy while requiring the actual own lease absent; root separately qualifies current resource bodies/config/claims."
+  ],
+  "minimal_derivations": [
+    {
+      "derived": {
+        "bytes": 76309,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v02.py",
+        "sha256": "b39332a2b1ed536d1b9d53b81ab7471b74ed696ba9437616a6c568b86104c084"
+      },
+      "exact_text": true,
+      "only_literal_changes": [
+        "freeze_actor_ranking_outputs_v01.py -> freeze_actor_ranking_outputs_v02.py",
+        "analyzer-source-independent-review-v01.json -> analyzer-source-independent-review-v02.json"
+      ],
+      "prior": {
+        "bytes": 76309,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v01.py",
+        "sha256": "83039ddb8c2b5263501e773efb6b2c7bd616a94346cd0979c2313f3dbc5631ac"
+      }
+    },
+    {
+      "derived": {
+        "bytes": 76309,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v03.py",
+        "sha256": "618e509c00d16fdc6993815f1272c8782ca152deb005624ccdb4e180d3d26edf"
+      },
+      "exact_text": true,
+      "only_literal_changes": [
+        "freeze_actor_ranking_outputs_v02.py -> freeze_actor_ranking_outputs_v03.py",
+        "analyzer-source-independent-review-v02.json -> analyzer-source-independent-review-v03.json"
+      ],
+      "prior": {
+        "bytes": 76309,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v02.py",
+        "sha256": "b39332a2b1ed536d1b9d53b81ab7471b74ed696ba9437616a6c568b86104c084"
+      }
+    }
+  ],
+  "observed_at_utc": "2026-10-13T22:17:11.841846+00:00",
+  "passed": true,
+  "retained_independent_control_count": 233,
+  "reviewer": "/root/actor_ranking_model_n9",
+  "schema": "actor-ranking-analyzer-source-independent-review/v1",
+  "scope": {
+    "actual_updates_required": 32,
+    "authored_score_sets": 30,
+    "configured_latent_dimension": 384,
+    "default_promotion": false,
+    "diagnostic_sources": 464,
+    "inference_source_forwards": 1520,
+    "initial_and_final_gate_sources": 632,
+    "latent_enabled": false,
+    "model_forwards": 1552,
+    "output_files": 62,
+    "paired_authored_panels": 9,
+    "panel_summaries": 33,
+    "total_source_occurrences": 1904,
+    "training_rows": 168,
+    "training_source_occurrences": 384
+  },
+  "source_checks": {
+    "CE_to_N9_protected632_heads_recounted": true,
+    "CE_updates32_and_occurrences384_ID_order_must_match": true,
+    "actual32_objective_traces_use_unchanged_targeted_validator": true,
+    "all464_diagnostics_previously_exposed": true,
+    "all_output_names62_match_qualified_freezer": true,
+    "blind_generalization_claimed": false,
+    "checkpoint_JSON_opaque": true,
+    "detached_choice_exact_ties_row_major": true,
+    "dynamic_training_trace_ID_SHA_gold_nonactor_joins": true,
+    "equal_FLOPs_claimed": false,
+    "exact_runtime_observer_and_actual_plan_bound": true,
+    "frozen_CE_read_after_N9_freeze_only": true,
+    "fullIR_actor_rank_hinge_and_coverage_reported_separately": true,
+    "full_filtered_gold_nonactor_negative_domain_reused": true,
+    "independent_legal_gold_claimed": false,
+    "initial_complete632_and_final_protected632_recounted": true,
+    "nested_float32_hinge_association_replayed": true,
+    "new_CE_control_model_forwards_zero": true,
+    "new_CE_control_updates_zero": true,
+    "no_production_imports_or_numerical_methods_in_analyzer": true,
+    "paired_gains_and_losses_per_ID": true,
+    "rankingON_coefficient025_margin1": true,
+    "reference_reads_after_complete_durable62_freeze_only": true,
+    "repeated384_preupdate_traces_distinct_from_final168_scores": true,
+    "runtime_outputs_map_must_equal_freeze_results": true,
+    "selected_nonactor_coupling_and_abstentions_reported": true,
+    "selected_wrong_and_gold_gradients_preserved_in_qualified_trainer": true,
+    "selection_or_promotion_authority": false,
+    "statutory8_unscored": true,
+    "whole_IR_includes_modality_plus_six_fields": true
+  },
+  "unchanged_controls_rerun": false,
+  "unchanged_function_ASTs": [
+    {
+      "AST_sha256": "fc9c460a88e379e9e6c574508a783d50244a1f835febf1f7e228fd1efc323777",
+      "name": "require"
+    },
+    {
+      "AST_sha256": "57d0bce2d72373dc6652703724fa37ab69fba4bcad05709c6711311eeb75bcad",
+      "name": "canonical"
+    },
+    {
+      "AST_sha256": "b36e994c4f1228c8a6eb83a65b27199e3fb6c4351cc38d285a73145071769945",
+      "name": "digest"
+    },
+    {
+      "AST_sha256": "d8be304279a7dcb800152a6a5931c381a765f6216ba246fe482d4c1cf94d1910",
+      "name": "pin"
+    },
+    {
+      "AST_sha256": "ceb2f7dc7ad1deb6c429f371abe849c40fb25f02a8d301eae01da594a54e7626",
+      "name": "read"
+    },
+    {
+      "AST_sha256": "1a0f1e01ac9d2ede1d3f4a1c052376f232b7676ac4c06bc6ca6117dfb004fcb7",
+      "name": "detached"
+    },
+    {
+      "AST_sha256": "9c8cdedb1976a55ad3d078b1132545d548c4dabc15c823e1f92ae44e76b10c54",
+      "name": "source_projection"
+    },
+    {
+      "AST_sha256": "89df892221589f6f4f9ba7db7844aa3db4feffa68e48a437414377f44c339139",
+      "name": "structural_validity"
+    },
+    {
+      "AST_sha256": "2fdda363787402742128f1e91e4cbc537f464c5e72b87aef201e7545167bf32a",
+      "name": "private"
+    },
+    {
+      "AST_sha256": "344ac06c99d955ffc0381b4b8e3db8c4da7e32330f49f30132a2851dd8e637e6",
+      "name": "fixed"
+    },
+    {
+      "AST_sha256": "4a73fb44d28c348196f230befacdf19431e9c6ec513a27600132302e6af40901",
+      "name": "descriptor"
+    },
+    {
+      "AST_sha256": "26d214c23e04439d97d65abfdc56ccc4fdd9a6b4afd3ba464a2669f64bf659c8",
+      "name": "f32"
+    },
+    {
+      "AST_sha256": "99331a32d01b4e40d7e3f44d5127bd33dd4e37b60cb3df9ce8ba6a37d5cf72be",
+      "name": "binary"
+    },
+    {
+      "AST_sha256": "0d06a448bd3ae3dbeb1a3067df0672b6f6b81b8b8eedb420552b95500680498a",
+      "name": "guarded_choice"
+    },
+    {
+      "AST_sha256": "c951ee61df818d13c299bcdd2c856a0df1c7faef0f6711e4835f052a097a8bd6",
+      "name": "expected_names"
+    },
+    {
+      "AST_sha256": "8d7fcd3c7564efbf36163ede1eb1f5af02711a3eba63ff84b0c60458af92d7e2",
+      "name": "validate_freeze"
+    },
+    {
+      "AST_sha256": "5d3b37e9b5a531730c95f3c5cc36e6c59eb291958f046f0c46e1cbc16af2e946",
+      "name": "bind"
+    },
+    {
+      "AST_sha256": "3dcbb313001d1208887c27f36a623ea2b8928fd2d4e2434ee0cfdd8cdc4551c3",
+      "name": "pure_predicates"
+    },
+    {
+      "AST_sha256": "9cd8b88b659e1bf87e5faa2d869654d60a8d8ea3e2b6fc78c8fca14efac58381",
+      "name": "references"
+    },
+    {
+      "AST_sha256": "ed074f65e97c5d242f2cca1f275789ab0006fd8f5dd860fe0a071304c61202df",
+      "name": "validate_capture"
+    },
+    {
+      "AST_sha256": "4db2beeddde126fc2f108c75101ea51f8de95030d420f5e46d19620e608b2807",
+      "name": "validate_joint"
+    },
+    {
+      "AST_sha256": "87d7004746daa90bf36c860a8b4a24dc3ef3f35ddd0e9dc37da7e76d2b91749b",
+      "name": "projection"
+    },
+    {
+      "AST_sha256": "becd1de82589d329c91f1b6711c2e3aaeff2c9319f0bdec0822e0d0509f10d97",
+      "name": "compare_saved"
+    },
+    {
+      "AST_sha256": "45e99dd3e36d8a26cf72f539eee83d425c73aec42c54339d3fa0ac2fbdd00e7d",
+      "name": "span_ranking"
+    },
+    {
+      "AST_sha256": "1d7de242e1af046fb68754a4fe5f193c294eaa5b8ed4ea4a5c6acfe9c8a872a4",
+      "name": "span_coverage"
+    },
+    {
+      "AST_sha256": "ed1d80c933decbf4bfe27ce0bef76860f7d0fd5f1ad7b40bdacbffbe02a4c75c",
+      "name": "hard_negative"
+    },
+    {
+      "AST_sha256": "45f510d066ec1f7d82ade2da6e51606db8ee5e16df1ff31ab50ec07900b8be7d",
+      "name": "gold_coverage"
+    },
+    {
+      "AST_sha256": "54f53fdcb38c2ebb4231d631e9c6c46be34016f8bc6940d659de265794f9de72",
+      "name": "independent_score_checks"
+    },
+    {
+      "AST_sha256": "12fb204aeb96cde4a4616f4b13d1465e7fea052fd5cdbbce7288a49a4b794e82",
+      "name": "modality_summary"
+    },
+    {
+      "AST_sha256": "86186c036a37c8e97676fb77616325696fa85de4cd9f7d1afb288d3c8d516a8f",
+      "name": "failure_overlap"
+    },
+    {
+      "AST_sha256": "0b3cf53c2173913dab0907f0ab896236aef12754f2ed89276a995eeea2359a40",
+      "name": "coverage_summary"
+    },
+    {
+      "AST_sha256": "10d15fecccecc06e88747aa105e0253424f771bd58478647b8aa3ccc59d8af19",
+      "name": "panel_score"
+    },
+    {
+      "AST_sha256": "628dc3653184bc6423559a19fd190d0dba9cfae58453b339ea677b228c59ab48",
+      "name": "paired_changes"
+    },
+    {
+      "AST_sha256": "1b67f87bcd71751314fe8e86dd5ca1d93b80f2e77049b12cffd4da27e9581dad",
+      "name": "coverage_changes"
+    },
+    {
+      "AST_sha256": "aaa34067151bf026810d95992610118b0ef331bd598b0ba3450d98f8da818aa5",
+      "name": "frozen_CE"
+    },
+    {
+      "AST_sha256": "0e498d209eb16fc1b77936b7878487263b3e27f43de01f2ab9715036518a2144",
+      "name": "decoded_coupling"
+    },
+    {
+      "AST_sha256": "caf53b96e62ad81d8b7b20442fe9b66b10c3a56c5d1170eb99c9290e0a3dd49c",
+      "name": "require_map_pin"
+    },
+    {
+      "AST_sha256": "aa6cb276c740fe421e22a3b2fdb7d8791334d37516e831d24138653e73f84968",
+      "name": "runtime_counts"
+    },
+    {
+      "AST_sha256": "9c2b97a68cf14df27cd565e238e5266daf1a4e42531826d278d71c3ae0d6cb2e",
+      "name": "training_metadata"
+    }
+  ]
+}

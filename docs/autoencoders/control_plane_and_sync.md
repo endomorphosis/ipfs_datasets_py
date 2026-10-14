@@ -66,6 +66,70 @@ Numerical loops work on local memory and immutable local artifacts. DuckDB
 records variants, runs, versions, leases, receipts, and publication work; it is
 not queried or updated for each weight scalar during a gradient step.
 
+## Explicit fenced SpanCache prototype
+
+[`SpanClaimsQuackGateway`](../../ipfs_datasets_py/duckdb_control/span_cache_claims_quack.py)
+extends the existing queued SpanCache Quack transport. It requires an already
+open native `SpanCache`, an owner-issued `SpanClaimWorkerScope(worker_id,
+span_ids)`, and `enable_prototype=True`. Its singleton
+[`SpanCacheClaims`](../../ipfs_datasets_py/logic/autoformal/span_cache_claims.py)
+facade uses that exact catalog connection and transaction; it creates no
+separate claims database. The legacy SpanCache claim helpers retain their
+existing behavior and do not acquire the new fencing guarantees.
+
+Source binding is an explicit owner-local operation:
+`gateway.bind_sources_fenced(operation_id, bindings, owner_authorized=True)`.
+Each binding supplies `source_span_id`, `source_revision`, `source_sha256`, and
+`expected_binding` (null for first binding, or the exact previous revision/hash
+for replacement). Replacing a binding retires its old claims. The authorization
+argument records an explicit owner invocation; it is not an external trust
+proof. Source binding is absent from the worker RPC vocabulary.
+
+| Worker command | Closed payload fields |
+| --- | --- |
+| `ClaimSpansFenced` | `span_ids`, optional `lease_seconds` (default 300); the owner injects the assigned worker identity |
+| `ReadClaimedSpanFenced` | `claim` |
+| `CompleteSpansFenced` | `rows`, `code_identity`, `path_hashes`; each row is exactly `claim`, `agrees`, `decompiled`, `rule`, `repair`, `reason` |
+| `ReleaseSpansFenced` | `claims` |
+| `ResolveSpanOperation` | Original `operation_id`, original mutation `command`, and exact original `payload` |
+
+Claims bind the complete source revision/hash, legal identity, worker, token,
+owner generation, fence, and expiry. The owner checks current persisted claims
+and source identity again before completion or release; workers cannot supply
+replacement source text or choose another worker. Worker operation IDs are
+namespaced before reaching the shared native ledger. Exact historical receipts
+can be replayed after a restart; they do not grant current lease eligibility.
+Stale claims and source or operation conflicts return a structured `refused`
+result. Callers must inspect that status instead of treating receipt delivery
+as success. All qualification, admission, formalization, and `roundtrip_ok`
+flags remain false, including for Constitution spans.
+
+Construct, start, serve, and close the gateway on the original catalog owner's
+process and thread. The transport pump only queues commands; the owner must
+continue calling `gateway.serve(cache)` while workers await replies. Each call
+dequeues at most 64 requests, including cancelled items, then yields to other
+owner work even if producers continue submitting requests. Use
+`SpanClaimsTransportClient` with private `connection_parameters()` handoff and
+close worker clients before the owner closes endpoints and then the catalog.
+Use a separate endpoint for each worker scope, all backed by the same native
+owner. No private catalog is attached to any served Quack instance; clients
+open only transient transport connections. This API does not start a service,
+rewire the ingestion CLI, or enable remote production access automatically.
+
+The scope contains 1–64 assigned spans; each command batch contains 1–32 rows.
+The existing wire bounds remain 65,536 request bytes and 131,072 reply bytes.
+Long source replies refuse with `reply_requires_data_plane`, preserving the
+complete stored span; they are never truncated. Owner waits cancel commands
+that have not started. A timeout or failure after dispatch can follow a commit:
+resolve the original operation ID and exact payload before retrying.
+
+This remains a loopback prototype with the existing bearer authentication and
+exact SQL allowlist. Bearer holders can see that endpoint's reply table;
+separate worker scopes are not a confidentiality or one-use-capability proof.
+Installed DuckDB and Quack/HTTPFS artifacts remain pinned, with no extension
+downloads. No production endpoint or DuckLake activation is established, and
+these control receipts provide no semantic, training, or Lean qualification.
+
 ## Exact generations rather than merging optimizer states
 
 The legal feature campaign follows this sequence:

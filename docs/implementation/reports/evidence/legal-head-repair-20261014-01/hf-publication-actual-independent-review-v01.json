@@ -1,0 +1,2021 @@
+{
+  "all_downloads_and_original_sources_byte_exact": true,
+  "all_old_identities_exact": true,
+  "all_remote_new_identities_exact": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 6359,
+      "sha256": "c8c050d35cb324a5d2fc263c5f8498c083eb0419b99025fee4aa62a49d2ce75b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/analyze_conditions_presence_v01.py": {
+      "bytes": 69447,
+      "sha256": "7c4592c9870643a5cfe9ae55acb1abd75825a9f750152faa0aca1b07db87a771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 8308,
+      "sha256": "fac7763ccec814fa6dc514e9f70b7ea54b43c44755ba4cd9b1e6c3784c81623c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/archive_conditions_presence_hf_v02.py": {
+      "bytes": 19267,
+      "sha256": "cd01c3d6476c59be92542ad160feedb7038149c5ef92f70f0a6c0f0e63b49eae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/audit_conditions_presence_terminal_resources_v01.py": {
+      "bytes": 13120,
+      "sha256": "0cee7fd7b4967c6dcf20e766301e984b85266b6d361c9c13c8c8ffcfcb66b5c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/build_conditions_presence_release_spec_v01.py": {
+      "bytes": 12325,
+      "sha256": "2300414c742f067dc80bc311b11f83e8f25c2f835cd7c5f327d1d841e2622a27"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/capacity-refusal-observation-v01.json": {
+      "bytes": 1790,
+      "sha256": "6eae9c95cca9c6dff15fb39f3df08e60b001daadf25ec4c91be3df9cd56d8900"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8276,
+      "sha256": "ca05777b098120a676d2bbdcafca3938cc5042175e6db0509a212617575cb2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json": {
+      "bytes": 52960,
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-runtime-review-v01.json": {
+      "bytes": 78532,
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-terminal-resource-audit-v01.json": {
+      "bytes": 29330,
+      "sha256": "ea983896627e870cf2c7c79a7a6c51477c1d4ec66298ab2adf2ebabad76b882b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-training-review-v01.json": {
+      "bytes": 26740,
+      "sha256": "befd64039b656fd69f87a8afd1e5a0101c62fe5614379f17d0a9ec3695c035b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-independent-recount-v01.json": {
+      "bytes": 2315880,
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json": {
+      "bytes": 21832,
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json": {
+      "bytes": 2776304,
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-terminal-resource-inputs-v01.json": {
+      "bytes": 6581,
+      "sha256": "590a5eb60b5d988efedc56c1286de14277920d57178c909bcd4140cf8312656d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 6117,
+      "sha256": "9b3a96088827a37ad73e6ad4dbdddb5ef243bc4059c98bfec84cd0f9607adadb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7099,
+      "sha256": "c34832ff703e592e8e57715cc80802bd009bb333d32c81f72c750bb3f14bc749"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_protocol_v01.py": {
+      "bytes": 13955,
+      "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_presence_contracts.py": {
+      "bytes": 17039,
+      "sha256": "1fe49c0e36242ffa21455be2b14ae4664e2eb549b89c937748da62d3fe815e3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-root-review-v01.json": {
+      "bytes": 4285,
+      "sha256": "868f8cc1bcd61fa28bff2c43b7eb3d629d8a6d1dd653f62171479e3360588563"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 11002,
+      "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/freeze_conditions_presence_outputs_v01.py": {
+      "bytes": 18731,
+      "sha256": "9b635f214e80e2e4705a5dddfe8a804e65f75dd3b5b5f832863e1d909b72b671"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 1401000,
+      "sha256": "f5c0d5102181b088c74fb163db86e3f6bde00930448b8c538a5d80d46bebcd4b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-helper-port-derivation-v01.json": {
+      "bytes": 1209,
+      "sha256": "151fe390d5e455be9f080938f554d6a3907bc7b7f9f1030acf0c4547005f149d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 82947,
+      "sha256": "0bafba5baca929a052395e477921a690ee7d1bb46ae01c236f8344fe0f5dfbbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-preparation-receipt-v01.json": {
+      "bytes": 72419,
+      "sha256": "f0d10fa4466bd0a5eab4685c8b703770f4a2b6b81737e92ec243ea39b89a4cad"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-publication-independent-review-v01.json": {
+      "bytes": 98636,
+      "sha256": "55a9d1151f297c54d1075e70900edeeafb697cc481b2256f29e6f11669806d6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-publication-verification-v01.json": {
+      "bytes": 75025,
+      "sha256": "df90c177df785fd95fb6f708fb24273fda195a264c9beeeef2750e1a5f2f0e0c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-release-spec-v01.json": {
+      "bytes": 76317,
+      "sha256": "3249a58e7e3965e3960109005708fd8fc31782edbc04c4ee2f38c30d381e9772"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/README.md": {
+      "bytes": 6359,
+      "sha256": "c8c050d35cb324a5d2fc263c5f8498c083eb0419b99025fee4aa62a49d2ce75b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "eb7b0e9078f976f3df08c719e383dc5fff3d3acbc4d80ea3dec98a119ac17aa6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429302,
+      "sha256": "b8fb400f4fd96a0b83d31c988c0be46c0e89c7a70c4c83da4b4e38fb2a4b877d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "f0b526ab8ee08ff36d4f165ddeec8bbc67ed6a136cdfa60883540ef133dc1b41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431267,
+      "sha256": "84bcaf9a3782e0dd25eded8db221bbe9f37d2549001b7f0e7bf3d5634fefc4fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "9ad796c9be1174c879ee7dbbafcac36f5b90b92b3acfeb9981cde6b9444cedf0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 678690,
+      "sha256": "ee7761773e874bc53263305b89ea5a0f9a60ba515861d1c54a58d1015669a032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "13ee22f4a0a63a859462446fb5868ebe6db64aac2bf17c7a1eec4664d171587b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 804889,
+      "sha256": "2753e176048d13539413c03b79cb80b6da4c6c9f819db180131c78ed5edf0eda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "2c14eba5a09dbcb1af8dd08578891b66574c59c4e1029e3f85c36ad7a2dc4a90"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 805525,
+      "sha256": "c62b092b11232abea5d9fcdb78b299f300552de1561ae57f937fd79132bdcdd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "f63f4bec2132e68488fa8478aa8db33a680970f5b4a05edb06c61649c1597585"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 626506,
+      "sha256": "1700e482bec7fb04bbd11f708a9918b6d39f080c4afe1ab983c418105969c7ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "9e3743937ffd1ac576263b4939a0698b04652d48b435ee5db06014438cd7b763"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "57dd1d7cebb8d39ca0bcb95e99dda1ce84f526c9d84db03aa90a92c8db9c282b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "57831087b8bf822d90a01fea67c99c0bb084fdd66433085270cc1ee10cffa40a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1451975,
+      "sha256": "6563b1b6a7a6df062812fb383dfdacebd98e9341f13094c519bff14d1a9cebf5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "ac6f49335d3452c9a35c8245b490a8dc13b06b44b2a783a0c5def41a0f2d74fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2286964,
+      "sha256": "ee83951ed1f370aab4d4ace76dea05e63f00fa56399c4fdfeb5fc3f4d3fb5d5f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/cell-checkpoint.json": {
+      "bytes": 9337558,
+      "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/cell-training.json": {
+      "bytes": 367209,
+      "sha256": "26c70b4787b02c583d41b311ed91b0b10f2d7ef59239d5edd9e83e01014a9038"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "ce1fc477a88d8c56a7c20c1240bb27eb76a0120bc1788da2b40fdf6f23b5071d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20285,
+      "sha256": "da0c1705bb196ee857026c8bdd088d8809df80c370b5ebc4f6f2ae42265db8a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-disabled.json": {
+      "bytes": 20289,
+      "sha256": "0bdd1f7617b34f10574e47248bb09ca9bd3caa3d49a21a56a5018c49edf4bd78"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20287,
+      "sha256": "de361ae677c9d491629a66185df31eb28da27fba004f4403b23a91d3628410c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-zeros.json": {
+      "bytes": 20285,
+      "sha256": "381f338bfe734fc8112dd127a236b003b4f021f07a7593bfa9799f97e7a1c5ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "24227e3ea9e9a9b07f5c81653d9888a0c24727b9c79f23c6a1c3446fdefff291"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "4c191d96ae0c3554efd40354ee421f7e9471152d7071af8a40b7f77ce49184fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-training168-raw.json": {
+      "bytes": 3588013,
+      "sha256": "d60e2f1faad0ee83687d89fcca6c273c5ec462fea763a0eae6492ab50efaf71f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/summary.json": {
+      "bytes": 62105,
+      "sha256": "6ec7eb8bc440461c2adcde36521f8a5fe1b1a0843728cc04b3b933c9e065569b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1024996,
+      "sha256": "18d299abb12013d733133aa07a2d7763af265d29c772f85af435a2d9c0bbefd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1434161,
+      "sha256": "0c0ad06daeea537305067442b9fa121e588dbeef9b44283a96be66032b18e59c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1024788,
+      "sha256": "bb2393f68feb47735bb8722f9fb5a96434edc80d3b06a5dcef426944b6ad5fb5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1433575,
+      "sha256": "d28fffed948badf6c1b65aa2a74d517f4b5d09a7183b523f63ecfe58e16bd37c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526660,
+      "sha256": "0d6cbc0405eca031a349b769176a796d6e5f84d8f9eb2d1e32bbeda464fb39e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 678683,
+      "sha256": "f66dce6f14f9d69baaeabf69bb8e2aa28106ad2881a744343b63a19ac892ceae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 520909,
+      "sha256": "49e993f72a38f4987c85a4525038ae15e6878292f4b1391647322b599ccb7395"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 807095,
+      "sha256": "24b795438140e40c44681dd7feee83a4698465f1d6d9ff8bdd2fde7177b0b5d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 462509,
+      "sha256": "f390e96c80799814eb3b9ebbd1ac7fe0a4559c7b873b7b606e795ad574574a80"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 805493,
+      "sha256": "8b14722d9cd8db43bbfeda107ed3d8a0b3e4099e5bca32e477a77317d58eb981"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "80ac9292e12421ef9a1d8c0370d4b94ea194c296a81dc2f654ab69142fb10231"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 626492,
+      "sha256": "75a0246b3c414cd499f7bdcbb9c89e6497de08b4f88b38a145ef0c552fc6a64c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "6f1673c9fd51078e001691e99983d8249a8fe28bc199cda71f7547444635869c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-law-joint.json": {
+      "bytes": 107530,
+      "sha256": "805f502f343a2e85b50ee000c7b2f4359573e08f04958c5f29ad0284c31144a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "6f42880078a1831fc9d70710e51c428d8d9b3e309da80381b3167456ca002eae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044652,
+      "sha256": "743c3ec07c4c0a098a77bdbab717b41d5c55eac1417b54e16b9aedbd3980c4f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451959,
+      "sha256": "a8858e468228649fb688f10826770847b570517ab173bd4e8867f7b7871df02e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1456849,
+      "sha256": "0461ddc7794a1ac2112fbad1512c50171575344233d74544c5d3f043a1493665"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2286936,
+      "sha256": "04d455a28f86d2ae6a39dbe97587bf17df6f0ae98f5f470e95dde25789d48311"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20281,
+      "sha256": "043494f990cae2b3925a891ec3afbdab2fb7ba345b694fa7b21536338f931c61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-disabled.json": {
+      "bytes": 20285,
+      "sha256": "d78d95321807a7f34ff4841e46c7412813388265159c0f769a43bd8282b2fcbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20283,
+      "sha256": "a9b62a0f19f78b06122762a235cfef92ffdfd1d3024b6df79f0f22fc7d4a5da2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-zeros.json": {
+      "bytes": 20281,
+      "sha256": "1551a339ef86a914e5e2316d920291ee5dfc6aea054be534ca1b2fdcd4037a58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "d7919329437242def74482fcbfa6d7107e1b784e997cd5c1771917e86124b82a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-training168-joint.json": {
+      "bytes": 2491319,
+      "sha256": "426b8226648e6d7f513e7e343539e3f2859eda9f72061e0f09dcf95d80834e7e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-training168-raw.json": {
+      "bytes": 3590509,
+      "sha256": "208d4924d843669306a58db775e663046608fae8607beac29a76e2896b815dca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child-exit.json": {
+      "bytes": 105,
+      "sha256": "a5a1c471f64f417f9001a8b3bae9837452f70fac9571023d2538376d5ead4fc4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child-identity.json": {
+      "bytes": 44,
+      "sha256": "a96b5f1f14d6443c5ac155a99c6ff3c0b34965c837f6f0eac364d00df89ab71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child.log": {
+      "bytes": 83,
+      "sha256": "1fb73060e7348620c4f5e4852fe0d82844bab600dcb6d7138719998aab8b9067"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/command.json": {
+      "bytes": 1069,
+      "sha256": "4cba4fc4d89b224c2554cdca0d1af4b94694cca69641c649b28f9208f37b7e72"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 51509,
+      "sha256": "9442dac7ea6ede1720441762bede2a8bf62114a9dd9697ccca50974219f5fff6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/group-rss-summary.json": {
+      "bytes": 1759,
+      "sha256": "6f9cc62bfe6bdae4bb4da7ce22a4124f8348a1ffe9c613458fb988393ad1e1e3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "1a6faf0d6ad3905f18836d6665be53420343f7a6cb2f7cb244733e258240c40d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "bfb40c46b138f6815874ee784e32d6c6cc53be491573c4cf1b390f4750de5ec8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/lease-observations.jsonl": {
+      "bytes": 107304,
+      "sha256": "8579d9a2496b6e992182b869623c78f396009a40b3f916a5ffc1029d0a8aeb5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "4018fbbe91780acee6244d8c8e2b8b200323e47ae3d65361a10af52d5799b4c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/pre-admission.json": {
+      "bytes": 7907,
+      "sha256": "b02280772936dd3acf270507135f58d57d01175b2ca74065ece09b7efd84139c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/resource-observations.json": {
+      "bytes": 2627,
+      "sha256": "4111c468f57342e6bb7598ee9814aca4a45f6734acff8df7476e2c8dfd1176bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "9d3ed620eedca6c6035a9c652c5f416da58b0fb62c1eb5e59face6f10974f593"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/analyzer-source-independent-review-v01.json": {
+      "bytes": 8308,
+      "sha256": "fac7763ccec814fa6dc514e9f70b7ea54b43c44755ba4cd9b1e6c3784c81623c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/capacity-refusal-observation-v01.json": {
+      "bytes": 1790,
+      "sha256": "6eae9c95cca9c6dff15fb39f3df08e60b001daadf25ec4c91be3df9cd56d8900"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8276,
+      "sha256": "ca05777b098120a676d2bbdcafca3938cc5042175e6db0509a212617575cb2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-plan-v01.json": {
+      "bytes": 52960,
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-runtime-review-v01.json": {
+      "bytes": 78532,
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-terminal-resource-audit-v01.json": {
+      "bytes": 29330,
+      "sha256": "ea983896627e870cf2c7c79a7a6c51477c1d4ec66298ab2adf2ebabad76b882b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-training-review-v01.json": {
+      "bytes": 26740,
+      "sha256": "befd64039b656fd69f87a8afd1e5a0101c62fe5614379f17d0a9ec3695c035b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-independent-recount-v01.json": {
+      "bytes": 2315880,
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-output-freeze-v01.json": {
+      "bytes": 21832,
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-result-analysis-v01.json": {
+      "bytes": 2776304,
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-terminal-resource-inputs-v01.json": {
+      "bytes": 6581,
+      "sha256": "590a5eb60b5d988efedc56c1286de14277920d57178c909bcd4140cf8312656d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 6117,
+      "sha256": "9b3a96088827a37ad73e6ad4dbdddb5ef243bc4059c98bfec84cd0f9607adadb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/evaluation-contract-root-review-v01.json": {
+      "bytes": 4285,
+      "sha256": "868f8cc1bcd61fa28bff2c43b7eb3d629d8a6d1dd653f62171479e3360588563"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 11002,
+      "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/hf-helper-port-derivation-v01.json": {
+      "bytes": 1209,
+      "sha256": "151fe390d5e455be9f080938f554d6a3907bc7b7f9f1030acf0c4547005f149d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/next-experiment-gaps-v01.json": {
+      "bytes": 3970,
+      "sha256": "e2b6c686ae3a635a821962f1d966c07b5f3fc66d5c54f70beeb08e8f115bd2dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/phase-intake-v01.json": {
+      "bytes": 2783,
+      "sha256": "c1e5c2f4b9dd75c80a5a203025cc0bfadd1afc608a44fab27ae1c8f838620a10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 18392,
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-baseline-inputs-v01.json": {
+      "bytes": 1322,
+      "sha256": "1cdb97d00df8523c7f61afc063b0ef242b22aa04255190eff13bfaf343f4d513"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-baseline-v01.json": {
+      "bytes": 78307,
+      "sha256": "6d7b895b3f86c0b920fa2dad25a6d6fcbe7408d6fb738089fe2dc334a63920cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 1472,
+      "sha256": "5a2265a002ef5c58d54854bc57a66463edb5c095492cf9b2e088ee90a71b47a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-observer-source-independent-review-v01.json": {
+      "bytes": 13363,
+      "sha256": "7ee836640c2ecb963b2c8a258e56df63947cec99be04bd7e1944fc9a8ea8045d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-observer-source-independent-review-v02.json": {
+      "bytes": 13210,
+      "sha256": "524fe5c6f0ba9170a726a962ece153381f563d06bcf8263247052bdbb67d0c6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/resource-protocol-contract-v01.json": {
+      "bytes": 8085,
+      "sha256": "82c0ae4b5134a4726557fe38700c9a39bc0cf5c651866c416399bfdc9f794139"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 112211,
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/result-recount-inputs-v01.json": {
+      "bytes": 593,
+      "sha256": "342773db78e560ed9f699f716aad51bd1d96418590bc49ad0d9b7b5ed8e7f1ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/result-recount-source-independent-review-v01.json": {
+      "bytes": 6949,
+      "sha256": "056ae8a6d7fd06895d523642f0402d626fe9f3ad21d231fa51c80b55dfef9fd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/retained-source-owners-v01.json": {
+      "bytes": 13659,
+      "sha256": "5c72c7152821c47efdb7e934a2e34df34f9eb7627b1c787b07d92dca115ad2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 12027,
+      "sha256": "6b8138ace63c4949e618b6a48c48a3edbb6d198e69dfc0551aa74c5b69bad7dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 11053,
+      "sha256": "72cc2b1576920eb1e2e1574b4350d137af836c2af514bcc95ddad58aefd19b31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/sampler-source-independent-review-v01.json": {
+      "bytes": 3451,
+      "sha256": "00540d4e2f7ada13e3e00c0fcf6926bd03dca011c685a1f84c08038ac609ab54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 29072,
+      "sha256": "db8462063e2296fa8476cd251c69ae7332bc4dfbcdecac18f6d57a31cfd73927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/evidence/training-design-v01.json": {
+      "bytes": 8440,
+      "sha256": "88088621c20a9bd3785a4b7149bc80493d2f154ece968d8c80d76a4f6b0fe324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/analyze_conditions_presence_v01.py": {
+      "bytes": 69447,
+      "sha256": "7c4592c9870643a5cfe9ae55acb1abd75825a9f750152faa0aca1b07db87a771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/archive_conditions_presence_hf_v02.py": {
+      "bytes": 19267,
+      "sha256": "cd01c3d6476c59be92542ad160feedb7038149c5ef92f70f0a6c0f0e63b49eae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/audit_conditions_presence_terminal_resources_v01.py": {
+      "bytes": 13120,
+      "sha256": "0cee7fd7b4967c6dcf20e766301e984b85266b6d361c9c13c8c8ffcfcb66b5c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/build_conditions_presence_release_spec_v01.py": {
+      "bytes": 12325,
+      "sha256": "2300414c742f067dc80bc311b11f83e8f25c2f835cd7c5f327d1d841e2622a27"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/conditions_presence_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7099,
+      "sha256": "c34832ff703e592e8e57715cc80802bd009bb333d32c81f72c750bb3f14bc749"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/conditions_presence_resource_protocol_v01.py": {
+      "bytes": 13955,
+      "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/freeze_conditions_presence_outputs_v01.py": {
+      "bytes": 18731,
+      "sha256": "9b635f214e80e2e4705a5dddfe8a804e65f75dd3b5b5f832863e1d909b72b671"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/prepare_conditions_presence_v01.py": {
+      "bytes": 14717,
+      "sha256": "43eef9e94c79dd98ac72a710ad190929f1ddd62d3c31238bf74dd0798d6fa41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_resource_baseline_v01.py": {
+      "bytes": 5639,
+      "sha256": "8e8893003c660ea94a951601f2f724449f5320bf9b269e9b8a83ec882eff8b58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_resource_baseline_v02.py": {
+      "bytes": 7730,
+      "sha256": "c1257b0d85222a17b45bdd6bf44fa3a265b97b9f3478667805b55f54e2824f29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_result_recount_v01.py": {
+      "bytes": 38610,
+      "sha256": "5bbe5855cb5d2039ba96e2cb05860a1760f9c977be12c1e59d438fcbc2e6dc0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/run_conditions_presence_v01.py": {
+      "bytes": 35837,
+      "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/recipes/sample_conditions_presence_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "8c12ec40dd07881f3e2884835b67e254549ea7904c80b6a04824bfc053079422"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-upload-v01/releases/20261014-conditions-presence-v1/source/test_legal_span_conditions_presence_contracts.py": {
+      "bytes": 17039,
+      "sha256": "1fe49c0e36242ffa21455be2b14ae4664e2eb549b89c937748da62d3fe815e3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/README.md": {
+      "bytes": 6359,
+      "sha256": "c8c050d35cb324a5d2fc263c5f8498c083eb0419b99025fee4aa62a49d2ce75b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "eb7b0e9078f976f3df08c719e383dc5fff3d3acbc4d80ea3dec98a119ac17aa6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429302,
+      "sha256": "b8fb400f4fd96a0b83d31c988c0be46c0e89c7a70c4c83da4b4e38fb2a4b877d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "f0b526ab8ee08ff36d4f165ddeec8bbc67ed6a136cdfa60883540ef133dc1b41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431267,
+      "sha256": "84bcaf9a3782e0dd25eded8db221bbe9f37d2549001b7f0e7bf3d5634fefc4fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "9ad796c9be1174c879ee7dbbafcac36f5b90b92b3acfeb9981cde6b9444cedf0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 678690,
+      "sha256": "ee7761773e874bc53263305b89ea5a0f9a60ba515861d1c54a58d1015669a032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "13ee22f4a0a63a859462446fb5868ebe6db64aac2bf17c7a1eec4664d171587b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 804889,
+      "sha256": "2753e176048d13539413c03b79cb80b6da4c6c9f819db180131c78ed5edf0eda"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "2c14eba5a09dbcb1af8dd08578891b66574c59c4e1029e3f85c36ad7a2dc4a90"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 805525,
+      "sha256": "c62b092b11232abea5d9fcdb78b299f300552de1561ae57f937fd79132bdcdd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "f63f4bec2132e68488fa8478aa8db33a680970f5b4a05edb06c61649c1597585"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 626506,
+      "sha256": "1700e482bec7fb04bbd11f708a9918b6d39f080c4afe1ab983c418105969c7ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "9e3743937ffd1ac576263b4939a0698b04652d48b435ee5db06014438cd7b763"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "57dd1d7cebb8d39ca0bcb95e99dda1ce84f526c9d84db03aa90a92c8db9c282b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "57831087b8bf822d90a01fea67c99c0bb084fdd66433085270cc1ee10cffa40a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1451975,
+      "sha256": "6563b1b6a7a6df062812fb383dfdacebd98e9341f13094c519bff14d1a9cebf5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "ac6f49335d3452c9a35c8245b490a8dc13b06b44b2a783a0c5def41a0f2d74fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2286964,
+      "sha256": "ee83951ed1f370aab4d4ace76dea05e63f00fa56399c4fdfeb5fc3f4d3fb5d5f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/cell-checkpoint.json": {
+      "bytes": 9337558,
+      "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/cell-training.json": {
+      "bytes": 367209,
+      "sha256": "26c70b4787b02c583d41b311ed91b0b10f2d7ef59239d5edd9e83e01014a9038"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "ce1fc477a88d8c56a7c20c1240bb27eb76a0120bc1788da2b40fdf6f23b5071d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20285,
+      "sha256": "da0c1705bb196ee857026c8bdd088d8809df80c370b5ebc4f6f2ae42265db8a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-disabled.json": {
+      "bytes": 20289,
+      "sha256": "0bdd1f7617b34f10574e47248bb09ca9bd3caa3d49a21a56a5018c49edf4bd78"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20287,
+      "sha256": "de361ae677c9d491629a66185df31eb28da27fba004f4403b23a91d3628410c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity-zeros.json": {
+      "bytes": 20285,
+      "sha256": "381f338bfe734fc8112dd127a236b003b4f021f07a7593bfa9799f97e7a1c5ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "24227e3ea9e9a9b07f5c81653d9888a0c24727b9c79f23c6a1c3446fdefff291"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "4c191d96ae0c3554efd40354ee421f7e9471152d7071af8a40b7f77ce49184fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/initial-training168-raw.json": {
+      "bytes": 3588013,
+      "sha256": "d60e2f1faad0ee83687d89fcca6c273c5ec462fea763a0eae6492ab50efaf71f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/summary.json": {
+      "bytes": 62105,
+      "sha256": "6ec7eb8bc440461c2adcde36521f8a5fe1b1a0843728cc04b3b933c9e065569b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1024996,
+      "sha256": "18d299abb12013d733133aa07a2d7763af265d29c772f85af435a2d9c0bbefd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1434161,
+      "sha256": "0c0ad06daeea537305067442b9fa121e588dbeef9b44283a96be66032b18e59c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1024788,
+      "sha256": "bb2393f68feb47735bb8722f9fb5a96434edc80d3b06a5dcef426944b6ad5fb5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1433575,
+      "sha256": "d28fffed948badf6c1b65aa2a74d517f4b5d09a7183b523f63ecfe58e16bd37c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526660,
+      "sha256": "0d6cbc0405eca031a349b769176a796d6e5f84d8f9eb2d1e32bbeda464fb39e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 678683,
+      "sha256": "f66dce6f14f9d69baaeabf69bb8e2aa28106ad2881a744343b63a19ac892ceae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 520909,
+      "sha256": "49e993f72a38f4987c85a4525038ae15e6878292f4b1391647322b599ccb7395"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 807095,
+      "sha256": "24b795438140e40c44681dd7feee83a4698465f1d6d9ff8bdd2fde7177b0b5d8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 462509,
+      "sha256": "f390e96c80799814eb3b9ebbd1ac7fe0a4559c7b873b7b606e795ad574574a80"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 805493,
+      "sha256": "8b14722d9cd8db43bbfeda107ed3d8a0b3e4099e5bca32e477a77317d58eb981"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "80ac9292e12421ef9a1d8c0370d4b94ea194c296a81dc2f654ab69142fb10231"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 626492,
+      "sha256": "75a0246b3c414cd499f7bdcbb9c89e6497de08b4f88b38a145ef0c552fc6a64c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "6f1673c9fd51078e001691e99983d8249a8fe28bc199cda71f7547444635869c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-law-joint.json": {
+      "bytes": 107530,
+      "sha256": "805f502f343a2e85b50ee000c7b2f4359573e08f04958c5f29ad0284c31144a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "6f42880078a1831fc9d70710e51c428d8d9b3e309da80381b3167456ca002eae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044652,
+      "sha256": "743c3ec07c4c0a098a77bdbab717b41d5c55eac1417b54e16b9aedbd3980c4f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451959,
+      "sha256": "a8858e468228649fb688f10826770847b570517ab173bd4e8867f7b7871df02e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1456849,
+      "sha256": "0461ddc7794a1ac2112fbad1512c50171575344233d74544c5d3f043a1493665"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2286936,
+      "sha256": "04d455a28f86d2ae6a39dbe97587bf17df6f0ae98f5f470e95dde25789d48311"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20281,
+      "sha256": "043494f990cae2b3925a891ec3afbdab2fb7ba345b694fa7b21536338f931c61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-disabled.json": {
+      "bytes": 20285,
+      "sha256": "d78d95321807a7f34ff4841e46c7412813388265159c0f769a43bd8282b2fcbc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20283,
+      "sha256": "a9b62a0f19f78b06122762a235cfef92ffdfd1d3024b6df79f0f22fc7d4a5da2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity-zeros.json": {
+      "bytes": 20281,
+      "sha256": "1551a339ef86a914e5e2316d920291ee5dfc6aea054be534ca1b2fdcd4037a58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "d7919329437242def74482fcbfa6d7107e1b784e997cd5c1771917e86124b82a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-training168-joint.json": {
+      "bytes": 2491319,
+      "sha256": "426b8226648e6d7f513e7e343539e3f2859eda9f72061e0f09dcf95d80834e7e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/results/trained-training168-raw.json": {
+      "bytes": 3590509,
+      "sha256": "208d4924d843669306a58db775e663046608fae8607beac29a76e2896b815dca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child-exit.json": {
+      "bytes": 105,
+      "sha256": "a5a1c471f64f417f9001a8b3bae9837452f70fac9571023d2538376d5ead4fc4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child-identity.json": {
+      "bytes": 44,
+      "sha256": "a96b5f1f14d6443c5ac155a99c6ff3c0b34965c837f6f0eac364d00df89ab71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/child.log": {
+      "bytes": 83,
+      "sha256": "1fb73060e7348620c4f5e4852fe0d82844bab600dcb6d7138719998aab8b9067"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/command.json": {
+      "bytes": 1069,
+      "sha256": "4cba4fc4d89b224c2554cdca0d1af4b94694cca69641c649b28f9208f37b7e72"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 51509,
+      "sha256": "9442dac7ea6ede1720441762bede2a8bf62114a9dd9697ccca50974219f5fff6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/group-rss-summary.json": {
+      "bytes": 1759,
+      "sha256": "6f9cc62bfe6bdae4bb4da7ce22a4124f8348a1ffe9c613458fb988393ad1e1e3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "1a6faf0d6ad3905f18836d6665be53420343f7a6cb2f7cb244733e258240c40d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "bfb40c46b138f6815874ee784e32d6c6cc53be491573c4cf1b390f4750de5ec8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/lease-observations.jsonl": {
+      "bytes": 107304,
+      "sha256": "8579d9a2496b6e992182b869623c78f396009a40b3f916a5ffc1029d0a8aeb5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "4018fbbe91780acee6244d8c8e2b8b200323e47ae3d65361a10af52d5799b4c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/pre-admission.json": {
+      "bytes": 7907,
+      "sha256": "b02280772936dd3acf270507135f58d57d01175b2ca74065ece09b7efd84139c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/resource-observations.json": {
+      "bytes": 2627,
+      "sha256": "4111c468f57342e6bb7598ee9814aca4a45f6734acff8df7476e2c8dfd1176bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/cells/conditions-presence-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "9d3ed620eedca6c6035a9c652c5f416da58b0fb62c1eb5e59face6f10974f593"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/analyzer-source-independent-review-v01.json": {
+      "bytes": 8308,
+      "sha256": "fac7763ccec814fa6dc514e9f70b7ea54b43c44755ba4cd9b1e6c3784c81623c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/capacity-refusal-observation-v01.json": {
+      "bytes": 1790,
+      "sha256": "6eae9c95cca9c6dff15fb39f3df08e60b001daadf25ec4c91be3df9cd56d8900"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8276,
+      "sha256": "ca05777b098120a676d2bbdcafca3938cc5042175e6db0509a212617575cb2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-plan-v01.json": {
+      "bytes": 52960,
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-runtime-review-v01.json": {
+      "bytes": 78532,
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-terminal-resource-audit-v01.json": {
+      "bytes": 29330,
+      "sha256": "ea983896627e870cf2c7c79a7a6c51477c1d4ec66298ab2adf2ebabad76b882b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-ce-training-review-v01.json": {
+      "bytes": 26740,
+      "sha256": "befd64039b656fd69f87a8afd1e5a0101c62fe5614379f17d0a9ec3695c035b0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-independent-recount-v01.json": {
+      "bytes": 2315880,
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-output-freeze-v01.json": {
+      "bytes": 21832,
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-result-analysis-v01.json": {
+      "bytes": 2776304,
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-terminal-resource-inputs-v01.json": {
+      "bytes": 6581,
+      "sha256": "590a5eb60b5d988efedc56c1286de14277920d57178c909bcd4140cf8312656d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/conditions-presence-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 6117,
+      "sha256": "9b3a96088827a37ad73e6ad4dbdddb5ef243bc4059c98bfec84cd0f9607adadb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/evaluation-contract-root-review-v01.json": {
+      "bytes": 4285,
+      "sha256": "868f8cc1bcd61fa28bff2c43b7eb3d629d8a6d1dd653f62171479e3360588563"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 11002,
+      "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/hf-helper-port-derivation-v01.json": {
+      "bytes": 1209,
+      "sha256": "151fe390d5e455be9f080938f554d6a3907bc7b7f9f1030acf0c4547005f149d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/next-experiment-gaps-v01.json": {
+      "bytes": 3970,
+      "sha256": "e2b6c686ae3a635a821962f1d966c07b5f3fc66d5c54f70beeb08e8f115bd2dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/phase-intake-v01.json": {
+      "bytes": 2783,
+      "sha256": "c1e5c2f4b9dd75c80a5a203025cc0bfadd1afc608a44fab27ae1c8f838620a10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 18392,
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-baseline-inputs-v01.json": {
+      "bytes": 1322,
+      "sha256": "1cdb97d00df8523c7f61afc063b0ef242b22aa04255190eff13bfaf343f4d513"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-baseline-v01.json": {
+      "bytes": 78307,
+      "sha256": "6d7b895b3f86c0b920fa2dad25a6d6fcbe7408d6fb738089fe2dc334a63920cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 1472,
+      "sha256": "5a2265a002ef5c58d54854bc57a66463edb5c095492cf9b2e088ee90a71b47a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-observer-source-independent-review-v01.json": {
+      "bytes": 13363,
+      "sha256": "7ee836640c2ecb963b2c8a258e56df63947cec99be04bd7e1944fc9a8ea8045d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-observer-source-independent-review-v02.json": {
+      "bytes": 13210,
+      "sha256": "524fe5c6f0ba9170a726a962ece153381f563d06bcf8263247052bdbb67d0c6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/resource-protocol-contract-v01.json": {
+      "bytes": 8085,
+      "sha256": "82c0ae4b5134a4726557fe38700c9a39bc0cf5c651866c416399bfdc9f794139"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/result-independent-review-v01.json": {
+      "bytes": 112211,
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/result-recount-inputs-v01.json": {
+      "bytes": 593,
+      "sha256": "342773db78e560ed9f699f716aad51bd1d96418590bc49ad0d9b7b5ed8e7f1ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/result-recount-source-independent-review-v01.json": {
+      "bytes": 6949,
+      "sha256": "056ae8a6d7fd06895d523642f0402d626fe9f3ad21d231fa51c80b55dfef9fd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/retained-source-owners-v01.json": {
+      "bytes": 13659,
+      "sha256": "5c72c7152821c47efdb7e934a2e34df34f9eb7627b1c787b07d92dca115ad2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 12027,
+      "sha256": "6b8138ace63c4949e618b6a48c48a3edbb6d198e69dfc0551aa74c5b69bad7dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 11053,
+      "sha256": "72cc2b1576920eb1e2e1574b4350d137af836c2af514bcc95ddad58aefd19b31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/sampler-source-independent-review-v01.json": {
+      "bytes": 3451,
+      "sha256": "00540d4e2f7ada13e3e00c0fcf6926bd03dca011c685a1f84c08038ac609ab54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/trainer-source-independent-review-v01.json": {
+      "bytes": 29072,
+      "sha256": "db8462063e2296fa8476cd251c69ae7332bc4dfbcdecac18f6d57a31cfd73927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/evidence/training-design-v01.json": {
+      "bytes": 8440,
+      "sha256": "88088621c20a9bd3785a4b7149bc80493d2f154ece968d8c80d76a4f6b0fe324"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/analyze_conditions_presence_v01.py": {
+      "bytes": 69447,
+      "sha256": "7c4592c9870643a5cfe9ae55acb1abd75825a9f750152faa0aca1b07db87a771"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/archive_conditions_presence_hf_v02.py": {
+      "bytes": 19267,
+      "sha256": "cd01c3d6476c59be92542ad160feedb7038149c5ef92f70f0a6c0f0e63b49eae"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/audit_conditions_presence_terminal_resources_v01.py": {
+      "bytes": 13120,
+      "sha256": "0cee7fd7b4967c6dcf20e766301e984b85266b6d361c9c13c8c8ffcfcb66b5c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/build_conditions_presence_release_spec_v01.py": {
+      "bytes": 12325,
+      "sha256": "2300414c742f067dc80bc311b11f83e8f25c2f835cd7c5f327d1d841e2622a27"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/conditions_presence_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7099,
+      "sha256": "c34832ff703e592e8e57715cc80802bd009bb333d32c81f72c750bb3f14bc749"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/conditions_presence_resource_protocol_v01.py": {
+      "bytes": 13955,
+      "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/freeze_conditions_presence_outputs_v01.py": {
+      "bytes": 18731,
+      "sha256": "9b635f214e80e2e4705a5dddfe8a804e65f75dd3b5b5f832863e1d909b72b671"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/prepare_conditions_presence_v01.py": {
+      "bytes": 14717,
+      "sha256": "43eef9e94c79dd98ac72a710ad190929f1ddd62d3c31238bf74dd0798d6fa41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_resource_baseline_v01.py": {
+      "bytes": 5639,
+      "sha256": "8e8893003c660ea94a951601f2f724449f5320bf9b269e9b8a83ec882eff8b58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_resource_baseline_v02.py": {
+      "bytes": 7730,
+      "sha256": "c1257b0d85222a17b45bdd6bf44fa3a265b97b9f3478667805b55f54e2824f29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/review_conditions_presence_result_recount_v01.py": {
+      "bytes": 38610,
+      "sha256": "5bbe5855cb5d2039ba96e2cb05860a1760f9c977be12c1e59d438fcbc2e6dc0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/run_conditions_presence_v01.py": {
+      "bytes": 35837,
+      "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/recipes/sample_conditions_presence_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "8c12ec40dd07881f3e2884835b67e254549ea7904c80b6a04824bfc053079422"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/hf-verified-download-v01/releases/20261014-conditions-presence-v1/source/test_legal_span_conditions_presence_contracts.py": {
+      "bytes": 17039,
+      "sha256": "1fe49c0e36242ffa21455be2b14ae4664e2eb549b89c937748da62d3fe815e3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/next-experiment-gaps-v01.json": {
+      "bytes": 3970,
+      "sha256": "e2b6c686ae3a635a821962f1d966c07b5f3fc66d5c54f70beeb08e8f115bd2dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/phase-intake-v01.json": {
+      "bytes": 2783,
+      "sha256": "c1e5c2f4b9dd75c80a5a203025cc0bfadd1afc608a44fab27ae1c8f838620a10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/prepare_conditions_presence_v01.py": {
+      "bytes": 14717,
+      "sha256": "43eef9e94c79dd98ac72a710ad190929f1ddd62d3c31238bf74dd0798d6fa41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/public-result-summary-v01.json": {
+      "bytes": 18392,
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/release-manifest-v01.json": {
+      "bytes": 75670,
+      "sha256": "af407499e62c4c56c11b3c3a0e9e9db3fb2be3e6fc03c1586185ed81a1a159c0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-inputs-v01.json": {
+      "bytes": 1322,
+      "sha256": "1cdb97d00df8523c7f61afc063b0ef242b22aa04255190eff13bfaf343f4d513"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-v01.json": {
+      "bytes": 78307,
+      "sha256": "6d7b895b3f86c0b920fa2dad25a6d6fcbe7408d6fb738089fe2dc334a63920cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 1472,
+      "sha256": "5a2265a002ef5c58d54854bc57a66463edb5c095492cf9b2e088ee90a71b47a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-observer-source-independent-review-v01.json": {
+      "bytes": 13363,
+      "sha256": "7ee836640c2ecb963b2c8a258e56df63947cec99be04bd7e1944fc9a8ea8045d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-observer-source-independent-review-v02.json": {
+      "bytes": 13210,
+      "sha256": "524fe5c6f0ba9170a726a962ece153381f563d06bcf8263247052bdbb67d0c6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-protocol-contract-v01.json": {
+      "bytes": 8085,
+      "sha256": "82c0ae4b5134a4726557fe38700c9a39bc0cf5c651866c416399bfdc9f794139"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json": {
+      "bytes": 112211,
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-recount-inputs-v01.json": {
+      "bytes": 593,
+      "sha256": "342773db78e560ed9f699f716aad51bd1d96418590bc49ad0d9b7b5ed8e7f1ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 6949,
+      "sha256": "056ae8a6d7fd06895d523642f0402d626fe9f3ad21d231fa51c80b55dfef9fd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/retained-source-owners-v01.json": {
+      "bytes": 13659,
+      "sha256": "5c72c7152821c47efdb7e934a2e34df34f9eb7627b1c787b07d92dca115ad2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/review_conditions_presence_resource_baseline_v01.py": {
+      "bytes": 5639,
+      "sha256": "8e8893003c660ea94a951601f2f724449f5320bf9b269e9b8a83ec882eff8b58"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/review_conditions_presence_resource_baseline_v02.py": {
+      "bytes": 7730,
+      "sha256": "c1257b0d85222a17b45bdd6bf44fa3a265b97b9f3478667805b55f54e2824f29"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/review_conditions_presence_result_recount_v01.py": {
+      "bytes": 38610,
+      "sha256": "5bbe5855cb5d2039ba96e2cb05860a1760f9c977be12c1e59d438fcbc2e6dc0a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py": {
+      "bytes": 35837,
+      "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 12027,
+      "sha256": "6b8138ace63c4949e618b6a48c48a3edbb6d198e69dfc0551aa74c5b69bad7dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 11053,
+      "sha256": "72cc2b1576920eb1e2e1574b4350d137af836c2af514bcc95ddad58aefd19b31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/sample_conditions_presence_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "8c12ec40dd07881f3e2884835b67e254549ea7904c80b6a04824bfc053079422"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/sampler-source-independent-review-v01.json": {
+      "bytes": 3451,
+      "sha256": "00540d4e2f7ada13e3e00c0fcf6926bd03dca011c685a1f84c08038ac609ab54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 29072,
+      "sha256": "db8462063e2296fa8476cd251c69ae7332bc4dfbcdecac18f6d57a31cfd73927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/training-design-v01.json": {
+      "bytes": 8440,
+      "sha256": "88088621c20a9bd3785a4b7149bc80493d2f154ece968d8c80d76a4f6b0fe324"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/child-exit.json": {
+      "bytes": 105,
+      "sha256": "a5a1c471f64f417f9001a8b3bae9837452f70fac9571023d2538376d5ead4fc4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/child-identity.json": {
+      "bytes": 44,
+      "sha256": "a96b5f1f14d6443c5ac155a99c6ff3c0b34965c837f6f0eac364d00df89ab71e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/child.log": {
+      "bytes": 83,
+      "sha256": "1fb73060e7348620c4f5e4852fe0d82844bab600dcb6d7138719998aab8b9067"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/command.json": {
+      "bytes": 1069,
+      "sha256": "4cba4fc4d89b224c2554cdca0d1af4b94694cca69641c649b28f9208f37b7e72"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/group-rss-observations.jsonl": {
+      "bytes": 51509,
+      "sha256": "9442dac7ea6ede1720441762bede2a8bf62114a9dd9697ccca50974219f5fff6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/group-rss-summary.json": {
+      "bytes": 1759,
+      "sha256": "6f9cc62bfe6bdae4bb4da7ce22a4124f8348a1ffe9c613458fb988393ad1e1e3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "1a6faf0d6ad3905f18836d6665be53420343f7a6cb2f7cb244733e258240c40d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/lease-binding.json": {
+      "bytes": 694,
+      "sha256": "bfb40c46b138f6815874ee784e32d6c6cc53be491573c4cf1b390f4750de5ec8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/lease-observations.jsonl": {
+      "bytes": 107304,
+      "sha256": "8579d9a2496b6e992182b869623c78f396009a40b3f916a5ffc1029d0a8aeb5c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/owned-group-final.json": {
+      "bytes": 190,
+      "sha256": "4018fbbe91780acee6244d8c8e2b8b200323e47ae3d65361a10af52d5799b4c3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/pre-admission.json": {
+      "bytes": 7907,
+      "sha256": "b02280772936dd3acf270507135f58d57d01175b2ca74065ece09b7efd84139c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/resource-observations.json": {
+      "bytes": 2627,
+      "sha256": "4111c468f57342e6bb7598ee9814aca4a45f6734acff8df7476e2c8dfd1176bb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "eb7b0e9078f976f3df08c719e383dc5fff3d3acbc4d80ea3dec98a119ac17aa6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429302,
+      "sha256": "b8fb400f4fd96a0b83d31c988c0be46c0e89c7a70c4c83da4b4e38fb2a4b877d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "f0b526ab8ee08ff36d4f165ddeec8bbc67ed6a136cdfa60883540ef133dc1b41"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431267,
+      "sha256": "84bcaf9a3782e0dd25eded8db221bbe9f37d2549001b7f0e7bf3d5634fefc4fa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "9ad796c9be1174c879ee7dbbafcac36f5b90b92b3acfeb9981cde6b9444cedf0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 678690,
+      "sha256": "ee7761773e874bc53263305b89ea5a0f9a60ba515861d1c54a58d1015669a032"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "13ee22f4a0a63a859462446fb5868ebe6db64aac2bf17c7a1eec4664d171587b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-raw.json": {
+      "bytes": 804889,
+      "sha256": "2753e176048d13539413c03b79cb80b6da4c6c9f819db180131c78ed5edf0eda"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "2c14eba5a09dbcb1af8dd08578891b66574c59c4e1029e3f85c36ad7a2dc4a90"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-raw.json": {
+      "bytes": 805525,
+      "sha256": "c62b092b11232abea5d9fcdb78b299f300552de1561ae57f937fd79132bdcdd5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "f63f4bec2132e68488fa8478aa8db33a680970f5b4a05edb06c61649c1597585"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 626506,
+      "sha256": "1700e482bec7fb04bbd11f708a9918b6d39f080c4afe1ab983c418105969c7ea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "9e3743937ffd1ac576263b4939a0698b04652d48b435ee5db06014438cd7b763"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "57dd1d7cebb8d39ca0bcb95e99dda1ce84f526c9d84db03aa90a92c8db9c282b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "57831087b8bf822d90a01fea67c99c0bb084fdd66433085270cc1ee10cffa40a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1451975,
+      "sha256": "6563b1b6a7a6df062812fb383dfdacebd98e9341f13094c519bff14d1a9cebf5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "ac6f49335d3452c9a35c8245b490a8dc13b06b44b2a783a0c5def41a0f2d74fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2286964,
+      "sha256": "ee83951ed1f370aab4d4ace76dea05e63f00fa56399c4fdfeb5fc3f4d3fb5d5f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json": {
+      "bytes": 9337558,
+      "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-training.json": {
+      "bytes": 367209,
+      "sha256": "26c70b4787b02c583d41b311ed91b0b10f2d7ef59239d5edd9e83e01014a9038"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "ce1fc477a88d8c56a7c20c1240bb27eb76a0120bc1788da2b40fdf6f23b5071d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20285,
+      "sha256": "da0c1705bb196ee857026c8bdd088d8809df80c370b5ebc4f6f2ae42265db8a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-disabled.json": {
+      "bytes": 20289,
+      "sha256": "0bdd1f7617b34f10574e47248bb09ca9bd3caa3d49a21a56a5018c49edf4bd78"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20287,
+      "sha256": "de361ae677c9d491629a66185df31eb28da27fba004f4403b23a91d3628410c0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-zeros.json": {
+      "bytes": 20285,
+      "sha256": "381f338bfe734fc8112dd127a236b003b4f021f07a7593bfa9799f97e7a1c5ac"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "24227e3ea9e9a9b07f5c81653d9888a0c24727b9c79f23c6a1c3446fdefff291"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "4c191d96ae0c3554efd40354ee421f7e9471152d7071af8a40b7f77ce49184fb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-raw.json": {
+      "bytes": 3588013,
+      "sha256": "d60e2f1faad0ee83687d89fcca6c273c5ec462fea763a0eae6492ab50efaf71f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/summary.json": {
+      "bytes": 62105,
+      "sha256": "6ec7eb8bc440461c2adcde36521f8a5fe1b1a0843728cc04b3b933c9e065569b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1024996,
+      "sha256": "18d299abb12013d733133aa07a2d7763af265d29c772f85af435a2d9c0bbefd9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1434161,
+      "sha256": "0c0ad06daeea537305067442b9fa121e588dbeef9b44283a96be66032b18e59c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1024788,
+      "sha256": "bb2393f68feb47735bb8722f9fb5a96434edc80d3b06a5dcef426944b6ad5fb5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1433575,
+      "sha256": "d28fffed948badf6c1b65aa2a74d517f4b5d09a7183b523f63ecfe58e16bd37c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526660,
+      "sha256": "0d6cbc0405eca031a349b769176a796d6e5f84d8f9eb2d1e32bbeda464fb39e5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 678683,
+      "sha256": "f66dce6f14f9d69baaeabf69bb8e2aa28106ad2881a744343b63a19ac892ceae"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-joint.json": {
+      "bytes": 520909,
+      "sha256": "49e993f72a38f4987c85a4525038ae15e6878292f4b1391647322b599ccb7395"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-raw.json": {
+      "bytes": 807095,
+      "sha256": "24b795438140e40c44681dd7feee83a4698465f1d6d9ff8bdd2fde7177b0b5d8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-joint.json": {
+      "bytes": 462509,
+      "sha256": "f390e96c80799814eb3b9ebbd1ac7fe0a4559c7b873b7b606e795ad574574a80"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-raw.json": {
+      "bytes": 805493,
+      "sha256": "8b14722d9cd8db43bbfeda107ed3d8a0b3e4099e5bca32e477a77317d58eb981"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "80ac9292e12421ef9a1d8c0370d4b94ea194c296a81dc2f654ab69142fb10231"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 626492,
+      "sha256": "75a0246b3c414cd499f7bdcbb9c89e6497de08b4f88b38a145ef0c552fc6a64c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "6f1673c9fd51078e001691e99983d8249a8fe28bc199cda71f7547444635869c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-joint.json": {
+      "bytes": 107530,
+      "sha256": "805f502f343a2e85b50ee000c7b2f4359573e08f04958c5f29ad0284c31144a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-raw.json": {
+      "bytes": 281964,
+      "sha256": "6f42880078a1831fc9d70710e51c428d8d9b3e309da80381b3167456ca002eae"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044652,
+      "sha256": "743c3ec07c4c0a098a77bdbab717b41d5c55eac1417b54e16b9aedbd3980c4f0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451959,
+      "sha256": "a8858e468228649fb688f10826770847b570517ab173bd4e8867f7b7871df02e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456849,
+      "sha256": "0461ddc7794a1ac2112fbad1512c50171575344233d74544c5d3f043a1493665"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-raw.json": {
+      "bytes": 2286936,
+      "sha256": "04d455a28f86d2ae6a39dbe97587bf17df6f0ae98f5f470e95dde25789d48311"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20281,
+      "sha256": "043494f990cae2b3925a891ec3afbdab2fb7ba345b694fa7b21536338f931c61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-disabled.json": {
+      "bytes": 20285,
+      "sha256": "d78d95321807a7f34ff4841e46c7412813388265159c0f769a43bd8282b2fcbc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20283,
+      "sha256": "a9b62a0f19f78b06122762a235cfef92ffdfd1d3024b6df79f0f22fc7d4a5da2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-zeros.json": {
+      "bytes": 20281,
+      "sha256": "1551a339ef86a914e5e2316d920291ee5dfc6aea054be534ca1b2fdcd4037a58"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "d7919329437242def74482fcbfa6d7107e1b784e997cd5c1771917e86124b82a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-joint.json": {
+      "bytes": 2491319,
+      "sha256": "426b8226648e6d7f513e7e343539e3f2859eda9f72061e0f09dcf95d80834e7e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-raw.json": {
+      "bytes": 3590509,
+      "sha256": "208d4924d843669306a58db775e663046608fae8607beac29a76e2896b815dca"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/scheduler-adoption.json": {
+      "bytes": 4646,
+      "sha256": "9d3ed620eedca6c6035a9c652c5f416da58b0fb62c1eb5e59face6f10974f593"
+    }
+  },
+  "checkpoint_parsing": false,
+  "default_promotion": false,
+  "findings": [],
+  "immutable_remote_files": 5269,
+  "model_execution": false,
+  "new_files": 164,
+  "observed_main_matches_publication": true,
+  "observed_main_revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+  "old_files_preserved": 5105,
+  "parent_revision": "f91692a0a695d91b793a00936dd525fbe2bafcac",
+  "passed": true,
+  "payload_bytes": 71689458,
+  "private_resource_reads": false,
+  "release_prefix": "releases/20261014-conditions-presence-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+  "schema": "conditions-presence-Hub-actual-publication-independent-review/v1",
+  "semantic_accuracy": null
+}
