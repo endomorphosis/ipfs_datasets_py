@@ -17,7 +17,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Mapping
 
-from .catalog import EXCLUDED_SLUGS, all_countries, target_repo
+from .catalog import EXCLUDED_SLUGS, all_countries, static_crosswalk_coverage, target_repo
 
 ALIAS_TO_CANONICAL = {
     "dominican_republic": "dominicanrepublic",
@@ -449,6 +449,7 @@ def coverage_report(releases_dir: Path | None = None) -> dict[str, Any]:
         "n_catalog": len(all_countries()),
         "excluded": excluded,
         "alias_sources": aliases,
+        "crosswalk": static_crosswalk_coverage(),
         "missing_justicedao": missing_hub,
         "missing_local_and_hub": missing_local,
         "local_only": sorted(local_ir_canon - hub_ir_canon),

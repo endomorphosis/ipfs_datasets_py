@@ -139,13 +139,63 @@ def load_local_source(local_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, dict
     return laws, articles, meta
 
 
+def _law_shards(local: Path) -> list[Path]:
+    data = local / "data"
+    if not data.is_dir():
+        return []
+    return [
+        path
+        for path in sorted(data.glob("laws-*.parquet"))
+        if "_html" not in path.name
+    ]
+
+
+def _pack_local_shards(local: Path, cache_dir: Path) -> Path:
+    """Concatenate a local shard directory. Does not contact the Hub."""
+
+    meta: dict[str, Any] = {}
+    meta_path = local / "pack_meta.json"
+    if meta_path.is_file():
+        try:
+            loaded = json.loads(meta_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                meta = loaded
+        except Exception:
+            meta = {}
+    revision = str(meta.get("source_revision") or meta.get("revision") or "")
+    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+        raise ValueError("source_revision must be 40 lowercase hex characters")
+    slug = str(meta.get("slug") or local.name)
+    dataset = str(meta.get("source_dataset") or f"endomorphosis/ipfs_{slug}_laws")
+    dest = Path(cache_dir) / "packed-shards" / slug
+    from ipfs_datasets_py.processors.legal_scrapers.world_law.load_sharded_laws import (
+        load_sharded_laws,
+    )
+
+    load_sharded_laws(
+        local,
+        dest,
+        slug=slug,
+        source_dataset=dataset,
+        source_revision=revision,
+    )
+    return dest
+
+
 def load_source(repo_id: str, cache_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:
-    """Load Hub dataset id OR a local directory with laws/articles parquet."""
+    """Load Hub dataset id OR a local directory with laws/articles parquet.
+
+    A local directory of ``data/laws-*.parquet`` is packed with
+    ``load_sharded_laws`` before it is read. That path requires a 40-hex
+    ``source_revision`` in ``pack_meta.json`` and does not call the Hub.
+    """
     local = Path(repo_id)
     if local.is_dir() and (
         (local / "data" / "laws.parquet").is_file() or (local / "laws.parquet").is_file()
     ):
         return load_local_source(local)
+    if local.is_dir() and _law_shards(local):
+        return load_local_source(_pack_local_shards(local, cache_dir))
 
     configure_hf()
     os.environ.setdefault("HF_HOME", str(cache_dir / "hf"))

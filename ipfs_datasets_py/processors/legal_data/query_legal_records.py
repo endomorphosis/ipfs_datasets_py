@@ -8,13 +8,16 @@ and norm repos are opened only when ``pin_readable`` is true.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
-import uuid
+import re
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Mapping
 
 from ipfs_datasets_py.processors.legal_data.iso_slug_crosswalk import (
     ResolvedJurisdiction,
+    fold_alias,
     resolve_jurisdiction,
 )
 from ipfs_datasets_py.processors.legal_data.justicedao_release_pins import (
@@ -31,6 +34,19 @@ _CURRENT_BUNDLE = frozenset({
     "federal-register-full-graphrag-v20260810",
     "patent-legal-ir-graphrag",
 })
+_SHA40 = re.compile(r"^[0-9a-f]{40}$")
+_QUERY_ID_FIELDS = (
+    "jurisdiction",
+    "text_query",
+    "citation",
+    "instrument_type",
+    "admin_level",
+    "language",
+    "limit",
+    "allow_stale",
+    "gap_status",
+    "alias_revisions",
+)
 
 
 class LegalQueryDisabled(RuntimeError):
@@ -82,6 +98,7 @@ def query_legal_records(
     limit: int = 20,
     allow_stale: bool = False,
     gap_status: str | None = None,
+    alias_revisions: Mapping[str, tuple[str | None, str | None]] | None = None,
     corpus_opener: Callable[[str], tuple[dict[str, object], ...]] | None = None,
 ) -> LegalQueryResult:
     """Return legal-record/v1 rows for one jurisdiction.
@@ -96,6 +113,18 @@ def query_legal_records(
         )
     if limit < 1 or limit > 100:
         raise LegalQueryInputError("limit_out_of_range")
+    query_id = _stable_query_id(
+        jurisdiction=jurisdiction,
+        text_query=text_query,
+        citation=citation,
+        instrument_type=instrument_type,
+        admin_level=admin_level,
+        language=language,
+        limit=limit,
+        allow_stale=allow_stale,
+        gap_status=gap_status,
+        alias_revisions=alias_revisions,
+    )
     del language  # reader-side filter; resolving it here would change the flag order
 
     resolved = resolve_jurisdiction(jurisdiction)
@@ -106,6 +135,7 @@ def query_legal_records(
             source_repo=None,
             source_revision=None,
             records=(),
+            query_id=query_id,
         )
 
     _require_query_shape(
@@ -121,6 +151,7 @@ def query_legal_records(
         admin_level=admin_level,
         allow_stale=allow_stale,
         gap_status=gap_status,
+        alias_revisions=alias_revisions,
     )
     records: tuple[dict[str, object], ...] = ()
     if route.open_repo is not None and corpus_opener is not None:
@@ -133,6 +164,7 @@ def query_legal_records(
         source_repo=route.source_repo,
         source_revision=route.source_revision,
         records=records,
+        query_id=query_id,
     )
 
 
@@ -165,6 +197,7 @@ def _route(
     admin_level: str | None,
     allow_stale: bool,
     gap_status: str | None,
+    alias_revisions: Mapping[str, tuple[str | None, str | None]] | None,
 ) -> _Route:
     if resolved.admin_level == "adm1":
         return _closed(resolved.echo)
@@ -177,7 +210,12 @@ def _route(
     level = admin_level or resolved.admin_level
     if level == "municipality":
         return _route_municipal(resolved, allow_stale=allow_stale, gap_status=gap_status)
-    return _route_national(resolved, allow_stale=allow_stale, gap_status=gap_status)
+    return _route_national(
+        resolved,
+        allow_stale=allow_stale,
+        gap_status=gap_status,
+        alias_revisions=alias_revisions,
+    )
 
 
 def _route_us(*, instrument_type: str | None, admin_level: str | None, allow_stale: bool) -> _Route:
@@ -192,11 +230,11 @@ def _route_us(*, instrument_type: str | None, admin_level: str | None, allow_sta
         "us-federal": "justicedao/ipfs_uscode",
         "us-state": "justicedao/ipfs_state_laws",
     }.get(admin_level or "")
-    if instrument_type == "register":
+    if repo is None and instrument_type == "register":
         repo = "justicedao/federal-register-full-graphrag-v20260810"
-    elif instrument_type == "case":
+    elif repo is None and instrument_type == "case":
         repo = "justicedao/ipfs_caselaw_access_project"
-    elif instrument_type == "patent":
+    elif repo is None and instrument_type == "patent":
         repo = "justicedao/patent-legal-ir-graphrag"
     if repo is None:
         return _closed("US")
@@ -210,10 +248,12 @@ def _route_national(
     *,
     allow_stale: bool,
     gap_status: str | None,
+    alias_revisions: Mapping[str, tuple[str | None, str | None]] | None,
 ) -> _Route:
     if not resolved.slug:
         return _closed(resolved.echo)
-    repo = f"justicedao/ipfs_{resolved.slug}_laws_ir"
+    slug = _select_alias_slug(resolved.slug, alias_revisions)
+    repo = f"justicedao/ipfs_{slug}_laws_ir"
     return _with_gap(
         echo=resolved.echo,
         ir_repo=repo,
@@ -230,8 +270,6 @@ def _route_municipal(
     gap_status: str | None,
 ) -> _Route:
     municipal = resolved.municipal_slug
-    if municipal is None and resolved.slug:
-        municipal = f"{resolved.slug}_municipal"
     if not municipal:
         return _closed(resolved.echo)
     ir_repo = f"justicedao/ipfs_{municipal}_laws_ir"
@@ -289,6 +327,74 @@ def _closed(echo: str) -> _Route:
     return _Route(echo, "not_published", None, None, None)
 
 
+def _alias_pair(slug: str) -> tuple[str, str] | None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.coverage import (
+        ALIAS_TO_CANONICAL,
+    )
+
+    canonical = fold_alias(slug)
+    for alias_key, canonical_value in ALIAS_TO_CANONICAL.items():
+        if slug in {alias_key, canonical_value} or canonical == canonical_value:
+            return alias_key, canonical_value
+    return None
+
+
+def _sha_match(pair: tuple[str | None, str | None] | None) -> bool:
+    if pair is None:
+        return False
+    dataset_revision, source_sha = pair
+    return (
+        isinstance(dataset_revision, str)
+        and isinstance(source_sha, str)
+        and _SHA40.fullmatch(dataset_revision) is not None
+        and dataset_revision == source_sha
+    )
+
+
+def _select_alias_slug(
+    slug: str,
+    revisions: Mapping[str, tuple[str | None, str | None]] | None,
+) -> str:
+    """Pick one spelling of an alias pair.
+
+    Exactly one spelling whose manifest revision equals that spelling's own
+    source SHA wins, including when it is the alias key. Both matches, neither
+    match, and a missing report all select the canonical slug. This function
+    does not open a dataset.
+    """
+
+    pair = _alias_pair(slug)
+    if pair is None:
+        return fold_alias(slug)
+    alias_key, canonical = pair
+    if revisions is None:
+        return canonical
+    if _sha_match(revisions.get(alias_key)) and not _sha_match(revisions.get(canonical)):
+        return alias_key
+    return canonical
+
+
+def _jsonable_revisions(
+    revisions: Mapping[str, tuple[str | None, str | None]] | None,
+) -> dict[str, list[str | None] | None] | None:
+    if revisions is None:
+        return None
+    encoded: dict[str, list[str | None] | None] = {}
+    for key in sorted(revisions):
+        pair = revisions[key]
+        encoded[key] = None if pair is None else [pair[0], pair[1]]
+    return encoded
+
+
+def _stable_query_id(**fields: object) -> str:
+    payload = {key: fields.get(key) for key in _QUERY_ID_FIELDS}
+    raw_revisions = fields.get("alias_revisions")
+    revisions = raw_revisions if isinstance(raw_revisions, Mapping) else None
+    payload["alias_revisions"] = _jsonable_revisions(revisions)
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
 def _result(
     *,
     jurisdiction: str,
@@ -296,6 +402,7 @@ def _result(
     source_repo: str | None,
     source_revision: str | None,
     records: tuple[dict[str, object], ...],
+    query_id: str,
 ) -> LegalQueryResult:
     return LegalQueryResult(
         schema_version=_QUERY_SCHEMA,
@@ -305,5 +412,5 @@ def _result(
         source_repo=source_repo,
         source_revision=source_revision,
         records=records,
-        query_id=str(uuid.uuid4()),
+        query_id=query_id,
     )

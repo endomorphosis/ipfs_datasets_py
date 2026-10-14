@@ -160,6 +160,54 @@ def all_countries() -> list[dict[str, Any]]:
     return merge_country_rows(COUNTRIES, load_cached_countries())
 
 
+def is_local_law_pack(path: Path) -> bool:
+    """True when a directory already has laws.parquet or text law shards."""
+
+    local = Path(path)
+    if not local.is_dir():
+        return False
+    if (local / "data" / "laws.parquet").is_file() or (local / "laws.parquet").is_file():
+        return True
+    data = local / "data"
+    if not data.is_dir():
+        return False
+    return any(
+        shard.name.startswith("laws-") and shard.suffix == ".parquet" and "_html" not in shard.name
+        for shard in data.glob("laws-*.parquet")
+    )
+
+
+def static_crosswalk_coverage() -> dict[str, Any]:
+    """Compare reviewed crosswalk slugs with the static catalog.
+
+    A slug that is only in the crosswalk stays non-indexable. Alias keys
+    fold onto the canonical slug and are not a second country.
+    """
+
+    from ipfs_datasets_py.processors.legal_data.iso_slug_crosswalk import (
+        codes_in_crosswalk,
+        national_slug,
+    )
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.coverage import (
+        ALIAS_TO_CANONICAL,
+        canonical_slug,
+    )
+
+    slugs: set[str] = set()
+    for code in codes_in_crosswalk():
+        slug = national_slug(code)
+        if slug:
+            slugs.add(canonical_slug(slug))
+    known = {str(row["slug"]) for row in COUNTRIES if row.get("slug")}
+    return {
+        "crosswalk_slugs": sorted(slugs),
+        "in_static_catalog": sorted(slugs & known),
+        "not_in_static_catalog": sorted(slugs - known),
+        "missing_indexable": False,
+        "alias_keys_are_not_extra_countries": sorted(ALIAS_TO_CANONICAL),
+    }
+
+
 def get_country(source: str) -> dict[str, Any]:
     source = source.strip()
     # Local filtered pack: directory with data/laws.parquet (+ optional pack_meta.json)
@@ -167,9 +215,7 @@ def get_country(source: str) -> dict[str, Any]:
     import json as _json
 
     local = _Path(source)
-    if local.is_dir() and (
-        (local / "data" / "laws.parquet").is_file() or (local / "laws.parquet").is_file()
-    ):
+    if is_local_law_pack(local):
         pack_meta: dict[str, Any] = {}
         meta_path = local / "pack_meta.json"
         if meta_path.is_file():
@@ -205,6 +251,11 @@ def get_country(source: str) -> dict[str, Any]:
     if "/" in source:
         slug = source.rsplit("/", 1)[-1]
     slug = slug.removeprefix("ipfs_").removesuffix("_laws").removesuffix("-ir")
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.coverage import (
+        canonical_slug,
+    )
+
+    slug = canonical_slug(slug)
     for row in all_countries():
         if row["slug"] == slug or row["repo"] == source or row["repo"].endswith("/" + source):
             return dict(row)

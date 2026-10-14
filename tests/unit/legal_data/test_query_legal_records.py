@@ -146,3 +146,123 @@ def test_readable_world_pin_returns_partial_with_revision(monkeypatch) -> None:
     assert current.coverage == "current"
     assert current.source_repo == "justicedao/ipfs_france_laws_ir"
     assert calls[-1] == "justicedao/ipfs_france_laws_ir"
+
+
+def test_admin_level_repo_is_not_replaced_by_instrument(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    federal = query_legal_records(
+        jurisdiction="US",
+        text_query="title 18",
+        admin_level="us-federal",
+        instrument_type="register",
+    )
+    assert federal.source_repo == "justicedao/ipfs_uscode"
+    assert federal.coverage == "current"
+    state = query_legal_records(
+        jurisdiction="US",
+        text_query="penal",
+        admin_level="us-state",
+        instrument_type="case",
+    )
+    assert state.source_repo == "justicedao/ipfs_state_laws"
+    assert state.coverage == "current"
+    patent_state = query_legal_records(
+        jurisdiction="US",
+        text_query="claim",
+        admin_level="us-federal",
+        instrument_type="patent",
+    )
+    assert patent_state.source_repo == "justicedao/ipfs_uscode"
+
+
+def test_instrument_without_admin_level_selects_its_repo(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    register = query_legal_records(
+        jurisdiction="US",
+        text_query="notice",
+        instrument_type="register",
+    )
+    assert register.source_repo == "justicedao/federal-register-full-graphrag-v20260810"
+    assert register.coverage == "current"
+    case = query_legal_records(
+        jurisdiction="US",
+        text_query="brown",
+        instrument_type="case",
+    )
+    assert case.source_repo == "justicedao/ipfs_caselaw_access_project"
+    assert case.coverage == "snapshot"
+    patent = query_legal_records(
+        jurisdiction="US",
+        text_query="claim",
+        instrument_type="patent",
+    )
+    assert patent.source_repo == "justicedao/patent-legal-ir-graphrag"
+    assert patent.coverage == "current"
+
+
+def test_query_id_is_stable_for_the_same_request(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    first = query_legal_records(jurisdiction="FR", text_query="code", citation="art 1")
+    second = query_legal_records(jurisdiction="FR", text_query="code", citation="art 1")
+    changed = query_legal_records(jurisdiction="FR", text_query="code", citation="art 2")
+    assert first.query_id == second.query_id
+    assert len(first.query_id) == 64
+    assert changed.query_id != first.query_id
+
+
+def test_missing_municipal_slug_does_not_invent_a_repo(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    closed = query_legal_records(
+        jurisdiction="CL",
+        text_query="ordenanza",
+        admin_level="municipality",
+    )
+    assert closed.coverage == "not_published"
+    assert closed.source_repo is None
+    named = query_legal_records(jurisdiction="chile_municipal", text_query="ordenanza")
+    assert named.coverage == "not_published"
+    assert named.source_repo is None
+    hungary = query_legal_records(jurisdiction="hungary_municipal", text_query="rendelet")
+    assert hungary.source_repo is None
+    spain = query_legal_records(jurisdiction="spain_municipal", text_query="ordenanza")
+    assert spain.jurisdiction == "ES"
+    assert spain.source_repo == "justicedao/ipfs_spain_municipal_laws_ir"
+
+
+_MATCH = "a" * 40
+_OTHER = "b" * 40
+
+
+def test_alias_sha_selects_one_spelling(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    alias_only = query_legal_records(
+        jurisdiction="PG",
+        text_query="land",
+        alias_revisions={
+            "papua_new_guinea": (_MATCH, _MATCH),
+            "papuanewguinea": (_OTHER, _MATCH),
+        },
+    )
+    assert alias_only.jurisdiction == "PG"
+    assert alias_only.source_repo == "justicedao/ipfs_papua_new_guinea_laws_ir"
+    neither = query_legal_records(
+        jurisdiction="papua_new_guinea",
+        text_query="land",
+        alias_revisions={
+            "papua_new_guinea": (_OTHER, _MATCH),
+            "papuanewguinea": (_MATCH, _OTHER),
+        },
+    )
+    assert neither.jurisdiction == "PG"
+    assert neither.source_repo == "justicedao/ipfs_papuanewguinea_laws_ir"
+    both = query_legal_records(
+        jurisdiction="papua_new_guinea",
+        text_query="land",
+        alias_revisions={
+            "papua_new_guinea": (_MATCH, _MATCH),
+            "papuanewguinea": (_MATCH, _MATCH),
+        },
+    )
+    assert both.source_repo == "justicedao/ipfs_papuanewguinea_laws_ir"
+    unset = query_legal_records(jurisdiction="PG", text_query="land")
+    assert unset.source_repo == "justicedao/ipfs_papuanewguinea_laws_ir"

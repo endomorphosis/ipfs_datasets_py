@@ -16,11 +16,13 @@ from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.upload import (
 from ipfs_datasets_py.processors.legal_scrapers.world_law.export_norm import (
     ExportRefused,
     ExportUploadBlocked,
+    _write_parts,
     choose_export_command,
     destination_repo,
     export_norm,
     main,
 )
+from ipfs_datasets_py.processors.legal_scrapers.world_law.schema import LEGAL_RECORD_FIELDS
 
 _SHA = "53a38d3ea51402640141bf1f1126d669c1277e46"
 _MODULE = (
@@ -278,6 +280,76 @@ def test_pack_shards_writes_laws_and_refuses_html_slugs(tmp_path: Path, capsys) 
     )
     assert refused == 2
     assert "pack-shards" in capsys.readouterr().out
+
+
+def test_parquet_keeps_a_column_missing_from_the_first_row(tmp_path: Path) -> None:
+    first = {name: None for name in LEGAL_RECORD_FIELDS}
+    second = dict(first)
+    second["citation"] = "Art. 1"
+    del first["citation"]
+    written = _write_parts([first, second], tmp_path / "out", 10)
+    table = pq.read_table(written[0])
+    assert "citation" in table.column_names
+    assert table.column("citation").to_pylist() == [None, "Art. 1"]
+    assert list(table.column_names) == list(LEGAL_RECORD_FIELDS)
+
+
+def test_chile_and_hungary_card_configs_print_zero_as_not_published(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "source"
+    _write(
+        source / "data" / "laws-00001.parquet",
+        [
+            {
+                "cid": "fr",
+                "country_code": "FR",
+                "doc_type": "ordinance",
+                "title_native": "Arrete",
+                "text": "texte",
+                "content_complete": True,
+                "source_official": True,
+            }
+        ],
+    )
+    summary = export_norm(
+        source,
+        tmp_path / "out",
+        family="world-municipal",
+        source_dataset="endomorphosis/world_municipal_law",
+        source_revision=_SHA,
+        dry_run=True,
+    )
+    counts = summary["card_config_counts"]
+    assert counts["CL"] == {
+        "rows_kept": 0,
+        "coverage": "not_published",
+        "provenance_table": False,
+    }
+    assert counts["HU"]["rows_kept"] == 0
+    assert counts["HU"]["coverage"] == "not_published"
+    assert summary["rows_kept"] == 1
+    assert not (tmp_path / "out").exists()
+    code = main(
+        [
+            "--family",
+            "world-municipal",
+            "--source",
+            str(source),
+            "--out",
+            str(tmp_path / "printed"),
+            "--revision",
+            _SHA,
+            "--source-dataset",
+            "endomorphosis/world_municipal_law",
+            "--dry-run",
+        ]
+    )
+    assert code == 0
+    printed = capsys.readouterr().out
+    assert '"CL"' in printed
+    assert '"HU"' in printed
+    assert "not_published" in printed
 
 
 def test_upload_ignore_patterns_cover_token_and_cache_files() -> None:

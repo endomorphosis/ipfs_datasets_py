@@ -22,7 +22,7 @@ from .sparse import export_sparse_graphrag
 from .mem import MemAbort, checkpoint, log_mem
 from .spill import spill_dir_for, spill_pickle
 from .package import package_from_spill, package_release
-from .catalog import get_country, indexable_countries, target_repo
+from .catalog import get_country, indexable_countries, is_local_law_pack, target_repo
 
 from .incremental import (
     fetch_hub_prior,
@@ -184,13 +184,7 @@ def build_country(
     repo = country["repo"]
     out = Path(out) if out else RELEASES / f"ipfs_{country['slug']}_laws_ir"
     local_dir = country.get("local_source_dir") or (
-        str(Path(source).resolve())
-        if Path(source).is_dir()
-        and (
-            (Path(source) / "data" / "laws.parquet").is_file()
-            or (Path(source) / "laws.parquet").is_file()
-        )
-        else None
+        str(Path(source).resolve()) if is_local_law_pack(Path(source)) else None
     )
     _log(
         f"build start {repo} -> {out} "

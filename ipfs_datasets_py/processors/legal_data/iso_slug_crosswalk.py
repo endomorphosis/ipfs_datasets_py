@@ -145,6 +145,42 @@ MUNICIPAL_SLUG: dict[str, str] = {
     "PS": "palestine_municipal",
 }
 
+# Reviewed endomorphosis/ipfs_*_municipal_laws hubs. A ``*_municipal`` stem
+# outside this set is not a catalog, including chile_municipal and
+# hungary_municipal. Those names are not world-card configs.
+_PUBLISHED_MUNICIPAL_SLUGS = frozenset({
+    "andorra_municipal",
+    "austria_municipal",
+    "belgium_municipal",
+    "brazil_municipal",
+    "canada_municipal",
+    "czech_municipal",
+    "estonia_municipal",
+    "ethiopia_municipal",
+    "indonesia_municipal",
+    "jordan_municipal",
+    "kenya_municipal",
+    "korea_municipal",
+    "latvia_municipal",
+    "malta_municipal",
+    "mauritius_municipal",
+    "mozambique_municipal",
+    "namibia_municipal",
+    "netherlands_municipal",
+    "new_zealand_municipal",
+    "palestine_municipal",
+    "peru_municipal",
+    "portugal_municipal",
+    "saudi_arabia_municipal",
+    "slovenia_municipal",
+    "south_africa_municipal",
+    "spain_municipal",
+    "tanzania_municipal",
+    "tunisia_municipal",
+    "uganda_municipal",
+    "zimbabwe_municipal",
+})
+
 _CODE = re.compile(r"^[A-Za-z]{2}(-[A-Za-z0-9]{1,3})?$")
 
 HTML_COUNTRY_NAMES = {
@@ -257,10 +293,11 @@ def _resolve_code(code: str) -> ResolvedJurisdiction | None:
 
 
 def _resolve_slug(slug: str) -> ResolvedJurisdiction | None:
-    found = _SLUG_INDEX.get(slug)
+    folded = fold_alias(slug)
+    found = _SLUG_INDEX.get(folded)
     if found is None:
-        if slug.endswith("_municipal"):
-            stem = slug[: -len("_municipal")]
+        if folded in _PUBLISHED_MUNICIPAL_SLUGS and folded.endswith("_municipal"):
+            stem = folded[: -len("_municipal")]
             for code in codes_in_crosswalk():
                 if national_slug(code) == stem:
                     return ResolvedJurisdiction(
@@ -268,7 +305,7 @@ def _resolve_slug(slug: str) -> ResolvedJurisdiction | None:
                         code=code,
                         slug=stem,
                         admin_level="municipality",
-                        municipal_slug=slug,
+                        municipal_slug=folded,
                     )
         return None
     code, level = found

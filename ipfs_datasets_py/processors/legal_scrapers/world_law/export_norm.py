@@ -45,6 +45,10 @@ HTML_MUNICIPAL_SLUGS = frozenset({
 })
 _FAMILIES = frozenset({"html", "american", "world-national", "world-municipal"})
 _RECORD_SCHEMA = pa.schema([pa.field(name, pa.string()) for name in LEGAL_RECORD_FIELDS])
+# world_municipal_law README at 5adaca491711041b297664294fda9bfecea0c62e names
+# these configs. They are absent from that card's provenance table. A dry-run
+# count of zero is not_published. This writer does not invent their rows.
+_CARD_CONFIGS_WITHOUT_PROVENANCE = ("CL", "HU")
 
 
 class ExportRefused(ValueError):
@@ -145,6 +149,8 @@ def export_norm(
         "dry_run": dry_run,
         "files": [],
     }
+    if family == "world-municipal":
+        summary["card_config_counts"] = _card_config_counts(records)
     if dry_run:
         return summary
     dest = Path(dest_dir)
@@ -269,6 +275,23 @@ def _one(
     if isinstance(provenance, dict):
         provenance["query_default"] = gap_status in {"stale", "missing", "incomplete"}
     return record
+
+
+def _card_config_counts(records: Sequence[Mapping[str, object]]) -> dict[str, dict[str, object]]:
+    kept: Counter[str] = Counter()
+    for record in records:
+        code = str(record.get("jurisdiction") or "").upper()
+        if code in _CARD_CONFIGS_WITHOUT_PROVENANCE:
+            kept[code] += 1
+    counts: dict[str, dict[str, object]] = {}
+    for code in _CARD_CONFIGS_WITHOUT_PROVENANCE:
+        rows = int(kept[code])
+        counts[code] = {
+            "rows_kept": rows,
+            "coverage": "snapshot" if rows else "not_published",
+            "provenance_table": False,
+        }
+    return counts
 
 
 def _encode(record: Mapping[str, object]) -> dict[str, object]:

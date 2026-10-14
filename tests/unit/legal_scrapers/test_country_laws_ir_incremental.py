@@ -91,6 +91,25 @@ def _corpus_for(*titles: str, revision: str = "rev-a") -> pd.DataFrame:
     return corpus
 
 
+def test_crosswalk_slugs_outside_the_static_catalog_stay_non_indexable() -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.catalog import (
+        COUNTRIES,
+        static_crosswalk_coverage,
+    )
+
+    report = static_crosswalk_coverage()
+    known = {row["slug"] for row in COUNTRIES}
+    assert report["missing_indexable"] is False
+    assert "guam" in report["not_in_static_catalog"]
+    assert "guam" not in known
+    assert "curacao" in report["not_in_static_catalog"]
+    assert "chile" in report["in_static_catalog"]
+    assert "hungary" in report["in_static_catalog"]
+    assert "papua_new_guinea" not in report["crosswalk_slugs"]
+    assert "papuanewguinea" in report["not_in_static_catalog"]
+    assert "papua_new_guinea" in report["alias_keys_are_not_extra_countries"]
+
+
 def test_catalog_targets_justicedao_and_endomorphosis_source() -> None:
     germany = get_country("germany")
     assert germany["repo"] == "endomorphosis/ipfs_germany_laws"
@@ -4393,6 +4412,60 @@ def test_upload_rejects_non_justicedao_repo(tmp_path: Path) -> None:
     (tmp_path / "manifest.json").write_text("{}", encoding="utf-8")
     with pytest.raises(UploadError, match="justicedao"):
         upload_release(tmp_path, "endomorphosis/ipfs_malta_laws_ir")
+
+
+def test_load_source_packs_local_shards_without_calling_the_hub(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir import normalize
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.catalog import (
+        get_country,
+        is_local_law_pack,
+    )
+
+    def _refuse_hub(*_args, **_kwargs):
+        raise AssertionError("dataset_info must not be called for a local shard directory")
+
+    monkeypatch.setattr(normalize, "dataset_info", _refuse_hub)
+    source = tmp_path / "spain_municipal"
+    (source / "data").mkdir(parents=True)
+    _laws(
+        {"id": "law-1", "title": "One", "text": "body one " * 10, "language": "es"}
+    ).to_parquet(source / "data" / "laws-00001.parquet", index=False)
+    second = _laws(
+        {"id": "law-2", "title": "Two", "text": "body two " * 10, "language": "es", "eli": "eli:es:2"}
+    )
+    second.to_parquet(source / "data" / "laws-00002.parquet", index=False)
+    revision = "351bceff9e8e77acdc7222e303e6af644bc80e02"
+    (source / "pack_meta.json").write_text(
+        json.dumps(
+            {
+                "slug": "spain_municipal",
+                "source_dataset": "endomorphosis/ipfs_spain_municipal_laws",
+                "source_revision": revision,
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert is_local_law_pack(source)
+    country = get_country(str(source))
+    assert country["local_source_dir"]
+    assert country["slug"] == "spain_municipal"
+    assert country["source_revision"] == revision
+    laws, articles, meta = normalize.load_source(str(source), tmp_path / "cache")
+    assert laws["id"].tolist() == ["law-1", "law-2"]
+    assert "eli" in laws.columns
+    assert articles.empty
+    assert meta["source_revision"] == revision
+    assert (tmp_path / "cache" / "packed-shards" / "spain_municipal" / "pack_meta.json").is_file()
+
+    bare = tmp_path / "bare"
+    (bare / "data").mkdir(parents=True)
+    _laws({"id": "law-3", "title": "Three", "text": "body three " * 10}).to_parquet(
+        bare / "data" / "laws-00001.parquet", index=False
+    )
+    with pytest.raises(ValueError, match="40 lowercase hex"):
+        normalize.load_source(str(bare), tmp_path / "cache-bare")
 
 
 def test_load_local_source_allows_missing_articles_parquet(tmp_path: Path) -> None:
