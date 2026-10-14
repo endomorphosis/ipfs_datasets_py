@@ -30,6 +30,7 @@ therefore use a deterministic fake in unit tests while production uses
 from __future__ import annotations
 
 import math
+import errno
 import os
 import re
 import shutil
@@ -83,6 +84,90 @@ _SENSITIVE_ASSIGNMENT = re.compile(
 
 class ToolProcessError(ValueError):
     """Raised when a process request violates the bounded-runner contract."""
+
+
+@dataclass(frozen=True, slots=True)
+class NativeProcessIdentity:
+    """Linux identity observed by the parent, never read from tool stdout."""
+
+    pid: int
+    birth_ticks: int
+    parent_pid: int
+    process_group_id: int
+    session_id: int
+
+    def to_dict(self) -> dict[str, int]:
+        return {name: getattr(self, name) for name in self.__dataclass_fields__}
+
+
+@dataclass(frozen=True, slots=True)
+class NativeToolLifecycleObservation:
+    """Fresh sampled native ownership evidence for sequential native tools.
+
+    This profile does not attest kernel containment or rule out a deliberately
+    escaped daemon between ancestry samples. The caller must retain its lease
+    whenever ``cleanup_confirmed`` is false, even if the leader returned zero.
+    """
+
+    parent_pid: int
+    parent_birth_ticks: int
+    leader: NativeProcessIdentity
+    observed_descendants: tuple[NativeProcessIdentity, ...]
+    leader_reaped: bool
+    descendant_tracking_complete: bool
+    group_scan_complete: bool
+    remaining_group_members: tuple[NativeProcessIdentity, ...]
+    remaining_tracked_descendants: tuple[NativeProcessIdentity, ...]
+    readers_started: int
+    readers_joined: int
+    stdin_writer_started: int
+    stdin_writer_joined: int
+    workspace_device: int
+    workspace_inode: int
+    workspace_removed: bool
+    observation_errors: tuple[str, ...] = ()
+
+    @property
+    def process_cleanup_confirmed(self) -> bool:
+        return (self.leader_reaped and self.descendant_tracking_complete
+                and self.group_scan_complete and not self.remaining_group_members
+                and not self.remaining_tracked_descendants
+                and 0 <= self.readers_started == self.readers_joined <= 2
+                and self.stdin_writer_started == self.stdin_writer_joined
+                and not self.observation_errors)
+
+    @property
+    def cleanup_confirmed(self) -> bool:
+        return self.process_cleanup_confirmed and self.workspace_removed
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema": "native-owned-tool-lifecycle@1",
+            "parent": {"pid": self.parent_pid, "birth_ticks": self.parent_birth_ticks},
+            "leader": self.leader.to_dict(),
+            "observed_descendants": [item.to_dict() for item in self.observed_descendants],
+            "leader_reaped": self.leader_reaped,
+            "descendant_tracking_complete": self.descendant_tracking_complete,
+            "group_scan_complete": self.group_scan_complete,
+            "remaining_group_members": [item.to_dict() for item in self.remaining_group_members],
+            "remaining_tracked_descendants": [item.to_dict() for item in self.remaining_tracked_descendants],
+            "readers": {"started": self.readers_started, "joined": self.readers_joined},
+            "stdin_writer": {"started": self.stdin_writer_started, "joined": self.stdin_writer_joined},
+            "workspace": {"device": self.workspace_device, "inode": self.workspace_inode,
+                          "removed": self.workspace_removed},
+            "observation_errors": list(self.observation_errors),
+            "ownership_is_sampled": True,
+            "kernel_containment_attested": False,
+            "cleanup_confirmed": self.cleanup_confirmed,
+        }
+
+
+class OwnedToolCleanupError(ToolProcessError):
+    """An opt-in native run requires its actual cleanup owner to be retained."""
+
+    def __init__(self, cleanup_handle: NativeToolCleanupHandle, reason: str):
+        super().__init__(reason)
+        self.cleanup_handle = cleanup_handle
 
 
 class ToolRuntime(StrEnum):
@@ -213,8 +298,11 @@ class ToolRunRequest:
     output_paths: tuple[str, ...] = ()
     environment: Mapping[str, str] = field(default_factory=dict, repr=False)
     secrets: tuple[str, ...] = field(default=(), repr=False)
+    owned_process_observation: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.owned_process_observation) is not bool:
+            raise ToolProcessError("owned_process_observation must be an exact boolean")
         if isinstance(self.argv, (str, bytes, bytearray)):
             raise ToolProcessError("argv must be a sequence, never a shell string")
         object.__setattr__(self, "argv", tuple(self.argv))
@@ -253,6 +341,7 @@ class ProcessInvocation:
     environment: Mapping[str, str]
     stdin: bytes | None
     limits: ToolRunLimits
+    owned_process_observation: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,6 +360,8 @@ class RawProcessResult:
     resource_exhausted: bool = False
     error: str = ""
     workspace_limit_exceeded: bool = False
+    native_lifecycle: NativeToolLifecycleObservation | None = None
+    native_cleanup_handle: NativeToolCleanupHandle | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -307,6 +398,7 @@ class ToolRunResult:
     workspace_cleaned: bool = True
     termination_reason: str = ""
     error: str = ""
+    native_lifecycle: NativeToolLifecycleObservation | None = None
 
     @property
     def ok(self) -> bool:
@@ -325,7 +417,7 @@ class ToolRunResult:
         return self.output_files
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "interface_version": self.interface_version,
             "runtime": self.runtime.value,
             "command": list(self.command),
@@ -349,6 +441,9 @@ class ToolRunResult:
             "termination_reason": self.termination_reason,
             "error": self.error,
         }
+        if self.native_lifecycle is not None:
+            result["native_lifecycle"] = self.native_lifecycle.to_dict()
+        return result
 
 
 class CancellationSignal(Protocol):
@@ -612,15 +707,28 @@ def _linux_process_identity(pid: int) -> tuple[int, str, int, int] | None:
         return None
 
 
+def _linux_owned_identity(pid: int) -> tuple[NativeProcessIdentity, str]:
+    """Read one bounded procfs identity; callers distinguish exit from error."""
+    with (Path("/proc") / str(pid) / "stat").open() as stream:
+        raw = stream.read(8193)
+    if len(raw) > 8192:
+        raise ToolProcessError("Linux process identity exceeds observation bound")
+    fields = raw.rsplit(")", 1)[1].split()
+    return NativeProcessIdentity(pid, int(fields[19]), int(fields[1]),
+                                 int(fields[2]), int(fields[3])), fields[0]
+
+
 class _LinuxDescendantTracker:
     """Retain observed ancestry through reparenting and process-group changes."""
 
-    def __init__(self, leader_pid: int):
+    def __init__(self, leader_pid: int, *, retain_history: bool = False):
         self.leader_pid = leader_pid
         self.enabled = sys.platform.startswith("linux") and Path("/proc/self/stat").is_file()
         self.records: dict[int, tuple[int, int | None]] = {}
         self.error = ""
         self._seeded = False
+        self.retain_history = retain_history
+        self.history: dict[tuple[int, int], NativeProcessIdentity] = {}
 
     def _forget(self, pid: int) -> None:
         record = self.records.pop(pid, None)
@@ -628,7 +736,8 @@ class _LinuxDescendantTracker:
             os.close(record[1])
 
     def _retain(self, pid: int, identity: tuple[int, str, int, int]) -> bool:
-        if len(self.records) >= 8192:
+        if len(self.records) >= 8192 or (self.retain_history
+                and (pid, identity[0]) not in self.history and len(self.history) >= 8192):
             self.error = "descendant tracking capacity exceeded"
             return False
         descriptor = None
@@ -643,7 +752,31 @@ class _LinuxDescendantTracker:
                 os.close(descriptor)
             return False
         self.records[pid] = (identity[0], descriptor)
+        if self.retain_history:
+            try:
+                observed, _ = _linux_owned_identity(pid)
+                if observed.birth_ticks != identity[0]:
+                    self._forget(pid)
+                    return False
+                self.history[(pid, identity[0])] = observed
+            except (FileNotFoundError, ProcessLookupError):
+                self._forget(pid)
+                return False
+            except (OSError, ValueError, IndexError, ToolProcessError):
+                self.error = "tracked process identity could not be observed"
+                return False
         return True
+
+    def _identity(self, pid):
+        identity = _linux_process_identity(pid)
+        if identity is None and self.retain_history:
+            try:
+                _linux_owned_identity(pid)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
+            except (OSError, ValueError, IndexError, ToolProcessError):
+                self.error = "tracked process observation failed"
+        return identity
 
     def refresh(self) -> None:
         if not self.enabled:
@@ -658,7 +791,7 @@ class _LinuxDescendantTracker:
             if pid in visited:
                 continue
             visited.add(pid)
-            identity = _linux_process_identity(pid)
+            identity = self._identity(pid)
             known = self.records.get(pid)
             if identity is None or (known is not None and known[0] != identity[0]):
                 self._forget(pid)
@@ -677,15 +810,20 @@ class _LinuxDescendantTracker:
                     try:
                         children = (task / "children").read_text().split()
                         pending.extend((int(child), pid) for child in children)
-                    except (OSError, ValueError):
+                    except (OSError, ValueError) as error:
+                        if self.retain_history and not (isinstance(error, OSError)
+                                and error.errno in (errno.ENOENT, errno.ESRCH)):
+                            self.error = "descendant child-list observation failed"
                         continue
-            except OSError:
+            except OSError as error:
+                if self.retain_history and error.errno not in (errno.ENOENT, errno.ESRCH):
+                    self.error = "descendant task observation failed"
                 continue
 
     def live_descendants(self) -> list[int]:
         live = []
         for pid, (birth, _) in tuple(self.records.items()):
-            identity = _linux_process_identity(pid)
+            identity = self._identity(pid)
             if identity is None or identity[0] != birth or identity[1] == "Z":
                 self._forget(pid)
             elif pid != self.leader_pid:
@@ -774,23 +912,29 @@ class _BoundedCapture:
         self._limit = limit
         self._value = bytearray()
         self.truncated = False
+        self.completed = False
+        self.error = ""
 
     def drain(self, stream: Any) -> None:
         try:
             while True:
                 chunk = stream.read(65_536)
                 if not chunk:
+                    self.completed = True
                     return
                 remaining = self._limit - len(self._value)
                 if remaining > 0:
                     self._value.extend(chunk[:remaining])
                 if len(chunk) > remaining:
                     self.truncated = True
+        except BaseException as error:
+            self.error = "native pipe capture failed: " + type(error).__name__
+            raise
         finally:
             try:
                 stream.close()
-            except OSError:
-                pass
+            except OSError as error:
+                self.error = "native pipe close failed: " + type(error).__name__
 
     @property
     def value(self) -> bytes:
@@ -864,6 +1008,235 @@ def _execution_exception_text(error: BaseException) -> str:
     return str(error) + ("; " + "; ".join(notes[:12]) if notes else "")
 
 
+class NativeToolCleanupHandle:
+    """Parent-owned resources retained until a fresh complete cleanup succeeds.
+
+    ``retry_cleanup`` is bounded by the original termination grace and returns
+    fresh observations, including failures. It never releases a scheduler
+    lease. A caller's cleanup guardian must keep and renew its actual leases.
+    The handle can move between threads in the same birth-bound parent, but
+    cannot be used after fork. No implicit finalizer declares cleanup complete.
+    """
+
+    def __init__(self, process, descendants, workers, workspace, grace_seconds,
+                 *, parent_identity, workspace_info):
+        self._process = process
+        self._descendants = descendants
+        self._workers = workers
+        self._workspace = workspace
+        self._grace_seconds = grace_seconds
+        self._temporary = None
+        self._lock = threading.Lock()
+        self._captures = ()
+        self._initial_errors = []
+        parent = parent_identity
+        self._parent = parent
+        self._leader = None
+        self._workspace_info = workspace_info
+        self._last_observation = None
+        self._closed = False
+        if process is not None:
+            self.attach_process(process)
+
+    def attach_process(self, process) -> None:
+        # Preallocation precedes Popen; retain the actual child before any
+        # fallible post-launch sampler or thread initialization can run.
+        self._process = process
+        self._descendants.leader_pid = process.pid
+        parent = self._parent
+        self._leader = NativeProcessIdentity(process.pid, 0, parent.pid, process.pid, process.pid)
+        try:
+            self._leader, _ = _linux_owned_identity(process.pid)
+        except (OSError, ValueError, IndexError, ToolProcessError):
+            self._leader = NativeProcessIdentity(process.pid, 0, parent.pid, process.pid, process.pid)
+            self._initial_errors.append("native leader birth identity was not observed")
+        if (self._leader.parent_pid != parent.pid or self._leader.process_group_id != process.pid
+                or self._leader.session_id != process.pid):
+            self._initial_errors.append("native child did not enter its owned session")
+
+    def attach_workspace(self, temporary) -> None:
+        self._temporary = temporary
+        # An unresolved handle dropped by its caller must leave an orphaned
+        # workspace, never delete the workspace of work that is still alive.
+        temporary._finalizer.detach()
+        self._check_owner()
+
+    def _check_owner(self) -> None:
+        parent, _ = _linux_owned_identity(os.getpid())
+        if parent.pid != self._parent.pid or parent.birth_ticks != self._parent.birth_ticks:
+            raise ToolProcessError("native cleanup handle belongs to another parent")
+
+    def _group_members(self):
+        members, errors = [], []
+        try:
+            for count, entry in enumerate(Path("/proc").iterdir(), 1):
+                if count > 32768:
+                    errors.append("native group scan capacity exceeded")
+                    break
+                if not entry.name.isdigit():
+                    continue
+                try:
+                    identity, state = _linux_owned_identity(int(entry.name))
+                    if identity.process_group_id == self._leader.process_group_id and state != "Z":
+                        members.append(identity)
+                except (FileNotFoundError, ProcessLookupError):
+                    continue
+                except (OSError, ValueError, IndexError, ToolProcessError) as error:
+                    errors.append("native group member observation failed: " + type(error).__name__)
+                    break
+        except OSError as error:
+            errors.append("native group enumeration failed: " + type(error).__name__)
+        return tuple(sorted(members, key=lambda item: (item.pid, item.birth_ticks))), errors
+
+    def _owns_group_member(self, identity):
+        if (identity.pid, identity.birth_ticks) in self._descendants.history:
+            return True
+        if identity.pid == self._leader.pid:
+            return identity.birth_ticks == self._leader.birth_ticks
+        # A numeric group or session ID alone is reusable after the leader is
+        # reaped. Unknown members are adoptable only under its live birth-bound
+        # session anchor; afterwards only retained identities may be signalled.
+        try:
+            anchor, state = _linux_owned_identity(self._leader.pid)
+        except (FileNotFoundError, ProcessLookupError):
+            return False
+        return (state != "Z" and anchor == self._leader
+                and identity.session_id == self._leader.session_id)
+
+    def _retry(self, *, remove_workspace):
+        errors = list(self._initial_errors)
+
+        def attempt(label, action):
+            try:
+                return action()
+            except BaseException as error:
+                errors.append(label + ": " + type(error).__name__)
+                return None
+
+        # Each step remains independent if a sampler or cleanup boundary fails.
+        # Tracked pidfds/births survive until leader, helpers and pipes drain.
+        if not self._closed:
+            attempt("refresh tracked descendants", self._descendants.refresh)
+            attempt("terminate native leader", lambda: _terminate_process_tree(
+                self._process, grace_seconds=self._grace_seconds, descendants=self._descendants))
+            drained = attempt("drain tracked descendants", lambda: self._descendants.drain(self._grace_seconds))
+            if drained is not None and drained[1]:
+                errors.append("tracked descendants survived bounded cleanup")
+            group, scan_errors = self._group_members()
+            errors.extend(scan_errors)
+            # Signal only individually birth-checked identities observed in the
+            # owned session, never a newly reused numeric group ID.
+            for identity in group:
+                if identity.pid == self._leader.pid and identity.birth_ticks != self._leader.birth_ticks:
+                    errors.append("native leader PID was reused before group drain")
+                    continue
+                try:
+                    if not self._owns_group_member(identity):
+                        errors.append("unowned member in reused or unanchored native group")
+                        continue
+                    latest, _ = _linux_owned_identity(identity.pid)
+                    if latest == identity:
+                        known = self._descendants.records.get(identity.pid)
+                        if known is not None and known[0] != identity.birth_ticks:
+                            self._descendants._forget(identity.pid)
+                        if identity.pid not in self._descendants.records:
+                            self._descendants._retain(identity.pid,
+                                (identity.birth_ticks, "S", identity.parent_pid, 0))
+                        descriptor = self._descendants.records.get(identity.pid, (None, None))[1]
+                        if descriptor is not None and hasattr(signal, "pidfd_send_signal"):
+                            signal.pidfd_send_signal(descriptor, signal.SIGKILL)
+                        else:
+                            latest, _ = _linux_owned_identity(identity.pid)
+                            if latest == identity:
+                                os.kill(identity.pid, signal.SIGKILL)
+                except (FileNotFoundError, ProcessLookupError):
+                    pass
+                except (OSError, ValueError, IndexError, ToolProcessError) as error:
+                    errors.append("terminate owned group member: " + type(error).__name__)
+            stop = time.monotonic() + max(.1, min(1., self._grace_seconds))
+            while group and not scan_errors and time.monotonic() < stop:
+                time.sleep(.01)
+                group, scan_errors = self._group_members()
+            errors.extend(scan_errors)
+            for worker, _ in self._workers:
+                if worker.ident is not None:
+                    attempt("join native pipe worker", lambda worker=worker:
+                            worker.join(timeout=max(.1, self._grace_seconds)))
+
+        group, scan_errors = self._group_members()
+        errors.extend(scan_errors)
+        live = attempt("inspect tracked descendants", self._descendants.live_descendants)
+        remaining = []
+        for pid in live or ():
+            try:
+                identity, state = _linux_owned_identity(pid)
+                known = self._descendants.records.get(pid)
+                if known is not None and identity.birth_ticks == known[0] and state != "Z":
+                    remaining.append(identity)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
+            except (OSError, ValueError, IndexError, ToolProcessError) as error:
+                errors.append("tracked survivor observation failed: " + type(error).__name__)
+        if self._descendants.error:
+            errors.append(self._descendants.error)
+        reaped = attempt("inspect native leader reaping", self._process.poll) is not None
+        readers = self._workers[:2]
+        writers = self._workers[2:]
+        started = lambda values: sum(worker.ident is not None for worker, _ in values)
+        joined = lambda values: sum(worker.ident is not None and not worker.is_alive() for worker, _ in values)
+        process_drained = (reaped and not group and live is not None and not remaining
+                           and not errors and started(readers) == joined(readers)
+                           and started(writers) == joined(writers))
+        removed = False
+        if process_drained:
+            streams = {id(stream): stream for stream in
+                       (self._process.stdin, self._process.stdout, self._process.stderr) if stream is not None}
+            for stream in streams.values():
+                attempt("close native pipe", stream.close)
+            if remove_workspace and not self._closed:
+                if attempt("close retained process handles", self._descendants.close) is not None:
+                    self._closed = True
+                elif not self._descendants.records:
+                    self._closed = True
+            if remove_workspace and self._temporary is not None and not errors:
+                try:
+                    info = self._workspace.lstat()
+                    if (info.st_dev, info.st_ino) != (self._workspace_info.st_dev, self._workspace_info.st_ino):
+                        errors.append("owned workspace identity changed before cleanup")
+                    else:
+                        attempt("remove owned workspace", self._temporary.cleanup)
+                except FileNotFoundError:
+                    pass
+                except OSError as error:
+                    errors.append("observe owned workspace before cleanup: " + type(error).__name__)
+                try:
+                    self._workspace.lstat()
+                except FileNotFoundError:
+                    removed = True
+                except OSError as error:
+                    errors.append("observe owned workspace removal: " + type(error).__name__)
+        observation = NativeToolLifecycleObservation(
+            self._parent.pid, self._parent.birth_ticks, self._leader,
+            tuple(sorted((item for item in self._descendants.history.values()
+                          if item.pid != self._leader.pid), key=lambda item: (item.pid, item.birth_ticks))),
+            reaped, self._descendants.enabled and not self._descendants.error,
+            not scan_errors, group, tuple(remaining), started(readers), joined(readers),
+            started(writers), joined(writers), self._workspace_info.st_dev,
+            self._workspace_info.st_ino, removed, tuple(dict.fromkeys(errors))[:32])
+        self._last_observation = observation
+        return observation
+
+    def retry_process_cleanup(self) -> NativeToolLifecycleObservation:
+        self._check_owner()
+        with self._lock:
+            return self._retry(remove_workspace=False)
+
+    def retry_cleanup(self) -> NativeToolLifecycleObservation:
+        self._check_owner()
+        with self._lock:
+            return self._retry(remove_workspace=True)
+
+
 class SubprocessExecutor:
     """Production executor using a new process group and bounded pipe drains."""
 
@@ -886,6 +1259,9 @@ class SubprocessExecutor:
         cancellation: CancellationSignal | Any | None = None,
     ) -> RawProcessResult:
         started = self._clock()
+        if invocation.owned_process_observation and (type(self) is not SubprocessExecutor
+                or self._popen is not subprocess.Popen or not sys.platform.startswith("linux")):
+            raise ToolProcessError("owned process observations require the exact native Linux executor")
         if invocation.limits.resident_memory_bytes is not None and not Path("/proc/self/stat").is_file():
             return RawProcessResult(returncode=None, error="resident memory guard requires Linux procfs")
         if _is_cancelled(cancellation):
@@ -936,6 +1312,16 @@ class SubprocessExecutor:
         process = None
         descendants = None
         workers = []
+        owned = None
+        parent_identity = workspace_info = None
+        if invocation.owned_process_observation:
+            parent_identity, _ = _linux_owned_identity(os.getpid())
+            workspace_info = invocation.cwd.lstat()
+            # Construct every lifecycle owner before starting native work.
+            descendants = _LinuxDescendantTracker(0, retain_history=True)
+            owned = NativeToolCleanupHandle(None, descendants, workers,
+                invocation.cwd, invocation.limits.termination_grace_seconds,
+                parent_identity=parent_identity, workspace_info=workspace_info)
         try:
             if stop_workspace_scan():
                 return RawProcessResult(
@@ -959,11 +1345,16 @@ class SubprocessExecutor:
                 creationflags=creation_flags,
                 preexec_fn=preexec,
             )
-            descendants = _LinuxDescendantTracker(process.pid)
+            if owned is not None:
+                owned.attach_process(process)
+            else:
+                descendants = _LinuxDescendantTracker(process.pid)
             assert process.stdout is not None
             assert process.stderr is not None
             stdout = _BoundedCapture(invocation.limits.max_output_bytes)
             stderr = _BoundedCapture(invocation.limits.max_output_bytes)
+            if owned is not None:
+                owned._captures = (stdout, stderr)
             readers = (
                 threading.Thread(target=stdout.drain, args=(process.stdout,), daemon=True),
                 threading.Thread(target=stderr.drain, args=(process.stderr,), daemon=True),
@@ -1060,23 +1451,31 @@ class SubprocessExecutor:
                 )
                 returncode = process.poll()
 
-            if _living_group_descendants(process.pid, process.pid):
-                tree_terminated = (
-                    _terminate_remaining_group(
-                        process.pid, invocation.limits.termination_grace_seconds
+            native_lifecycle = None
+            if owned is not None:
+                native_lifecycle = owned.retry_process_cleanup()
+                if not native_lifecycle.process_cleanup_confirmed:
+                    raise OwnedToolCleanupError(owned, "native owned process cleanup is unresolved")
+                cleanup_error = "; ".join(filter(None, (workspace_error, stdout.error, stderr.error,
+                    "native pipe EOF was not observed" if not(stdout.completed and stderr.completed) else "")))
+            else:
+                if _living_group_descendants(process.pid, process.pid):
+                    tree_terminated = (
+                        _terminate_remaining_group(
+                            process.pid, invocation.limits.termination_grace_seconds
+                        )
+                        or tree_terminated
                     )
-                    or tree_terminated
-                )
-            terminated_descendants, surviving_descendants = descendants.drain(
-                invocation.limits.termination_grace_seconds)
-            tree_terminated = tree_terminated or terminated_descendants
-            cleanup_error = "; ".join(filter(None, (descendants.error, workspace_error)))
-            if surviving_descendants:
-                tree_terminated = False
-                cleanup_error = "tracked descendants survived bounded cleanup: " + ",".join(map(str, surviving_descendants))
-            descendants.close()
-            for reader in readers:
-                reader.join(timeout=max(0.1, invocation.limits.termination_grace_seconds))
+                terminated_descendants, surviving_descendants = descendants.drain(
+                    invocation.limits.termination_grace_seconds)
+                tree_terminated = tree_terminated or terminated_descendants
+                cleanup_error = "; ".join(filter(None, (descendants.error, workspace_error)))
+                if surviving_descendants:
+                    tree_terminated = False
+                    cleanup_error = "tracked descendants survived bounded cleanup: " + ",".join(map(str, surviving_descendants))
+                descendants.close()
+                for reader in readers:
+                    reader.join(timeout=max(0.1, invocation.limits.termination_grace_seconds))
             resource_exhausted = bool(cleanup_error) or resident_exhausted or workspace_exceeded or (
                 not timed_out
                 and not cancelled
@@ -1101,10 +1500,24 @@ class SubprocessExecutor:
                 resource_exhausted=resource_exhausted,
                 error=cleanup_error,
                 workspace_limit_exceeded=workspace_exceeded,
+                native_lifecycle=native_lifecycle,
+                native_cleanup_handle=owned,
             )
         except BaseException as error:
             if process is None:
                 raise
+            if isinstance(error, OwnedToolCleanupError):
+                raise
+            if owned is not None:
+                # The caller receives the actual retained cleanup owner even
+                # when a cancellation callback or OS operation interrupted us.
+                try:
+                    owned.retry_process_cleanup()
+                except BaseException as cleanup_error:
+                    error.add_note("bounded process cleanup: " + type(cleanup_error).__name__)
+                raise OwnedToolCleanupError(owned,
+                    "native execution interrupted: " + type(error).__name__ + ": "
+                    + _execution_exception_text(error)) from error
             try:
                 _cleanup_failed_execution(process, descendants, workers,
                     invocation.limits.termination_grace_seconds, error)
@@ -1343,9 +1756,10 @@ class BoundedStdinObservation:
     command: tuple[str, ...] = ()
     error: str = ""
     interface_version: str = UNIVERSAL_BOUNDED_TOOL_LIFECYCLE_VERSION
+    native_lifecycle: NativeToolLifecycleObservation | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        result = {
             "interface_version": self.interface_version,
             "stdout": self.stdout,
             "stderr": self.stderr,
@@ -1362,6 +1776,9 @@ class BoundedStdinObservation:
             "command": list(self.command),
             "error": self.error,
         }
+        if self.native_lifecycle is not None:
+            result["native_lifecycle"] = self.native_lifecycle.to_dict()
+        return result
 
 
 def run_bounded_stdin_tool(
@@ -1377,6 +1794,7 @@ def run_bounded_stdin_tool(
     timeout_ms: int | None = None,
     max_output_bytes: int | None = None,
     max_memory_bytes: int | None = None,
+    owned_process_observation: bool = False,
 ) -> BoundedStdinObservation:
     """Run an argv+stdin tool through the universal bounded lifecycle.
 
@@ -1386,6 +1804,8 @@ def run_bounded_stdin_tool(
 
     if isinstance(argv, (str, bytes, bytearray)):
         raise ToolProcessError("argv must be a sequence, never a shell string")
+    if type(owned_process_observation) is not bool:
+        raise ToolProcessError("owned_process_observation must be an exact boolean")
     resolved_limits = limits
     if resolved_limits is None:
         resolved_limits = tool_limits_from_milliseconds(
@@ -1401,6 +1821,8 @@ def run_bounded_stdin_tool(
         active_runner = BoundedToolRunner()
     else:
         active_runner = runner
+    if owned_process_observation and type(active_runner) is not BoundedToolRunner:
+        raise ToolProcessError("owned observations require the exact native bounded runner")
     request = ToolRunRequest(
         argv=tuple(argv),
         runtime=runtime,
@@ -1408,6 +1830,7 @@ def run_bounded_stdin_tool(
         stdin=stdin,
         environment=environment or {},
         secrets=tuple(secrets),
+        owned_process_observation=owned_process_observation,
     )
     result = active_runner.run(request, cancellation=cancellation)
     return BoundedStdinObservation(
@@ -1425,6 +1848,7 @@ def run_bounded_stdin_tool(
         termination_reason=result.termination_reason,
         command=result.command,
         error=result.error,
+        native_lifecycle=result.native_lifecycle,
     )
 
 
@@ -1549,6 +1973,11 @@ class BoundedToolRunner:
                 secrets=tuple(secrets),
             )
         self._validate_request(request)
+        if request.owned_process_observation and (type(self) is not BoundedToolRunner
+                or type(self._executor) is not SubprocessExecutor
+                or self._executor._popen is not subprocess.Popen
+                or not sys.platform.startswith("linux")):
+            raise ToolProcessError("owned observations require the exact native Linux bounded runner")
         secret_values = self._secret_values(request)
         redacted_command = _redact_command(request.argv, secret_values)
         if _is_cancelled(cancellation):
@@ -1595,6 +2024,8 @@ class BoundedToolRunner:
             dir=str(workspace_root) if workspace_root is not None else None,
         )
         workspace = Path(temporary.name).resolve()
+        owned_handle = None
+        owned_observation = None
         try:
             try:
                 os.chmod(workspace, 0o700)
@@ -1618,11 +2049,18 @@ class BoundedToolRunner:
                     else _bytes(request.stdin, "stdin")
                 ),
                 limits=request.limits,
+                owned_process_observation=request.owned_process_observation,
             )
             execution_started = time.monotonic()
             executor_failed = False
             try:
                 raw = self._execute(invocation, cancellation)
+                owned_handle = raw.native_cleanup_handle
+            except OwnedToolCleanupError as error:
+                owned_handle = error.cleanup_handle
+                executor_failed = True
+                raw = RawProcessResult(returncode=None, resource_exhausted=True,
+                    error=_execution_exception_text(error), native_cleanup_handle=owned_handle)
             except OSError as error:
                 executor_failed = True
                 raw = RawProcessResult(returncode=None, error=_execution_exception_text(error))
@@ -1672,7 +2110,23 @@ class BoundedToolRunner:
                 workspace_limit_exceeded=workspace_exceeded,
             )
         finally:
-            temporary.cleanup()
+            if owned_handle is None:
+                temporary.cleanup()
+            else:
+                # Keep the TemporaryDirectory object and process handles alive
+                # on unresolved cleanup; its finalizer must not delete a live
+                # child's workspace when the caller unwinds its stack.
+                try:
+                    owned_handle.attach_workspace(temporary)
+                    owned_observation = owned_handle.retry_cleanup()
+                except BaseException as cleanup_error:
+                    raise OwnedToolCleanupError(owned_handle,
+                        "native cleanup observation failed: " + type(cleanup_error).__name__) from cleanup_error
+                if not owned_observation.cleanup_confirmed:
+                    raise OwnedToolCleanupError(owned_handle,
+                        "native process, pipe or workspace cleanup is unresolved")
+        if owned_observation is not None:
+            result = replace(result, native_lifecycle=owned_observation, workspace_cleaned=True)
         return result
 
     def _execute(
@@ -1911,6 +2365,7 @@ class BoundedToolRunner:
             workspace_cleaned=workspace_cleaned,
             termination_reason=reason,
             error=error,
+            native_lifecycle=raw.native_lifecycle,
         )
 
 
@@ -1960,6 +2415,10 @@ __all__ = [
     "CommandRequest",
     "CommandResult",
     "NativeProcessExecutor",
+    "NativeProcessIdentity",
+    "NativeToolCleanupHandle",
+    "NativeToolLifecycleObservation",
+    "OwnedToolCleanupError",
     "ProcessExecutor",
     "ProcessInvocation",
     "ProcessLimits",

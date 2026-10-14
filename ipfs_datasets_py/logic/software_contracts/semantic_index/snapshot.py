@@ -773,11 +773,22 @@ def _working_paths(root: Path, exclusions: Sequence[bytes]) -> set[bytes]:
     return {p for p in _require_git(root, ("ls-files", "-z", "--cached", "--others", "--exclude-standard"), "ls-files").split(b"\0") if p and not _ignored_raw(p, exclusions)}
 def _index_oids(root: Path, exclusions: Sequence[bytes]) -> dict[bytes, dict[str, str]]:
     result: dict[bytes, dict[str, str]] = {}
-    for record in _require_git(root, ("ls-files", "--stage", "-z"), "index").split(b"\0"):
+    # Git's -v status tag uses lowercase for assume-unchanged and S/s for
+    # skip-worktree. Either can hide current source changes from git status.
+    # Discard ordinary tags after the gate so existing snapshot identities
+    # remain unchanged. Excluded paths remain outside the admitted profile.
+    for record in _require_git(root, ("ls-files", "--stage", "-v", "-z"), "index").split(b"\0"):
         if not record: continue
-        try: meta, raw = record.split(b"\t", 1); _mode, oid, stage = meta.decode("ascii").split()
+        try:
+            meta, raw = record.split(b"\t", 1)
+            tag, _mode, oid, stage = meta.decode("ascii").split()
+            if len(tag) != 1 or tag not in "HSMRCK?Uhsmrcku":
+                raise ValueError("unsupported git index status tag")
         except ValueError as exc: raise GitSnapshotError("git index record was malformed") from exc
-        if not _ignored_raw(raw, exclusions): result.setdefault(raw, {})[stage] = _git_oid(oid, "index blob") or ""
+        if not _ignored_raw(raw, exclusions):
+            if tag == "S" or tag.islower():
+                raise GitSnapshotError("git index suppression flags are unsupported for admitted source")
+            result.setdefault(raw, {})[stage] = _git_oid(oid, "index blob") or ""
     return result
 def _status(root: Path) -> dict[bytes, bytes]:
     records = [r for r in _require_git(root, ("status", "--porcelain", "-z", "--untracked-files=all"), "status").split(b"\0") if r]

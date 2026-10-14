@@ -365,7 +365,7 @@ def build_symbol_graph(
         if edge.relation == RelationType.INHERITS.value and edge.target_id in known_symbols:
             target = by_id[edge.target_id]
             bases = target.annotations.get("bases", ())
-            if isinstance(bases, list) and any(str(base).rsplit(".", 1)[-1] == "Protocol" for base in bases):
+            if type(bases) in (list, tuple) and any(str(base).rsplit(".", 1)[-1] == "Protocol" for base in bases):
                 metadata = dict(edge.metadata)
                 metadata.update({
                     "derived_from_edge": edge.edge_id,

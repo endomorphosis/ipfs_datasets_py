@@ -20,6 +20,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import lru_cache
+import os
 from types import MappingProxyType
 import unicodedata
 from typing import Any, ClassVar, Final, Iterable, Mapping, Sequence
@@ -2731,6 +2733,26 @@ class SemanticStateRoot:
 # ---------------------------------------------------------------------------
 
 
+_BLOCK_CACHE_ENV: Final[str] = "IPFS_DATASETS_SEMANTIC_BLOCK_CACHE"
+_MAX_CACHED_BLOCK_BYTES: Final[int] = 16 * 1024
+
+
+@lru_cache(maxsize=4096)
+def _cached_canonical_dag_json_bytes(data: bytes) -> None:
+    """Remember successful canonicality only, retaining no parsed objects.
+
+    The caller admits exact builtin bytes before selecting this cache. Failed
+    UTF-8, JSON, strict DAG-JSON and canonical encoding checks raise and are
+    therefore never cached. CID syntax, codec and fresh hashing remain outside
+    this helper and run for each block verification, including cache hits.
+    """
+    import json
+
+    payload = json.loads(data.decode("utf-8"))
+    if canonical_dag_json_bytes(payload) != data:
+        raise SemanticStateModelError("dag-json block is not canonical")
+
+
 def verify_block_bytes(claimed_cid: str, data: bytes) -> str:
     """Reverify one bundle block against its claimed CID (raw or dag-json)."""
     if type(data) is not bytes:
@@ -2751,16 +2773,35 @@ def verify_block_bytes(claimed_cid: str, data: bytes) -> str:
             ) from exc
     if codec == "dag-json":
         try:
-            text = data.decode("utf-8")
-            import json
+            # Preserve the existing uncached path for arbitrary str subclasses.
+            # Only literal strings and builtin bytes reach the optimized path.
+            if type(claimed_cid) is not str:
+                import json
 
-            obj = json.loads(text)
-            # Require exact canonical encoding, not just semantic JSON equality.
-            if canonical_dag_json_bytes(obj) != data:
+                obj = json.loads(data.decode("utf-8"))
+                if canonical_dag_json_bytes(obj) != data:
+                    raise SemanticStateModelError(
+                        f"dag-json block {claimed} is not canonical"
+                    )
+                return decode_and_recompute_structured(claimed, obj)
+            if (os.environ.get(_BLOCK_CACHE_ENV) != "0"
+                    and len(data) <= _MAX_CACHED_BLOCK_BYTES):
+                _cached_canonical_dag_json_bytes(data)
+            else:
+                _cached_canonical_dag_json_bytes.__wrapped__(data)
+            # This is the normative content encoder used by the existing
+            # structured path. Hash every observed byte at every invocation;
+            # the cache proves canonical encoding only, never CID equality.
+            from ipfs_datasets_py.logic.software_contracts.content import (
+                _cid_from_digest_bytes,
+            )
+
+            recomputed = _cid_from_digest_bytes(data, codec="dag-json")
+            if recomputed != claimed:
                 raise SemanticStateModelError(
-                    f"dag-json block {claimed} is not canonical"
+                    f"forged or mismatched structured block CID {claimed}"
                 )
-            return decode_and_recompute_structured(claimed, obj)
+            return recomputed
         except SemanticStateModelError:
             raise
         except Exception as exc:

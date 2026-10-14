@@ -256,6 +256,9 @@ def _actor_texts(value: Any) -> List[str]:
 def _actor_text(element: Dict[str, Any]) -> str:
     """Return a source-grounded actor slot from flat or detail fields."""
 
+    heading_recovery = _source_separated_heading_actor_recovery(element)
+    if heading_recovery:
+        return heading_recovery["actor"]
     flat_value = _first_text(element.get("subject")).strip()
     modal_clause_actor = _modal_clause_actor_text(element)
     if (
@@ -1220,6 +1223,9 @@ def _passive_contribution_actor_text(element: Mapping[str, Any]) -> str:
 
 
 def _modal_clause_actor_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
+    heading_recovery = _source_separated_heading_actor_recovery(element)
+    if heading_recovery:
+        return {key: list(heading_recovery["actor_span"]) for key in ("subject", "actor")}
     match_info = _modal_clause_actor_match(element)
     if not match_info:
         return {}
@@ -1260,6 +1266,19 @@ def _passive_contribution_actor_field_spans(
 def _modal_clause_modality_field_spans(element: Mapping[str, Any]) -> Dict[str, List[int]]:
     """Return source spans for explicit modal cues used to infer modality."""
 
+    scope = element.get("duty_scope_span")
+    source = element.get("text")
+    modal = (element.get("field_spans") or {}).get("modal")
+    if (isinstance(source, str) and isinstance(scope, (list, tuple)) and len(scope) == 2
+            and isinstance(modal, (list, tuple)) and len(modal) == 2
+            and all(type(part) is int for part in [*scope, *modal])
+            and 0 <= scope[0] <= modal[0] < modal[1] <= scope[1] <= len(source)
+            and list(scope) == list(element.get("support_span") or [])
+            and element.get("support_text") == source[scope[0]:scope[1]]):
+        return {key: list(modal) for key in ("modality", "deontic_operator")}
+    heading_recovery = _source_separated_heading_actor_recovery(element)
+    if heading_recovery:
+        return {key: list(heading_recovery["modal_span"]) for key in ("modality", "deontic_operator")}
     match_info = _modal_clause_actor_match(element)
     if not match_info:
         return {}
@@ -1303,6 +1322,17 @@ def _passive_contribution_actor_match(
 
 
 def _modal_clause_source_text_candidates(element: Mapping[str, Any]) -> List[tuple[str, str]]:
+    # A source-bound semicolon duty has its own actor/modal search window.
+    # In particular, a lowercase actor must not make recovery fall through to
+    # another clause's capitalized actor and borrow that clause's modal span.
+    scope = element.get("duty_scope_span")
+    source = element.get("text")
+    if (isinstance(source, str) and isinstance(scope, (list, tuple)) and len(scope) == 2
+            and all(type(part) is int for part in scope)
+            and 0 <= scope[0] < scope[1] <= len(source)
+            and list(scope) == list(element.get("support_span") or [])
+            and element.get("support_text") == source[scope[0]:scope[1]]):
+        return [("support_text", element["support_text"])]
     candidates: List[tuple[str, str]] = []
     for key in ("support_text", "text", "source_text"):
         value = str(element.get(key) or "")
@@ -1390,6 +1420,208 @@ def _is_heading_polluted_actor(flat_value: str, modal_clause_actor: str) -> bool
     if re.search(r"\b(?:of|for|and|or)\b", prefix):
         return False
     return True
+
+
+def _heading_recovery_span(value: Any) -> Optional[tuple[int, int]]:
+    """Accept one exact interval without legacy numeric coercions."""
+
+    if (
+        type(value) not in (list, tuple)
+        or len(value) != 2
+        or any(type(bound) is not int for bound in value)
+    ):
+        return None
+    start, end = value
+    return (start, end) if 0 <= start < end else None
+
+
+def _heading_recovery_source_window(
+    element: Mapping[str, Any],
+) -> Optional[tuple[str, int, str]]:
+    """Use one exact support view, with full-source identity when available."""
+
+    texts = []
+    for key in ("text", "source_text"):
+        value = element.get(key)
+        if value:
+            if type(value) is not str:
+                return None
+            texts.append(value)
+    if len(texts) > 1 and any(value != texts[0] for value in texts[1:]):
+        return None
+    source = texts[0] if texts else ""
+    source_span = None
+    if element.get("source_span") is not None:
+        source_span = _heading_recovery_span(element["source_span"])
+        if source_span is None or (source and source_span[1] > len(source)):
+            return None
+    support = element.get("support_text")
+    support_span = None
+    if element.get("support_span") is not None:
+        support_span = _heading_recovery_span(element["support_span"])
+        if support_span is None:
+            return None
+    if support:
+        if type(support) is not str or support_span is None:
+            return None
+        start, end = support_span
+        if end - start != len(support) or (source and source[start:end] != support):
+            return None
+        if source_span and not source_span[0] <= start < end <= source_span[1]:
+            return None
+        return support, start, source
+    if not source:
+        return None
+    if support_span is not None:
+        return None
+    if source_span is not None and source_span != (0, len(source)):
+        return None
+    return source, 0, source
+
+
+def _heading_recovery_unquoted_range(text: str, start: int, end: int) -> bool:
+    """Reject quoted/bracketed or malformed context without altering offsets."""
+
+    quote = None
+    brackets: List[str] = []
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    quotes = {'"': '"', "'": "'", "“": "”", "‘": "’"}
+    for index, character in enumerate(text[:end]):
+        if start <= index and (quote is not None or brackets):
+            return False
+        previous = text[index - 1] if index else ""
+        following = text[index + 1] if index + 1 < len(text) else ""
+        apostrophe = (
+            character in {"'", "’"}
+            and previous.isalnum()
+            and (following.isalnum() or previous.lower() == "s")
+        )
+        if quote is not None:
+            if character == quote and previous != "\\" and not (
+                character in {"'", "’"} and previous.isalnum() and following.isalnum()
+            ):
+                quote = None
+            continue
+        if character in quotes and not apostrophe:
+            if index >= start:
+                return False
+            quote = quotes[character]
+        elif character in pairs:
+            if index >= start:
+                return False
+            brackets.append(pairs[character])
+        elif character in ")]}":
+            if not brackets or brackets.pop() != character or index >= start:
+                return False
+        elif character in {"”", "’"} and not apostrophe:
+            return False
+    return quote is None and not brackets
+
+
+def _source_separated_heading_actor_recovery(
+    element: Mapping[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """Recover one actor only from a separated heading and exact action span.
+
+    This narrow path permits prepositions inside a discarded source-separated
+    heading. It does not relax the older suffix heuristic or its institutional
+    title safeguards. Actor, modal and action coordinates must identify the same
+    occurrence; another clause's last modal is never evidence for this recovery.
+    """
+
+    flat = _clean_source_label(_first_text(element.get("subject")))
+    suffixes = list(re.finditer(r"\b(?:The|the)\s+[A-Z][A-Za-z]", flat))
+    if not any(
+        match.start() > 0 and not _modal_actor_suffix_is_embedded_tail(flat, match.start())
+        for match in suffixes
+    ):
+        return None
+    window = _heading_recovery_source_window(element)
+    fields = element.get("field_spans")
+    actions = _actor_texts(element.get("action"))
+    if window is None or not isinstance(fields, Mapping) or len(actions) != 1:
+        return None
+    action_span = _heading_recovery_span(fields.get("action"))
+    if action_span is None:
+        return None
+    text, base, source = window
+    action_start, action_end = action_span
+    if not base <= action_start < action_end <= base + len(text):
+        return None
+    raw_action = text[action_start - base : action_end - base]
+    normalized_action = re.sub(r"\s+", " ", raw_action.strip()).casefold()
+    if normalized_action != re.sub(r"\s+", " ", actions[0].strip()).casefold():
+        return None
+    matches = []
+    for match in _MODAL_CLAUSE_ACTOR_RE.finditer(text):
+        actor = _clean_source_label(match.group("actor"))
+        if (
+            not actor.lower().startswith("the ")
+            or not flat.casefold().endswith(" " + actor.casefold())
+        ):
+            continue
+        actor_start, actor_end = match.span("actor")
+        modal_start, modal_end = match.span("modal")
+        if (
+            not modal_end < action_start - base
+            or not text[modal_end : action_start - base].isspace()
+        ):
+            continue
+        prefix = _clean_source_label(flat[: -len(actor)])
+        if (
+            not prefix
+            or re.search(r"[.;:!?()\[\]{}\"“”‘’]", prefix)
+            or re.search(
+                r"\b(?:shall|must|may|authorized|directed|required)\b", prefix, re.IGNORECASE
+            )
+        ):
+            continue
+        if prefix.split()[-1].lower() in {
+            "sec", "dr", "mr", "mrs", "ms", "prof", "st", "no", "art", "para",
+            "inc", "ltd", "co", "dept", "fig", "vol", "vs",
+        }:
+            continue
+        separator = re.search(r"\.\s+\Z", text[:actor_start])
+        if separator is None:
+            continue
+        pattern = r"(?<!\w)" + r"\s+".join(re.escape(token) for token in prefix.split()) + r"\Z"
+        heading = re.search(pattern, text[: separator.start()], re.IGNORECASE)
+        if heading is None:
+            continue
+        context_text = source or text
+        context_base = base if source else 0
+        if not _heading_recovery_unquoted_range(
+            context_text, context_base + heading.start(), context_base + action_start - base
+        ):
+            continue
+        absolute_modal = (base + modal_start, base + modal_end)
+        if any(
+            key in fields and _heading_recovery_span(fields[key]) != absolute_modal
+            for key in ("modality", "deontic_operator")
+        ):
+            continue
+        matches.append({
+            "actor": actor,
+            "actor_span": (base + actor_start, base + actor_end),
+            "modal_span": absolute_modal,
+            "modal_text": match.group("modal"),
+            "polluted_actor": flat,
+        })
+    return matches[0] if len(matches) == 1 else None
+
+
+def _ir_actor_entities(element: Dict[str, Any]) -> List[str]:
+    """Apply a recovered label to only matching entries, preserving their order."""
+
+    actors = _actor_texts(element.get("actor_entities")) or _actor_entities(element)
+    recovery = _source_separated_heading_actor_recovery(element)
+    if not recovery:
+        return actors
+    polluted = recovery["polluted_actor"].casefold()
+    return [
+        recovery["actor"] if _clean_source_label(actor).casefold() == polluted else actor
+        for actor in actors
+    ]
 
 
 def _is_clipped_passive_actor(flat_value: str, recovered_actor: str) -> bool:
@@ -2027,6 +2259,9 @@ def _modality_from_parser_element(element: Dict[str, Any]) -> str:
     if inferred_norm_type:
         return inferred_norm_type
 
+    heading_recovery = _source_separated_heading_actor_recovery(element)
+    if heading_recovery:
+        return _modality_from_textual_value(heading_recovery["modal_text"])
     for key in ("text", "support_text", "action"):
         inferred = _modality_from_textual_value(element.get(key))
         if inferred:
@@ -2160,7 +2395,10 @@ def _support_scoped_slot_records(
 
 
 def _same_sentence_slot_scope(
-    element: Mapping[str, Any], support_span: "SourceSpan"
+    element: Mapping[str, Any],
+    support_span: "SourceSpan",
+    *,
+    citation_periods: Sequence[int] = (),
 ) -> "SourceSpan":
     """Expand slot scoping to the containing sentence, not the whole section."""
 
@@ -2172,19 +2410,195 @@ def _same_sentence_slot_scope(
 
     sentence_start = 0
     for index in range(min(support_start, len(text) - 1), -1, -1):
-        if text[index] in ".!?\n":
+        if text[index] in ".!?\n" and index not in citation_periods:
             sentence_start = index + 1
             break
 
     sentence_end = len(text)
     for index in range(min(max(support_end, 0), len(text) - 1), len(text)):
-        if text[index] in ".!?\n":
+        if text[index] in ".!?\n" and index not in citation_periods:
             sentence_end = index + 1
             break
 
     if sentence_end <= sentence_start:
         return support_span
     return SourceSpan(sentence_start, sentence_end)
+
+
+def _qualifier_scoped_reference_records(
+    element: Mapping[str, Any],
+    records: Sequence[Mapping[str, Any]],
+    ordinary_scope: "SourceSpan",
+    qualifiers: Sequence[Mapping[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Keep exact reference occurrences inside an already retained qualifier.
+
+    Decimal citation dots can shorten the ordinary sentence window. A retained
+    condition or exception supplies a narrower source-bound container for its
+    references; this does not widen scope to other sentences or resolve a target.
+    """
+    ordinary = _support_scoped_slot_records(records, ordinary_scope)
+    if len(ordinary) == len(records):
+        return ordinary
+    window = _heading_recovery_source_window(element)
+    if window is not None and window[2]:
+        source = window[2]
+        bounds = _heading_recovery_span(element.get("source_span")) or (0, len(source))
+    else:
+        # Document parsing stores source_span in document coordinates while
+        # support/detail offsets index the exact local sentence in text.
+        source = element.get("text")
+        document_span = _heading_recovery_span(element.get("source_span"))
+        support = _heading_recovery_span(element.get("support_span"))
+        if (
+            type(source) is not str or not source or document_span is None
+            or document_span[1] - document_span[0] != len(source)
+            or support is None or not 0 <= support[0] < support[1] <= len(source)
+            or element.get("support_text") != source[support[0]:support[1]]
+            or (element.get("source_text") and element["source_text"] != source)
+        ):
+            return ordinary
+        bounds = (0, len(source))
+
+    def exact_span(record: Mapping[str, Any]) -> Optional[tuple[int, int]]:
+        span = _heading_recovery_span(record.get("span"))
+        if span is None or not bounds[0] <= span[0] < span[1] <= bounds[1]:
+            return None
+        if record.get("raw_text") != source[span[0]:span[1]]:
+            return None
+        for key in ("source_id", "document_id", "parent_source_id", "canonical_citation"):
+            if key in record and record[key] != element.get(key):
+                return None
+        for key in ("source_span", "support_span"):
+            if key in record and _heading_recovery_span(record[key]) != span:
+                return None
+        return span
+
+    containers = [span for qualifier in qualifiers if (span := exact_span(qualifier))]
+    result: List[Dict[str, Any]] = []
+    for record in records:
+        if _support_scoped_slot_records([record], ordinary_scope):
+            result.append(dict(record))
+            continue
+        span = exact_span(record)
+        if span and any(start <= span[0] < span[1] <= end for start, end in containers):
+            result.append(dict(record))
+    return result
+
+
+def _exact_fronted_slot_clause(
+    element: Mapping[str, Any],
+    record: Mapping[str, Any],
+    source: str,
+    source_bounds: tuple[int, int],
+    *,
+    override: bool = False,
+) -> Optional[tuple[int, int]]:
+    """Authenticate one fronted qualifier before widening its sentence scope.
+
+    This stricter path only admits records lost at a citation's interior dots;
+    existing legacy records retain their ordinary support-scoping behavior.
+    """
+
+    span = _heading_recovery_span(record.get("span"))
+    clause = _heading_recovery_span(record.get("clause_span"))
+    if span is None or clause is None:
+        return None
+    if not source_bounds[0] <= clause[0] < span[0] < span[1] < clause[1] <= source_bounds[1]:
+        return None
+    for key in ("source_span", "support_span"):
+        if key in record and _heading_recovery_span(record[key]) != span:
+            return None
+    for key in ("source_id", "document_id", "parent_source_id", "canonical_citation"):
+        if key in record and (
+            type(record[key]) is not str or record[key] != element.get(key)
+        ):
+            return None
+    body = source[span[0] : span[1]]
+    if not body or record.get("raw_text") != body:
+        return None
+    for key in ("normalized_text", "value", "text"):
+        if key in record and record[key] != body:
+            return None
+    kind = record.get("clause_type")
+    if type(kind) is not str:
+        return None
+    connector = kind.replace("_", " ")
+    allowed = (
+        {"notwithstanding"}
+        if override
+        else {"subject to", "provided that", "if", "when", "where"}
+    )
+    if (
+        record.get("type") != ("override" if override else "condition")
+        or connector not in allowed
+    ):
+        return None
+    prefix = source[clause[0] : span[0]]
+    connector_pattern = re.escape(connector).replace(r"\ ", r"\s+") + r"\s+"
+    if not re.fullmatch(connector_pattern, prefix, re.IGNORECASE):
+        return None
+    if not re.fullmatch(r"\s*,\s*", source[span[1] : clause[1]]):
+        return None
+    return clause
+
+
+def _citation_scoped_condition_records(
+    element: Mapping[str, Any],
+    records: Sequence[Mapping[str, Any]],
+    support_span: "SourceSpan",
+    ordinary_scope: "SourceSpan",
+) -> List[Dict[str, Any]]:
+    """Preserve exact conditions separated from support by dotted citations.
+
+    Only periods inside authenticated fronted precedence references may cease
+    to be sentence boundaries. Source-invalid records, other sentences and
+    quoted or semicolon-separated clauses cannot use this additional path.
+    """
+
+    ordinary = _support_scoped_slot_records(records, ordinary_scope)
+    if len(ordinary) == len(records):
+        return ordinary
+    window = _heading_recovery_source_window(element)
+    support = _heading_recovery_span(element.get("support_span"))
+    if window is None or support is None or not window[2]:
+        return ordinary
+    source = window[2]
+    source_bounds = _heading_recovery_span(element.get("source_span")) or (0, len(source))
+    periods: List[int] = []
+    for override in _slot_detail_records(
+        element, "override_clause_details", "override_clauses"
+    ):
+        clause = _exact_fronted_slot_clause(
+            element, override, source, source_bounds, override=True
+        )
+        if clause is None or clause[1] > support[0]:
+            continue
+        body = override["raw_text"]
+        if not re.fullmatch(r"sections?\s+[0-9]+(?:\.[0-9]+)+", body, re.IGNORECASE):
+            continue
+        start, end = override["span"]
+        periods.extend(index for index in range(start, end) if source[index] == ".")
+    if not periods:
+        return ordinary
+    expanded = _same_sentence_slot_scope(element, support_span, citation_periods=periods)
+    result: List[Dict[str, Any]] = []
+    for record in records:
+        if _support_scoped_slot_records([record], ordinary_scope):
+            result.append(dict(record))
+            continue
+        clause = _exact_fronted_slot_clause(element, record, source, source_bounds)
+        if clause is None or not expanded.start <= clause[0] < clause[1] <= support[0]:
+            continue
+        bridge = source[clause[1] : support[0]]
+        if any(character in ";!?\n" for character in source[clause[0] : support[0]]):
+            continue
+        if not _heading_recovery_unquoted_range(source, clause[0], support[1]):
+            continue
+        if re.search(r"\b(?:shall|must|may)\b", bridge, re.IGNORECASE):
+            continue
+        result.append(dict(record))
+    return result
 
 
 def _direct_record_spans(record: Mapping[str, Any]) -> List[List[int]]:
@@ -2684,8 +3098,10 @@ class LegalNormIR:
             conditions = _slot_detail_records(element, "condition_details", "conditions")
             exceptions = _slot_detail_records(element, "exception_details", "exceptions")
         else:
-            conditions = _support_scoped_slot_records(
+            conditions = _citation_scoped_condition_records(
+                element,
                 _slot_detail_records(element, "condition_details", "conditions"),
+                support_span,
                 slot_scope_span,
             )
             exceptions = _support_scoped_slot_records(
@@ -2713,9 +3129,11 @@ class LegalNormIR:
                 ),
                 slot_scope_span,
             )
-        cross_references = _support_scoped_slot_records(
+        cross_references = _qualifier_scoped_reference_records(
+            element,
             _slot_detail_records(element, "cross_reference_details", "cross_references"),
             slot_scope_span,
+            [*conditions, *exceptions],
         )
         if not conditions and not parser_scoped:
             conditions = _support_scoped_slot_records(
@@ -2802,7 +3220,7 @@ class LegalNormIR:
             formal_terms=dict(element.get("formal_terms") or {}),
             legal_frame=dict(element.get("legal_frame") or {}),
             section_context=dict(element.get("section_context") or {}),
-            actor_entities=_actor_texts(element.get("actor_entities")) or _actor_entities(element),
+            actor_entities=_ir_actor_entities(element),
             quality=quality,
             definition_scope=dict(element.get("definition_scope") or {}),
         )

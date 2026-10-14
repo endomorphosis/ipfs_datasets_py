@@ -42,6 +42,12 @@ QUALIFICATION_DEPENDENCIES = (
     "logic/deontic/decoder.py", "logic/legal_ir/canonical_contracts.py",
     "logic/legal_ir/canonical_roundtrip.py",
     "logic/autoformal/semantic_integrity.py",
+    "logic/autoformal/__init__.py", "logic/legal_document.py",
+    "logic/autoformal/legal_temporal_occurrence_provenance.py",
+    "logic/autoformal/legal_temporal_event_interpretation.py",
+    "logic/autoformal/legal_temporal_deadline_interpretation.py",
+    "logic/autoformal/legal_temporal_event_proposer_v4.py",
+    "logic/autoformal/legal_temporal_event_owner_adapter_v4.py",
     "optimizers/logic_theorem_optimizer/autoencoder_paths.py",
 )
 
@@ -195,10 +201,18 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
 
     if _is_constitution(sample):
         failure = {"passed": False, "reason": "constitution_not_formalized", "admitted": False}
+        unavailable = {"schema": "legal-temporal-occurrence-unavailable/v1", "status": "not_evaluated",
+                       "source_id": sample_id, "source_sha256": _sha(sample["text"].encode()),
+                       "reason_codes": ["constitution_not_formalized"],
+                       "model_calls": 0, "native_build_calls": 0,
+                       "source_semantics_verified": False, "owner_occurrence_resolved": False,
+                       "formula_admission": False, "admitted": False, "formalized": False}
         return {**{name: failure for name in STRUCTURAL_GATES},
+                "temporal_occurrence_provenance": unavailable,
+                "temporal_occurrence_provenance_sha256": _sha(_raw(unavailable)),
                 "compiler": {"compiler_status": "not_evaluated", "reason": "constitution_not_formalized",
                              "roundtrip": False, "admitted": False}}
-    session = AutoformalSession()
+    session = AutoformalSession(capture_temporal_provenance=True)
     compile_started = time.monotonic()
     compiled = compile_span(session, sample["text"], sample_id, allow_partial=False)
     compile_seconds = time.monotonic() - compile_started
@@ -221,7 +235,25 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
         clause = session.documents.clause(row.document_id, row.clause_id)
         if clause is None:
             continue
-        family_rows.append(qualify_logic_families(clause.text, row.rule, source_id=row.clause_id))
+        family = qualify_logic_families(clause.text, row.rule, source_id=row.clause_id)
+        # Bind the family projection to its captured compiler row. The source
+        # occurrences remain diagnostic candidates, never a resolved owner.
+        from ...logic.autoformal.legal_temporal_occurrence_provenance import digest as occurrence_digest
+        entry = session.temporal_occurrences[(row.document_id, row.clause_id)]
+        local_index = sum(prior.document_id == row.document_id and prior.clause_id == row.clause_id
+                          for prior in rows[:index])
+        observation = entry["receipt"]["rule_rows"][local_index]
+        if observation["rule_sha256"] != occurrence_digest(row.rule):
+            raise CandidateQualificationError("temporal occurrence compiler row binding differs")
+        family["temporal_occurrence_evidence"] = {
+            "receipt_sha256": entry["receipt_sha256"], "rule_index": local_index,
+            "interpretation_requests_sha256": entry["interpretation_requests_sha256"],
+            "deadline_interpretation_requests_sha256": entry["deadline_interpretation_requests_sha256"],
+            "rule_sha256": observation["rule_sha256"], "source_id": row.clause_id,
+            "scope": "source_occurrence_and_lexical_candidate_diagnostics_only",
+            "owner_occurrence_resolved": False, "semantic_qualification_passed": False,
+        }
+        family_rows.append(family)
         lake_rows.append(_lake_gate(row.rule, roundtrip_ok=semantic_ok,
                          output_directory=directory / f"lake-{index}",
                          timeout_seconds=lake_timeout_seconds, statement_lock=statement_lock))
@@ -239,7 +271,10 @@ def _structural_gates(sample: Mapping[str, Any], sample_id: str, directory: Path
     coverage_ok = family_ok and bool(coverage_rows) and all(row["passed"] for row in coverage_rows)
     lake_ok = semantic_ok and len(lake_rows) == len(rows) and all(
         row.get("passed") is True for row in lake_rows)
+    temporal_provenance = session.temporal_occurrence_report()
     return {"compiler": compiled, "semantic_gate": semantic,
+            "temporal_occurrence_provenance": temporal_provenance,
+            "temporal_occurrence_provenance_sha256": _sha(_raw(temporal_provenance)),
             "family_syntax_gate": {"passed": family_ok, "rows": family_rows, "admitted": False,
                                    "reason": "" if family_ok else "required_family_syntax_failed"},
             "family_coverage_gate": {"passed": coverage_ok, "rows": coverage_rows,
@@ -325,10 +360,24 @@ def qualify_candidate(candidate_artifact: Mapping[str, Any], candidate_version_i
                       "statement_lock": str(lock_path)})
         paths.update({"dependency:" + relative: str(root / "ipfs_datasets_py" / relative)
                       for relative in QUALIFICATION_DEPENDENCIES})
+        from ...logic.autoformal.legal_temporal_deadline_interpretation import producer_pins
+        try:
+            temporal_pins = producer_pins()
+        except ValueError as exc:
+            raise CandidateQualificationError("temporal diagnostic producer source changed") from exc
+        for producer_path in temporal_pins:
+            path = Path(producer_path).resolve()
+            if not path.is_relative_to(root / "ipfs_datasets_py"):
+                raise CandidateQualificationError("temporal diagnostic producer resolved outside workspace")
+            paths["temporal_dependency:" + str(path.relative_to(root))] = str(path)
         for name in ("autoencoder", "samples"):
             if root not in Path(paths[name]).parents:
                 raise CandidateQualificationError(f"{name} resolved outside workspace")
         hashes = {key: _sha(Path(path).read_bytes()) for key, path in paths.items()}
+        for producer_path, expected_sha in temporal_pins.items():
+            key = "temporal_dependency:" + str(Path(producer_path).resolve().relative_to(root))
+            if hashes[key] != expected_sha:
+                raise CandidateQualificationError("temporal diagnostic producer source changed")
         if hashes["statement_lock"] != lock_sha:
             raise CandidateQualificationError("statement lock changed during loading")
         resolved = _load_candidate(candidate_artifact, checkpoint_dependencies)

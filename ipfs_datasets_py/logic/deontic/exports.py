@@ -16,6 +16,8 @@ from typing import Any, Dict, Iterable, List, Mapping, Sequence, Union
 
 from .decoder import decode_legal_norm_ir
 from .formula_builder import (
+    _is_same_document_resolved_reference as _formula_same_document_reference,
+    _reference_is_external as _formula_reference_is_external,
     build_deontic_formula_record_from_ir,
     build_deontic_formula_records_from_irs,
 )
@@ -28,6 +30,32 @@ from .prover_syntax import validate_ir_with_provers
 
 
 IRInput = Union[LegalNormIR, Mapping[str, Any]]
+
+
+def _formula_validation_blockers(record: Mapping[str, Any] | None) -> List[str]:
+    """Return current semantic blockers that cached readiness cannot clear."""
+
+    if not isinstance(record, Mapping):
+        return []
+    return [
+        blocker for blocker in record.get("blockers", [])
+        if blocker in {
+            "formula_condition_cap_exceeded",
+            "formula_exception_cap_exceeded",
+            "formula_external_applicability_unresolved",
+            "formula_reference_condition_unresolved",
+            "formula_reference_exception_unresolved",
+            "formula_inline_exception_action_unresolved",
+            "formula_duty_scope_unresolved",
+            "formula_coordination_scope_unresolved",
+        }
+    ]
+
+
+def _coordination_evidence_fields(record: Mapping[str, Any]) -> Dict[str, Any]:
+    """Carry unresolved source grouping with readiness-bearing diagnostics."""
+    evidence = record.get("coordination_scope_evidence")
+    return {"coordination_scope_evidence": evidence} if evidence else {}
 
 
 EXPORT_TABLE_SPECS: Dict[str, Dict[str, Any]] = {
@@ -119,7 +147,6 @@ DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS = (
 )
 
 DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY = {
-    "conditional_normative": ("actor", "modality", "action", "conditions"),
     "definition": ("actor", "modality", "action"),
     "applicability_rule": ("actor", "modality", "action", "cross_references"),
     "exemption_rule": ("actor", "modality", "action"),
@@ -1495,6 +1522,8 @@ def build_formal_logic_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "schema_version": record["schema_version"],
     }
     row.update(reference_provenance)
+    if record.get("coordination_scope_evidence"):
+        row["coordination_scope_evidence"] = record["coordination_scope_evidence"]
     return row
 
 
@@ -1528,6 +1557,7 @@ def build_proof_obligation_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "parser_warnings": list(norm.quality.parser_warnings),
         "deterministic_resolution": formula_record["deterministic_resolution"],
         "schema_version": norm.schema_version,
+        **_coordination_evidence_fields(formula_record),
     }
     row.update(reference_provenance)
     return row
@@ -1541,6 +1571,10 @@ def build_repair_queue_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         blockers = list(norm.quality.parser_warnings)
 
     formula_record = build_deontic_formula_record_from_ir(norm)
+
+    for blocker in _formula_validation_blockers(formula_record):
+        if blocker not in blockers:
+            blockers.append(blocker)
 
     reference_provenance = _cross_reference_provenance_from_ir(norm)
     row = {
@@ -1564,6 +1598,7 @@ def build_repair_queue_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "requires_llm_repair": False,
         "allow_llm_repair": False,
         "schema_version": norm.schema_version,
+        **_coordination_evidence_fields(formula_record),
     }
     row.update(reference_provenance)
     return row
@@ -1737,6 +1772,7 @@ def build_prover_syntax_summary_record_from_ir(
 
     target_names = [str(record.get("target") or "") for record in records]
     required_targets_passed = bool(checked_records) and valid_count == len(checked_records)
+    validation_blockers = _formula_validation_blockers(build_deontic_formula_record_from_ir(norm))
 
     return {
         "prover_syntax_summary_id": _stable_id(
@@ -1754,8 +1790,8 @@ def build_prover_syntax_summary_record_from_ir(
         "syntax_invalid_count": len(invalid_records),
         "syntax_valid_rate": (valid_count / len(checked_records)) if checked_records else 0.0,
         "required_targets_passed": required_targets_passed,
-        "proof_ready": norm.proof_ready,
-        "requires_validation": bool(norm.blockers) or not required_targets_passed,
+        "proof_ready": norm.proof_ready and not validation_blockers,
+        "requires_validation": bool(norm.blockers or validation_blockers) or not required_targets_passed,
         "parser_warnings": list(norm.quality.parser_warnings),
         "targets": target_names,
         "diagnostic_distribution": diagnostics,
@@ -1826,10 +1862,11 @@ def build_decoder_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "missing_slots": missing_slots,
         "parser_warnings": list(decoded.parser_warnings),
         "phrase_provenance": phrase_rows,
-        "proof_ready": norm.proof_ready,
+        "proof_ready": norm.proof_ready and not _formula_validation_blockers(formula_record),
         "requires_validation": requires_validation,
         "decoder_validation_resolution": decoder_validation_resolution,
         "schema_version": norm.schema_version,
+        **_coordination_evidence_fields(formula_record),
     }
 
 
@@ -1854,7 +1891,7 @@ def _decoder_validation_status(
     validation flag.
     """
 
-    if missing_slots:
+    if missing_slots or _formula_validation_blockers(formula_record):
         return True, {}
 
     formula_resolution = _decoder_formula_record_resolution(formula_record)
@@ -1893,6 +1930,13 @@ def _decoder_validation_status(
         return True, {}
     resolution_type = str(resolution.get("type") or "").strip()
     if not resolution_type:
+        return True, {}
+    if (
+        resolution_type == "pure_precedence_override"
+        and isinstance(formula_record, Mapping)
+        and formula_record.get("proof_ready") is not True
+    ):
+        # Current IR may contain qualifiers absent when this clearance was saved.
         return True, {}
 
     return (
@@ -2591,13 +2635,23 @@ def parser_elements_for_metrics(
         for record in build_deontic_formula_records_from_irs(resolved_norms)
         if record.get("source_id")
     }
+    source_id_counts = Counter(norm.source_id for norm in resolved_norms if norm.source_id)
 
-    for element in metric_elements:
+    for source_element, element in zip(source_elements, metric_elements):
         export_readiness = dict(element.get("export_readiness") or {})
-        inactive_projection = inactive_projection_by_source_id.get(
-            str(element.get("source_id") or "")
+        unique_source_id = source_id_counts.get(element.get("source_id"), 0) == 1
+        inactive_projection = (
+            inactive_projection_by_source_id.get(str(element.get("source_id") or ""))
+            if unique_source_id else
+            source_element if _has_inactive_deterministic_repair_projection(source_element) else None
         )
         batch_formula_record = batch_formula_records_by_source_id.get(element.get("source_id"))
+        if not unique_source_id:
+            # Missing or repeated IDs cannot identify a batch formula. Evaluate
+            # this row so a neighbor cannot lend it readiness or references.
+            batch_formula_record = build_deontic_formula_record_from_ir(
+                LegalNormIR.from_parser_element(element)
+            )
         if batch_formula_record:
             export_readiness["formula_proof_ready"] = bool(batch_formula_record.get("proof_ready"))
             export_readiness["formula_requires_validation"] = bool(
@@ -2611,7 +2665,10 @@ def parser_elements_for_metrics(
             )
             _project_same_document_resolved_cross_references(
                 element,
-                resolved_references_by_source_id.get(str(element.get("source_id") or ""), []),
+                (
+                    resolved_references_by_source_id.get(str(element.get("source_id") or ""), [])
+                    if unique_source_id else element.get("resolved_cross_references") or []
+                ),
                 batch_formula_record,
             )
             _project_formula_record_active_repair_status(element, batch_formula_record)
@@ -2624,13 +2681,20 @@ def parser_elements_for_metrics(
                 or dict(inactive_projection.get("llm_repair") or {}).get("deterministic_resolution")
                 or {}
             )
-            if deterministic_resolution:
-                export_readiness["deterministic_resolution"] = deterministic_resolution
-            export_readiness["formula_proof_ready"] = True
-            export_readiness["formula_requires_validation"] = False
-            export_readiness["formula_repair_required"] = False
-            export_readiness["export_requires_validation"] = False
-            export_readiness["export_repair_required"] = False
+            stale_override_clearance = (
+                deterministic_resolution.get("type") == "pure_precedence_override"
+                and batch_formula_record is not None
+                and (batch_formula_record.get("deterministic_resolution") or {}).get("type")
+                != "pure_precedence_override"
+            )
+            if not stale_override_clearance and not _formula_validation_blockers(batch_formula_record):
+                if deterministic_resolution:
+                    export_readiness["deterministic_resolution"] = deterministic_resolution
+                export_readiness["formula_proof_ready"] = True
+                export_readiness["formula_requires_validation"] = False
+                export_readiness["formula_repair_required"] = False
+                export_readiness["export_requires_validation"] = False
+                export_readiness["export_repair_required"] = False
 
         formula_proof_ready = export_readiness.get("formula_proof_ready") is True
         formula_requires_validation = bool(export_readiness.get("formula_requires_validation"))
@@ -2657,6 +2721,7 @@ def parser_elements_for_metrics(
             element["active_repair_warnings"] = active_warnings
 
         element["export_readiness"] = export_readiness
+        _project_formula_validation_repair_status(element, batch_formula_record)
 
     return metric_elements
 
@@ -3619,6 +3684,7 @@ def parser_elements_with_ir_export_readiness(
             _clear_parser_exception_repair_if_formula_resolved(copied, deterministic_resolution)
             _project_formula_resolved_metric_readiness(copied, deterministic_resolution)
 
+        _project_formula_validation_repair_status(copied, formula_record)
         aligned.append(copied)
     return aligned
 
@@ -3991,10 +4057,11 @@ def _canonical_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "repair_required": bool(formula_record["repair_required"]),
         "export_proof_ready": bool(formula_record["proof_ready"]),
         "export_repair_required": bool(formula_record["repair_required"]),
-        "blockers": list(norm.blockers),
+        "blockers": list(formula_record["blockers"]),
         "parser_warnings": list(norm.quality.parser_warnings),
         "deterministic_resolution": formula_record["deterministic_resolution"],
         "schema_version": norm.schema_version,
+        **_coordination_evidence_fields(formula_record),
     }
     row.update(reference_provenance)
     return row
@@ -4182,11 +4249,7 @@ def _section_context_citations(norm: LegalNormIR) -> List[str]:
 
 
 def _reference_is_external(reference: Mapping[str, Any]) -> bool:
-    for key in ("resolution_scope", "document_scope", "source_scope", "scope"):
-        value = str(reference.get(key) or "").strip().lower().replace("-", "_")
-        if value in {"external", "external_document", "other_document"}:
-            return True
-    return False
+    return _formula_reference_is_external(reference)
 
 
 def _cross_reference_provenance_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
@@ -4336,16 +4399,7 @@ def _reference_provenance_key(reference: Mapping[str, Any]) -> str:
 
 
 def _is_same_document_resolved_reference(reference: Mapping[str, Any]) -> bool:
-    if reference.get("same_document") is True:
-        return True
-
-    for key in ("resolution_scope", "document_scope", "source_scope", "scope"):
-        value = str(reference.get(key) or "").strip().lower().replace("-", "_")
-        if value in {"same_document", "this_document", "current_document", "local"}:
-            return True
-
-    target_document = str(reference.get("target_document") or "").strip().lower()
-    return target_document in {"same_document", "this_document", "current_document"}
+    return _formula_same_document_reference(reference)
 
 
 def _is_local_scope_reference_record(reference: Mapping[str, Any]) -> bool:
@@ -4667,6 +4721,57 @@ def _project_same_document_resolved_cross_references(
 
     if projected:
         element["resolved_cross_references"] = projected
+
+
+def _project_formula_validation_repair_status(
+    element: Dict[str, Any],
+    formula_record: Mapping[str, Any] | None,
+) -> None:
+    """Keep incomplete formula exports in repair across repeated projections.
+
+    Historical parser flags cannot authorize a formula that omits substantive
+    predicates or lacks resolution for present reference qualifiers. These
+    records require producer repair or reference review; this projection does
+    not enable an LLM invocation.
+    """
+
+    validation_blockers = _formula_validation_blockers(formula_record)
+    if not validation_blockers:
+        return
+    readiness = dict(element.get("export_readiness") or {})
+    readiness.update({
+        "proof_ready": False,
+        "formula_proof_ready": False,
+        "formula_requires_validation": True,
+        "formula_repair_required": True,
+        "export_requires_validation": True,
+        "export_repair_required": True,
+        "metric_requires_validation": True,
+        "metric_repair_required": True,
+        "repair_required": True,
+        "deterministic_resolution": {},
+        "formula_blockers": list(formula_record.get("blockers") or []),
+    })
+    validation = readiness.get("requires_validation")
+    readiness["requires_validation"] = (
+        list(dict.fromkeys([*validation, *validation_blockers]))
+        if isinstance(validation, list) else True
+    )
+    element["export_readiness"] = readiness
+    warnings = list(dict.fromkeys([*(element.get("parser_warnings") or []), *validation_blockers]))
+    element["active_repair_required"] = True
+    element["repair_required"] = True
+    element["active_repair_warnings"] = warnings
+    element["repair_required_warnings"] = list(warnings)
+    repair = dict(element.get("llm_repair") or {})
+    repair.update({
+        "required": True,
+        "allow_llm_repair": False,
+        "deterministically_resolved": False,
+        "deterministic_resolution": {},
+        "reasons": list(dict.fromkeys([*(repair.get("reasons") or []), *validation_blockers])),
+    })
+    element["llm_repair"] = repair
 
 
 def _project_formula_record_active_repair_status(
@@ -5052,10 +5157,20 @@ def _deterministic_capability_profile_slots(
     requested = tuple(dict.fromkeys(str(slot) for slot in requested_slots if slot))
     if requested != DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS:
         return requested
-    if str(norm.mental_state or "").strip():
-        return ("actor", "modality", "mental_state", "action")
-
     family = _deterministic_norm_family(norm)
+    core_slots = (
+        ("actor", "modality", "mental_state", "action")
+        if str(norm.mental_state or "").strip()
+        else requested
+    )
+    if family == "conditional_normative":
+        # Conditions, exceptions, and overrides each establish this family.
+        # Audit every represented scope instead of requiring an absent condition.
+        return core_slots + tuple(
+            slot for slot in ("conditions", "exceptions", "overrides") if getattr(norm, slot)
+        )
+    if core_slots != requested:
+        return core_slots
     return DEFAULT_DETERMINISTIC_CAPABILITY_PROFILE_SLOTS_BY_FAMILY.get(family, requested)
 
 

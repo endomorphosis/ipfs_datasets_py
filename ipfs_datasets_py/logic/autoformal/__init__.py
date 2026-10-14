@@ -6,6 +6,7 @@ regexes are not on this path.
 """
 from __future__ import annotations
 
+from copy import deepcopy
 import importlib.util
 import re
 import sys
@@ -90,6 +91,8 @@ class AutoformalSession:
     compiled_ids: list[str] = field(default_factory=list)
     vocabularies: dict[str, dict[str, list[str]]] = field(default_factory=dict)
     retried: set[str] = field(default_factory=set)
+    capture_temporal_provenance: bool = False
+    temporal_occurrences: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree
@@ -104,6 +107,116 @@ class AutoformalSession:
 
     def clause_get(self, document_id: str, clause_id: str) -> dict[str, Any]:
         return self.documents.clause_view(document_id, clause_id)
+
+    def _capture_temporal(
+        self, text: str, source_id: str, *, document_text: str,
+        document_id: str, clause_start: int, clause_end: int,
+        source_selector: dict[str, Any] | None, rule_rows: list[dict[str, Any]],
+        scope: str, reason: str = "",
+    ) -> dict[str, Any]:
+        """Keep diagnostics beside the compiler output, without changing a rule."""
+        from .legal_temporal_occurrence_provenance import (
+            build_occurrence_receipt, digest, join_adapter_diagnostics,
+        )
+        from . import legal_temporal_event_proposer_v4 as proposer
+        from .legal_temporal_event_interpretation import build_interpretation_requests
+        from .legal_temporal_deadline_interpretation import build_deadline_requests
+
+        receipt = build_occurrence_receipt(
+            text, source_id=source_id, document_text=document_text,
+            document_id=document_id, clause_start=clause_start, clause_end=clause_end,
+            source_selector=source_selector, rule_rows=rule_rows,
+        )
+        budget_reasons = []
+        if len(text) > proposer.MAX_SOURCE_CHARACTERS:
+            budget_reasons.append("proposer_source_character_budget_exceeded")
+        if len(text.encode("utf-8")) > proposer.MAX_SOURCE_BYTES:
+            budget_reasons.append("proposer_source_byte_budget_exceeded")
+        if budget_reasons:
+            diagnostics = {
+                "schema": "legal-temporal-occurrence-adapter-unavailable/v1",
+                "status": "not_evaluated", "reason_codes": budget_reasons,
+                "source_sha256": receipt["source_binding"]["source_text_sha256"],
+                "occurrence_receipt_sha256": receipt["receipt_sha256"],
+                "source_truncated": False, "model_calls": 0,
+                "authority": dict(receipt["authority"]),
+            }
+            interpretation_requests = {
+                **deepcopy(diagnostics),
+                "schema": "legal-temporal-event-interpretation-requests-unavailable/v1",
+            }
+            deadline_requests = {
+                **deepcopy(diagnostics),
+                "schema": "legal-temporal-deadline-interpretation-requests-unavailable/v1",
+            }
+        else:
+            proposal_receipt = proposer.propose(text)
+            diagnostics = join_adapter_diagnostics(
+                receipt, proposal_receipt, source_text=text,
+                document_text=document_text, rule_rows=rule_rows,
+            )
+            interpretation_requests = build_interpretation_requests(
+                receipt, proposal_receipt, source_text=text,
+                document_text=document_text, rule_rows=rule_rows,
+            )
+            deadline_requests = build_deadline_requests(
+                receipt, proposal_receipt, source_text=text,
+                document_text=document_text, rule_rows=rule_rows,
+            )
+        entry = {"receipt": receipt, "receipt_sha256": digest(receipt),
+                 "adapter_diagnostics": diagnostics, "adapter_diagnostics_sha256": digest(diagnostics),
+                 "interpretation_requests": interpretation_requests,
+                 "interpretation_requests_sha256": digest(interpretation_requests),
+                 "deadline_interpretation_requests": deadline_requests,
+                 "deadline_interpretation_requests_sha256": digest(deadline_requests),
+                 "scope": scope, "compiler_reason": reason,
+                 "compiler_rows_at_capture": deepcopy(rule_rows)}
+        self.temporal_occurrences[(document_id, source_id)] = entry
+        return deepcopy(entry)
+
+    def capture_span_temporal(
+        self, text: str, span_id: str, *, rule_rows: tuple = (), reason: str = "",
+    ) -> dict[str, Any]:
+        """Inventory the whole input, including spans with no compiler rows.
+
+        This standalone source window has no implied association to rules from
+        separately segmented clauses. Clause compilation records that relation.
+        """
+        if rule_rows:
+            raise ValueError("whole-input inventory cannot attach segmented rules")
+        if text == "":
+            return {"schema": "legal-temporal-occurrence-unavailable/v1",
+                    "status": "not_evaluated", "reason_codes": ["empty_source"],
+                    "source_id": span_id, "model_calls": 0,
+                    "authority": self.temporal_occurrence_report()["authority"]}
+        return self._capture_temporal(
+            text, span_id + "#whole-input", document_text=text, document_id=span_id,
+            clause_start=0, clause_end=len(text), source_selector=None, rule_rows=[],
+            scope="whole_input_inventory_only", reason=reason,
+        )
+
+    def temporal_occurrence_report(self) -> dict[str, Any]:
+        """Export recorded observations, not another qualification gate."""
+        return {"schema": "legal-temporal-occurrence-session/v1",
+                "enabled": self.capture_temporal_provenance,
+                "artifacts": deepcopy(list(self.temporal_occurrences.values())),
+                "model_calls": 0, "native_build_calls": 0,
+                "authority": {name: False for name in (
+                    "source_semantics_verified", "owner_occurrence_resolved", "temporal_origin_resolved",
+                    "formula_admission", "family_coverage_gate", "qualified", "admitted", "formalized")}}
+
+    def _compiled_clause_result(self, clause: Any, document_id: str, rows: list[RuleRow]) -> dict[str, Any]:
+        result = {"rows": [row.public() for row in rows]}
+        if self.capture_temporal_provenance:
+            document = self.documents.documents[document_id]
+            result["temporal_occurrence_provenance"] = self._capture_temporal(
+                clause.text, clause.id, document_text=document.text, document_id=document_id,
+                clause_start=clause.start, clause_end=clause.end,
+                source_selector=clause.source_selector or None, rule_rows=result["rows"],
+                scope="clause_compilation_observation",
+                reason=",".join(sorted({row.reason for row in rows if row.reason})),
+            )
+        return result
 
     def compile_clause(
         self,
@@ -124,7 +237,7 @@ class AutoformalSession:
                 status="inactive", reason=clause.reason or "repealed",
             )
             self.rows.append(row)
-            return {"rows": [row.public()]}
+            return self._compiled_clause_result(clause, document_id, [row])
         self.compiled_ids.append(clause_id)
         if vocabulary is None and clause_id not in self.vocabularies:
             vocabulary = vocabulary_from_clause(clause.text)
@@ -142,7 +255,7 @@ class AutoformalSession:
                 status=produced_status(produced), reason="no_rule",
             )
             self.rows.append(row)
-            return {"rows": [row.public()]}
+            return self._compiled_clause_result(clause, document_id, [row])
         temporal_records = _temporal_records(clause.text)
         written: list[RuleRow] = []
         for item in produced:
@@ -156,7 +269,7 @@ class AutoformalSession:
             )
             self.rows.append(row)
             written.append(row)
-        return {"rows": [row.public() for row in written]}
+        return self._compiled_clause_result(clause, document_id, written)
 
     def decompile_rule(self, document_id: str, clause_id: str) -> dict[str, Any]:
         matched = [row.public() for row in self.rows if row.document_id == document_id and row.clause_id == clause_id]
@@ -642,6 +755,23 @@ _JOINED_CLAUSE_RE = re.compile(
 
 
 def compile_span(
+    session: Any,
+    text: str,
+    span_id: str,
+    *,
+    vocabulary: dict[str, list[str]] | None = None,
+    allow_partial: bool = False,
+) -> dict[str, Any]:
+    """Compile with optional occurrence diagnostics beside the unchanged rules."""
+    result = _compile_span(session, text, span_id, vocabulary=vocabulary, allow_partial=allow_partial)
+    if getattr(session, "capture_temporal_provenance", False):
+        result["temporal_occurrence_provenance"] = session.capture_span_temporal(
+            text, span_id, reason=str(result.get("reason") or ""),
+        )
+    return result
+
+
+def _compile_span(
     session: Any,
     text: str,
     span_id: str,

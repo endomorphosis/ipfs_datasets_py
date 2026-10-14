@@ -219,7 +219,11 @@ class RepositoryCodebaseIndex:
 
     def __init__(self, *, ingestor: DuckDBASTIngestor | None = None,
                  artifacts: ImmutableCAS | None = None,
-                 catalog: CodebaseCatalog | None = None) -> None:
+                 catalog: CodebaseCatalog | None = None,
+                 optimized_observation: bool = True) -> None:
+        if type(optimized_observation) is not bool:
+            raise CodebaseIRError("optimized_observation must be an exact bool")
+        self.optimized_observation = optimized_observation
         self.ingestor = ingestor if ingestor is not None else DuckDBASTIngestor()
         self.artifacts = artifacts
         if catalog is not None:
@@ -430,6 +434,8 @@ class RepositoryCodebaseIndex:
         Uses the manifest's exact capture profile under default shared admission.
         No parsing, inference, training or SQL mutation occurs. Opaque entries
         remain unknown; excluded source remains outside the observation scope.
+        Operation-local inventory resolution is on by default; construct this
+        owner with optimized_observation=False to use public member methods.
         """
         from ipfs_datasets_py.duckdb_control.codebase_catalog import CodebaseHead
         from .codebase_resources import acquire_codebase_resources
@@ -438,6 +444,9 @@ class RepositoryCodebaseIndex:
         )
         if type(expected_head) is not CodebaseHead or self.catalog is None or self.artifacts is None:
             raise CodebaseIRError("observation requires a catalog head and artifact owner")
+        optimized = self.optimized_observation
+        if type(optimized) is not bool:
+            raise CodebaseIRError("optimized_observation must be an exact bool")
         if type(timeout_seconds) not in {int, float} or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
             raise CodebaseIRError("timeout_seconds must be finite and positive")
         if type(admission_timeout_seconds) not in {int, float} or not math.isfinite(admission_timeout_seconds) or admission_timeout_seconds < 0:
@@ -462,18 +471,31 @@ class RepositoryCodebaseIndex:
             checkpoint()
             require_head()
             manifest = self.load(expected_head.manifest_cid)
+            captured = manifest.snapshot
+            captured_snapshot_cid = captured.snapshot_cid
             if (manifest.snapshot.repository_id != expected_head.repository_id
-                    or manifest.snapshot.snapshot_cid != expected_head.snapshot_cid
+                    or captured_snapshot_cid != expected_head.snapshot_cid
                     or manifest.ast_revision_id != expected_head.ast_revision_id):
                 raise CodebaseIRError("catalog head does not bind its manifest")
-            captured = manifest.snapshot
             CodebaseScanLimits(captured.max_entries, captured.max_file_bytes).validate_reservation(memory_mb)
+            # This freshly loaded manifest already binds every unit exactly
+            # once. Resolve its immutable inventory locally rather than
+            # searching and hashing the entire snapshot for each AST row.
+            # SQL/CAS evidence and current source are still reread below.
+            units = {unit.source_key: unit for unit in manifest.units} if optimized else None
             for entry in captured.entries:
                 checkpoint()
                 if not entry.is_opaque:
                     self.artifacts.get_bytes(entry.source_cid)
-                self.lookup(manifest, entry.path)
-                self.load_ast_artifact(manifest, entry.path)
+                if optimized:
+                    unit = units[entry.source_key]
+                    self._lookup_member(manifest, entry, unit)
+                    self._load_ast_artifact_member(
+                        manifest, entry, unit, snapshot_cid=captured_snapshot_cid,
+                    )
+                else:
+                    self.lookup(manifest, entry.path)
+                    self.load_ast_artifact(manifest, entry.path)
             checkpoint()
             observed = snapshot_repository(
                 repository, repository_id=expected_head.repository_id,
@@ -481,7 +503,9 @@ class RepositoryCodebaseIndex:
                 exclusions=captured.exclusions,
             )
             checkpoint()
-            if observed.snapshot_cid != captured.snapshot_cid:
+            if captured.snapshot_cid != captured_snapshot_cid:
+                raise CodebaseIRError("captured snapshot changed during observation")
+            if observed.snapshot_cid != captured_snapshot_cid:
                 raise StaleCodebaseError("current repository differs from the published snapshot")
             require_head()
             checkpoint()
@@ -502,12 +526,16 @@ class RepositoryCodebaseIndex:
         if entry is None:
             raise CodebaseIRError("path is outside the captured inventory")
         unit = next(item for item in manifest.units if item.source_key == entry.source_key)
+        return self._lookup_member(manifest, entry, unit)
+
+    def _lookup_member(self, manifest, entry, unit) -> ASTCatalogProjection | None:
+        """Replay one resolved member through the current native SQL owner."""
         if unit.ast_cid is None:
             return None
         found = self.ingestor.store.get_by_ast_cid(unit.ast_cid)
         if found is None:
             raise CodebaseIRError("AST projection is missing or invalidated")
-        if (found.source_cid != entry.source_cid or found.source_file.path != path
+        if (found.source_cid != entry.source_cid or found.source_file.path != entry.path
                 or found.source_revision.revision_id != manifest.ast_revision_id
                 or found.ast_blob.parse_status != unit.parse_status):
             raise CodebaseIRError("AST projection does not match the manifest")
@@ -521,14 +549,20 @@ class RepositoryCodebaseIndex:
         if entry is None:
             raise CodebaseIRError("path is outside the captured inventory")
         unit = next(item for item in manifest.units if item.source_key == entry.source_key)
+        return self._load_ast_artifact_member(manifest, entry, unit)
+
+    def _load_ast_artifact_member(self, manifest, entry, unit, *, snapshot_cid=None) -> ASTRecord | None:
+        """Reread exact AST CAS bytes using this invocation's snapshot identity."""
         if unit.ast_cid is None:
             return None
         record = ASTRecord.from_dict(self.artifacts.get(unit.ast_cid))
+        if snapshot_cid is None:
+            snapshot_cid = manifest.snapshot.snapshot_cid
         provenance = record.provenance
-        if (provenance.source_cid != entry.source_cid or provenance.path != path
+        if (provenance.source_cid != entry.source_cid or provenance.path != entry.path
                 or provenance.repository_id != manifest.snapshot.repository_id
-                or provenance.revision != "snapshot:" + manifest.snapshot.snapshot_cid
-                or provenance.repository_tree_cid != manifest.snapshot.snapshot_cid):
+                or provenance.revision != "snapshot:" + snapshot_cid
+                or provenance.repository_tree_cid != snapshot_cid):
             raise CodebaseIRError("AST artifact does not match the manifest")
         return record
 
