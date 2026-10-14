@@ -110,6 +110,16 @@ def main(argv: list[str] | None = None) -> int:
                        help="Raw Hub id (default endomorphosis/ipfs_<slug>_laws)")
     p_raw.add_argument("--prior-pack", default=None, help="Existing parquet pack to merge into")
 
+    p_pack = sub.add_parser(
+        "pack-shards",
+        help="Concatenate local data/laws-*.parquet into data/laws.parquet. Does not upload.",
+    )
+    p_pack.add_argument("--source", required=True)
+    p_pack.add_argument("--out", required=True)
+    p_pack.add_argument("--slug", required=True)
+    p_pack.add_argument("--revision", required=True)
+    p_pack.add_argument("--source-dataset", default=None)
+
     args = ap.parse_args(argv)
     if args.cmd == "build":
         from .build import build_country
@@ -408,6 +418,43 @@ def main(argv: list[str] | None = None) -> int:
             prior_pack=Path(args.prior_pack) if args.prior_pack else None,
         )
         print(json.dumps(meta, indent=2, default=str))
+        return 0
+    if args.cmd == "pack-shards":
+        from ipfs_datasets_py.processors.legal_scrapers.world_law.export_norm import (
+            ExportRefused,
+            choose_export_command,
+        )
+        from ipfs_datasets_py.processors.legal_scrapers.world_law.load_sharded_laws import (
+            load_sharded_laws,
+        )
+
+        source = Path(args.source)
+        siblings = [str(path.relative_to(source)) for path in source.rglob("*") if path.is_file()]
+        try:
+            command = choose_export_command(args.slug, siblings)
+        except ExportRefused as exc:
+            print(json.dumps({"error": str(exc), "slug": args.slug}))
+            return 2
+        if command != "load_sharded_laws":
+            print(json.dumps({
+                "error": "pack-shards only accepts sharded laws parquet",
+                "command": command,
+                "slug": args.slug,
+            }))
+            return 2
+        dataset = args.source_dataset or f"endomorphosis/ipfs_{args.slug}_laws"
+        try:
+            written = load_sharded_laws(
+                source,
+                Path(args.out),
+                slug=args.slug,
+                source_dataset=dataset,
+                source_revision=args.revision,
+            )
+        except (OSError, ValueError) as exc:
+            print(json.dumps({"error": str(exc), "slug": args.slug}))
+            return 2
+        print(json.dumps(written, indent=2))
         return 0
     return 1
 
