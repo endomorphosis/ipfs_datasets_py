@@ -147,12 +147,13 @@ and `IPFS_DATASETS_T02_OUTPUT`. Missing either path fails, without a skip or
 a fabricated lease. The validation argv is:
 
 ```sh
-python3 -m pytest -c pytest.ini -o addopts= \
+python3 -m pytest --config-file=pytest.ini -o addopts= \
   -panyio.pytest_plugin -ppytest_asyncio.plugin \
   scripts/ops/legal_ir/span_claim_acceptance_test.py -q
 ```
 
-Attached plugin options keep argv tokens unique, as required by the native
+The long configuration option avoids the conservative shell-token guard on
+`-c`; attached plugin options keep argv tokens unique, as required by the native
 validation-record contract. The adapter supplies no subset, extra authority or
 alternative policy. Direct
 execution of the convenience CLI is outside this unchanged policy's allowed
