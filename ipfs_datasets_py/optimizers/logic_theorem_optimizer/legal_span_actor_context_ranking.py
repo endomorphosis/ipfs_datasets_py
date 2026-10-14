@@ -363,7 +363,7 @@ def _validate_objective_entry(entry, batch, policy):
         "present_gold_nonactor_coordinates","compatible_wrong_domain_sha256","compatible_wrong_candidate_count"}
     for index,identifier,row,base_row in zip(entry["indices"],entry["ids"],d["rows"],base_rows,strict=True):
         _require(type(row) is dict and set(row)==fields and row["id"]==identifier
-            and type(index) is int and 0 <= index < 168 and row["training_index"]==index
+            and type(index) is int and 0 <= index < 168 and type(row["training_index"]) is int and row["training_index"]==index
             and row["actor_present"] is True and type(row["token_count"]) is int and 1 <= row["token_count"] <= 128
             and type(row["source_sha256"]) is str and span._SHA.fullmatch(row["source_sha256"]),
             "authenticated actor ranking membership required")

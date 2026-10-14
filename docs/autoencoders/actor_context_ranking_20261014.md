@@ -1,82 +1,35 @@
-# Actor context with filtered ranking: untrained candidate
+# Actor context ranking continuation: model sources reviewed; runtime update pending
 
-This draft adds a decoder continuation that combines the trained F15 actor
-context with the existing filtered ranking objective. No F16 training, model
-inference, checkpoint parsing, resource census, reservation or promotion has
-run. Independent qualification is pending: all three collaborating agents reached
-the account usage limit during preparation.
+This is the untrained candidate in draft source PR [1304](https://github.com/endomorphosis/ipfs_datasets_py/pull/1304). It combines the trained F15 differentiable actor context with the retained filtered ranking hinge. No F16 checkpoint, accuracy result, main merge or new Hugging Face weight release exists.
 
-The new `SpanActorContextRankingAdapterDecoder` copies all 42 trained F15
-tensors. It freezes the 36 nonactor tensors, including every learned conditions
-row, and trains the same six actor projection, query and context-gate tensors:
-908 stored scalars, 258 active and 650 inactive. It delegates the entire forward
-factory to F15, preserving the differentiable actor route and the extra frozen
-full-width conditions pass. No inference candidate heuristic is changed.
+The latest trained donor remains F15: 154/168 complete training IR matches in both decoding views. Its immutable experimental release is [1622817fd804ff5333fce7dc8d04433e4acef2e4](https://huggingface.co/Publicus/legal-ir-autoencoder/tree/1622817fd804ff5333fce7dc8d04433e4acef2e4/releases/20261014-actor-refinement-v1). Those are exposed engineering diagnostics, not an independently established statutory semantic accuracy.
 
-The objective retains the exact targeted main-loss normalization and adds its
-existing actor hinge at coefficient 0.25 and margin 1. The wrong-span domain is
-the complete valid source-boundary domain, excluding the exact actor gold span
-and spans overlapping present gold nonactor roles. Wrong-span selection uses
-detached scores; the chosen wrong and gold scores retain their gradient graph.
-Empty domains retain a connected zero and remain in the full batch denominator.
-The candidate records source, training-index, gold-coordinate and filtered-domain
-identities in its objective trace. Geometry and trace agreement alone do not
-establish membership in the authenticated training set; the guarded runner and
-independent recount must verify that join against the fixed training manifest.
+## Candidate and validation
 
-The fixed proposed recipe is one 32-update run from the exact published F15
-checkpoint, with fresh Adam, learning rate 0.001, batch size 12, seed and order
-1729, no weight decay and gradient clipping at 5. Latent conditioning remains
-disabled with 384-dimensional placeholders. Trained query and gate values are
-preserved; no fresh-zero first-step assumption is introduced.
+The candidate copies all 42 trained F15 tensors, freezes the 36 nonactor tensors including the learned conditions head, and trains six actor/query/gate tensors with fresh Adam. The existing main loss normalization remains unchanged; the additional term is the full filtered actor hinge with coefficient 0.25 and margin 1. The fixed recipe remains one 32-update attempt, batch 12, seed/order 1729, learning rate 0.001 and latent input disabled. There is no hyperparameter search or automatic promotion.
 
-The preregistered acceptance conditions are conjunctive:
+Independent review found and resolved an exact-type validation gap: returned training indices must be integers, excluding Boolean and decimal aliases. The earlier draft bytes and finding are retained. The current module is 57,479 bytes, SHA256 `6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa`.
 
-- All 632 initial source head vectors and greedy/joint predictions must match
-  the trained F15 donor before the first update.
-- All 632 final modality, four presence and nonactor boundary score vectors
-  must retain their protected binary32 bits.
-- Training raw and joint complete IR must both reach at least 155/168.
-- Neither route may lose any complete-IR success versus either N11 or F15
-  across the nine scored scopes, and all 32 permission cases must remain intact.
+Completed checks are recorded in the adjacent evidence directory:
 
-The postfreeze comparison has four states: frozen N11, F15 parent, initial
-candidate and trained candidate. It scores 36 authored state/scope sets, reports
-40 panels including the four unscored statutory panels, and compares two sets
-of nine scopes. Saved comparator outputs add no model forwards. Evaluation
-reference bodies and the separate postfreeze comparator input file must remain
-outside the training child's admitted parsing closure.
+- Independent model review: the 11 original detached controls replayed against the current module, plus 19 independently authored scalar-graph, domain and policy controls. These do not establish actual Torch behavior.
+- Training harness: 11 author controls and six additional independent membership refusal cases. Every recorded ranking row must join the exact authenticated training text, index, gold spans and complete filtered domain.
+- Actual qualified import-only bootstrap: 40 declared modules, 17 measured loaded modules and nine mandatory imports. The supplemental attention file makes 41 raw algorithm sources. No model or numerical library was imported by this smoke check.
+- Evaluators: 55 detached controls independently replayed. Both frozen N11 and F15 comparators are covered across nine scored groups in raw and joint views. The analyzer and recounter share an author; a different agent reviewed both. Actual scoring remains prohibited until the full output freeze and actual runtime bindings exist.
+- Resource source checks and synthetic controls passed; they do not establish current compatibility, capacity or admission.
 
-Eleven detached stdlib/fake-interface decoder contracts pass. They cover exact
-donor and all-tensor identity maps, fresh six-tensor optimizer state, trained
-query/gate behavior, protected conditions and inactive rows, factory delegation,
-fixed scheduling, and source/gold/domain/hinge trace tampering. Twenty-five
-synthetic resource predicates also pass. These checks are author-level source
-evidence, not independent source approval, actual Torch validation, a real
-resource observation, or evidence of higher training accuracy.
+All 40 retained algorithm source files remain byte-exact. The package change is the added hybrid module and its reviewed validation hardening. Earlier findings, superseded drafts and failed observations remain evidence, not successful qualifications.
 
-The resource port retains the 145,000,000,000-byte cap and the existing guardian,
-adoption and watchdog bytes. Its historical anchor is the completed F15
-540-record map; live record counts, outstanding claims, occupancy and capacity
-remain unknown. A future qualified observation must preserve every historical
-body and fully charge typed additions, including the 200 MB request and 200 MB
-future-output allowance. No source or resource gate has been fabricated.
+## Actual runtime prerequisite gap
 
-The source checkout starts at merged F15 `b1fd77597867ad31f1687edc8bff090caf3d3b7d`.
-All 40 retained algorithm files remain byte-identical; the new candidate adds
-the forty-first. The separate root checkout starts at newer incoming main
-`729d97881136681e90c05e9d2e0707f57708755d`, retaining another agent's accelerator
-advance and repository-proof work. Canonical HEAD and index anchors remain
-unchanged. The draft does not change main, any root gitlink, a default decoder,
-or the existing published weights.
+The first bounded resource collection stopped on the guardian's read-only compatibility check, before sampling, census, admission, a reservation or model work. A separately reviewed one-shot diagnostic reproduced the identical 1,283-byte stderr identity and safely disclosed the exact error: `exact complete persisted scheduler configuration required; unknown/missing keys refused`.
 
-Before training, finish independent model and resource source review, complete
-and qualify the F16 runner/preparer/inert bootstrap and terminal/freezer ports,
-obtain a fresh qualified resource baseline, and qualify the concrete run plan.
-Only then run the single bounded candidate. Freeze all outputs before executing
-the independently reviewed analyzer and recount. Preserve a failed scientific
-outcome without a tuning retry or automatic promotion.
+A qualified private copy and a separately reviewed config-only inspector established that the existing scheduler now has 24 source-declared configuration fields instead of the older adapter's 19. There are no unknown or missing configuration keys. The five additions concern the proof profile and recovery; recovery is disabled in the sampled configuration. Existing global capacities also differ from the historical policy: 16 CPU slots, 99,688 MiB and 16 child slots, with proof memory headroom 24,922 MiB. The second independently reviewed inspector authenticated the same private copy and disclosed lane values only after matching source-declared lane names and a closed integer schema: the validation lane reserves two CPU slots and zero MiB. All 24 sampled configuration values are now available in the public inspection receipt; its canonical configuration SHA256 is `f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661`.
 
-Real US Code semantic fidelity, genuine active 8D/384D/768D latent decoding,
-broader logic-family qualification, isolated numerical reload and
-`lake build legal` remain unqualified.
+These observations do not authorize resetting shared configuration. The next work is to qualify an adapter for the newer scheduler and preserve its current native safeguards, including PID headroom and cancellation/draining during lease release. Adding the five schema fields to the old adapter alone would omit newer native behavior, so that shortcut is not qualified. The experiment's own request stays two CPU slots, 1,536 MiB, one child, 300 seconds and 200 MB, with the same 145 GB native storage cap and four counted physical roots. Current ledger totals, root compatibility, storage fit and admission remain unqualified. No foreign state, capacity, claim or lease was changed by this phase.
+
+## Fixed acceptance and remaining work
+
+Before update zero, all 632 source rows must reproduce F15's full binary32 heads, greedy decisions and joint decisions. After training, modality, all four presence heads and all nonactor boundaries must remain bit-equal. Scientific success additionally requires at least 155/168 complete training IR matches in both views, zero complete-IR loss IDs versus **both** frozen comparators across all nine scored groups and both views, and retention of all 32 permission cases without abstention. A failed scientific result is archived without a retry or promotion.
+
+The guarded run, complete 62-file freeze, actual independent scoring/recount, experimental weight publication and final integration are still pending. Selected training scalars cannot independently prove the complete preupdate argmax or live gradient graph. This phase does not qualify active 8D/384D/768D latent semantics, independent US Code semantic gold, broader logic-family correctness, portable numerical reload or `lake build legal`.

@@ -1,0 +1,62 @@
+{
+  "actual_censuses": 0,
+  "actual_pair_count": 1,
+  "admission_calls": 0,
+  "all_attempt_evidence_retained": true,
+  "assumed_idle": false,
+  "attempts": [
+    {
+      "check": {
+        "bytes": 0,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-v01.json",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "check_returncode": 1,
+      "check_stderr_bytes": 1283,
+      "check_stderr_sha256": "51ca139e9007be9d130b753b8b192493ec32a75d28e6b6fe2672b9586342313e",
+      "collection_error": "qualified check failed; no blind retry",
+      "collection_error_type": "ValueError",
+      "index": 1,
+      "matched": false,
+      "sample_receipt": null
+    }
+  ],
+  "collector": {
+    "bytes": 9580,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v01.py",
+    "sha256": "9d7ed2f231b5bee4958eefe2129ca12c1f61a8702f938895400b8fb96d738215"
+  },
+  "findings": [
+    "no matching qualified endpoint pair within fixed collection bound"
+  ],
+  "global_state_writes": 0,
+  "joins_weakened": false,
+  "locks_acquired": 0,
+  "max_pairs": 3,
+  "model_calls": 0,
+  "new_claims": 0,
+  "observed_at_utc": "2026-10-14T11:37:38.791363+00:00",
+  "observer_main_calls": 0,
+  "passed": false,
+  "permitted_indices": [
+    1,
+    2,
+    3
+  ],
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "private_endpoint_bodies_parsed": 0,
+  "private_receipt_metadata_only": true,
+  "resource_API_calls": 0,
+  "schema": "actor-context-ranking-resource-collection/v1",
+  "selected_index": null,
+  "selected_input_manifest": null,
+  "source_qualification": {
+    "bytes": 14343,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-source-independent-review-v01.json",
+    "sha256": "7e9ca866957cc9f02467707adf5580998eba3356e697482cd31b815b0b36d133"
+  }
+}

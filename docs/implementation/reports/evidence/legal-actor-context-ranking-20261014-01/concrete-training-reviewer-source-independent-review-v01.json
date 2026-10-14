@@ -1,0 +1,127 @@
+{
+  "actual_checkpoint_JSON_parses": 0,
+  "actual_model_calls": 0,
+  "actual_output_freezes": 0,
+  "actual_private_body_reads": 0,
+  "actual_resource_API_calls": 0,
+  "actual_runtime_main_calls": 0,
+  "actual_training_plan_review_calls": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v03.py": {
+      "bytes": 7150,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v03.py",
+      "sha256": "4a2c1aed786af33046d9c20ec4f0d3376feb8c86dfee345ee23e23b53491a1d6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py": {
+      "bytes": 20230,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py",
+      "sha256": "4edb0362eced0670740dc973e921cc09ee6e3e939c1d092fe81626a2a75aa39b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v03.py": {
+      "bytes": 18600,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v03.py",
+      "sha256": "fe75cc8fbab28032c967b841b93853a7b3080a7025ac8b943b1900f312b6637f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py": {
+      "bytes": 57479,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+      "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 18389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json",
+      "sha256": "26284be9473a9265659982067bf80a3d60ade49dd504b627d7866f7f09bb418d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v03.py": {
+      "bytes": 20530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v03.py",
+      "sha256": "8b147e6adb9bf98103389c47d6673c61b32a590cfe71c57d26fc55c5c5ab5165"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json": {
+      "bytes": 30082,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json",
+      "sha256": "1feab43bb59a12d457f3f0363fa4539495b7a0ea7ef11495c2d0cead701d142a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v03.py": {
+      "bytes": 13530,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v03.py",
+      "sha256": "7b0d9893bb164a5ed9b01ca0626b54ddb385fabcb40af1dbb57f7dc059c6e474"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json": {
+      "bytes": 7532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+      "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py": {
+      "bytes": 9248,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py",
+      "sha256": "5d2b02a917c6c5fd2576b5056592b8fb8c23098c5fc562ef8b12b3c5518c609b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v03.py": {
+      "bytes": 40395,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v03.py",
+      "sha256": "62dff1e7626f34a3a29e96374f92fce732fc079eff03ee5c44a5858e98e858f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-contract-peer-controls-v01.json": {
+      "bytes": 2825,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-contract-peer-controls-v01.json",
+      "sha256": "2df8d33953d2906c034933077b1498f0279e5f40104667a10eb8a81193d8a5c4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 4061,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/training-design-v01.json": {
+      "bytes": 5655,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/training-design-v01.json",
+      "sha256": "ab412ceace1375819323afc9cc08f43720db28f007a04a7f4b7be8cdafd93ca1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v03.py": {
+      "bytes": 48261,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v03.py",
+      "sha256": "3ac3a0b15434562fbb50e35f8883daad2bc674342d259269643bc9ee2cc0d22f"
+    }
+  },
+  "findings": [],
+  "independent_of_runtime_source_author": true,
+  "limitations": [
+    "Source-only qualification. Actual plan, baseline, admission,62 outputs, terminal resource custody and output freeze remain absent and unqualified."
+  ],
+  "observed_at_utc": "2026-10-14T11:41:07.640636+00:00",
+  "observer": {
+    "bytes": 9248,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v02.py",
+    "sha256": "5d2b02a917c6c5fd2576b5056592b8fb8c23098c5fc562ef8b12b3c5518c609b"
+  },
+  "passed": true,
+  "peer_controls": {
+    "bytes": 2825,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-contract-peer-controls-v01.json",
+    "sha256": "2df8d33953d2906c034933077b1498f0279e5f40104667a10eb8a81193d8a5c4"
+  },
+  "protocol": {
+    "bytes": 20230,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v01.py",
+    "sha256": "4edb0362eced0670740dc973e921cc09ee6e3e939c1d092fe81626a2a75aa39b"
+  },
+  "resolved_findings": [
+    {
+      "code": "CE_prefix_schema_collision",
+      "corrected_sources": [
+        "audit_actor_context_ranking_terminal_resources_v03.py",
+        "freeze_actor_context_ranking_outputs_v03.py"
+      ],
+      "description": "Preserved draft suffix collision fixed to canonical cell-plan/cell-results; detached production custody predicates accept canonical plan and refuse corrupted schema.",
+      "original_sources": [
+        "audit_actor_context_ranking_terminal_resources_v02.py",
+        "freeze_actor_context_ranking_outputs_v02.py"
+      ]
+    }
+  ],
+  "review_scope": "Full concrete reviewer source read: closed plan, raw41 owners, measured smoke maps and nine mandatory imports, source gates, fixed science/descriptors, qualified baseline and never-used attempt; no package/model/private/score JSON parsing. Exact guardian review field names preserved.",
+  "reviewer": "/root",
+  "schema": "actor-context-ranking-concrete-training-reviewer-source-independent-review/v1",
+  "source_review_only": true,
+  "training_admission_qualified": false
+}

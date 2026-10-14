@@ -1,0 +1,167 @@
+{
+  "accuracy_gain_measured": false,
+  "actual_inert_bootstrap": {
+    "declared_owners": 40,
+    "loaded_owners": 17,
+    "mandatory_loaded_owners": 9,
+    "passed": true,
+    "raw_algorithms_with_attention": 41
+  },
+  "actual_phase_runtime_actions": {
+    "actual_censuses": 0,
+    "checkpoint_JSON_parses_by_root": 0,
+    "config_only_copied_snapshot_inspections": 2,
+    "guardian_readonly_checks": 2,
+    "model_calls": 0,
+    "optimizer_updates": 0,
+    "qualified_private_opening_samples": 1,
+    "reservations_acquired": 0
+  },
+  "attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-context-ranking-20261014-actor-context-ranking-hinge-01",
+  "attempt_path_absent": true,
+  "canonical_raw4": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_raw4_unchanged": true,
+  "config_inspection": {
+    "canonical_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+    "fields": 24,
+    "missing_expected_fields": 0,
+    "note": "Sampled read-only observation; never reset or raise shared state. Newer native PID and lease-draining guards must be preserved by a separately qualified bridge.",
+    "proof_memory_headroom_mb": 24922,
+    "proof_recovery_enabled": false,
+    "sampled_child_slots": 16,
+    "sampled_cpu_slots": 16,
+    "sampled_memory_mb": 99688,
+    "unknown_fields": 0,
+    "validation_cpu_reservation": 2
+  },
+  "current_harness_versions": {
+    "freezer": "freeze_actor_context_ranking_outputs_v03.py",
+    "plan_reviewer": "review_actor_context_ranking_training_plan_v02.py",
+    "preparer": "prepare_actor_context_ranking_v03.py",
+    "runner": "run_actor_context_ranking_v03.py",
+    "smoke": "actor_context_ranking_bootstrap_smoke_controls_v03.py",
+    "terminal": "audit_actor_context_ranking_terminal_resources_v03.py"
+  },
+  "current_runtime_compatibility_qualified": false,
+  "default_promotion": false,
+  "failed_collection_preserved": true,
+  "foreign_state_mutated": false,
+  "global_storage_cap_bytes": 145000000000,
+  "main_merge_performed": false,
+  "model_and_evaluator_source_reviews_passed": true,
+  "model_source": {
+    "bytes": 57479,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_context_ranking.py",
+    "sha256": "6f37e5295ab09fe5f61215ab0445e6348d2972551c6bee1719e1c3c2ce2bd1aa"
+  },
+  "new_weights_created": false,
+  "observed_at_utc": "2026-10-14T11:58:02.004097+00:00",
+  "own_request": {
+    "child_slots": 1,
+    "cpu_slots": 2,
+    "deadline_seconds": 300,
+    "future_output_bound_bytes": 200000000,
+    "rss_mib": 1536,
+    "storage_bytes": 200000000
+  },
+  "pending": [
+    "Qualify a full-current scheduler bridge and resource policy without changing shared configuration/cap/roots or the model recipe.",
+    "Qualify fresh current ledger/scheduler joins, four-root capacity census and concrete training plan.",
+    "Run exactly one fixed32-update attempt, freeze62 outputs and obtain actual independent postfreeze scoring/recount.",
+    "Publish actual experimental weights only if created; complete exact-head integration after applicable reviews."
+  ],
+  "references": {
+    "DRAFT_REPORT_v03.md": {
+      "bytes": 6231,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/DRAFT_REPORT_v03.md",
+      "sha256": "6219dd776b907c7ab16a6d083225a69824cdcbae1dacd108782dc4541f2f7708"
+    },
+    "actor-context-ranking-bootstrap-smoke-controls-v03.json": {
+      "bytes": 9417,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-bootstrap-smoke-controls-v03.json",
+      "sha256": "b2c0203fc37d8d2123a849a3882b2464a0291e601e3c098b52c9fcb4a9c37953"
+    },
+    "actor-context-ranking-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 8172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-terminal-resource-source-independent-review-v01.json",
+      "sha256": "a17ab180dd1c76a1573ad7b24dbfac0365a87358da01490d0407a21a54e63edd"
+    },
+    "analyzer-port-source-independent-review-v01.json": {
+      "bytes": 12668,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/analyzer-port-source-independent-review-v01.json",
+      "sha256": "a3e26165d52e9c6e9f91aa0eef6d417a57aa2faf8d304a9fdde6a3a3d7d39faf"
+    },
+    "bootstrap-source-independent-review-v01.json": {
+      "bytes": 27351,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap-source-independent-review-v01.json",
+      "sha256": "c982060099b369ba25601824c2313166250fd70182b926df026c4eb7a86e9740"
+    },
+    "concrete-training-reviewer-source-independent-review-v01.json": {
+      "bytes": 8127,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/concrete-training-reviewer-source-independent-review-v01.json",
+      "sha256": "2f6c4455982eabe9e2b6543b60db2e03ac44d2f41163f1021cc167b85a036d71"
+    },
+    "guardian-check-diagnostic-v01.json": {
+      "bytes": 3063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-v01.json",
+      "sha256": "41bfeaf5a661e55d5ae5789da02791b53f306d2bf2de8ccdf5d8ee4c7f4effd0"
+    },
+    "guardian-config-inspection-v02.json": {
+      "bytes": 14492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v02.json",
+      "sha256": "29ee4031d08b3845794978d59571c5867a73a1204d3e861cc909e0685cba4661"
+    },
+    "model-source-independent-review-v01.json": {
+      "bytes": 30082,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/model-source-independent-review-v01.json",
+      "sha256": "1feab43bb59a12d457f3f0363fa4539495b7a0ea7ef11495c2d0cead701d142a"
+    },
+    "resource-collection-v01.json": {
+      "bytes": 2165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json",
+      "sha256": "f62adf64c67c0dc7384616f979e3ec6140f42f03ebf3111b1e5b917b576aa38e"
+    },
+    "result-recount-source-independent-review-v01.json": {
+      "bytes": 12503,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/result-recount-source-independent-review-v01.json",
+      "sha256": "20f65553c8f4015150c09afac9383651b3d564b0a31f7fd5b870f5745b19138b"
+    },
+    "runner-preparer-source-independent-review-v01.json": {
+      "bytes": 54123,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "d0d02873d61c6829aa64e54c134de9650c5ba3a26772c6d59bec06f8cb974d9f"
+    },
+    "runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 8172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-freeze-source-independent-review-v01.json",
+      "sha256": "37d3c6d8eee27f9fc56ba0960577746198e1248218f04adc9769f931af935aa5"
+    },
+    "trainer-source-independent-review-v01.json": {
+      "bytes": 4061,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "257800d1a3ce2e471165ac2e64dfcbb4251106a859386086f36d9cb4ff7930a6"
+    }
+  },
+  "root_cause": "Historical adapter expects19 persisted config fields; sampled current configuration has24 source-declared fields and different existing capacities/validation reservation.",
+  "schema": "actor-context-ranking-pretraining-handoff/v2",
+  "scientific_recipe_and_acceptance_unchanged": true,
+  "status": "model_and_evaluation_source_reviewed_runtime_migration_pending",
+  "whole_pretraining_qualification_complete": false
+}
