@@ -214,6 +214,10 @@ def test_service_successor_keeps_resume_publication_and_fits_preserved_envelope(
     assert "--scheduler-state /tmp/ipfs-datasets-resource-scheduler-1000.json" in dropin
     assert "--expected-policy-sha256 f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661" in dropin
     assert "Restart=no" in dropin and "RuntimeMaxSec=" not in dropin
+    # Systemd's outer cgroup must fit the unchanged native headroom plus
+    # the real 8192MiB owner/group request. The request itself stays bounded.
+    assert "MemoryHigh=36G" in dropin and "MemoryMax=40G" in dropin
+    assert 36*1024 >= 24922 + 8192 + 1024
 
 
 @pytest.mark.parametrize("elapsed", [0, 59.999, 60, 60.001])

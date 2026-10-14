@@ -553,3 +553,31 @@ would consume most of the approximately 4.12GB headroom in the preceding native
 accounting observation. Confirm actual custody, CUDA execution, a completed
 batch and publication behavior before deliberately enabling any bounded
 recovery policy. Do not release old failed claims to manufacture headroom.
+
+
+### Service cgroup allowance and unchanged native memory headroom
+
+The first October 14 observed trial stopped before model execution: its effective
+service cgroup reported total 8192MiB and available 7133MiB, while the explicitly
+bound F07 native policy requires 24922MiB of proof headroom in addition to the
+8192MiB campaign request. `MemoryHigh=8G`/`MemoryMax=10G` made that request
+impossible in the service's actual scope, despite healthy host-level memory.
+The failed 1GB disk claim and original failure evidence remain retained.
+
+The reviewed successor uses `MemoryHigh=36G` and `MemoryMax=40G` so the native
+request and unchanged headroom can fit the same service cgroup, with margin.
+Those are outer service/container allowances. The actual native campaign
+request, combined parent/child RSS monitoring and declared memory envelope
+remain 8192MiB; CPU 3, child 5, the 1GB storage reservation, the shared 145GB cap,
+proof thresholds, source/logic gates and fixed encoder context remain unchanged.
+A 36GiB high allowance is 36864MiB, leaving 3750MiB above 8192+24922 before existing
+cgroup occupancy. Actual occupancy and proof telemetry still decide admission;
+this change is not a memory reservation, performance claim or proof admission.
+
+`Restart=no` remains set for one observed trial, with `max-batches 0` and no
+productive deadline. Install only the exact reviewed successor over the exact
+previous drop-in, while stopped, preserve both versions and the failed claim,
+and inspect effective systemd memory settings before root starts one new trial.
+No native threshold or stored reservation is weakened or released to make the
+trial pass. The cgroup mismatch was revealed by the externally changed F07
+policy's scope; the scheduler policy itself is not reconfigured by this fix.
