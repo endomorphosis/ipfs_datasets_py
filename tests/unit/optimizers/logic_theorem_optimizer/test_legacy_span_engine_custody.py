@@ -308,3 +308,163 @@ def test_native_cleanup_stops_descendants_after_engine_leader_exits(tmp_path):
         assert host._group_usage(identity)["live_processes"] == 0
     finally:
         runner.stop_child(child, identity)
+
+
+
+def test_resumed_native_owner_uses_fresh_bytecode_and_preserves_prior_startup(private):
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    args = arguments(private)
+    def campaign():
+        return resources.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100000,
+            memory_mb=1024, cpu_slots=3, child_process_slots=5,
+            scheduler_state_path=path, expected_scheduler_policy_sha256=policy)
+
+    first = campaign()
+    with first:
+        prior = first.prepare_engine_bytecode()
+        prior_identity = host._root_identity(prior)
+        prior_payload = prior / "foreign.pyc"
+        prior_payload.write_bytes(b"retained previous startup bytecode")
+        prior_ready = prior.with_name(prior.name + ".ready.json")
+        prior_ready.write_bytes(b'{"retained_previous_startup":true}\n')
+        first.close(artifacts_durable=True)
+    first_row = deepcopy(json.loads(ledger.read_bytes())["reservations"][first.reservation.reservation_id])
+    assert first_row["status"] == "released"
+    parent_identity = host._root_identity(runtime / ".engine-bytecode")
+    prior_bytes = prior_payload.read_bytes(), prior_ready.read_bytes()
+
+    child = None
+    second = campaign()
+    with second:
+        try:
+            spare = second.prepare_engine_bytecode()
+            bytecode = second.prepare_engine_bytecode()
+            assert len({prior.name, spare.name, bytecode.name}) == 3
+            for prefix in (spare, bytecode):
+                assert prefix.parent == runtime / ".engine-bytecode"
+                assert len(prefix.name) == 32 and all(char in "0123456789abcdef" for char in prefix.name)
+                assert prefix.stat().st_mode & 0o777 == 0o700
+                assert prefix.stat().st_uid == os.geteuid()
+                assert list(prefix.iterdir()) == []
+            environment = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1",
+                PYTHONPYCACHEPREFIX=str(bytecode), IPFS_DATASETS_AUTO_INSTALL="false",
+                IPFS_AUTO_INSTALL="false", OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
+                MKL_NUM_THREADS="1")
+            child = subprocess.Popen([sys.executable, "-B", "-c", CHILD, "none"], cwd=ROOT,
+                env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, start_new_session=True)
+            launch = second.bind_engine_launch(child.pid, custody.invocation_sha256(args),
+                bytecode_directory=bytecode)
+            owner = host._process(os.getpid())
+            assert launch["owner"] == {key: owner[key] for key in ("pid", "birth")}
+            assert launch["bytecode"] == host._root_identity(bytecode)
+            assert launch["spec"] == custody.engine_resource_spec(args)
+            row = json.loads(ledger.read_bytes())["reservations"][second.reservation.reservation_id]
+            assert row["status"] == "active" and row["child"] == launch["child"]
+            assert row["attempt_directory"] == host._root_identity(runtime)
+            assert row["legacy_engine_launch_sha256"] == custody._sha(launch)
+            lease = json.loads(path.read_bytes())["leases"][launch["lease_id"]]
+            assert lease["owner_pid"] == owner["pid"] and lease["owner_birth_marker"] == owner["birth"]
+            assert lease["request_id"] == "daemon:" + second.reservation.reservation_id
+            serialized = json.dumps(launch, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+            assert b'"lease_key"' not in serialized
+            output, error = child.communicate(serialized, timeout=30)
+            assert child.returncode == 0, error.decode()
+            assert json.loads(output) == {"verified": True, "model_executed": False, "admitted": False}
+            assert list(bytecode.iterdir()) == []
+            assert host._root_identity(prior) == prior_identity
+            assert host._root_identity(runtime / ".engine-bytecode") == parent_identity
+            assert (prior_payload.read_bytes(), prior_ready.read_bytes()) == prior_bytes
+            assert set((runtime / ".engine-bytecode").iterdir()) == {prior, prior_ready, spare, bytecode}
+            second.close(artifacts_durable=True)
+        finally:
+            if child is not None and child.poll() is None:
+                child.kill()
+                child.wait(timeout=10)
+    rows = json.loads(ledger.read_bytes())["reservations"]
+    assert rows["preserved"] == preserved
+    assert rows[first.reservation.reservation_id] == first_row
+    assert rows[second.reservation.reservation_id]["status"] == "released"
+    final = json.loads(path.read_bytes())
+    assert final["config"] == initial["config"]
+    assert final["retained_campaign_history"] == initial["retained_campaign_history"]
+    assert final["next_sequence"] == initial["next_sequence"] + 2
+    assert final["metrics"]["acquisitions_total"] == initial["metrics"]["acquisitions_total"] + 2
+    assert final["metrics"]["releases_total"] == initial["metrics"]["releases_total"] + 2
+    assert final["leases"] == {} and final["waiters"] == {}
+
+
+@pytest.mark.parametrize("kind", ["file", "symlink", "dangling_symlink"])
+def test_entered_native_owner_refuses_unsafe_existing_bytecode_parent(private, tmp_path, kind):
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    resource = resources.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100000,
+        memory_mb=1024, cpu_slots=3, child_process_slots=5,
+        scheduler_state_path=path, expected_scheduler_policy_sha256=policy)
+    parent = runtime / ".engine-bytecode"
+    outside = tmp_path / "outside-bytecode"
+    with resource:
+        if kind == "file":
+            parent.write_bytes(b"retained non-directory startup artifact")
+            expected = "resource root is not a directory"
+        else:
+            if kind == "symlink":
+                outside.mkdir()
+                (outside / "retained.pyc").write_bytes(b"outside bytes must remain untouched")
+            parent.symlink_to(outside, target_is_directory=True)
+            expected = "symlink resource path"
+        before = parent.lstat()
+        with pytest.raises(host.DaemonResourceError, match=expected):
+            resource.prepare_engine_bytecode()
+        after = parent.lstat()
+        assert (after.st_dev, after.st_ino, after.st_mode, after.st_mtime_ns, after.st_ctime_ns) == \
+            (before.st_dev, before.st_ino, before.st_mode, before.st_mtime_ns, before.st_ctime_ns)
+        assert set(runtime.iterdir()) == {parent}
+        assert resource.reservation._child is None
+        if kind == "file":
+            assert parent.read_bytes() == b"retained non-directory startup artifact"
+        else:
+            assert parent.is_symlink() and parent.readlink() == outside
+            if kind == "symlink":
+                assert (outside / "retained.pyc").read_bytes() == b"outside bytes must remain untouched"
+                assert set(outside.iterdir()) == {outside / "retained.pyc"}
+            else:
+                assert not outside.exists()
+    rows = json.loads(ledger.read_bytes())["reservations"]
+    assert rows["preserved"] == preserved
+    assert rows[resource.reservation.reservation_id]["status"] == "retained"
+    assert rows[resource.reservation.reservation_id]["child"] is None
+    assert rows[resource.reservation.reservation_id]["artifacts_durable_asserted"] is False
+    final = json.loads(path.read_bytes())
+    assert final["config"] == initial["config"] and final["leases"] == {} and final["waiters"] == {}
+
+
+def test_entered_native_owner_refuses_uuid_collision_without_reusing_old_bytecode(private, monkeypatch):
+    from types import SimpleNamespace
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    resource = resources.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100000,
+        memory_mb=1024, cpu_slots=3, child_process_slots=5,
+        scheduler_state_path=path, expected_scheduler_policy_sha256=policy)
+    with resource:
+        prefix = resource.prepare_engine_bytecode()
+        before = host._root_identity(prefix)
+        payload = prefix / "retained.pyc"
+        payload.write_bytes(b"collision must not reuse or clear this prefix")
+        # Replace only custody's UUID dependency; native lease heartbeat and
+        # state-file UUIDs keep their actual implementation.
+        with monkeypatch.context() as patch:
+            patch.setattr(custody, "uuid", SimpleNamespace(uuid4=lambda: SimpleNamespace(hex=prefix.name)))
+            with pytest.raises(FileExistsError):
+                resource.prepare_engine_bytecode()
+        assert host._root_identity(prefix) == before
+        assert payload.read_bytes() == b"collision must not reuse or clear this prefix"
+        assert set(prefix.parent.iterdir()) == {prefix}
+        assert resource.reservation._child is None
+        resource.close(artifacts_durable=True)
+    rows = json.loads(ledger.read_bytes())["reservations"]
+    assert rows["preserved"] == preserved
+    assert rows[resource.reservation.reservation_id]["status"] == "released"
+    final = json.loads(path.read_bytes())
+    assert final["config"] == initial["config"] and final["leases"] == {} and final["waiters"] == {}
