@@ -1,0 +1,142 @@
+{
+  "Git_mutations": 0,
+  "all39_raw_source_owner_pins_closed": true,
+  "bootstrap_helper": {
+    "bytes": 42637,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-binding-20261012-01/run_temporal_contrast_pilot.py",
+    "sha256": "0ae80b9554c45ec104430b7f1a482ad834a33e5f41f5f031fdd203634374fa05"
+  },
+  "bootstrap_inert_namespace_wrapper_used": false,
+  "checkpoint_JSON_parses": 0,
+  "controls_source": {
+    "bytes": 7101,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py",
+    "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+  },
+  "data_export_or_gold_reads": 0,
+  "declared_owner_count": 39,
+  "exact_production_bootstrap_used": true,
+  "findings": [],
+  "inference_source_forwards": 0,
+  "legacy_helper": {
+    "bytes": 23767,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/run_temporal_adapter.py",
+    "sha256": "51fc99fa25a0c2c7636c34f1d569651ba0a545562a3ca26723280104384d5c3b"
+  },
+  "limitations": [
+    "Source-only import smoke, not an actual model or runtime-resource qualification."
+  ],
+  "loaded_owner_count": 15,
+  "loaded_owners": {
+    "ipfs_datasets_py.logic.formalization.autoencoder.retained_span_score_capture": {
+      "bytes": 17966,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py",
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "ipfs_datasets_py.logic.legal_ir.canonical_contracts": {
+      "bytes": 109257,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py",
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "ipfs_datasets_py.logic.legal_ir.joint_span_selection": {
+      "bytes": 16730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py",
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_formula_codec": {
+      "bytes": 14622,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py",
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_family_evaluator": {
+      "bytes": 42137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_ir_grammar_decoder": {
+      "bytes": 146870,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_actor_boundary": {
+      "bytes": 49894,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_actor_features": {
+      "bytes": 60367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_balanced": {
+      "bytes": 53599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py",
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation": {
+      "bytes": 14165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula": {
+      "bytes": 35294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_split_features": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.snapshot_evaluator": {
+      "bytes": 38995,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "ipfs_datasets_py.utils.cid_utils": {
+      "bytes": 4428,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py",
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    }
+  },
+  "mandatory_loaded_owner_count": 7,
+  "mandatory_loaded_owners": [
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_actor_boundary",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_actor_features",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_conditions_balanced",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_continuation",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_formula",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_split_features",
+    "ipfs_datasets_py.optimizers.logic_theorem_optimizer.legal_span_targeted_loss"
+  ],
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T07:44:00.401703+00:00",
+  "optimizer_updates": 0,
+  "passed": true,
+  "private_global_body_reads": 0,
+  "resource_API_calls": 0,
+  "retained_helper": {
+    "bytes": 38053,
+    "path": "/home/barberb/lift_coding/artifacts/legal-split-feature-20261013-01/run_split_features.py",
+    "sha256": "abedfe1505c3c554deac3b79d6516062a0d8b4589510522f812ebee07ce2d19a"
+  },
+  "retained_plan": {
+    "bytes": 52960,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+    "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+  },
+  "runner": {
+    "bytes": 40252,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py",
+    "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+  },
+  "schema": "conditions-balanced-production-bootstrap-smoke-controls/v1",
+  "source_imports_only": true
+}

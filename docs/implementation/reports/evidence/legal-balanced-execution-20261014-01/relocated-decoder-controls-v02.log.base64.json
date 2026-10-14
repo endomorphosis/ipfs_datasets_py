@@ -1,0 +1,10 @@
+{
+  "data": "Li4uLi4uLi4uCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KUmFuIDkgdGVzdHMgaW4gMC40ODlzCgpPSwo=",
+  "encoding": "base64",
+  "schema": "legal-ir-lossless-public-log/v1",
+  "source": {
+    "bytes": 107,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/relocated-decoder-controls-v02.log",
+    "sha256": "4548b812f2e5fa5806cfcab61bc299f4fef5d921da12346d88f29ffeb8e48e74"
+  }
+}

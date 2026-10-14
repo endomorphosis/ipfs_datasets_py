@@ -1,0 +1,90 @@
+{
+  "Git_calls": 0,
+  "actual_producer_main_calls": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v02.py": {
+      "bytes": 21740,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v02.py",
+      "sha256": "86fe7ccd996573a4a891627dfa248edd7aa2d5390242ac8b2704e92e12b6079e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py",
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    }
+  },
+  "cases": [
+    {
+      "name": "exact admitted observer/source/proof closure reaches training capacity guard",
+      "passed": true
+    },
+    {
+      "name": "false clearance refuses before output creation",
+      "passed": true
+    },
+    {
+      "name": "false baseline refuses before output creation",
+      "passed": true
+    },
+    {
+      "name": "wrong source qualification schema refuses",
+      "passed": true
+    },
+    {
+      "name": "wrong clearance qualified observer refuses",
+      "passed": true
+    },
+    {
+      "name": "failed independent source gate refuses",
+      "passed": true
+    },
+    {
+      "name": "missing admitted baseline refuses",
+      "passed": true
+    },
+    {
+      "name": "missing admitted root-rebind proof refuses",
+      "passed": true
+    },
+    {
+      "name": "raw protocol drift refuses before loader",
+      "passed": true
+    },
+    {
+      "name": "raw qualified observer drift refuses",
+      "passed": true
+    },
+    {
+      "name": "one exact raw attention source accepted",
+      "passed": true
+    },
+    {
+      "name": "additional supplemental source refuses",
+      "passed": true
+    },
+    {
+      "name": "attention recipe constant drift refuses",
+      "passed": true
+    },
+    {
+      "name": "original attention raw source hash drift refuses",
+      "passed": true
+    },
+    {
+      "name": "supplemental source absent from relocation artifacts refuses",
+      "passed": true
+    }
+  ],
+  "checkpoint_JSON_parses": 0,
+  "control_count": 15,
+  "findings": [],
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T07:51:21.924777+00:00",
+  "passed": true,
+  "private_body_reads": 0,
+  "reference_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-runner-preparer-independent-source-controls/v1",
+  "scope": "Exact runner prefix and supplemental guard AST with fake public metadata/protocol. No actual main, source package or numerical import."
+}

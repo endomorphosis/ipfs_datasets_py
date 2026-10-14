@@ -1,0 +1,382 @@
+{
+  "Lake_executed": false,
+  "N11_added_FN_recovered_count": 2,
+  "N11_added_FN_recovered_ids": {
+    "authored_dev": [],
+    "authored_eval": [],
+    "fresh_challenge": [],
+    "fresh_dev": [
+      "n7-2bcb71aec5a8f1f606afed70"
+    ],
+    "fresh_test": [
+      "n7-5a2c8467d216f3d061a0d98c"
+    ],
+    "fresh_tune": [],
+    "old_authored_eval": [],
+    "old_tune": [],
+    "training168": []
+  },
+  "N11_added_FN_target_count": 4,
+  "N11_added_FN_unrecovered_ids": {
+    "authored_dev": [],
+    "authored_eval": [
+      "targeted-loss-authored_eval-condition_duration-0-o-absent"
+    ],
+    "fresh_challenge": [],
+    "fresh_dev": [
+      "n7-e08efcdf2d91af1515b84572"
+    ],
+    "fresh_test": [],
+    "fresh_tune": [],
+    "old_authored_eval": [],
+    "old_tune": [],
+    "training168": []
+  },
+  "all_panels_previously_exposed_diagnostics": true,
+  "analysis": {
+    "bytes": 3635320,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-analysis-v01.json",
+    "sha256": "b6e9fb3ff1d0085c2a7bcd37bd049310d592e22a0c4b9615b399affd25aa38fb"
+  },
+  "broader_logic_families_qualified": false,
+  "comparison_scores": [
+    {
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_exact_ir": 94,
+      "row_count": 96,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_exact_ir": 8,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_exact_ir": 25,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_exact_ir": 48,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 45,
+      "panel": "authored_dev",
+      "raw_exact_ir": 44,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 33,
+      "panel": "authored_eval",
+      "raw_exact_ir": 27,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_exact_ir": null,
+      "row_count": 8,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 153,
+      "panel": "training168",
+      "raw_exact_ir": 153,
+      "row_count": 168,
+      "state": "parent"
+    },
+    {
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_exact_ir": 94,
+      "row_count": 96,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_exact_ir": 8,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_exact_ir": 25,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_exact_ir": 48,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 46,
+      "panel": "authored_dev",
+      "raw_exact_ir": 45,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 33,
+      "panel": "authored_eval",
+      "raw_exact_ir": 27,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_exact_ir": null,
+      "row_count": 8,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 153,
+      "panel": "training168",
+      "raw_exact_ir": 153,
+      "row_count": 168,
+      "state": "trained"
+    },
+    {
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_exact_ir": 94,
+      "row_count": 96,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_exact_ir": 8,
+      "row_count": 36,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_exact_ir": 25,
+      "row_count": 36,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_exact_ir": 48,
+      "row_count": 72,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 46,
+      "panel": "authored_dev",
+      "raw_exact_ir": 45,
+      "row_count": 72,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 33,
+      "panel": "authored_eval",
+      "raw_exact_ir": 27,
+      "row_count": 72,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": null,
+      "panel": "law",
+      "raw_exact_ir": null,
+      "row_count": 8,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "frozen_N11"
+    },
+    {
+      "joint_exact_ir": 154,
+      "panel": "training168",
+      "raw_exact_ir": 154,
+      "row_count": 168,
+      "state": "frozen_N11"
+    }
+  ],
+  "complete_IR_loss_ids_vs_N10": {
+    "authored_dev": {
+      "joint": [],
+      "raw": []
+    },
+    "authored_eval": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_challenge": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_dev": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_test": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_tune": {
+      "joint": [],
+      "raw": []
+    },
+    "old_authored_eval": {
+      "joint": [],
+      "raw": []
+    },
+    "old_tune": {
+      "joint": [],
+      "raw": []
+    },
+    "training168": {
+      "joint": [],
+      "raw": []
+    }
+  },
+  "complete_IR_loss_ids_vs_N11": {
+    "authored_dev": {
+      "joint": [],
+      "raw": []
+    },
+    "authored_eval": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_challenge": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_dev": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_test": {
+      "joint": [],
+      "raw": []
+    },
+    "fresh_tune": {
+      "joint": [],
+      "raw": []
+    },
+    "old_authored_eval": {
+      "joint": [],
+      "raw": []
+    },
+    "old_tune": {
+      "joint": [],
+      "raw": []
+    },
+    "training168": {
+      "joint": [
+        "matched-temporal-train-plain_deadline-1-p-present"
+      ],
+      "raw": [
+        "matched-temporal-train-plain_deadline-1-p-present"
+      ]
+    }
+  },
+  "default_promotion": false,
+  "freeze": {
+    "bytes": 21853,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json",
+    "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+  },
+  "genuine_latent_semantics_qualified": false,
+  "independent_recount": {
+    "bytes": 3095457,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-independent-recount-v01.json",
+    "sha256": "637a02bbaa9b671363f653359ed637d3a1c6e502ff761c4ad48d1191aa9adc6d"
+  },
+  "new_conditions_head_FN_ids_vs_N10": {
+    "authored_dev": [],
+    "authored_eval": [
+      "targeted-loss-authored_eval-condition_duration-0-o-absent"
+    ],
+    "fresh_challenge": [],
+    "fresh_dev": [
+      "n7-e08efcdf2d91af1515b84572"
+    ],
+    "fresh_test": [],
+    "fresh_tune": [],
+    "old_authored_eval": [],
+    "old_tune": [],
+    "training168": []
+  },
+  "new_conditions_head_FP_ids_vs_N10": {
+    "authored_dev": [],
+    "authored_eval": [],
+    "fresh_challenge": [],
+    "fresh_dev": [],
+    "fresh_test": [],
+    "fresh_tune": [],
+    "old_authored_eval": [],
+    "old_tune": [],
+    "training168": []
+  },
+  "portable_reload_qualified": false,
+  "remaining_frozen_actor_boundary_errors": 12,
+  "remaining_frozen_conditions_boundary_errors": 2,
+  "schema": "conditions-balanced-public-result-summary/v1",
+  "scientific_success": false,
+  "scope": "Completed fixed diagnostic comparison; not a blind legal-fidelity estimate or default candidate selection.",
+  "statutory8_unscored": true,
+  "technical_pass": true,
+  "training_boundary_errors": 14,
+  "training_ceiling_with_all_boundaries_frozen": 154
+}

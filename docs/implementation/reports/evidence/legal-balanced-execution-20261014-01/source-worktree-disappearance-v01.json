@@ -1,0 +1,9 @@
+{
+  "active_path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets",
+  "active_path_exists": false,
+  "observed_registration": [],
+  "recipe_and_gate_still_present": true,
+  "schema": "active-source-worktree-disappearance-observation/v1",
+  "scope": "Read-only physical and registered metadata; no cleanup,repair,Git mutation,claim or model execution by this observation.",
+  "training_authorized": false
+}

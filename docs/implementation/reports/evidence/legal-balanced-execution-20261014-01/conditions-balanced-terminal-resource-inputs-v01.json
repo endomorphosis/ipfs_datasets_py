@@ -1,0 +1,109 @@
+{
+  "attempt_name": "conditions-balanced-20261014-conditions-balanced-ce-01",
+  "baseline": {
+    "bytes": 84897,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-baseline-v01.json",
+    "sha256": "268c65ced2eed28d7863ab196ed43c36eab7f64a1bef1642db757402491ebfc7"
+  },
+  "cell": "conditions-balanced-ce",
+  "findings": [],
+  "metadata_check": {
+    "bytes": 6737,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/guardian-check-v02.json",
+    "sha256": "1bc6e8f47ca67051fc777796de27ad4dcc6d0c958e81f0b819981cce21ceaa61"
+  },
+  "opening_snapshot": {
+    "bytes": 1429,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json",
+    "sha256": "f95ddb2a13c720f6a9047fe6bca87d96b700c6bf4109c4c21d365b67284591fa"
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 67232,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-plan-v01.json",
+    "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+  },
+  "runtime_artifacts": {
+    "child-exit.json": {
+      "bytes": 105,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/child-exit.json",
+      "sha256": "5c8095463e7cfeaa42d1cc1b2915b0c14e0067f8e57318900088d5913e121236"
+    },
+    "child-identity.json": {
+      "bytes": 43,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/child-identity.json",
+      "sha256": "78e6b72fdaa3cface110dc418a2d1f36af176405b9e4211fe6863799fc3016b5"
+    },
+    "command.json": {
+      "bytes": 1097,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/command.json",
+      "sha256": "b6639b295256ebfd796399d12189ce63d176ca39c47c4f34dfd2a0d1b89fec8b"
+    },
+    "group-rss-observations.jsonl": {
+      "bytes": 50897,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/group-rss-observations.jsonl",
+      "sha256": "dbb491c1622e463ecf78a107b4b8cc3c1de7baf42a154ec060eedee102ba2872"
+    },
+    "group-rss-summary.json": {
+      "bytes": 1757,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/group-rss-summary.json",
+      "sha256": "584ac625d9ee4068d053e81f2122cbae6f5fcf97f48665b64718d85a9b47a4c3"
+    },
+    "guardian-exit.json": {
+      "bytes": 521,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/guardian-exit.json",
+      "sha256": "9dbe7312d35d0cc35154fa80fff0f0ef8060ee62efb4570153b34f055d21bae1"
+    },
+    "lease-binding.json": {
+      "bytes": 693,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/lease-binding.json",
+      "sha256": "3743c644b6cadeafa36d7baff016c4a0e7a58d0f68b884ac3d033259516177fa"
+    },
+    "lease-observations.jsonl": {
+      "bytes": 106358,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/lease-observations.jsonl",
+      "sha256": "00096e9f6567c123dfde5cf01c1dd9be9319fbd82cd72e836f5c9b0132e4e04a"
+    },
+    "owned-group-final.json": {
+      "bytes": 189,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/owned-group-final.json",
+      "sha256": "a152df444cecf5106266e4dac6dafe92b02fc19da515a6b9c29be4ad97f94e66"
+    },
+    "pre-admission.json": {
+      "bytes": 7964,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/pre-admission.json",
+      "sha256": "df071980e36bb4af1e34f3103e57edc922181e9ce358a46cfa30ed9f20f667eb"
+    },
+    "resource-observations.json": {
+      "bytes": 2626,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/resource-observations.json",
+      "sha256": "2836fecc1aadf98e0f299fc76e6dba976f129492c66d3696f106829db3319ef3"
+    },
+    "resources-final.json": {
+      "bytes": 6326,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/resources-final.json",
+      "sha256": "4367167db231591fd6405cb5d765b7f42490491aa508c4f205caeab557661828"
+    },
+    "resources-start.json": {
+      "bytes": 2557,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/resources-start.json",
+      "sha256": "8e25ab43e61a3e5ae0b666c829c8fd629392517463e2ec89fa0660e6f83cb9f0"
+    },
+    "scheduler-adoption.json": {
+      "bytes": 4647,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/scheduler-adoption.json",
+      "sha256": "7f565b11308e3a7c1a8d3d30624f57fee15c970402d5ff28afbaa3952c492df5"
+    }
+  },
+  "schema": "conditions-balanced-terminal-resource-inputs/v1",
+  "terminal_snapshot": {
+    "bytes": 2059,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/private-runtime-snapshots/terminal-conditions-balanced-ce-v01/snapshot-receipt-v01.json",
+    "sha256": "617e9d0a542509f4f44a04e6128f7889a5c1e805f6bc323e9705949c078120e8"
+  },
+  "training_review": {
+    "bytes": 39309,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-training-review-v01.json",
+    "sha256": "0843182f77c68844ff7c894803464f606996af3476e0436ed9a180d571ee84eb"
+  }
+}

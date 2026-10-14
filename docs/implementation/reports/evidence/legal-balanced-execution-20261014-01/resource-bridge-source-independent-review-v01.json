@@ -1,0 +1,45 @@
+{
+  "actual_execution_authorized": false,
+  "adoption": {
+    "bytes": 15101,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py",
+    "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 2270,
+      "sha256": "8c64950ffd0a14b6c02ad4a901cfbc0e8517bf3fb9a4dd611b091b125b687360"
+    }
+  },
+  "findings": [],
+  "guardian": {
+    "bytes": 38449,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_scope_guardian_v02.py",
+    "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+  },
+  "original_qualification": {
+    "bytes": 2270,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-bridge-source-independent-review-v01.json",
+    "sha256": "8c64950ffd0a14b6c02ad4a901cfbc0e8517bf3fb9a4dd611b091b125b687360"
+  },
+  "passed": true,
+  "review_basis": "Exact raw qualified F12 source byte copies; F-relative paths relocate to F14. Cap, resource budgets, native owner, scheduler and all execution behavior unchanged.",
+  "schema": "conditions-balanced-resource-bridge-source-independent-review/v1",
+  "watchdog": {
+    "bytes": 24435,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/owned_lease_watchdog_actor_ranking_v02.py",
+    "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+  }
+}

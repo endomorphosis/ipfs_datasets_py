@@ -1,0 +1,17 @@
+{
+  "names": [
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-checkpoint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-training.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/data-schedule-before-models.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parent-head-parity.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-alternate_placeholders.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-disabled.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-rotated_placeholders.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-zeros.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-joint.json"
+  ],
+  "parent_revision": "b5277ca8ade2ae96e19b5b4f4f0d72d84f79c8be",
+  "revision": "8e2aee0401f292466e634aeb4deace1263acfa32"
+}

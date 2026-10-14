@@ -1,0 +1,111 @@
+{
+  "actual_execution": {
+    "Git_mutations": 0,
+    "bootstrap_main_calls": 0,
+    "checkpoint_JSON_parses": 0,
+    "claims_or_cleanup": 0,
+    "freezer_main_calls": 0,
+    "model_calls": 0,
+    "numerical_imports": 0,
+    "preparer_main_calls": 0,
+    "reference_savedscore_or_private_body_reads": 0,
+    "resource_API_calls": 0,
+    "runner_main_calls": 0
+  },
+  "actual_scientific_result": null,
+  "attempt_name": "conditions-balanced-20261014-conditions-balanced-ce-01",
+  "authority": "Derivation/source controls only; not a concrete training, scoring, capacity or resource mutation approval. All actualgate/baseline/clearance/plan/runtime/result pins remain subject to independent root qualification.",
+  "changes": {
+    "freezer": "Byte-identical reviewed F13draft under actualproducerfilename.538\u2192539 expectation remains conditional freshexactresource custody. No execution or sourcegate created.",
+    "preparer": [
+      "Verify fixed original F12plan39owner bytes; verify original trainer/model/test/design qualification and byte-exact relocated science.",
+      "Require new root-authored conditions-balanced-trainer-relocation-source-independent-review/v1 with all39 actualF14ownerpins and originaltrainer fullpin.",
+      "Use shared qualified resource baseline validator, explicitly bind actual baseline observer qualification/source artifacts and new capacity inputmanifest/gate closure.",
+      "Retain newphase exclusiveplan output,39/15/7 source-only production smoke requirement and peer gate."
+    ],
+    "runner": [
+      "Add source-only loader for exact admitted resource protocol and delegate baseline/capacity pure validators.",
+      "Require protocol in admitted plan; rawhash authenticate before loader.",
+      "Before any mkdir/bootstrap/checkpoint/torch, read admitted actual baseline and both exact baseline/clearance observer sourcequalification gates; bind their observer/source artifact closure to actual plan; require fullrun capacityPASS.",
+      "All16 other retained functions AST exact."
+    ],
+    "smoke": "Byte-identical reviewed F12 production bootstrap source; actualF14run must be root-controlled after39sources/protocol closure."
+  },
+  "control_source": {
+    "bytes": 7767,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_execution_port_controls_v01.py",
+    "sha256": "04859482e6f47176f8c5402b8b58d0ec8a9fcff8801c674397554b80b5937729"
+  },
+  "controls": {
+    "bytes": 3985,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/execution-port-controls-v01.json",
+    "sha256": "6409799d0845a7c9db0a06e6c6a8af07e67e86fd95dc75931d829e02631245bf"
+  },
+  "derives_from": {
+    "conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py",
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "prepare_conditions_balanced_v01.py": {
+      "bytes": 17607,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/prepare_conditions_balanced_v01.py",
+      "sha256": "6d2cd3a086ae68cef11018eca9e0a3a3d1f8b808dafc2586c78430260e1f35c9"
+    },
+    "run_conditions_balanced_v01.py": {
+      "bytes": 42674,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/run_conditions_balanced_v01.py",
+      "sha256": "f58dbf127567bce1186c1dd78cd0ef20921eeca88467d4ed66c98a3834907af9"
+    }
+  },
+  "freezer_derives_from": {
+    "bytes": 18728,
+    "path": "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/freeze_conditions_balanced_outputs_draft_v01.py",
+    "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+  },
+  "never_used_attempt_requires_fresh_absence_qualification": true,
+  "resource_protocol_API": {
+    "actual_baseline_and_clearance_pins": null,
+    "actual_source_pin": "PENDING_RUNTIME_SEAL",
+    "filename": "conditions_balanced_resource_protocol_v01.py",
+    "qualify_capacity_clearance": "pure validator with keyword for_training; original cap/fullclaims/200Mrequest/200Mfuturebound and actualPASS mandatory for_trainingTrue",
+    "qualify_execution_baseline": "pure validator returning baseline_ledger mapping; exact actualrootrebind/provenance/sourcequalification custody required"
+  },
+  "schema": "conditions-balanced-execution-recipe-port-derivation/v1",
+  "science": {
+    "evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-contract-v01.json",
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "training-design-v01.json": {
+      "bytes": 8880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/training-design-v01.json",
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    }
+  },
+  "science_both_byte_identical_to_F12": true,
+  "sources": {
+    "conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py",
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "prepare_conditions_balanced_v01.py": {
+      "bytes": 19481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v01.py",
+      "sha256": "e346a47bda4a266282bf8a1a3d6b70aea4a5c00025feb746d2328e6f000cfc4e"
+    },
+    "run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py",
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    }
+  },
+  "status": "source_sealed_pending_actual_resource_custody_and_independent_execution_approval"
+}

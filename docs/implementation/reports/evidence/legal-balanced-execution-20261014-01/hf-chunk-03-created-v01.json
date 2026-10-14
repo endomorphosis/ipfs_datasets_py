@@ -1,0 +1,17 @@
+{
+  "names": [
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/summary.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_eval-joint.json"
+  ],
+  "parent_revision": "8e2aee0401f292466e634aeb4deace1263acfa32",
+  "revision": "3fe09e1efa1f64dbc87dc5becf07097cbc0757d1"
+}

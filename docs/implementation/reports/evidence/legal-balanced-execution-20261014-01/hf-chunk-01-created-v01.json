@@ -1,0 +1,24 @@
+{
+  "names": [
+    "releases/20261014-conditions-balanced-v1/README.md",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-joint.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-raw.json",
+    "releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-joint.json"
+  ],
+  "parent_revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+  "revision": "b5277ca8ade2ae96e19b5b4f4f0d72d84f79c8be"
+}
