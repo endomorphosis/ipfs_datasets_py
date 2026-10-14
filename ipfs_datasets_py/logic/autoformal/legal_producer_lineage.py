@@ -402,9 +402,55 @@ def _manifest(value, expected, record_ids):
     return deepcopy(value)
 
 
-def reconcile_producer_lineage(provenance_reports, *, expected_provenance_report_sha256s,
-        expected_record_sha256s, witness_manifest, expected_witness_manifest_sha256):
-    """Replay every physical cache unit and all independently declared witnesses."""
+def _verified_page_parent(request, item):
+    """Use the fixed page owner and regenerate independently pinned whole reports.
+
+    This path belongs only to the additive v2 wrapper. A caller cannot supply an
+    arbitrary reader, projected rows, or a self-seal in place of external pins.
+    """
+    from . import legal_parent_parquet_pages as pages
+    fields = {"descriptor_sha256", "preflight_report", "expected_preflight_sha256",
+              "row_report", "expected_row_report_sha256"}
+    _need(type(item) is dict and set(item) == fields, "closed page-parent replay input required")
+    descriptor = request["descriptor"]
+    for field in ("descriptor_sha256", "expected_preflight_sha256", "expected_row_report_sha256"):
+        _sha(item[field])
+    _need(item["descriptor_sha256"] == descriptor_sha256(descriptor), "independent page-parent descriptor pin differs")
+    _need(type(item["preflight_report"]) is dict and type(item["row_report"]) is dict,
+          "complete externally pinned page and selected-row reports required")
+    _need(pages.parent_page_report_sha256(item["preflight_report"]) == item["expected_preflight_sha256"],
+          "independent FULL page preflight pin differs")
+    _need(pages.parent_row_report_sha256(item["row_report"]) == item["expected_row_report_sha256"],
+          "independent FULL page-selected-row pin differs")
+    limits = item["preflight_report"].get("limits")
+    checked = pages.read_selected_parent_rows(descriptor,
+        expected_descriptor_sha256=item["descriptor_sha256"],
+        preflight_report=item["preflight_report"],
+        expected_preflight_sha256=item["expected_preflight_sha256"],
+        row_ordinals=request["row_ordinals"], expected_row_sha256s=request["expected_row_sha256s"],
+        limits=limits)
+    _need(_wire(checked) == _wire(item["row_report"]), "complete page-selected rows differ from fixed-owner regeneration")
+    _need([r["raw_row_sha256"] for r in checked["rows"]] == request["expected_row_sha256s"],
+          "independent page-selected row hash population differs")
+    return checked
+
+
+def _reconcile_producer_lineage(provenance_reports, *, expected_provenance_report_sha256s,
+        expected_record_sha256s, witness_manifest, expected_witness_manifest_sha256,
+        parent_profile="legacy_v1", parent_page_inputs=None,
+        expected_parent_page_inputs_sha256=None):
+    """Common declaration checks with a closed, owner-fixed parent profile."""
+    _need(parent_profile in ("legacy_v1", "pagewise_v2"), "closed parent decoder profile required")
+    if parent_profile == "legacy_v1":
+        _need(parent_page_inputs is None and expected_parent_page_inputs_sha256 is None,
+              "legacy parent profile cannot accept alternate page witnesses")
+    else:
+        _sha(expected_parent_page_inputs_sha256)
+        _need(type(parent_page_inputs) is list and len(parent_page_inputs) <= MAX_PARENT_FILES,
+              "bounded complete page-parent input population required")
+        payload = _wire(parent_page_inputs, 32 * 1024 * 1024)
+        _need(hashlib.sha256(payload).hexdigest() == expected_parent_page_inputs_sha256,
+              "independent complete page-parent input population pin differs")
     _need(type(provenance_reports) is list and 0 < len(provenance_reports) <= 8
           and type(expected_provenance_report_sha256s) is list
           and len(provenance_reports) == len(expected_provenance_report_sha256s), "complete bounded provenance batch pins required")
@@ -427,15 +473,23 @@ def reconcile_producer_lineage(provenance_reports, *, expected_provenance_report
     _need(0 < len(physical) <= MAX_RECORDS and type(expected_record_sha256s) is list
           and ids == expected_record_sha256s and len(ids) == len(set(ids)), "independent complete ordered physical record population differs")
     manifest = _manifest(witness_manifest, expected_witness_manifest_sha256, ids)
+    if parent_profile == "pagewise_v2":
+        _need(len(parent_page_inputs) == len(manifest["parents"]), "complete page-parent input population differs")
+        _need([p.get("descriptor_sha256") if type(p) is dict else None for p in parent_page_inputs]
+              == [descriptor_sha256(p["descriptor"]) for p in manifest["parents"]],
+              "ordered page-parent descriptor population differs")
     reports = {}; report_issues = {}; inventories = {}; file_issues = []
     for descriptor in manifest["reports"]:
         try: report, issues = _load_report(descriptor)
         except FileNotFoundError: report, issues = None, [{"code": "producer_report_or_container_file_unavailable"}]
         reports[descriptor["sha256"]] = report; report_issues[descriptor["sha256"]] = issues
-    for request in manifest["parents"]:
+    for parent_index, request in enumerate(manifest["parents"]):
         descriptor = request["descriptor"]
         try:
-            inventory = read_parent_row_witnesses(descriptor, expected_descriptor_sha256=descriptor_sha256(descriptor), row_ordinals=request["row_ordinals"])
+            if parent_profile == "legacy_v1":
+                inventory = read_parent_row_witnesses(descriptor, expected_descriptor_sha256=descriptor_sha256(descriptor), row_ordinals=request["row_ordinals"])
+            else:
+                inventory = _verified_page_parent(request, parent_page_inputs[parent_index])
         except FileNotFoundError:
             inventory = None; file_issues.append({"code": "source_parent_file_unavailable", "sha256": descriptor["sha256"]})
         except _UnsupportedParentDecodedProfile as exc:
@@ -540,6 +594,15 @@ def reconcile_producer_lineage(provenance_reports, *, expected_provenance_report
     report["lineage_sha256"] = _digest(report)
     _wire(report)
     return report
+
+
+def reconcile_producer_lineage(provenance_reports, *, expected_provenance_report_sha256s,
+        expected_record_sha256s, witness_manifest, expected_witness_manifest_sha256):
+    """Replay the original v1 declaration contract with its original decoder."""
+    return _reconcile_producer_lineage(provenance_reports,
+        expected_provenance_report_sha256s=expected_provenance_report_sha256s,
+        expected_record_sha256s=expected_record_sha256s, witness_manifest=witness_manifest,
+        expected_witness_manifest_sha256=expected_witness_manifest_sha256)
 
 
 def validate_producer_lineage(report, provenance_reports, *, expected_report_sha256, **trusted_inputs):
