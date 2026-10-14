@@ -1,0 +1,140 @@
+{
+  "Git_mutations": 0,
+  "actual_input_manifest_bound": false,
+  "actual_input_manifest_scope": "Root supplies exact successful freeze/analysis descriptors in result-recount-inputs-v02.json after complete freeze and qualified analysis.",
+  "actual_outputs_opened": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_recount_independent_controls_v01.py": {
+      "bytes": 7560,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_recount_independent_controls_v01.py",
+      "sha256": "e6e7f51f4b5a4e784b0b3d0052d9a0b7fb71061608ac48e5ef9cd179a9e5fe70"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_result_recount_controls_v01.py": {
+      "bytes": 9301,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_result_recount_controls_v01.py",
+      "sha256": "97176621486f608718665816b3fc6f85e8eac23acbd6c52c865c9eb253d0e8d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v01.py": {
+      "bytes": 88984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v01.py",
+      "sha256": "515494b398829598437a19f0ddd967c65b2f8f6a361fb77157e76dcd5a72f624"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v02.py": {
+      "bytes": 88984,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyze_actor_features_v02.py",
+      "sha256": "84f2911ace8c6c802549bbd0880229d1e99b71f63f5084696879b7a8cd73a5ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyzer-source-independent-review-v01.json": {
+      "bytes": 10987,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/analyzer-source-independent-review-v01.json",
+      "sha256": "bbb2bc3eda8c9b99c18a8ba25f0db6adeabd26976624082b000f905b916cfd16"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-author-controls-v01.json": {
+      "bytes": 2366,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-author-controls-v01.json",
+      "sha256": "e5702fba87c08a9e76ac8ee5ca69d3d868ef9e54581a11356f5f88efd1c70436"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-independent-synthetic-controls-v01.json": {
+      "bytes": 2315,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-independent-synthetic-controls-v01.json",
+      "sha256": "059f6204ead2c1abd7c79102c58b640a6af1e46d076e4e55ea1a55ee987712ee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 8787,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-source-independent-review-v01.json",
+      "sha256": "3261148a652202085c60f9964b59642d40f5737536f641d1105ff6ecee5d7c79"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v01.py": {
+      "bytes": 49955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v01.py",
+      "sha256": "081b5fce6a280d3e5cf832dddaf0b3229675c3ac54096fab93791506733cd29f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py": {
+      "bytes": 49955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py",
+      "sha256": "2af389d81a78c45f8dc28b0da5ff44c172d3fc2c18949bf04c2dccddeae05e3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json": {
+      "bytes": 14398,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json",
+      "sha256": "e17fabcfd38b6c34469ae67f581da009be7701a63555bbb04a33b314f7cd5656"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-author-controls-v01.json": {
+      "bytes": 1133,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-author-controls-v01.json",
+      "sha256": "7e93252af2c1c924936b5aa2f0f0d9a45e6b597cce538e0ec14c5892150ba907"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-independent-replay-controls-v01.json": {
+      "bytes": 3684,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-independent-replay-controls-v01.json",
+      "sha256": "31a0055d5397e527198c8ba84cbfe4baa0cdf8a25d0306328bd32a25de038e1c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 8833,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-recount-source-independent-review-v01.json",
+      "sha256": "cf5e9be253288986274a5530addb447407cd39f44b67a49e00014d1ee4cdc133"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/review_actor_ranking_result_recount_v01.py": {
+      "bytes": 39120,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/review_actor_ranking_result_recount_v01.py",
+      "sha256": "9f01a4e10de9c1cf6c83ab2edfbcd089bb74c1e6fe765cae7142143336f78c82"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "exact_literal_derivation": true,
+  "findings": [],
+  "inherited_control_counts": {
+    "N10_author": 19,
+    "N10_independent": 23,
+    "N9_replay": 175
+  },
+  "limitations": [
+    "Source qualification and wholly synthetic controls only; actual result recount is root-owned after exact complete freeze.",
+    "Primary full-IR, modality, role and actor coverage panel/paired metrics are recounted. Secondary optional-presence confusion and actor-token-contrast diagnostics are explicitly not independently recounted by this observer.",
+    "Feature trace validates source-bound saved metadata and numerical-child claims; it does not independently reconstruct gradients or Adam moments from tensor arithmetic."
+  ],
+  "literal_changes": [
+    {
+      "after": "result-recount-source-independent-review-v02.json",
+      "before": "result-recount-source-independent-review-v01.json",
+      "occurrences": 1
+    },
+    {
+      "after": "result-recount-inputs-v02.json",
+      "before": "result-recount-inputs-v01.json",
+      "occurrences": 1
+    }
+  ],
+  "main_executed": false,
+  "model_or_encoder_calls": 0,
+  "network_calls": 0,
+  "numerical_library_imports": 0,
+  "observed_at_utc": "2026-10-14T00:41:06.010906+00:00",
+  "observer": {
+    "bytes": 49955,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/review_actor_features_result_recount_v02.py",
+    "sha256": "2af389d81a78c45f8dc28b0da5ff44c172d3fc2c18949bf04c2dccddeae05e3c"
+  },
+  "optimizer_updates": 0,
+  "passed": true,
+  "prior_source_qualification": {
+    "bytes": 8787,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-recount-source-independent-review-v01.json",
+    "sha256": "3261148a652202085c60f9964b59642d40f5737536f641d1105ff6ecee5d7c79"
+  },
+  "private_body_reads": 0,
+  "production_module_imports": 0,
+  "reference_gold_opened": 0,
+  "resource_API_calls": 0,
+  "reviewer": "/root/evaluation_n10",
+  "schema": "actor-features-result-recount-source-independent-review/v1",
+  "source_checks": [
+    "Exacttwo gate/inputmanifest pathliterals changed;all19functionASTs identical",
+    "Same43panels/39authoredscore sets/three nine-panelpairedcomparisons and632parity scopes",
+    "SameCEOFFfeaturetrainingmetadata/1280candidateinference1312feature accounting, no metricorformula changes",
+    "SuccessfulV01freeze/runtime/analysis/recount outputnames remainunchanged andwereuncreated afterprechildfailure",
+    "Source qualification/freeze-complete gate androotclosedV02freeze+analysisinputmanifest remainmandatory; no goldbeforefreeze"
+  ],
+  "unchanged_controls_not_rerun": true,
+  "unchanged_function_AST_count": 19
+}

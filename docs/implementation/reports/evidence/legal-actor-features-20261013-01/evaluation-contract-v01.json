@@ -1,0 +1,544 @@
+{
+  "N7_fresh72_previously_exposed": true,
+  "all464_previously_exposed_engineering_diagnostics": true,
+  "automatic_selection_or_promotion": false,
+  "cell": "actor-features-ce",
+  "checkpoint_selection_executed": false,
+  "completed_frozen_CE": {
+    "analysis": {
+      "bytes": 427353,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-result-analysis-v01.json",
+      "sha256": "7bb3c2ef9b6011bdff6b4636951d8a4aa4d988c024bb789f4403de0884e3cfe4"
+    },
+    "analyzer": {
+      "bytes": 63873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/analyze_actor_boundary_v04.py",
+      "sha256": "e02f5e6246f0b22dd97e07ff0549a408352ce8a4b6321b165b45b05090f8e924"
+    },
+    "equal_FLOPs_claimed": false,
+    "freeze": {
+      "bytes": 21180,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-output-freeze-v04.json",
+      "sha256": "6605e75a3d041d5e3ecdca09c057e1d1939f216641a29715fb8b70c4180eec8d"
+    },
+    "independent_review": {
+      "bytes": 89023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/result-independent-review-v01.json",
+      "sha256": "872be4d00b59b6b3177dc91f71c30151c11bae545611982edb3e69601ce2178f"
+    },
+    "matched_update_and_source_occurrence_budget": true,
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "next_ranking_reuse_audit": {
+      "bytes": 17900,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/next-ranking-reuse-audit-v01.json",
+      "sha256": "5ec54ae9a7558816258f89601dc84b479eb7e196d863185f1d3bd8c010b2feeb"
+    },
+    "plan": {
+      "bytes": 44754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-boundary-20261013-01/actor-boundary-ce-plan-v02.json",
+      "sha256": "14b6bd49eadf3998e517bab762a442fea72bb358152e3dc8f2c3b9a3afefd07f"
+    },
+    "reference_training_source_occurrences": 384,
+    "reference_updates": 32,
+    "trained_aggregate_reference": {
+      "authored_dev": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 50,
+          "full_gold_assignment_survives_retained_domain": 50,
+          "rank_sum": 116,
+          "top1": 59,
+          "top16": 72,
+          "top8": 72
+        },
+        "joint_abstentions": 8,
+        "joint_actor_exact": 55,
+        "joint_exact_ir": 45,
+        "joint_modality_exact": 55,
+        "modality_exact": 51,
+        "raw_abstentions": 14,
+        "raw_actor_exact": 50,
+        "raw_exact_ir": 44,
+        "row_count": 72
+      },
+      "authored_eval": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 50,
+          "full_gold_assignment_survives_retained_domain": 50,
+          "rank_sum": 91,
+          "top1": 64,
+          "top16": 72,
+          "top8": 72
+        },
+        "joint_abstentions": 1,
+        "joint_actor_exact": 63,
+        "joint_exact_ir": 33,
+        "joint_modality_exact": 55,
+        "modality_exact": 44,
+        "raw_abstentions": 14,
+        "raw_actor_exact": 51,
+        "raw_exact_ir": 27,
+        "row_count": 72
+      },
+      "fresh_challenge": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 31,
+          "full_gold_assignment_survives_retained_domain": 26,
+          "rank_sum": 158,
+          "top1": 30,
+          "top16": 31,
+          "top8": 30
+        },
+        "joint_abstentions": 0,
+        "joint_actor_exact": 30,
+        "joint_exact_ir": 25,
+        "joint_modality_exact": 33,
+        "modality_exact": 31,
+        "raw_abstentions": 3,
+        "raw_actor_exact": 28,
+        "raw_exact_ir": 25,
+        "row_count": 36
+      },
+      "fresh_dev": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 11,
+          "full_gold_assignment_survives_retained_domain": 0,
+          "rank_sum": 312,
+          "top1": 28,
+          "top16": 30,
+          "top8": 30
+        },
+        "joint_abstentions": 2,
+        "joint_actor_exact": 26,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 32,
+        "modality_exact": 7,
+        "raw_abstentions": 27,
+        "raw_actor_exact": 6,
+        "raw_exact_ir": 0,
+        "row_count": 36
+      },
+      "fresh_test": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 3,
+          "full_gold_assignment_survives_retained_domain": 0,
+          "rank_sum": 1785,
+          "top1": 9,
+          "top16": 13,
+          "top8": 13
+        },
+        "joint_abstentions": 8,
+        "joint_actor_exact": 9,
+        "joint_exact_ir": 0,
+        "joint_modality_exact": 18,
+        "modality_exact": 3,
+        "raw_abstentions": 31,
+        "raw_actor_exact": 3,
+        "raw_exact_ir": 0,
+        "row_count": 36
+      },
+      "fresh_tune": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 22,
+          "full_gold_assignment_survives_retained_domain": 20,
+          "rank_sum": 250,
+          "top1": 30,
+          "top16": 30,
+          "top8": 30
+        },
+        "joint_abstentions": 0,
+        "joint_actor_exact": 27,
+        "joint_exact_ir": 19,
+        "joint_modality_exact": 29,
+        "modality_exact": 10,
+        "raw_abstentions": 24,
+        "raw_actor_exact": 11,
+        "raw_exact_ir": 8,
+        "row_count": 36
+      },
+      "law": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": null,
+          "full_gold_assignment_survives_retained_domain": null,
+          "rank_sum": null,
+          "top1": null,
+          "top16": null,
+          "top8": null
+        },
+        "joint_abstentions": 0,
+        "joint_actor_exact": null,
+        "joint_exact_ir": null,
+        "joint_modality_exact": null,
+        "modality_exact": null,
+        "raw_abstentions": 6,
+        "raw_actor_exact": null,
+        "raw_exact_ir": null,
+        "row_count": 8
+      },
+      "old_authored_eval": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 58,
+          "full_gold_assignment_survives_retained_domain": 55,
+          "rank_sum": 126,
+          "top1": 62,
+          "top16": 72,
+          "top8": 69
+        },
+        "joint_abstentions": 1,
+        "joint_actor_exact": 61,
+        "joint_exact_ir": 51,
+        "joint_modality_exact": 59,
+        "modality_exact": 56,
+        "raw_abstentions": 6,
+        "raw_actor_exact": 56,
+        "raw_exact_ir": 48,
+        "row_count": 72
+      },
+      "old_tune": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 94,
+          "full_gold_assignment_survives_retained_domain": 94,
+          "rank_sum": 96,
+          "top1": 96,
+          "top16": 96,
+          "top8": 96
+        },
+        "joint_abstentions": 0,
+        "joint_actor_exact": 96,
+        "joint_exact_ir": 94,
+        "joint_modality_exact": 96,
+        "modality_exact": 96,
+        "raw_abstentions": 0,
+        "raw_actor_exact": 96,
+        "raw_exact_ir": 94,
+        "row_count": 96
+      },
+      "training168": {
+        "actor_gold_coverage": {
+          "all_fixed_head_decisions_correct": 160,
+          "full_gold_assignment_survives_retained_domain": 160,
+          "rank_sum": 206,
+          "top1": 156,
+          "top16": 168,
+          "top8": 168
+        },
+        "joint_abstentions": 1,
+        "joint_actor_exact": 155,
+        "joint_exact_ir": 153,
+        "joint_modality_exact": 161,
+        "modality_exact": 160,
+        "raw_abstentions": 2,
+        "raw_actor_exact": 155,
+        "raw_exact_ir": 153,
+        "row_count": 168
+      }
+    }
+  },
+  "completed_frozen_hinge": {
+    "aggregate_assertion_scope": "Six panels published in qualified N9 public summary. All ten saved panels will be recounted after N10 freeze; no unstated baseline values are fabricated.",
+    "analysis": {
+      "bytes": 1031559,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-result-analysis-v01.json",
+      "sha256": "9cd76b43bccbef9fa12cfff26f885217b79128920fe7c6dfd1986a5489102c50"
+    },
+    "analyzer": {
+      "bytes": 76309,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/analyze_actor_ranking_v03.py",
+      "sha256": "618e509c00d16fdc6993815f1272c8782ca152deb005624ccdb4e180d3d26edf"
+    },
+    "equal_FLOPs_claimed": false,
+    "freeze": {
+      "bytes": 21251,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-output-freeze-v01.json",
+      "sha256": "7560a0b6b47dcbd8f8a10d472a87cd2f6f27653bab1e4cb0f4b0a35d870fa4ca"
+    },
+    "independent_review": {
+      "bytes": 66176,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/result-independent-review-v01.json",
+      "sha256": "cbdb152024208bc621827207e34a9fd90c4a4ed20ff43cfab078b4d60888d2a0"
+    },
+    "matched_update_and_source_occurrence_budget": true,
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 44409,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/actor-ranking-hinge-plan-v01.json",
+      "sha256": "0fb9d290844529ef1638e9c0f00d57c8d78ba6f9e487b2cb59a262cc1fc64897"
+    },
+    "public_summary": {
+      "bytes": 8979,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/public-result-summary-v01.json",
+      "sha256": "37fcf051dec62319baeb3e4470b2f224b3fc013d52c93ac579be418ad73a9134"
+    },
+    "reference_training_source_occurrences": 384,
+    "reference_updates": 32,
+    "trained_aggregate_reference": {
+      "authored_eval": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 50,
+          "rank_sum": 92,
+          "top1": 63,
+          "top16": 72,
+          "top8": 72
+        },
+        "joint_actor_exact": 63,
+        "joint_exact_ir": 33,
+        "raw_exact_ir": 27,
+        "row_count": 72
+      },
+      "fresh_dev": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 0,
+          "rank_sum": 318,
+          "top1": 28,
+          "top16": 30,
+          "top8": 30
+        },
+        "joint_actor_exact": 26,
+        "joint_exact_ir": 0,
+        "raw_exact_ir": 0,
+        "row_count": 36
+      },
+      "fresh_test": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 0,
+          "rank_sum": 1783,
+          "top1": 9,
+          "top16": 13,
+          "top8": 13
+        },
+        "joint_actor_exact": 9,
+        "joint_exact_ir": 0,
+        "raw_exact_ir": 0,
+        "row_count": 36
+      },
+      "old_authored_eval": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 55,
+          "rank_sum": 126,
+          "top1": 62,
+          "top16": 72,
+          "top8": 69
+        },
+        "joint_actor_exact": 61,
+        "joint_exact_ir": 51,
+        "raw_exact_ir": 48,
+        "row_count": 72
+      },
+      "old_tune": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 94,
+          "rank_sum": 96,
+          "top1": 96,
+          "top16": 96,
+          "top8": 96
+        },
+        "joint_actor_exact": 96,
+        "joint_exact_ir": 94,
+        "raw_exact_ir": 94,
+        "row_count": 96
+      },
+      "training168": {
+        "actor_gold_coverage": {
+          "full_gold_assignment_survives_retained_domain": 160,
+          "rank_sum": 208,
+          "top1": 156,
+          "top16": 168,
+          "top8": 168
+        },
+        "joint_actor_exact": 155,
+        "joint_exact_ir": 153,
+        "raw_exact_ir": 153,
+        "row_count": 168
+      }
+    }
+  },
+  "default_promotion": false,
+  "diagnostic_metrics": {
+    "actor_rank_gain": {
+      "counts": [
+        "gold actor stable top1/top8/top16",
+        "rank sum/min/max",
+        "per-ID rank improved/unchanged/worsened",
+        "per-ID top1/top8/top16 gained/lost",
+        "binary32 ties and topK boundary guard ties"
+      ],
+      "scope": "Per exposed authored panel and training168 separately; N10 trained minus frozen N8CE, N10 trained minus frozen N9hinge, and N4 initial-to-N10 trained.",
+      "success_definition": "Report rank gain when top1 gains exceed losses or rank_sum falls; identify any top8/top16 loss separately. This is an engineering result, never promotion authority."
+    },
+    "actor_token_contrast": {
+      "counts": [
+        "whole actor vector changed IDs",
+        "token-relative float32 contrast changed IDs",
+        "stable marginal start/end top1 changed IDs"
+      ],
+      "interpretation": "Whole vector change alone can be a constant shift and does not establish pointer ranking improvement; contrasts are post-freeze engineering diagnostics.",
+      "scope": "Each source independently, start and end separately; initial-to-trained and each frozen control-to-trained."
+    },
+    "hard_negative": {
+      "counts": [
+        "nonempty/empty domain",
+        "hinge active (>0)/inactive (=0)",
+        "mean/sum hinge",
+        "minimum/mean gold-minus-chosen-wrong margin",
+        "margin>=1 count",
+        "margin improved/equal/worsened IDs",
+        "hinge inactive gained/lost IDs"
+      ],
+      "scope": "Post-freeze only on training168 and each scored exposed panel, using unchanged training-compatible negative domain on saved logits. N10 actual training ranking is OFF.",
+      "success_definition": "Report filtered-domain margin gain if margin>=1 gains exceed losses or total hinge falls; separately report active count and zero-domain count. No fullIR or inference-coverage claim follows."
+    },
+    "head_decisions_and_retained_gold": {
+      "counts": [
+        "guarded modality/presence correctness",
+        "all fixed head decisions correct",
+        "present role top8 coverage",
+        "full gold assignment survives retained top8 domain",
+        "fixed blocker IDs and actor blocker overlaps"
+      ],
+      "scope": "Separate from actor ranking and selected final IR.",
+      "training_and_fresh_panels_reported_separately": true
+    },
+    "legacy_retention": {
+      "CE_known_result": "94/96 fullIR due to two temporal failures; all32 permission outcomes preserved. Do not require or restate96/96 as the completed CE baseline.",
+      "scope": "Exposed old_tune96; separate temporal-presence guard-margin1e-7 and all32 gold permissions."
+    },
+    "optional_presence_false_positives": {
+      "counts": [
+        "TP/TN/FP/FN IDs and counts",
+        "abstention or guarded-head ambiguity IDs and counts, excluded from TP/TN/FP/FN",
+        "gold-present and gold-absent denominators"
+      ],
+      "interpretation": "Protected head decisions must match controls exactly; selection-level changes can follow actor/nonoverlap coupling.",
+      "scope": "For every optional role object/conditions/exceptions/temporal, training and each authored panel separately; head decisions and greedy/joint selected output separately."
+    },
+    "selected_final_IR": {
+      "counts": [
+        "fullIR exact",
+        "all six role exactness",
+        "modality exactness/confusion",
+        "abstention count/reason",
+        "per-ID fullIR actor/modality/all-role gains/losses vs frozen CE",
+        "per-ID fullIR actor/modality/all-role gains/losses vs frozen N8CE and frozen N9hinge",
+        "selected error overlaps excluding abstentions plus abstention-as-nonmatch decomposition"
+      ],
+      "regression_definition": "Report every correct-to-incorrect fullIR, actor, modality, role, topK or retained-gold transition with IDs; do not hide offsetting losses behind net gains.",
+      "scope": "Raw/greedy and joint separately; complete canonical IR means modality plus actor/action/object/conditions/exceptions/temporal.",
+      "success_definition": "Report fullIR gain only from complete seven-field exact equality. Actor/rank/hinge improvement alone is not fullIR gain."
+    },
+    "thresholds": "Fixed selection guard1e-7, topK8, search nodes50000, diagnostic top1/8/16; no fitting."
+  },
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "independent_statutory_gold": false,
+  "interpretation_limits": [
+    "All references are already exposed agent-authored/root-reviewed engineering targets; no independent legal gold or blind generalization.",
+    "Filtered-domain training hinge excludes present gold nonactor overlaps; inference retains topK before compatibility and may still omit the gold assignment.",
+    "Frozen modality and presence argmax decisions precede joint search. Actor changes can alter abstention/status or selected nonactor spans through compatibility coupling, but cannot change modality when both outputs are selected.",
+    "Fresh dev/test fullIR and retained-gold baselines are0/36 each; rank or actor gains cannot remove fixed nonactor blockers.",
+    "No Lake, broad-family, genuine8D/384D/768D latent, semantic-accuracy or default-change claim.",
+    "N10 adds trainable actor feature parameters; equal updates and exact training occurrences/order are compared, not equal model size or FLOPs. No control is retrained."
+  ],
+  "law8_unscored": true,
+  "no_new_blind_generalization_claim": true,
+  "old392_previously_exposed": true,
+  "populations": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96,
+    "training168": 168
+  },
+  "preregistered_before_new_model_execution": true,
+  "prior_evaluation_contract": {
+    "bytes": 16689,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/evaluation-contract-v02.json",
+    "sha256": "cdb22f6cf6e6d8fdb42a6bcaf5b7330c6c2f16e4d570785df5c446debd225bcb"
+  },
+  "recipe": {
+    "actor_feature_geometry_authority": "The independently qualified source/training design binds exact adapter shapes, count and parameter order before execution. Counts of N8 pointer-only parameters are not reused for N10.",
+    "batch_size": 12,
+    "clip_gradient_norm": 5.0,
+    "inactive_gradients_and_moments_exact_zero": true,
+    "latent_enabled": false,
+    "latent_width": 384,
+    "learning_rate": 0.001,
+    "new_encoder_calls": 0,
+    "new_updates": 32,
+    "optimizer": "fresh Adam",
+    "original_base_tensors_frozen": 34,
+    "seed_and_order": 1729,
+    "source_tokens_max": 128,
+    "training_row_occurrences": 384,
+    "training_rows": 168
+  },
+  "references_parent_only": true,
+  "required_frozen_output_count": 62,
+  "schema": "actor-features-evaluation-contract/v1",
+  "score_only_after_complete_frozen_bundle": true,
+  "semantic_accuracy": null,
+  "source_only_controls": [
+    "zero placeholders",
+    "alternate placeholders",
+    "latent disabled",
+    "rotated placeholders"
+  ],
+  "source_only_preregistration_scope": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_parses": 0,
+    "network_calls": 0,
+    "new_gold_scored": 0,
+    "new_model_calls": 0,
+    "new_optimizer_updates": 0,
+    "new_outputs_opened": 0,
+    "numerical_library_imports": 0,
+    "private_body_reads": 0,
+    "resource_API_calls": 0
+  },
+  "source_parent": {
+    "checkpoint_bytes": 3592389,
+    "checkpoint_sha256": "95bd50a7cc6e25381ad126e3d955f0816c31470ec469fb22ceca297e35115035",
+    "model_state_sha256": "fb63e61c7e2591259d40492b5ac5c020ae77f64c08e409d16b372ff7229b9aa5"
+  },
+  "technical_gate": {
+    "feature_effect": "Report within-source start/end token contrast changes separately from whole-vector changes; a constant additive pointer shift alone is not representation/ranking progress.",
+    "final": "All632 modality and every presence vector plus five nonactor start/end vectors binary32 exact; exclude ONLY actor start/end vectors. Original34 tensors and inactive copied actor rows1 through5 fixed.",
+    "initial": "All632 complete head vectors binary32 exact against immutable N4 parent plus greedy/joint parity before first update.",
+    "source_occurrences": {
+      "model_forwards": 1552,
+      "new_inference": 1520,
+      "total": 1904,
+      "training_batches": 32,
+      "training_rows": 384
+    },
+    "training_trace": "Exactly32 returned completed CE-only updates and384 occurrences authenticated to training IDs/source hashes; reused OFF objective validator. Adapter trace and zero-initialization guards are source-bound before execution."
+  },
+  "threshold_or_hyperparameters_fitted": false,
+  "training_objective": {
+    "actor_ranking_enabled": false,
+    "gold_authority": "Only authenticated168 training labels enter updates. Exposed diagnostic labels run in parent after complete freeze and never enter model child or optimization.",
+    "implementation": "Reuse legal_span_targeted_loss._loss and existing OFF policy/objective validators; no copied CE or hinge implementation.",
+    "name": "actor-features-ce",
+    "postfreeze_hinge_diagnostic": "Existing .25/margin1 filtered hard-negative diagnostic is retained for comparability; hinge is OFF during all N10 updates and is never an inference candidate generator.",
+    "presence_ce_weight": 1.0,
+    "trainable_branch": "Actor-only token-context residual features plus copied actor start/end head; all original34 base tensors, copied inactive head rows1..5, modality, optional presence and other role logits frozen."
+  }
+}
