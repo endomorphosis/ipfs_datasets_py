@@ -1,0 +1,39 @@
+{
+  "actual_census_calls": 0,
+  "actual_model_calls": 0,
+  "actual_private_body_reads": 0,
+  "actual_resource_API_calls": 0,
+  "control_count": 16,
+  "controls": [
+    "exact current537 bodies statuses fullclaims accepted",
+    "exact one publicbound newreleased200M produces538 accepted",
+    "prior body changed refused",
+    "prior body removed refused",
+    "unbound extra claim added refused",
+    "cap raised refused",
+    "untyped cap refused",
+    "root replaced refused",
+    "ownclaim retained on successful terminal refused",
+    "historicalID reused asnewownclaim refused",
+    "exact contemporaneouscheck copiedbytes config occupancy accepted",
+    "copied endpoint pin mismatch refused",
+    "config mismatch refused",
+    "census-free admissionguarantee claimed refused",
+    "producer pathset changed refused",
+    "occupancy count mismatch refused"
+  ],
+  "controls_source": {
+    "bytes": 5641,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_controls_v01.py",
+    "sha256": "eb7e8dc4f345ad203811245e6536f4048ea4dbbdd4c5a27381f1005cb1b1d128"
+  },
+  "findings": [],
+  "main_executed": false,
+  "observer": {
+    "bytes": 13955,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_protocol_v01.py",
+    "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+  },
+  "passed": true,
+  "schema": "conditions-presence-resource-protocol-author-controls/v1"
+}

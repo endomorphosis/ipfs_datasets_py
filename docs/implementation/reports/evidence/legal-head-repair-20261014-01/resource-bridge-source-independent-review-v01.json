@@ -1,0 +1,30 @@
+{
+  "all_three_sources_byte_identical_to_qualified_N10": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    }
+  },
+  "findings": [],
+  "guardian_default_cap_145000000000_and_same4counted_roots": true,
+  "independent_source_review_performed_on_N10_and_reused_by_exact_identity": true,
+  "model_calls": 0,
+  "own_resources_2CPU_1536MiB_1child_200MB_300s_unchanged": true,
+  "passed": true,
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-presence-resource-bridge-source-independent-review/v1",
+  "source_checks": [
+    "Full guardian and helper bytes compared to sealed N10 originals; __file__-relative compatibility helper source identities unchanged.",
+    "Ten raw producer pins, historical proof guards, fairness/RSS/capacity checks unchanged; no resource protocol source or limits changed."
+  ]
+}

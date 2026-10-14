@@ -1,0 +1,28 @@
+{
+  "bridge_qualification": {
+    "bytes": 1472,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-bridge-source-independent-review-v01.json",
+    "sha256": "5a2265a002ef5c58d54854bc57a66463edb5c095492cf9b2e088ee90a71b47a6"
+  },
+  "check": {
+    "bytes": 6708,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/guardian-check-v01.json",
+    "sha256": "859605c0becdc36808584765ea064fc03ed1fc0a6141672d5f1359e47dae127c"
+  },
+  "contract": {
+    "bytes": 8085,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-protocol-contract-v01.json",
+    "sha256": "82c0ae4b5134a4726557fe38700c9a39bc0cf5c651866c416399bfdc9f794139"
+  },
+  "sample_receipt": {
+    "bytes": 1413,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/private-runtime-snapshots/opening-v01/snapshot-receipt-v01.json",
+    "sha256": "cfd422ab121c679cfbc62b79d21f41016fe71e2ebbdaa76c4c5716e6cc91498c"
+  },
+  "sampler_qualification": {
+    "bytes": 3451,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/sampler-source-independent-review-v01.json",
+    "sha256": "00540d4e2f7ada13e3e00c0fcf6926bd03dca011c685a1f84c08038ac609ab54"
+  },
+  "schema": "conditions-presence-resource-baseline-inputs/v1"
+}
