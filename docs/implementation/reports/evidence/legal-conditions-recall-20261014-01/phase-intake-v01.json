@@ -1,0 +1,47 @@
+{
+  "N11_checkpoint_used_as_donor": false,
+  "bases": {
+    "root": "839ef8a9acb2e3ec98c1f94a20e8f8c7d491e481",
+    "source": "0897aa1d4252e175477addac5417028241de596a"
+  },
+  "canonical_Git_commands": false,
+  "checkpoint_JSON_parses": false,
+  "comparison": "One class-balanced conditions-only objective vs exact N10 and saved N11 outputs; no sweep or threshold fitting.",
+  "current_main_intake": {
+    "bytes": 149664,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/continuation-main-intake-v01.json",
+    "sha256": "3b8c56934ce39cf9a46d4df41d8656663695626f70ca499c84aea55d300f4b82"
+  },
+  "default_promotion": false,
+  "findings": [],
+  "model_or_numeric_imports": false,
+  "owned_worktrees": {
+    "root": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/root",
+    "source": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/datasets"
+  },
+  "passed": true,
+  "previous_completion": {
+    "bytes": 3393,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/completion-review-v01.json",
+    "sha256": "7b2f1454953c7939039774cb79fcb98234200dc451e321441ef3a47ef5a3c76a"
+  },
+  "previous_final_integration": {
+    "bytes": 23163,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/final-integration-independent-review-v01.json",
+    "sha256": "82168635a2abdacef9ecacd61589de38e3ae26a79faa80d2388f514548157c2c"
+  },
+  "retained38": {
+    "bytes": 14431,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/retained-source-owners-v01.json",
+    "sha256": "6c16a9888f946d50be598435555d253a362d3d99ffe52b7bb113d60b154e39c8"
+  },
+  "schema": "conditions-balanced-phase-intake/v1",
+  "storage_codec": "Separate optional lossless component codec; no effect on model or training; actual roundtrip still requires guardian.",
+  "training_source": {
+    "bytes": 6464267,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results/cell-checkpoint.json",
+    "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+  },
+  "training_source_is_trained_N10": true,
+  "training_source_model_state_sha256": "c05074b28fb827500f7be6e30d606faee39436047685a1a41b85fa88913100ab"
+}

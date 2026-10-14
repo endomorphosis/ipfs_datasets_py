@@ -1,0 +1,131 @@
+{
+  "Git_calls": 0,
+  "actual_main_calls": 0,
+  "actual_tree_censuses": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py",
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-author-controls-v01.json": {
+      "bytes": 3192,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-author-controls-v01.json",
+      "sha256": "172913fd271cc47bea7e301dc17dee4c9d0c15c2c05138f751da8a5200a59fdf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_capacity_clearance_controls_v01.py": {
+      "bytes": 6826,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_capacity_clearance_controls_v01.py",
+      "sha256": "1625f9aa70ad79edc6f335a2e563dd900d583d449fd3fbf3e1c0f08ec366da2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_resource_protocol_v01.py": {
+      "bytes": 13965,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_resource_protocol_v01.py",
+      "sha256": "265d96839054a16d4c4ab0f2550dc69948263a87566e9337a429b3ddb02f69f0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/owned_lease_watchdog_actor_ranking_v02.py",
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-baseline-v01.json": {
+      "bytes": 77889,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-baseline-v01.json",
+      "sha256": "9fd03480b85fb3b9a9164a4b4e87b4807bf8c65419a1037edccbb1b04723775f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-observer-source-independent-review-v01.json": {
+      "bytes": 11282,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-observer-source-independent-review-v01.json",
+      "sha256": "ecc1dab08ccea80d7dc78339f910e90f5d6fd527db15eaae991c1766cc6a79b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-protocol-contract-v01.json": {
+      "bytes": 8109,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-protocol-contract-v01.json",
+      "sha256": "34dd2cf9422d076e647f73666d4d10913ebfa62d4ceb78ba6102797cc857acd5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_capacity_clearance_v01.py": {
+      "bytes": 8023,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_capacity_clearance_v01.py",
+      "sha256": "bce76340578fb66a532bf1085f367e9cff703e8df8bac199f2dddbd70c8b8692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_resource_baseline_v01.py": {
+      "bytes": 7730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_resource_baseline_v01.py",
+      "sha256": "fd53fe4db54fea96e748b1528d1c3f243933361e4db14bf5edfaf5c2098a4bbd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py",
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "author_controls": {
+    "bytes": 3192,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/capacity-clearance-author-controls-v01.json",
+    "sha256": "172913fd271cc47bea7e301dc17dee4c9d0c15c2c05138f751da8a5200a59fdf"
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "independent_arithmetic_controls": [
+    "exact boundaries",
+    "one byte apparent shortfall",
+    "one byte physical shortfall",
+    "native fit lacks future output budget"
+  ],
+  "inherited_map_and_census_controls_reused": true,
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T04:38:44.881649+00:00",
+  "observer": {
+    "bytes": 8023,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_capacity_clearance_v01.py",
+    "sha256": "bce76340578fb66a532bf1085f367e9cff703e8df8bac199f2dddbd70c8b8692"
+  },
+  "passed": true,
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "reviewer": "/root/evaluation_n10",
+  "schema": "conditions-balanced-capacity-clearance-source-independent-review/v1",
+  "source_checks": [
+    "Full sealed observer read: exact opening2 receipt and new check bound to original baseline and all538 body hashes; fixed10 producers and qualified shared ledger/snapshot predicates retained.",
+    "Fourroot disjoint inventory/root-identity AST exactly equals independently qualified baseline; no new claim, scheduler admission, cleanup or resource API.",
+    "Full-run charged projection includes current inventory + retained full claims + native200M request + additional200M future output bound; physical check adds both200M amounts. Bound is not a second claim.",
+    "Output exclusively records PASS/refusal; baseline remains immutable. Source only qualification does not assert current capacity/admission."
+  ]
+}

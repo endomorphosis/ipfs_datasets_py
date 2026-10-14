@@ -1,0 +1,66 @@
+{
+  "actual_result_or_reference_body_reads": 0,
+  "additional_prior_guard_cases": [
+    {
+      "accepted": true,
+      "function": "training_metadata",
+      "positive_count": 72
+    },
+    {
+      "accepted": false,
+      "function": "training_metadata",
+      "positive_count": 71
+    },
+    {
+      "accepted": false,
+      "function": "training_metadata",
+      "positive_count": 73
+    },
+    {
+      "accepted": true,
+      "function": "recount_training",
+      "positive_count": 72
+    },
+    {
+      "accepted": false,
+      "function": "recount_training",
+      "positive_count": 71
+    },
+    {
+      "accepted": false,
+      "function": "recount_training",
+      "positive_count": 73
+    }
+  ],
+  "analyzer": {
+    "bytes": 78443,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v01.py",
+    "sha256": "5142aeaf1fe4574ea3790074134e71adad2451f816e7ae4a51476e5a074ffc11"
+  },
+  "changes_since_control_sources": [
+    "Documentation/scope labels corrected to N12/40panels/36scoredscopes.",
+    "Added independent168-source96/72 training-label count prologues before the already tested weighted validators; six focused prior guards tested. Weighted remainder and scientific predicates unchanged."
+  ],
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "model_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "recount": {
+    "bytes": 46595,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py",
+    "sha256": "4b2a739bd5ff2af9dccd831db06c0d108bbfdbd436bf342a4ad89cd4700da3dc"
+  },
+  "schema": "conditions-balanced-evaluation-final-binding/v1",
+  "scientific_controls": {
+    "bytes": 2166,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/scientific-success-author-controls-v01.json",
+    "sha256": "63d02392abc6457368389302c0e5a92635aa7042b20e4eac4c162738b28cabae"
+  },
+  "unchanged_controls_not_replayed": true,
+  "weighted_controls": {
+    "bytes": 1887,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/evaluation-author-controls-v01.json",
+    "sha256": "4ab36018727cce95ed1ea0a66dbba3fb8cb133330c680bb5e248b27d17bbedc7"
+  }
+}

@@ -1,0 +1,309 @@
+{
+  "Lake_executed": false,
+  "N7_fresh72_previously_exposed": true,
+  "all464_previously_exposed_engineering_diagnostics": true,
+  "attempt_name": "conditions-balanced-20261014-conditions-balanced-ce-01",
+  "automatic_selection_or_promotion": false,
+  "broader_logic_families_qualified": false,
+  "cell": "conditions-balanced-ce",
+  "checkpoint_selection_executed": false,
+  "completed_frozen_N11": {
+    "analysis": {
+      "bytes": 2776304,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json",
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "freeze": {
+      "bytes": 21832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "independent_recount": {
+      "bytes": 2315880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-independent-recount-v01.json",
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "independent_review": {
+      "bytes": 112211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 52960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "public_summary": {
+      "bytes": 18392,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/public-result-summary-v01.json",
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "role": "Frozen diagnostic comparator only; candidate starts from N10 donor, not N11",
+    "runtime_review": {
+      "bytes": 78532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-runtime-review-v01.json",
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    }
+  },
+  "completed_frozen_parent": {
+    "analysis": {
+      "bytes": 4426986,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-result-analysis-v01.json",
+      "sha256": "bc5c5d1e08750b8fe86e9fd3953f23531235fdcfb73b9bd5b0178c9e41bcba39"
+    },
+    "checkpoint": {
+      "bytes": 6464267,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results/cell-checkpoint.json",
+      "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+    },
+    "freeze": {
+      "bytes": 21187,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-output-freeze-v01.json",
+      "sha256": "56abf07cfc80b79ef7eb48a0f0579310ae8f555e15cc9c49d1f6fe23bd687e2a"
+    },
+    "independent_recount": {
+      "bytes": 861265,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-independent-recount-v01.json",
+      "sha256": "3afb425df0baf5da7296830eef873ad56dbef39b2418f123da9a1ba794edd53b"
+    },
+    "independent_review": {
+      "bytes": 122326,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-independent-review-v01.json",
+      "sha256": "c0df4c577fe2563ec7a47f6d4d146c63d0f9f546db197c8a4e563ef2689fc306"
+    },
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 46558,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json",
+      "sha256": "f433954ab6e9f26510096f308e879cac1b027bf33aa94a5df7bf765045e555fc"
+    },
+    "public_summary": {
+      "bytes": 204376,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/public-result-summary-v01.json",
+      "sha256": "c7349c862816d9f6bbc171ad685a17a53eb19f83547cd133b2ba16dcae0c4151"
+    },
+    "runtime_review": {
+      "bytes": 84458,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-runtime-review-v01.json",
+      "sha256": "f428248fe7f7d003a93125c1978007a9216bcdab968c28055fb9384fe5a3b2f2"
+    },
+    "source_model_state_sha256": "c05074b28fb827500f7be6e30d606faee39436047685a1a41b85fa88913100ab"
+  },
+  "default_promotion": false,
+  "diagnostic_interpretation": [
+    "N11 repaired one training and one authored_dev complete IR by removing false-positive conditions, but added headFN1/2/1 on authored_eval/fresh_dev/fresh_test. This one fixed class-balanced recipe tests that observed tradeoff; all panels are already exposed diagnostics.",
+    "Weights derive exclusively from retained training counts96negative72positive; no labels from diagnostic references enter training, no threshold/mining/sweep or evaluation-dependent checkpoint selection.",
+    "Both frozen comparators reuse completed outputs; N11 is never the donor. Frozen other head scores still permit selected output coupling through overlap or abstention.",
+    "Technical validation is separate from preregistered scientific success; all negative outcomes remain publishable experimental evidence, never automatic default promotion.",
+    "Storage codec qualification/output, if separately authorized by root, is serialization-only and opaque to this scoring contract; it must not alter candidate logicalstate, sources, budget or any scored output.",
+    "Independent US Code fidelity, real8D/384D/768Dlatent decoding, broad logic-family compliance and lake build legal remain unqualified."
+  ],
+  "expected_authored_score_sets": 36,
+  "expected_paired_panel_count": 9,
+  "expected_panel_count": 40,
+  "fixed_selection": {
+    "diagnostic_actor_top_k": [
+      1,
+      8,
+      16
+    ],
+    "guard_margin": 1e-07,
+    "max_search_nodes": 50000,
+    "threshold_fitting": false,
+    "top_k": 8
+  },
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "genuine_latent_semantics_qualified": false,
+  "independent_statutory_gold": false,
+  "law8_unscored": true,
+  "no_new_blind_generalization_claim": true,
+  "observed_at_utc": "2026-10-14T04:15:56.058666+00:00",
+  "old392_previously_exposed": true,
+  "optional_storage_codec": {
+    "evaluation_scope_unchanged": true,
+    "legacy_checkpoints_preserved": true,
+    "model_forward_calls": 0,
+    "root_owned_separate_artifacts": true,
+    "serialization_only": true,
+    "training_updates": 0
+  },
+  "parent_optional_presence_baseline": null,
+  "populations": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96,
+    "training168": 168
+  },
+  "preregistered_before_new_model_execution": true,
+  "primary_metrics": {
+    "complete_IR": "Exact modality plus actor/action/object/conditions/exceptions/temporal equality, raw/greedy and joint independently.",
+    "conditions_target": "Report selected/abstained transitions, conditions false positives removed/introduced, false negatives removed/introduced; source-level outcome table and no hidden regressions.",
+    "head_decision": "Guarded2way argmax threshold1e-7; ambiguity excluded from TP/TN/FP/FN and reported with gold split. Do not equate fixed head presence with successfully selected nonempty span.",
+    "optional_presence": "Primary independently recounted for allfour optional roles on all9 authored scopes and four states(parent N10,initial,trained,frozen_N11): head guarded decisions vs raw selected vs joint selected, TP/TN/FP/FN IDs/counts, positive/negative gold denominators, ambiguity/abstention separately gold-split.",
+    "paired": "All9 authored scopes: initial vs trained, frozen N10 donor vs trained, frozen N11 diagnostic vs trained; every raw/joint sevenfield gain/loss ID. No new comparator forwards/updates.",
+    "retention": "32 permissions and all632 protected bit-equality gates; preserve complete actor rank even if selected actor changes.",
+    "selected_presence": "Only decoded/selected rows enter TP/TN/FP/FN; raw or joint abstention IDs and reasons counted separately with gold-present/absent split. All optional role selections can change through compatibility despite frozen heads."
+  },
+  "prior_evaluation_contract": {
+    "bytes": 11002,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-v01.json",
+    "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+  },
+  "recipe": {
+    "active_presence_rows": [
+      2,
+      3
+    ],
+    "active_trainable_scalars": 130,
+    "batch_size": 12,
+    "class_weights_from_training_only": true,
+    "clip_gradient_norm": 5.0,
+    "inactive_scalars": 390,
+    "latent_enabled": false,
+    "latent_width": 384,
+    "learning_rate": 0.001,
+    "model_tensor_count": 42,
+    "new_encoder_calls": 0,
+    "new_updates": 32,
+    "optimizer": "fresh Adam",
+    "original_tensors_frozen": 40,
+    "seed_and_order": 1729,
+    "source_tokens_max": 128,
+    "stored_trainable_scalars": 520,
+    "trainable_tensor_count": 2,
+    "training_row_occurrences": 384,
+    "training_rows": 168
+  },
+  "references_parent_only": true,
+  "required_frozen_output_count": 62,
+  "schema": "conditions-balanced-evaluation-contract/v1",
+  "score_only_after_complete_frozen_bundle": true,
+  "semantic_accuracy": null,
+  "source_export": {
+    "bytes": 4675279,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+    "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+  },
+  "source_model_state_sha256": "c05074b28fb827500f7be6e30d606faee39436047685a1a41b85fa88913100ab",
+  "source_only_controls": [
+    "zero placeholders",
+    "alternate placeholders",
+    "latent disabled",
+    "rotated placeholders"
+  ],
+  "source_only_preregistration_scope": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_parses": 0,
+    "network_calls": 0,
+    "new_gold_scored": 0,
+    "new_model_calls": 0,
+    "new_outputs_opened": 0,
+    "numerical_library_imports": 0,
+    "private_body_reads": 0,
+    "resource_API_calls": 0
+  },
+  "source_parent": {
+    "bytes": 6464267,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results/cell-checkpoint.json",
+    "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+  },
+  "strict_scientific_success": {
+    "aggregation": "Conjunction of all ID-level requirements; offsetting gains or count equality cannot hide regressions",
+    "both_raw_and_joint_gain_ids_must_remain_exact": true,
+    "default_promotion_even_on_success": false,
+    "preserve_N11_complete_IR_gain_ids": {
+      "authored_dev": [
+        "targeted-loss-authored_dev-plain_deadline-1-p-present"
+      ],
+      "training168": [
+        "matched-temporal-train-plain_deadline-1-p-present"
+      ]
+    },
+    "qualified_technical_completion_required": true,
+    "recover_N11_added_FN_ids": {
+      "candidate_must_classify_each_as_present_TP": true,
+      "expected_panel_counts": {
+        "authored_eval": 1,
+        "fresh_dev": 2,
+        "fresh_test": 1
+      },
+      "expected_total4": true,
+      "set_definition": "N11 conditions-head FN IDs minus N10 conditions-head FN IDs; derive only after current complete freeze"
+    },
+    "when_failed": "Technical completion and archival publication may still pass; record scientific_success=False and every failed predicate. No additional model/weight/threshold fitting is authorized.",
+    "zero_complete_IR_loss_IDs_vs_N10_and_N11_all9_raw_joint": true,
+    "zero_new_conditions_head_FN_IDs_vs_N10_each9": true,
+    "zero_new_conditions_head_FP_IDs_vs_N10_each9": true,
+    "zero_new_positive_conditions_head_ambiguity_IDs_vs_N10_each9": true
+  },
+  "technical_gate": {
+    "actor_rank": "Frozen actor start/end scores and complete actor rank/top1/top8/top16 records must equal frozen N10 parent on every authored row; changed final actor extraction due to overlap or abstention is reported separately.",
+    "feature_routes": "Three frozen feature-path passes per candidate forward; two inherited N10 routes plus one copied full8 presence head route. Parent control no new calls.",
+    "final": "All632 modality, start/end and nonconditions presence binary32 outputs unchanged; exclude ONLY conditions presence pair. Every original40 tensor and inactive copied presence rows0:2 and4:8 fixed; inactive gradients/Adam moments zero all32 updates.",
+    "initial": "All632 initial full head vectors bit equal to frozen N10 trained saved captures before update; original40 base tensors bit equal.",
+    "permissions": "All32 permission gold rows in old_tune96: raw and joint P_to_P32/P_to_O0/P_to_F0/P_abstentions0 required and individually ID-bound. Report all32 retention independently, not merely32 optimizer updates.",
+    "source_occurrences": {
+      "copied_parent_actual_forwards": 0,
+      "copied_parent_capture_files": 6,
+      "copied_parent_capture_rows": 240,
+      "model_forwards": 1312,
+      "new_inference": 1280,
+      "total": 1664,
+      "training_batches": 32,
+      "training_rows": 384
+    },
+    "training_trace": "Exactly32 authenticated completed weighted conditions-CE updates/384 occurrences, identical168source schedule. Each row joins ID/index/gold label, unweighted pair CE, applied fixed float32 class weight and weighted contribution. Weighted all12 mean and separate unweighted all12 mean authenticated; frozen40/inactive390 and onlytwoAdam tensors unchanged."
+  },
+  "threshold_or_hyperparameters_fitted": false,
+  "training_objective": {
+    "actor_ranking_enabled": false,
+    "actual_float32_weights_traced": true,
+    "class_weights": {
+      "absent": {
+        "denominator": 8,
+        "numerator": 7
+      },
+      "present": {
+        "denominator": 6,
+        "numerator": 7
+      }
+    },
+    "conditions_pair_cross_entropy": true,
+    "derivation": "168/(2*class_count); dataset mean applied weight equals1",
+    "hard_negative_mining": false,
+    "name": "conditions-balanced-ce",
+    "reduction": "sum(weight[label]*per_row_CE)/12; not sum(weighted_CE)/sum(batch_weights)",
+    "row_scope": "All12 batch rows; multiply per-row conditions CE by fixed training-count class weight then mean over12",
+    "threshold_fitting": false,
+    "training_class_counts": {
+      "absent": 96,
+      "present": 72,
+      "total": 168
+    },
+    "unweighted_CE_separately_reported": true,
+    "weights_fitted_on_evaluation": false
+  }
+}

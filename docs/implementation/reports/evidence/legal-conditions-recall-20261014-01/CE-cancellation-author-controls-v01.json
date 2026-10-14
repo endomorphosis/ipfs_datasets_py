@@ -1,0 +1,69 @@
+{
+  "actual_saved_outputs_or_reference_bodies_read": 0,
+  "analyzer": {
+    "bytes": 78445,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py",
+    "sha256": "505ab5504578533bdf427b3a679c1af498e7d050cd4eeff0439b7144cf6a0126"
+  },
+  "case": "One equal-huge-float32-logit regression with positive/negative signs and absent/present class weights",
+  "checkpoint_JSON_parses": 0,
+  "controls_source": {
+    "bytes": 2959,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_CE_cancellation_controls_v01.py",
+    "sha256": "9982853fc1ad74bcb7ff7d03f1605f75d90444b9fa83c98a08a4375f46f7e8a3"
+  },
+  "findings": [],
+  "model_calls": 0,
+  "new_unweighted_equals_math_log2_exactly": true,
+  "new_weighted_log2_preserved": true,
+  "numerical_imports": 0,
+  "old_cancellation_reproduced": true,
+  "passed": true,
+  "previous_analyzer": {
+    "bytes": 78443,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v01.py",
+    "sha256": "5142aeaf1fe4574ea3790074134e71adad2451f816e7ae4a51476e5a074ffc11"
+  },
+  "previous_controls_not_replayed": true,
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-CE-cancellation-author-controls/v1",
+  "variants": [
+    {
+      "class_weight_float32": 0.875,
+      "equal_logit": 1.0000000200408773e+20,
+      "saved_unweighted_CE_float32": 0.6931471824645996,
+      "saved_weighted_CE_float32": 0.6065037846565247,
+      "target": 0,
+      "unweighted_CE": 0.6931471805599453,
+      "weighted_CE": 0.6065037829899521
+    },
+    {
+      "class_weight_float32": 1.1666666269302368,
+      "equal_logit": 1.0000000200408773e+20,
+      "saved_unweighted_CE_float32": 0.6931471824645996,
+      "saved_weighted_CE_float32": 0.8086717128753662,
+      "target": 1,
+      "unweighted_CE": 0.6931471805599453,
+      "weighted_CE": 0.8086716831100752
+    },
+    {
+      "class_weight_float32": 0.875,
+      "equal_logit": -1.0000000200408773e+20,
+      "saved_unweighted_CE_float32": 0.6931471824645996,
+      "saved_weighted_CE_float32": 0.6065037846565247,
+      "target": 0,
+      "unweighted_CE": 0.6931471805599453,
+      "weighted_CE": 0.6065037829899521
+    },
+    {
+      "class_weight_float32": 1.1666666269302368,
+      "equal_logit": -1.0000000200408773e+20,
+      "saved_unweighted_CE_float32": 0.6931471824645996,
+      "saved_weighted_CE_float32": 0.8086717128753662,
+      "target": 1,
+      "unweighted_CE": 0.6931471805599453,
+      "weighted_CE": 0.8086716831100752
+    }
+  ]
+}

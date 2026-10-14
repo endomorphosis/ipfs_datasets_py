@@ -1,0 +1,33 @@
+{
+  "baseline": {
+    "bytes": 77889,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-baseline-v01.json",
+    "sha256": "9fd03480b85fb3b9a9164a4b4e87b4807bf8c65419a1037edccbb1b04723775f"
+  },
+  "bridge_qualification": {
+    "bytes": 2270,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-bridge-source-independent-review-v01.json",
+    "sha256": "8c64950ffd0a14b6c02ad4a901cfbc0e8517bf3fb9a4dd611b091b125b687360"
+  },
+  "check": {
+    "bytes": 6732,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/guardian-check-v02.json",
+    "sha256": "f191f51a7d6297c97a853fcea563a0dc0d5217a8e7d90dc3528ed92bbf7e77a8"
+  },
+  "contract": {
+    "bytes": 8109,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/resource-protocol-contract-v01.json",
+    "sha256": "34dd2cf9422d076e647f73666d4d10913ebfa62d4ceb78ba6102797cc857acd5"
+  },
+  "sample_receipt": {
+    "bytes": 1425,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json",
+    "sha256": "0909a1bba1a3ba8f591e163d20b818aae68dc62281a5faa9d5cd9c739e86d42b"
+  },
+  "sampler_qualification": {
+    "bytes": 2166,
+    "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/sampler-source-independent-review-v01.json",
+    "sha256": "4b4f5a304c071b07fb5bb8a817f3daff84b05ca922a95c667a9affdcb1f55258"
+  },
+  "schema": "conditions-balanced-capacity-clearance-inputs/v1"
+}
