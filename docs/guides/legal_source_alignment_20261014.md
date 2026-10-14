@@ -91,7 +91,7 @@ observation bytes. Limits may only be lowered. The native 16 MiB raw report,
 Over-bound complete reports are refused, with failed attempts preserved; no
 truncation, easy-source selection or larger native limit substitutes for custody.
 
-The complete actual alignment, context and handoff wrappers contain 7,934,246,
+The complete actual alignment, context and handoff wrappers contain 7,934,219,
 16,530,094 and 7,456,689 canonical bytes. Their ordinary zlib payloads exceed the
 existing native compressed limit. The stage therefore permits a closed reference
 to an independently pinned FULL baseline artifact. Before issuing that reference,
