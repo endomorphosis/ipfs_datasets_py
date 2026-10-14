@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import threading
 import time
+from copy import deepcopy
 
+import pytest
 from ipfs_datasets_py.logic.integration.reasoning import (
     LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION,
     LegalIRIncrementalCompilationSnapshot,
@@ -436,3 +438,200 @@ def test_snapshot_round_trips_for_reuse() -> None:
     assert second.metrics.executed_nodes == ()
     assert len(second.metrics.avoided_nodes) == len(_passes())
     assert counters == {"active": 0}
+
+
+def test_changed_declared_input_executes_with_explicitly_empty_external_groups() -> None:
+    calls = []
+    spec = LegalIRPassSpec(
+        pass_id="calculate",
+        title="Calculate ordinary declared input",
+        kind=LegalIRPassKind.COMPILER,
+        order=10,
+        declared_inputs=("ordinary_value",),
+        declared_outputs=("calculated_value",),
+    )
+
+    def calculate(state):
+        calls.append(state["ordinary_value"])
+        return {"calculated_value": state["ordinary_value"] * 2}
+
+    compiler = LegalIRIncrementalCompiler((spec,), {"calculate": calculate})
+    externals = {"sources": {}, "citations": {}, "symbols": {}, "temporal": {}}
+    first = compiler.compile({"ordinary_value": 7}, **externals)
+    second = compiler.compile({"ordinary_value": 8}, previous=first.snapshot, **externals)
+
+    assert calls == [7, 8]
+    assert first.snapshot.external_digests == second.snapshot.external_digests == {}
+    assert first.snapshot.pass_spec_digests == second.snapshot.pass_spec_digests
+    assert second.successful and second.output_state["calculated_value"] == 16
+    assert second.metrics.executed_nodes == ("pass:calculate",)
+    assert second.metrics.avoided_nodes == ()
+
+
+@pytest.mark.parametrize("damage", ["output_payload", "output_digest"])
+def test_cached_output_integrity_mismatch_executes_instead_of_reusing(damage) -> None:
+    first = compile_legal_ir_incremental(_state(), _functions({}), passes=_passes())
+    previous = deepcopy(first.snapshot.to_dict())
+    if damage == "output_payload":
+        previous["pass_outputs"]["ingest"]["normalized_document"] = "forged cached output"
+    else:
+        previous["pass_output_digests"]["ingest"] = "0" * 64
+    counters: dict[str, int] = {}
+
+    result = compile_legal_ir_incremental(
+        _state(), _functions(counters), passes=_passes(), previous=previous
+    )
+
+    assert result.successful
+    assert counters["ingest"] == 1
+    assert "pass:ingest" in result.metrics.executed_nodes
+    assert "pass:ingest" not in result.metrics.avoided_nodes
+    assert result.output_state["normalized_document"] == _state()["raw_document"].lower()
+    assert (
+        result.snapshot.pass_output_digests["ingest"]
+        == first.snapshot.pass_output_digests["ingest"]
+    )
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+def test_failed_callback_runs_once_and_blocks_only_its_transitive_dependents(workers) -> None:
+    specs = (
+        LegalIRPassSpec(
+            pass_id="failed",
+            title="Fail once",
+            kind=LegalIRPassKind.COMPILER,
+            order=10,
+            declared_inputs=("value",),
+            declared_outputs=("failed_output",),
+        ),
+        LegalIRPassSpec(
+            pass_id="blocked",
+            title="Direct dependent",
+            kind=LegalIRPassKind.COMPILER,
+            order=20,
+            declared_inputs=("failed_output",),
+            declared_outputs=("blocked_output",),
+        ),
+        LegalIRPassSpec(
+            pass_id="transitive",
+            title="Transitive dependent",
+            kind=LegalIRPassKind.COMPILER,
+            order=30,
+            declared_inputs=("blocked_output",),
+            declared_outputs=("transitive_output",),
+        ),
+        LegalIRPassSpec(
+            pass_id="independent",
+            title="Independent root",
+            kind=LegalIRPassKind.COMPILER,
+            order=40,
+            declared_inputs=("value",),
+            declared_outputs=("safe_output",),
+        ),
+        LegalIRPassSpec(
+            pass_id="independent_child",
+            title="Independent downstream",
+            kind=LegalIRPassKind.COMPILER,
+            order=50,
+            declared_inputs=("safe_output",),
+            declared_outputs=("safe_child_output",),
+        ),
+    )
+    calls = []
+
+    def failed(state):
+        calls.append("failed")
+        if calls.count("failed") == 1:
+            raise RuntimeError("authored callback failure")
+        # A regressed retry returns once, allowing the test to fail its exact
+        # call-count assertion instead of hanging the test process forever.
+        return {"failed_output": "unexpected callback retry"}
+
+    def forbidden(state):
+        raise AssertionError("failed producer's dependent must not execute")
+
+    def independent(state):
+        calls.append("independent")
+        return {"safe_output": state["value"] + 1}
+
+    def independent_child(state):
+        calls.append("independent_child")
+        return {"safe_child_output": state["safe_output"] * 2}
+
+    result = compile_legal_ir_incremental(
+        {"value": 3},
+        {
+            "failed": failed,
+            "blocked": forbidden,
+            "transitive": forbidden,
+            "independent": independent,
+            "independent_child": independent_child,
+        },
+        passes=specs,
+        max_workers=workers,
+        resource_limits={"cpu": workers},
+    )
+
+    assert (
+        calls.count("failed") == calls.count("independent") == calls.count("independent_child") == 1
+    )
+    assert not result.successful
+    assert result.output_state["safe_child_output"] == 8
+    assert not {"failed_output", "blocked_output", "transitive_output"} & result.output_state.keys()
+    assert not {"failed", "blocked", "transitive"} & result.snapshot.pass_outputs.keys()
+    records = result.snapshot.records_by_pass_id
+    assert records["failed"].executed and records["failed"].metadata["execution_failed"] is True
+    assert records["blocked"].status == records["transitive"].status == "skipped"
+    assert records["blocked"].metadata["blocked_by"] == ["failed"]
+    assert records["transitive"].metadata["blocked_by"] == ["blocked"]
+    assert records["independent"].executed and records["independent_child"].executed
+    assert {(item.pass_id, item.code) for item in result.diagnostics} == {
+        ("failed", "incremental_pass_execution_failed"),
+        ("blocked", "incremental_pass_dependency_failed"),
+        ("transitive", "incremental_pass_dependency_failed"),
+    }
+    assert set(result.metrics.executed_nodes) == {
+        "pass:failed",
+        "pass:independent",
+        "pass:independent_child",
+    }
+
+
+def test_failed_recompile_discards_prior_outputs_and_recovers_from_failed_snapshot() -> None:
+    previous = compile_legal_ir_incremental(_state(), _functions({}), passes=_passes())
+    changed = _state(text="The agency shall disclose revised records.")
+    attempts = []
+    functions = _functions({})
+
+    def fail_ingest(state):
+        attempts.append("ingest")
+        if len(attempts) == 1:
+            raise RuntimeError("authored warm-cache failure")
+        return {"normalized_document": state["raw_document"].lower()}
+
+    functions["ingest"] = fail_ingest
+    failed = compile_legal_ir_incremental(
+        changed, functions, passes=_passes(), previous=previous.snapshot
+    )
+
+    assert attempts == ["ingest"]
+    assert not failed.successful
+    assert failed.snapshot.pass_outputs == {}
+    assert failed.snapshot.pass_output_digests == {}
+    assert {row.pass_id for row in failed.snapshot.node_records if row.status == "skipped"} == {
+        "citations",
+        "symbols",
+        "temporal",
+        "lower",
+    }
+    counters: dict[str, int] = {}
+    recovered = compile_legal_ir_incremental(
+        changed, _functions(counters), passes=_passes(), previous=failed.snapshot
+    )
+
+    assert recovered.successful and recovered.metrics.avoided_nodes == ()
+    assert {node.removeprefix("pass:") for node in recovered.metrics.executed_nodes} == {
+        spec.pass_id for spec in _passes()
+    }
+    assert all(counters[spec.pass_id] == 1 for spec in _passes())
+    assert recovered.output_state["normalized_document"] == changed["raw_document"].lower()
