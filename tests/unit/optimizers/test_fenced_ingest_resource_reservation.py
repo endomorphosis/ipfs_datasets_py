@@ -77,8 +77,13 @@ def test_opening_preserves_existing_noncanonical_json_bytes_without_normalizing(
 def test_current_native_producer_rejects_smaller_legacy_policy_without_migrating(private):
     path, _, _, _, _, _ = private
     state = json.loads(path.read_bytes())
-    for key in ("proof_resource_profile", "proof_recovery_enabled", "proof_recovery_samples",
-                "proof_recovery_interval_seconds", "proof_recovery_grants"):
+    newer = {"proof_resource_profile", "proof_recovery_enabled", "proof_recovery_samples",
+             "proof_recovery_interval_seconds", "proof_recovery_grants"}
+    # Omit fields from the selected producer's actual closed inventory. The
+    # pinned P scheduler predates recovery fields; its own earlier inventory
+    # still must not be normalized into the current schema.
+    omitted = newer.intersection(state["config"]) or {"total_child_process_slots"}
+    for key in omitted:
         state["config"].pop(key)
     path.write_text(json.dumps(state))
     before = path.read_bytes()
@@ -176,7 +181,7 @@ def test_factory_refuses_bad_existing_metadata_without_initializing_or_rewriting
         state = json.loads(path.read_bytes())
         if failure == "policy": state["config"]["total_cpu_slots"] += 1
         if failure == "safety": state["config"]["proof_safety_enabled"] = False
-        if failure == "partial": state["config"].pop("proof_recovery_grants")
+        if failure == "partial": state["config"].pop("proof_memory_headroom_mb")
         if failure == "control_shape": state["leases"] = []
         if failure == "negative_envelope":
             state["leases"] = {"private-corrupt-record": {"owner_pid": os.getpid(), "lane": "hammer_lean",

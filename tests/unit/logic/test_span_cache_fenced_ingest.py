@@ -450,6 +450,9 @@ def test_cli_selects_explicit_profile_and_rejects_real_inference_from_D(monkeypa
     spec = importlib.util.spec_from_file_location("fenced_ingest_cli_fixture", script)
     cli = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(cli)
+    # Exercise a genuinely noncanonical caller regardless of the checkout
+    # selected for this storage-contract suite; never invoke its parser.
+    monkeypatch.setattr(cli, "ROOT", tmp_path/"unreviewed-logic-tree")
     with pytest.raises(RuntimeError, match="canonical workspace tree"):
         cli._fenced_compiler_preflight()
     seen = []
