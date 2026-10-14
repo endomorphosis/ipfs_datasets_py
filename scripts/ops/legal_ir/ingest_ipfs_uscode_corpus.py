@@ -628,15 +628,88 @@ def drain(
     totals["formalized"] = False
     totals["goals_enqueued"] = False
     totals["jsonl_written"] = False
+    totals["claim_profile"] = "legacy"
+    totals["qualified"] = False
     return totals
+
+
+def _fenced_compiler_preflight() -> tuple[dict, str]:
+    """Fenced orchestration is executable only after canonical-tree deployment."""
+    canonical = Path("/home/barberb/lift_coding/external/ipfs_datasets").resolve()
+    if ROOT.resolve() != canonical:
+        raise RuntimeError("fenced-v1 requires reviewed deployment under the canonical workspace tree")
+    from ipfs_datasets_py.logic.autoformal.tree_pin import require_workspace_logic_tree, workspace_root
+    from ipfs_datasets_py.logic.autoformal.span_cache import compiler_identity, compiler_path_hashes
+    if workspace_root().resolve() != canonical:
+        raise RuntimeError("fenced-v1 canonical root differs")
+    origins = require_workspace_logic_tree()
+    if any(not Path(path).resolve().is_relative_to(canonical) for path in origins.values()):
+        raise RuntimeError("fenced-v1 compiler, decompiler or parser origin differs")
+    hashes = compiler_path_hashes(canonical)
+    return hashes, compiler_identity(hashes)
+
+
+def _compile_claimed_fenced(item: dict) -> dict:
+    # Preserve the existing actual compiler/census/Lake path and its criteria.
+    from ipfs_datasets_py.logic.autoformal.span_agreement import annotate_compiled_batch
+    return annotate_compiled_batch([_compile_claimed(item)], lake_limit=4)[0]
+
+
+def _run_fenced_cli(args) -> dict:
+    from concurrent.futures import ProcessPoolExecutor
+    import multiprocessing
+    from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache, compiler_path_hashes
+    from ipfs_datasets_py.logic.autoformal.span_cache_fenced_ingest import load_source_manifest, drain_fenced_manifest
+    from ipfs_datasets_py.logic.autoformal.worker_budget import worker_budget
+    if args.source_manifest is None:
+        raise ValueError("fenced-v1 requires --source-manifest; no revision or source identity is inferred")
+    if args.parquet is not None or args.limit is not None or args.upload or args.enqueue_only or args.quack_gaps or args.supervisor_database is not None or not args.resume:
+        raise ValueError("fenced-v1 consumes an existing prepared cache; enqueue, upload, remote checkpoint import and supervisor dispatch remain separate reviewed operations")
+    hashes, identity = _fenced_compiler_preflight()
+    manifest, manifest_ref = load_source_manifest(args.source_manifest)
+    if args.release_id != manifest["release_id"]:
+        raise ValueError("CLI release ID differs from the explicit source manifest")
+    if not args.cache.is_file() or args.cache.is_symlink():
+        raise ValueError("fenced-v1 requires an existing regular owner-prepared cache file")
+    workers = args.compile_workers or worker_budget()
+    if workers < 1:
+        raise ValueError("positive compiler worker count required")
+    destination = (args.upload_dir or args.cache.parent / "hf-checkpoint") / "exchange"
+    cache = SpanCache(args.cache)
+    try:
+        with ProcessPoolExecutor(max_workers=workers, initializer=_init_worker,
+                                 mp_context=multiprocessing.get_context("spawn")) as pool:
+            def stage(rows):
+                return _stage_exchange_batch(rows, destination, agent_id="fenced-control-plane",
+                    release_id=manifest["release_id"], code_identity=identity, path_hashes=hashes)
+            report = drain_fenced_manifest(cache, manifest, worker_pool=pool,
+                compile_worker=_compile_claimed_fenced, stage_exchange=stage, exchange_dir=destination,
+                code_identity=identity, path_hashes=hashes,
+                source_guard=lambda: compiler_path_hashes(ROOT), batch_size=args.batch,
+                max_spans=args.fenced_span_limit, start_index=args.fenced_start_index,
+                max_examined=args.fenced_scan_limit)
+            return {**report, "source_manifest": manifest_ref, "compile_workers": workers,
+                    "compiler_tree": str(ROOT), "resource_admission_verified_by_cli": False,
+                    "production_state": "selected_canonical_fenced_cli_not_production_verified"}
+    finally:
+        cache.close()
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--parquet", type=Path, required=True)
+    parser.add_argument("--parquet", type=Path, help="Required for the legacy source-enqueue path.")
     parser.add_argument("--cache", type=Path, required=True)
+    parser.add_argument("--claim-profile", choices=("legacy", "fenced-v1"), default="legacy",
+                        help="Explicit fenced source-manifest profile; legacy helpers remain unqualified.")
+    parser.add_argument("--source-manifest", type=Path)
+    parser.add_argument("--fenced-span-limit", type=int, default=32,
+                        help="Maximum selected fenced spans per invocation (1..4096).")
+    parser.add_argument("--fenced-start-index", type=int, default=0,
+                        help="Explicit position in this exact source manifest; start at returned next_manifest_index.")
+    parser.add_argument("--fenced-scan-limit", type=int, default=256,
+                        help="Maximum examined fenced manifest rows per invocation (1..4096).")
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--batch", type=int, default=128)
+    parser.add_argument("--batch", type=int, default=None)
     parser.add_argument("--compile-workers", type=int, default=0,
                         help="Pin compile processes. 0 keeps the load-and-memory budget.")
     parser.add_argument("--release-id", default="ipfs-uscode-5016b86a")
@@ -656,6 +729,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Ignored. Census and goals append to the span-cache dataset, not a local supervisor.",
     )
     args = parser.parse_args(argv)
+    if args.batch is None:
+        args.batch = 16 if args.claim_profile == "fenced-v1" else 128
+    if args.claim_profile == "fenced-v1":
+        report = _run_fenced_cli(args)
+        print(json.dumps({"stage": "fenced_census_complete", **report}, sort_keys=True), flush=True)
+        return 0 if not report["held"] else 2
+    if args.parquet is None:
+        parser.error("--parquet is required for the legacy profile")
+    if args.source_manifest is not None:
+        parser.error("--source-manifest requires --claim-profile fenced-v1")
     from ipfs_datasets_py.logic.autoformal.span_cache import SpanCache, compiler_identity, compiler_path_hashes
 
     hashes = compiler_path_hashes(ROOT)

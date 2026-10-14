@@ -117,3 +117,74 @@ Every new receipt and result lookup explicitly records `qualified=false`,
 seal is engineering evidence. Constitution spans remain unformalized. Actual
 scoped `lake build <Lib>` remains the sole Lean admission; transactional tests,
 result rows, parser output and transport responses confer no such admission.
+
+## Executable private-native T02 engineering checker
+
+The [engineering checker CLI](../../scripts/ops/legal_ir/check_span_claim_acceptance.py)
+and [pure report verifier](../../ipfs_datasets_py/logic/autoformal/span_claim_acceptance.py)
+bind the complete 121-case native claim/Quack regression collection to an
+explicit manifest. The manifest contains `criterion_key=OBLIGATION-F-T02`,
+`task_cid`, `validation_key`, `repository_commit`, `declared_native_tree_id`,
+ordered `source_pins`, `test_modules`, `expected_cases` and `scenarios`, with
+schema `span-claim-engineering-manifest/v1`. The tree/task declarations are
+not authenticated or converted into native IR roots by this checker.
+
+The live command requires an existing validation reservation with at least
+one CPU slot, 1536 MiB and two child-process slots for the outer pytest entry
+and complete inner pytest collection.
+The trusted launcher passes the granted lease ID using
+`IPFS_DATASETS_T02_VALIDATION_LEASE_ID`, the existing state path through
+`IPFS_DATASETS_T02_SCHEDULER_STATE` and its pinned policy through
+`IPFS_DATASETS_T02_SCHEDULER_POLICY_SHA256`. The CLI checks the unchanged native
+scheduler policy, original owner ancestry and request scope, and polls native
+cancellation. It does not acquire, renew, reset or reconfigure the scheduler.
+
+The unchanged native policy admits a closed pytest command. Its explicit
+[entry adapter](../../scripts/ops/legal_ir/span_claim_acceptance_test.py) lies
+outside default testpaths and delegates to the same checker. The trusted
+launcher additionally supplies exact paths in `IPFS_DATASETS_T02_MANIFEST`
+and `IPFS_DATASETS_T02_OUTPUT`. Missing either path fails, without a skip or
+a fabricated lease. The validation argv is:
+
+```sh
+python3 -m pytest -c pytest.ini -o addopts= \
+  -p anyio.pytest_plugin -p pytest_asyncio.plugin \
+  scripts/ops/legal_ir/span_claim_acceptance_test.py -q
+```
+
+The adapter supplies no subset, extra authority or alternative policy. Direct
+execution of the convenience CLI is outside this unchanged policy's allowed
+command prefixes; do not widen that policy to admit it.
+
+The selected existing reservation must have a request ID beginning with
+`legal-ir-supervisor-start:gap-T02-`. The library runner instead requires an
+explicit lease verifier supplied by a trusted owner; no unverified default or
+boolean bypass exists. The output directory must be fresh.
+Standalone callers may explicitly pass `--scheduler-state` and
+`--expected-policy-sha256`; absent launcher environment and absent explicit
+values refuse. No scheduler path or policy is synthesized. The native pytest
+binding retains only the reviewed relative adapter path in argv; its trusted
+launcher supplies manifest, output and native reservation context separately.
+
+The runner keeps source hashes before/after, exact subprocess invocation,
+JUnit bytes and an independent setup/call/teardown event stream. It checks
+actual imported producer origins, native DuckDB/transport identity, complete
+scenario coverage and zero missing, duplicated, failed or skipped cases.
+The offline verifier additionally requires the independently retained launch
+binding; a patched report or standalone pass count supplies no owner trust.
+Temporary pytest inputs, bytecode and cache state remain isolated.
+The native pytest cacheprovider remains enabled because repository conftest
+uses its API; its cache directory is fixed to the fresh temporary runtime.
+Collection/startup failure retains actual exit status, invocation, source and
+lease observations in `failure-execution-report.json`. Missing JUnit or phase
+evidence is recorded as unavailable and never replaced with synthetic passes.
+External SIGTERM raises into the same bounded owned-child TERM/KILL cleanup
+and temporary-runtime cleanup before emitting a refusal. The CLI restores the
+previous signal handler afterward; repeated SIGTERM during that cleanup is
+ignored until the bounded cleanup finishes.
+
+Its `engineering_gate_passed` result covers private transactional/transport
+regressions only. Native acceptance still requires a reviewed exact validator
+binding, authenticated owner material and an explicitly selected production
+caller migration. All legal/model/Lake/roundtrip authority flags remain false;
+this command never opens a production SpanCache or supervisor goal database.

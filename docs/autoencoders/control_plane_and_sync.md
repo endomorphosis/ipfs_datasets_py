@@ -130,6 +130,123 @@ Installed DuckDB and Quack/HTTPFS artifacts remain pinned, with no extension
 downloads. No production endpoint or DuckLake activation is established, and
 these control receipts provide no semantic, training, or Lean qualification.
 
+## Explicit fenced ingestion of prepared spans
+
+[`span_cache_fenced_ingest.py`](../../ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py)
+provides an opt-in owner path for an already prepared `SpanCache`. The ingestion
+CLI selects it with `--claim-profile fenced-v1`; its default remains the legacy,
+unqualified path. The fenced profile does not enqueue missing rows, import
+remote checkpoints, release legacy claims, or reset terminal rows.
+
+Supply an exact source manifest. This illustrative shape uses placeholders
+which must be replaced with real immutable identities before execution:
+
+```json
+{
+  "schema": "span-cache-fenced-ingest-source/v1",
+  "corpus_id": "justicedao/ipfs_uscode",
+  "release_id": "EXACT_RELEASE_ID",
+  "source_revision": "hub:EXACT_40_HEX_REVISION",
+  "spans": [
+    {
+      "source_span_id": "EXACT_EXISTING_SPAN_ID",
+      "legal_id": "EXACT_EXISTING_LEGAL_ID",
+      "source_sha256": "EXACT_64_HEX_SHA256_OF_COMPLETE_SOURCE_TEXT",
+      "expected_binding": null
+    }
+  ]
+}
+```
+
+The manifest is closed: no extra fields or inferred revision are accepted.
+Duplicate JSON keys are rejected, even when their repeated values are equal.
+`corpus_id` must equal the existing owner's `dataset_id`; every source ID,
+legal ID, and complete UTF-8 text digest must match its stored row. Revision
+identities are pinned 40-hex Git/Hub revisions or `sha256:` plus 64 hex digits.
+`expected_binding` is null for first binding, or exactly the prior
+`source_revision` and `source_sha256` for an explicit compare-and-swap. A
+same-manifest retry may replay its exact original binding receipt. A new release
+or manifest context with an already bound row requires the explicit current
+`expected_binding`; matching the desired revision alone is insufficient. A
+constructed fixture artifact's revision identifies that artifact, not an
+official law release. Binding establishes identity and grants no admission.
+
+After reviewed deployment to the canonical tree, a bounded invocation is:
+
+```bash
+python3 -B scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py \
+  --claim-profile fenced-v1 \
+  --cache /PRIVATE/PREPARED/span-cache.duckdb \
+  --source-manifest /PRIVATE/EXACT/source-manifest.json \
+  --release-id EXACT_RELEASE_ID \
+  --upload-dir /CHARGED/exchange-outbox \
+  --batch 16 --fenced-span-limit 32 --fenced-scan-limit 256
+```
+
+This profile requires the script under
+`/home/barberb/lift_coding/external/ipfs_datasets`, verifies actual canonical
+compiler/decompiler/parser import origins, and checks compiler source hashes
+again during work. A development worktree cannot run this real compiler path.
+The existing load-and-memory worker budget remains the default; an explicit
+`--compile-workers` override must be positive. Workers use process spawning,
+never inherit the owner's live database connection, and retain the existing
+compiler/census/Lake functions and their acceptance criteria. This boundary
+does not train a learned autoencoder or establish decoder fidelity.
+
+Deployment also requires the existing native admitted resource and storage
+budget, including Lake/Lean child processes and their descendants, temporary
+proof artifacts, and retained exchange/output artifacts. `worker_budget()`
+estimates capacity; it grants no lease, resource
+admission, or authorization. An explicit `--compile-workers` override grants
+none either. This CLI currently has no checked external reservation hook, so
+canonical source preflight alone does not make a production run authorized or
+ready. Its report retains `resource_admission_verified_by_cli=false`. Private
+validation uses separately admitted native leases; wiring and checking the
+deployment reservation remains an integration requirement.
+
+Each invocation selects at most `--fenced-span-limit` spans (1–4096), examines
+at most `--fenced-scan-limit` manifest rows (1–4096), and uses batches of 1–32.
+The returned `next_manifest_index` can be passed as `--fenced-start-index` with
+the exact same manifest; null means the end of that manifest, not corpus
+formalization. Retain every report's held rows before advancing this cursor.
+Restarting at zero rechecks completed rows against current source bindings,
+compiler identity, durable native results, and the full immutable artifact
+closure. A valid result resumes without another producer call. Legacy
+terminal rows, changed source/code identity, malformed claim metadata, and
+current live claims remain held for explicit owner reconciliation. A missing
+or altered staged artifact refuses resume rather than silently recomputing.
+Historical result selection filters exact current source/repair identity in
+native SQL before applying its 64-record materialization bound; a long history
+of unrelated operation IDs cannot hide the current matching evidence.
+
+Before completion, the entire original worker observation is saved as an
+immutable JSON artifact and through the existing validated Parquet census/goal
+exchange. Its family, decoder, census, and goal evidence remains intact even
+when it is too large for the control plane. The native result stores the exact
+rule/decompilation and verified artifact references within the existing
+65,536-byte command bound. Required rule data exceeding that bound refuses
+completion; it is not truncated and the already staged output is retained.
+Stage or worker failures attempt release only with the original live native
+claim. Expired, foreign, or changed claims produce an explicit cleanup refusal
+with no bare-ID or legacy fallback.
+
+Workers which omit `source_revision` or `source_sha256` retain every original
+field and receive those missing identities from the verified native claim.
+`fenced_source_binding` records that native origin explicitly, so the immutable
+output and census remain bound to the source revision for later publication.
+Conflicting worker identities or provenance are refused before staging; they
+are never overwritten. This provenance marker establishes identity only.
+
+The original observation may record diagnostic compiler agreement; the fenced
+disposition remains `agrees=false` because this profile establishes no
+independent learned-model qualification. `qualified`, `admitted`, `formalized`,
+and `roundtrip_ok` remain false. The Constitution is not formalized. Only an
+actual `lake build <Lib>` on the applicable material can admit that material;
+neither this result ledger nor a compiler string is an admit. The CLI stages
+evidence locally and performs no Hub upload, native supervisor goal dispatch,
+Quack service activation, or DuckLake activation. Publication and goal import
+remain separate reviewed operations using the retained exchange manifests.
+
 ## Exact generations rather than merging optimizer states
 
 The legal feature campaign follows this sequence:
