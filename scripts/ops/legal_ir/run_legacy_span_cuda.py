@@ -435,14 +435,55 @@ def publish_pending(db, upload, runtime=None):
                           http_status=getattr(response, "status_code", None), retry_seconds=retry_seconds)
                     raise
             return invoke
-    api = ObservedHubAPI()
-    for batch_id, path in db.execute("SELECT id,manifest FROM batches WHERE status='staged' LIMIT 2").fetchall():
+    api = None
+    for batch_id, path, receipt_sha in db.execute("SELECT id,manifest,receipt_sha256 FROM batches WHERE status='staged' ORDER BY rowid LIMIT 2").fetchall():
         try:
-            manifest_kind = json.loads(Path(path).read_bytes()).get("schema")
+            manifest = json.loads(Path(path).read_bytes())
+            manifest_kind = manifest.get("schema")
             if manifest_kind in {"uscode-paired-span-bundle/v1", "uscode-paired-span-bundle/v2"}:
-                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import publish_paired_manifest
+                from ipfs_datasets_py.logic.autoformal.paired_span_census import (
+                    PairedCensusError, load_paired_census_bundle)
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.paired_span_publication import (
+                    _descriptors, publish_paired_manifest)
+                # Local validation precedes this batch's first Hub operation.
+                # A publisher/readback failure below remains ambiguous and
+                # must keep the ordinary staged retry/backoff behavior.
+                before = [desc for desc, _ in _descriptors(path, manifest)]
+                try:
+                    bundle = load_paired_census_bundle(path)
+                except PairedCensusError as error:
+                    after = [desc for desc, _ in _descriptors(path, manifest)]
+                    if after != before:
+                        raise ValueError("paired preflight inputs changed") from error
+                    context = {
+                        "schema": "legacy-paired-schema-deferral/v1",
+                        "status": "needs_schema_migration", "batch_id": batch_id,
+                        "manifest_path": str(path), "manifest_sha256": before[0]["sha256"],
+                        "receipt_sha256": receipt_sha, "immutable_files": before,
+                        "error_type": type(error).__name__, "error_message": str(error)[:512],
+                        "observed_at": time.time(), "local_preflight": True,
+                        "uploaded": False, "admitted": False, "formalized": False,
+                        "rows_and_receipt_preserved": True}
+                    db.execute("BEGIN")
+                    try:
+                        meta(db, "publication_schema_deferral:" + batch_id, context)
+                        db.execute("UPDATE batches SET status='needs_schema_migration' WHERE id=? AND status='staged' AND manifest=?",
+                                   [batch_id, path])
+                        db.execute("COMMIT")
+                    except BaseException:
+                        db.execute("ROLLBACK")
+                        raise
+                    event("publication_needs_schema_migration", batch_id=batch_id,
+                          error=type(error).__name__, reason=str(error)[:512],
+                          manifest_sha256=before[0]["sha256"], admitted=False)
+                    continue
+                after = [desc for desc, _ in _descriptors(path, manifest)]
+                if after != before or bundle["manifest_sha256"] != before[0]["sha256"]:
+                    raise ValueError("paired preflight inputs changed")
+                api = api or ObservedHubAPI()
                 receipt = publish_paired_manifest(path, upload=True, api=api)
             else:
+                api = api or ObservedHubAPI()
                 receipt = publish_exchange_manifest(path, upload=True, api=api)
         except Exception as error:
             event("publication_deferred", batch_id=batch_id, error=type(error).__name__)
@@ -456,6 +497,7 @@ def publish_pending(db, upload, runtime=None):
     if runtime is not None and (meta(db, "publication_retry_after") or 0) <= time.time():
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_publication import cleanup_published_batches
         try:
+            api = api or ObservedHubAPI()
             for cleanup in cleanup_published_batches(db, runtime, api=api):
                 batch_id = cleanup["batch_id"]
                 event("verified_publication_cleanup", batch_id=batch_id, deleted_bytes=cleanup["deleted_bytes"],
@@ -540,6 +582,9 @@ def engine(args, *, custody):
                 if after == before:
                     return 1
             publish_pending(db, True, runtime)
+            if db.execute("SELECT count(*) FROM batches WHERE status='needs_schema_migration'").fetchone()[0]:
+                status(db, runtime, phase="publication_needs_schema_migration")
+                return 1
             status(db, runtime, phase="publication_completed")
             return 0
         finally:

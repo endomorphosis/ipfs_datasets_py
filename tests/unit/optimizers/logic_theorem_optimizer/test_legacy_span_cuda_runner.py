@@ -590,3 +590,143 @@ def private_custody(monkeypatch):
             return True
     monkeypatch.setattr(custody, "LegacySpanEngineVerifier", PrivateControllerFixture)
     return PrivateControllerFixture()
+
+
+
+def paired_queue_batch(db, runtime, span_id):
+    row = source(span_id=span_id)
+    runner.enqueue(db, {"rows": [row], "next_section": 1})
+    batch_id, _ = runner.select_batch(db, 1)
+    captured = receipt(row, batch_id)
+    captured["campaign"]["publication_format"] = "paired"
+    staged = runner.stage(db, runtime, batch_id, captured, "fixture-agent")
+    return batch_id, Path(staged["manifest"]["path"])
+
+
+def test_local_paired_schema_failure_preserves_bytes_and_allows_next_publication(queue, monkeypatch):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+    import huggingface_hub
+    from ipfs_datasets_py.logic.autoformal import paired_span_census as census
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    bad_id, original = paired_queue_batch(db, runtime, "bad-old-layout")
+    good_id, good_path = paired_queue_batch(db, runtime, "good-current-layout")
+    old_bundle = census.load_paired_census_bundle(original)
+    manifest = json.loads(original.read_bytes())
+    # Reproduce the retained producer's exact class of drift: v2 manifest,
+    # old-layout paired table, matching immutable bytes/hash/row count.
+    sink = pa.BufferOutputStream()
+    pq.write_table(pa.Table.from_pylist(old_bundle["paired_spans"],
+        schema=census.arrow_schemas(census.LEGACY_SCHEMA)["paired_spans"]), sink, compression="zstd")
+    raw = sink.getvalue().to_pybytes()
+    digest = hashlib.sha256(raw).hexdigest()
+    filename = "paired_spans-old-layout-" + digest + ".parquet"
+    (runtime / "outbox" / filename).write_bytes(raw)
+    desc = manifest["tables"]["paired_spans"]
+    desc.update(filename=filename, sha256=digest, bytes=len(raw),
+        path_in_repo=str(Path(desc["path_in_repo"]).with_name(filename)))
+    manifest.pop("fingerprint")
+    manifest.pop("path_in_repo")
+    fingerprint = hashlib.sha256(runner.encode(manifest)).hexdigest()
+    filename = "manifest-" + fingerprint + ".json"
+    manifest.update(fingerprint=fingerprint,
+        path_in_repo=census.REPO_PREFIX + "/manifests/fixture-agent/" + filename)
+    bad_path = runtime / "outbox" / filename
+    bad_path.write_bytes(runner.encode(manifest))
+    db.execute("UPDATE batches SET manifest=? WHERE id=?", [str(bad_path), bad_id])
+    retained = {str(p): p.read_bytes() for root in (runtime / "outbox", runtime / "receipts")
+                for p in root.iterdir() if p.is_file()}
+    work_before = db.execute("SELECT * FROM work ORDER BY id").fetchall()
+    bad_before = db.execute("SELECT ids,manifest,publication,receipt_sha256 FROM batches WHERE id=?", [bad_id]).fetchone()
+    events = []
+    monkeypatch.setattr(huggingface_hub, "HfApi", lambda: events.append("api_created") or object())
+    def publish(path, *, upload, api):
+        assert Path(path) == good_path and upload is True
+        assert db.execute("SELECT status FROM batches WHERE id=?", [bad_id]).fetchone()[0] == "needs_schema_migration"
+        assert census.load_paired_census_bundle(path)["admitted"] is False
+        events.append("good_publisher")
+        return {"uploaded": True, "commit_sha": "f" * 40}
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    runner.publish_pending(db, True)
+    assert events == ["api_created", "good_publisher"]
+    assert db.execute("SELECT status FROM batches WHERE id=?", [good_id]).fetchone()[0] == "published"
+    assert db.execute("SELECT ids,manifest,publication,receipt_sha256 FROM batches WHERE id=?", [bad_id]).fetchone() == bad_before
+    assert db.execute("SELECT * FROM work ORDER BY id").fetchall() == work_before
+    assert all(Path(p).read_bytes() == raw for p, raw in retained.items())
+    deferred = runner.meta(db, "publication_schema_deferral:" + bad_id)
+    assert deferred["error_message"] == "bundle table schema or row count differs"
+    assert deferred["manifest_sha256"] == hashlib.sha256(bad_path.read_bytes()).hexdigest()
+    assert deferred["status"] == "needs_schema_migration" and deferred["local_preflight"] is True
+    assert deferred["uploaded"] is deferred["admitted"] is deferred["formalized"] is False
+    runner.publish_pending(db, True)
+    assert events == ["api_created", "good_publisher"]
+
+
+def test_paired_publisher_error_after_preflight_remains_staged_without_schema_deferral(queue, monkeypatch):
+    import huggingface_hub
+    from ipfs_datasets_py.logic.autoformal.paired_span_census import PairedCensusError
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    batch_id, path = paired_queue_batch(db, runtime, "valid-preflight-ambiguous-readback")
+    before = db.execute("SELECT * FROM batches").fetchall()
+    monkeypatch.setattr(huggingface_hub, "HfApi", lambda: object())
+    calls = []
+    def publish(*args, **kwargs):
+        calls.append("remote_mutation_may_have_happened")
+        raise PairedCensusError("bundle table schema or row count differs")
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    runner.publish_pending(db, True)
+    assert calls == ["remote_mutation_may_have_happened"]
+    assert db.execute("SELECT * FROM batches").fetchall() == before
+    assert runner.meta(db, "publication_schema_deferral:" + batch_id) is None
+    assert path.exists()
+
+
+def test_paired_preflight_keeps_hub_rate_limit_backoff_and_staged_evidence(queue, monkeypatch):
+    import huggingface_hub
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import paired_span_publication as paired
+    db, runtime = queue
+    batch_id, path = paired_queue_batch(db, runtime, "valid-preflight-rate-limit")
+    calls = []
+    class RateLimit(Exception):
+        response = SimpleNamespace(status_code=429, headers={"Retry-After": "90"})
+    class API:
+        def __init__(self):
+            calls.append("api_created")
+        def repo_info(self, **kwargs):
+            calls.append("repo_info")
+            raise RateLimit("fixture network refusal")
+    def publish(path, *, upload, api):
+        api.repo_info(repo_id="fixture-repository")
+        pytest.fail("rate limit should have interrupted publisher")
+    monkeypatch.setattr(huggingface_hub, "HfApi", API)
+    monkeypatch.setattr(paired, "publish_paired_manifest", publish)
+    monkeypatch.setattr(runner.time, "time", lambda: 1000.0)
+    runner.publish_pending(db, True)
+    assert calls == ["api_created", "repo_info"]
+    assert runner.meta(db, "publication_retry_after") == 1090.0
+    assert db.execute("SELECT status,publication FROM batches WHERE id=?", [batch_id]).fetchone() == ("staged", None)
+    assert runner.meta(db, "publication_schema_deferral:" + batch_id) is None
+    runner.publish_pending(db, True)
+    assert calls == ["api_created", "repo_info"] and path.exists()
+
+
+def test_publish_only_does_not_claim_completion_with_schema_migration_pending(tmp_path, monkeypatch):
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_publication as publication
+    runtime = tmp_path / "runtime"
+    for name in ("receipts", "outbox", "inputs"):
+        (runtime / name).mkdir(parents=True, exist_ok=True)
+    db = runner.open_queue(runtime / "campaign.duckdb")
+    db.execute("INSERT INTO batches VALUES ('old','[]','needs_schema_migration',NULL,NULL,'retained-digest')")
+    db.close()
+    monkeypatch.setattr(publication, "cleanup_published_batches", lambda *a, **kw: [])
+    args = runner.arguments(["--runtime-directory", str(runtime), "--publish-only", "--upload"])
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 1
+    observed = json.loads((runtime / "status.json").read_bytes())
+    assert observed["phase"] == "publication_needs_schema_migration"
+    db = runner.open_queue(runtime / "campaign.duckdb")
+    try:
+        assert db.execute("SELECT status,publication,receipt_sha256 FROM batches").fetchone() == ("needs_schema_migration", None, "retained-digest")
+    finally:
+        db.close()
