@@ -52,3 +52,68 @@ the only Lean admission and every report publication remains unadmitted.
 Verified publication: [report manifest](https://huggingface.co/datasets/justicedao/uscode-autoformal-span-cache/blob/4f7922a2188c111e30841a08769f0f989d0b7c61/autoformal/uscode/reports/v1/manifests/0f2431a7c4746625fdbf693b312447f138d7ff4b820774ed4990dc334caa84ed.json).
 The archived report is 3,959,482 bytes compressed and reconstructs all
 73,673,016 original bytes. The local original remains retained.
+
+## Fenced owner completion and retained result evidence
+
+The opt-in [SpanCache claim control](../../ipfs_datasets_py/logic/autoformal/span_cache_claims.py)
+is obtained with `cache.fenced_claims()` on the original native catalog owner
+thread. It uses that exact connection and one transaction for span outcomes,
+term links, claim retirement, full result evidence and compact operation
+receipts. The existing `claim_batch`, `complete_claimed` and `release_claims`
+helpers retain their legacy unqualified contracts. Existing ingestion callers
+are not automatically migrated by importing the new interface.
+
+Call these APIs only through the owner:
+
+| Operation | Inputs and meaning |
+| --- | --- |
+| `bind_sources_fenced(operation_id, bindings)` | Closed rows contain `source_span_id`, explicit `source_revision`, `source_sha256` and `expected_binding`. First binding requires `expected_binding=None`; a later revision requires the exact prior revision/hash. Rebinding atomically retires old claims and invalidates cached term links. |
+| `claim_batch_fenced(operation_id, worker_id, span_ids, lease_seconds=300)` | Claims an explicit bounded set of previously source-bound spans and returns durable claim envelopes without copying full source text into the operation ledger. |
+| `read_claim_source_fenced(claim)` | Returns exact stored source bytes represented as UTF-8 text through the live owner. An expired or superseded claim cannot fetch a new live response. |
+| `complete_claimed_fenced(operation_id, rows, code_identity=..., path_hashes=...)` | Each closed row contains `claim`, `agrees`, `decompiled`, `rule`, `repair` and `reason`. Source text and legal IDs come from the verified owner row. Both the rule and repair/diagnostics are retained for agreement and disagreement. |
+| `release_claims_fenced(operation_id, claims)` | Releases only exact currently live claims. Wrong source, worker, token, generation or deadline refuses the entire batch. |
+| `resolve_operation(operation_id, command, payload)` | Looks up an exact committed command/payload after an ambiguous response. It does not rerun the operation or grant a present lease. |
+| `read_completion_results_fenced(operation_id, rows, code_identity=..., path_hashes=...)` | Owner-local historical lookup requiring the exact original completion payload. Returns the full retained result ledger for later export, without duplicating full source text. Missing legacy history or an oversized reply is explicitly refused. |
+
+Source revisions must be caller-supplied immutable identities: a 40-character
+lowercase Git/Hub commit, optionally prefixed with `git:` or `hub:`, or an
+explicit `sha256:` followed by 64 lowercase hexadecimal characters. A missing
+revision is never derived from the span text. This binding checks identity;
+it does not authenticate statutory currentness or legal interpretation.
+
+A claim envelope contains `schema`, `source_span_id`, `source_revision`,
+`source_sha256`, `legal_id`, `claim_worker`, `claim_token`, `owner_generation`,
+`fence` and `expires_at`. Fenced APIs require the original process/thread and
+native connection. A later owner incarnation advances its persisted generation
+and fences older work. Owner transitions and new mutations both advance the
+same persisted fence column, creating a real native MVCC conflict for an
+overlapping owner transition. Exact retries do not advance it. New mutations verify
+the original finite claim deadlines again after output work and immediately
+before commit. A caught nested failure still poisons the whole transaction.
+
+The fence uses a plain native `UPDATE`, checks its affected-row count and reads
+back the generation/sequence in the same transaction. The installed DuckDB
+1.5.5 allowed an overlapping generation update when the guard used
+`UPDATE ... RETURNING`; actual private-owner overlap tests rejected the plain
+update variant correctly. Keep this concurrency test when changing engines or
+the guard SQL. Sequential stale-generation checks alone missed this failure.
+
+Exact retries return the original committed receipt, including after source
+rebinding, expiry or owner restart. That historical receipt does not assert
+that its old claim is still live. Reusing its operation ID with changed output,
+compiler bindings, span membership or command is rejected. Legacy writers are
+not upgraded into fenced writers; their source/status changes can invalidate
+subsequent fenced work.
+
+Full results reside in the same catalog's `span_claim_results` ledger. Compact
+receipts remain in `span_claim_operations`; they are not enlarged to contain
+all model/compiler output. Owner commands and historical result responses keep
+the 65,536-byte control bound. Larger evidence needs a separately designed
+immutable data-plane export rather than truncation or a larger control limit.
+No exporter or production ingestion switch is activated by this API.
+
+Every new receipt and result lookup explicitly records `qualified=false`,
+`admitted=false`, `formalized=false` and `roundtrip_ok=false`. A compile-cache
+seal is engineering evidence. Constitution spans remain unformalized. Actual
+scoped `lake build <Lib>` remains the sole Lean admission; transactional tests,
+result rows, parser output and transport responses confer no such admission.
