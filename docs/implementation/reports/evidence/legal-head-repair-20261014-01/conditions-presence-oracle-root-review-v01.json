@@ -1,0 +1,27 @@
+{
+  "all9_parent_baseline_counts_match_independent_N10_recount": true,
+  "all_source_pins_raw_reverified": true,
+  "checkpoint_JSON_parses": 0,
+  "conditions_training_upper_bound_gain": 1,
+  "diagnostic": {
+    "bytes": 84971,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-oracle-diagnostic-v01.json",
+    "sha256": "5a26a1b31ef1461409f301ee44571b3630cce1d8905d170088ecc605332155f1"
+  },
+  "does_not_authorize_gold_input_in_model_child": true,
+  "findings": [],
+  "gold_dependent_postfreeze_diagnostic_not_trained_performance": true,
+  "modality_training_upper_bound_gain": 0,
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T02:59:41.421606+00:00",
+  "passed": true,
+  "private_body_reads": 0,
+  "root_full_source_review": true,
+  "schema": "conditions-presence-oracle-root-review/v1",
+  "six_modality_blockers_also_have_actor_errors": true,
+  "source": {
+    "bytes": 9144,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/diagnose_conditions_presence_oracle_v01.py",
+    "sha256": "eb65b7aea6f14101194acfef760fac50cb0563cce645fc823f3e6b53980ef895"
+  }
+}

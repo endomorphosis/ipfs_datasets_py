@@ -1,0 +1,15 @@
+{
+  "analysis": {
+    "bytes": 2776304,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json",
+    "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+  },
+  "findings": [],
+  "freeze": {
+    "bytes": 21832,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+    "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+  },
+  "passed": true,
+  "schema": "conditions-presence-result-recount-inputs/v1"
+}

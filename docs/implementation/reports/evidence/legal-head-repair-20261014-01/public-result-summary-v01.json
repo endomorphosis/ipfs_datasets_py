@@ -1,0 +1,774 @@
+{
+  "Lake_executed": false,
+  "actor_scores_and_ranks_unchanged": true,
+  "actual_new_inference_forwards": 1280,
+  "actual_new_model_forwards": 1312,
+  "actual_updates": 32,
+  "all32_permission_rows_retained": true,
+  "all632_initial_and_protected_final_bits_equal": true,
+  "all_scored_panels_exposed_authored": true,
+  "analysis": {
+    "bytes": 2776304,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json",
+    "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+  },
+  "checkpoint": {
+    "bytes": 9337558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+    "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+  },
+  "conditions_false_negative_regressions_present": true,
+  "copied_parent_rows_not_new_forwards": 240,
+  "default_promotion": false,
+  "findings": [],
+  "independent_recount": {
+    "bytes": 2315880,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-independent-recount-v01.json",
+    "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+  },
+  "latent_enabled": false,
+  "paired_complete_IR": {
+    "authored_dev": {
+      "joint": {
+        "after_correct": 46,
+        "before_correct": 45,
+        "gain_ids": [
+          "targeted-loss-authored_dev-plain_deadline-1-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 45,
+        "before_correct": 44,
+        "gain_ids": [
+          "targeted-loss-authored_dev-plain_deadline-1-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "authored_eval": {
+      "joint": {
+        "after_correct": 33,
+        "before_correct": 33,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 27,
+        "before_correct": 27,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "fresh_challenge": {
+      "joint": {
+        "after_correct": 25,
+        "before_correct": 25,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 25,
+        "before_correct": 25,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "fresh_dev": {
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "fresh_test": {
+      "joint": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 0,
+        "before_correct": 0,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "fresh_tune": {
+      "joint": {
+        "after_correct": 19,
+        "before_correct": 19,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 8,
+        "before_correct": 8,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "old_authored_eval": {
+      "joint": {
+        "after_correct": 51,
+        "before_correct": 51,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 48,
+        "before_correct": 48,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "old_tune": {
+      "joint": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 94,
+        "before_correct": 94,
+        "gain_ids": [],
+        "gains": 0,
+        "loss_ids": [],
+        "losses": 0
+      }
+    },
+    "training168": {
+      "joint": {
+        "after_correct": 154,
+        "before_correct": 153,
+        "gain_ids": [
+          "matched-temporal-train-plain_deadline-1-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      },
+      "raw": {
+        "after_correct": 154,
+        "before_correct": 153,
+        "gain_ids": [
+          "matched-temporal-train-plain_deadline-1-p-present"
+        ],
+        "gains": 1,
+        "loss_ids": [],
+        "losses": 0
+      }
+    }
+  },
+  "panels": {
+    "authored_dev": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 11,
+            "TN": 37,
+            "TP": 24,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 3,
+            "TN": 37,
+            "TP": 24,
+            "abstained_or_ambiguous": 8
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 35,
+            "TP": 23,
+            "abstained_or_ambiguous": 14
+          }
+        },
+        "joint_abstentions": 8,
+        "joint_complete_IR": 45,
+        "raw_abstentions": 14,
+        "raw_complete_IR": 44,
+        "rows": 72
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 9,
+            "TN": 39,
+            "TP": 24,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 3,
+            "TN": 39,
+            "TP": 24,
+            "abstained_or_ambiguous": 6
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 37,
+            "TP": 23,
+            "abstained_or_ambiguous": 12
+          }
+        },
+        "joint_abstentions": 6,
+        "joint_complete_IR": 46,
+        "raw_abstentions": 12,
+        "raw_complete_IR": 45,
+        "rows": 72
+      }
+    },
+    "authored_eval": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 5,
+            "FP": 0,
+            "TN": 48,
+            "TP": 19,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 5,
+            "FP": 0,
+            "TN": 47,
+            "TP": 19,
+            "abstained_or_ambiguous": 1
+          },
+          "raw": {
+            "FN": 5,
+            "FP": 0,
+            "TN": 41,
+            "TP": 12,
+            "abstained_or_ambiguous": 14
+          }
+        },
+        "joint_abstentions": 1,
+        "joint_complete_IR": 33,
+        "raw_abstentions": 14,
+        "raw_complete_IR": 27,
+        "rows": 72
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 6,
+            "FP": 0,
+            "TN": 48,
+            "TP": 18,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 6,
+            "FP": 0,
+            "TN": 47,
+            "TP": 18,
+            "abstained_or_ambiguous": 1
+          },
+          "raw": {
+            "FN": 6,
+            "FP": 0,
+            "TN": 41,
+            "TP": 12,
+            "abstained_or_ambiguous": 13
+          }
+        },
+        "joint_abstentions": 1,
+        "joint_complete_IR": 33,
+        "raw_abstentions": 13,
+        "raw_complete_IR": 27,
+        "rows": 72
+      }
+    },
+    "fresh_challenge": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 23,
+            "TP": 10,
+            "abstained_or_ambiguous": 3
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 25,
+        "raw_abstentions": 3,
+        "raw_complete_IR": 25,
+        "rows": 36
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 23,
+            "TP": 10,
+            "abstained_or_ambiguous": 3
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 25,
+        "raw_abstentions": 3,
+        "raw_complete_IR": 25,
+        "rows": 36
+      }
+    },
+    "fresh_dev": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 12,
+            "TN": 0,
+            "TP": 24,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 10,
+            "TN": 0,
+            "TP": 24,
+            "abstained_or_ambiguous": 2
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 0,
+            "TP": 9,
+            "abstained_or_ambiguous": 27
+          }
+        },
+        "joint_abstentions": 2,
+        "joint_complete_IR": 0,
+        "raw_abstentions": 27,
+        "raw_complete_IR": 0,
+        "rows": 36
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 2,
+            "FP": 12,
+            "TN": 0,
+            "TP": 22,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 2,
+            "FP": 10,
+            "TN": 0,
+            "TP": 22,
+            "abstained_or_ambiguous": 2
+          },
+          "raw": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 0,
+            "TP": 8,
+            "abstained_or_ambiguous": 26
+          }
+        },
+        "joint_abstentions": 2,
+        "joint_complete_IR": 0,
+        "raw_abstentions": 26,
+        "raw_complete_IR": 0,
+        "rows": 36
+      }
+    },
+    "fresh_test": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 2,
+            "FP": 12,
+            "TN": 6,
+            "TP": 16,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 2,
+            "FP": 10,
+            "TN": 6,
+            "TP": 10,
+            "abstained_or_ambiguous": 8
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 2,
+            "TN": 2,
+            "TP": 1,
+            "abstained_or_ambiguous": 31
+          }
+        },
+        "joint_abstentions": 8,
+        "joint_complete_IR": 0,
+        "raw_abstentions": 31,
+        "raw_complete_IR": 0,
+        "rows": 36
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 3,
+            "FP": 12,
+            "TN": 6,
+            "TP": 15,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 3,
+            "FP": 10,
+            "TN": 6,
+            "TP": 9,
+            "abstained_or_ambiguous": 8
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 2,
+            "TN": 2,
+            "TP": 1,
+            "abstained_or_ambiguous": 31
+          }
+        },
+        "joint_abstentions": 8,
+        "joint_complete_IR": 0,
+        "raw_abstentions": 31,
+        "raw_complete_IR": 0,
+        "rows": 36
+      }
+    },
+    "fresh_tune": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 8,
+            "TP": 4,
+            "abstained_or_ambiguous": 24
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 19,
+        "raw_abstentions": 24,
+        "raw_complete_IR": 8,
+        "rows": 36
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 24,
+            "TP": 12,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 8,
+            "TP": 4,
+            "abstained_or_ambiguous": 24
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 19,
+        "raw_abstentions": 24,
+        "raw_complete_IR": 8,
+        "rows": 36
+      }
+    },
+    "old_authored_eval": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 48,
+            "TP": 22,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 47,
+            "TP": 22,
+            "abstained_or_ambiguous": 1
+          },
+          "raw": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 42,
+            "TP": 22,
+            "abstained_or_ambiguous": 6
+          }
+        },
+        "joint_abstentions": 1,
+        "joint_complete_IR": 51,
+        "raw_abstentions": 6,
+        "raw_complete_IR": 48,
+        "rows": 72
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 48,
+            "TP": 22,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 47,
+            "TP": 22,
+            "abstained_or_ambiguous": 1
+          },
+          "raw": {
+            "FN": 2,
+            "FP": 0,
+            "TN": 42,
+            "TP": 22,
+            "abstained_or_ambiguous": 6
+          }
+        },
+        "joint_abstentions": 1,
+        "joint_complete_IR": 51,
+        "raw_abstentions": 6,
+        "raw_complete_IR": 48,
+        "rows": 72
+      }
+    },
+    "old_tune": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 94,
+        "raw_abstentions": 0,
+        "raw_complete_IR": 94,
+        "rows": 96
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 48,
+            "TP": 48,
+            "abstained_or_ambiguous": 0
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 94,
+        "raw_abstentions": 0,
+        "raw_complete_IR": 94,
+        "rows": 96
+      }
+    },
+    "training168": {
+      "parent": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 1,
+            "TN": 95,
+            "TP": 72,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 95,
+            "TP": 72,
+            "abstained_or_ambiguous": 1
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 94,
+            "TP": 72,
+            "abstained_or_ambiguous": 2
+          }
+        },
+        "joint_abstentions": 1,
+        "joint_complete_IR": 153,
+        "raw_abstentions": 2,
+        "raw_complete_IR": 153,
+        "rows": 168
+      },
+      "trained": {
+        "conditions_presence_by_view": {
+          "head": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 96,
+            "TP": 72,
+            "abstained_or_ambiguous": 0
+          },
+          "joint": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 96,
+            "TP": 72,
+            "abstained_or_ambiguous": 0
+          },
+          "raw": {
+            "FN": 0,
+            "FP": 0,
+            "TN": 95,
+            "TP": 72,
+            "abstained_or_ambiguous": 1
+          }
+        },
+        "joint_abstentions": 0,
+        "joint_complete_IR": 154,
+        "raw_abstentions": 1,
+        "raw_complete_IR": 154,
+        "rows": 168
+      }
+    }
+  },
+  "passed": true,
+  "primary_metrics_independently_recounted": true,
+  "result_review": {
+    "bytes": 112211,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+    "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+  },
+  "schema": "conditions-presence-public-result-summary/v1",
+  "semantic_accuracy": null,
+  "statutory8_unscored": true,
+  "total_new_source_occurrences": 1664,
+  "training_occurrences": 384
+}
