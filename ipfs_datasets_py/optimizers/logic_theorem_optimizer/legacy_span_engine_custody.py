@@ -144,7 +144,7 @@ def prepare_engine_bytecode(reservation, runtime_directory):
     runtime = host._safe_path(runtime_directory, directory=True)
     _need(reservation._record.get("attempt_directory") == host._root_identity(runtime),
           "bytecode startup requires attached native runtime")
-    parent = host._safe_path(runtime / ".engine-bytecode", missing=True)
+    parent = host._safe_path(runtime / ".engine-bytecode", directory=True, missing=True)
     parent.mkdir(mode=0o700, exist_ok=True)
     host._safe_path(parent, directory=True)
     directory = parent / uuid.uuid4().hex
