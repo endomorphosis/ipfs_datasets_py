@@ -58,6 +58,9 @@ conservatively sum resident pages and can count shared pages more than once.
 Four available process slots cannot fit even one spawned worker on this path.
 Zero capacity must defer before opening the cache or pool. Requesting more
 workers does not raise the scheduler policy or suppress proof-pressure checks.
+An explicit administrative expansion is described in
+[idle_process_capacity.md](idle_process_capacity.md); it requires idle native
+state and deliberate policy rebinding while preserving control history.
 
 The parent monitors while pool work blocks, including during launch delivery,
 and stops the recorded process group on cancellation, timeout or refusal.

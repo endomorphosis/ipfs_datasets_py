@@ -15,6 +15,8 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
+import time
 import uuid
 
 from . import resource_scheduler as native
@@ -142,7 +144,6 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
             # directory or lock. Read again while holding the native lock.
             _read(self.state_path, require_current=False)
             descriptor = os.open(self.lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
-            temporary = None
             try:
                 info = os.fstat(descriptor)
                 _need(stat.S_ISREG(info.st_mode) and info.st_nlink == 1, "unaliased native scheduler lock required")
@@ -156,32 +157,38 @@ class _PinnedGlobalResourceScheduler(native.GlobalResourceScheduler):
                 yield state
                 if not persist:
                     return
-                current_raw, _ = _read(self.state_path)
-                _need(current_raw == raw, "native state changed outside its sibling lock")
                 self._validate_state_configuration(state, allow_reconfigure=False)
-                _need(_parents(self.state_path) == self._parents, "native scheduler directory identity changed")
-                _need(all(hashlib.sha256(path.read_bytes()).hexdigest() == digest
-                          for path, digest in self._sources.items()), "native scheduler producer source changed")
-                encoded = json.dumps(state, sort_keys=True, separators=(",", ":"), allow_nan=False)
-                _need(len(encoded.encode("utf-8")) <= MAX_STATE_BYTES, "native scheduler state exceeds bound")
-                if encoded == raw:
-                    return
-                temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
-                with temporary.open("x", encoding="utf-8") as stream:
-                    stream.write(encoded)
-                    stream.flush()
-                    os.fsync(stream.fileno())
-                os.replace(temporary, self.state_path)
-                temporary = None
-                directory = os.open(self.state_path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-                try:
-                    os.fsync(directory)
-                finally:
-                    os.close(directory)
+                self._persist_locked_state(raw, state)
             finally:
-                if temporary is not None:
-                    temporary.unlink(missing_ok=True)
                 os.close(descriptor)
+
+    def _persist_locked_state(self, raw, state):
+        """Persist under the caller-held native lock after policy validation."""
+        current_raw, _ = _read(self.state_path)
+        _need(current_raw == raw, "native state changed outside its sibling lock")
+        _need(_parents(self.state_path) == self._parents, "native scheduler directory identity changed")
+        _need(all(hashlib.sha256(path.read_bytes()).hexdigest() == digest
+                  for path, digest in self._sources.items()), "native scheduler producer source changed")
+        encoded = json.dumps(state, sort_keys=True, separators=(",", ":"), allow_nan=False)
+        _need(len(encoded.encode("utf-8")) <= MAX_STATE_BYTES, "native scheduler state exceeds bound")
+        if encoded == raw:
+            return
+        temporary = self.state_path.with_name(f".{self.state_path.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+        try:
+            with temporary.open("x", encoding="utf-8") as stream:
+                stream.write(encoded)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, self.state_path)
+            temporary = None
+            directory = os.open(self.state_path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
 
 def open_existing_scheduler(state_path, expected_policy_sha256):
@@ -213,4 +220,98 @@ def open_existing_scheduler(state_path, expected_policy_sha256):
     return _PinnedGlobalResourceScheduler(config, policy, expected_policy_sha256, parents)
 
 
-__all__ = ["open_existing_scheduler", "policy_sha256", "ExistingResourceSchedulerError"]
+def _native_capacity_host(config):
+    """Observe only the selected native default producer, with scoped pins."""
+    proof_source = Path(native.__file__).with_name("proof_resource_safety.py")
+    sampler = config.proof_resource_sampler
+    producer = sys.modules.get(native.ProofHostResources.__module__)
+    _need(sampler is native.collect_proof_host_resources
+          and Path(sampler.__code__.co_filename).resolve() == proof_source.resolve()
+          and producer is not None and Path(producer.__file__).resolve() == proof_source.resolve(),
+          "native capacity telemetry producer differs from selected source")
+    _need(not proof_source.is_symlink(), "native proof telemetry source is aliased")
+    digest = hashlib.sha256(proof_source.read_bytes()).hexdigest()
+    try:
+        host = sampler()
+    except Exception as error:
+        raise ExistingResourceSchedulerError("native capacity telemetry unknown") from error
+    _need(hashlib.sha256(proof_source.read_bytes()).hexdigest() == digest,
+          "native proof telemetry source changed")
+    return host, digest
+
+
+def expand_idle_process_capacity(state_path, expected_policy_sha256, total_child_process_slots, *, apply=False):
+    """Explicit administrative expansion; never used by worker admission.
+
+    The default is a read-only plan. Applying requires an entirely idle existing
+    scheduler, known native PID headroom and healthy native proof telemetry.
+    Only the child-process capacity changes. History, reservations, pressure
+    thresholds and every other policy field are preserved. Old policy bindings
+    subsequently refuse; callers must deliberately bind a new facade/spec.
+    """
+    _need(type(apply) is bool, "apply must be an explicit bool")
+    _need(type(total_child_process_slots) is int and total_child_process_slots > 0,
+          "positive integer process capacity required")
+    facade = open_existing_scheduler(state_path, expected_policy_sha256)
+    with facade._locked_state(persist=False) as state:
+        previous = deepcopy(state)
+        raw, observed = _read(facade.state_path)
+        _need(observed == state, "native capacity snapshot changed")
+        policy = deepcopy(state["config"])
+        _need(total_child_process_slots > policy["total_child_process_slots"], "capacity must strictly increase")
+        policy["total_child_process_slots"] = total_child_process_slots
+        try:
+            config = native.ResourceSchedulerConfig(state_path=facade.state_path, **deepcopy(policy))
+            config.validate()
+        except (TypeError, ValueError) as error:
+            raise ExistingResourceSchedulerError("expanded native typed configuration is invalid") from error
+        _need(config.persisted_dict() == policy, "expanded policy cannot be normalized")
+        preserved = {key: value for key, value in state.items() if key != "config"}
+        report = dict(schema="native-idle-process-capacity-plan/v1", applied=False,
+            previous_policy_sha256=expected_policy_sha256, next_policy_sha256=policy_sha256(policy),
+            previous_process_slots=state["config"]["total_child_process_slots"],
+            requested_process_slots=total_child_process_slots, next_policy=policy,
+            preserved_control_sha256=policy_sha256(preserved),
+            lease_count=len(state["leases"]), waiter_count=len(state["waiters"]),
+            status="held_native_activity", admitted=False, qualified=False)
+        backoff = state.get("proof_backoff", {})
+        _need(type(backoff) is dict, "native proof backoff shape invalid")
+        if backoff:
+            until = backoff.get("until")
+            _need(type(until) in (int, float) and math.isfinite(until) and until >= 0,
+                  "native proof backoff deadline invalid")
+        active_backoff = bool(backoff) and backoff["until"] > time.time()
+        if state["leases"] or state["waiters"] or state.get("proof_recovery") or active_backoff:
+            _need(not apply, "idle scheduler required; leases, waiters or pressure state remain")
+            return report
+        host, proof_digest = _native_capacity_host(facade.config)
+        proof_source = Path(native.__file__).with_name("proof_resource_safety.py")
+        facade._sources[proof_source] = proof_digest
+        _need(isinstance(host, native.ProofHostResources), "native proof host observation required")
+        _need(host.available_pid_tasks is not None, "known native PID headroom required")
+        demand = native.PROOF_PID_HEADROOM_TASKS + native.PROOF_PID_TASKS_PER_PROCESS*total_child_process_slots
+        _need(host.available_pid_tasks >= demand, "native PID headroom insufficient for expanded capacity")
+        _need(host.available_memory_mb >= facade.config.proof_memory_headroom_mb,
+              "native memory headroom insufficient")
+        for observed, threshold in (
+            (host.memory_stall_percent, facade.config.proof_memory_stall_percent),
+            (host.cpu_stall_percent, facade.config.proof_cpu_stall_percent),
+            (host.io_stall_percent, facade.config.proof_io_stall_percent),
+        ):
+            _need(observed < threshold, "native proof pressure holds capacity expansion")
+        _need(_read(facade.state_path)[0] == raw, "native capacity state changed outside lock")
+        report.update(status="ready_explicit_policy_rebind", pid_tasks_required=demand,
+            available_pid_tasks=host.available_pid_tasks, available_memory_mb=host.available_memory_mb,
+            pressure=dict(memory_full=host.memory_stall_percent, cpu_some=host.cpu_stall_percent,
+                          io_full=host.io_stall_percent), proof_source_sha256=proof_digest)
+        if apply:
+            successor = deepcopy(previous)
+            successor["config"] = policy
+            _need({key: value for key, value in successor.items() if key != "config"} == preserved,
+                  "native control history must remain unchanged")
+            facade._persist_locked_state(raw, successor)
+            report.update(applied=True, status="applied_requires_explicit_policy_rebind")
+        return report
+
+
+__all__ = ["open_existing_scheduler", "expand_idle_process_capacity", "policy_sha256", "ExistingResourceSchedulerError"]
