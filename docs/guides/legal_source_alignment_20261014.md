@@ -91,6 +91,25 @@ observation bytes. Limits may only be lowered. The native 16 MiB raw report,
 Over-bound complete reports are refused, with failed attempts preserved; no
 truncation, easy-source selection or larger native limit substitutes for custody.
 
+The complete actual alignment, context and handoff wrappers contain 7,934,246,
+16,530,094 and 7,456,689 canonical bytes. Their ordinary zlib payloads exceed the
+existing native compressed limit. The stage therefore permits a closed reference
+to an independently pinned FULL baseline artifact. Before issuing that reference,
+the child regenerates the complete report through the fixed owners and the driver
+compares its entire canonical payload with the independently pinned baseline.
+Validation binds the reference to the job's expected artifact, verifies its raw
+file and FULL canonical hashes, and recovers the complete report. Missing,
+changed, aliased or differently pinned artifacts are refused. The full reports
+remain retained in the campaign artifacts; the native Git results store their
+verified references. This changes storage, without granting source or legal
+authority or replacing complete reports with summaries.
+
+Context selectors use a deterministic shared projection table with 1,202 unique
+entries and 6,646 reference occurrences. All 1,186 exact intersections and 4,274
+uncovered ranges remain represented. Original piece, reference and boundary
+envelopes retain their complete fields; repeated status metadata in the new
+context observations references the report's all-false authority table.
+
 `parent_source_alignment_report_sha256` hashes the FULL report, including its
 internal seal. `validate_parent_source_alignment` requires an independent FULL
 pin and repeats complete source regeneration. The 54 focused owner cases cover
