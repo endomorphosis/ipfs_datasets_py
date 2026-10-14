@@ -1,0 +1,19 @@
+{
+  "controls_source": {
+    "bytes": 7465,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v01.py",
+    "sha256": "9faf5d7c5265e7bd304ab5c6b72f429afa8bec43e8b4de80705c4e11c26eb2bc"
+  },
+  "errors": 0,
+  "failures": 1,
+  "findings": [
+    "Control assertion incorrectly included the later helper.NoEncoder meta-path insert instead of only the initial NoNumerical/audit installation. No production-source finding."
+  ],
+  "model_calls": 0,
+  "passed": false,
+  "private_body_reads": 0,
+  "production_main_calls": 0,
+  "production_module_imports": 0,
+  "schema": "actor-context-ranking-current-recipe-independent-controls/v1",
+  "tests_run": 8
+}

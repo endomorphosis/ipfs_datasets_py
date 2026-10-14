@@ -1,0 +1,16 @@
+{
+  "all31843_parent_entries_exact": true,
+  "canonical_raw4_unchanged": true,
+  "checkpoint_JSON_parses": 0,
+  "commit": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+  "draft_only": true,
+  "exact25_ADDs": true,
+  "findings": [],
+  "independent_qualification": false,
+  "model_calls": 0,
+  "new_training_updates": 0,
+  "parent": "b1fd77597867ad31f1687edc8bff090caf3d3b7d",
+  "passed": true,
+  "schema": "actor-context-ranking-draft-commit/v1",
+  "tree": "3f7f8def30cab72b1699fcc82969d00cb65f1ca4"
+}

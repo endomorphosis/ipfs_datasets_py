@@ -1,0 +1,60 @@
+{
+  "evidence": {
+    "analysis": {
+      "bytes": 3470679,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json",
+      "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+    },
+    "freeze": {
+      "bytes": 22324,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json",
+      "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+    },
+    "plan": {
+      "bytes": 71091,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+      "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+    },
+    "public_summary": {
+      "bytes": 9283,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json",
+      "sha256": "6ebcace6fd13bc112eff52e9d2cce04dfcf4db5a461153df6cefda7ecc23c9e2"
+    },
+    "recount": {
+      "bytes": 3168876,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json",
+      "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+    },
+    "result_review": {
+      "bytes": 14788,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json",
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "runtime": {
+      "bytes": 87180,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+      "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+    },
+    "terminal_resource": {
+      "bytes": 43725,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json",
+      "sha256": "4066de94530f90d41222334050924f27ed4ce7e0f3e8e00dd97c24a41b598c68"
+    },
+    "training_review": {
+      "bytes": 37235,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-training-review-v01.json",
+      "sha256": "f3b08b61d8c5c66e8258ffbb07c77e9e41ffc51aa71bf5fad58fd2756ab844fa"
+    }
+  },
+  "report": {
+    "bytes": 9905,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md",
+    "sha256": "109f6a0d8dd66b61a783cb0437f21ddd5a82728353022e95360f6724a9782141"
+  },
+  "schema": "actor-context-ranking-public-source-capsule-inputs/v4",
+  "source_review": {
+    "bytes": 36161,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-capsule-builder-source-independent-review-v04.json",
+    "sha256": "8c59c13ad020ec05bfff4add1963551856ea25f6c3dc9cb2d524128e938e8864"
+  }
+}

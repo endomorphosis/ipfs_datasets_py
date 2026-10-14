@@ -1,0 +1,149 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json": {
+      "bytes": 98977,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+      "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py": {
+      "bytes": 28064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+      "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json": {
+      "bytes": 2337,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+      "sha256": "061df2c38c9d18889556ca7388a9b1b4b23fea47bfef358574945698e2705515"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json": {
+      "bytes": 9624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json",
+      "sha256": "f1984b7d2b641f727d6e079872e888f081c8f14e51ff287e4cc5348fa15441ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py": {
+      "bytes": 41111,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+      "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py": {
+      "bytes": 9501,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_analyzer_detached_v01.py",
+      "sha256": "cc6e77eb10602a1116d4c6f0f5c09e7c4629d2ab5dd5769dc0a806ecbfcf6aa8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py": {
+      "bytes": 27631,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py",
+      "sha256": "6eaac15eb42429532ad488e7ccdafd9e6867f78e90271817e74de0c155269dfd"
+    }
+  },
+  "evidence_limits": [
+    "Current traces do not record full pre-update token logits: do not claim an independent complete training-time argmax replay from selected wrong/gold scalars alone.",
+    "Protected score vectors do not guarantee selected-role IR invariance; compare exact loss IDs versus both frozen comparators.",
+    "No new comparator forwards/updates, no equal-compute ablation claim.",
+    "All authored panels are exposed engineering diagnostics; law8 remains unscored; no new semantic/generalization/latent/Lean or numerical-reload claim."
+  ],
+  "expected_authored_score_sets": 36,
+  "expected_external_paired_scope_maps": 18,
+  "expected_panels": 40,
+  "fixed_candidate": {
+    "active_trainable_scalars": 258,
+    "attempt_name": "actor-context-ranking-20261014-actor-context-ranking-hinge-01",
+    "batch_size": 12,
+    "cell": "actor-context-ranking-hinge",
+    "donor_checkpoint_bytes": 12230969,
+    "donor_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+    "donor_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+    "frozen_tensors": 36,
+    "inactive_actor_scalars": 650,
+    "learning_rate": 0.001,
+    "model_tensors": 42,
+    "new_updates": 32,
+    "optimizer": "fresh Adam",
+    "seed_and_order": 1729,
+    "stored_trainable_scalars": 908,
+    "trainable_actor_tensors": 6,
+    "training_occurrences": 384,
+    "training_rows": 168
+  },
+  "objective": {
+    "actor_hinge_coefficient": 0.25,
+    "actor_hinge_margin": 1.0,
+    "empty_tuning_required": true,
+    "hinge_mean": "all batch rows including empty-domain zero",
+    "inference_target_free": true,
+    "main": "Retain exact targeted legacy modality2/six-facet normalization and expression association; only actor outputs differentiable.",
+    "negative_domain": "All valid forward source-token spans, excluding exact gold actor and overlap with every present gold nonactor span.",
+    "ranking_enabled": true,
+    "selection": "Detached float32 complete-domain argmax with row-major ties; selected wrong and gold scores recomputed on the original graph.",
+    "training_only_teacher_forcing": true
+  },
+  "owned_future_sources": [
+    "analyze_actor_context_ranking_v01.py",
+    "review_actor_context_ranking_result_recount_v01.py",
+    "test_actor_context_ranking_analyzer_detached_v01.py",
+    "test_actor_context_ranking_recount_detached_v01.py"
+  ],
+  "parent_state": "exact frozen F15",
+  "phase": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01",
+  "proposed_state_labels": [
+    "frozen_N11",
+    "parent",
+    "initial",
+    "trained"
+  ],
+  "safety": {
+    "SDK_calls": 0,
+    "actual_model_calls": 0,
+    "checkpoint_JSON_parses": 0,
+    "claims": 0,
+    "numerical_imports": 0,
+    "private_resource_body_reads": 0,
+    "reference_packet_body_reads": 0,
+    "saved_head_body_reads": 0,
+    "scoring_calls": 0
+  },
+  "schema": "actor-context-ranking-evaluation-port-plan/v1",
+  "scored_scopes": [
+    "old_tune",
+    "fresh_tune",
+    "fresh_challenge",
+    "old_authored_eval",
+    "authored_dev",
+    "authored_eval",
+    "fresh_dev",
+    "fresh_test",
+    "training168"
+  ],
+  "state_labels_require_actual_root_contract": true,
+  "status": "source_only_port_plan_actual_contract_pending",
+  "strict_acceptance": {
+    "all32_permission_cases_retained_without_abstention": true,
+    "conjunctive": true,
+    "default_promotion": false,
+    "each_comparator_nine_scopes_and_both_routes": true,
+    "final632_modality_all4presence_nonactor_pointer_bits_equal": true,
+    "initial_all632_heads_and_greedy_joint_equal_F15": true,
+    "no_full7field_IR_loss_IDs_vs_both_N11_and_F15": true,
+    "scientific_failure_archived_without_retry": true,
+    "technical_pass_required": true,
+    "training_joint_IR_minimum": 155,
+    "training_raw_IR_minimum": 155
+  },
+  "trace_checks": [
+    "Join all32 objective/freeze/feature entries to exact batch source IDs/index order and complete authenticated168 labels.",
+    "Reconstruct full filtered negative domains from training-only tokenization and present gold nonactor coordinates; compare count/domain SHA/gold/selected coordinate membership and declared teacher scope.",
+    "Recompute existing float32 hinge association from recorded selected-wrong/gold scalars, complete mean reduction bound and main+.25*hinge scalar.",
+    "Check all6 finite/nonNone actor gradients, connected query/gate/context/residual, first trained query gradient permitted; record zero/nonzero counts without fresh-zero assumptions.",
+    "Check frozen36 gradientsNone/no optimizer membership, inactive650 gradients/momentszero and all42 tensor partition/checkpoint lineage."
+  ]
+}

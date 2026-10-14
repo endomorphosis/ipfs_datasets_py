@@ -1,0 +1,76 @@
+{
+  "actual_resource_censuses": 0,
+  "actual_training_updates": 0,
+  "all31843_source_parent_entries_preserved": true,
+  "artifacts": {
+    "actor-context-ranking-model-contract-controls-v01.json": {
+      "bytes": 3314,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-model-contract-controls-v01.json",
+      "sha256": "90b2203339a0b6de67843f4018aaa1af2890cfd921621be2aba3d3284ca1705e"
+    },
+    "actor-context-ranking-resource-author-controls-v01.json": {
+      "bytes": 4685,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-resource-author-controls-v01.json",
+      "sha256": "96d89e893753290c391d4f8dd4c7272d1144df756e010759f926f3a7d5599d78"
+    },
+    "draft-pr-created-v01.json": {
+      "bytes": 217,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-pr-created-v01.json",
+      "sha256": "338b96b8872073bd2deae5bc13fd94c65c25e2f55744572b5444bb10efa35e5c"
+    },
+    "draft-source-commit-v01.json": {
+      "bytes": 499,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-commit-v01.json",
+      "sha256": "35f9061a4cdaab6fc85176bba69a44d7dfa480d516badcd36cfc752a67e3fea3"
+    },
+    "draft-source-stage-v01.json": {
+      "bytes": 9703,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-stage-v01.json",
+      "sha256": "48e9a40fa008af8e60b016e6f5b793cc7d323a26691aa13b47667a0ec979e1c8"
+    },
+    "evaluation-contract-v01.json": {
+      "bytes": 18389,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/evaluation-contract-v01.json",
+      "sha256": "26284be9473a9265659982067bf80a3d60ade49dd504b627d7866f7f09bb418d"
+    },
+    "pretraining-handoff-v01.json": {
+      "bytes": 12172,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pretraining-handoff-v01.json",
+      "sha256": "9f347e95aa84b5a231bc0a0cd839c821da5f2d0a940767c1d4f160d2eb7ce245"
+    },
+    "training-design-v01.json": {
+      "bytes": 5655,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/training-design-v01.json",
+      "sha256": "ab412ceace1375819323afc9cc08f43720db28f007a04a7f4b7be8cdafd93ca1"
+    }
+  },
+  "blocking_condition": "Collaborating agents reached account usage limit; independent review and remaining guarded recipe/evaluation ports are pending.",
+  "canonical_four_raw_anchors_unchanged": true,
+  "checkpoint_JSON_parses": 0,
+  "claims_acquired": 0,
+  "decoder_contract_tests_passed": 11,
+  "default_promotion": false,
+  "experiment_complete": false,
+  "independent_source_qualification": false,
+  "main_merge_performed": false,
+  "model_calls": 0,
+  "new_checkpoint_created": false,
+  "new_weights_published": false,
+  "regular_ADD_count": 25,
+  "retained40_algorithm_sources_preserved": true,
+  "schema": "actor-context-ranking-draft-publication-handoff/v1",
+  "source_PR": {
+    "base": "b1fd77597867ad31f1687edc8bff090caf3d3b7d",
+    "draft": true,
+    "head": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+    "html_url": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1304",
+    "number": 1304,
+    "state": "open"
+  },
+  "source_and_root_owned_tracked_trees_clean": true,
+  "source_commit": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+  "source_tree": "3f7f8def30cab72b1699fcc82969d00cb65f1ca4",
+  "status": "draft_published_training_pending",
+  "synthetic_resource_controls_passed": 25,
+  "training_started": false
+}

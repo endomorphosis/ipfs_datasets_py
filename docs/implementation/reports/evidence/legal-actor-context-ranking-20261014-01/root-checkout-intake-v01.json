@@ -1,0 +1,22 @@
+{
+  "alternates": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/root/.git/objects",
+  "branch": "codex/legal-actor-context-ranking-20261014-01",
+  "canonical_Git_commands": 0,
+  "checkpoint_JSON_parses": 0,
+  "git_directory": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/root/.git",
+  "head": "729d97881136681e90c05e9d2e0707f57708755d",
+  "initialization_observation": "Initial empty-template setup lacked .git/info and stopped before fetch/index/checkout. Exact unborn and empty-ref state verified, then created the missing owned directory.",
+  "intake_ref": "refs/codex/legal-actor-context-ranking-20261014-01/intake-main-v01",
+  "model_calls": 0,
+  "origin": "https://github.com/endomorphosis/lift_coding.git",
+  "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/root",
+  "prior_is_ancestor": true,
+  "prior_merged_commit": "c5ab7034b6e923f66cd7661a3f1ae322856d6fb3",
+  "private_body_reads": 0,
+  "raw_tree_bytes": 6121055,
+  "raw_tree_entries": 37614,
+  "raw_tree_sha256": "6460cf0df15f94a45671d2c2206d013e555406d009c4e9748485d1690c28dd5a",
+  "schema": "actor-context-ranking-owned-checkout/v1",
+  "self_contained_object_custody": false,
+  "sparse_configuration_sha256": "5918e78ad724c581f46900ed1839af4075d789f98369f14e8db455861e1e884e"
+}

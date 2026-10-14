@@ -1,0 +1,1731 @@
+{
+  "default_promotion": false,
+  "incoming_main": "904f885c180eb9dfcdef80199f708125428d3859",
+  "original_training_checkout_modified": false,
+  "owned_clone": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets-integration",
+  "private_payload_copies": false,
+  "raw_checkpoint_or_capture_copies": false,
+  "retained_published_draft": "54aae1d13faea237eddde301754db85afd1e127a",
+  "schema": "actor-context-ranking-source-publication-selection/v1",
+  "scientific_success": false,
+  "selected_bytes": 22619730,
+  "selected_file_count": 183,
+  "selected_files": {
+    "docs/autoencoders/actor_context_ranking_20261014.md": {
+      "role": "completed_phase_guide",
+      "source": {
+        "bytes": 9905,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md",
+        "sha256": "109f6a0d8dd66b61a783cb0437f21ddd5a82728353022e95360f6724a9782141"
+      },
+      "status": "Prose still requires concrete packet review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md": {
+      "role": "completed_phase_report_copy",
+      "source": {
+        "bytes": 9905,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md",
+        "sha256": "109f6a0d8dd66b61a783cb0437f21ddd5a82728353022e95360f6724a9782141"
+      },
+      "status": "Same report bytes; prose still requires concrete packet review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/MODEL_CARD_v01.md": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 3506,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/MODEL_CARD_v01.md",
+        "sha256": "ea363fb5d0fb3129e67c44ec44393ea8fe3111155984ee350c17dac265ac3591"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-bootstrap-smoke-controls-v04.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 9417,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-bootstrap-smoke-controls-v04.json",
+        "sha256": "a6b8f27ee56a21568095af3529e96b42e369d949a11532673613d9e1762b076e"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-recipe-independent-controls-v01.json": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 738,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-recipe-independent-controls-v01.json",
+        "sha256": "e0aa31e11f16fe1278534e0a8b416bb0b7e82a6a49b5c36b60aa4ed9ed027acf"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-recipe-independent-controls-v02.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 1974,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-recipe-independent-controls-v02.json",
+        "sha256": "a4f550a6540a8c2dead6bd05c94478011895d83133fbefc4cc25f3d9ca0a3052"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-resource-core-author-controls-v01.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 2323,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-current-resource-core-author-controls-v01.json",
+        "sha256": "8ed40949fb465221646bf7509ef5395b9096d7d7667b94785c2cd75f87829941"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-harness-author-controls-v02.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 1022,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-harness-author-controls-v02.json",
+        "sha256": "0b1bbcb2c458dac08668c093f8a50398244ae74ec7397b850d91085a7afe1961"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-partial-observer-author-controls-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 5488,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-partial-observer-author-controls-v01.json",
+        "sha256": "2495955c499b98cb8fada11aa7d40d74d6c76536dfb2ac0e4ab7686c161c36a4"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-port-detached-controls-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 2075,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-port-detached-controls-v01.json",
+        "sha256": "27cfd9a4309e497349b544a08ab53da7dca5eb61516f37b3c0208cd9acf761e7"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-resume-author-controls-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 5367,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hf-resume-author-controls-v01.json",
+        "sha256": "baaf732715599a8612b478f83b5c5d387053c1d893355467fdbc3d2fcd07da08"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json": {
+      "role": "plan",
+      "source": {
+        "bytes": 71091,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-plan-v01.json",
+        "sha256": "71b65a145c0f666e0b58b26a5510e205d351a80ef149bcb0d3c26dd55b1317ee"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json": {
+      "role": "runtime",
+      "source": {
+        "bytes": 87180,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json",
+        "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json": {
+      "role": "terminal_resource",
+      "source": {
+        "bytes": 43725,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json",
+        "sha256": "4066de94530f90d41222334050924f27ed4ce7e0f3e8e00dd97c24a41b598c68"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-training-review-v01.json": {
+      "role": "training_review",
+      "source": {
+        "bytes": 37235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-training-review-v01.json",
+        "sha256": "f3b08b61d8c5c66e8258ffbb07c77e9e41ffc51aa71bf5fad58fd2756ab844fa"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json": {
+      "role": "recount",
+      "source": {
+        "bytes": 3168876,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-independent-recount-v01.json",
+        "sha256": "0db57059f3fca19b69e6fc3554a4a3ee64274fc58ed12ed36bcedb5f065a3f6d"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json": {
+      "role": "freeze",
+      "source": {
+        "bytes": 22324,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json",
+        "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-release-builder-detached-controls-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 2058,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-release-builder-detached-controls-v01.json",
+        "sha256": "bbb0556a88060206ab11cb49a16b699cb8be9a7e354add35595f3e0dc648dde1"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json": {
+      "role": "analysis",
+      "source": {
+        "bytes": 3470679,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-analysis-v01.json",
+        "sha256": "cdb1b30f035dc9710eb12624659dbe31a4eaa78337ca1e8b8d7ffbfe8dbf4722"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json": {
+      "role": "result_review",
+      "source": {
+        "bytes": 14788,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json",
+        "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor-context-ranking-terminal-resource-source-independent-review-v02.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 12589,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-terminal-resource-source-independent-review-v02.json",
+        "sha256": "3fda3a82554559ba318268da997e7d95c110a1872813e88fb08f8a317db29a4e"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v04.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 7499,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v04.py",
+        "sha256": "f028c1aaee1911842461d193fcc4a5fb0a19f4a5786491a65d71fec75f406758"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_current_resource_core_author_controls_v01.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 14091,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_current_resource_core_author_controls_v01.py",
+        "sha256": "0f71556a2355d5df4ac1da11aad99551a37288e7d6572a4f9e430a7a3f4baff2"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v02.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 21063,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v02.py",
+        "sha256": "8838ec6f4d2f8a91da1fbba3b56b2b50de955e1eea88ee72b6b2a0e202f3390f"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v03.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 21090,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v03.py",
+        "sha256": "5df6178fc35cf2a521501af6ff87b0f629bda92c37226f4534e4946759073c68"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v03.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 18825,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v03.py",
+        "sha256": "573941d4c9dc69445a74b973e2b7966c66a1aa0b220fc31fc4c6335adc86b93b"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/adoption-watchdog-current-source-independent-review-v01.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 11466,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adoption-watchdog-current-source-independent-review-v01.json",
+        "sha256": "622ba6bf7cbdd3b6028cce70670487077a718c01fbbe4db3155a6daa5e752042"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 30925,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/archive_actor_context_ranking_hf_v01.py",
+        "sha256": "e6c383eed91d6cee2405ce401fb0ab6692b714e0a2d3e99c09dbf4abe9f6a1ee"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v04.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 18940,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/audit_actor_context_ranking_terminal_resources_v04.py",
+        "sha256": "c29556a0bdd304933b8de5ba26d7162fdcae750e8e30009df5b6a134bf892aca"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/baseline-attributes-v01.txt": {
+      "role": "raw_attributes_data",
+      "source": {
+        "bytes": 2230,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-attrs-readback-v01/baseline/.gitattributes",
+        "sha256": "88ff4d857c849ce3e11fea7c2f70d648550968cf546ab9cbc4d690e1b6543036"
+      },
+      "status": "Data only; no Git attributes installation."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/bootstrap-source-independent-review-v02.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 33808,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap-source-independent-review-v02.json",
+        "sha256": "29ae5c435b863990e5a36b87bb2fdfba75853142731ace532fa968dcb967ec99"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v01.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 5328,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v01.py",
+        "sha256": "fadd04b0ebe0201a5e58cc267fa8de28f4a52a06f0850b61c5f5d835f5d5579d"
+      },
+      "status": "Preserved/unqualified bytecode-loader source candidate or negative source gate, superseded by exact-byte loader."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 6599,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/bootstrap_actor_context_ranking_resources_v02.py",
+        "sha256": "e1847c2723216b4f2a06ee9da80adfeb8121e94e0b2442da0d2f95e2288d7be1"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_public_capsule_v04.py": {
+      "role": "capsule_source_and_concrete_inputs",
+      "source": {
+        "bytes": 14028,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_public_capsule_v04.py",
+        "sha256": "2925f6fd8594bb067531c57ae23ecc785f039fcf020b42e71c1d436aadf56ea4"
+      },
+      "status": "Manifest-only; no copying or publication."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_release_spec_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 18426,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/build_actor_context_ranking_release_spec_v01.py",
+        "sha256": "e4a7e845f2cd9a962a08c6bd1022e386511dad3b9d4a8e509c4edfe11c49fa9b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 24004,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v01.py",
+        "sha256": "6b2da968b047405a4821b0fc59a87738f36db67f73e174977a90a0c9249b71a6"
+      },
+      "status": "V01 preserved. Its source gate was passed, but actual guarded smoke FAILED. Never relabel as actual success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v02.py": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 35640,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/capture_actor_context_ranking_resource_import_smoke_v02.py",
+        "sha256": "cd5f7e479c6bff9e00089c98503cbd0a79d18c566e4e8d64269767a54eafc4b7"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v02.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 9690,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v02.py",
+        "sha256": "afc7afe0dbba1e82e9f4c72f9dd3a1343d3776f6f3b40c951635f09c0c555b47"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v03.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 9710,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v03.py",
+        "sha256": "dcd2ad3af6227acc7fa2a88fcc086d0367a6cf36e270e60d6bc82e9a99259e66"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/completed-report-independent-review-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 8382,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/completed-report-independent-review-v01.json",
+        "sha256": "d3c83727199f7df1f05908796060d667513e4d87e4cdf6c70486497a6978119b"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/concrete-training-reviewer-source-independent-review-v02.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 12593,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/concrete-training-reviewer-source-independent-review-v02.json",
+        "sha256": "d2b91b0724e40df5e9d9115f108ba5158f464b013d075fc95359aaa0266ea564"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current-bridge-independent-detached-controls-v01.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 939,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current-bridge-independent-detached-controls-v01.json",
+        "sha256": "84343846be4adaa0d07ef3708ad19a872d8300b5300bf91fa67d08beb4d714c2"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current-resource-ports-independent-controls-v02.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 8290,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current-resource-ports-independent-controls-v02.json",
+        "sha256": "b15ffcd3a54b7a43ea7f304d0fc9546400aa0272d352b0ce3a17ff5a2b0ee669"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current-runtime-consumers-independent-controls-v01.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 4789,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current-runtime-consumers-independent-controls-v01.json",
+        "sha256": "fe2a470400ea4e60b5d604e7c94b6b82e286ef1772f2604b6aae9e2c8c77b79a"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current-scheduler-independent-detached-controls-v01.json": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 768,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current-scheduler-independent-detached-controls-v01.json",
+        "sha256": "1a0c5362bd4441539a198cf96c29a397bcc99aee14a5adadaec0e8c0bab05365"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current-scheduler-independent-detached-controls-v02.json": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 772,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current-scheduler-independent-detached-controls-v02.json",
+        "sha256": "f2c745e86f46a0b7fdcb19c6b402d5c9d19be714f67fded723d72b7513b4b5a6"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_bridge_independent_detached_controls_v01.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 13671,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_bridge_independent_detached_controls_v01.py",
+        "sha256": "4368610408fb89e10513bd29bad38c7804e7ddf9508d93554f0d2a9674c17d78"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_resource_ports_independent_controls_v01.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 9427,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_resource_ports_independent_controls_v01.py",
+        "sha256": "e5dbdca5c26aed99620b2367bce4a23b452e105336d7464062225a47d43e21f8"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_resource_ports_independent_controls_v02.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 12769,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_resource_ports_independent_controls_v02.py",
+        "sha256": "bca97f1a3b2bd23869cd13a99e48442743df66b4a7ba3396d7acae698693f6f0"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_runtime_consumers_independent_controls_v01.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 8018,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_runtime_consumers_independent_controls_v01.py",
+        "sha256": "a5f92afd02ac8e7a88c8fdc9cfbed8875830388f9ac16a3f626559fa0865cd66"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_scheduler_independent_detached_controls_v01.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 14170,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_scheduler_independent_detached_controls_v01.py",
+        "sha256": "52605dc7a80a2a7ca9c1e4fe1c5d758236c742e71d68a95024239bf6daec095c"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/current_scheduler_independent_detached_controls_v02.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 14242,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/current_scheduler_independent_detached_controls_v02.py",
+        "sha256": "1be34dc0298b65c8bd7d90b5d7d574494201b03d684eb18d2d53e5bb957e2120"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_recipe_v01.py": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 7890,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_recipe_v01.py",
+        "sha256": "10108107e255808055ed682e94ec22703d81db10e099042eeccd2d32d6cdbd56"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_resource_ports_v01.py": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 10803,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_resource_ports_v01.py",
+        "sha256": "5d55a1d845748354c7f1087705ad49d605e6250cca1f89efe240f3636fc6299c"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_resource_ports_v02.py": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 4343,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/derive_actor_context_ranking_current_resource_ports_v02.py",
+        "sha256": "da0ff145dbbe85b6cb8735997af987b835b2099e8d41c26c8e4383e42f6e6f4d"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-pr-update-v02.json": {
+      "role": "optional_publication_custody",
+      "source": {
+        "bytes": 2124,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-pr-update-v02.json",
+        "sha256": "61e9a047adb9e4266a17e0be591d281742190877bb2b64ece0563555bcec72d1"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-source-commit-v02.json": {
+      "role": "optional_publication_custody",
+      "source": {
+        "bytes": 665,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-commit-v02.json",
+        "sha256": "99025780a255be73a80210ddc59a3d9ba2c3faffc9a2c847e35332e136936ca8"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-source-stage-independent-review-v01.json": {
+      "role": "optional_publication_custody",
+      "source": {
+        "bytes": 206235,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-stage-independent-review-v01.json",
+        "sha256": "40626752d97ba82f0e051dd3abae748722d1384295d939d703eb5ed1cf856c84"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/draft-source-stage-v02.json": {
+      "role": "optional_publication_custody",
+      "source": {
+        "bytes": 29614,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-stage-v02.json",
+        "sha256": "723f477e29238ab68f14437f1921087e0624a3828c01945c8303b12ef668ca88"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/final-publication-inclusion-recommendation-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 55009,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/final-publication-inclusion-recommendation-v01.json",
+        "sha256": "2cd89a2bb13a944158bd8f972b495d7db0e0ef7913778a121bfd4ad2b69d4058"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v04.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 20862,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/freeze_actor_context_ranking_outputs_v04.py",
+        "sha256": "d44331aa0dc7377a0cddcdd4eabfb060c1594b2e3c84e93463fbdebd2732c927"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-baseline-immutable-observed-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1520684,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-baseline-immutable-observed-v01.json",
+        "sha256": "e225a602bef48e4079849019589868da0bcf4d43a21c72ef9086b1b4ec09b082"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-before-file-identities-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 3040998,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-before-file-identities-v01.json",
+        "sha256": "de488e30a48aaba63660ca87fd1ef26f90aadd9b3a7c7beba55908fc7c96e4d9"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-01-created-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 2294,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-created-v01.json",
+        "sha256": "c63eed3a0193e836c670eefca60bce6a5e4992c4e041f5bdbd558c8732892f03"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-01-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 2262,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-preupload-v01.json",
+        "sha256": "b866ed9feb8b0d34846d533eb5ad360bf8d15e1c2ce903d46089d4acbb1c7235"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-01-verified-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 214,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-verified-v01.json",
+        "sha256": "065790f6af876433e9c8e42a22ba45fc446063f8ff741d3a7a1d6984956d4f3d"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-02-created-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 262,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-created-v01.json",
+        "sha256": "0f5c8b9f2b54f7c53820e1f93d538f805bd8e007fb89512fbc86e670eecda4a9"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-02-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 230,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-preupload-v01.json",
+        "sha256": "dd41b8a2f7eaf62f5dccec35017a550998617a8cb892f38b5f83660c71aee108"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-02-verified-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 213,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-verified-v01.json",
+        "sha256": "fe7eea84dcf75197507d5b9c579d24e39467788c1ee530fd8015bb1711780678"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-03-created-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 256,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-created-v01.json",
+        "sha256": "ad0455cf4e66eff65e8b7c740ea4cd7377d5b5444550e07db28f1db913fc0a74"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk-03-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "original_partial_commit_chain",
+      "source": {
+        "bytes": 224,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-preupload-v01.json",
+        "sha256": "be03e616c333fbb2695233fe37ebe2699318f179d7d8da28bbd08a5f95dbe38c"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk01-immutable-observed-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1524820,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk01-immutable-observed-v01.json",
+        "sha256": "6d1d30390fc3cfa616f50477145da5418956589d3c7da17893877b123eefd6fb"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk02-immutable-observed-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1525050,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk02-immutable-observed-v01.json",
+        "sha256": "bf3cf365ea20e7849a1fc1c1fffe31f7d90b72d67f303e0cfd6febcef6ae8881"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-chunk03-immutable-observed-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1525420,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk03-immutable-observed-v01.json",
+        "sha256": "49bf68250f1aac8ea953303c43b2d78849f9e6ca18c31b6c7f1b59a598fa95ca"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-helper-port-derivation-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 4691,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-helper-port-derivation-v01.json",
+        "sha256": "6f9feb9edb30f43cc68364c2f10d84c6f0ebfdcba6c6b3ac934784ebed0912a2"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-helper-port-source-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 13022,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-helper-port-source-independent-review-v01.json",
+        "sha256": "c091c17dc00b8a7d7a25d1e6343de14ec9637abe5f29e1ea9c6fec6a9d0274d9"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-helper-source-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 126718,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-helper-source-independent-review-v01.json",
+        "sha256": "812c5c528d42c14430b308e52d5dff1c9f0ece3ac3f76038548050526bc9a9b2"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-live-immutable-observed-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1525384,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-live-immutable-observed-v01.json",
+        "sha256": "ca3098315f4d77470c8cf4905b7af08414551016ca4b3c198b298874b94a8aac"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-partial-observer-independent-control-replay-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 641,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-observer-independent-control-replay-v01.json",
+        "sha256": "7fc10a1dd205afe085bf95b7c958644e1ce1ba327e6e999126af196ba8a0d23e"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-partial-observer-source-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 19029,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-observer-source-independent-review-v01.json",
+        "sha256": "468425fa9bed4cdd0abe2db10d2b20272f1a0b8be9279141bd1cb2d75e01d214"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 109799,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json",
+        "sha256": "45cae121d94a6527940f7cebba88f278c573723c4de5a69d7c14d4c9fac24140"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-completion-independent-review-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 164985,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-completion-independent-review-v01.json",
+        "sha256": "2ed67d38bffe368581c86919c7c8de4fae42e6c1a373fb399afe0ee14e58d274"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 151803,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json",
+        "sha256": "2bcafc080c2e444e738a3488f8a403c70bd3046e8cddb77974b2855a7cb027e0"
+      },
+      "status": "Concrete prepublication payload review only; not proof of completed remote publication."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-interruption-v01.json": {
+      "minimum_core": true,
+      "role": "required_original_failure",
+      "source": {
+        "bytes": 4683,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-interruption-v01.json",
+        "sha256": "ee29856ded7d1b19fae1a4655263ee5696cbf6f9aed08c922a57ec55c86073c8"
+      },
+      "status": "Original publisher exited1 after chunk3 create. Retain interruption and sanitized classification; private combined log body remains excluded."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-partial-discrepancy-independent-v01.json": {
+      "minimum_core": true,
+      "role": "required_failed_independent_invariant",
+      "source": {
+        "bytes": 16981,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-partial-discrepancy-independent-v01.json",
+        "sha256": "e847a88b2371359634540e280c0fb42db1a2dd4073d4d6bf9e17d9d4cc61e9b3"
+      },
+      "status": "Preserve passedFalse and sole142-byte checkpoint-specific LFS rule drift; recovery must not relabel this failed receipt."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-partial-observation-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 18259,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-partial-observation-v01.json",
+        "sha256": "91973346270feadc1d3c6c1d9a9f2dbd9f82780a433a61d692b7fc3288b33b4b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-resume-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 152007,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-resume-independent-review-v01.json",
+        "sha256": "84954e510b5884a400c3cbb1cef8ca09e735f5219afbb5b7a947ef3ab8bc2158"
+      },
+      "status": "Concrete recovery pre-execution review only; not an actual completion receipt."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-reuse-inventory-v01.json": {
+      "minimum_core": false,
+      "role": "optional_historical_design_receipt",
+      "source": {
+        "bytes": 17062,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-reuse-inventory-v01.json",
+        "sha256": "b8e818c45d085381b2f6c204ed6b0d238911ce1ddbb2c2603483b3d8c7f858b1"
+      },
+      "status": "Optional provenance; superseded as an execution description."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-publication-verification-v02.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 100015,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-verification-v02.json",
+        "sha256": "d00ce44fc8eee0216861698f8021e549291015c76e206801d94f8c01eb1cd0fa"
+      },
+      "status": "Newly present completed publisher receipt; must still receive a separate actual independent immutable metadata/raw-readback review before final publication claims."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 94501,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json",
+        "sha256": "bc36cad30b42c66d87d2224aa681569dccd50eca2635c1ba137f504909d9717b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 1966,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-created-v01.json",
+        "sha256": "3e22a6c61968cf588b03e7894ca2f6a5abd1936161004be259d9cbb191ccc8c6"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 1934,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-preupload-v01.json",
+        "sha256": "cecdaeeee71f172ace85b2638c70e2694a15be3c72d413dd4117997efcbd6a44"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-04-verified-v01.json",
+        "sha256": "a1aa9576ef1bd66972faefc88f1dd97250bbcae2181f54bb584c025fdcb4b6db"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 2322,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-created-v01.json",
+        "sha256": "7ee714e8e1bb6113e870747718214fe36b20742d3de8daeb4dcdb43c2fdbac16"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 2290,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-preupload-v01.json",
+        "sha256": "b4c4a0d99f5080141da2b7efefdae5b515be0f87b9384d29da35f5a8c85e3e9b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-05-verified-v01.json",
+        "sha256": "b1603060456303ff0e4ed398ea37e57d1aaf2db99595a62f9a08199dbe474fe3"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 4454,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-created-v01.json",
+        "sha256": "675c5b0698f2883953c27fc570a561ee070c46892426bfa455aae04fe1813b61"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 4422,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-preupload-v01.json",
+        "sha256": "1cbb51f136efe8b8cd010d44f9c24471a1ac47b5f68648b941ef9cb7d8156a48"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-06-verified-v01.json",
+        "sha256": "2511e690d3534a402711f0c5798512146a8435fb18ab5c09a06a81b33480afca"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 5072,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-created-v01.json",
+        "sha256": "2538e98fd6e8c6b3ed65f04b4f63f8e065860e841eb56582004b255ae8f661c0"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 5040,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-preupload-v01.json",
+        "sha256": "14898ebc7b07b3e04509f92f6021809a42fa44c36d39a143628fb90fb366b176"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-07-verified-v01.json",
+        "sha256": "1a6ac7b2df7b0dfe62a0d6ab2b595eb02abee206f8531dc5c77102a28049eabb"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 6048,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-created-v01.json",
+        "sha256": "fbc258e0bd38ade0d45ee20fba6519b95a074ee02d880df37552444504ff2f31"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 6016,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-preupload-v01.json",
+        "sha256": "0a1f5e01beb199c023115d89e13424fb061d418d845ad7edf907ea918ba6278b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-08-verified-v01.json",
+        "sha256": "b7126478433920365b5808db406b8953ac865b52346cbcfc215033c773b7c210"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-created-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 2196,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-created-v01.json",
+        "sha256": "765c2fa45da3a4cd7d51511ec4a9932c4c6581fbce68d86c2e1414e10053f590"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 2164,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-preupload-v01.json",
+        "sha256": "609910372bb9d66d5945b0612cafad1068eb5c01c9fc216d0a674d752b7d0203"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-verified-v01.json": {
+      "minimum_core": true,
+      "role": "reviewed_resume_created_or_verified_chain",
+      "source": {
+        "bytes": 228,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-chunk-09-verified-v01.json",
+        "sha256": "0a9c9eb79585d0c55ce66677d15537e84e7cd166fe59f781e234752eae50551e"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-commit-created-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 2285,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-commit-created-v01.json",
+        "sha256": "6e44364eea1b6624929cd15a1b36b5f53bbab7ab56345804a39e21e344ead71f"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-correction-created-v01.json": {
+      "minimum_core": true,
+      "role": "explicit_attributes_only_correction_chain",
+      "source": {
+        "bytes": 165,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-correction-created-v01.json",
+        "sha256": "fc6f25bb3078efe347e76ab50bf70117b4f74578437d8f7c0253eab5c0eb79f9"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-correction-preupload-v01.json": {
+      "minimum_core": true,
+      "role": "explicit_attributes_only_correction_chain",
+      "source": {
+        "bytes": 695,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-correction-preupload-v01.json",
+        "sha256": "95bed199729c1d5ab933b549dac570db2710fd447e4206fbdc8dc88f611d6d49"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-correction-verified-v01.json": {
+      "minimum_core": true,
+      "role": "explicit_attributes_only_correction_chain",
+      "source": {
+        "bytes": 267,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-correction-verified-v01.json",
+        "sha256": "6a0c2ada73efc9261a3074f4a3afca80d283aa80a731efada617533673ba5d1b"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-final-file-identities-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 1566171,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-final-file-identities-v01.json",
+        "sha256": "243284458d8174c114172d66e9adeb09e41d09e6f1ed43e1a568d5874e7c4ba2"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-helper-source-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 6334,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-helper-source-independent-review-v01.json",
+        "sha256": "1908e8825cfbff2db18cea629e7f14c347b9e339aa4de6f0093a10c5af4363e0"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/hf-resume-independent-detached-controls-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 5902,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-independent-detached-controls-v01.json",
+        "sha256": "1f473bebf9e9517ccef9fc86456f362242ac7d044458e3e7b1d1d1f5bcb10fad"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/integration-preservation-approach-independent-review-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 4233,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/integration-preservation-approach-independent-review-v01.json",
+        "sha256": "ed94e6ae696a9e42ba7ddc4ff3e5f48a6b533b9859307d1ea32975cc4629faf5"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/main-intake-independent-review-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 115779,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/main-intake-independent-review-v01.json",
+        "sha256": "53eeea167ef229c80823754b94a1daa4c83f6eff7449e5171ac02df99e852502"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/modern-resource-publication-inventory-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 110219,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/modern-resource-publication-inventory-v01.json",
+        "sha256": "2f9258673ac58cdd51bd911ba4d3a853d2953d5d632fec7ca4adb4b4758413cd"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/native_resource_dependencies/autoencoder_daemon_resources.py": {
+      "role": "unchanged_native_public_source_dependency",
+      "source": {
+        "bytes": 36724,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+        "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+      },
+      "status": "Source bytes only; no runtime state/body or execution. Guardian retains historical endpoint paths; no portable execution claim."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/native_resource_dependencies/lazy_scheduler_adoption.py": {
+      "role": "unchanged_native_public_source_dependency",
+      "source": {
+        "bytes": 1345,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py",
+        "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+      },
+      "status": "Source bytes only; no runtime state/body or execution. Guardian retains historical endpoint paths; no portable execution claim."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/observe_actor_context_ranking_hf_partial_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 14203,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/observe_actor_context_ranking_hf_partial_v01.py",
+        "sha256": "bab0f43229cb26aa8e7b472463308d773617c21ea4ad1a718a42467694a1002d"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/owned_lease_watchdog_actor_ranking_v03.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 27360,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/owned_lease_watchdog_actor_ranking_v03.py",
+        "sha256": "af2847920a5bb184f0e9801e7eabe1eea68029085fc1f1730d8cd682a662ff4b"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/partial-chunk03-attributes-v01.txt": {
+      "role": "raw_attributes_data",
+      "source": {
+        "bytes": 2372,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-partial-attrs-readback-v01/chunk03/.gitattributes",
+        "sha256": "491dc65266e518f57817be1df5fe35ad3f57aa128ebe2b51662213c5058cabb0"
+      },
+      "status": "Data only; no Git attributes installation."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/postfreeze-next-training-design-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 17180,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-next-training-design-v01.json",
+        "sha256": "0b8bc269f028a75ccdaf8f0c320c83b8de5d643d562a462cb08be1486638b7fe"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/posttraining-handoff-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 6029,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/posttraining-handoff-v01.json",
+        "sha256": "ed21c0c4a3abcac6033e260c3c8f452537f93f60fe7cfcb740e2992dcdb5b670"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/posttraining-handoff-v02.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 3603,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/posttraining-handoff-v02.json",
+        "sha256": "4036a91c3817227949e3b1d4b7d4578c65b34e31c868495dbedfca74f3236254"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 14798,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json",
+        "sha256": "600ef51584d9ee2391381edaab48996cdf53fc5f40eea8db2b713359ec3d052c"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v04.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 13863,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v04.py",
+        "sha256": "2c11f2261b4fdd965db40d03539546660d7fd153b0c925ec6942978839652133"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-capsule-builder-source-independent-review-v04.json": {
+      "role": "capsule_source_and_concrete_inputs",
+      "source": {
+        "bytes": 36161,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-capsule-builder-source-independent-review-v04.json",
+        "sha256": "8c59c13ad020ec05bfff4add1963551856ea25f6c3dc9cb2d524128e938e8864"
+      },
+      "status": "Manifest-only; no copying or publication."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json": {
+      "role": "public_summary",
+      "source": {
+        "bytes": 9283,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json",
+        "sha256": "6ebcace6fd13bc112eff52e9d2cce04dfcf4db5a461153df6cefda7ecc23c9e2"
+      },
+      "status": "Actual postfreeze public evidence under independent result review."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-source-allowlist-v04.json": {
+      "role": "capsule_source_and_concrete_inputs",
+      "source": {
+        "bytes": 49051,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-source-allowlist-v04.json",
+        "sha256": "ec1a3cfe853783d893bd8369f908efc91e6bb10776a7b38e90eaccb4277270a4"
+      },
+      "status": "Manifest-only; no copying or publication."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-source-capsule-inputs-v04.json": {
+      "role": "capsule_source_and_concrete_inputs",
+      "source": {
+        "bytes": 3070,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-source-capsule-inputs-v04.json",
+        "sha256": "cf8e07807346a68a8c6aa1f95d1a78aae67ca5d98fc49a690736dd22ea822bd7"
+      },
+      "status": "Manifest-only; no copying or publication."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-source-capsule-v04.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 95739,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-source-capsule-v04.json",
+        "sha256": "6fb4b39d6ec8511b5ca5a71283da28502a95ae7a64438cca14d3e9c326b64bfe"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/public-summary-card-independent-review-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 9730,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-summary-card-independent-review-v01.json",
+        "sha256": "0f4de1c459f95c03562e18e544404938be8bf910aa0b00fd76c9d94152461b28"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/release-manifest-v01.json": {
+      "minimum_core": true,
+      "role": "public_source_control_or_metadata_receipt",
+      "source": {
+        "bytes": 94358,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/release-manifest-v01.json",
+        "sha256": "e4d57b46d349aec13f535edaf05d37d76cb32d35ff596d80fab1bfa5519b1904"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/remote-related-head-review-datasets-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 9280,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-datasets-v01.json",
+        "sha256": "c06eafcb49a3a3410f6d95c1d61f21c94a08f73904c4400a989ab61d6ea0e804"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/remote-related-head-review-root-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 7331,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-root-v01.json",
+        "sha256": "645d3670df9f0802f3c77d0691e69bb5792613c1a2fc7a1bae974e2e8346426f"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/remote-related-heads-datasets-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 4501,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-heads-datasets-v01.json",
+        "sha256": "f488611c12c7222337ec9da0cf01fb50e0b5740d40ac764091622be5a675384d"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/remote-related-heads-root-v01.json": {
+      "role": "bounded_publication_and_integration_metadata",
+      "source": {
+        "bytes": 3633,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-heads-root-v01.json",
+        "sha256": "6cbc2601310e72a058574c45a7c3e9b3e86e4fe13fce6ecc18ec9c35b2e317e8"
+      },
+      "status": "Recorded scope retained; final Git merge pending."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 8911,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v01.json",
+        "sha256": "7df903a5325095ef56180a0737f68315d146fdaf97a0288952c635f6eccc0183"
+      },
+      "status": "V01 preserved. Its source gate was passed, but actual guarded smoke FAILED. Never relabel as actual success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v02.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 27213,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-import-smoke-v02.json",
+        "sha256": "ae7a7a65c5d0df2ffc59ad0b3e069900adf91d2ab762ba5d63cb4be5d7361c26"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-author-source-readiness-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 4619,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-author-source-readiness-v01.json",
+        "sha256": "a82b00c862c4cb311330157d6c81e4da35d612d11514a945a20c637030a27374"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 12057,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v01.json",
+        "sha256": "17c13625a518242da0b8018f46ae2840b3ec19226a49b1df90cde8379a20d2b2"
+      },
+      "status": "V01 preserved. Its source gate was passed, but actual guarded smoke FAILED. Never relabel as actual success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v02.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 16076,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-source-independent-review-v02.json",
+        "sha256": "9024f98bcf1f2970fb2097cac6e49a9a05d0bc5b6455583a94aea8fc2e642493"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-v02-source-derivation-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 7779,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-smoke-v02-source-derivation-v01.json",
+        "sha256": "56920bcfaa82685698a9b2322e7ca6525a4edb2bf65d5da0c25b36c00c277b4a"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v01.json": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 17516,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v01.json",
+        "sha256": "65f0aaa42cadd19c9afc118dca450730cd986099d9c5cbba0477484764dbac53"
+      },
+      "status": "Preserved/unqualified bytecode-loader source candidate or negative source gate, superseded by exact-byte loader."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 25630,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bootstrap-source-independent-review-v02.json",
+        "sha256": "7aa5d74d7e805d122f74c6ac1941736636ad0f9a59409c7777a6d60845c59ebd"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-bridge-source-independent-review-v02.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 42614,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bridge-source-independent-review-v02.json",
+        "sha256": "4e3bacc5241002288cebecc29b08036229da4ae1240052c27913fa2a7bdf9f62"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-collection-source-independent-review-v03.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 14890,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-source-independent-review-v03.json",
+        "sha256": "6f4790f6ea659e6775e52bef8c4356eb6a1be5ef92d7f2bc5ab079f3883c392e"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-current-config-amendment-design-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 20563,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-config-amendment-design-v01.json",
+        "sha256": "43469112a9abfaf9c1348450bd0a82d4d28b1b4e7e4b9c2809d2c632dacc8106"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-current-core-source-preparation-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 29136,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-core-source-preparation-v01.json",
+        "sha256": "86cab0ae932344f5424fb1550403ea8cba929ece7e5c6eed5f7b3abbd95c0b7c"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 8642,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v01.json",
+        "sha256": "9a594a56f2d235d811e6851606b2cb9061947bcf4d490cb7f30e7b60cb2337aa"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v02.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 6704,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v02.json",
+        "sha256": "248a64c312749fc9a50e27200373d132423d56c51bc616eb27bacc6ec1d80850"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-import-smoke-independent-controls-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 5003,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-import-smoke-independent-controls-v01.json",
+        "sha256": "6defbc4aea58dba3e767f307d881032aa7f363a673bca316dacf901194f7ceb8"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-observation-policy-v02.json": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 8590,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v02.json",
+        "sha256": "9d8ea86843bba3d6d9a22717d2be330ff549a38f5c43466912fa90dc8852c996"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-observer-source-independent-review-v03.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 15403,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observer-source-independent-review-v03.json",
+        "sha256": "85f658bd97fd7d0a4ce114da1c876f824e9ba3d73a77601bdeb781135891bff2"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-smoke-v02-independent-controls-v01.json": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 3009,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-smoke-v02-independent-controls-v01.json",
+        "sha256": "80d40edc2e5c6091d47e23fcca8a7095d8e8de5c372967381008805ba63eca78"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 4678,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-snapshot-v01.json",
+        "sha256": "fbbbc82c791998e4498a30226cc8f61a17bd7ce46f57229629710631af9761b2"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/__init__.py": {
+      "role": "initializer_custody_only",
+      "source": {
+        "bytes": 56829,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/__init__.py",
+        "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/__init__.py": {
+      "role": "initializer_custody_only",
+      "source": {
+        "bytes": 957,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/__init__.py",
+        "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "role": "initializer_custody_only",
+      "source": {
+        "bytes": 69336,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+        "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "role": "executed_native_resource_source",
+      "source": {
+        "bytes": 15543,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+        "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "role": "executed_native_resource_source",
+      "source": {
+        "bytes": 111009,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+        "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "role": "executed_native_resource_source",
+      "source": {
+        "bytes": 53075,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-source-v01/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+        "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+      },
+      "status": "Exact current source snapshot; three init files are custody-only and never execute."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource_import_smoke_independent_controls_v01.py": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 6190,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource_import_smoke_independent_controls_v01.py",
+        "sha256": "22d7135e893c641209aebf3f544e1e4b437e0346fcfba5c618c9ce73747a58d9"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resource_smoke_v02_independent_controls_v01.py": {
+      "role": "current_smoke_bridge_or_preserved_history",
+      "source": {
+        "bytes": 6748,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource_smoke_v02_independent_controls_v01.py",
+        "sha256": "7185e38b2f10230042e608fba8aa215bfd8c963ee6d224eafa4c74fb337898d9"
+      },
+      "status": "Public source/metadata only; read actual receipt status, not filename, to distinguish failure from success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/resume_actor_context_ranking_hf_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 26577,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resume_actor_context_ranking_hf_v01.py",
+        "sha256": "ad2cceb8472371c613c852241df9858711cfd1d0da1eaf6e1925ae20e7b495ff"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v01.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 7465,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v01.py",
+        "sha256": "9faf5d7c5265e7bd304ab5c6b72f429afa8bec43e8b4de80705c4e11c26eb2bc"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v02.py": {
+      "role": "controls_source_or_receipt",
+      "source": {
+        "bytes": 7511,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v02.py",
+        "sha256": "fa3dbf04f2b6256bdda1ce6942a68df93d46295609cab7166a4a4645c9d6a36e"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v02.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 7532,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v02.py",
+        "sha256": "c3f68782666e9c71596c7a3d5cc8215ada32c6b9cf702ecba816c753d2affc6a"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v03.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 7875,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v03.py",
+        "sha256": "21c20974cf9f5f55331f63ebe3e26d7e5a5a249e976b858f2d4c88fa051a9549"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v03.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 9570,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_training_plan_v03.py",
+        "sha256": "7de92b9619ea87738efdb3db9724f023a36fb27fb5ea8c1f4f3a5dbe8b4d50ea"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v04.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 40869,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v04.py",
+        "sha256": "8229b72d469405dd996319010dac2c5500b6c6b19d56f1c243d9b5a56213e63e"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_scope_guardian_v03.py": {
+      "role": "preserved_superseded_or_refusal",
+      "source": {
+        "bytes": 39316,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v03.py",
+        "sha256": "71c6749cf566268a05a9b59fad1164145e11f5a4120d44049529d5de291f0ac2"
+      },
+      "status": "Preserved/unqualified bytecode-loader source candidate or negative source gate, superseded by exact-byte loader."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/run_scope_guardian_v04.py": {
+      "role": "current_resource_source",
+      "source": {
+        "bytes": 40140,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v04.py",
+        "sha256": "cadff26b30c65b42f0fd218cae391dcb9bfec5014ac104605860428d33e422b8"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/runtime-freeze-source-independent-review-v02.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 12576,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runtime-freeze-source-independent-review-v02.json",
+        "sha256": "d4283e05211bef606cf8b090c2e0e9e412cb95463c57a7c48e3d43beb640c389"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/scheduler-current-source-independent-review-v01.json": {
+      "role": "source_only_review_gate",
+      "source": {
+        "bytes": 26402,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/scheduler-current-source-independent-review-v01.json",
+        "sha256": "96332c871cc022326d94e4addd584a49cbf1afdc139c9c35e83c9b2483278d94"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/scheduler-source-compatibility-review-v01.json": {
+      "role": "design_or_derivation",
+      "source": {
+        "bytes": 32505,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/scheduler-source-compatibility-review-v01.json",
+        "sha256": "90f22a323e851d062f1a97136e3addd34de0ee835d9b68d4fbe4b565721a2c78"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_harness_detached_v02.py": {
+      "role": "current_recipe_source",
+      "source": {
+        "bytes": 11804,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_harness_detached_v02.py",
+        "sha256": "b7e2e6edfd17c6b72bc1a3b6ba0b9a174e10ab3354e290f211f36f6a47aff318"
+      },
+      "status": "Preserved source/evidence under its recorded source-only scope."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_partial_detached_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 8927,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_partial_detached_v01.py",
+        "sha256": "4089faab2f5075448687048da65607ae9f4c8ac4ef5558661ac567a6c23a0cf2"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_port_detached_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 12514,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_port_detached_v01.py",
+        "sha256": "9231f6ce2ab2c72c8dc985f8e1816dd00e48db02e852ec49f552f89517db7763"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_resume_detached_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 9839,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_hf_resume_detached_v01.py",
+        "sha256": "aa39216f5b60a3c7119c666a6f47427d4576b3d1e542df1024ff991d4e17fef8"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    },
+    "docs/implementation/reports/evidence/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_release_builder_detached_v01.py": {
+      "minimum_core": true,
+      "role": "publisher_or_verifier_source",
+      "source": {
+        "bytes": 8123,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_actor_context_ranking_release_builder_detached_v01.py",
+        "sha256": "6242c8c1ba44584603ebc2aebaaa878336454ba9b80d1350dab4639f1243c5c0"
+      },
+      "status": "Include exact immutable public source/metadata under its stated scope; qualification does not imply scientific success."
+    }
+  }
+}

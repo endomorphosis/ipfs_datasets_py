@@ -1,0 +1,25 @@
+{
+  "actual_guardian_calls": 0,
+  "actual_model_calls": 0,
+  "controls_source": {
+    "bytes": 5113,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_guardian_check_diagnostic_detached_v01.py",
+    "sha256": "9f8fff817bcbe44dd04ea4592b114efdc2ad6df045551fa01db3374ae962d52b"
+  },
+  "endpoint_body_reads": 0,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "independent_qualification": false,
+  "passed": true,
+  "producer": {
+    "bytes": 11178,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py",
+    "sha256": "154babc6d327d5d4fd79aa046d8d58c644b3a63769742288b2b9ea7ef3db9f9d"
+  },
+  "producer_main_executed": false,
+  "schema": "actor-context-ranking-guardian-check-diagnostic-author-controls/v1",
+  "subprocess_calls": 0,
+  "synthetic_classifier_and_AST_only": true,
+  "tests_run": 12
+}

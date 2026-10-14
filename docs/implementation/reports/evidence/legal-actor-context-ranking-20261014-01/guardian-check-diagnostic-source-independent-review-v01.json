@@ -1,0 +1,122 @@
+{
+  "actual_guardian_calls_by_reviewer": 0,
+  "actual_model_calls_by_reviewer": 0,
+  "actual_private_body_reads_by_reviewer": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py",
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py": {
+      "bytes": 11178,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py",
+      "sha256": "154babc6d327d5d4fd79aa046d8d58c644b3a63769742288b2b9ea7ef3db9f9d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-author-controls-v01.json": {
+      "bytes": 932,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-author-controls-v01.json",
+      "sha256": "0e1b41b125185d7986524312530d255b923778ef44f9eae758e51e9b3cee042f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/owned_lease_watchdog_actor_ranking_v02.py",
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 14090,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-bridge-source-independent-review-v01.json",
+      "sha256": "e1a832f587ef5921124736e9dd34bd2e175529fd03b240c90d75cc054c3113a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json": {
+      "bytes": 2165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json",
+      "sha256": "f62adf64c67c0dc7384616f979e3ec6140f42f03ebf3111b1e5b917b576aa38e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json": {
+      "bytes": 7532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+      "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py",
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_guardian_check_diagnostic_detached_v01.py": {
+      "bytes": 5113,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/test_guardian_check_diagnostic_detached_v01.py",
+      "sha256": "9f8fff817bcbe44dd04ea4592b114efdc2ad6df045551fa01db3374ae962d52b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py",
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "findings": [],
+  "guardian": {
+    "bytes": 38449,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_scope_guardian_v02.py",
+    "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+  },
+  "independent_of_source_author": true,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T11:47:23.596223+00:00",
+  "passed": true,
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "prior_failed_collection": {
+    "bytes": 2165,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json",
+    "sha256": "f62adf64c67c0dc7384616f979e3ec6140f42f03ebf3111b1e5b917b576aa38e"
+  },
+  "producer": {
+    "bytes": 11178,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/diagnose_actor_context_ranking_guardian_check_v01.py",
+    "sha256": "154babc6d327d5d4fd79aa046d8d58c644b3a63769742288b2b9ea7ef3db9f9d"
+  },
+  "qualifies_only_one_shot_diagnostic": true,
+  "review_scope": "Full exact helper source reviewed. Gate/input/ten-owner raw fences before one unchanged guardian --check child;15second timeout, exclusive owned private700 directory and0600 streams, no stderr text published, exact source-message allowlist. Five independent synthetic classifier leak/matching controls pass. No sampler/census/admission/model route or automatic retry. Diagnostic cannot substitute compatibility/baseline.",
+  "reviewer": "/root",
+  "schema": "actor-context-ranking-guardian-check-diagnostic-source-independent-review/v1",
+  "training_authorized": false
+}

@@ -1,0 +1,24 @@
+{
+  "names": [
+    "releases/20261014-actor-context-ranking-v1/README.md",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_dev-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-authored_eval-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_challenge-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_dev-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_test-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-fresh_tune-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-law-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_authored_eval-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/baseline-old_tune-joint.json"
+  ],
+  "parent_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "revision": "59b54a18f8c685a2097746c88ae2176c43e7169f"
+}

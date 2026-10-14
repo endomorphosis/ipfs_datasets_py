@@ -1,0 +1,21 @@
+{
+  "names": [
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/cell-training.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/data-schedule-before-models.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parent-head-parity.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parity-alternate_placeholders.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parity-disabled.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parity-rotated_placeholders.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parity-zeros.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-parity.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-training168-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/initial-training168-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-fresh_dev-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-fresh_dev-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-fresh_test-joint.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-fresh_test-raw.json",
+    "releases/20261014-actor-context-ranking-v1/cells/actor-context-ranking-hinge/results/parent-training168-joint.json"
+  ],
+  "parent_revision": "3ce3a10dec49e5c12d3eb65ec616e90924be19fb",
+  "revision": "8441564083804f070b36c84cdd3ae26a376defd0"
+}

@@ -1,0 +1,40 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v04.py": {
+      "bytes": 7499,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_bootstrap_smoke_controls_v04.py",
+      "sha256": "f028c1aaee1911842461d193fcc4a5fb0a19f4a5786491a65d71fec75f406758"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v04.py": {
+      "bytes": 13863,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/prepare_actor_context_ranking_v04.py",
+      "sha256": "2c11f2261b4fdd965db40d03539546660d7fd153b0c925ec6942978839652133"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v04.py": {
+      "bytes": 40869,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/run_actor_context_ranking_v04.py",
+      "sha256": "8229b72d469405dd996319010dac2c5500b6c6b19d56f1c243d9b5a56213e63e"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "controls_source": {
+    "bytes": 7511,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_current_recipe_controls_v02.py",
+    "sha256": "fa3dbf04f2b6256bdda1ce6942a68df93d46295609cab7166a4a4645c9d6a36e"
+  },
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "guard_positive_fixture_stops_before_any_production_code_execution": true,
+  "inherited31_bootstrap_guards_and17_scientific_harness_cases_not_rerun": true,
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "production_main_calls": 0,
+  "production_module_imports": 0,
+  "resource_calls": 0,
+  "schema": "actor-context-ranking-current-recipe-independent-controls/v1",
+  "source_AST_and_fake_loader_only": true,
+  "tests_run": 8
+}

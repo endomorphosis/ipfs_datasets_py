@@ -1,0 +1,16 @@
+{
+  "draft_PR": 1304,
+  "head": "54aae1d13faea237eddde301754db85afd1e127a",
+  "independent_stage_review": {
+    "bytes": 206235,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/draft-source-stage-independent-review-v01.json",
+    "sha256": "40626752d97ba82f0e051dd3abae748722d1384295d939d703eb5ed1cf856c84"
+  },
+  "main_merge": false,
+  "new_weights_created": false,
+  "observed_at_utc": "2026-10-14T12:06:37.900972+00:00",
+  "parent": "b25e0bf7d03b4e29eed2d0cacce85aa629c9b158",
+  "schema": "actor-context-ranking-draft-source-commit/v2",
+  "training_started": false,
+  "tree": "1b394d7c55b85621a94a2208ce3ef5d012eb9c28"
+}

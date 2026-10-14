@@ -1,0 +1,117 @@
+{
+  "actual_execution_qualified": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v02.py": {
+      "bytes": 21063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v02.py",
+      "sha256": "8838ec6f4d2f8a91da1fbba3b56b2b50de955e1eea88ee72b6b2a0e202f3390f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v03.py": {
+      "bytes": 21090,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor_context_ranking_resource_protocol_v03.py",
+      "sha256": "5df6178fc35cf2a521501af6ff87b0f629bda92c37226f4534e4946759073c68"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v02.py": {
+      "bytes": 9690,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v02.py",
+      "sha256": "afc7afe0dbba1e82e9f4c72f9dd3a1343d3776f6f3b40c951635f09c0c555b47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v03.py": {
+      "bytes": 9710,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/collect_actor_context_ranking_opening_v03.py",
+      "sha256": "dcd2ad3af6227acc7fa2a88fcc086d0367a6cf36e270e60d6bc82e9a99259e66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v01.json": {
+      "bytes": 8642,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v01.json",
+      "sha256": "9a594a56f2d235d811e6851606b2cb9061947bcf4d490cb7f30e7b60cb2337aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v02.json": {
+      "bytes": 8590,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v02.json",
+      "sha256": "9d8ea86843bba3d6d9a22717d2be330ff549a38f5c43466912fa90dc8852c996"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v02.py": {
+      "bytes": 7532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v02.py",
+      "sha256": "c3f68782666e9c71596c7a3d5cc8215ada32c6b9cf702ecba816c753d2affc6a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v03.py": {
+      "bytes": 7875,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/review_actor_context_ranking_resource_baseline_v03.py",
+      "sha256": "21c20974cf9f5f55331f63ebe3e26d7e5a5a249e976b858f2d4c88fa051a9549"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/sample_actor_context_ranking_private_resources_v01.py": {
+      "bytes": 6692,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/sample_actor_context_ranking_private_resources_v01.py",
+      "sha256": "ad9d0bffaf611957590d44f89aa2e3a3cf484943119e1459f7523ba3c152aff2"
+    }
+  },
+  "changed_protocol_ASTs": [
+    "qualify_baseline",
+    "snapshot"
+  ],
+  "checks": {
+    "actual_tests_run": 0,
+    "complete_final_diffs_read": true,
+    "exact_current_source_rawpins": true,
+    "method": "Source-text/AST/raw-hash checks only; independent whole-port fake controls are separately owned by n9.",
+    "source_gate_precedes_private_snapshot_call": true
+  },
+  "delta_findings": [],
+  "independent_full_port_qualification_claimed": false,
+  "independent_of_root_authored_current_deltas": true,
+  "inherited_unchanged_protocol_ASTs": [
+    "capacity",
+    "full_descriptor",
+    "prior_hashes",
+    "qualify_check",
+    "qualify_ledger",
+    "qualify_policy"
+  ],
+  "limits": [
+    "Author feedback on root-authored deltas; not a substitute for the separately required whole-port independent source gates.",
+    "No resource compatibility/capacity/admission/model result is established."
+  ],
+  "observed_at_utc": "2026-10-14T12:16:06.807896+00:00",
+  "passed_new_delta_consistency_review": true,
+  "prior_author_feedback": {
+    "bytes": 8642,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-current-ports-author-delta-review-v01.json",
+    "sha256": "9a594a56f2d235d811e6851606b2cb9061947bcf4d490cb7f30e7b60cb2337aa"
+  },
+  "resolved_followups": [
+    {
+      "evidence": "snapshot typed index is exactly3/4/5; pure baseline receipt directory is exactlyopening-v03/v04/v05. Diagnostic opening2 cannot substitute.",
+      "id": "opening-index-scope",
+      "status": "closed_by_exact_source_predicates"
+    },
+    {
+      "evidence": "Collector compiles exactly the size/SHA-checked sampler source buffer; observer compiles exactly the size/SHA-checked final protocolV03 buffer. Neither route uses SourceFileLoader or cached bytecode.",
+      "id": "source-loader-bytecode-cache",
+      "status": "closed_by_checked_buffer_compilation"
+    }
+  ],
+  "retained_V02_delta_conclusions": [
+    "Same own2CPU/1536MiB/1child/300s/200M reservation plus200M future output bound.",
+    "Same145B cap, exact four physical root metadata and run-root identity, known540 body map, full charging of every current nonreleased claim.",
+    "Exact authenticated full24 f07c config is adopted without configuration changes.",
+    "Ten named producer source roles plus the separately admitted eleventh namespace bootstrap source remain closed.",
+    "ObserverV03 source-qualification checks precede all private receipt/copy parsing; collector still requires exact current ledger+scheduler check/copy byte joins.",
+    "Fresh indices3,4,5 remain bounded to at mostthree pairs, failure stops; outputcollectionV02 and inputV02 filenames remain exclusive and previously absent."
+  ],
+  "reviewer_actions": {
+    "API_calls": 0,
+    "census_calls": 0,
+    "checkpoint_JSON_parses": 0,
+    "claims": 0,
+    "model_calls": 0,
+    "native_endpoint_reads": 0,
+    "private_body_reads": 0,
+    "producer_imports": 0,
+    "public_source_and_metadata_reads": true,
+    "resource_or_sampler_main_calls": 0
+  },
+  "schema": "actor-context-ranking-resource-current-ports-author-delta-review/v2",
+  "source_author_of_V01_ancestry": true
+}

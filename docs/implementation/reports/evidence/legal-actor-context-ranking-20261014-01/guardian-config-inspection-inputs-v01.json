@@ -1,0 +1,33 @@
+{
+  "current_scheduler_source": {
+    "bytes": 111009,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+    "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+  },
+  "historical_adoption_source": {
+    "bytes": 15101,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py",
+    "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+  },
+  "policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "prior_diagnostic": {
+    "bytes": 3063,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-v01.json",
+    "sha256": "41bfeaf5a661e55d5ae5789da02791b53f306d2bf2de8ccdf5d8ee4c7f4effd0"
+  },
+  "sample_receipt": {
+    "bytes": 1437,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json",
+    "sha256": "0f25d4e0c010c46efb923d761bcf13ecb45886b95652771a09bde85385cb165b"
+  },
+  "sampler_qualification": {
+    "bytes": 13300,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/sampler-source-independent-review-v01.json",
+    "sha256": "dfe1ae62a452f203cf73237ada13e3c53e5fd1870fdab32e1484e6aad358727d"
+  },
+  "schema": "actor-context-ranking-guardian-config-inspection-inputs/v1"
+}

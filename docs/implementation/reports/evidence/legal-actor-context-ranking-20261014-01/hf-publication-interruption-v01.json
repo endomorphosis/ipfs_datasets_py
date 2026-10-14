@@ -1,0 +1,91 @@
+{
+  "all_failure_and_success_evidence_preserved": true,
+  "attributes_only_cause_confirmed": false,
+  "automatic_repair": false,
+  "automatic_retry": false,
+  "baseline_files": 5646,
+  "baseline_revision": "1622817fd804ff5333fce7dc8d04433e4acef2e4",
+  "classification": "immutable_identity_postcondition_refusal_after_checkpoint_commit",
+  "created_chunk3_file_count": 1,
+  "default_promotion": false,
+  "observed_at_utc": "2026-10-14T13:16:58.797889+00:00",
+  "preparation_receipt": {
+    "bytes": 109799,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-preparation-receipt-v01.json",
+    "sha256": "45cae121d94a6527940f7cebba88f278c573723c4de5a69d7c14d4c9fac24140"
+  },
+  "private_combined_log": {
+    "bytes": 3075,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/private-resource-diagnostics/hf-publication-v01/combined.log",
+    "sha256": "5573a04c9cedda85b917153465bf5666296133a4d60f15f65f0847e6a0d8fa80"
+  },
+  "private_log_body_published": false,
+  "publication_review": {
+    "bytes": 151803,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-independent-review-v01.json",
+    "sha256": "2bcafc080c2e444e738a3488f8a403c70bd3046e8cddb77974b2855a7cb027e0"
+  },
+  "publisher_rerun": false,
+  "publisher_returncode": 1,
+  "release_prefix": "releases/20261014-actor-context-ranking-v1",
+  "remote_rollback": false,
+  "repository": "Publicus/legal-ir-autoencoder",
+  "required_next_action": "Independently source-qualified immutable observation, then concrete reviewed reconciliation and resume if all other identities and created checkpoint bytes match.",
+  "retained_chunk_receipts": {
+    "hf-chunk-01-created-v01.json": {
+      "bytes": 2294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-created-v01.json",
+      "sha256": "c63eed3a0193e836c670eefca60bce6a5e4992c4e041f5bdbd558c8732892f03"
+    },
+    "hf-chunk-01-preupload-v01.json": {
+      "bytes": 2262,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-preupload-v01.json",
+      "sha256": "b866ed9feb8b0d34846d533eb5ad360bf8d15e1c2ce903d46089d4acbb1c7235"
+    },
+    "hf-chunk-01-verified-v01.json": {
+      "bytes": 214,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-01-verified-v01.json",
+      "sha256": "065790f6af876433e9c8e42a22ba45fc446063f8ff741d3a7a1d6984956d4f3d"
+    },
+    "hf-chunk-02-created-v01.json": {
+      "bytes": 262,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-created-v01.json",
+      "sha256": "0f5c8b9f2b54f7c53820e1f93d538f805bd8e007fb89512fbc86e670eecda4a9"
+    },
+    "hf-chunk-02-preupload-v01.json": {
+      "bytes": 230,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-preupload-v01.json",
+      "sha256": "dd41b8a2f7eaf62f5dccec35017a550998617a8cb892f38b5f83660c71aee108"
+    },
+    "hf-chunk-02-verified-v01.json": {
+      "bytes": 213,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-02-verified-v01.json",
+      "sha256": "fe7eea84dcf75197507d5b9c579d24e39467788c1ee530fd8015bb1711780678"
+    },
+    "hf-chunk-03-created-v01.json": {
+      "bytes": 256,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-created-v01.json",
+      "sha256": "ad0455cf4e66eff65e8b7c740ea4cd7377d5b5444550e07db28f1db913fc0a74"
+    },
+    "hf-chunk-03-preupload-v01.json": {
+      "bytes": 224,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-chunk-03-preupload-v01.json",
+      "sha256": "be03e616c333fbb2695233fe37ebe2699318f179d7d8da28bbd08a5f95dbe38c"
+    }
+  },
+  "schema": "actor-context-ranking-Hub-publication-interruption/v1",
+  "scientific_success": false,
+  "source_spec": {
+    "bytes": 94501,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-release-spec-v01.json",
+    "sha256": "bc36cad30b42c66d87d2224aa681569dccd50eca2635c1ba137f504909d9717b"
+  },
+  "source_spec_or_payload_modified": false,
+  "suspected_cause": "Hub-generated checkpoint-specific Git LFS attributes rule; requires immutable comparison before correction.",
+  "unverified_created_chunk_revision": "246e7793db1399341387fabbb740781ea23251c8",
+  "verified_chunk_revisions": [
+    "59b54a18f8c685a2097746c88ae2176c43e7169f",
+    "88876ef24d5566f6dc5d6c640b3d6cbcfe20907b"
+  ],
+  "verified_uploaded_file_count": 19
+}

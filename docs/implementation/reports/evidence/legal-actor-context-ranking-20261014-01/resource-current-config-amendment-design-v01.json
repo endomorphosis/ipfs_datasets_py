@@ -1,0 +1,340 @@
+{
+  "actual_existing_config": {
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "max_gpu_memory_percent": null,
+    "max_memory_percent": null,
+    "max_swap_percent": null,
+    "max_waiting_requests": 256,
+    "proof_backoff_seconds": 2.0,
+    "proof_cpu_stall_percent": 50.0,
+    "proof_io_stall_percent": 10.0,
+    "proof_memory_headroom_mb": 24922,
+    "proof_memory_stall_percent": 2.0,
+    "proof_recovery_enabled": false,
+    "proof_recovery_grants": 4,
+    "proof_recovery_interval_seconds": 0.25,
+    "proof_recovery_samples": 2,
+    "proof_resource_profile": null,
+    "proof_safety_enabled": true,
+    "require_known_gpu_for_gpu_work": true,
+    "reserved_gpu_memory_mb": 0,
+    "reserved_memory_mb": 0,
+    "total_child_process_slots": 16,
+    "total_cpu_slots": 16,
+    "total_gpu_memory_mb": null,
+    "total_memory_mb": 99688,
+    "total_unified_memory_mb": null
+  },
+  "actual_existing_config_sha256": "f07cb14289fcb6275e4497dcc36be0dcf8bfc3dc87531ff7a9537eb85fdcc661",
+  "approval_state": {
+    "actual_bridge_code_created": false,
+    "actual_compatibility_qualified": false,
+    "capacity_qualified": false,
+    "source_authoring_design_only": true,
+    "training_authorized": false
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-v01.json": {
+      "bytes": 3063,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-check-diagnostic-v01.json",
+      "sha256": "41bfeaf5a661e55d5ae5789da02791b53f306d2bf2de8ccdf5d8ee4c7f4effd0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-lane-author-controls-v02.json": {
+      "bytes": 1630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-lane-author-controls-v02.json",
+      "sha256": "e57c2467ea32677582ac30cb5f66598bff32060f34320b0badb3591967c18c2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-source-independent-review-v02.json": {
+      "bytes": 6448,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-source-independent-review-v02.json",
+      "sha256": "b68c12d0b2934ddd6e47aa7250bf0751fe935b20fc3882325a370fd6d0c8fc32"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v01.json": {
+      "bytes": 14026,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v01.json",
+      "sha256": "280b6aafedfed016ee3fc38a3e07f56d083f4ca54e96c3ab350ca5dfe5daea36"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v02.json": {
+      "bytes": 14492,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v02.json",
+      "sha256": "29ee4031d08b3845794978d59571c5867a73a1204d3e861cc909e0685cba4661"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/inspect_actor_context_ranking_scheduler_config_v02.py": {
+      "bytes": 16815,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/inspect_actor_context_ranking_scheduler_config_v02.py",
+      "sha256": "9a408eddfef4263262f72a91d74e1adeb1a0a589fb82f3b3e401eb0c1265b535"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json": {
+      "bytes": 2165,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-collection-v01.json",
+      "sha256": "f62adf64c67c0dc7384616f979e3ec6140f42f03ebf3111b1e5b917b576aa38e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json": {
+      "bytes": 7532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+      "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 54123,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "d0d02873d61c6829aa64e54c134de9650c5ba3a26772c6d59bec06f8cb974d9f"
+    }
+  },
+  "author_actions": {
+    "census_calls": 0,
+    "checkpoint_JSON_parses": 0,
+    "current_scheduler_source_AST_and_raw_hashes_only": true,
+    "global_state_writes": 0,
+    "guardian_calls": 0,
+    "model_calls": 0,
+    "private_body_reads": 0,
+    "public_metadata_reads_only": true,
+    "resource_client_calls": 0,
+    "sampler_calls": 0
+  },
+  "author_independence": false,
+  "candidate_current_scheduler_closure": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/__init__.py",
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/__init__.py",
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py",
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 15543,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py",
+      "sha256": "3655923785cb99409171caaba8c523354f03dbe8d82b6deb45a7b46db8394633"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 111009,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py",
+      "sha256": "75fc31a79031ba941fb81570419e0c630c67363d77aafc97979a156cd02248a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py",
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "config_provenance": {
+    "bytes": 14492,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/guardian-config-inspection-v02.json",
+    "sha256": "29ee4031d08b3845794978d59571c5867a73a1204d3e861cc909e0685cba4661"
+  },
+  "current_blockers": [
+    "Current complete scheduler bridge/source gates not yet authored/qualified",
+    "No current matched compatibility/sample pair, resource baseline or capacity census exists",
+    "No actual candidate model run or training authorization"
+  ],
+  "findings": [],
+  "full_current_guard_requirements": [
+    "Import exact current ResourceScheduler/ProofHostResources/proof safety/runtime telemetry and package-init closure; do not spoof the old scheduler or remove modern PID admission checks.",
+    "Validate the complete actual24-key persisted configuration against the authenticated exact f07cb142... snapshot before any scheduler client; missing/unknown/different values refuse.",
+    "Adoption override accepts _validate_state_configuration(state, *, allow_reconfigure=False) and forces inherited allow_reconfigure=False after exact complete config and state checks, including when constructor requests True.",
+    "Refuse _new_state and any initialization, idle reset, normalization write, configuration replacement, proof toggle, foreign release/cancel/recovery or unknown state fields.",
+    "Preserve current proof/PID safeguards even with proof_recovery_enabled=False; current PID margin includes32 plus16 times reserved/requested child slots.",
+    "Admit the exact current optional proof_recovery state only after closed source-derived typed validation; never read unknown state into public evidence or invent an idle proof.",
+    "Treat current release(True) as acknowledgement only: own root/nested rows must actually be absent before successful terminal closeout. Deferred drain or owned descendants keep closeout incomplete; preserve original scheduler release/cancellation semantics.",
+    "Native145B storage owner remains byte-identical and receives the new exact qualified scheduler accessor through the existing legitimate integration; no private owner-field impersonation."
+  ],
+  "history": {
+    "current_full_claim_bytes_unknown": true,
+    "current_record_count_unknown": true,
+    "historical_full_nonreleased_claim_bytes": 44381777216,
+    "known_record_body_hash_map_sha256": "e7169aed16aa55774a027dce5edb91f11e4dd2188f54d1b45b90c279da5feef4",
+    "known_record_count": 540,
+    "known_record_status_counts": {
+      "released": 439,
+      "retained": 101
+    },
+    "preserve_every_known_body_and_charge_every_current_record": true,
+    "required_preserved_claims": [
+      {
+        "reservation_id": "c3e6fbcf39d146cd85f12617d320b153",
+        "status": "retained",
+        "storage_bytes": 200000000
+      },
+      {
+        "reservation_id": "893d4ed80ab3497f95b1490080e3caa3",
+        "status": "released",
+        "storage_bytes": 200000000
+      }
+    ]
+  },
+  "observed_at_utc": "2026-10-14T11:58:52.700512+00:00",
+  "observed_not_changed": {
+    "five_extra_fields": {
+      "proof_recovery_enabled": false,
+      "proof_recovery_grants": 4,
+      "proof_recovery_interval_seconds": 0.25,
+      "proof_recovery_samples": 2,
+      "proof_resource_profile": null
+    },
+    "lane_reservations": {
+      "validation": {
+        "cpu_slots": 2,
+        "memory_mb": 0
+      }
+    },
+    "proof_memory_headroom_mb": 24922,
+    "total_child_process_slots": 16,
+    "total_cpu_slots": 16,
+    "total_memory_mb": 99688
+  },
+  "original_policy": {
+    "bytes": 7532,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/resource-observation-policy-v01.json",
+    "sha256": "d9056253244e653c544b4fee5ac371a3d86a538fa8c67f6330512ec2cd9a90ac"
+  },
+  "passed_source_design_consistency": true,
+  "prohibited_changes": [
+    "No global capacity raise/reset or scheduler configuration mutation",
+    "No145B cap change, root migration, claim release/reconciliation, cleanup or foreign work mutation",
+    "No replacing native PID/proof/release guards with historical equivalents",
+    "No change to model/donor/loss/seed/batch/data/32-update/evaluation contract or comparator scope"
+  ],
+  "proposed_versions": {
+    "adoption": "adopt_shared_scheduler_actor_ranking_v03.py",
+    "bootstrap": "actor_context_ranking_bootstrap_smoke_controls_v04.py",
+    "bootstrap_receipt": "actor-context-ranking-bootstrap-smoke-controls-v04.json",
+    "collector": "collect_actor_context_ranking_opening_v02.py",
+    "concrete_reviewer": "review_actor_context_ranking_training_plan_v03.py",
+    "freezer": "freeze_actor_context_ranking_outputs_v04.py",
+    "guardian": "run_scope_guardian_v03.py",
+    "observer": "review_actor_context_ranking_resource_baseline_v02.py",
+    "plan": "actor-context-ranking-hinge-plan-v01.json",
+    "policy": "resource-observation-policy-v02.json",
+    "preparer": "prepare_actor_context_ranking_v04.py",
+    "protocol": "actor_context_ranking_resource_protocol_v02.py",
+    "resource_baseline_inputs": "resource-baseline-inputs-v02.json",
+    "resource_baseline_output": "resource-baseline-v01.json",
+    "resource_collection_output": "resource-collection-v02.json",
+    "runner": "run_actor_context_ranking_v04.py",
+    "terminal": "audit_actor_context_ranking_terminal_resources_v04.py",
+    "watchdog": "owned_lease_watchdog_actor_ranking_v03.py"
+  },
+  "purpose": "Replace historical scheduler compatibility closure with the current scheduler implementation while adopting the authenticated existing complete configuration without changing it.",
+  "qualification_plan": [
+    "Independent current-scheduler compatibility source report must close exact dependencies, validator signature, PID guard, recovery-state validation and release/drain semantics before bridge code is sealed.",
+    "Independently source-qualify bridge/adoption/watchdog changes with detached unknown/missing config, no-reset, modern-signature, active-foreign-state, PID and deferred-closeout refusal cases.",
+    "Version policy/protocol/collector/observer and rebind exact current config/source gates; retain V01 collection failure, diagnostic and both config inspections immutable.",
+    "After root trigger collect at most3 fresh check/sample pairs at exclusive indices3,4,5, stopping immediately on a failed child; exact scheduler AND ledger byte/SHA joins remain mandatory. Diagnostic opening2 is not a matched baseline and cannot be substituted.",
+    "One qualified observer on a selected exact pair reconstructs known540 body hashes, preserves all known bodies, accounts every additional current record, validates all four root physical identities, and runs the exact existing four-root census kernel.",
+    "Require observed apparent bytes plus actual FULL nonreleased claims plus200M own reservation plus200M future output bound <=145B, and physicalfree >=actual fullclaims+400M; no capacity/idle assumption from the old observation.",
+    "Rebind active runner/preparer/bootstrap/reviewer and terminal/freezer producer paths only as needed; independent recipe gate must bind the new actual inert smoke and actual current resource sources, followed by one immutable actual plan and concrete root training review.",
+    "Only after actual fresh capacityPASS and exact concrete review may unchanged native guardian atomically admit the one bounded model child. No admission or model is performed by this design."
+  ],
+  "reusable_without_change": [
+    "sample_actor_context_ranking_private_resources_v01.py and its independently qualified no-API endpoint-copy semantics",
+    "Numerical model/test/design/evaluation contract/data/schedule and trainedF15 donor raw identity",
+    "17-case independently qualified V03 scientific harness controls when their affected helper ASTs remain exact",
+    "Native145B owner and historical540 public body-map anchors"
+  ],
+  "schema": "actor-context-ranking-current-config-resource-amendment-design/v1",
+  "status": "proposed_source_design_only",
+  "unchanged_counted_root_metadata": [
+    {
+      "device": 66306,
+      "inode": 66764317,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+    },
+    {
+      "device": 66306,
+      "inode": 58092485,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+    },
+    {
+      "device": 66306,
+      "inode": 51016937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+    },
+    {
+      "device": 66306,
+      "inode": 524344,
+      "path": "/tmp/pytest-of-barberb"
+    }
+  ],
+  "unchanged_experiment": {
+    "actual_forward_calls": 1312,
+    "actual_forward_source_occurrences": 1664,
+    "attempt_name": "actor-context-ranking-20261014-actor-context-ranking-hinge-01",
+    "batch_size": 12,
+    "cell": "actor-context-ranking-hinge",
+    "declared_module_owner_count": 40,
+    "donor_checkpoint_bytes": 12230969,
+    "donor_checkpoint_sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4",
+    "donor_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+    "final_protected_head_rows": 632,
+    "initial_full_head_parity_rows": 632,
+    "mandatory_loaded_owner_count": 9,
+    "measured_inert_loaded_owner_count": 17,
+    "new_comparator_model_calls": 0,
+    "new_updates": 32,
+    "objective": "existing_actor_CE_plus_0.25_filtered_actor_hinge_margin1",
+    "physical_outputs": 62,
+    "raw_algorithm_file_count": 41,
+    "seed": 1729,
+    "source_occurrences": 384
+  },
+  "unchanged_resource_envelope": {
+    "admission_timeout_seconds": 120,
+    "child_deadline_seconds": 300,
+    "child_process_slots": 1,
+    "cpu_slots": 2,
+    "future_own_output_bound_bytes": 200000000,
+    "global_disk_cap_bytes": 145000000000,
+    "ledger_lock_timeout_seconds": 60,
+    "memory_mb": 1536,
+    "storage_bytes": 200000000
+  },
+  "unchanged_run_root_identity": {
+    "device": 66306,
+    "inode": 74367713,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01"
+  },
+  "version_scope": "Names are the proposed minimal rebind set, not existing producer or future evidence descriptors. Root may settle equivalent version labels before code authoring."
+}

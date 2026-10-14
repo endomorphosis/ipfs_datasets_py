@@ -1,0 +1,159 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md": {
+      "bytes": 9905,
+      "sha256": "109f6a0d8dd66b61a783cb0437f21ddd5a82728353022e95360f6724a9782141"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 3506,
+      "sha256": "ea363fb5d0fb3129e67c44ec44393ea8fe3111155984ee350c17dac265ac3591"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-runtime-review-v01.json": {
+      "bytes": 87180,
+      "sha256": "7addc2135ff36c553183f0a8818280b044f694fb592aca152826db8922d3d5a5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-hinge-terminal-resource-audit-v01.json": {
+      "bytes": 43725,
+      "sha256": "4066de94530f90d41222334050924f27ed4ce7e0f3e8e00dd97c24a41b598c68"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-output-freeze-v01.json": {
+      "bytes": 22324,
+      "sha256": "f5140b6c3c9a6c32ec3e012444f873bfc79c4f6936d0b2d76296748fa5ceda30"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/actor-context-ranking-result-independent-review-v01.json": {
+      "bytes": 14788,
+      "sha256": "d12ab3444109c957ddf6710d084babe73fd4354fa39336c5b6839abaa885268a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-completion-independent-review-v01.json": {
+      "bytes": 164985,
+      "sha256": "2ed67d38bffe368581c86919c7c8de4fae42e6c1a373fb399afe0ee14e58d274"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-interruption-v01.json": {
+      "bytes": 4683,
+      "sha256": "ee29856ded7d1b19fae1a4655263ee5696cbf6f9aed08c922a57ec55c86073c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-partial-discrepancy-independent-v01.json": {
+      "bytes": 16981,
+      "sha256": "e847a88b2371359634540e280c0fb42db1a2dd4073d4d6bf9e17d9d4cc61e9b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-resume-independent-review-v01.json": {
+      "bytes": 152007,
+      "sha256": "84954e510b5884a400c3cbb1cef8ca09e735f5219afbb5b7a947ef3ab8bc2158"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-publication-verification-v02.json": {
+      "bytes": 100015,
+      "sha256": "d00ce44fc8eee0216861698f8021e549291015c76e206801d94f8c01eb1cd0fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/hf-resume-correction-verified-v01.json": {
+      "bytes": 267,
+      "sha256": "6a0c2ada73efc9261a3074f4a3afca80d283aa80a731efada617533673ba5d1b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/postfreeze-next-training-design-v01.json": {
+      "bytes": 17180,
+      "sha256": "0b8bc269f028a75ccdaf8f0c320c83b8de5d643d562a462cb08be1486638b7fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/pre-run-upstream-intake-v01.json": {
+      "bytes": 14798,
+      "sha256": "600ef51584d9ee2391381edaab48996cdf53fc5f40eea8db2b713359ec3d052c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-result-summary-v01.json": {
+      "bytes": 9283,
+      "sha256": "6ebcace6fd13bc112eff52e9d2cce04dfcf4db5a461153df6cefda7ecc23c9e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-source-capsule-v04.json": {
+      "bytes": 95739,
+      "sha256": "6fb4b39d6ec8511b5ca5a71283da28502a95ae7a64438cca14d3e9c326b64bfe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/public-summary-card-independent-review-v01.json": {
+      "bytes": 9730,
+      "sha256": "0f4de1c459f95c03562e18e544404938be8bf910aa0b00fd76c9d94152461b28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-datasets-v01.json": {
+      "bytes": 9280,
+      "sha256": "c06eafcb49a3a3410f6d95c1d61f21c94a08f73904c4400a989ab61d6ea0e804"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-head-review-root-v01.json": {
+      "bytes": 7331,
+      "sha256": "645d3670df9f0802f3c77d0691e69bb5792613c1a2fc7a1bae974e2e8346426f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-autoformalization-source-alignment-20261014-01/completion.json": {
+      "bytes": 25943,
+      "sha256": "03040f6d4916cbef9075e1626b13e7554aaa7f6026ab0e43cd1f7ec4703652ca"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-autoformalization-source-alignment-20261014-01/independent-source-alignment-audit.json": {
+      "bytes": 8707,
+      "sha256": "0ce77f923147b204af9fcbf7c48de7efe32aeb39e221e719bebbf8b2b2d5500f"
+    }
+  },
+  "authorship": {
+    "independent_result_and_actual_HF_review_by_reviewer": false,
+    "primary_analysis_and_recount_by_reviewer": true,
+    "report_by_reviewer": false,
+    "summary_by_reviewer": false
+  },
+  "checks": [
+    "actual_result_review_clean",
+    "actual_HF_completion_review_clean",
+    "all_nine_scope_table",
+    "authored_dev_score_row",
+    "authored_eval_score_row",
+    "fresh_challenge_score_row",
+    "fresh_dev_score_row",
+    "fresh_test_score_row",
+    "fresh_tune_score_row",
+    "old_authored_eval_score_row",
+    "old_tune_score_row",
+    "training168_score_row",
+    "negative_and_permission_qualifiers",
+    "actor_gains_and_hinge",
+    "14_error_partition",
+    "exact_main_hinge_and_geometry",
+    "fixed_recipe",
+    "runtime_counts",
+    "copied_parent_and_bits",
+    "freeze_and_owner_counts",
+    "terminal_facts",
+    "HF_final_quantities",
+    "HF_forced_raw_proof_qualified",
+    "original_failure_preserved_and_exact_resume",
+    "opaque_checkpoint_metadata",
+    "99_source_capsule_and_exclusions",
+    "finite_source_ancestry_snapshot",
+    "finite_root_ancestry_snapshot",
+    "integration_not_premature_merge_claim",
+    "future_design_is_proposal",
+    "alignment_pending_not_legal_gold",
+    "no_latent_or_legal_overclaim"
+  ],
+  "checks_passed": 32,
+  "default_promotion": false,
+  "findings": [],
+  "operations": {
+    "Git_commands_or_mutations": 0,
+    "checkpoint_or_saved_head_or_gold_body_parses": 0,
+    "model_or_encoder_calls": 0,
+    "network_queries_or_downloads": 0,
+    "new_scoring_runs": 0,
+    "numerical_imports": 0,
+    "private_body_reads": 0,
+    "report_edits": 0,
+    "resource_API_calls_or_census": 0
+  },
+  "passed": true,
+  "qualifications": [
+    "The report accurately preserves authored_dev+2 and the old_tune actor/full-IR loss, without conflating all32 P modality decisions with all32 rule retention.",
+    "Actual HF claims now bind the completed independent review164985/2ed67d38; this reviewer made no new SDK call, download or numerical reload. The strict original .gitattributes failure remains failed, and one explicit correction is disclosed.",
+    "Integration/head counts are the finite observed public-branch snapshot. This is not an actual future source/root merge proof, live census, continuous custody claim or unpublished-worktree audit.",
+    "The historical scope-family build is expressly separate from F16 and statutory truth. Exact historical native counts are carried as the report's bounded prior-phase statement, not a new build or independent numerical/semantic verification in this review.",
+    "Next-training tensor/scalar counts and distillation are source-derived proposals only. No future accuracy or161complete-IR ceiling is asserted."
+  ],
+  "report": {
+    "bytes": 9905,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/COMPLETED_REPORT_v01.md",
+    "sha256": "109f6a0d8dd66b61a783cb0437f21ddd5a82728353022e95360f6724a9782141"
+  },
+  "reviewed_at_utc": "2026-10-14T13:44:52.497971+00:00",
+  "schema": "actor-context-ranking-completed-report-independent-review/v1",
+  "scientific_success": false,
+  "scope": "Independent prose/qualifier check of root-authored completed report against qualified public result, runtime, HF, finite intake and proposal metadata. No fresh scoring or remote query."
+}

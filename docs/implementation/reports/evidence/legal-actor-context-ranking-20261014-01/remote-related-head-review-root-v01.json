@@ -1,0 +1,191 @@
+{
+  "foreign_refs_or_worktrees_modified": false,
+  "heads": [
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "9e794a4cfdc9cbfacdb63604dcca1605ce2bf1d5",
+      "ref": "refs/heads/agent/autoencoder-progress-reconciliation-20261006"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "aab99b3792e4d13572830f4aa91c7915092b23fe",
+      "ref": "refs/heads/codex/autoencoder-reconciliation-20261007-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "017c70b007a2b2690f419bd2b18f6761c5e2ee38",
+      "ref": "refs/heads/codex/legal-actor-boundary-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "4f5a81a71cbbf9369e1afd9123bcc3c397392bed",
+      "ref": "refs/heads/codex/legal-actor-features-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "b92c62576e1dc1b38a473fe3740571aaa4e0d495",
+      "ref": "refs/heads/codex/legal-actor-ranking-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "3aafb03f4a47df741ffd2999b664f7d469e3e9f7",
+      "ref": "refs/heads/codex/legal-actor-refinement-20261014-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "9560715afae323defa5e4cb5ae769cc530f10ec3",
+      "ref": "refs/heads/codex/legal-balanced-execution-20261014-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "72d3352f985777373a3b59b80807ac786bd020e4",
+      "ref": "refs/heads/codex/legal-conditions-recall-20261014-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "50ad273eba32737117aa158cf64826d3963ff504",
+      "ref": "refs/heads/codex/legal-formal-output-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "b6dffa3a21a3ba8b0d5e0972c1296ca51d410ef7",
+      "ref": "refs/heads/codex/legal-head-repair-20261014-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "739e7088a203a4b307d96192e489a88dbf9177b1",
+      "ref": "refs/heads/codex/legal-joint-readout-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "e82ec9fdbde3f93cac631d27cac463dc643f3d8c",
+      "ref": "refs/heads/codex/legal-matched-curriculum-20261012-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "d90d47016e60c38ef6b32ea0e23d6a3c2ea8cdc9",
+      "ref": "refs/heads/codex/legal-native-cache-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "00130686f43e35105e2ee98e5a36428f3aff3538",
+      "ref": "refs/heads/codex/legal-open-vocabulary-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "7022af89a77a58c9ea34bd506ad1238d97eee688",
+      "ref": "refs/heads/codex/legal-permission-retention-20261012-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "fb8176ab49e063f6d2446b74bbde0cc34e47b9ad",
+      "ref": "refs/heads/codex/legal-retention-objective-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "3e980a7e37bf39c4d29b3fbfb1369910c2686cd3",
+      "ref": "refs/heads/codex/legal-scope-family-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "5a3172e1d695f0b0337fcb9f91399f10a8a37bf4",
+      "ref": "refs/heads/codex/legal-split-feature-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "6a5db7e355d511f37552b092ef0b232a1d4bf875",
+      "ref": "refs/heads/codex/legal-storage-closeout-workspace-20261012-02"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "b3de21a5ab2d1c16abb65becdd4e604bc11daaeb",
+      "ref": "refs/heads/codex/legal-storage-continuation-20261014-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "3a767d41deb30c83b3d25cdfe1269bdb4bab3904",
+      "ref": "refs/heads/codex/legal-storage-recovery-workspace-20261012-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "fbb194215f19763cf88082bc6ed30eb4bccbbf7f",
+      "ref": "refs/heads/codex/legal-structured-training-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "544ff58507a2237fd697ed2b907dde0fb9a39bae",
+      "ref": "refs/heads/codex/legal-targeted-loss-20261012-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "c38bb4d0530d186414c72e2940e3274b23cd4b0b",
+      "ref": "refs/heads/codex/legal-temporal-adapter-root-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "f59df3d04b38b7a43ab945754207e7be57425de1",
+      "ref": "refs/heads/codex/legal-temporal-adapter-root-20261013-02"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "e6fdeac5ea72deb2920719b378e213b62c5487d8",
+      "ref": "refs/heads/codex/legal-temporal-attention-20261013-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "72b5da10319c02e7da84ecea65c6e34583b0e03d",
+      "ref": "refs/heads/codex/legal-temporal-binding-workspace-20261012-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "f23fd713ab83ef2ed800c0b62e36edef7d80073f",
+      "ref": "refs/heads/codex/legal-temporal-contrast-workspace-20261011-01"
+    },
+    {
+      "commits_outside_observed_main": 0,
+      "is_ancestor_of_observed_main": true,
+      "oid": "e33dbd0e9a09fddfffdfb0af66fd7ab8e323638f",
+      "ref": "refs/heads/codex/legal-temporal-presence-20261013-01"
+    }
+  ],
+  "intake": {
+    "bytes": 3633,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-context-ranking-20261014-01/remote-related-heads-root-v01.json",
+    "sha256": "6cbc2601310e72a058574c45a7c3e9b3e86e4fe13fce6ecc18ec9c35b2e317e8"
+  },
+  "limits": "Name-filtered published head/ancestry snapshot only; no private/unpublished worktree inspection or attribution.",
+  "observed_at_utc": "2026-10-14T13:04:35.232676+00:00",
+  "observed_main": "dd528f888484f47b9665c2a5d1477d2a4dec7e0b",
+  "owned_new_fetch_refs": [],
+  "schema": "actor-context-ranking-remote-related-head-review/v1",
+  "unmerged_heads_automatically_integrated": false,
+  "working_tree_or_index_changed": false
+}
