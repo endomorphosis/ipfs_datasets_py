@@ -1,0 +1,79 @@
+{
+  "actual_net_counted_savings_bytes": 783677871,
+  "all32_permission_cases_retained": true,
+  "archive_immutable_publication_verified_by_pinned_receipt": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 2754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/MODEL_CARD_v01.md",
+      "sha256": "e3b072e59f9774d9aeb85358ab2c3131bb81ed6f41da499c0a063c6f59c81df8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-runtime-review-v01.json": {
+      "bytes": 87286,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-runtime-review-v01.json",
+      "sha256": "f8d6b98215732ee8baf43646e065556a882729cb9ed6e0f2c1fb7e6872435e80"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-terminal-resource-audit-v01.json": {
+      "bytes": 41117,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-terminal-resource-audit-v01.json",
+      "sha256": "bb30ea75741a9b0ca46969fc142ff067e299ff2c8820eedc699b33aa4bd3adac"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json": {
+      "bytes": 21456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json",
+      "sha256": "fcb0e01d212174c936c5a61c3efa7c8c229015097ff6eabde1fd3fdea61d72d9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json": {
+      "bytes": 98977,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+      "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json": {
+      "bytes": 2337,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+      "sha256": "061df2c38c9d18889556ca7388a9b1b4b23fea47bfef358574945698e2705515"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-actual-independent-review-v01.json": {
+      "bytes": 121467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-actual-independent-review-v01.json",
+      "sha256": "69cfa09e4ea93fa7bd3feec16a4074bafe4b55ab8c9cf4268ec216f7eb7ea99e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-applied-v01.json": {
+      "bytes": 3663,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-applied-v01.json",
+      "sha256": "9162798c9896636524c67f6915d15519418a46c28c3213dac455bd2990e00e31"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json": {
+      "bytes": 4750,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json",
+      "sha256": "c579a3e8feb9277235816137649757ce9a7cdc4e522255c22da79316efd04d48"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json": {
+      "bytes": 9624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json",
+      "sha256": "f1984b7d2b641f727d6e079872e888f081c8f14e51ff287e4cc5348fa15441ab"
+    }
+  },
+  "card_release_inventory_claim_requires_actual_model_publication_before_final_Git_commit": true,
+  "findings": [],
+  "independent_numerical_reload_claimed": false,
+  "model_HF_publication_not_yet_observed": true,
+  "original800M_target_met": false,
+  "passed": true,
+  "review_actions": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_parses": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "new_censuses": 0,
+    "private_endpoint_body_reads": 0,
+    "public_metadata_reads_only": true
+  },
+  "schema": "actor-refinement-public-summary-card-storage-independent-review/v1",
+  "scientific_success": false,
+  "storage_net_savings_arithmetic_exact": true,
+  "summary_all18_parent_and_trained_panel_counts_match_independent_review": true,
+  "training_raw_and_joint": 154,
+  "training_required_minimum": 155,
+  "zero_complete_IR_loss_IDs_all9_scopes": true
+}

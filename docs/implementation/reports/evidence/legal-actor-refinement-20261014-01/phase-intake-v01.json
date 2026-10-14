@@ -1,0 +1,33 @@
+{
+  "baseline_choice": "N11; balanced comparison failed acceptance and is not promoted",
+  "canonical_raw4": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_raw4_unchanged": true,
+  "checkpoint_JSON_parses": 0,
+  "claims_acquired": 0,
+  "independent_git_metadata": true,
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T08:49:39.736634+00:00",
+  "prior_completion": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/completion-review-v01.json",
+  "private_body_reads": 0,
+  "schema": "actor-refinement-environment-intake/v1",
+  "source_checkout": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets",
+  "source_parent": "caeaf877f8bfe55366f916dbe4d633e42baa984c",
+  "storage_cap_bytes": 145000000000
+}

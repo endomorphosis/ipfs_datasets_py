@@ -1,0 +1,48 @@
+{
+  "actual_metadata_detached_helper_calls": 1,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json": {
+      "bytes": 66306,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-plan-v01.json",
+      "sha256": "bc7facaba1d1bc78b8145bdd9fed2957e488cab22eb27f470ddd208b04aa5375"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py": {
+      "bytes": 28390,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py",
+      "sha256": "471dc3f744bfd374e798e0b9e0633a01b1045f039b689e3111c17fe3a4017e95"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v01.py": {
+      "bytes": 17151,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/build_actor_refinement_release_spec_v01.py",
+      "sha256": "1e3ba03b62ee64f90923f96a96fd177cae7c3c1334eed5190ceb46b8e5f45dd6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-port-derivation-v01.json": {
+      "bytes": 8643,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-helper-port-derivation-v01.json",
+      "sha256": "3addb01cc6abf3719ee2df6e9556a609a7fd8a2d201b1fcc0263fa9c7e75b167"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 40673,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "2b9ef89ebf9512ccdc61ccfa0e7e83a00b291764ad74fae22272b4be5e5b9ca1"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [
+    {
+      "actual_qualified_key": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+      "code": "supplemental_source_map_key_shape",
+      "descriptor_matches": true,
+      "helper_expected_key": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+      "observed_refusal": "Exact one supplemental attention source qualification required",
+      "remainder_after_diagnostic_only_in_memory_key_normalization": "All40 actual plan-admitted sources validate; no artifact edited"
+    }
+  ],
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": false,
+  "private_body_reads": 0,
+  "production_main_calls": 0,
+  "schema": "actor-refinement-Hub-helper-port-custody-finding/v1"
+}

@@ -1,0 +1,74 @@
+{
+  "actual_tree_censuses": 0,
+  "all_original_directories_preserved": true,
+  "all_removed_bytes_recoverable_from_durable_counted_archive_and_HF": true,
+  "all_runtime_command_terminal_metadata_preserved": true,
+  "applied_at_utc": "2026-10-14T09:46:54.752238+00:00",
+  "cap_changed": false,
+  "checkpoint_JSON_parses": 0,
+  "claims_modified": 0,
+  "concrete_review": {
+    "bytes": 30676,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-independent-review-v01.json",
+    "sha256": "47df35baee736ae63a9959e90c0a6cfb6379d99804c69762b43e634d8ab26aad"
+  },
+  "continuous_original_raw_path_availability_claimed": false,
+  "counted_archive": {
+    "bytes": 149504694,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-released-results-20261014-v01.tar.gz",
+    "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+  },
+  "counted_metadata_actual_bytes": 1142964,
+  "counted_metadata_bound_bytes": 2000000,
+  "counted_progress_journal": {
+    "bytes": 341530,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-released-results-20261014-v01.journal.jsonl",
+    "sha256": "db21099d06be72da5217c78a39c42793894fb82475545462a4df9e02b81557a0"
+  },
+  "counted_restoration_manifest": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-released-results-20261014-v01.manifest.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "findings": [],
+  "fresh_qualified_post_apply_native_baseline_required": true,
+  "hf_publication": {
+    "bytes": 4750,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-hf-publication-v01.json",
+    "sha256": "c579a3e8feb9277235816137649757ce9a7cdc4e522255c22da79316efd04d48"
+  },
+  "measured_net_apparent_savings_bytes": 783677871,
+  "minimum_conservative_savings_bytes": 750000000,
+  "model_calls": 0,
+  "new_claims": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "prepared": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "private_endpoint_reads": 0,
+  "producer": {
+    "bytes": 13454,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/apply_owned_results_archive_v01.py",
+    "sha256": "e8cd87849223767c40d48c5e90da55bc7f93f21a6ce2e1a128fc48ede3855d41"
+  },
+  "protected_attempts": [
+    "conditions-balanced-20261014-conditions-balanced-ce-01",
+    "conditions-presence-20261014-conditions-presence-ce-01"
+  ],
+  "quarantine_empty": true,
+  "raw_removed_bytes": 934325529,
+  "removed_original_file_count": 1162,
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-owned-results-archive-applied/v1",
+  "source_qualification": {
+    "bytes": 5381,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-apply-source-independent-review-v01.json",
+    "sha256": "88dcadd74569b9cd0ae05205411567ccd311dc90f58dc948e132796404383fe1"
+  },
+  "target800M_met": false,
+  "temporary_private_quarantine": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/attempt-01/owned-results-archive-quarantine-v01",
+  "training_authorized": false
+}

@@ -1,0 +1,36 @@
+{
+  "actual_review": {
+    "bytes": 220073,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-actual-independent-review-v01.json",
+    "sha256": "3097b700479052acffcc3a601e0cacc376247871b67c01cfac357da5a51fcaab"
+  },
+  "checks": [
+    {
+      "full_descriptors_compared_to_brief_descriptors": 16,
+      "gate": {
+        "bytes": 9166,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-resume-helper-source-independent-review-v01.json",
+        "sha256": "f512502ffbc42f2049081085090010b07c7879cf3fad5471fc72c15086ce2298"
+      },
+      "normalized_path_bytes_sha256_all_exact": true,
+      "overlapping_artifact_pins": 16
+    },
+    {
+      "full_descriptors_compared_to_brief_descriptors": 221,
+      "gate": {
+        "bytes": 263832,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/hf-publication-resume-independent-review-v01.json",
+        "sha256": "8bc3f85823eb1055ab4c70005a617698e42c64fb1490aaefac3428c891a7d833"
+      },
+      "normalized_path_bytes_sha256_all_exact": true,
+      "overlapping_artifact_pins": 221
+    }
+  ],
+  "diagnosis": "The initial ephemeral assembly script compared brief artifact-map values {bytes,sha256} directly with gate full descriptors {path,bytes,sha256}. Whole-dictionary equality fails because the representations differ. Explicit same-path plus bytes/SHA256 normalization matches every overlapping descriptor. No raw file, publication identity, or chain mismatch exists.",
+  "existing_artifacts_modified": false,
+  "findings": [],
+  "model_calls": 0,
+  "network_calls": 0,
+  "passed": true,
+  "schema": "actor-refinement-Hub-independent-review-preseal-bookkeeping-resolution/v1"
+}

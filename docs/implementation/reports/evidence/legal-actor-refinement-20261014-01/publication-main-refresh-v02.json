@@ -1,0 +1,57 @@
+{
+  "algorithm_source_count": 40,
+  "all40_admitted_algorithm_files_exact": true,
+  "branch_or_index_mutations": 0,
+  "canonical_Git_commands": 0,
+  "canonical_raw4": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "path": "/home/barberb/lift_coding/.git/HEAD",
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "path": "/home/barberb/lift_coding/.git/index",
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_raw4_unchanged": true,
+  "checkpoint_JSON_parses": 0,
+  "fetch_flags": [
+    "--no-write-fetch-head",
+    "--no-tags",
+    "--no-auto-maintenance",
+    "--refmap=",
+    "--recurse-submodules=no"
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T10:30:53.101371+00:00",
+  "passed": true,
+  "private_body_reads": 0,
+  "root": {
+    "current_head": "51774875d8e42deb4d378aa4d9dbf3ec8329969f",
+    "fetched_ref": "refs/codex/legal-actor-refinement-20261014-01/root-publication-main-intake-v02",
+    "main": "51774875d8e42deb4d378aa4d9dbf3ec8329969f",
+    "main_unchanged_since_prior": true,
+    "owned_repo": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/root"
+  },
+  "schema": "actor-refinement-publication-main-refresh/v2",
+  "source": {
+    "current_head": "058defd650493f803a7760d05f64026875d8204b",
+    "fetched_ref": "refs/codex/legal-actor-refinement-20261014-01/source-publication-main-intake-v02",
+    "main": "802c8f32c8b3d3058271e23c69e93f37b39f43fb",
+    "main_unchanged_since_prior": true,
+    "owned_repo": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets"
+  }
+}

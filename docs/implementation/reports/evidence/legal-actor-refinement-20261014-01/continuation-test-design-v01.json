@@ -1,0 +1,85 @@
+{
+  "actual_model_or_numerical_imports": 0,
+  "actual_new_module_qualified": false,
+  "additional_notes": [
+    "Do not call either inherited _initial_state: actor_features resets query/gate/actor readouts and conditions_presence resets learned conditions readout.",
+    "Use fake no_grad nesting depth and asymmetric token features/padding to exercise actual nonzero trained route, masked attention and token-varying residuals.",
+    "Existing conditions _frozen_head_digest omits learned conditions; replace its protected projection. A before-output digest alone is not after-update parity evidence.",
+    "Nonzero trained values need not yield nonzero gradients for every tensor on every batch. Actor pointer biases add a common score shift and can have zero gradient.",
+    "Independent fake fixtures must make conditions_presence rows2:4 differ from original presence so recopying original values cannot pass accidentally."
+  ],
+  "checkpoint_heads_gold_or_private_body_reads": 0,
+  "critical_controls": [
+    "Full42 initialization retains trained nonzero query/gate and deliberately distinct learned conditions rows.",
+    "Training route has connected six actor tensors with frozen encoders and learned conditions detached; inherited outer no_grad must not suppress actor gradients.",
+    "Finite nonzero first query/gate gradients/moments accepted; zero actor bias gradients are allowed; inactive650 gradients/moments and allfrozen36 remain protected.",
+    "Final protected projection catches conditions-presence/modality/nonactor boundary bit flips including signedzero; actor-vector changes accepted.",
+    "CompleteIR includes modality; any lossID vs N11 in either route/scope fails, either training count<=154 fails, any permission loss/abstention fails.",
+    "Synthetic N11 conditions-presence joint-panel schema is accepted; unknown schemas/replay/topK/searchbound/source IDs refused."
+  ],
+  "exact_trainable_tensor_names": [
+    "actor_start.weight",
+    "actor_start.bias",
+    "actor_end.weight",
+    "actor_end.bias",
+    "actor_attention.query",
+    "actor_context.gate"
+  ],
+  "executed_tests": 0,
+  "geometry": {
+    "active_trainable_scalars": 258,
+    "actor_pointer_active_rows": [
+      0
+    ],
+    "actor_pointer_inactive_rows": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "all32_returned_branch_and_gradient_moment_freeze_traces_required": true,
+    "both_complete_N11_conditions_presence_tensors_frozen": true,
+    "exact_tensor_count": 42,
+    "frozen_gradients_none_and_no_frozen_optimizer_members": true,
+    "frozen_tensor_count": 36,
+    "inactive_gradients_and_Adam_moments_zero": true,
+    "inactive_stored_scalars": 650,
+    "query_and_gate_full64_active": true,
+    "stored_trainable_scalars": 908,
+    "trainable_parameter_order": [
+      "actor_start.weight",
+      "actor_start.bias",
+      "actor_end.weight",
+      "actor_end.bias",
+      "actor_attention.query",
+      "actor_context.gate"
+    ],
+    "trainable_tensor_count": 6
+  },
+  "prepared_only": true,
+  "review_basis": "Read-only delegated independent source review of retained N11/actor feature implementations and detached tests; no numerical imports or actual checkpoint/head/reference bodies.",
+  "schema": "actor-refinement-continuation-test-design/v1",
+  "source_pins": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py",
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_features_contracts.py": {
+      "bytes": 39343,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_features_contracts.py",
+      "sha256": "2fce1a325218550bae160a58f9bba4fdd3c1b351d7bf2da320004905bb668ce0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_presence_contracts.py": {
+      "bytes": 17039,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_presence_contracts.py",
+      "sha256": "1fe49c0e36242ffa21455be2b14ae4664e2eb549b89c937748da62d3fe815e3b"
+    }
+  }
+}

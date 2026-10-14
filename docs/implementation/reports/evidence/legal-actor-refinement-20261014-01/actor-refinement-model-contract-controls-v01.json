@@ -1,0 +1,94 @@
+{
+  "actual_detached_unittest_cases": 9,
+  "actual_model_calls": 0,
+  "actual_numerical_imports": 0,
+  "actual_training_updates": 0,
+  "architecture": {
+    "active_trainable_scalars": 258,
+    "factory": "legal_span_actor_features._model differentiable inherited forward, plus learned frozen N11 conditions_presence full8 on extra frozen span features",
+    "feature_paths_per_source_forward": 3,
+    "frozen_tensors": 36,
+    "inactive_trainable_scalars": 650,
+    "loaded_and_mandatory_modules": "must be measured by actual inert bootstrap",
+    "source_model_forwards_per_capture_row": 1,
+    "source_model_tensors": 42,
+    "source_owner_modules_expected": 39,
+    "stored_trainable_scalars": 908,
+    "supplemental_nonimported_source_files": 1,
+    "trainable_tensors": 6
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py",
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py": {
+      "bytes": 21092,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py",
+      "sha256": "d98fded27a3b2aff697ec072533b0124ea1eb1d96baa0954621681651a9fc43a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/training-design-v01.json": {
+      "bytes": 4625,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/training-design-v01.json",
+      "sha256": "f56bbf45b2dfbd5465dee4b32fda23417f44543686dcc95cde42ec91961a8e4e"
+    }
+  },
+  "checkpoint_JSON_or_saved_heads_or_gold_or_private_body_reads": 0,
+  "checks": [
+    "Exact N11 trained42 deep copy, preserve nonzero query/gate/learned conditions, and independent source storage",
+    "Derived source-frozen36 digest is separate from full42 donor digest, validated against immutable donor subset",
+    "Fresh Adam owns actor6; finite nonzero first query moments allowed; inactive650 rows and shape/finite/type guards reject mutations",
+    "Trained-first-step feature trace accepts nonzero query/context gradients, changed query and nonzero moments; no fresh-zero assumptions",
+    "Freeze trace permits only actor6, protects learned N11 conditions36 and inactive650; source-frozen36 supplied in each trace row",
+    "Fake actual factory retains differentiable inherited actor forward, adds exactly one frozen span feature pass and frozen full8 conditions projection, preserves protected output references, independent copied head and ambient RNG",
+    "Parameter configuration owns42 independent tensors/storages, trains exact6 in order, freezes36, refuses aliasing",
+    "Retained targeted CE returns same loss object, ranking OFF, authenticated actor coordinates/index and complete batch denominator",
+    "Retained schedule32 updates/batch12/seed1729 is384 occurrences on168; bad train budgets reject before checkpoint/model access"
+  ],
+  "final_test_elapsed_seconds": 0.478,
+  "findings": [],
+  "implementation_limitations": [
+    "Fake controls do not establish binary32 numerical parity or actual autograd gradients; guarded child must establish632 initial and protected632 final parity plus all32 numerical traces",
+    "No actual experiment performance or future success claimed",
+    "Nested N11 source checkpoint remains embedded under existing128MiB model bound; future actual output size and publication per-file bound require direct measurement"
+  ],
+  "passed": true,
+  "schema": "actor-refinement-model-contract-controls/v1",
+  "scope": "AST-selected production pure functions plus stdlib fake tensors, no package imports; synthetic donor digest overrides only in detached namespace",
+  "source": {
+    "bytes": 56952,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+    "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+  },
+  "tests": {
+    "bytes": 21092,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py",
+    "sha256": "d98fded27a3b2aff697ec072533b0124ea1eb1d96baa0954621681651a9fc43a"
+  },
+  "training_design": {
+    "bytes": 4625,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/training-design-v01.json",
+    "sha256": "f56bbf45b2dfbd5465dee4b32fda23417f44543686dcc95cde42ec91961a8e4e"
+  }
+}

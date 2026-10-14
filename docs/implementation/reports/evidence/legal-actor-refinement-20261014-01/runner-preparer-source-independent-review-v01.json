@@ -1,0 +1,183 @@
+{
+  "actual_bootstrap": {
+    "bytes": 8822,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-bootstrap-smoke-controls-v02.json",
+    "sha256": "962204bab70cdf42f7f32d97c1e3ccd8914755d350c81f9852bdc9217c6bd97a"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-bootstrap-smoke-controls-v02.json": {
+      "bytes": 8822,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-bootstrap-smoke-controls-v02.json",
+      "sha256": "962204bab70cdf42f7f32d97c1e3ccd8914755d350c81f9852bdc9217c6bd97a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_bootstrap_smoke_controls_v02.py": {
+      "bytes": 7083,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_bootstrap_smoke_controls_v02.py",
+      "sha256": "2c396545cf9326c579ad2507ea1500d8cce711079544d5c5e830db2a2957f5e0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_recipe_independent_controls_v02.py": {
+      "bytes": 12935,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_recipe_independent_controls_v02.py",
+      "sha256": "beb0311b1f6f4f403296ea0315d952a691b9fed48b8ca59b5077b92b637a1172"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v02.py": {
+      "bytes": 19906,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v02.py",
+      "sha256": "2d16688e59fcc1877e31fb5579904f8c961e2566b0aee8ed0a77c86d92370f10"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v02.py": {
+      "bytes": 13018,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v02.py",
+      "sha256": "94e950ba5c2c8061be1bfcac2a928e4417e401b99d585fd59ef42d47f79626c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/recipe-independent-detached-controls-v02.json": {
+      "bytes": 2871,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/recipe-independent-detached-controls-v02.json",
+      "sha256": "d185f415d880aec9f3c4119b4ef7a9f7a42edaf29a426de2d0072d16cacacb92"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v02.py": {
+      "bytes": 37759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v02.py",
+      "sha256": "511320fcd5f5bd1b1b0967667f2b4f219134f2ace615b7a30c675f04877b99f3"
+    }
+  },
+  "bootstrap_controls": {
+    "bytes": 7083,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_bootstrap_smoke_controls_v02.py",
+    "sha256": "2c396545cf9326c579ad2507ea1500d8cce711079544d5c5e830db2a2957f5e0"
+  },
+  "detached_control_count": 19,
+  "detached_control_receipt": {
+    "bytes": 2871,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/recipe-independent-detached-controls-v02.json",
+    "sha256": "d185f415d880aec9f3c4119b4ef7a9f7a42edaf29a426de2d0072d16cacacb92"
+  },
+  "findings": [],
+  "limitations": [
+    "Qualifies recipe source and actual inert import smoke; does not qualify actual capacity/native admission, a concrete training plan, numerical parity, training completion, or scientific success.",
+    "Actual fresh source-qualified baseline and exact concrete plan review remain required before guardian execution."
+  ],
+  "literal_port_proof": {
+    "bootstrap": {
+      "byte_exact_after_declared_replacements": true,
+      "current": {
+        "bytes": 7083,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_bootstrap_smoke_controls_v02.py",
+        "sha256": "2c396545cf9326c579ad2507ea1500d8cce711079544d5c5e830db2a2957f5e0"
+      },
+      "only_literal_replacements": {
+        "actor-refinement-bootstrap-smoke-controls-v01.json": "actor-refinement-bootstrap-smoke-controls-v02.json",
+        "run_actor_refinement_v01.py": "run_actor_refinement_v02.py"
+      },
+      "original": {
+        "bytes": 7083,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_bootstrap_smoke_controls_v01.py",
+        "sha256": "453d3358b056cbde6326b557c389c9ec03a3cf598673b81d6839b9521179eb9c"
+      }
+    },
+    "preparer": {
+      "byte_exact_after_declared_replacements": true,
+      "current": {
+        "bytes": 13018,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v02.py",
+        "sha256": "94e950ba5c2c8061be1bfcac2a928e4417e401b99d585fd59ef42d47f79626c3"
+      },
+      "only_literal_replacements": {
+        "actor-refinement-bootstrap-smoke-controls-v01.json": "actor-refinement-bootstrap-smoke-controls-v02.json",
+        "actor_refinement_bootstrap_smoke_controls_v01.py": "actor_refinement_bootstrap_smoke_controls_v02.py",
+        "actor_refinement_resource_protocol_v01.py": "actor_refinement_resource_protocol_v02.py",
+        "run_actor_refinement_v01.py": "run_actor_refinement_v02.py"
+      },
+      "original": {
+        "bytes": 13018,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v01.py",
+        "sha256": "76cfdf05f3de904bfec6b910d206f9a2c5ae710f7cb9461a897e7f126b0c4495"
+      }
+    },
+    "runner": {
+      "byte_exact_after_declared_replacements": true,
+      "current": {
+        "bytes": 37759,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v02.py",
+        "sha256": "511320fcd5f5bd1b1b0967667f2b4f219134f2ace615b7a30c675f04877b99f3"
+      },
+      "only_literal_replacements": {
+        "actor_refinement_resource_protocol_v01.py": "actor_refinement_resource_protocol_v02.py"
+      },
+      "original": {
+        "bytes": 37759,
+        "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v01.py",
+        "sha256": "9c1fe62765d07d2ae840d97461ea4b5952a42db71dae5b18c093ba54fe29923b"
+      }
+    }
+  },
+  "passed": true,
+  "preparer": {
+    "bytes": 13018,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v02.py",
+    "sha256": "94e950ba5c2c8061be1bfcac2a928e4417e401b99d585fd59ef42d47f79626c3"
+  },
+  "reviewer_actions": {
+    "Git_mutations": 0,
+    "checkpoint_JSON_or_actual_saved_scores_or_reference_or_private_body_parses": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "new_bootstrap_runs": 0,
+    "numerical_imports": 0,
+    "production_main_calls": 0,
+    "resource_API_calls": 0
+  },
+  "runner": {
+    "bytes": 37759,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v02.py",
+    "sha256": "511320fcd5f5bd1b1b0967667f2b4f219134f2ace615b7a30c675f04877b99f3"
+  },
+  "schema": "actor-refinement-runner-preparer-source-independent-review/v1",
+  "source_review": {
+    "active_trainable_scalars": 258,
+    "actual_baseline_and_observer_full_public_artifact_chain_qualified_before_output_mkdir": true,
+    "actual_loaded_owners": 16,
+    "all32_trace_hashes_and_batch_feature_freeze_joins": true,
+    "closed_exact_trained_N11_donor": true,
+    "complete_three_original_sources_and_all_final_diffs_read": true,
+    "declared_module_owners": 39,
+    "fixed_resource_envelope": {
+      "child_slots": 1,
+      "cpu_slots": 2,
+      "deadline_seconds": 300,
+      "rss_mib": 1536,
+      "storage_bytes": 200000000
+    },
+    "frozen_tensors": 36,
+    "full632_final_modality_all_presence_and_nonactor_pointer_protection": true,
+    "full632_initial_gate_before_any_update": true,
+    "immutable_originals_preserved": true,
+    "inactive_scalars": 650,
+    "learned_N11_conditions_tensors_frozen": true,
+    "mandatory_loaded_owners": 8,
+    "model_module": "legal_span_actor_refinement",
+    "new_inference_forwards": 1280,
+    "new_training_forwards": 32,
+    "no_fresh_zero_first_query_gradient_or_moment_assumption": true,
+    "nonimported_supplemental_attention_bound": true,
+    "optimizer": "fresh Adam six actor tensors,32updates,batch12,seed/order1729",
+    "resource_baseline_name_and_schema_unchanged": true,
+    "resource_protocol": "actor_refinement_resource_protocol_v02.py",
+    "saved_parent_copies": {
+      "files": 6,
+      "new_forwards": 0,
+      "rows": 240
+    },
+    "source_frozen36_joined_to_validated_checkpoint": true,
+    "source_only_preparation": true,
+    "stored_trainable_scalars": 908,
+    "successful_output_files": 62,
+    "total_new_model_forwards": 1312,
+    "total_new_source_occurrences": 1664,
+    "trained_query_gate_preserved": true,
+    "training_capture_chunks": [
+      128,
+      40
+    ]
+  }
+}

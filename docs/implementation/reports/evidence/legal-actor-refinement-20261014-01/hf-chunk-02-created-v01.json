@@ -1,0 +1,14 @@
+{
+  "names": [
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/baseline-old_tune-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-checkpoint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/cell-training.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/data-schedule-before-models.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parent-head-parity.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-alternate_placeholders.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-disabled.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-rotated_placeholders.json"
+  ],
+  "parent_revision": "5bd19a067cd014288591b12bfc118046f8d978a2",
+  "revision": "1c5d3103e73895c250b84261d7ab4c4341da9a0f"
+}
