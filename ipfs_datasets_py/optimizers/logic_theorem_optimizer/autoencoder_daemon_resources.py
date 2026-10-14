@@ -252,11 +252,25 @@ class DaemonResourceReservation:
     """
 
     def __init__(self, ledger_path, *, roots, storage_bytes, memory_mb, cpu_slots=1, child_process_slots=1,
-                 timeout_seconds=0, ledger_lock_timeout_seconds=None):
+                 timeout_seconds=0, ledger_lock_timeout_seconds=None,
+                 scheduler_state_path=None, expected_scheduler_policy_sha256=None,
+                 require_existing_ledger=False):
         self.storage_bytes = _integer(storage_bytes, "storage_bytes", maximum=MAX_STORAGE_BYTES)
         self.memory_mb = _integer(memory_mb, "memory_mb")
         self.cpu_slots = _integer(cpu_slots, "cpu_slots")
         self.child_process_slots = _integer(child_process_slots, "child_process_slots")
+        if (scheduler_state_path is None) != (expected_scheduler_policy_sha256 is None):
+            raise DaemonResourceError("strict scheduler state and policy must be supplied together")
+        if scheduler_state_path is not None and (
+                not isinstance(scheduler_state_path, (str, Path)) or not str(scheduler_state_path)
+                or type(expected_scheduler_policy_sha256) is not str
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_scheduler_policy_sha256)):
+            raise DaemonResourceError("invalid strict existing scheduler identity")
+        if type(require_existing_ledger) is not bool:
+            raise DaemonResourceError("require_existing_ledger must be a boolean")
+        self._scheduler_state_path = scheduler_state_path
+        self._expected_scheduler_policy_sha256 = expected_scheduler_policy_sha256
+        self._require_existing_ledger = require_existing_ledger
         if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds < 0:
             raise DaemonResourceError("invalid timeout_seconds")
         self.timeout_seconds = float(timeout_seconds)
@@ -329,7 +343,7 @@ class DaemonResourceReservation:
         try:
             descriptor = os.open(self.ledger_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except FileNotFoundError:
-            if self._entered:
+            if self._entered or self._require_existing_ledger:
                 raise DaemonResourceError("disk ledger disappeared") from None
             return {"schema": SCHEMA, "roots": self.root_identities,
                     "limit_bytes": MAX_STORAGE_BYTES, "reservations": {}}
@@ -403,6 +417,13 @@ class DaemonResourceReservation:
     def __enter__(self):
         if self._entered:
             raise DaemonResourceError("reservation can only be entered once")
+        scheduler = None
+        if self._scheduler_state_path is not None:
+            from .existing_resource_scheduler import open_existing_scheduler
+            # Metadata refusal precedes any durable storage reservation. A
+            # later native admission failure retains the normal disk claim.
+            scheduler = open_existing_scheduler(self._scheduler_state_path,
+                                                self._expected_scheduler_policy_sha256)
         with self._locked():
             ledger = self._read()
             if len(ledger["reservations"]) >= MAX_RESERVATIONS:
@@ -421,7 +442,7 @@ class DaemonResourceReservation:
             self._record = copy.deepcopy(record)
             self._entered = True
         try:
-            self._lease = get_global_resource_scheduler().acquire(
+            self._lease = (scheduler if scheduler is not None else get_global_resource_scheduler()).acquire(
                 SCHEDULER_LANE, cpu_slots=self.cpu_slots, memory_mb=self.memory_mb,
                 child_process_slots=self.child_process_slots, requires_gpu=False, timeout=self.timeout_seconds,
                 request_id="daemon:" + self.reservation_id)
@@ -435,6 +456,20 @@ class DaemonResourceReservation:
                 self._cleanup_error = type(cleanup).__name__
             raise
         return self
+
+    def heartbeat(self):
+        """Renew owned native custody without exposing its authority token."""
+        self._verify_owner_roots()
+        if not self._entered or self._lease is None or self._record["status"] == "released":
+            return False
+        return bool(self._lease.renew())
+
+    @property
+    def cancelled(self):
+        """Missing, released or revoked native custody is a cancellation."""
+        self._verify_owner_roots()
+        return (not self._entered or self._lease is None or self._record["status"] == "released"
+                or self._lease.cancelled)
 
     def _update(self, **fields):
         with self._locked():
@@ -541,6 +576,8 @@ class DaemonResourceReservation:
             raise DaemonResourceError("attempt storage byte limit exceeded")
         if group["rss_bytes"] > self.memory_mb * 1024 * 1024:
             raise DaemonResourceError("child group RSS limit exceeded")
+        if self._scheduler_state_path is not None and usage["process_slot_estimate_exceeded"]:
+            raise DaemonResourceError("child group process-slot limit exceeded")
         return copy.deepcopy(usage)
 
     def finalize(self, attempt_directory: Path, *, artifacts_durable=False):

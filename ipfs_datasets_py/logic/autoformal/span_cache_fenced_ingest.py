@@ -146,7 +146,17 @@ def stage_complete_observation(output, destination, stage_exchange, *, release_i
     return result
 
 
-def verify_staged_observation(result, root):
+def verify_staged_observation(result, root, *, historical_evidence_roots=()):
+    from ...optimizers.logic_theorem_optimizer.autoencoder_daemon_resources import _safe_path
+    from .span_cache_exchange import _manifest_file
+    need(type(historical_evidence_roots) in (list, tuple) and len(historical_evidence_roots) <= 64,
+         "bounded explicit historical evidence roots required")
+    allowed = [_safe_path(root, directory=True)] + [_safe_path(path, directory=True) for path in historical_evidence_roots]
+    def owner_root(ref):
+        path = _safe_path(ref["path"])
+        matches = [base for base in allowed if path.is_relative_to(base)]
+        need(matches, "historical staged artifact escapes its explicit owner roots")
+        return matches[0]
     need(type(result) is dict and result.get("schema") == RESULT_SCHEMA, "fenced result reference schema differs")
     base = {"schema", "worker_output", "exchange_manifests", "census_rows", "goal_rows", *_FALSE}
     scoped = {"source_manifest_digest", "source_manifest_scope"}
@@ -163,10 +173,16 @@ def verify_staged_observation(result, root):
         _token(scope["corpus_id"], "corpus ID")
         _token(scope["release_id"], "release ID")
         _revision(scope["source_revision"])
-    verify_reference(result["worker_output"], root)
+    verify_reference(result["worker_output"], owner_root(result["worker_output"]))
     census_count, goal_count = 0, 0
     for ref in refs:
-        verify_reference(ref, root)
+        base = owner_root(ref)
+        verify_reference(ref, base)
+        # Refuse a downloaded-layout escape before decoding either Parquet.
+        manifest = json.loads(_read_regular_snapshot(ref["path"], max_bytes=1024*1024))
+        for kind in ("census", "goals"):
+            material = _safe_path(_manifest_file(Path(ref["path"]), manifest, manifest[kind]))
+            need(material.is_relative_to(base), "historical exchange material escapes its explicit owner root")
         bundle = load_exchange_bundle(ref["path"])
         census_count += len(bundle["census_rows"])
         goal_count += len(bundle["goal_rows"])
@@ -174,7 +190,7 @@ def verify_staged_observation(result, root):
          "persisted staged population differs")
 
 
-def _saved_terminal(owner, span_id, revision, source_sha, code_identity, path_hashes, root, manifest_digest):
+def _saved_terminal(owner, span_id, revision, source_sha, code_identity, path_hashes, root, manifest_digest, historical_evidence_roots=()):
     if owner._binding(owner._connection, span_id) != {"source_revision": revision, "source_sha256": source_sha}:
         return False
     current = owner._connection.execute(
@@ -217,7 +233,7 @@ def _saved_terminal(owner, span_id, revision, source_sha, code_identity, path_ha
                 # A result row alone cannot stand in for its exact committed
                 # operation. Keep it held for explicit owner reconciliation.
                 continue
-            verify_staged_observation(repair, root)
+            verify_staged_observation(repair, root, historical_evidence_roots=historical_evidence_roots)
             return True
     return False
 
@@ -225,7 +241,8 @@ def _saved_terminal(owner, span_id, revision, source_sha, code_identity, path_ha
 def drain_fenced_manifest(cache, manifest, *, worker_pool, compile_worker: Callable,
                           stage_exchange: Callable, exchange_dir, code_identity, path_hashes,
                           source_guard: Callable, worker_id="fenced-ingest-owner", batch_size=16,
-                          max_spans=32, lease_seconds=300, start_index=0, max_examined=256):
+                          max_spans=32, lease_seconds=300, start_index=0, max_examined=256,
+                          historical_evidence_roots=()):
     """Bounded owner selection/resume; worker and staging boundaries are injectable.
 
     Tests inject metadata-only workers/stagers. Real callers must supply the
@@ -299,7 +316,7 @@ def drain_fenced_manifest(cache, manifest, *, worker_pool, compile_worker: Calla
                                        "reason": "source_binding_requires_explicit_expected_binding"})
                 continue
         if span["status"] in {"gap", "sealed"}:
-            if _saved_terminal(owner, spec["source_span_id"], manifest["source_revision"], spec["source_sha256"], code_identity, path_hashes, root, manifest_id):
+            if _saved_terminal(owner, spec["source_span_id"], manifest["source_revision"], spec["source_sha256"], code_identity, path_hashes, root, manifest_id, historical_evidence_roots):
                 result["resumed"] += 1
             else:
                 result["held"].append({"source_span_id": spec["source_span_id"], "reason": "terminal_row_requires_explicit_owner_reconciliation"})

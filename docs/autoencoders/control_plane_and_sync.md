@@ -171,38 +171,34 @@ or manifest context with an already bound row requires the explicit current
 constructed fixture artifact's revision identifies that artifact, not an
 official law release. Binding establishes identity and grants no admission.
 
-After reviewed deployment to the canonical tree, a bounded invocation is:
+After reviewed deployment to the canonical tree, use the
+[native-owned runtime](fenced_span_ingest_runtime.md) with its complete closed
+spec and existing resource/storage reservations:
 
 ```bash
-python3 -B scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py \
-  --claim-profile fenced-v1 \
-  --cache /PRIVATE/PREPARED/span-cache.duckdb \
-  --source-manifest /PRIVATE/EXACT/source-manifest.json \
-  --release-id EXACT_RELEASE_ID \
-  --upload-dir /CHARGED/exchange-outbox \
-  --batch 16 --fenced-span-limit 32 --fenced-scan-limit 256
+python3 -B scripts/ops/legal_ir/run_fenced_span_ingest.py \
+  --spec /PRIVATE/closed-fenced-runtime.json
 ```
 
 This profile requires the script under
 `/home/barberb/lift_coding/external/ipfs_datasets`, verifies actual canonical
 compiler/decompiler/parser import origins, and checks compiler source hashes
 again during work. A development worktree cannot run this real compiler path.
-The existing load-and-memory worker budget remains the default; an explicit
-`--compile-workers` override must be positive. Workers use process spawning,
+The runtime clamps worker selection to the admitted CPU, memory and process
+envelope and observed hardware. Direct unowned `fenced-v1` invocation refuses
+before opening the cache or pool. Workers use process spawning,
 never inherit the owner's live database connection, and retain the existing
 compiler/census/Lake functions and their acceptance criteria. This boundary
 does not train a learned autoencoder or establish decoder fidelity.
 
-Deployment also requires the existing native admitted resource and storage
-budget, including Lake/Lean child processes and their descendants, temporary
-proof artifacts, and retained exchange/output artifacts. `worker_budget()`
-estimates capacity; it grants no lease, resource
-admission, or authorization. An explicit `--compile-workers` override grants
-none either. This CLI currently has no checked external reservation hook, so
-canonical source preflight alone does not make a production run authorized or
-ready. Its report retains `resource_admission_verified_by_cli=false`. Private
-validation uses separately admitted native leases; wiring and checking the
-deployment reservation remains an integration requirement.
+The coordinator verifies the actual external owner's native launch binding;
+`resource_admission_verified_by_cli=true` records that resource gate only.
+It grants no semantic, learned-model or Lean qualification. The runtime page
+describes native policy/ledger preservation, temporary storage, external cache
+growth, cancellation, deadline enforcement and the conservative process floor.
+An existing four-slot process envelope cannot fit one spawned compiler worker;
+this path defers without changing that policy. Private validation uses its
+separately admitted native leases.
 
 Each invocation selects at most `--fenced-span-limit` spans (1–4096), examines
 at most `--fenced-scan-limit` manifest rows (1–4096), and uses batches of 1–32.

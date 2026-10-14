@@ -453,10 +453,40 @@ def test_cli_selects_explicit_profile_and_rejects_real_inference_from_D(monkeypa
     with pytest.raises(RuntimeError, match="canonical workspace tree"):
         cli._fenced_compiler_preflight()
     seen = []
-    def metadata_only(args):
+    def metadata_only(args, *, runtime=None):
         seen.append((args.claim_profile, args.batch, args.source_manifest))
         return {"held": [], "qualified": False, "admitted": False}
     monkeypatch.setattr(cli, "_run_fenced_cli", metadata_only)
     assert cli.main(["--cache", str(tmp_path/"not-opened.duckdb"), "--claim-profile", "fenced-v1", "--source-manifest", "fixture.json"]) == 0
     assert seen == [("fenced-v1", 16, Path("fixture.json"))]
     assert not (tmp_path/"not-opened.duckdb").exists()
+
+
+def test_new_attempt_resumes_exact_history_only_under_explicit_owner_evidence_root(owner, tmp_path):
+    first = tmp_path/"first-attempt"
+    second = tmp_path/"second-attempt"
+    first_report = run(owner, first)
+    (second/"exchange").mkdir(parents=True)
+    def forbidden(*args, **kwargs):
+        pytest.fail("historical resume invoked a new producer")
+    with pytest.raises(ingest.FencedIngestError, match="escapes"):
+        run(owner, second, compile_worker=forbidden, stage_exchange=forbidden)
+    resumed = run(owner, second, historical_evidence_roots=[tmp_path],
+                  compile_worker=forbidden, stage_exchange=forbidden)
+    assert resumed["resumed"] == 1 and resumed["processed"] == 0 and resumed["held"] == []
+    assert list((second/"exchange").iterdir()) == []
+    assert all(resumed[flag] is False for flag in ingest._FALSE)
+    original = Path(first_report["completions"][0]["worker_output"]["path"])
+    original.write_text("tampered historical bytes")
+    with pytest.raises(ingest.FencedIngestError, match="immutable bytes changed"):
+        run(owner, second, historical_evidence_roots=[tmp_path], compile_worker=forbidden)
+
+
+def test_historical_evidence_root_cannot_be_a_symlink(owner, tmp_path):
+    run(owner, tmp_path/"first-attempt")
+    second = tmp_path/"second-attempt"
+    (second/"exchange").mkdir(parents=True)
+    alias = tmp_path/"root-alias"
+    alias.symlink_to(tmp_path, target_is_directory=True)
+    with pytest.raises(RuntimeError, match="symlink"):
+        run(owner, second, historical_evidence_roots=[alias])
