@@ -87,6 +87,9 @@ exited successful process may report false there.
 
 Successful receipts can verify compilation and conditional obligations. Source
 authenticity, reviewed legal meaning, context closure, statutory admission,
-training qualification and legal proof authority remain false. Cross-section
-resolution, broader operators, a reviewed connected pilot, complete toolchain
-release closure and incremental rebuild equivalence remain separate work.
+training qualification and legal proof authority remain false. The additive
+[incremental compilation owner](legal_corpus_incremental.md) connects these
+modules to the existing LegalIR pass manager, verifies the selected installed
+library closure and retains separate fresh/reused artifact evidence. Cross-section
+resolution, broader operators, a reviewed connected pilot and authenticated
+toolchain release provenance remain separate work.
