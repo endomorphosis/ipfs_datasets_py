@@ -468,3 +468,168 @@ def test_entered_native_owner_refuses_uuid_collision_without_reusing_old_bytecod
     assert rows[resource.reservation.reservation_id]["status"] == "released"
     final = json.loads(path.read_bytes())
     assert final["config"] == initial["config"] and final["leases"] == {} and final["waiters"] == {}
+
+
+
+READY_CHILD = r'''import json,os,select,sys,time
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.legacy_span_engine_custody import (
+    LegacySpanEngineVerifier,read_engine_launch)
+launch=read_engine_launch(sys.stdin.buffer)
+verifier=LegacySpanEngineVerifier(launch,dict(launch['spec']))
+path=verifier.ready_path()
+assert not path.exists()
+control=int(sys.argv[1])
+def await_command(expected):
+    deadline=time.monotonic()+10
+    while True:
+        verifier.verify()
+        remaining=deadline-time.monotonic()
+        if remaining<=0: raise RuntimeError('bounded test child control timed out')
+        if select.select([control],[],[],min(remaining,0.05))[0]:
+            assert os.read(control,1)==expected
+            return
+await_command(b'R')
+receipt=verifier.ready_receipt()
+temporary=path.with_name(path.name+'.child.tmp')
+temporary.write_text(json.dumps(receipt,sort_keys=True,separators=(',',':'))+'\n')
+os.replace(temporary,path)
+await_command(b'F')
+os.close(control)
+print(json.dumps(dict(ready=receipt,model_executed=False,training_started=False,admitted=False)))
+'''
+
+
+def test_actual_native_child_ready_wait_polls_missing_leaf_before_current_handoff(private):
+    import time
+    path, policy, initial, runtime, ledger = private
+    preserved = deepcopy(json.loads(ledger.read_bytes())["reservations"]["preserved"])
+    args = arguments(private)
+    resource = resources.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100000,
+        memory_mb=1024, cpu_slots=3, child_process_slots=5,
+        scheduler_state_path=path, expected_scheduler_policy_sha256=policy)
+    child = None
+    read_fd = write_fd = None
+    callbacks = []
+    with resource:
+        try:
+            bytecode = resource.prepare_engine_bytecode()
+            read_fd, write_fd = os.pipe()
+            environment = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1",
+                PYTHONPYCACHEPREFIX=str(bytecode), IPFS_DATASETS_AUTO_INSTALL="false",
+                IPFS_AUTO_INSTALL="false", OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
+                MKL_NUM_THREADS="1")
+            started = time.monotonic()
+            child = subprocess.Popen([sys.executable, "-B", "-c", READY_CHILD, str(read_fd)], cwd=ROOT,
+                env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, start_new_session=True, pass_fds=(read_fd,))
+            os.close(read_fd)
+            read_fd = None
+            launch = resource.bind_engine_launch(child.pid, custody.invocation_sha256(args),
+                bytecode_directory=bytecode)
+            ready_path = custody.engine_ready_path(launch)
+            assert not ready_path.exists()
+            serialized = json.dumps(launch, sort_keys=True, separators=(",", ":")).encode() + b"\n"
+            assert b'"lease_key"' not in serialized
+            child.stdin.write(serialized)
+            child.stdin.close()
+            child.stdin = None
+
+            def verify_live():
+                custody.verify_startup_deadline(started)
+                assert child.poll() is None
+                assert custody.owned_child_identity(child) == launch["child"]
+                assert resource.reservation.heartbeat() and not resource.reservation.cancelled
+                resource.check_limits(full=True)
+                owner = host._process(os.getpid())
+                assert launch["owner"] == {key: owner[key] for key in ("pid", "birth")}
+                lease = json.loads(path.read_bytes())["leases"][launch["lease_id"]]
+                assert lease["owner_pid"] == owner["pid"] and lease["owner_birth_marker"] == owner["birth"]
+                assert lease["request_id"] == "daemon:" + resource.reservation.reservation_id
+                row = json.loads(ledger.read_bytes())["reservations"][resource.reservation.reservation_id]
+                assert row["status"] == "active" and row["child"] == launch["child"]
+                assert row["attempt_directory"] == host._root_identity(runtime)
+                assert row["legacy_engine_launch_sha256"] == custody._sha(launch)
+                callbacks.append(ready_path.exists())
+                if len(callbacks) == 1:
+                    # The child cannot write until the second loop callback,
+                    # so this first iteration must exercise missing-leaf polling.
+                    assert callbacks[-1] is False
+                elif len(callbacks) == 2:
+                    assert os.write(write_fd, b"R") == 1
+                custody.verify_startup_deadline(started)
+
+            ready = custody.wait_engine_ready(child, launch, verify_live)
+            assert len(callbacks) >= 3 and callbacks[0] is False
+            assert ready == dict(schema="legacy-span-engine-ready/v1", launch_sha256=custody._sha(launch),
+                child=launch["child"], model_executed=False, training_started=False,
+                admitted=False, qualified=False)
+            assert json.loads(ready_path.read_bytes()) == ready
+            assert child.poll() is None
+            assert os.write(write_fd, b"F") == 1
+            output, error = child.communicate(timeout=15)
+            assert child.returncode == 0, error.decode()
+            assert json.loads(output) == dict(ready=ready, model_executed=False,
+                training_started=False, admitted=False)
+            assert list(bytecode.iterdir()) == []
+            resource.close(artifacts_durable=True)
+        finally:
+            for descriptor in (read_fd, write_fd):
+                if descriptor is not None:
+                    os.close(descriptor)
+            if child is not None and child.poll() is None:
+                child.kill()
+                child.wait(timeout=10)
+    rows = json.loads(ledger.read_bytes())["reservations"]
+    assert rows["preserved"] == preserved
+    assert rows[resource.reservation.reservation_id]["status"] == "released"
+    final = json.loads(path.read_bytes())
+    assert final["config"] == initial["config"]
+    assert final["retained_campaign_history"] == initial["retained_campaign_history"]
+    assert final["next_sequence"] == initial["next_sequence"] + 1
+    assert final["metrics"]["acquisitions_total"] == initial["metrics"]["acquisitions_total"] + 1
+    assert final["metrics"]["releases_total"] == initial["metrics"]["releases_total"] + 1
+    assert final["leases"] == {} and final["waiters"] == {}
+
+
+@pytest.mark.parametrize("kind", ["missing_parent", "symlink", "directory", "hardlink", "malformed"])
+def test_ready_wait_refuses_invalid_parent_or_receipt_before_polling(tmp_path, kind):
+    directory = tmp_path / "absent-parent" if kind == "missing_parent" else tmp_path
+    launch = dict(spec={"runtime_directory": str(tmp_path)}, child={"pid": 123, "birth": "path-fixture"},
+        bytecode={"path": str(directory / ("a" * 32))})
+    ready_path = custody.engine_ready_path(launch)
+    before = None
+    if kind == "symlink":
+        target = tmp_path / "retained-target.json"
+        target.write_bytes(b'{"retained":true}\n')
+        ready_path.symlink_to(target)
+        error, message = host.DaemonResourceError, "symlink resource path"
+    elif kind == "directory":
+        ready_path.mkdir()
+        error, message = host.DaemonResourceError, "resource file is not regular"
+    elif kind == "hardlink":
+        target = tmp_path / "retained-target.json"
+        target.write_bytes(b'{"retained":true}\n')
+        os.link(target, ready_path)
+        error, message = custody.LegacySpanEngineCustodyError, "bounded unaliased"
+    elif kind == "malformed":
+        ready_path.write_bytes(b"{not-json")
+        error, message = json.JSONDecodeError, None
+    else:
+        error, message = host.DaemonResourceError, "missing resource path"
+    if kind != "missing_parent":
+        info = ready_path.lstat()
+        before = info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+    calls = []
+    process = type("NoPolling", (), {"poll": lambda self: pytest.fail("invalid readiness path was polled")})()
+    with pytest.raises(error, match=message):
+        custody.wait_engine_ready(process, launch, lambda: calls.append("verified"))
+    assert calls == ["verified"]
+    if before is not None:
+        info = ready_path.lstat()
+        assert (info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns) == before
+    if kind in ("symlink", "hardlink"):
+        assert target.read_bytes() == b'{"retained":true}\n'
+    elif kind == "malformed":
+        assert ready_path.read_bytes() == b"{not-json"
+    elif kind == "missing_parent":
+        assert not directory.exists()

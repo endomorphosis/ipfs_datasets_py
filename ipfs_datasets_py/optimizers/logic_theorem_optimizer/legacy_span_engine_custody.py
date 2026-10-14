@@ -180,7 +180,7 @@ def wait_engine_ready(process, launch, verify_live):
     while True:
         verify_live()
         try:
-            observed = host._safe_path(path)
+            observed = host._safe_path(path, missing=True)
             descriptor = os.open(observed, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
             with os.fdopen(descriptor, "rb") as stream:
                 before = os.fstat(stream.fileno())
