@@ -1,0 +1,174 @@
+{
+  "Git_calls": 0,
+  "actual_result_reads": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v03.py": {
+      "bytes": 18664,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v03.py",
+      "sha256": "1230a59f2a36424adfd79d635f62e6186281335fdb1e87c373ebc218fefd8588"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v03.json": {
+      "bytes": 21160,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v03.json",
+      "sha256": "17e9b5d5eccc20faf1357c036476b48f34973ec041850c372a24c5d387e4c41f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/audit_conditions_presence_terminal_resources_v01.py": {
+      "bytes": 13120,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/audit_conditions_presence_terminal_resources_v01.py",
+      "sha256": "0cee7fd7b4967c6dcf20e766301e984b85266b6d361c9c13c8c8ffcfcb66b5c8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8276,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-bootstrap-smoke-controls-v01.json",
+      "sha256": "ca05777b098120a676d2bbdcafca3938cc5042175e6db0509a212617575cb2a8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json": {
+      "bytes": 52960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 6117,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-terminal-resource-source-independent-review-v01.json",
+      "sha256": "9b3a96088827a37ad73e6ad4dbdddb5ef243bc4059c98bfec84cd0f9607adadb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7099,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_bootstrap_smoke_controls_v01.py",
+      "sha256": "c34832ff703e592e8e57715cc80802bd009bb333d32c81f72c750bb3f14bc749"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_protocol_v01.py": {
+      "bytes": 13955,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_protocol_v01.py",
+      "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 11002,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-v01.json",
+      "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/freeze_conditions_presence_outputs_v01.py": {
+      "bytes": 18731,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/freeze_conditions_presence_outputs_v01.py",
+      "sha256": "9b635f214e80e2e4705a5dddfe8a804e65f75dd3b5b5f832863e1d909b72b671"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/prepare_conditions_presence_v01.py": {
+      "bytes": 14717,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/prepare_conditions_presence_v01.py",
+      "sha256": "43eef9e94c79dd98ac72a710ad190929f1ddd62d3c31238bf74dd0798d6fa41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-v01.json": {
+      "bytes": 78307,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-v01.json",
+      "sha256": "6d7b895b3f86c0b920fa2dad25a6d6fcbe7408d6fb738089fe2dc334a63920cf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-observer-source-independent-review-v02.json": {
+      "bytes": 13210,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-observer-source-independent-review-v02.json",
+      "sha256": "524fe5c6f0ba9170a726a962ece153381f563d06bcf8263247052bdbb67d0c6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-protocol-contract-v01.json": {
+      "bytes": 8085,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-protocol-contract-v01.json",
+      "sha256": "82c0ae4b5134a4726557fe38700c9a39bc0cf5c651866c416399bfdc9f794139"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py": {
+      "bytes": 35837,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py",
+      "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_scope_guardian_v02.py",
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runner-independent-controls-v01.json": {
+      "bytes": 901,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runner-independent-controls-v01.json",
+      "sha256": "94688ebd9c33a067beaa2ff0e831d94e0ad9a574257eb66689e22c342f5b613a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 12027,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "6b8138ace63c4949e618b6a48c48a3edbb6d198e69dfc0551aa74c5b69bad7dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/terminal-freezer-independent-controls-v01.json": {
+      "bytes": 1179,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/terminal-freezer-independent-controls-v01.json",
+      "sha256": "90414a0abde470c303bb89ab8eb8701a8cde5bcb9eea0559f722991e2b5f312d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 29072,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "db8462063e2296fa8476cd251c69ae7332bc4dfbcdecac18f6d57a31cfd73927"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/training-design-v01.json": {
+      "bytes": 8440,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/training-design-v01.json",
+      "sha256": "88088621c20a9bd3785a4b7149bc80493d2f154ece968d8c80d76a4f6b0fe324"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "full_model_module_imports": 0,
+  "independent_combined_cases": 7,
+  "independent_controls": {
+    "bytes": 1179,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/terminal-freezer-independent-controls-v01.json",
+    "sha256": "90414a0abde470c303bb89ab8eb8701a8cde5bcb9eea0559f722991e2b5f312d"
+  },
+  "independent_runner_cases": 8,
+  "inherited_controls_not_repeated": true,
+  "main_calls": 0,
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T03:16:47.246367+00:00",
+  "observer": {
+    "bytes": 18731,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/freeze_conditions_presence_outputs_v01.py",
+    "sha256": "9b635f214e80e2e4705a5dddfe8a804e65f75dd3b5b5f832863e1d909b72b671"
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 52960,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+    "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+  },
+  "private_body_reads": 0,
+  "resource_API_calls": 0,
+  "reviewer": "/root/evaluation_n10",
+  "runner": {
+    "bytes": 35837,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py",
+    "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+  },
+  "schema": "conditions-presence-runtime-freeze-source-independent-review/v1",
+  "scope": {
+    "active_scalars": 130,
+    "actual_inference": 1280,
+    "actual_model_forwards": 1312,
+    "actual_updates": 32,
+    "copied_parent_rows": 240,
+    "default_promotion": false,
+    "expected_outputs": 62,
+    "final_source_rows": 632,
+    "frozen_parent_tensors": 40,
+    "inactive_scalars": 390,
+    "initial_source_rows": 632,
+    "model_tensors": 42,
+    "new_Adam_tensors": 2,
+    "new_parent_forwards": 0,
+    "stored_scalars": 520,
+    "total_new_occurrences": 1664,
+    "training_occurrences": 384
+  },
+  "source_checks": [
+    "Full sealed18731/9b635... saved-runtime freezer source independently read against N10V03 inherited rawinventory/admission/durable/foreigncoexistence controls; checkpoint opaque and allgoldunopened.",
+    "ActualplanV01 raw52960/83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c bound without parsing; exactconcrete review schema matches centralresourcecontract. Terminal observer/gate/m12inputs/plan/review allmustjoin beforefreeze.",
+    "New42/40/2 and520/130/390 geometry,32returnedbatch/source/policy/freezetrace validated through independent8case runner helper. All632initialfullbits and finalONLYconditionspresenceexcluded guards independently exercised; protectedmodality/allboundaries/threepresence required.",
+    "62physicalinventory unchanged; exact6frozen N10 parentcapture copies240rows rawbyte-provenance,0newparentcalls.1280newinference+32training=1312model calls,384training and1664newsourceoccurrences;3frozenfeaturepaths/call,0externalembeddingencoders.",
+    "Shared537priorbodymap andonly ownreleased538 terminal sourcequalification mandatory; noretainedclaimcloseouts/capchange/newglobalpolicy. Foreigncoexistence occupancy typed,ownleaseabsent and sampledRSSdurability gates inherited.",
+    "Seven combined synthetic sourcecustody/geometry cases and8runner CE cases retained, earlier62inventory20coexistence cases inherited without broadreplay. Allfrozenruntime map62results exactlyjoins rawSHA inventory before any authoredscoring authorization."
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "all32_permission_IDs_retention_required": true,
+  "all632_initial_and_protected_final_bits_required": true,
+  "all_optional_presence_confusions_and_abstentions_primary_independent_recount_required": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json": {
+      "bytes": 46558,
+      "sha256": "f433954ab6e9f26510096f308e879cac1b027bf33aa94a5df7bf765045e555fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-runtime-review-v01.json": {
+      "bytes": 84458,
+      "sha256": "f428248fe7f7d003a93125c1978007a9216bcdab968c28055fb9384fe5a3b2f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-independent-recount-v01.json": {
+      "bytes": 861265,
+      "sha256": "3afb425df0baf5da7296830eef873ad56dbef39b2418f123da9a1ba794edd53b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-output-freeze-v01.json": {
+      "bytes": 21187,
+      "sha256": "56abf07cfc80b79ef7eb48a0f0579310ae8f555e15cc9c49d1f6fe23bd687e2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-result-analysis-v01.json": {
+      "bytes": 4426986,
+      "sha256": "bc5c5d1e08750b8fe86e9fd3953f23531235fdcfb73b9bd5b0178c9e41bcba39"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/evaluation-contract-v01.json": {
+      "bytes": 22072,
+      "sha256": "19fa0d2f587301b98331b3ce41869b424ee1e1b87bda92d8b321d65034a66e47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/public-result-summary-v01.json": {
+      "bytes": 204376,
+      "sha256": "c7349c862816d9f6bbc171ad685a17a53eb19f83547cd133b2ba16dcae0c4151"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-independent-review-v01.json": {
+      "bytes": 122326,
+      "sha256": "c0df4c577fe2563ec7a47f6d4d146c63d0f9f546db197c8a4e563ef2689fc306"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 11002,
+      "sha256": "1c2697b52837cecb2b832de17915513d97c08069f1bf4521249073b2e831e345"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/parent-conditions-presence-baseline-v01.json": {
+      "bytes": 136088,
+      "sha256": "a65a5c850710c6914743ebfc51e8aecaba74d2ca8dbfa80d2754e2d445fe9fbe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json": {
+      "bytes": 4675279,
+      "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json": {
+      "bytes": 3473,
+      "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json": {
+      "bytes": 100802,
+      "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json": {
+      "bytes": 434236,
+      "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results/cell-checkpoint.json": {
+      "bytes": 6464267,
+      "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "copied_parent_files_not_actual_forwards": true,
+  "cumulative_training_progress_preserved": true,
+  "findings": [],
+  "full_IR_seven_fields_and_all_paired_gain_loss_IDs_required": true,
+  "model_calls": 0,
+  "observed_at_utc": "2026-10-14T02:58:09.555408+00:00",
+  "only_conditions_presence_mutable": true,
+  "passed": true,
+  "private_body_reads": 0,
+  "schema": "conditions-presence-evaluation-contract-root-review/v1",
+  "source_only_and_statutory_latent_family_Lean_limits_explicit": true,
+  "source_parent_is_trained_N10": true
+}

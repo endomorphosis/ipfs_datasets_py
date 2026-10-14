@@ -6,7 +6,7 @@ import pytest
 from ipfs_datasets_py.logic.autoformal import legal_statutory_context as context
 
 URL = "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-sec1.htm"
-RAW = '''<h3 class="section-head">&sect;1. Fictional fixture</h3>
+RAW = '''<meta charset="utf-8"><h3 class="section-head">&sect;1. Fictional fixture</h3>
 <p class="statutory-body">(a) Élodie  shall notify the office; the office shall reply.</p>
 <p class="statutory-body-1em">(1) The office means a café office.</p>
 <p class="statutory-body">(b) aaaa; αβ; 🏛.</p>

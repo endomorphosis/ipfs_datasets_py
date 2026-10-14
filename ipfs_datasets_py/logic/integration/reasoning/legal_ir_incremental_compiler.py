@@ -32,7 +32,6 @@ from .legal_ir_pass_manager import (
     LegalIRPassValidationError,
 )
 
-
 LEGAL_IR_INCREMENTAL_COMPILER_SCHEMA_VERSION: Final = "legal-ir-incremental-compiler-v1"
 
 
@@ -516,6 +515,7 @@ class LegalIRIncrementalCompiler:
         lease_manager = LegalIRResourceLeaseManager(self._resource_limits)
         state = _deepcopy_mapping(initial_state)
         completed: set[str] = set()
+        failed: set[str] = set()
         pending: set[str] = set(self.ordered_pass_ids)
         node_records: list[LegalIRIncrementalNodeRecord] = []
         pass_outputs = dict(previous_snapshot.pass_outputs) if previous_snapshot else {}
@@ -543,6 +543,70 @@ class LegalIRIncrementalCompiler:
 
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             while pending:
+                # A failed producer never becomes ready again, and its output
+                # must not be replaced by a stale value from the prior compile.
+                # Propagate blocked dependencies before selecting independent
+                # work so a failure cannot masquerade as a graph cycle.
+                while True:
+                    blocked = sorted(
+                        (
+                            pass_id
+                            for pass_id in pending
+                            if self._dependencies.get(pass_id, set()) & failed
+                        ),
+                        key=self._pass_sort_key,
+                    )
+                    if not blocked:
+                        break
+                    for pass_id in blocked:
+                        blocked_by = tuple(
+                            sorted(
+                                self._dependencies.get(pass_id, set()) & failed,
+                                key=self._pass_sort_key,
+                            )
+                        )
+                        pending.remove(pass_id)
+                        failed.add(pass_id)
+                        pass_outputs.pop(pass_id, None)
+                        node_id = f"pass:{pass_id}"
+                        invalidated_node_ids.add(node_id)
+                        diagnostics.append(
+                            LegalIRPassDiagnostic(
+                                code="incremental_pass_dependency_failed",
+                                message=f"Blocked by failed pass dependencies: {', '.join(blocked_by)}.",
+                                severity=LegalIRPassDiagnosticSeverity.ERROR.value,
+                                pass_id=pass_id,
+                            )
+                        )
+                        node_records.append(
+                            LegalIRIncrementalNodeRecord(
+                                node_id=node_id,
+                                kind=LegalIRIncrementalNodeKind.PASS.value,
+                                digest=_stable_hash(
+                                    {
+                                        "pass_id": pass_id,
+                                        "blocked_by": blocked_by,
+                                        "spec_digest": pass_spec_digests[pass_id],
+                                    }
+                                ),
+                                dependencies=tuple(
+                                    f"pass:{dependency}"
+                                    for dependency in sorted(
+                                        self._dependencies.get(pass_id, set()),
+                                        key=self._pass_sort_key,
+                                    )
+                                ),
+                                status=LegalIRIncrementalCompileStatus.SKIPPED.value,
+                                invalidated=True,
+                                pass_id=pass_id,
+                                resource_requirements=self._requirements_for(
+                                    self._pass_by_id[pass_id]
+                                ),
+                                metadata={"blocked_by": list(blocked_by)},
+                            )
+                        )
+                if not pending:
+                    break
                 ready = tuple(
                     sorted(
                         (
@@ -591,17 +655,13 @@ class LegalIRIncrementalCompiler:
                     )
                     can_reuse = (
                         previous_snapshot is not None
-                        and pass_id not in candidate_passes
-                        and previous_record is not None
-                        and bool(cached_outputs)
-                    )
-                    can_reuse_digest = (
-                        previous_snapshot is not None
                         and input_digest == previous_input_digest
-                        and previous_output_digest
+                        and previous_spec_digests.get(pass_id) == pass_spec_digests[pass_id]
+                        and bool(previous_output_digest)
                         and bool(cached_outputs)
+                        and _stable_hash(cached_outputs) == previous_output_digest
                     )
-                    if can_reuse or can_reuse_digest:
+                    if can_reuse:
                         output_values = _deepcopy_mapping(cached_outputs)
                         for path, value in output_values.items():
                             _set_path(state, path, value)
@@ -640,11 +700,7 @@ class LegalIRIncrementalCompiler:
                                 output_digest=previous_output_digest,
                                 duration_seconds=0.0,
                                 resource_requirements=self._requirements_for(spec),
-                                metadata={
-                                    "reuse_reason": "input_digest_match"
-                                    if can_reuse_digest
-                                    else "subgraph_clean"
-                                },
+                                metadata={"reuse_reason": "input_digest_match"},
                             )
                         )
                         continue
@@ -665,19 +721,62 @@ class LegalIRIncrementalCompiler:
                     pending.remove(record.pass_id)
 
                 task_results: list[_PassTaskResult] = []
+                task_failures: list[tuple[LegalIRPassSpec, str, Exception]] = []
                 for future in as_completed(tasks):
                     spec, _input_digest, _was_candidate = tasks[future]
                     try:
                         task_results.append(future.result())
                     except Exception as exc:  # noqa: BLE001 - surfaced as compiler diagnostic
-                        diagnostics.append(
-                            LegalIRPassDiagnostic(
-                                code="incremental_pass_execution_failed",
-                                message=str(exc),
-                                severity=LegalIRPassDiagnosticSeverity.ERROR.value,
-                                pass_id=spec.pass_id,
-                            )
+                        task_failures.append((spec, _input_digest, exc))
+
+                for spec, input_digest, exc in sorted(
+                    task_failures, key=lambda item: self._pass_sort_key(item[0].pass_id)
+                ):
+                    pending.remove(spec.pass_id)
+                    failed.add(spec.pass_id)
+                    pass_outputs.pop(spec.pass_id, None)
+                    node_id = f"pass:{spec.pass_id}"
+                    invalidated_node_ids.add(node_id)
+                    executed_nodes.append(node_id)
+                    diagnostics.append(
+                        LegalIRPassDiagnostic(
+                            code="incremental_pass_execution_failed",
+                            message=str(exc),
+                            severity=LegalIRPassDiagnosticSeverity.ERROR.value,
+                            pass_id=spec.pass_id,
                         )
+                    )
+                    node_records.append(
+                        LegalIRIncrementalNodeRecord(
+                            node_id=node_id,
+                            kind=LegalIRIncrementalNodeKind.PASS.value,
+                            digest=_stable_hash(
+                                {
+                                    "input_digest": input_digest,
+                                    "pass_id": spec.pass_id,
+                                    "spec_digest": pass_spec_digests[spec.pass_id],
+                                    "execution_failed": True,
+                                }
+                            ),
+                            dependencies=tuple(
+                                f"pass:{dependency}"
+                                for dependency in sorted(
+                                    self._dependencies.get(spec.pass_id, set()),
+                                    key=self._pass_sort_key,
+                                )
+                            ),
+                            status=LegalIRIncrementalCompileStatus.EXECUTED.value,
+                            invalidated=True,
+                            pass_id=spec.pass_id,
+                            input_digest=input_digest,
+                            resource_requirements=self._requirements_for(spec),
+                            metadata={
+                                "execution_failed": True,
+                                "error_type": type(exc).__name__,
+                                "error": str(exc),
+                            },
+                        )
+                    )
 
                 for result in sorted(
                     task_results, key=lambda item: self._pass_sort_key(item.pass_id)

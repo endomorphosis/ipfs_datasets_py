@@ -13,7 +13,8 @@ from ipfs_datasets_py.logic.autoformal import legal_statutory_context as context
 
 URL = "https://www.govinfo.gov/content/pkg/USCODE-2024-title10/html/USCODE-2024-title10-sec1.htm"
 TEXT = "Agency must file notice."
-RAW = (f'<h3 class="section-head">§1. Fictional graph fixture</h3>'
+RAW = ('<meta charset="utf-8">'
+       f'<h3 class="section-head">§1. Fictional graph fixture</h3>'
        f'<p class="statutory-body">(a) {TEXT}</p>'
        f'<p class="statutory-body">(b) {TEXT}</p>').encode()
 AST = {"rules": [{"modality": "O", "actor": "Agency", "action": "file", "object": "notice",

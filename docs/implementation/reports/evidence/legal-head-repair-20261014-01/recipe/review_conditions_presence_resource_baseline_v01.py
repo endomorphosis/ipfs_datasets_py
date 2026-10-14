@@ -1,0 +1,63 @@
+"""Qualify exact current537 copied bodies and one bounded pre-admission metadata census."""
+from datetime import datetime,timezone
+import importlib.util
+import os
+from pathlib import Path
+import shutil
+import sys
+
+F=Path(__file__).resolve().parent
+sys.dont_write_bytecode=True
+spec=importlib.util.spec_from_file_location('conditions_resource_protocol',F/'conditions_presence_resource_protocol_v01.py')
+p=importlib.util.module_from_spec(spec);spec.loader.exec_module(p)
+OUTPUT=F/'resource-baseline-v01.json'
+INPUTS=F/'resource-baseline-inputs-v01.json'
+QUALIFICATION=F/'resource-observer-source-independent-review-v01.json'
+
+
+def main():
+    p.require(sys.argv[1:]==[] and not os.path.lexists(OUTPUT),'exclusive argument-free baseline required')
+    m=p.Metadata(OUTPUT);sys.addaudithook(m.audit);own=m.pin(Path(__file__).resolve())
+    approval=m.read(QUALIFICATION)
+    p.require(approval['schema']=='conditions-presence-resource-observer-source-independent-review/v1' and approval['passed'] is True
+        and approval['findings']==[] and approval['observer']==own,'exact independent baseline source qualification required')
+    for path,expected in approval['artifacts'].items():m.pin(path,dict(path=path,**{k:expected[k] for k in ('bytes','sha256')}))
+    contract=p.qualify_contract(m.read(p.CONTRACT,p.CONTRACT_PIN));inputs=m.read(INPUTS)
+    p.require(set(inputs)=={'schema','contract','sample_receipt','check','sampler_qualification','bridge_qualification'}
+        and inputs['schema']=='conditions-presence-resource-baseline-inputs/v1' and inputs['contract']==p.CONTRACT_PIN,'closed root-approved input manifest required')
+    baseline=m.read(contract['prior_baseline']['path'],contract['prior_baseline']);terminal=m.read(contract['prior_terminal']['path'],contract['prior_terminal'])
+    hashes=p.prior_hashes(contract,baseline,terminal)
+    for key in ('prior_final','prior_HF_actual'):m.pin(contract[key]['path'],contract[key])
+    receipt,ledger,state=p.snapshot(m,inputs['sample_receipt'],'opening',contract)
+    status=p.qualify_ledger(contract,ledger,hashes)
+    check=m.read(inputs['check']['path'],inputs['check']);scheduler=p.qualify_check(contract,check,receipt,state)
+    q=m.read(inputs['sampler_qualification']['path'],inputs['sampler_qualification'])
+    p.require(q['schema']=='conditions-presence-sampler-source-independent-review/v1' and q['passed'] is True and q['findings']==[]
+        and q['sampler']==contract['sampler'],'exact qualified sampler required')
+    bridge=m.read(inputs['bridge_qualification']['path'],inputs['bridge_qualification'])
+    p.require(bridge['passed'] is True and bridge['findings']==[],'same qualified bytecopy resource bridge required')
+    m.pin(contract['guardian']['path'],contract['guardian']);m.pin(contract['sampler']['path'],contract['sampler'])
+    for path,brief in contract['resource_producer_pins'].items():
+        pin=m.pin(path,dict(path=path,**brief));p.require(check['producers'][path]==pin,'fixed ten raw producer pins must match actual check')
+    helpers=p.census_helpers(m,contract);roots=[Path(row['path']) for row in contract['counted_root_metadata']]
+    p.require([helpers['_root_identity'](root) for root in roots]==contract['counted_root_metadata']
+        and helpers['_root_identity'](Path(contract['run_root']))==contract['run_root_identity'],'named root identities changed')
+    inventory=helpers['_inventory'](roots);claims=status['full_nonreleased_claim_bytes'];requested=contract['resources']['storage_bytes']
+    free=min(shutil.disk_usage(root).free for root in roots);charged=inventory['apparent_bytes']+claims+requested
+    p.require(charged<=contract['global_cap_bytes'] and free>=claims+requested,'actual fullclaimcharged census/physical capacity must fit own200M before admission')
+    status.update(schema=ledger['schema'],limit_bytes=ledger['limit_bytes'],path=receipt['ledger']['path'],bytes=receipt['ledger']['bytes'],sha256=receipt['ledger']['sha256'])
+    value=dict(schema='conditions-presence-resource-baseline/v1',passed=True,findings=[],observer=own,source_qualification=m.pin(QUALIFICATION),
+        input_manifest=m.pin(INPUTS),resource_contract=p.CONTRACT_PIN,observed_at_utc=datetime.now(timezone.utc).isoformat(),
+        baseline_ledger=status,counted_root_metadata=contract['counted_root_metadata'],run_root_identity=contract['run_root_identity'],
+        private_sample_receipt=inputs['sample_receipt'],fresh_metadata_check=inputs['check'],scheduler_observation=scheduler,
+        adapted_sampler=contract['sampler'],sampler_source_qualification=inputs['sampler_qualification'],qualified_local_guardian=contract['guardian'],
+        resource_bridge_source_qualification=inputs['bridge_qualification'],
+        preadmission_full_claim_census=dict(inventory=inventory,observed_apparent_bytes=inventory['apparent_bytes'],outstanding_full_reservations_bytes=claims,
+            additional_requested_bytes=requested,charged_bytes=charged,minimum_filesystem_free_bytes=free,limit_bytes=contract['global_cap_bytes'],admission_guaranteed=False),
+        prior_baseline=contract['prior_baseline'],prior_terminal=contract['prior_terminal'],sampled_coexistence=True,continuous_coverage_claimed=False,
+        artifacts={path:descriptor for path,descriptor in m.reads.items() if 'private-runtime-snapshots' not in Path(path).parts},
+        global_endpoint_body_reads=0,resource_API_calls=0,model_calls=0,checkpoint_JSON_parses=0,shared_state_modified=False,claim_reconciliations=0,
+        full_record_bodies_published=False,semantic_accuracy=None,default_promotion=False)
+    print(m.write(value))
+
+if __name__=='__main__':main()
