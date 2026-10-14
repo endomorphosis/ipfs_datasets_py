@@ -188,6 +188,16 @@ def _summarize_phase8_rows(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
             ir_slot_provenance_records=ir_slot_provenance_records,
         )
     )
+    # Source-specific slot requirements determine completeness above. Keep the
+    # same nested diagnostic surfaces as the aggregate/empty-input path without
+    # recomputing that gate using slots absent from individual sources.
+    phase8_quality_summary.update(
+        {
+            "prover_syntax_target_coverage": prover_summary,
+            "prover_syntax_corpus_coverage": prover_corpus_summary,
+            "ir_slot_provenance": provenance_summary,
+        }
+    )
 
     quality_record_count = len(phase8_quality_records)
     quality_complete_count = sum(

@@ -39,6 +39,11 @@ from ipfs_datasets_py.logic.software_contracts.ast_ir import (
     SourceSpan,
     SymbolDefinition,
 )
+from ipfs_datasets_py.logic.software_contracts.content import (
+    SOURCE_CODEC,
+    cid_for_bytes,
+    validate_cid,
+)
 from ipfs_datasets_py.logic.software_contracts.schema_versions import (
     AST_IR_SCHEMA_VERSION,
 )
@@ -56,6 +61,20 @@ ASTS_CATALOG_NAME: Final = "asts"
 MAX_STORED_PAYLOAD_BYTES: Final = 16 * 1024 * 1024
 MAX_BATCH_PAYLOAD_BYTES: Final = 64 * 1024 * 1024
 MAX_QUERY_ROWS: Final = 100_000
+_MAX_CANONICAL_REUSE_BLOBS: Final = 64
+_MAX_CANONICAL_REUSE_PAYLOAD_BYTES: Final = 8 * 1024 * 1024
+_MAX_CANONICAL_REUSE_ROWS: Final = 4096
+
+# Bound each ast_nodes statement without adding a limit to valid source rows.
+MAX_NODE_INSERT_ROWS: Final = 64
+MAX_NODE_INSERT_STRING_BYTES: Final = 256 * 1024
+MAX_REFERENCE_INSERT_ROWS: Final = 64
+MAX_REFERENCE_INSERT_STRING_BYTES: Final = 256 * 1024
+
+# Optional cache artifacts are separate from the authoritative AST table family.
+SOURCE_SHARD_CACHE_TABLE: Final = "source_shard_cache_artifacts"
+MAX_SOURCE_SHARD_CACHE_BYTES: Final = 64 * 1024 * 1024
+MAX_SOURCE_SHARD_CACHE_ARTIFACTS: Final = 64
 
 # Closed catalog table family declared by the control-plane plan (DQK-G600).
 ASTS_CATALOG_TABLES: Final[tuple[str, ...]] = (
@@ -1638,6 +1657,7 @@ class DuckDBASTStoreProtocol(Protocol):
         *,
         before_apply: Callable[[Any], None] | None = None,
         before_commit: Callable[[Any], None] | None = None,
+        reuse_existing: Callable[[Any], bool] | None = None,
     ) -> tuple[tuple[ASTCatalogProjection, ...], tuple[InvalidationRow, ...]]: ...
 
     def get(self, blob_id: str) -> ASTCatalogProjection | None: ...
@@ -1670,13 +1690,30 @@ class DuckDBASTStore:
     Invalidation removes active projections and retains its audit rows.
     """
 
-    def __init__(self, *, connection: Any | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        connection: Any | None = None,
+        optimized_node_inserts: bool = True,
+        optimized_reference_inserts: bool = True,
+        optimized_canonical_validation: bool = True,
+    ) -> None:
+        if type(optimized_node_inserts) is not bool:
+            raise DuckDBASTStoreError("optimized_node_inserts must be an exact boolean")
+        if type(optimized_reference_inserts) is not bool:
+            raise DuckDBASTStoreError("optimized_reference_inserts must be an exact boolean")
+        if type(optimized_canonical_validation) is not bool:
+            raise DuckDBASTStoreError("optimized_canonical_validation must be an exact boolean")
+        self._optimized_canonical_validation = optimized_canonical_validation
+        self._optimized_node_inserts = optimized_node_inserts
+        self._optimized_reference_inserts = optimized_reference_inserts
         self._connection = connection
         self._lock = threading.RLock()
         self._by_blob: OrderedDict[str, ASTCatalogProjection] = OrderedDict()
         self._by_ast_cid: dict[str, str] = {}
         self._by_file: dict[str, str] = {}
         self._invalidations: list[InvalidationRow] = []
+        self._source_shard_cache_payloads: dict[str, bytes] = {}
         self._stats = {
             "puts": 0,
             "parse_failures": 0,
@@ -1834,7 +1871,13 @@ class DuckDBASTStore:
     @classmethod
     def _validate_projection(
         cls, projection: ASTCatalogProjection, *, canonical: bool = True
-    ) -> None:
+    ) -> ASTCatalogProjection:
+        """Validate and return a detached canonical snapshot for native reads.
+
+        Returning the rebuilt projection keeps a later checkpoint from changing
+        the admitted facts through a caller-owned object. Row-fixture validation
+        retains its existing process-local behavior.
+        """
         if type(projection) is not ASTCatalogProjection:
             raise DuckDBASTStoreError(
                 "put_projection requires an exact ASTCatalogProjection"
@@ -1853,7 +1896,7 @@ class DuckDBASTStore:
         if not canonical:
             # Preserve the existing hermetic row-fixture surface. Durable
             # publication always requires the complete canonical AST payload.
-            return
+            return projection
         expected = cls._rebuild(
             projection.ast_blob.to_dict(),
             projection.source_revision.to_dict(),
@@ -1864,8 +1907,14 @@ class DuckDBASTStore:
             raise DuckDBASTStoreIntegrityError(
                 "projection rows differ from canonical AST payload"
             )
+        return expected
 
-    def _load(self, blob_id: str) -> ASTCatalogProjection | None:
+    def _load(
+        self, blob_id: str, *, canonical_projection: ASTCatalogProjection | None = None
+    ) -> ASTCatalogProjection | None:
+        # Only the private active validator supplies a detached snapshot already
+        # rebuilt from the complete canonical input. Ordinary lookups always
+        # reconstruct persisted payloads; this is never a process-global cache.
         blobs = self._rows("ast_blobs", "blob_id=?", [blob_id])
         if not blobs:
             return None
@@ -1887,7 +1936,32 @@ class DuckDBASTStore:
             if blob["parse_status"] == ParseStatus.FAILED.value
             else []
         )
-        expected = self._rebuild(blob, revision, diagnostics, intrinsic)
+        try:
+            reusable = (
+                canonical_projection is not None
+                and type(blob["created_at"]) in (int, float)
+                and math.isfinite(blob["created_at"])
+                and canonical_projection.ast_blob.to_dict() == blob
+                and {
+                    key: value for key, value in canonical_projection.source_revision.to_dict().items()
+                    if key != "created_at"
+                } == {key: value for key, value in revision.items() if key != "created_at"}
+                and sorted(map(_json_dumps, diagnostics))
+                    == sorted(_json_dumps(row.to_dict()) for row in canonical_projection.diagnostics)
+                and sorted(map(_json_dumps, intrinsic))
+                    == sorted(_json_dumps(row.to_dict()) for row in canonical_projection.invalidations)
+            )
+        except (KeyError, TypeError, ValueError, OverflowError, RecursionError):
+            # Malformed persisted facts retain the original reconstruction and
+            # integrity-error path rather than escaping from hint eligibility.
+            reusable = False
+        if reusable:
+            # Payload, intrinsic parse-failure facts and identity match exactly.
+            # Keep the native family comparisons below and the final active
+            # revision clock check; a header or clock miss takes the old path.
+            expected = canonical_projection
+        else:
+            expected = self._rebuild(blob, revision, diagnostics, intrinsic)
         if (
             expected.ast_blob.to_dict() != blob
             or expected.source_file.to_dict() != source_file
@@ -1934,6 +2008,322 @@ class DuckDBASTStore:
                     f"stored {table} rows differ from canonical AST payload"
                 )
         return expected
+
+    def _active_revision_matches(
+        self,
+        projections: Sequence[ASTCatalogProjection],
+        invalidations: Sequence[InvalidationRow] = (),
+        *,
+        revision_id: str,
+        repository_id: str,
+        revision: str,
+        repository_tree_cid: str,
+        checkpoint: Callable[[], None] | None = None,
+    ) -> bool:
+        """Compare complete active membership inside the owner's transaction.
+
+        The caller holds this store's lock and, for native storage, transaction.
+        Historical source identity rows alone never establish active membership.
+        Missing/extra or different canonical projections return False; corrupt
+        selected stored families raise an integrity error. Timestamps stay exact.
+        """
+        for name, value in (("revision_id", revision_id),
+                            ("repository_id", repository_id), ("revision", revision),
+                            ("repository_tree_cid", repository_tree_cid)):
+            if type(value) is not str:
+                raise DuckDBASTStoreError(f"{name} must be an exact string")
+            _text(value, name)
+        if checkpoint is not None and not callable(checkpoint):
+            raise DuckDBASTStoreError("checkpoint must be callable")
+        check = checkpoint or (lambda: None)
+        if len(projections) + len(invalidations) > MAX_QUERY_ROWS:
+            raise DuckDBASTStoreError("active revision validation exceeds row bound")
+        projections, invalidations = tuple(projections), tuple(invalidations)
+        expected: dict[str, ASTCatalogProjection] = {}
+        canonical_by_blob: dict[str, ASTCatalogProjection] = {}
+        canonical_payload_bytes = 0
+        canonical_rows = 0
+        paths: set[str] = set()
+        payload_bytes = 0
+        for projection in projections:
+            check()
+            canonical_projection = self._validate_projection(
+                projection, canonical=self._connection is not None
+            )
+            if self._connection is not None and self._optimized_canonical_validation:
+                size = len(canonical_projection.ast_blob.payload_json.encode("utf-8"))
+                rows = sum(canonical_projection.table_row_counts().values())
+                if (
+                    len(canonical_by_blob) < _MAX_CANONICAL_REUSE_BLOBS
+                    and canonical_payload_bytes + size <= _MAX_CANONICAL_REUSE_PAYLOAD_BYTES
+                    and canonical_rows + rows <= _MAX_CANONICAL_REUSE_ROWS
+                ):
+                    # This optional operation-local cache has its own bounds.
+                    # Larger admitted batches keep the existing reconstruction
+                    # path for uncached members, without changing acceptance.
+                    canonical_by_blob[canonical_projection.blob_id] = canonical_projection
+                    canonical_payload_bytes += size
+                    canonical_rows += rows
+            del canonical_projection
+            row = projection.source_revision
+            if (row.revision_id != revision_id or row.repository_id != repository_id
+                    or row.revision != revision or row.repository_tree_cid != repository_tree_cid):
+                raise DuckDBASTStoreError("projection differs from admitted revision identity")
+            if projection.blob_id in expected or projection.source_file.path in paths:
+                raise DuckDBASTStoreError("active revision requires unique blobs and paths")
+            expected[projection.blob_id] = projection
+            paths.add(projection.source_file.path)
+            payload_bytes += len(projection.ast_blob.payload_json.encode("utf-8"))
+            if payload_bytes > MAX_BATCH_PAYLOAD_BYTES:
+                raise DuckDBASTStoreError("active revision exceeds payload byte bound")
+        audit: dict[str, InvalidationRow] = {}
+        for row in invalidations:
+            self._validate_invalidation(row)
+            if row.invalidation_id in audit:
+                raise DuckDBASTStoreError("active revision requires unique invalidation IDs")
+            audit[row.invalidation_id] = row
+        if self._connection is None:
+            for row in self._invalidations:
+                if (row.revision_id == revision_id and row.blob_id is None
+                        and row.file_id is None):
+                    self._validate_invalidation(row)
+                    return False
+            actual = {key: value for key, value in self._by_blob.items()
+                      if value.source_revision.revision_id == revision_id}
+            if actual != expected:
+                return False
+            for projection in projections:
+                check()
+                if (self._by_ast_cid.get(projection.ast_cid) != projection.blob_id
+                        or self._by_file.get(projection.source_file.file_id) != projection.blob_id):
+                    return False
+            for key, row in audit.items():
+                found = [item for item in self._invalidations if item.invalidation_id == key]
+                if found != [row]:
+                    return False
+            return True
+        # _load uses the owner's current schema. Refuse TEMP shadows and views
+        # rather than treating another relation as the admitted durable family.
+        placeholders = ",".join("?" for _ in ASTS_CATALOG_TABLES)
+        relations = self._connection.execute(
+            "SELECT table_name, table_type FROM information_schema.tables "
+            "WHERE table_catalog=current_database() AND table_schema=current_schema() "
+            f"AND table_name IN ({placeholders}) LIMIT {len(ASTS_CATALOG_TABLES) + 1}",
+            list(ASTS_CATALOG_TABLES),
+        ).fetchall()
+        shadows = self._connection.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_catalog='temp' "
+            f"AND table_name IN ({placeholders}) LIMIT 1", list(ASTS_CATALOG_TABLES),
+        ).fetchall()
+        if set(relations) != {(name, "BASE TABLE") for name in ASTS_CATALOG_TABLES} or shadows:
+            raise DuckDBASTStoreIntegrityError("active revision table ownership does not verify")
+        tombstones = self._rows(
+            "invalidations", "revision_id=? AND blob_id IS NULL AND file_id IS NULL", [revision_id],
+        )
+        for value in tombstones:
+            try:
+                self._validate_invalidation(InvalidationRow(**value))
+            except (TypeError, ValueError) as error:
+                raise DuckDBASTStoreIntegrityError("invalid stored revision tombstone") from error
+        if tombstones:
+            return False
+        rows = self._rows("ast_blobs", "revision_id=?", [revision_id], columns="blob_id")
+        actual_ids = {row["blob_id"] for row in rows}
+        matches = len(rows) == len(expected) and actual_ids == set(expected)
+        for projection in projections:
+            check()
+            if projection.blob_id in actual_ids:
+                # Validate every selected existing family before returning a
+                # clock/membership miss; an earlier miss cannot hide corruption
+                # in a later member and silently send it down the repair path.
+                if self._load(
+                    projection.blob_id,
+                    canonical_projection=canonical_by_blob.get(projection.blob_id),
+                ) != projection:
+                    matches = False
+            else:
+                matches = False
+        if projections:
+            # _load must first reject corrupt shared identity fields. Finite
+            # timestamp-only drift can then miss and take normal publication.
+            stored_revision = self._rows("source_revisions", "revision_id=?", [revision_id])
+            if stored_revision != [projections[-1].source_revision.to_dict()]:
+                matches = False
+        for key, row in audit.items():
+            check()
+            if self._rows("invalidations", "invalidation_id=?", [key]) != [row.to_dict()]:
+                matches = False
+        return matches
+
+    def validate_active_revision(
+        self,
+        projections: Sequence[ASTCatalogProjection],
+        invalidations: Sequence[InvalidationRow] = (),
+        *,
+        revision_id: str,
+        repository_id: str,
+        revision: str,
+        repository_tree_cid: str,
+        checkpoint: Callable[[], None] | None = None,
+    ) -> bool:
+        """Validate an externally admitted complete revision without adoption.
+
+        This owns a read transaction and never hydrates an active head. Trusted
+        callbacks already inside apply_batch use _active_revision_matches;
+        this public entry refuses a caller-owned native transaction first.
+        """
+        with self._lock:
+            if self._connection is None:
+                return self._active_revision_matches(
+                    projections, invalidations, revision_id=revision_id,
+                    repository_id=repository_id, revision=revision,
+                    repository_tree_cid=repository_tree_cid, checkpoint=checkpoint,
+                )
+            with self._source_shard_cache_transaction():
+                return self._active_revision_matches(
+                    projections, invalidations, revision_id=revision_id,
+                    repository_id=repository_id, revision=revision,
+                    repository_tree_cid=repository_tree_cid, checkpoint=checkpoint,
+                )
+
+    @staticmethod
+    def _cache_identity(expected_cid: str) -> str:
+        if type(expected_cid) is not str:
+            raise DuckDBASTStoreError("cache requires an exact CID string")
+        try:
+            return validate_cid(expected_cid, codecs={SOURCE_CODEC})
+        except (TypeError, ValueError) as error:
+            raise DuckDBASTStoreError("cache requires a canonical RAW CID") from error
+
+    @staticmethod
+    def _validate_cache_payload(payload: bytes, expected_cid: str) -> bytes:
+        if (type(expected_cid) is not str or type(payload) is not bytes
+                or not 0 < len(payload) <= MAX_SOURCE_SHARD_CACHE_BYTES):
+            raise DuckDBASTStoreIntegrityError("cache payload exceeds byte bound")
+        if cid_for_bytes(payload) != expected_cid:
+            raise DuckDBASTStoreIntegrityError("cache payload differs from caller-trusted CID")
+        return payload
+
+    def _source_shard_cache_location(self) -> tuple[str, str, str]:
+        assert self._connection is not None
+        database, schema = self._connection.execute(
+            "SELECT current_database(), current_schema()"
+        ).fetchone()
+        if (any(type(name) is not str or not 0 < len(name) <= 256
+                or "\x00" in name for name in (database, schema))
+                or database == "temp"):
+            raise DuckDBASTStoreError("cache requires an explicit persistent database/schema")
+        # Identifiers originate in the selected connection, never a cache row.
+        # Three-part qualification prevents a TEMP table from shadowing storage.
+        relation = ".".join('"' + name.replace('"', '""') + '"'
+                            for name in (database, schema, SOURCE_SHARD_CACHE_TABLE))
+        return database, schema, relation
+
+    def _read_source_shard_cache(self, expected_cid: str, relation: str) -> bytes | None:
+        # Caller holds the store lock and its transaction. Check length before
+        # fetching a BLOB; this cache never reconstructs or scans the AST catalog.
+        assert self._connection is not None
+        rows = self._connection.execute(
+            'SELECT octet_length(payload) FROM ' + relation + ' '
+            'WHERE cache_cid=? LIMIT 2', [expected_cid]
+        ).fetchall()
+        if not rows:
+            return None
+        if (len(rows) != 1 or type(rows[0][0]) is not int
+                or not 0 < rows[0][0] <= MAX_SOURCE_SHARD_CACHE_BYTES):
+            raise DuckDBASTStoreIntegrityError("cache row count or byte bound does not verify")
+        payloads = self._connection.execute(
+            'SELECT payload FROM ' + relation + ' '
+            'WHERE cache_cid=? LIMIT 2', [expected_cid]
+        ).fetchall()
+        if len(payloads) != 1:
+            raise DuckDBASTStoreIntegrityError("cache row population changed")
+        payload = self._validate_cache_payload(payloads[0][0], expected_cid)
+        if len(payload) != rows[0][0]:
+            raise DuckDBASTStoreIntegrityError("cache payload length changed")
+        return payload
+
+    @contextmanager
+    def _source_shard_cache_transaction(self):
+        # Two read-only statements have different transaction IDs in autocommit
+        # and share one ID inside a caller transaction. Detect it before BEGIN:
+        # DuckDB's rejected nested BEGIN would abort the caller's transaction.
+        # The connection remains exclusively owned by the calling store owner.
+        connection = self._connection
+        assert connection is not None
+        first = connection.execute("SELECT txid_current()").fetchone()
+        second = connection.execute("SELECT txid_current()").fetchone()
+        if (type(first) is not tuple or type(second) is not tuple
+                or len(first) != 1 or len(second) != 1
+                or type(first[0]) is not int or type(second[0]) is not int
+                or first[0] <= 0 or second[0] <= 0):
+            raise DuckDBASTStoreError("cache transaction state does not verify")
+        if first == second:
+            raise DuckDBASTStoreError("cache operation requires no caller-owned transaction")
+        with self._transaction():
+            yield
+
+    def put_source_shard_cache(self, payload: bytes) -> str:
+        """Store a bounded opaque cache bundle and return its RAW CID.
+
+        The owner must retain that CID independently for later admission. This
+        method validates byte identity only; the ingestor validates the bundle's
+        source, parser context and AST records. No active AST publication changes.
+        """
+        if (type(payload) is not bytes
+                or not 0 < len(payload) <= MAX_SOURCE_SHARD_CACHE_BYTES):
+            raise DuckDBASTStoreError("cache requires bounded exact bytes")
+        cache_cid = cid_for_bytes(payload)
+        with self._lock:
+            if self._connection is None:
+                previous = self._source_shard_cache_payloads.get(cache_cid)
+                if previous is not None:
+                    self._validate_cache_payload(previous, cache_cid)
+                elif (len(self._source_shard_cache_payloads) >= MAX_SOURCE_SHARD_CACHE_ARTIFACTS
+                      or sum(map(len, self._source_shard_cache_payloads.values()))
+                      + len(payload) > MAX_SOURCE_SHARD_CACHE_BYTES):
+                    raise DuckDBASTStoreError("in-memory cache artifact population exceeds bound")
+                self._source_shard_cache_payloads[cache_cid] = payload
+            else:
+                with self._source_shard_cache_transaction():
+                    _, _, relation = self._source_shard_cache_location()
+                    self._connection.execute(
+                        'CREATE TABLE IF NOT EXISTS ' + relation + ' '
+                        '(cache_cid VARCHAR PRIMARY KEY, payload BLOB NOT NULL)'
+                    )
+                    previous = self._read_source_shard_cache(cache_cid, relation)
+                    if previous is None:
+                        self._connection.execute(
+                            'INSERT INTO ' + relation + ' VALUES (?, ?)',
+                            [cache_cid, payload],
+                        )
+        return cache_cid
+
+    def get_source_shard_cache(self, expected_cid: str) -> bytes | None:
+        """Retrieve only a caller-selected artifact, verifying its exact bytes.
+
+        No latest-cache discovery or automatic acceptance of a database root is
+        performed. A missing artifact returns None; a damaged artifact refuses.
+        The length check and BLOB read share one transaction snapshot.
+        """
+        expected_cid = self._cache_identity(expected_cid)
+        with self._lock:
+            if self._connection is None:
+                found = self._source_shard_cache_payloads.get(expected_cid)
+                return (None if found is None
+                        else self._validate_cache_payload(found, expected_cid))
+            with self._source_shard_cache_transaction():
+                database, schema, relation = self._source_shard_cache_location()
+                tables = self._connection.execute(
+                    'SELECT count(*) FROM information_schema.tables '
+                    'WHERE table_catalog=? AND table_schema=? AND table_name=?',
+                    [database, schema, SOURCE_SHARD_CACHE_TABLE],
+                ).fetchone()
+                if tables == (0,):
+                    return None
+                if tables != (1,):
+                    raise DuckDBASTStoreIntegrityError("cache table population does not verify")
+                return self._read_source_shard_cache(expected_cid, relation)
 
     def stats(self) -> dict[str, int]:
         with self._lock:
@@ -1993,6 +2383,7 @@ class DuckDBASTStore:
         *,
         before_apply: Callable[[Any], None] | None = None,
         before_commit: Callable[[Any], None] | None = None,
+        reuse_existing: Callable[[Any], bool] | None = None,
     ) -> tuple[tuple[ASTCatalogProjection, ...], tuple[InvalidationRow, ...]]:
         """Publish a bounded batch and invalidations atomically.
 
@@ -2004,9 +2395,13 @@ class DuckDBASTStore:
         they must not start another transaction or publish external side effects.
         An exception from either callback rolls the complete batch back. They
         permit a control-domain compare-and-swap to commit with its AST rows.
+        A trusted reuse_existing callback runs after before_apply in that same
+        transaction. Only an exact True may elide projection writes, and only
+        with no supplied invalidations. It must verify complete canonical active
+        membership. before_commit still runs; returned projections stay exact.
         """
         if any(hook is not None and not callable(hook)
-               for hook in (before_apply, before_commit)):
+               for hook in (before_apply, before_commit, reuse_existing)):
             raise DuckDBASTStoreError("transaction hooks must be callable")
         if len(projections) + len(invalidations) > MAX_QUERY_ROWS:
             raise DuckDBASTStoreError("publication batch exceeds row bound")
@@ -2031,11 +2426,19 @@ class DuckDBASTStore:
                 list(self._invalidations),
             )
             invalidation_count = 0
+            applied_count = len(projections)
             try:
                 with self._transaction():
                     if before_apply is not None:
                         before_apply(self._connection)
-                    for projection in projections:
+                    reuse = False if reuse_existing is None else reuse_existing(self._connection)
+                    if type(reuse) is not bool:
+                        raise DuckDBASTStoreError("reuse_existing must return an exact boolean")
+                    if reuse and invalidations:
+                        raise DuckDBASTStoreError("cannot reuse projections with supplied invalidations")
+                    selected = () if reuse else projections
+                    applied_count = len(selected)
+                    for projection in selected:
                         if self._connection is None:
                             previous = self._by_file.get(projection.source_file.file_id)
                         else:
@@ -2084,7 +2487,7 @@ class DuckDBASTStore:
                     snapshot
                 )
                 raise
-            self._stats["puts"] += len(projections)
+            self._stats["puts"] += applied_count
             self._stats["invalidations"] += invalidation_count
             return projections, invalidations
 
@@ -2335,9 +2738,13 @@ class DuckDBASTStore:
             "interfaces",
             "diagnostics",
         ):
+            # An explicitly selected blob can have orphan family rows when
+            # its ast_blobs row was removed. Delete its complete owned family
+            # directly so normal publication can repair missing membership.
+            predicate = ("blob_id=?" if where == "blob_id=?" else
+                         f"blob_id IN (SELECT blob_id FROM ast_blobs WHERE {where})")
             self._connection.execute(
-                f'DELETE FROM "{table}" WHERE blob_id IN (SELECT blob_id FROM ast_blobs WHERE {where})',
-                list(parameters),
+                f'DELETE FROM "{table}" WHERE {predicate}', list(parameters),
             )
         self._connection.execute(
             "DELETE FROM ast_blobs WHERE " + where, list(parameters)
@@ -2428,30 +2835,65 @@ class DuckDBASTStore:
                 blob.created_at,
             ],
         )
-        for node in projection.nodes:
-            connection.execute(
-                """
+        node_insert = """
                 INSERT INTO ast_nodes VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
-                """,
-                [
-                    node.node_id,
-                    node.blob_id,
-                    node.file_id,
-                    node.revision_id,
-                    node.node_kind,
-                    node.record_id,
-                    node.parent_node_id,
-                    node.span.start_byte,
-                    node.span.end_byte,
-                    node.span.start_line,
-                    node.span.start_column,
-                    node.span.end_line,
-                    node.span.end_column,
-                    node.label,
-                    node.payload_json,
-                ],
+                """
+        node_value_group = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        node_parameters: list[Any] = []
+        node_rows = 0
+        node_string_bytes = 0
+        for node in projection.nodes:
+            parameters = [
+                node.node_id,
+                node.blob_id,
+                node.file_id,
+                node.revision_id,
+                node.node_kind,
+                node.record_id,
+                node.parent_node_id,
+                node.span.start_byte,
+                node.span.end_byte,
+                node.span.start_line,
+                node.span.start_column,
+                node.span.end_line,
+                node.span.end_column,
+                node.label,
+                node.payload_json,
+            ]
+            if not self._optimized_node_inserts:
+                connection.execute(node_insert, parameters)
+                continue
+            # Four bytes per code point bounds UTF-8 string parameters without
+            # materializing another encoded copy. Fixed-width values have at
+            # most fifteen parameters per row and sixty-four rows per chunk.
+            string_bytes = sum(4 * str.__len__(value) for value in parameters
+                               if isinstance(value, str))
+            if node_rows and (
+                node_rows == MAX_NODE_INSERT_ROWS
+                or node_string_bytes + string_bytes > MAX_NODE_INSERT_STRING_BYTES
+            ):
+                connection.execute(
+                    "INSERT INTO ast_nodes VALUES "
+                    + ", ".join([node_value_group] * node_rows),
+                    node_parameters,
+                )
+                node_parameters = []
+                node_rows = 0
+                node_string_bytes = 0
+            if string_bytes > MAX_NODE_INSERT_STRING_BYTES:
+                # Preserve existing valid large rows on the original route.
+                connection.execute(node_insert, parameters)
+                continue
+            node_parameters.extend(parameters)
+            node_rows += 1
+            node_string_bytes += string_bytes
+        if node_rows:
+            connection.execute(
+                "INSERT INTO ast_nodes VALUES "
+                + ", ".join([node_value_group] * node_rows),
+                node_parameters,
             )
         for item in projection.scopes:
             connection.execute(
@@ -2528,28 +2970,63 @@ class DuckDBASTStore:
                     item.span.end_column,
                 ],
             )
-        for item in projection.references:
-            connection.execute(
-                """
+        reference_insert = """
                 INSERT INTO "references" VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                 )
-                """,
-                [
-                    item.reference_row_id,
-                    item.blob_id,
-                    item.reference_id,
-                    item.name,
-                    item.scope_id,
-                    item.context,
-                    item.is_qualified,
-                    item.span.start_byte,
-                    item.span.end_byte,
-                    item.span.start_line,
-                    item.span.start_column,
-                    item.span.end_line,
-                    item.span.end_column,
-                ],
+                """
+        reference_value_group = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        reference_parameters: list[Any] = []
+        reference_rows = 0
+        reference_string_bytes = 0
+        for item in projection.references:
+            parameters = [
+                item.reference_row_id,
+                item.blob_id,
+                item.reference_id,
+                item.name,
+                item.scope_id,
+                item.context,
+                item.is_qualified,
+                item.span.start_byte,
+                item.span.end_byte,
+                item.span.start_line,
+                item.span.start_column,
+                item.span.end_line,
+                item.span.end_column,
+            ]
+            if not self._optimized_reference_inserts:
+                connection.execute(reference_insert, parameters)
+                continue
+            # Four bytes per code point bounds UTF-8 string parameters without
+            # materializing another encoded copy. Fixed-width values have at
+            # most thirteen parameters per row and sixty-four rows per chunk.
+            string_bytes = sum(4 * str.__len__(value) for value in parameters
+                               if isinstance(value, str))
+            if reference_rows and (
+                reference_rows == MAX_REFERENCE_INSERT_ROWS
+                or reference_string_bytes + string_bytes > MAX_REFERENCE_INSERT_STRING_BYTES
+            ):
+                connection.execute(
+                    'INSERT INTO "references" VALUES '
+                    + ", ".join([reference_value_group] * reference_rows),
+                    reference_parameters,
+                )
+                reference_parameters = []
+                reference_rows = 0
+                reference_string_bytes = 0
+            if string_bytes > MAX_REFERENCE_INSERT_STRING_BYTES:
+                # Preserve existing valid large rows on the original route.
+                connection.execute(reference_insert, parameters)
+                continue
+            reference_parameters.extend(parameters)
+            reference_rows += 1
+            reference_string_bytes += string_bytes
+        if reference_rows:
+            connection.execute(
+                'INSERT INTO "references" VALUES '
+                + ", ".join([reference_value_group] * reference_rows),
+                reference_parameters,
             )
         for item in projection.calls:
             connection.execute(
@@ -2727,6 +3204,8 @@ __all__ = [
     "InterfaceRow",
     "InvalidationRow",
     "PARSE_FAILURE_DIAGNOSTIC_CODE",
+    "MAX_SOURCE_SHARD_CACHE_BYTES",
+    "SOURCE_SHARD_CACHE_TABLE",
     "ParseStatus",
     "ReferenceRow",
     "SUPERVISOR_BLOB_SUMMARY_SCHEMA",

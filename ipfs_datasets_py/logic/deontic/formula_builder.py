@@ -2500,15 +2500,51 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
     blockers = list(norm.blockers)
     included_slots = _included_formula_slots(norm)
     omitted_slots = _omitted_formula_slots(norm)
-    deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
-    if not deterministic_resolution:
-        deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(
-            norm, blockers
+    capped_predicates = _capped_formula_qualifier_predicates(norm)
+    cap_blockers = [
+        marker
+        for slot, marker in (
+            ("conditions", "formula_condition_cap_exceeded"),
+            ("exceptions", "formula_exception_cap_exceeded"),
         )
-    if not deterministic_resolution:
-        deterministic_resolution = _readiness_formula_resolution(norm)
-    deterministic_resolution = _normalize_formula_resolution(deterministic_resolution)
-    proof_ready = norm.proof_ready or bool(deterministic_resolution)
+        if capped_predicates[slot]
+    ]
+    reference_blockers, reference_resolution = _reference_formula_readiness(norm, blockers)
+    inline_blockers = (
+        ["formula_inline_exception_action_unresolved"]
+        if _inline_exception_action_unresolved(norm) else []
+    )
+    duty_scope_blockers = (
+        ["formula_duty_scope_unresolved"]
+        if _explicit_duty_scope_unresolved(norm) else []
+    )
+    coordination_evidence = _unresolved_coordination_evidence(norm)
+    coordination_blockers = ["formula_coordination_scope_unresolved"] if coordination_evidence else []
+    hard_blockers = (
+        cap_blockers + reference_blockers + inline_blockers
+        + duty_scope_blockers + coordination_blockers
+    )
+    if hard_blockers:
+        # Neither parser promotion nor saved readiness can attest omitted
+        # antecedents, unresolved references, or unbound action/duty scope.
+        blockers.extend(marker for marker in hard_blockers if marker not in blockers)
+        deterministic_resolution = {}
+        proof_ready = False
+    elif reference_resolution is not None:
+        # Current qualifier coverage, rather than a generic or cached core-slot
+        # clearance, is the authority for a reference-bearing formula record.
+        deterministic_resolution = reference_resolution
+        proof_ready = bool(reference_resolution)
+    else:
+        deterministic_resolution = _deterministic_formula_resolution(norm, blockers)
+        if not deterministic_resolution:
+            deterministic_resolution = _batch_resolved_reference_exception_formula_resolution(
+                norm, blockers
+            )
+        if not deterministic_resolution:
+            deterministic_resolution = _readiness_formula_resolution(norm)
+        deterministic_resolution = _normalize_formula_resolution(deterministic_resolution)
+        proof_ready = norm.proof_ready or bool(deterministic_resolution)
     requires_validation = not proof_ready
     repair_required = requires_validation
 
@@ -2535,6 +2571,7 @@ def build_deontic_formula_record_from_ir(norm: LegalNormIR) -> Dict[str, Any]:
         "omitted_formula_slots": omitted_slots,
         "deterministic_resolution": deterministic_resolution,
         "schema_version": norm.schema_version,
+        **({"coordination_scope_evidence": coordination_evidence} if coordination_evidence else {}),
     }
 
 
@@ -2824,6 +2861,11 @@ def _reference_is_external(reference: Mapping[str, Any]) -> bool:
         value = str(reference.get(key) or "").strip().lower().replace("-", "_")
         if value in {"external", "external_document", "other_document"}:
             return True
+    target_document = str(reference.get("target_document") or "").strip().lower().replace("-", "_")
+    if target_document and target_document not in {
+        "same_document", "this_document", "current_document", "local",
+    }:
+        return True
     return False
 
 
@@ -3590,9 +3632,10 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         omitted["conditions"] = reference_conditions
     if reference_exceptions:
         omitted["exceptions"] = reference_exceptions
+    capped_predicates = _capped_formula_qualifier_predicates(norm)
     capped_conditions = _capped_slot_omission_records(
         substantive_conditions,
-        _FORMULA_CONDITION_LIMIT,
+        capped_predicates["conditions"],
         "condition",
         "condition is preserved in IR but omitted from capped deontic formula antecedents",
     )
@@ -3600,7 +3643,7 @@ def _omitted_formula_slots(norm: LegalNormIR) -> Dict[str, List[Dict[str, Any]]]
         omitted.setdefault("conditions", []).extend(capped_conditions)
     capped_exceptions = _capped_slot_omission_records(
         substantive_exceptions,
-        _FORMULA_EXCEPTION_LIMIT,
+        capped_predicates["exceptions"],
         "exception",
         "exception is preserved in IR but omitted from capped deontic formula antecedents",
     )
@@ -3634,19 +3677,52 @@ def _included_formula_slots(norm: LegalNormIR) -> List[str]:
     return included
 
 
+def _capped_formula_qualifier_predicates(norm: LegalNormIR) -> Dict[str, List[str]]:
+    """Return distinct substantive predicates actually absent because of caps.
+
+    The renderer deduplicates predicate aliases before applying each cap. A
+    later condition may also already be represented by a temporal or procedure
+    modifier, so it is not an omission. Frame renderers do not use these caps.
+    """
+
+    operator = _norm_modality(norm)
+    if operator in {"DEF", "PURP", "APP", "EXEMPT", "LIFE"} or norm.norm_type in {
+        "purpose",
+        "instrument_lifecycle",
+    }:
+        return {"conditions": [], "exceptions": []}
+    condition_preds = _unique_predicates(_formula_condition_texts(norm))
+    exception_preds = _unique_predicates(_formula_exception_texts(norm))
+    represented_modifiers = _formula_temporal_predicates(norm.temporal_constraints)
+    procedure_preds = _formula_procedure_predicates(norm.procedure)
+    procedure_preds.extend(_supplemental_procedure_predicates(norm.procedure, procedure_preds))
+    represented_modifiers.extend(procedure_preds)
+    mental_state_pred = _mental_state_predicate(norm)
+    if mental_state_pred and mental_state_pred != "P":
+        represented_modifiers.append(mental_state_pred)
+    return {
+        "conditions": [
+            predicate
+            for predicate in condition_preds[_FORMULA_CONDITION_LIMIT:]
+            if predicate not in represented_modifiers
+        ],
+        "exceptions": exception_preds[_FORMULA_EXCEPTION_LIMIT:],
+    }
+
+
 def _capped_slot_omission_records(
     items: Sequence[Dict[str, Any]],
-    limit: int,
+    omitted_predicates: Sequence[str],
     field: str,
     reason: str,
 ) -> List[Dict[str, Any]]:
-    """Return provenance for source-grounded slots beyond formula caps."""
+    """Keep every source occurrence of an actually omitted predicate."""
 
     records: List[Dict[str, Any]] = []
-    for item in items[limit:]:
+    for item in items:
         value = _slot_primary_text(item)
         predicate = normalize_predicate_name(value)
-        if not value or not predicate or predicate == "P":
+        if not value or predicate not in omitted_predicates:
             continue
         record: Dict[str, Any] = {
             "value": value,
@@ -4096,6 +4172,15 @@ def _readiness_formula_resolution(norm: LegalNormIR) -> Dict[str, Any]:
     normalized = _normalize_formula_resolution(dict(resolution))
     resolution_type = str(normalized.get("type") or "").strip()
     if resolution_type not in _READINESS_FORMULA_RESOLUTION_TYPES:
+        return {}
+    if resolution_type == "pure_precedence_override" and (
+        len(norm.overrides) != 1
+        or norm.conditions
+        or norm.exceptions
+        or norm.temporal_constraints
+    ):
+        # A rehydrated row can recover qualifiers omitted by an older producer.
+        # Its cached override-only resolution cannot clear those current slots.
         return {}
     return normalized
 
@@ -4572,12 +4657,609 @@ def _batch_resolved_reference_exception_formula_resolution(
     }
 
 
+def _unresolved_coordination_evidence(norm: LegalNormIR) -> List[Dict[str, Any]]:
+    """Retain source groups that cannot be promoted as independent duties.
+
+    Group recognition uses current source text, not persisted warnings or
+    coordination metadata. A source-bound independent sibling can remain clear;
+    invalid or contradictory provenance cannot hide a group behind another
+    duty's span. This does not decide inclusive/exclusive or modal scope.
+    """
+    source = norm.source_text
+    if not re.search(r"\bor\b", source, re.IGNORECASE):
+        return []
+    from .utils.deontic_parser import _unresolved_duty_disjunction_groups
+    groups = _unresolved_duty_disjunction_groups(source)
+    if not groups:
+        return []
+
+    def span(value: Any) -> tuple[int, int] | None:
+        if (isinstance(value, (list, tuple)) and len(value) == 2
+                and all(type(part) is int for part in value)
+                and 0 <= value[0] < value[1] <= len(source)):
+            return value[0], value[1]
+        return None
+
+    core = [span(norm.field_spans.get(key)) for key in ("subject", "modal", "action")]
+    support = span(norm.support_span.to_list())
+    if support is None or any(pair is None for pair in core):
+        return groups
+    evidence_spans = [support, *core]
+    for key in ("actor", "modality", "deontic_operator", "mental_state",
+                "action_verb", "action_object", "action_recipient"):
+        if norm.field_spans.get(key):
+            pair = span(norm.field_spans[key])
+            if pair is None:
+                return groups
+            evidence_spans.append(pair)
+    for item in [*norm.conditions, *norm.exceptions, *norm.overrides,
+                 *norm.temporal_constraints, *norm.cross_references]:
+        if not isinstance(item, dict) or span(item.get("span")) is None:
+            return groups
+        evidence_spans.append(span(item["span"]))
+        if item.get("clause_span"):
+            pair = span(item["clause_span"])
+            if pair is None:
+                return groups
+            evidence_spans.append(pair)
+
+    def procedure_spans(value: Any) -> bool:
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key == "span" or key.endswith("_span"):
+                    pair = span(item)
+                    if pair is None:
+                        return False
+                    evidence_spans.append(pair)
+                    if key == "span" and "raw_text" in value:
+                        if value["raw_text"] != source[pair[0]:pair[1]]:
+                            return False
+                elif not procedure_spans(item):
+                    return False
+        elif isinstance(value, list):
+            return all(procedure_spans(item) for item in value)
+        return True
+
+    if not isinstance(norm.procedure, dict) or not procedure_spans(norm.procedure):
+        return groups
+    affected = [group for group in groups if any(
+        left < group["scope_span"][1] and group["scope_span"][0] < right
+        for left, right in evidence_spans
+    )]
+    if affected:
+        return affected
+
+    # Only an independently bound core can establish that this norm belongs to
+    # a different clause. Merely shifting a saved support/modal span is not enough.
+    start, end = support
+    if norm.support_text != source[start:end]:
+        return groups
+    expected = _explicit_duty_source_core(source[start:end])
+    if expected is None:
+        return groups
+    actor, action, modality, expected_spans = expected
+    normalized = lambda value: " ".join(str(value).split()).strip(" ,;:.").casefold()
+    if (normalized(norm.actor) != normalized(actor)
+            or normalized(norm.action) != normalized(action)
+            or _norm_modality(norm) != modality):
+        return groups
+    if any(pair != (start + local[0], start + local[1])
+           for pair, local in zip(core, expected_spans)):
+        return groups
+    modal = core[1]
+    for key in ("modality", "deontic_operator"):
+        if not norm.field_spans.get(key):
+            continue
+        alias = span(norm.field_spans[key])
+        if alias != modal and not (
+            alias and alias[0] == modal[0] and alias[1] < modal[1]
+            and source[alias[1]:modal[1]].strip().casefold() == "not"
+        ):
+            return groups
+    if norm.procedure and not _coordination_procedure_matches_source(norm, support):
+        return groups
+    return []
+
+
+def _coordination_procedure_matches_source(norm: LegalNormIR, support: tuple[int, int]) -> bool:
+    """Require a claimed independent procedure to belong to that source clause.
+
+    Nested occurrence spans alone cannot protect spanless or rewritten cached
+    records. Each claimed value must agree with fresh local procedure evidence.
+    Partial legacy inventories may match a subset; this is an ownership check,
+    not proof that every procedure event or legal consequence was captured.
+    """
+    from .utils.deontic_parser import analyze_normative_sentence, _offset_source_spans
+    start, end = support
+    rows = analyze_normative_sentence(norm.source_text[start:end], "statute")
+    if len(rows) != 1:
+        return False
+    expected = _offset_source_spans(LegalNormIR.from_parser_element(rows[0]).procedure, start)
+
+    def matches(claimed: Any, actual: Any) -> bool:
+        if isinstance(claimed, dict):
+            return isinstance(actual, dict) and all(
+                key in actual and (
+                    value == actual[key] if key == "span" or key.endswith("_span")
+                    else matches(value, actual[key])
+                ) for key, value in claimed.items()
+            )
+        if isinstance(claimed, list):
+            if not isinstance(actual, list):
+                return False
+            remaining = iter(actual)
+            return all(any(matches(value, item) for item in remaining) for value in claimed)
+        return type(claimed) is type(actual) and claimed == actual
+
+    return matches(norm.procedure, expected)
+
+
+@lru_cache(maxsize=512)
+def _explicit_duty_source_core(clause: str) -> tuple[Any, ...] | None:
+    """Bind a supported clause's core fields to fresh deterministic evidence.
+
+    Each clause lacks top-level duty separators, so its local parser readiness
+    cannot recursively invoke this multi-duty check. Cache only immutable core
+    values, never mutable parser rows or a caller's readiness decision.
+    """
+    from .utils.deontic_parser import analyze_normative_sentence
+    elements = analyze_normative_sentence(clause, "statute")
+    if len(elements) != 1:
+        return None
+    expected = LegalNormIR.from_parser_element(elements[0])
+    spans = []
+    for key in ("subject", "modal", "action"):
+        value = expected.field_spans.get(key)
+        if (not isinstance(value, (list, tuple)) or len(value) != 2
+                or not all(type(part) is int for part in value)):
+            return None
+        spans.append(tuple(value))
+    return expected.actor, expected.action, _norm_modality(expected), tuple(spans)
+
+
+def _explicit_duty_scope_unresolved(norm: LegalNormIR) -> bool:
+    """Validate current evidence for supported semicolon-separated duties.
+
+    The source boundary recognizer is deliberately narrower than arbitrary
+    coordinated clauses. Persisted readiness cannot replace local core spans
+    or move, omit, or invent a recognized qualifier across those boundaries.
+    It compares with a fresh local source parse without modifying supplied IR.
+    """
+    source = norm.source_text
+    if ";" not in source:
+        return False
+    from .utils.deontic_parser import (
+        _explicit_duty_scope_ranges,
+        extract_condition_details,
+        extract_cross_reference_details,
+        extract_exception_details,
+        extract_override_clause_details,
+        extract_temporal_constraint_details,
+    )
+    scopes = _explicit_duty_scope_ranges(source)
+    if not scopes:
+        return False
+
+    def span(value: Any) -> tuple[int, int] | None:
+        if (isinstance(value, (list, tuple)) and len(value) == 2
+                and all(type(part) is int for part in value)
+                and 0 <= value[0] < value[1] <= len(source)):
+            return value[0], value[1]
+        return None
+
+    modal = span(norm.field_spans.get("modal"))
+    if modal is None:
+        return True
+    owners = [(start, end) for start, end in scopes if start <= modal[0] < modal[1] <= end]
+    if len(owners) != 1:
+        return True
+    start, end = owners[0]
+
+    def local(value: Any) -> bool:
+        pair = span(value)
+        return pair is not None and start <= pair[0] < pair[1] <= end
+
+    if not local(norm.support_span.to_list()):
+        return True
+    if norm.support_text != source[norm.support_span.start:norm.support_span.end]:
+        return True
+    for key in ("subject", "modal", "action"):
+        if not local(norm.field_spans.get(key)):
+            return True
+    for key in ("actor", "modality", "deontic_operator", "mental_state",
+                "action_verb", "action_object", "action_recipient"):
+        if norm.field_spans.get(key) and not local(norm.field_spans[key]):
+            return True
+
+    def normalized(value: Any) -> str:
+        return " ".join(str(value).split()).strip(" ,;:.").casefold()
+
+    action = norm.field_spans["action"]
+    actor = norm.field_spans["subject"]
+    if normalized(norm.action) != normalized(source[action[0]:action[1]]):
+        return True
+    if normalized(norm.actor).removeprefix("the ") != normalized(source[actor[0]:actor[1]]).removeprefix("the "):
+        return True
+    clause = source[start:end]
+    core = _explicit_duty_source_core(clause)
+    if core is None:
+        return True
+    expected_actor, expected_action, expected_modality, expected_spans = core
+    if (normalized(norm.actor) != normalized(expected_actor)
+            or normalized(norm.action) != normalized(expected_action)
+            or _norm_modality(norm) != expected_modality):
+        return True
+    for key, pair in zip(("subject", "modal", "action"), expected_spans):
+        if tuple(norm.field_spans[key]) != (start + pair[0], start + pair[1]):
+            return True
+    for key in ("modality", "deontic_operator"):
+        if not norm.field_spans.get(key):
+            continue
+        alias = span(norm.field_spans[key])
+        if alias != modal and not (
+            alias and alias[0] == modal[0] and alias[1] < modal[1]
+            and source[alias[1]:modal[1]].strip().casefold() == "not"
+        ):
+            return True
+    for records, extractor in (
+        (norm.conditions, extract_condition_details),
+        (norm.exceptions, extract_exception_details),
+        (norm.temporal_constraints, extract_temporal_constraint_details),
+        (norm.overrides, extract_override_clause_details),
+        (norm.cross_references, extract_cross_reference_details),
+    ):
+        expected = {
+            (item["span"][0] + start, item["span"][1] + start,
+             normalized(_slot_primary_text(item)))
+            for item in extractor(clause)
+        }
+        observed = set()
+        for item in records:
+            if not isinstance(item, dict) or not local(item.get("span")):
+                return True
+            left, right = item["span"]
+            if item.get("raw_text") != source[left:right]:
+                return True
+            if item.get("clause_span") and not local(item["clause_span"]):
+                return True
+            observed.add((left, right, normalized(_slot_primary_text(item))))
+        if observed != expected:
+            return True
+    return False
+
+
+def _inline_exception_action_unresolved(norm: LegalNormIR) -> bool:
+    """Require separate source-bound action and exception after an interrupter.
+
+    This guard does not repair cached parser rows. A recognized immediate
+    exception with stale, missing or overlapping action evidence stays blocked.
+    """
+    source = norm.source_text
+    if not source or _norm_modality(norm) not in {"O", "P", "F"}:
+        return False
+
+    def span(value: Any) -> tuple[int, int] | None:
+        if (isinstance(value, (list, tuple)) and len(value) == 2
+                and all(type(part) is int for part in value)
+                and 0 <= value[0] < value[1] <= len(source)):
+            return value[0], value[1]
+        return None
+
+    modals = {pair for key in ("modal", "modality", "deontic_operator")
+              if (pair := span(norm.field_spans.get(key)))}
+    primary_modal = span(norm.field_spans.get("modal"))
+    if primary_modal and all(
+        pair == primary_modal or (
+            pair[0] == primary_modal[0] and pair[1] < primary_modal[1]
+            and source[pair[1]:primary_modal[1]].strip().casefold() == "not"
+        ) for pair in modals
+    ):
+        # Legacy modality aliases sometimes cover only "shall" while the
+        # parser's exact modal span covers "shall not". Keep the negation.
+        modals = {primary_modal}
+    openings: set[int] = set()
+    for _, end in modals:
+        match = re.match(r"\s*,?\s*(\()\s*(?:except|unless)\b", source[end:], re.IGNORECASE)
+        if match:
+            openings.add(end + match.start(1))
+    # A missing or displaced modal span cannot hide the common source forms.
+    support = span(norm.support_span.to_list()) or (0, len(source))
+    for match in re.finditer(
+        r"\b(?:shall|must|may|cannot|can\s+not|required\s+to|authorized\s+to|permitted\s+to|prohibited\s+from|forbidden\s+to)(?:\s+not)?\s*,?\s*(\()\s*(?:except|unless)\b",
+        source, re.IGNORECASE,
+    ):
+        if support[0] <= match.start(1) < support[1]:
+            openings.add(match.start(1))
+    if not openings:
+        return False
+    if len(openings) != 1 or len(modals) != 1:
+        return True
+    opening = next(iter(openings))
+    modal = next(iter(modals))
+    if modal[1] > opening or not re.fullmatch(r"\s*,?\s*", source[modal[1]:opening]):
+        return True
+    depth = 0
+    closing = None
+    quote = ""
+    escaped = False
+    unquoted_body: List[str] = []
+    for index in range(opening, len(source)):
+        character = source[index]
+        if quote:
+            unquoted_body.append(" ")
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = ""
+            continue
+        apostrophe = (
+            character in {"'", "’"} and index > 0 and index + 1 < len(source)
+            and source[index - 1].isalnum() and source[index + 1].isalnum()
+        )
+        if character in {'"', "'", "“", "‘"} and not apostrophe:
+            quote = {"“": "”", "‘": "’"}.get(character, character)
+            unquoted_body.append(" ")
+            continue
+        unquoted_body.append(character)
+        if character == "(":
+            depth += 1
+        elif character == ")":
+            depth -= 1
+            if depth == 0:
+                closing = index
+                break
+    if closing is None:
+        return True
+    if len(re.findall(r"\b(?:except|unless)\b", "".join(unquoted_body), re.IGNORECASE)) != 1:
+        return True
+    action = span(norm.field_spans.get("action"))
+    if action is None or action[0] <= closing:
+        return True
+    if source[closing + 1:action[0]].strip():
+        return True
+    action_text = source[action[0]:action[1]]
+    normalized = lambda value: " ".join(str(value).split()).strip(" ,;:").casefold()
+    if not norm.action.strip() or normalized(action_text) != normalized(norm.action):
+        return True
+    if re.search(r"\b(?:shall|must|may|cannot)\b|[;()]", action_text, re.IGNORECASE):
+        return True
+    bound_exception = False
+    for exception in norm.exceptions:
+        body = span(exception.get("span"))
+        clause = span(exception.get("clause_span"))
+        if body is None or body[1] <= opening or body[0] >= closing:
+            continue
+        if clause is None or not opening < body[0] < body[1] <= closing:
+            return True
+        if clause[0] <= opening or clause[1] != closing + 1:
+            return True
+        if exception.get("raw_text") != source[body[0]:body[1]]:
+            return True
+        if any(
+            key in exception and normalized(exception[key]) != normalized(exception["raw_text"])
+            for key in ("normalized_text", "value", "text")
+        ):
+            return True
+        if not re.fullmatch(r"\s*(?:except(?:\s+for)?|unless)\s+", source[opening + 1:body[0]], re.IGNORECASE):
+            return True
+        if source[body[1]:closing].strip():
+            return True
+        bound_exception = True
+    return not bound_exception
+
+
 def _normalize_formula_resolution(resolution: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize deterministic resolution payloads without dropping provenance."""
 
     if not resolution:
         return {}
     return dict(resolution)
+
+
+_REFERENCE_NUMBER = r"[0-9][0-9A-Za-z]*(?:[.\-][0-9A-Za-z]+)*(?:\([a-z0-9]+\))*"
+_TYPED_REFERENCE_RE = re.compile(
+    r"\b(?P<kind>sections?|subsections?|chapters?|titles?|articles?|parts?)\s+"
+    r"(?P<numbers>" + _REFERENCE_NUMBER + r"(?:\s*(?:,\s*(?:(?:and|or)\s+)?|\band\s+|\bor\s+)" + _REFERENCE_NUMBER + r")*)(?![\w(])",
+    re.IGNORECASE,
+)
+
+
+def _exact_reference_ids(text: str) -> set[str]:
+    """Return typed, token-exact citation identities, preserving USC titles."""
+    source = str(text or "").strip().lower().rstrip(" .")
+    identities: set[str] = set()
+    usc_spans = []
+    for match in re.finditer(
+        r"\b(?P<title>\d+)\s+u\.?\s*s\.?\s*c\.?\s*(?:§\s*)?(?P<number>" + _REFERENCE_NUMBER + r")(?![\w(])",
+        source,
+        re.IGNORECASE,
+    ):
+        identities.add(f"usc:{match.group('title')}:{match.group('number')}")
+        usc_spans.append(match.span())
+    for match in _TYPED_REFERENCE_RE.finditer(source):
+        kind = match.group("kind").rstrip("s")
+        for number in re.findall(_REFERENCE_NUMBER, match.group("numbers"), re.IGNORECASE):
+            identities.add(f"{kind}:{number}")
+    for match in re.finditer(r"§\s*(" + _REFERENCE_NUMBER + r")(?![\w(])", source, re.IGNORECASE):
+        if not any(start <= match.start() < end for start, end in usc_spans):
+            identities.add(f"section:{match.group(1)}")
+    for match in re.finditer(r"\b(?:this|current)\s+(section|subsection|chapter|title|article|part)\b", source):
+        identities.add(f"{match.group(1)}:this")
+    return identities
+
+
+def _reference_record_ids(item: Mapping[str, Any]) -> set[str] | None:
+    """Reject incompatible citation aliases within one resolution record."""
+    kinds = {"section", "subsection", "chapter", "title", "article", "part"}
+    reference_type = str(item.get("reference_type") or "").strip().lower().rstrip("s")
+    if reference_type and reference_type not in kinds | {"cross_reference"}:
+        return None
+    declared_kinds = {
+        str(item.get(key) or "").strip().lower().rstrip("s")
+        for key in ("reference_type", "type")
+    } & kinds
+    if len(declared_kinds) > 1:
+        return None
+    kind = next(iter(declared_kinds), "")
+    identities: set[str] | None = None
+    for key in ("canonical_citation", "citation", "value", "normalized_text", "raw_text", "text", "target", "section", "subsection"):
+        text = str(item.get(key) or "").strip()
+        if not text:
+            continue
+        found = _exact_reference_ids(text)
+        inferred_kind = key if key in kinds else kind
+        if not inferred_kind and identities and len({value.split(":")[0] for value in identities}) == 1:
+            candidate_kind = next(iter(identities)).split(":")[0]
+            inferred_kind = candidate_kind if candidate_kind in kinds else ""
+        if not found and inferred_kind and (
+            re.fullmatch(_REFERENCE_NUMBER + r"\.?", text, re.IGNORECASE)
+            or text.lower() in {"this", "current"}
+        ):
+            found = _exact_reference_ids(f"{inferred_kind} {text}")
+            if text.lower() in {"this", "current"}:
+                found = {f"{inferred_kind}:this"}
+        if not found:
+            if key in {"canonical_citation", "citation", "target", "section", "subsection"}:
+                return None
+            continue
+        if kind in kinds and any(value.split(":")[0] != kind for value in found):
+            return None
+        if identities is not None and found != identities:
+            return None
+        identities = found
+    return identities
+
+
+def _reference_slot_text_is_pure(text: str, slot: str) -> bool:
+    normalized = str(text or "").strip().rstrip(" .")
+    if slot == "exceptions":
+        normalized = re.sub(
+            r"^(?:as\s+(?:otherwise\s+)?provided\s+in|(?:otherwise\s+)?provided\s+in|under|pursuant\s+to)\s+",
+            "", normalized, flags=re.IGNORECASE,
+        )
+    else:
+        normalized = re.sub(r"^(?:subject\s+to|under|pursuant\s+to)\s+", "", normalized, flags=re.IGNORECASE)
+    if re.fullmatch(r"(?:this|current)\s+(section|subsection|chapter|title|article|part)", normalized, re.IGNORECASE):
+        return True
+    # Ranges and unmodelled prose cannot be discharged by one endpoint.
+    if re.search(r"\b(?:through|to)\b|[–—]", normalized, re.IGNORECASE):
+        return False
+    matches = list(_TYPED_REFERENCE_RE.finditer(normalized))
+    remainder = normalized
+    for match in reversed(matches):
+        remainder = remainder[:match.start()] + " " + remainder[match.end():]
+    remainder = re.sub(r"§\s*" + _REFERENCE_NUMBER + r"(?![\w(])", " ", remainder, flags=re.IGNORECASE)
+    # USC-qualified references need a namespace-aware contract beyond the
+    # current local section resolver; never collapse them to bare sections.
+    return bool(_exact_reference_ids(normalized)) and bool(re.fullmatch(r"[\s,]*(?:(?:and|or)[\s,]*)?", remainder, re.IGNORECASE))
+
+
+def _slot_has_reference_semantics(item: Mapping[str, Any], slot: str) -> bool:
+    text = _slot_primary_text(dict(item))
+    if _exact_reference_ids(text):
+        return True
+    reference_type = str(item.get("reference_type") or item.get("type") or "").lower()
+    if reference_type in {"section", "subsection", "chapter", "title", "article", "part", "cross_reference"}:
+        return True
+    if slot == "exceptions" and _exception_text_needs_external_resolution(text):
+        return True
+    return bool(re.match(r"^(?:subject\s+to\s+)?(?:the\s+)?(?:section|subsection|chapter|title|article|part)\b", text, re.IGNORECASE))
+
+
+def _reference_formula_readiness(
+    norm: LegalNormIR, blockers: List[str]
+) -> tuple[List[str], Dict[str, Any] | None]:
+    """Validate present reference qualifiers before any cached/generic readiness."""
+    markers: List[str] = []
+    if _norm_modality(norm) == "APP" or norm.norm_type == "applicability":
+        actor_ids = _exact_reference_ids(norm.actor)
+        if (
+            not re.fullmatch(r"this\s+(section|subsection|chapter|title|article|part)", norm.actor.strip(), re.IGNORECASE)
+            or not _exact_reference_ids(norm.action).issubset(actor_ids)
+            or not _local_reference_metadata_is_consistent(norm, actor_ids)
+        ):
+            markers.append("formula_external_applicability_unresolved")
+    resolution: Dict[str, Any] | None = None
+    for slot, other_slot in (("conditions", "exceptions"), ("exceptions", "conditions")):
+        items = list(getattr(norm, slot))
+        referenced = [item for item in items if isinstance(item, Mapping) and _slot_has_reference_semantics(item, slot)]
+        if not referenced:
+            continue
+        marker = "formula_reference_" + ("condition" if slot == "conditions" else "exception") + "_unresolved"
+        texts = [_slot_primary_text(dict(item)) for item in referenced]
+        supported = (
+            len(referenced) == len(items)
+            and not getattr(norm, other_slot) and not norm.overrides
+            and _norm_modality(norm) in {"O", "P", "F"}
+            and bool(norm.actor.strip() and norm.action.strip())
+            and all(_reference_slot_text_is_pure(text, slot) for text in texts)
+        )
+        required_sets = [_exact_reference_ids(text) for text in texts]
+        local = all(ids and all(value.endswith(":this") for value in ids) for ids in required_sets)
+        records = _same_document_reference_records(norm)
+        available = set().union(*(_reference_record_ids(item) or set() for item in records)) if records else set()
+        all_metadata = [item for item in [*norm.cross_references, *norm.resolved_cross_references] if isinstance(item, Mapping)]
+        if local:
+            # Explicit self-reference text does not depend on unresolved parser
+            # placeholders. Positive metadata must still agree with that text.
+            allowed = set().union(*required_sets)
+            supported = supported and _local_reference_metadata_is_consistent(norm, allowed)
+        else:
+            supported = supported and all(ids and ids.issubset(available) for ids in required_sets)
+            if any(_reference_claims_same_document(item) and not _is_same_document_resolved_reference(item) for item in all_metadata):
+                supported = False
+        allowed_blockers = {"cross_reference_requires_resolution", "llm_repair_required"}
+        if slot == "exceptions":
+            allowed_blockers.add("exception_requires_scope_review")
+        supported = supported and set(blockers).issubset(allowed_blockers)
+        if not supported:
+            markers.append(marker)
+            continue
+        if local:
+            scopes = sorted({value.replace(":", " ").replace(" this", "") for ids in required_sets for value in ids})
+            scopes = ["this " + scope for scope in scopes]
+            resolution = {
+                "type": "local_scope_reference_" + ("condition" if slot == "conditions" else "exception"),
+                "resolved_blockers": sorted(set(blockers)), "scopes": scopes,
+                ("condition_spans" if slot == "conditions" else "exception_spans"): [item.get("span", []) for item in referenced],
+                "reason": "local self-reference " + ("condition" if slot == "conditions" else "exception") + " is exported as provenance outside the operative formula",
+            }
+        else:
+            reason = "reference-only " + ("condition" if slot == "conditions" else "exception") + " is backed by explicit same-document cross-reference resolution"
+            resolved_blockers = sorted(set(blockers))
+            if slot == "exceptions" and any(item.get("matched_section_context") for item in records):
+                reason = "numbered exception reference is resolved to an exact same-document section and retained as provenance"
+                resolved_blockers = sorted(set(blockers) - {"llm_repair_required"})
+            resolution = {
+                "type": "resolved_same_document_reference_" + ("condition" if slot == "conditions" else "exception"),
+                "resolved_blockers": resolved_blockers,
+                "references": list(dict.fromkeys(_reference_resolution_text(item) for item in records)),
+                ("condition_spans" if slot == "conditions" else "exception_spans"): [item.get("span", []) for item in referenced],
+                "reason": reason,
+            }
+    return markers, resolution
+
+
+def _local_reference_metadata_is_consistent(norm: LegalNormIR, allowed: set[str]) -> bool:
+    """Permit ordinary unresolved self-reference placeholders, not conflicts."""
+    for item in [*norm.cross_references, *norm.resolved_cross_references]:
+        if not isinstance(item, Mapping):
+            continue
+        ids = _reference_record_ids(item)
+        if _reference_is_external(item) or (ids and not ids.issubset(allowed)):
+            return False
+        if ids is None and any(_exact_reference_ids(str(value)) for value in item.values()):
+            return False
+        # The parser's placeholders carry unresolved/target_exists=False; the
+        # explicit local source scope needs no lookup. A claimed document or
+        # resolution flag, however, must never contradict that local scope.
+        if any(key in item and item[key] is not True for key in ("same_document", "resolved")):
+            return False
+        if _reference_claims_same_document(item) and not _is_same_document_resolved_reference(item):
+            return False
+    return True
 
 
 def _same_document_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
@@ -4591,34 +5273,17 @@ def _same_document_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
     """
 
     records: List[Dict[str, Any]] = []
-    for item in norm.resolved_cross_references:
+    for item in [*norm.resolved_cross_references, *norm.cross_references]:
         if isinstance(item, dict) and _is_same_document_resolved_reference(item):
-            records.append(item)
-
-    if records:
-        return records
-
-    return [
-        item
-        for item in norm.cross_references
-        if isinstance(item, dict) and _is_same_document_resolved_reference(item)
-    ]
+            if item not in records:
+                records.append(item)
+    return records
 
 
 def _reference_text_matches_slot(reference_text: str, slot_text: str) -> bool:
-    reference = str(reference_text or "").strip().lower()
-    slot = str(slot_text or "").strip().lower()
-    if not reference or not slot:
-        return False
-    if reference in slot:
-        return True
-    reference_citation = _canonical_section_citation(reference)
-    slot_citation = _canonical_section_citation(slot)
-    if reference_citation and slot_citation and reference_citation == slot_citation:
-        return True
-    reference_citations = set(_section_citations_from_text(reference))
-    slot_citations = set(_section_citations_from_text(slot))
-    return bool(reference_citations and reference_citations.issubset(slot_citations))
+    reference_ids = _exact_reference_ids(reference_text)
+    slot_ids = _exact_reference_ids(slot_text)
+    return bool(reference_ids and slot_ids and slot_ids.issubset(reference_ids))
 
 
 def _local_scope_reference_records(norm: LegalNormIR) -> List[Dict[str, Any]]:
@@ -4704,19 +5369,49 @@ def _slot_primary_text(item: Dict[str, Any]) -> str:
     return ""
 
 
-def _is_same_document_resolved_reference(item: Dict[str, Any]) -> bool:
-    """Return whether a resolved reference is explicitly same-document."""
+def _reference_claims_same_document(item: Mapping[str, Any]) -> bool:
+    """Detect a positive resolution claim before checking its consistency."""
 
-    if item.get("same_document") is True:
+    if item.get("same_document") is True or item.get("resolved") is True:
         return True
 
     for key in ("resolution_scope", "document_scope", "source_scope", "scope"):
         value = str(item.get(key) or "").strip().lower().replace("-", "_")
-        if value in {"same_document", "this_document", "current_document", "local"}:
+        if value in {"same_document", "this_document", "current_document", "local", "local_self"}:
             return True
 
-    target_document = str(item.get("target_document") or "").strip().lower()
-    return target_document in {"same_document", "this_document", "current_document"}
+    target_document = str(item.get("target_document") or "").strip().lower().replace("-", "_")
+    return target_document in {"same_document", "this_document", "current_document", "local"}
+
+
+def _is_same_document_resolved_reference(item: Mapping[str, Any]) -> bool:
+    """Accept consistent explicit same-document metadata, never truthy coercions."""
+    if _reference_is_external(item):
+        return False
+    for key in ("same_document", "resolved", "target_exists"):
+        if key in item and item[key] is not True:
+            return False
+    allowed_scopes = {"same_document", "this_document", "current_document", "local", "local_self"}
+    for key in ("resolution_scope", "document_scope", "source_scope", "scope"):
+        if key in item and str(item[key] or "").strip().lower().replace("-", "_") not in allowed_scopes:
+            return False
+    for key in ("resolution_status", "status"):
+        if key in item and str(item[key] or "").strip().lower() not in {"resolved", "complete"}:
+            return False
+    ids = _reference_record_ids(item)
+    if not ids:
+        return False
+    if any(str(item.get(key) or "").strip().lower().replace("-", "_") == "local_self"
+           for key in ("resolution_scope", "document_scope", "source_scope", "scope")) and not all(
+        value.endswith(":this") for value in ids
+    ):
+        return False
+    # A resolved flag alone does not establish which document owns the target.
+    explicit_scope = item.get("same_document") is True or any(
+        str(item.get(key) or "").strip().lower().replace("-", "_") in allowed_scopes
+        for key in ("resolution_scope", "document_scope", "source_scope", "scope", "target_document")
+    )
+    return explicit_scope
 
 
 def _is_local_scope_reference_exception_text(text: str) -> bool:

@@ -13,7 +13,7 @@ import ast
 import configparser
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 try:  # Python 3.11+, kept lazy so importing this module has no side effects.
     import tomllib
@@ -239,7 +239,10 @@ class PytestAnalyzer:
             return self.analyze_configuration(source, path=path)
         return PytestAnalysis(diagnostics=(f"unsupported pytest artifact: {path}",))
 
-    def analyze_files(self, sources: Mapping[str, str | bytes]) -> PytestAnalysis:
+    def analyze_files(
+        self, sources: Mapping[str, str | bytes], *,
+        checkpoint: Callable[[], None] | None = None,
+    ) -> PytestAnalysis:
         """Analyze a snapshot and attach each test to applicable config files.
 
         ``conftest.py`` is scoped by its containing directory; the supported
@@ -247,14 +250,25 @@ class PytestAnalyzer:
         syntactic scope rule, not pytest collection, so it remains stable
         without loading plugins or importing project code.
         """
-        partial = [self.analyze(source, path=path) for path, source in sorted(sources.items())]
+        if checkpoint is not None and not callable(checkpoint):
+            raise ValueError("checkpoint must be callable")
+        check = checkpoint if checkpoint is not None else (lambda: None)
+        check()
+        partial = []
+        for path, source in sorted(sources.items()):
+            check()
+            partial.append(self.analyze(source, path=path))
+            check()
         tests = tuple(sorted((item for result in partial for item in result.tests), key=lambda item: item.symbol_id))
         fixtures = tuple(sorted((item for result in partial for item in result.fixtures), key=lambda item: item.symbol_id))
         configurations = tuple(sorted((item for result in partial for item in result.configurations), key=lambda item: item.artifact_id))
         symbols = tuple(sorted((item for result in partial for item in result.symbols), key=lambda item: item[0]))
         artifacts = tuple(sorted((item for result in partial for item in result.artifacts), key=lambda item: item.artifact_id))
         diagnostics = tuple(sorted({item for result in partial for item in result.diagnostics}))
-        return PytestAnalysis(tests, fixtures, configurations, symbols, artifacts, self._edges(tests, fixtures, configurations), diagnostics)
+        check()
+        edges = self._edges(tests, fixtures, configurations)
+        check()
+        return PytestAnalysis(tests, fixtures, configurations, symbols, artifacts, edges, diagnostics)
 
     def analyze_python(self, source: str | bytes, *, path: str) -> PytestAnalysis:
         path = _normal_path(path)
