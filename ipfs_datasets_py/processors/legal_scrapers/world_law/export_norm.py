@@ -267,6 +267,7 @@ def _one(
         source_repo=source_dataset,
         source_revision=source_revision,
         drop_us=True,
+        admin_level="municipality" if family == "world-municipal" else "country",
     )
     if record is None:
         counts["dropped"] += 1

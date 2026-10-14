@@ -38,6 +38,7 @@ def project_world_v11_row(
     source_repo: str,
     source_revision: str,
     drop_us: bool = False,
+    admin_level: str = "country",
 ) -> dict[str, object] | None:
     reason = drop_reason(row, drop_us=drop_us)
     if reason is not None:
@@ -54,7 +55,7 @@ def project_world_v11_row(
     record.update(
         {
             "jurisdiction": null_text(row.get("country_code")),
-            "admin_level": "country",
+            "admin_level": admin_level,
             "instrument_type": doc_type,
             "citation": null_text(row.get("number")) or null_text(row.get("official_citation")),
             "bluebook_citation": None,

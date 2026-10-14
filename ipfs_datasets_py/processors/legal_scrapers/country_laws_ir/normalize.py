@@ -162,15 +162,15 @@ def _pack_local_shards(local: Path, cache_dir: Path) -> Path:
                 meta = loaded
         except Exception:
             meta = {}
-    revision = str(meta.get("source_revision") or meta.get("revision") or "")
-    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
-        raise ValueError("source_revision must be 40 lowercase hex characters")
+    from ipfs_datasets_py.processors.legal_scrapers.world_law.load_sharded_laws import (
+        load_sharded_laws,
+        require_source_revision,
+    )
+
+    revision = require_source_revision(local)
     slug = str(meta.get("slug") or local.name)
     dataset = str(meta.get("source_dataset") or f"endomorphosis/ipfs_{slug}_laws")
     dest = Path(cache_dir) / "packed-shards" / slug
-    from ipfs_datasets_py.processors.legal_scrapers.world_law.load_sharded_laws import (
-        load_sharded_laws,
-    )
 
     load_sharded_laws(
         local,
@@ -180,6 +180,28 @@ def _pack_local_shards(local: Path, cache_dir: Path) -> Path:
         source_revision=revision,
     )
     return dest
+
+
+def preflight_local_shard_source(source: str) -> None:
+    """Reject an unpacked shard directory before ``build_country`` starts.
+
+    Hub ids and directories that already contain ``laws.parquet`` return
+    without reading them. A shard directory whose ``source_revision`` is
+    missing or not 40 lowercase hex characters raises ``ValueError``.
+    """
+
+    local = Path(source)
+    if not local.is_dir():
+        return
+    if (local / "data" / "laws.parquet").is_file() or (local / "laws.parquet").is_file():
+        return
+    if not _law_shards(local):
+        return
+    from ipfs_datasets_py.processors.legal_scrapers.world_law.load_sharded_laws import (
+        require_source_revision,
+    )
+
+    require_source_revision(local)
 
 
 def load_source(repo_id: str, cache_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, Any]]:

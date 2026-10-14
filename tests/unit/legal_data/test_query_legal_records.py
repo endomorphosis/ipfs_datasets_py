@@ -210,6 +210,51 @@ def test_query_id_is_stable_for_the_same_request(monkeypatch) -> None:
     assert changed.query_id != first.query_id
 
 
+def test_empty_known_query_is_an_input_error(monkeypatch) -> None:
+    monkeypatch.delenv("LEGAL_QUERY_NORMALIZED", raising=False)
+    with pytest.raises(LegalQueryDisabled):
+        query_legal_records(jurisdiction="FR", text_query="", citation="")
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    with pytest.raises(LegalQueryInputError) as raised:
+        query_legal_records(jurisdiction="FR", text_query="  ", citation="")
+    assert raised.value.code == "query_required"
+
+
+def test_excluded_national_queries_are_not_published(monkeypatch) -> None:
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.catalog import (
+        EXCLUDED_SLUGS,
+    )
+
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    assert "ghana" in EXCLUDED_SLUGS
+    calls: list[str] = []
+    for jurisdiction in ("GH", "ghana", "BE", "PT", "LT"):
+        result = query_legal_records(
+            jurisdiction=jurisdiction,
+            text_query="code",
+            gap_status="stale",
+            allow_stale=True,
+            corpus_opener=_opened(calls),
+        )
+        assert result.coverage == "not_published"
+        assert result.source_repo is None
+        assert result.records == ()
+        assert result.jurisdiction in {"GH", "BE", "PT", "LT"}
+    assert calls == []
+    municipal = query_legal_records(jurisdiction="belgium_municipal", text_query="bylaw")
+    assert municipal.jurisdiction == "BE"
+    assert municipal.source_repo == "justicedao/ipfs_belgium_municipal_laws_ir"
+
+
+def test_subdivision_code_is_not_the_parent_statute(monkeypatch) -> None:
+    monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
+    result = query_legal_records(jurisdiction="US-CA", text_query="civil")
+    assert result.jurisdiction == "US-CA"
+    assert result.coverage == "not_published"
+    assert result.source_repo is None
+    assert result.records == ()
+
+
 def test_missing_municipal_slug_does_not_invent_a_repo(monkeypatch) -> None:
     monkeypatch.setenv("LEGAL_QUERY_NORMALIZED", "1")
     closed = query_legal_records(

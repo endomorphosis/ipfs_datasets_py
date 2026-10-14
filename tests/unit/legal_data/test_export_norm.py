@@ -352,6 +352,44 @@ def test_chile_and_hungary_card_configs_print_zero_as_not_published(
     assert "not_published" in printed
 
 
+def test_world_export_admin_level_follows_the_family(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    _write(
+        source / "data" / "laws-00001.parquet",
+        [
+            {
+                "cid": "es",
+                "country_code": "ES",
+                "doc_type": "ordinance",
+                "title_native": "Ordenanza",
+                "text": "texto",
+                "content_complete": True,
+                "source_official": True,
+            }
+        ],
+    )
+    municipal = tmp_path / "municipal"
+    export_norm(
+        source,
+        municipal,
+        family="world-municipal",
+        source_dataset="endomorphosis/world_municipal_law",
+        source_revision=_SHA,
+    )
+    national = tmp_path / "national"
+    export_norm(
+        source,
+        national,
+        family="world-national",
+        source_dataset="endomorphosis/world_national_law",
+        source_revision=_SHA,
+    )
+    municipal_level = pq.read_table(municipal / "data" / "laws.parquet").column("admin_level").to_pylist()
+    national_level = pq.read_table(national / "data" / "laws.parquet").column("admin_level").to_pylist()
+    assert municipal_level == ["municipality"]
+    assert national_level == ["country"]
+
+
 def test_upload_ignore_patterns_cover_token_and_cache_files() -> None:
     assert "**/.cache/**" in UPLOAD_IGNORE_PATTERNS
     assert "*token*" in UPLOAD_IGNORE_PATTERNS

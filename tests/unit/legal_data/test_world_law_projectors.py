@@ -178,6 +178,26 @@ def test_world_projector_drops_archived_and_unofficial_rows() -> None:
     assert omitted is None
 
 
+def test_world_national_stays_country_and_municipal_is_municipality() -> None:
+    national = project_world_v11_row(
+        _world_row(),
+        source_repo="endomorphosis/world_national_law",
+        source_revision=_SHA,
+    )
+    municipal = project_world_v11_row(
+        _world_row(country_code="ES", doc_type="ordinance"),
+        source_repo="endomorphosis/world_municipal_law",
+        source_revision=_SHA,
+        admin_level="municipality",
+    )
+    assert national is not None and municipal is not None
+    assert national["admin_level"] == "country"
+    assert municipal["admin_level"] == "municipality"
+    assert municipal["jurisdiction"] == "ES"
+    assert "html" not in national
+    assert "html" not in municipal
+
+
 def test_world_incomplete_text_is_null() -> None:
     record = project_world_v11_row(
         _world_row(content_complete=False, text="<html><body>hidden</body></html>"),

@@ -13,6 +13,29 @@ from pathlib import Path
 _SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
+def require_source_revision(source_dir: Path) -> str:
+    """Return the pack SHA, or raise before a build reads the directory."""
+
+    meta = _read_pack_meta(source_dir)
+    revision = str(meta.get("source_revision") or meta.get("revision") or "")
+    if _SHA.fullmatch(revision) is None:
+        raise ValueError("source_revision must be 40 lowercase hex characters")
+    return revision
+
+
+def _read_pack_meta(source_dir: Path) -> dict[str, object]:
+    meta_path = Path(source_dir) / "pack_meta.json"
+    if not meta_path.is_file():
+        return {}
+    try:
+        loaded = json.loads(meta_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if not isinstance(loaded, dict):
+        return {}
+    return loaded
+
+
 def load_sharded_laws(
     source_dir: Path,
     dest_dir: Path,
@@ -32,7 +55,12 @@ def load_sharded_laws(
     _concat(law_shards, data_out / "laws.parquet")
     article_shards = _shards(data_in, "articles")
     if article_shards:
-        _concat(article_shards, data_out / "articles.parquet")
+        articles_path = data_out / "articles.parquet"
+        _concat(article_shards, articles_path)
+        if not articles_path.is_file():
+            raise FileNotFoundError(
+                "article shards were not written to data/articles.parquet"
+            )
     meta = {
         "slug": slug,
         "source_dataset": source_dataset,

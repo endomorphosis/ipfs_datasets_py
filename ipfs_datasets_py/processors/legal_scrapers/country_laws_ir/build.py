@@ -178,6 +178,9 @@ def build_country(
     fetch_hub_prior_ir: bool = True,
     renormalize: bool = False,
 ) -> dict[str, Any]:
+    from .normalize import preflight_local_shard_source
+
+    preflight_local_shard_source(source)
     country = get_country(source)
     if not country.get("indexable", True):
         raise RuntimeError(f"{country['repo']} is excluded: {country.get('skip_reason')}")

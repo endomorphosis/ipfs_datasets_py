@@ -184,7 +184,12 @@ def _require_query_shape(
     admin_level: str | None,
 ) -> None:
     statute_like = instrument_type in {None, "", "statute"}
-    if resolved.code == "US" and statute_like and not admin_level:
+    if (
+        resolved.code == "US"
+        and resolved.admin_level != "adm1"
+        and statute_like
+        and not admin_level
+    ):
         raise LegalQueryInputError("admin_level_required")
     if not (text_query or "").strip() and not (citation or "").strip():
         raise LegalQueryInputError("query_required")
@@ -253,6 +258,8 @@ def _route_national(
     if not resolved.slug:
         return _closed(resolved.echo)
     slug = _select_alias_slug(resolved.slug, alias_revisions)
+    if _excluded_national(slug):
+        return _closed(resolved.echo)
     repo = f"justicedao/ipfs_{slug}_laws_ir"
     return _with_gap(
         echo=resolved.echo,
@@ -325,6 +332,20 @@ def _stamp_fallback(row: dict[str, object], gap_status: str) -> dict[str, object
 
 def _closed(echo: str) -> _Route:
     return _Route(echo, "not_published", None, None, None)
+
+
+def _excluded_national(slug: str) -> bool:
+    """National packs in ``EXCLUDED_SLUGS`` are not a published code.
+
+    Municipal slugs are not compared here. ``belgium_municipal`` stays a
+    municipal route even though ``belgium`` is excluded.
+    """
+
+    from ipfs_datasets_py.processors.legal_scrapers.country_laws_ir.catalog import (
+        EXCLUDED_SLUGS,
+    )
+
+    return fold_alias(slug) in EXCLUDED_SLUGS
 
 
 def _alias_pair(slug: str) -> tuple[str, str] | None:
