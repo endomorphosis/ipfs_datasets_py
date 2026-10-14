@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import marshal
 import os
 import tempfile
 import threading
@@ -61,6 +62,142 @@ LOCAL_BENCHMARK_PROOF_PROFILE = "local-benchmark@1"
 # capacities or split the existing shared scheduler authority during upgrades.
 PROOF_PID_TASKS_PER_PROCESS = 16
 PROOF_PID_HEADROOM_TASKS = 32
+
+
+# Polling still reads the complete shared JSON under the existing locks. Only
+# deterministic parsing of identical text may be reused within one facade.
+# The clone bytes are private, ephemeral and never read from a file or peer.
+_POLL_CACHE_MAX_TEXT_CHARS = 262144
+_POLL_CACHE_MAX_RESIDENT_BYTES = 4 * 1024**2
+_POLL_CACHE_MAX_NODES = 32768
+_POLL_CACHE_MAX_DEPTH = 64
+try:
+    _POLL_JSON_LOADS = json.loads
+    _POLL_JSON_LOADS_CODE = json.loads.__code__
+    _POLL_JSON_LOADS_DEFAULTS = json.loads.__defaults__
+    _POLL_JSON_LOADS_KWDEFAULTS = dict(json.loads.__kwdefaults__)
+    _POLL_JSON_DECODER = json._default_decoder
+    _POLL_JSON_DECODER_CLASS = json.JSONDecoder
+    _POLL_JSON_DECODE = json.JSONDecoder.decode
+    _POLL_JSON_DECODE_CODE = json.JSONDecoder.decode.__code__
+    _POLL_JSON_RAW_DECODE = json.JSONDecoder.raw_decode
+    _POLL_JSON_RAW_DECODE_CODE = json.JSONDecoder.raw_decode.__code__
+    _POLL_JSON_DECODER_SETTINGS = tuple(json._default_decoder.__dict__.items())
+    _POLL_JSON_CONSTANTS = tuple((key, id(value)) for key, value in json.decoder._CONSTANTS.items())
+    _POLL_JSON_INITIAL_STANDARD = (
+        _POLL_JSON_LOADS_CODE.co_filename == json.__file__
+        and _POLL_JSON_DECODE_CODE.co_filename == json.decoder.__file__
+        and _POLL_JSON_RAW_DECODE_CODE.co_filename == json.decoder.__file__
+        and type(_POLL_JSON_DECODER) is _POLL_JSON_DECODER_CLASS
+        and _POLL_JSON_DECODER.object_hook is None
+        and _POLL_JSON_DECODER.object_pairs_hook is None
+        and _POLL_JSON_DECODER.parse_float is float
+        and _POLL_JSON_DECODER.parse_int is int
+        and _POLL_JSON_DECODER.strict is True
+        and _POLL_JSON_DECODER.parse_object is json.decoder.JSONObject
+        and _POLL_JSON_DECODER.parse_array is json.decoder.JSONArray
+        and _POLL_JSON_DECODER.parse_string is json.decoder.scanstring
+        and _POLL_JSON_DECODER.parse_constant.__self__ is json.decoder._CONSTANTS
+        and _POLL_JSON_DECODER.parse_constant.__name__ == '__getitem__'
+        and type(_POLL_JSON_DECODER.scan_once).__module__ == '_json'
+        and type(_POLL_JSON_DECODER.scan_once).__name__ == 'Scanner'
+    )
+except (AttributeError, TypeError):
+    # Applications may install a wrapper or custom decoder before importing
+    # the scheduler. They keep the original per-poll JSON path, including its
+    # hooks and exceptions; cache setup must not prevent the import.
+    _POLL_JSON_INITIAL_STANDARD = False
+
+
+def _poll_json_decoder_unchanged() -> bool:
+    """Custom or modified decoder hooks keep their ordinary per-call behavior."""
+    try:
+        return _poll_json_decoder_matches()
+    except (AttributeError, TypeError):
+        return False
+
+
+def _poll_json_decoder_matches() -> bool:
+    if not _POLL_JSON_INITIAL_STANDARD:
+        return False
+    decoder = json._default_decoder
+    return (
+        json.loads is _POLL_JSON_LOADS
+        and json.loads.__code__ is _POLL_JSON_LOADS_CODE
+        and json.loads.__defaults__ is _POLL_JSON_LOADS_DEFAULTS
+        and json.loads.__kwdefaults__ == _POLL_JSON_LOADS_KWDEFAULTS
+        and decoder is _POLL_JSON_DECODER
+        and type(decoder) is _POLL_JSON_DECODER_CLASS
+        and json.JSONDecoder is _POLL_JSON_DECODER_CLASS
+        and json.JSONDecoder.decode is _POLL_JSON_DECODE
+        and json.JSONDecoder.decode.__code__ is _POLL_JSON_DECODE_CODE
+        and json.JSONDecoder.raw_decode is _POLL_JSON_RAW_DECODE
+        and json.JSONDecoder.raw_decode.__code__ is _POLL_JSON_RAW_DECODE_CODE
+        and len(decoder.__dict__) == len(_POLL_JSON_DECODER_SETTINGS)
+        and all(decoder.__dict__.get(key) is value for key, value in _POLL_JSON_DECODER_SETTINGS)
+        and not decoder.memo
+        and tuple((key, id(value)) for key, value in json.decoder._CONSTANTS.items()) == _POLL_JSON_CONSTANTS
+    )
+
+
+def _poll_state_pending_admissible(text: str) -> bool:
+    """Retain only bounded text while waiting for a second identical read."""
+    import sys
+
+    return (len(text) <= _POLL_CACHE_MAX_TEXT_CHARS
+            and sys.getsizeof(text) + 256 <= _POLL_CACHE_MAX_RESIDENT_BYTES)
+
+
+def _poll_state_snapshot(text: str, state: Any) -> Optional[bytes]:
+    """Bound admission work and retain only an isolated encoding of plain JSON.
+
+    Admission is optional: unusual/deep/large valid input remains on the
+    ordinary path. Nothing derived from a validator's mutable result is saved.
+    """
+    import sys
+
+    text_size = sys.getsizeof(text)
+    if len(text) > _POLL_CACHE_MAX_TEXT_CHARS or text_size >= _POLL_CACHE_MAX_RESIDENT_BYTES:
+        return None
+    remaining_nodes = _POLL_CACHE_MAX_NODES
+    remaining_bytes = _POLL_CACHE_MAX_RESIDENT_BYTES - text_size - 256
+
+    def bounded(value: Any, depth: int) -> bool:
+        nonlocal remaining_nodes, remaining_bytes
+        remaining_nodes -= 1
+        remaining_bytes -= sys.getsizeof(value)
+        if remaining_nodes < 0 or remaining_bytes < 0 or depth > _POLL_CACHE_MAX_DEPTH:
+            return False
+        kind = type(value)
+        if kind is dict:
+            if len(value) * 2 > remaining_nodes:
+                return False
+            return all(type(key) is str and bounded(key, depth + 1) and bounded(item, depth + 1)
+                       for key, item in value.items())
+        if kind is list:
+            return len(value) <= remaining_nodes and all(bounded(item, depth + 1) for item in value)
+        return (kind in (str, int, bool, type(None))
+                or (kind is float and math.isfinite(value)))
+
+    try:
+        if not bounded(state, 0):
+            return None
+        encoded = marshal.dumps(state, 4)
+        if text_size + sys.getsizeof(encoded) + 256 > _POLL_CACHE_MAX_RESIDENT_BYTES:
+            return None
+        return encoded
+    except (MemoryError, RecursionError, TypeError, ValueError):
+        return None
+
+
+def _decode_state_json(raw: str) -> Any:
+    """Keep the ordinary decoder as the miss/fallback path."""
+    return json.loads(raw)
+
+
+def _clone_poll_state(encoded: bytes) -> Any:
+    """Materialize fresh full containers from this facade's own private bytes."""
+    return marshal.loads(encoded)
 
 
 class ResourceLane(str, Enum):
@@ -889,7 +1026,14 @@ def _path_lock(path: Path) -> threading.RLock:
 class GlobalResourceScheduler:
     """One process-safe scheduler shared by all host-local runtime lanes."""
 
-    def __init__(self, config: Optional[ResourceSchedulerConfig] = None) -> None:
+    def __init__(
+        self, config: Optional[ResourceSchedulerConfig] = None, *, cached_poll_state: bool = True,
+    ) -> None:
+        if type(cached_poll_state) is not bool:
+            raise ResourceConfigurationError("cached_poll_state must be a bool")
+        self._cached_poll_state = cached_poll_state
+        self._poll_state_cache: Optional[tuple[str, bytes]] = None
+        self._poll_state_pending: Optional[str] = None
         self.config = config or default_resource_scheduler_config()
         self.config.validate()
         self.state_path = Path(self.config.state_path).expanduser().resolve()
@@ -948,20 +1092,88 @@ class GlobalResourceScheduler:
                 fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
                 temporary_path: Optional[Path] = None
                 try:
+                    candidate: Optional[bytes] = None
+                    pending_candidate = False
+                    eligible = not persist and not allow_reconfigure and self._cached_poll_state is True
+                    if not eligible:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
                     try:
-                        raw = self.state_path.read_text(encoding="utf-8").strip()
+                        text = self.state_path.read_text(encoding="utf-8")
+                        raw = text.strip()
                     except FileNotFoundError:
-                        raw = ""
+                        text = raw = ""
+                    except BaseException:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
+                        raise
+                    eligible = eligible and _poll_json_decoder_unchanged()
+                    if not eligible:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
                     if raw:
                         try:
-                            state = json.loads(raw)
+                            cached = self._poll_state_cache
+                            pending = self._poll_state_pending
+                            if eligible and cached is not None and text == cached[0]:
+                                try:
+                                    state = _clone_poll_state(cached[1])
+                                except (EOFError, MemoryError, RecursionError, TypeError, ValueError):
+                                    self._poll_state_cache = None
+                                    self._poll_state_pending = None
+                                    cached = pending = None
+                                    eligible = False
+                                    state = _decode_state_json(raw)
+                                else:
+                                    if not _poll_json_decoder_unchanged():
+                                        self._poll_state_cache = None
+                                        self._poll_state_pending = None
+                                        cached = pending = None
+                                        eligible = False
+                                        state = _decode_state_json(raw)
+                            else:
+                                repeated = eligible and pending is not None and text == pending
+                                self._poll_state_cache = None
+                                self._poll_state_pending = None
+                                # Release both slots and local references before decoding
+                                # a changed text or constructing an admitted snapshot.
+                                cached = pending = None
+                                state = _decode_state_json(raw)
+                                if eligible:
+                                    if repeated:
+                                        candidate = _poll_state_snapshot(text, state)
+                                    else:
+                                        pending_candidate = _poll_state_pending_admissible(text)
                         except (TypeError, ValueError) as exc:
+                            self._poll_state_cache = None
+                            self._poll_state_pending = None
                             raise SchedulerStateError(
                                 f"resource scheduler state is corrupt: {self.state_path}"
                             ) from exc
+                        except BaseException:
+                            self._poll_state_cache = None
+                            self._poll_state_pending = None
+                            raise
                     else:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
                         state = self._new_state()
-                    self._validate_state_configuration(state, allow_reconfigure=allow_reconfigure)
+                    try:
+                        self._validate_state_configuration(state, allow_reconfigure=allow_reconfigure)
+                    except BaseException:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
+                        raise
+                    if eligible and _poll_json_decoder_unchanged():
+                        if candidate is not None:
+                            self._poll_state_pending = None
+                            self._poll_state_cache = (text, candidate)
+                        elif pending_candidate:
+                            self._poll_state_cache = None
+                            self._poll_state_pending = text
+                    else:
+                        self._poll_state_cache = None
+                        self._poll_state_pending = None
                     yield state
                     if not persist:
                         return
