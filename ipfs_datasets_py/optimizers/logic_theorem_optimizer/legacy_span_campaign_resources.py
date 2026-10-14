@@ -201,7 +201,11 @@ class LegacySpanCampaignResources:
 
     def __init__(self, runtime_directory, resource_ledger, *, storage_bytes=750_000_000,
                  memory_mb=12288, cpu_slots=4, child_process_slots=6,
-                 full_check_interval_seconds=300):
+                 full_check_interval_seconds=300, scheduler_state_path,
+                 expected_scheduler_policy_sha256):
+        from .existing_resource_scheduler import open_existing_scheduler
+        # Strict native metadata refusal precedes runtime/ledger access.
+        open_existing_scheduler(scheduler_state_path, expected_scheduler_policy_sha256)
         self.directory = host._safe_path(runtime_directory, directory=True)
         self.identity = host._root_identity(self.directory)
         ledger = host._safe_path(resource_ledger)
@@ -229,7 +233,10 @@ class LegacySpanCampaignResources:
         self.reservation = host.DaemonResourceReservation(
             ledger, roots=roots, storage_bytes=self.storage_bytes, memory_mb=self.memory_mb,
             cpu_slots=cpu_slots, child_process_slots=child_process_slots,
-            timeout_seconds=0, ledger_lock_timeout_seconds=60)
+            timeout_seconds=0, ledger_lock_timeout_seconds=60,
+            scheduler_state_path=scheduler_state_path,
+            expected_scheduler_policy_sha256=expected_scheduler_policy_sha256,
+            require_existing_ledger=True)
         self._opened = False
         self._next_full = 0.0
 
@@ -253,6 +260,17 @@ class LegacySpanCampaignResources:
         value = self.reservation.check_usage(self.directory, child_pid=child_pid)
         self._next_full = time.monotonic() + self.interval
         return value
+
+    def prepare_engine_bytecode(self):
+        from .legacy_span_engine_custody import prepare_engine_bytecode
+        return prepare_engine_bytecode(self.reservation, self.directory)
+
+    def bind_engine_launch(self, child_pid, invocation_sha256, *, bytecode_directory):
+        """Bind one actual attached engine to the externally owned reservation."""
+        from .legacy_span_engine_custody import bind_engine_launch
+        self.attach_child(child_pid)
+        return bind_engine_launch(self.reservation, self.directory, invocation_sha256,
+            bytecode_directory=bytecode_directory)
 
     def check_limits(self, *, full=False):
         if not self._opened:

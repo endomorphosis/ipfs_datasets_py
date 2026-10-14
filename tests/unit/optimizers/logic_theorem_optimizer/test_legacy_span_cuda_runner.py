@@ -469,7 +469,7 @@ def test_engine_prefetches_one_cpu_batch_before_waiting_for_current_gpu(tmp_path
         compiler_workers=2, bridge_workers=1, publish_only=False, max_batches=2,
         storage_bytes=100_000_000, poll_seconds=1, upload=False, memory_mb=12288,
         guided_compiler=True, publication_format="paired")
-    assert runner.engine(args) == 0
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 0
     gpu_order = [event[1] for event in events if event[0] == "gpu_submit"]
     assert len(gpu_order) == 2
     assert events.index(("cpu_submit", gpu_order[1])) < events.index(("gpu_result", gpu_order[0]))
@@ -493,7 +493,7 @@ def test_publish_only_retries_existing_outbox_without_input_download_or_model(tm
     monkeypatch.setattr(runner, "download_progress", forbidden)
     monkeypatch.setattr(runner, "publish_pending", publish)
     args = runner.arguments(["--runtime-directory", str(tmp_path), "--publish-only", "--upload"])
-    assert runner.engine(args) == 0
+    assert runner.engine(args, custody=private_custody(monkeypatch)) == 0
     assert calls and all(value == (True, tmp_path) for value in calls)
     assert json.loads((tmp_path / "status.json").read_text())["phase"] == "publication_completed"
 
@@ -580,3 +580,13 @@ def test_paired_manifest_dispatch_does_not_enter_legacy_exporter(queue, monkeypa
     runner.publish_pending(db, True)
     assert calls == [(staged["manifest"]["path"], True)]
     assert db.execute("SELECT status FROM batches").fetchone()[0] == "published"
+
+
+def private_custody(monkeypatch):
+    """Explicit controller-only doubles; no subprocess, CUDA or admission."""
+    from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_engine_custody as custody
+    class PrivateControllerFixture:
+        def verify(self):
+            return True
+    monkeypatch.setattr(custody, "LegacySpanEngineVerifier", PrivateControllerFixture)
+    return PrivateControllerFixture()

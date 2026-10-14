@@ -7,6 +7,7 @@ import pytest
 
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import legacy_span_campaign_resources as work
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer import autoencoder_daemon_resources as host
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import existing_resource_scheduler as existing
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.resource_scheduler import (
     GlobalResourceScheduler, ResourceSchedulerConfig,
 )
@@ -20,8 +21,17 @@ def local(tmp_path, monkeypatch):
     runtime.mkdir()
     scheduler = GlobalResourceScheduler(ResourceSchedulerConfig(
         total_cpu_slots=4, total_memory_mb=16384, total_child_process_slots=8,
-        lane_reservations={}, state_path=tmp_path / "scheduler.json", auto_renew_leases=False))
-    monkeypatch.setattr(host, "get_global_resource_scheduler", lambda: scheduler)
+        lane_reservations={}, state_path=tmp_path / "scheduler.json", proof_safety_enabled=True,
+        auto_renew_leases=False))
+    monkeypatch.setattr(host, "get_global_resource_scheduler", lambda: pytest.fail("implicit global facade"))
+    real_factory = existing.open_existing_scheduler
+    def private_factory(*args):
+        facade = real_factory(*args)
+        facade.config.proof_resource_sampler = lambda: existing.native.ProofHostResources(
+            8, 32768, 32768, pid_task_limit=500, available_pid_tasks=400)
+        facade.config.auto_renew_leases = False
+        return facade
+    monkeypatch.setattr(existing, "open_existing_scheduler", private_factory)
     ledger = tmp_path / "disk.json"
     ledger.write_text(json.dumps({"schema": host.SCHEMA, "roots": [host._root_identity(root)],
         "limit_bytes": host.MAX_STORAGE_BYTES, "reservations": {
@@ -30,11 +40,17 @@ def local(tmp_path, monkeypatch):
     return runtime, ledger, scheduler
 
 
+def binding(scheduler):
+    path = scheduler.state_path
+    return dict(scheduler_state_path=path,
+        expected_scheduler_policy_sha256=existing.policy_sha256(json.loads(path.read_bytes())["config"]))
+
+
 def test_local_checks_avoid_global_census_and_explicit_close_preserves_other_claim(local, monkeypatch):
     runtime, ledger, scheduler = local
     preserved = json.loads(ledger.read_text())["reservations"]["preserved"]
     with work.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100_000,
-                                         cpu_slots=2, child_process_slots=2) as owned:
+                                         cpu_slots=2, child_process_slots=2, **binding(scheduler)) as owned:
         assert scheduler.snapshot()["allocated"]["cpu_slots"] == 2
         original = owned.reservation.check_usage
         monkeypatch.setattr(owned.reservation, "check_usage", lambda *a, **k: pytest.fail("global census"))
@@ -51,17 +67,17 @@ def test_local_checks_avoid_global_census_and_explicit_close_preserves_other_cla
 
 
 def test_context_exit_without_durable_close_retains_claim(local):
-    runtime, ledger, _ = local
+    runtime, ledger, scheduler = local
     with work.LegacySpanCampaignResources(runtime, ledger, storage_bytes=100_000,
-                                         cpu_slots=1, child_process_slots=1) as owned:
+                                         cpu_slots=1, child_process_slots=1, **binding(scheduler)) as owned:
         key = owned.reservation.reservation_id
     assert json.loads(ledger.read_text())["reservations"][key]["status"] == "retained"
 
 
 def test_local_overflow_is_rejected_without_releasing_claim(local):
-    runtime, ledger, _ = local
+    runtime, ledger, scheduler = local
     with work.LegacySpanCampaignResources(runtime, ledger, storage_bytes=5,
-                                         cpu_slots=1, child_process_slots=1) as owned:
+                                         cpu_slots=1, child_process_slots=1, **binding(scheduler)) as owned:
         (runtime / "large").write_bytes(b"123456")
         with pytest.raises(work.LegacySpanResourceError, match="storage limit"):
             owned.check_limits()
@@ -74,9 +90,9 @@ def test_outside_runtime_and_nonfinite_interval_fail_before_admission(local, tmp
     outside = tmp_path / "outside"
     outside.mkdir()
     with pytest.raises(work.LegacySpanResourceError, match="outside"):
-        work.LegacySpanCampaignResources(outside, ledger)
+        work.LegacySpanCampaignResources(outside, ledger, **binding(scheduler))
     with pytest.raises(work.LegacySpanResourceError, match="interval"):
-        work.LegacySpanCampaignResources(runtime, ledger, full_check_interval_seconds=float("inf"))
+        work.LegacySpanCampaignResources(runtime, ledger, full_check_interval_seconds=float("inf"), **binding(scheduler))
     assert scheduler.snapshot()["allocated"]["cpu_slots"] == 0
 
 
