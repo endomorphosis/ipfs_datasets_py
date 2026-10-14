@@ -1,0 +1,155 @@
+{
+  "Git_mutations": false,
+  "actual_plan_runtime_freeze_results_read": false,
+  "actual_reference_or_saved_score_reads": 0,
+  "analyzer": {
+    "bytes": 78455,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+    "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py": {
+      "bytes": 78455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+      "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-port-static-controls-v01.json": {
+      "bytes": 4773,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-port-static-controls-v01.json",
+      "sha256": "f99c7b18511e09f055688802b019bf176363d79ac6713018e792867c033823d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation_port_static_controls_v01.py": {
+      "bytes": 9090,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation_port_static_controls_v01.py",
+      "sha256": "f87ad3bb756e142abd300447adc452b00119a4c5640d26f5bbad095726a8c24e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78445,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "505ab5504578533bdf427b3a679c1af498e7d050cd4eeff0439b7144cf6a0126"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/evaluation-contract-v01.json",
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "4b2a739bd5ff2af9dccd831db06c0d108bbfdbd436bf342a4ad89cd4700da3dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/training-design-v01.json": {
+      "bytes": 8880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/training-design-v01.json",
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/fixed-experiment-runtime-rebind-proposal-v01.json": {
+      "bytes": 23533,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/fixed-experiment-runtime-rebind-proposal-v01.json",
+      "sha256": "c1da5352c8a76bfa3dd290f95e83aac7e659e056eca37194ac70b48f84740777"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/freezer-draft-source-independent-review-v01.json": {
+      "bytes": 4505,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/freezer-draft-source-independent-review-v01.json",
+      "sha256": "5a065049510ce5966f1d8696a527c09d820d04d86e6e38a841ebb1b2562a9d45"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/freezer-port-derivation-v01.json": {
+      "bytes": 1502,
+      "path": "/home/barberb/lift_coding/artifacts/legal-storage-continuation-20261014-01/freezer-port-derivation-v01.json",
+      "sha256": "cbb9303a32c8d687b7607a4370eef78e8536661187f0ebbd720b92c05b0918b7"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "future_actual_fields": "PENDING\u2014not invented: actualF14plan/clearance/trainingreview/terminal/runtime/freeze/analysis/recount/resultreview descriptors.",
+  "model_or_encoder_calls": 0,
+  "model_or_optimizer_execution": false,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "prepared_only": true,
+  "private_body_reads": 0,
+  "recounter": {
+    "bytes": 46595,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+    "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+  },
+  "resource_API_calls": 0,
+  "runnable_scoring_approval": false,
+  "schema": "conditions-balanced-execution-evaluation-source-port-plan/v1",
+  "scientific_logic_retained": {
+    "comparators": "Exact frozen trained N10 primary and frozen N11 diagnostic, no new comparator forwards/updates. Old andfresh authored references remain outside model plan.",
+    "full_IR": "Entire canonical rule including modality plus six roles; abstentions are nonmatches.",
+    "limits": "All464diagnostics are exposed; statutory8unscored; latentOFF/config384placeholders; no legal semantic/family/Lake/genuine latent/default/blindclaim.",
+    "model_partition": "42/40/2 tensors,520stored130active390inactive conditions presence rows2:4; original40frozen, all32returnedgradient/moment/digest traces bound.",
+    "scope": "40statepanels/36authoredscore sets/nine paired scopes;1280newinference+32batch=1312newmodelcalls/384trainingoccurrences/1664newsourceoccurrences;632initial andfinalprotected rows,240parent rowscopied byteexact.",
+    "stable_CE": "Analyzer grouped max-target logsumexp; independent recounter softplus delta. Equal huge logits preserve log2 and finite/extreme cases agree within original2e-6tolerance.",
+    "strict_success": "IDconjunction: no newconditionsheadFP/FN/positiveambiguity vsN10; recoverfour N11addedFN targets toTP; keepboth N11fullIRgainIDs onbothroutes; zero fullIR losses vsN10/N11. Technical completion can pass while scientific_successFalse; no furtherfit authorized.",
+    "training": "SameN10 checkpoint/state,168rows,96absent72present,weights7/8 and7/6,actual float32 weighted row CE averaged over fixed12denominator,distinct unweighted CE; no ranking or weight-sum normalization."
+  },
+  "source_delta": [
+    "Analyzer retains every scientific/helper function AST-identical to F12 stableV02; only main approval gate basename changesV02\u2192V01 under newly derivedF14ROOT. Header labelsF14.",
+    "Recounter retains every function AST-identical to F12; only header labelsF14. ROOT derives the newF14directory.",
+    "Evaluation metric contract and fixed training design remain byte-identical to original F12; actual execution/source/resource custody lives in new F14 manifest/plan. Never-used canonical attempt01 is preserved as root confirmed."
+  ],
+  "source_qualification_sequence": [
+    {
+      "order": 1,
+      "owner": "root/runtime",
+      "work": "Qualify legitimate temporary-root metadata rebind and fresh full-run capacity PASS using unchanged cap/config/claims. ExistingF12/F13 refusals cannot authorize training. Preserve exact538body custody or explicit authorized-change evidence."
+    },
+    {
+      "order": 2,
+      "owner": "model/runtime plusrootpeer",
+      "work": "SealF14runner/preparer/bootstrap/freezer/terminal observer; exact39owner rawclosure,15loaded/7mandatory actual cold bootstrap, unchanged recipe/source/tests. Concrete training review must bind actual plan/runner/guardian/clearance/sourcequal before single guardedrun."
+    },
+    {
+      "filename": "analyzer-source-independent-review-v01.json",
+      "order": 3,
+      "owner": "root independent reviewer oftheseports",
+      "schema": "conditions-balanced-analyzer-source-independent-review/v1",
+      "work": "After realF14plan andruntime/freezer producers are sealed, bind analyzer exactdescriptor,originalstableV02portproof,actualplan,evaluationcontract,trainer sourcequalification,allpurealgorithm/modelowner sources andruntime observer/freezer exactpins in artifacts. Required analyzer key is analyzer. Do not createfuture freeze/runtime/resultpins."
+    },
+    {
+      "filename": "result-recount-source-independent-review-v01.json",
+      "order": 4,
+      "owner": "root independent reviewer ofrecounter",
+      "schema": "conditions-balanced-result-recount-source-independent-review/v1",
+      "work": "Bind recounter exactdescriptor under observer plus unchangedoriginal source/staticcontrols and exact evaluation protocol. Sourceapproval alone authorizes no result read; main still requires actual frozen inputs."
+    },
+    {
+      "order": 5,
+      "owner": "root/runtime actualpostrun",
+      "work": "Qualify actualterminal custody; execute reviewedfreezer once to make complete62file outputs immutable and emit conditions-balanced-output-freeze-v01.json plus conditions-balanced-ce-runtime-review-v01.json with exact runtime counts. Checkpoint staysopaque."
+    },
+    {
+      "filename": "conditions-balanced-result-analysis-v01.json",
+      "order": 6,
+      "owner": "root analyzerexecution",
+      "work": "Only after sourcegate+actualfreeze: runanalyzer with exact--freeze/--freeze-bytes/--freeze-sha256/--output; protected/source/weightedCE/frozencomparator guards run beforeper-rowanalysis. Original referenceJSON is admitted onlyafter completeauthenticatedfreeze."
+    },
+    {
+      "filename": "result-recount-inputs-v01.json",
+      "order": 7,
+      "owner": "rootinputbinder thenindependentrecounter",
+      "schema": "conditions-balanced-result-recount-inputs/v1",
+      "work": "Createclosed{schema,passed,findings,freeze,analysis} with actualdescriptors; runqualified argument-free recounter once. Its audithook denies model/numerical/SDK/process/network/privateopens and onlypermits exclusiveownoutput."
+    },
+    {
+      "filename": "result-independent-review-v01.json",
+      "order": 8,
+      "owner": "independent resultreviewer",
+      "work": "Reconcileanalysis/recount/protectedheads/conditionsconfusion/gainslosses/actorranks/CEtrace+effectivecalls andsciencepredicate; bindall62outputs opaquely plusactualscience/source/runtime/gates/recipe. Reportfailedsciencewithoutmodelretry."
+    }
+  ],
+  "static_controls": {
+    "bytes": 4773,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-port-static-controls-v01.json",
+    "sha256": "f99c7b18511e09f055688802b019bf176363d79ac6713018e792867c033823d2"
+  }
+}

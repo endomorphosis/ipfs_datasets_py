@@ -1,0 +1,23 @@
+{
+  "approval_written": false,
+  "correct_union_count": 5445,
+  "exact_revision": "77e33d1c07b09a421b272e3ccb0af229933a7f82",
+  "independent_metadata_diagnostic": {
+    "actual_files": 5445,
+    "extra": 0,
+    "missing": 0,
+    "old_identity_changes": 0
+  },
+  "initial_and_diagnostic_readonly_SDK_calls": 2,
+  "initial_source": {
+    "bytes": 10310,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_hf_actual_v01.py",
+    "sha256": "d9dbd5888a459fdcca33a5148506ad903560b298c69bac9b24f175eed933e44b"
+  },
+  "models_or_uploads_or_checkpoint_JSON_parses": 0,
+  "new_count": 176,
+  "old_count": 5269,
+  "reason": "Initial observer refused an incorrect hardcoded total before approval. Parent confirmed arithmetic typo; publisher uses exact set union and published card/report counts were correct. V02 uses cardinality plus exact set union.",
+  "requested_incorrect_total": 5435,
+  "schema": "conditions-balanced-Hub-actual-review-count-refusal/v1"
+}

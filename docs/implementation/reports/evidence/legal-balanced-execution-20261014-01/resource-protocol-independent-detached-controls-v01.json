@@ -1,0 +1,119 @@
+{
+  "actual_census_or_claim_calls": 0,
+  "actual_public_contract": {
+    "bytes": 8893,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-protocol-contract-v01.json",
+    "sha256": "0a83321fd1dc46dae22137f89b41ed263fb0fa5d47b792a5c07484aa95d2ea0f"
+  },
+  "actual_public_reconciliation": {
+    "bytes": 17057,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-v01.json",
+    "sha256": "60b6587f4d462f2b099b50f2eaf569a7523c8f7f0002bc97196ca9583fdbedb2"
+  },
+  "control_count": 18,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "actual_root_only_proof_qualifies",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "actual_closed_new_contract_qualifies",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_cap_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_fullclaims_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_count_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_root_name_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_persistent_root_inode_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "contract_ten_producer_pin_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "rebind_body_map_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "rebind_claim_release_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "rebind_scheduler_change_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "rebind_missing_atomic_write_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "rebind_backup_digest_tamper_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "fullrun_200M_request_plus_200M_future_fit",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "native_only_fit_refuses_training",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "truthful_native_only_refusal_remains_valid_observation",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "physical_only_shortfall_refuses_training",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "dropped_future_bound_refused",
+      "passed": true
+    }
+  ],
+  "executed_main_or_full_module": false,
+  "findings": [],
+  "model_numeric_or_checkpoint_JSON_calls": 0,
+  "original_census_ledger_check_predicates_exact_aliases": true,
+  "passed": true,
+  "private_endpoint_or_body_reads": 0,
+  "schema": "conditions-balanced-resource-protocol-independent-detached-controls/v1",
+  "scope": "Pure protocol predicates with exact public contract/proof plus synthetic capacity cases; no native/private/resource execution.",
+  "source": {
+    "bytes": 22010,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_resource_protocol_v01.py",
+    "sha256": "09cfe98e31aecb9be4f24781c6f6d51b0b082402ab1bdd24861c5a7187bbd01a"
+  }
+}

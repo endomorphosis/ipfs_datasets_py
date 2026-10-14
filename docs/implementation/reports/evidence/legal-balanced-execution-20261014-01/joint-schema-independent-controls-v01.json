@@ -1,0 +1,106 @@
+{
+  "N11_producer_source": {
+    "bytes": 35837,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py",
+    "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+  },
+  "actual_result_reference_savedscore_checkpoint_or_private_body_reads": 0,
+  "cases": [
+    {
+      "expected_acceptance": true,
+      "name": "actual frozen N11 producer schema accepted with exact synthetic replay",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": true,
+      "name": "prior schema retained: conditions-balanced-joint-panel/v1",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": true,
+      "name": "prior schema retained: actor-features-joint-panel/v1",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": true,
+      "name": "prior schema retained: actor-ranking-joint-panel/v1",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": true,
+      "name": "prior schema retained: actor-boundary-joint-panel/v1",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": true,
+      "name": "prior schema retained: split-feature-joint-panel/v1",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": false,
+      "name": "unknown schema refused",
+      "passed": true,
+      "synthetic_selector_calls": 0
+    },
+    {
+      "expected_acceptance": false,
+      "name": "wrong top_k refused",
+      "passed": true,
+      "synthetic_selector_calls": 0
+    },
+    {
+      "expected_acceptance": false,
+      "name": "wrong search bound refused",
+      "passed": true,
+      "synthetic_selector_calls": 0
+    },
+    {
+      "expected_acceptance": false,
+      "name": "source ID mismatch refused",
+      "passed": true,
+      "synthetic_selector_calls": 0
+    },
+    {
+      "expected_acceptance": false,
+      "name": "saved replay value mismatch refused",
+      "passed": true,
+      "synthetic_selector_calls": 1
+    },
+    {
+      "expected_acceptance": false,
+      "name": "incomplete row scope refused",
+      "passed": true,
+      "synthetic_selector_calls": 0
+    }
+  ],
+  "control_count": 12,
+  "findings": [],
+  "full_module_or_main_calls": 0,
+  "new_source": {
+    "bytes": 78492,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py",
+    "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+  },
+  "old_source": {
+    "bytes": 78455,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+    "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+  },
+  "only_two_exact_source_edits": true,
+  "passed": true,
+  "production_or_numerical_imports": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-joint-schema-independent-controls/v1",
+  "scope": "Actual AST-extracted validate_joint with synthetic rows/scores and a deterministic selector stub; no numerical selector or saved output parsed. All stable-CE/scientific functions byte unchanged.",
+  "source": {
+    "bytes": 4941,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_joint_schema_compatibility_controls_v01.py",
+    "sha256": "423d85c6df0f6c4236b0e99e49d2ce5e0d54b24c39fdf2b4c335f44eafd5b0a7"
+  }
+}

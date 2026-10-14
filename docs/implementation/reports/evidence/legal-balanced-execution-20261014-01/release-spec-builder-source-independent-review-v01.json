@@ -1,0 +1,86 @@
+{
+  "actual_existing_input_receipt_keys_verified": [
+    "freeze",
+    "runtime_review",
+    "analysis",
+    "independent_recount"
+  ],
+  "actual_payload_copy_authorized": false,
+  "actual_result_review_scientific_success": false,
+  "actual_upload_authorized": false,
+  "algorithm_sources": 40,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 3599,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/MODEL_CARD_v01.md",
+      "sha256": "a91ded7f061bd729e62309e60898ec62c0575553ffefe7d75daf26da437d51c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py": {
+      "bytes": 24481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py",
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py": {
+      "bytes": 14098,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py",
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-runtime-review-v01.json": {
+      "bytes": 87611,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-runtime-review-v01.json",
+      "sha256": "b1551e2e14a6917a4afb8b9f812cc598f6c478491110bbb2d7cf49faef96f4f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json": {
+      "bytes": 21853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json",
+      "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-independent-review-v01.json": {
+      "bytes": 199842,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-independent-review-v01.json",
+      "sha256": "c0f1a533235449e9ef6a1a42a7007fdff2a27ddba2346dc10d1ee8dd2acde4fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 2875288,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-before-file-identities-v01.json",
+      "sha256": "17b897479b0e0064bf90d4fe77485a1abc7a7692a6570d21fbd19057fc32f45c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 4876,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-helper-port-source-independent-review-v01.json",
+      "sha256": "2ec3034854c0241ca72edc4d2aef658fcb35fcbced4ae9d87994b1e052ffbc19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/public-result-summary-v01.json": {
+      "bytes": 8630,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/public-result-summary-v01.json",
+      "sha256": "51ad97c08ff9207ddb2b80f49799a38cbd7284da92e9a76df47b4ab20f310ba9"
+    }
+  },
+  "builder": {
+    "bytes": 14098,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py",
+    "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+  },
+  "execution": {
+    "SDK_network_model_calls": 0,
+    "actual_builder_calls_by_this_gate": 0,
+    "checkpoint_JSON_parses": 0,
+    "reference_savedscore_or_private_body_reads": 0,
+    "resource_API_calls": 0
+  },
+  "expected_flat_frozen_results": 62,
+  "explicit_evidence_count": 39,
+  "explicit_recipe_count": 19,
+  "findings": [],
+  "helper": {
+    "bytes": 24481,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py",
+    "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+  },
+  "model_card_explicitly_reports_scientific_failure": true,
+  "passed": true,
+  "portable_reload_qualified": false,
+  "schema": "conditions-balanced-release-spec-builder-source-independent-review/v1",
+  "scope": "Full source read and actualpublicmetadata receipt-key join audit. No actualweights/head/reference bodies parsed. Root separately authorizes one concrete buildermain; this sourcegate alone permits no upload.",
+  "source_owners": 39
+}

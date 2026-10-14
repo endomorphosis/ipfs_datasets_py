@@ -1,0 +1,67 @@
+{
+  "actual_censuses": 0,
+  "actual_model_calls": 0,
+  "cases": [
+    {
+      "name": "qualified root-proof baseline returns exact538 mapping",
+      "passed": true
+    },
+    {
+      "name": "fresh conservative capacity pass authorizes runtime guard only",
+      "passed": true
+    },
+    {
+      "name": "truthful capacity refusal may prepare a reviewable plan",
+      "passed": true
+    },
+    {
+      "name": "truthful capacity refusal blocks training",
+      "passed": true
+    },
+    {
+      "name": "insufficient physical free blocks training",
+      "passed": true
+    },
+    {
+      "name": "changed historical body hash refuses",
+      "passed": true
+    },
+    {
+      "name": "changed persistent physical root refuses",
+      "passed": true
+    },
+    {
+      "name": "unbound roots reconciliation proof refuses",
+      "passed": true
+    },
+    {
+      "name": "wrong concrete baseline source gate path refuses",
+      "passed": true
+    },
+    {
+      "name": "arithmetic undercharge refuses",
+      "passed": true
+    },
+    {
+      "name": "future output bound removal refuses",
+      "passed": true
+    },
+    {
+      "name": "preexisting model execution claim refuses",
+      "passed": true
+    }
+  ],
+  "control_count": 12,
+  "findings": [],
+  "observed_at_utc": "2026-10-14T07:40:56.475742+00:00",
+  "passed": true,
+  "private_body_reads": 0,
+  "protocol": {
+    "bytes": 22010,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_resource_protocol_v01.py",
+    "sha256": "09cfe98e31aecb9be4f24781c6f6d51b0b082402ab1bdd24861c5a7187bbd01a"
+  },
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-resource-predicate-author-controls/v1",
+  "shared_mutations": 0
+}

@@ -1,0 +1,111 @@
+{
+  "actual_model_calls": 0,
+  "case_count": 10,
+  "cases": [
+    {
+      "expected_acceptance": true,
+      "name": "synthetic exact baseline/clearance/gate/protocol closure reaches capacity gate",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "refused capacity cannot proceed",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "baseline qualification wrong schema rejected",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "clearance qualification wrong observer rejected",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "unadmitted baseline descriptor rejected",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "unadmitted root rebind sourceproof rejected",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "resource protocol rawpin drift rejected before loading",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "baseline observer rawsource drift rejected",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "failed baseline independent gate rejected",
+      "passed": true
+    },
+    {
+      "name": "capacity gate statically precedes output mkdir/bootstrap/build_checkpoint",
+      "passed": true
+    }
+  ],
+  "changed_runner_functions": [
+    "main",
+    "qualify_capacity_clearance",
+    "validate_plan"
+  ],
+  "checkpoint_JSON_parses": 0,
+  "claim_or_cleanup_calls": 0,
+  "findings": [],
+  "numerical_imports": 0,
+  "passed": true,
+  "reference_savedscore_or_private_body_reads": 0,
+  "resource_API_calls": 0,
+  "reviewed_freezer_byte_identical": true,
+  "schema": "conditions-balanced-execution-port-controls/v1",
+  "scientific_design_and_eval_contract_byte_identical": true,
+  "scope": "Only actual runner AST prefix through capacity gate is detached; synthetic public metadata/fake resource validators. No production main/import, actual capacity authorization, or model execution. Unchanged weighted/model/inference/trace controls not repeated.",
+  "smoke_byte_identical": true,
+  "sources": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py",
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v01.py": {
+      "bytes": 19481,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v01.py",
+      "sha256": "e346a47bda4a266282bf8a1a3d6b70aea4a5c00025feb746d2328e6f000cfc4e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py",
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    }
+  },
+  "unchanged_runner_function_ASTs": [
+    "binary",
+    "canonical",
+    "capture",
+    "compare_captures",
+    "completion",
+    "digest",
+    "legacy_runner",
+    "merged_training_capture",
+    "pin",
+    "qualify_conditions_trace",
+    "read",
+    "require",
+    "reused_parent_capture",
+    "validate_sources",
+    "write"
+  ]
+}

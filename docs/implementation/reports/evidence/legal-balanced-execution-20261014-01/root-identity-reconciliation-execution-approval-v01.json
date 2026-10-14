@@ -1,0 +1,36 @@
+{
+  "authorize_roots_only_identity_rebind": true,
+  "cap_increase_authorized": false,
+  "claim_mutation_authorized": false,
+  "exact_mutation": {
+    "new_device": 66306,
+    "new_inode": 524344,
+    "old_device": 66306,
+    "old_inode": 524352,
+    "path": "/tmp/pytest-of-barberb"
+  },
+  "findings": [],
+  "new_model_calls": 0,
+  "observed_at_utc": "2026-10-14T07:40:57.580849+00:00",
+  "observer": {
+    "bytes": 7718,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/reconcile_balanced_execution_root_identity_v01.py",
+    "sha256": "c30826206b3e67cb994c24b1a08c9c8420069d0b03cb11df87ff124fa43e9957"
+  },
+  "outputs_deletion_authorized": false,
+  "passed": true,
+  "preflight": {
+    "bytes": 18661,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-preflight-v01.json",
+    "sha256": "ede579e46a287fbfc0fac5aff3d4d5e29821964600d895e4951c6af4d2a5ff5c"
+  },
+  "root_independent_review": "Full source, native lock/write/read-after, private backup and actual538/copied-state preflight reviewed. Genuine recreated tempdirectory identity only. Necessary reversible bookkeeping under continuing user-authorized training task.",
+  "scheduler_mutation_authorized": false,
+  "schema": "conditions-balanced-root-identity-reconciliation-execution-approval/v1",
+  "source_qualification": {
+    "bytes": 13763,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-source-independent-review-v01.json",
+    "sha256": "a612c31454de66be97d175f41a8671c0e4c406b7e6ed73f5839f640e3667de81"
+  },
+  "training_authorized": false
+}

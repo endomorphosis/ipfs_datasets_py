@@ -1,0 +1,166 @@
+{
+  "actual_locks_or_writes": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/balanced_execution_root_identity_v01.py": {
+      "bytes": 11831,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/balanced_execution_root_identity_v01.py",
+      "sha256": "a0ecd10daaac94605c07146307a89a6a63f526826f018b59cce15f86a898efc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/reconcile_balanced_execution_root_identity_v01.py": {
+      "bytes": 7718,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/reconcile_balanced_execution_root_identity_v01.py",
+      "sha256": "c30826206b3e67cb994c24b1a08c9c8420069d0b03cb11df87ff124fa43e9957"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_balanced_execution_root_identity_preflight_v01.py": {
+      "bytes": 4321,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_balanced_execution_root_identity_preflight_v01.py",
+      "sha256": "3ff9ae7cb0527db622147b87fdeee7eab76c32d73119bd88674f505222147366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_root_identity_detached_controls_v01.py": {
+      "bytes": 8770,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_root_identity_detached_controls_v01.py",
+      "sha256": "9e23cfa9d7f4b7d78fc6bf339119d44aca15119c2814ec07a3d6da5c28e35f61"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_resource_protocol_v01.py": {
+      "bytes": 13965,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/conditions_balanced_resource_protocol_v01.py",
+      "sha256": "265d96839054a16d4c4ab0f2550dc69948263a87566e9337a429b3ddb02f69f0"
+    }
+  },
+  "census_calls": 0,
+  "checkpoint_JSON_parses": 0,
+  "control_count": 24,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "old_root_envelope_needs_exact_rebind",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "current_envelope_is_idempotent_no_write_needed",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "only_temporary_inode_changes_all538_records_exact",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "cap_increase_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "cap_decrease_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "ledger_schema_change_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "extra_top_level_field_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "record_removed_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "record_added_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "retained_claim_released_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "released_claim_retained_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "claim_bytes_changed_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "opaque_foreign_body_field_added_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "root_name_changed_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "persistent_root_inode_changed_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "temporary_root_device_changed_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong_temporary_inode_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "prior_record_hash_mismatch_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "concurrent_prior_body_change_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "actual_foreign_scheduler_lease_and_waiter_preserved",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "fake_idle_counts_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "scheduler_config_change_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "scheduler_snapshot_check_join_mismatch_refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "locked_exact_before_backup_then_single_native_write_and_strict_readafter_order",
+      "passed": true
+    }
+  ],
+  "executed_main_or_full_module": false,
+  "findings": [],
+  "limits": "Fileless pure metadata predicates plus source-order checks; native lock/backup/atomic-write implementation is source-reviewed, never executed here.",
+  "model_or_numerical_imports": 0,
+  "passed": true,
+  "private_or_live_endpoint_reads": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-root-identity-independent-detached-controls/v1",
+  "synthetic_foreign_active_scheduler_leases": 1,
+  "synthetic_records": 538,
+  "synthetic_waiters": 1
+}

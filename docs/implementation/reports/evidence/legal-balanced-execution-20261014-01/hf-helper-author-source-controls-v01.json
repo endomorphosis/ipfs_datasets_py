@@ -1,0 +1,86 @@
+{
+  "Git_calls": 0,
+  "HF_calls": 0,
+  "actual_helper_action_calls": 0,
+  "cases": [
+    {
+      "name": "exact39owners plus sibling attention produce40 package-relative destinations",
+      "passed": true
+    },
+    {
+      "name": "omitted attention dependency refuses",
+      "passed": true
+    },
+    {
+      "name": "unadmitted supplemental raw file refuses",
+      "passed": true
+    },
+    {
+      "name": "unadmitted owner raw file refuses",
+      "passed": true
+    },
+    {
+      "name": "wrong attention bytes refuse",
+      "passed": true
+    },
+    {
+      "name": "duplicate actual owner file refuses despite39modulekeys",
+      "passed": true
+    },
+    {
+      "name": "immutable5269 plus newer additions remain exact",
+      "passed": true
+    },
+    {
+      "name": "changed old identity refuses",
+      "passed": true
+    },
+    {
+      "name": "same-or-greater count cannot hide missing old file",
+      "passed": true
+    },
+    {
+      "name": "occupied candidate release prefix refuses",
+      "passed": true
+    },
+    {
+      "name": "both private backup and private endpoint copies excluded",
+      "passed": true
+    },
+    {
+      "name": "entire payload CAS/chunk/oldidentity/immutable readback loop AST unchanged",
+      "passed": true
+    }
+  ],
+  "checkpoint_JSON_parses": 0,
+  "control_count": 12,
+  "findings": [],
+  "helper": {
+    "bytes": 24481,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py",
+    "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+  },
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observed_at_utc": "2026-10-14T08:01:39.186125+00:00",
+  "passed": true,
+  "payload_copies": 0,
+  "private_body_reads": 0,
+  "schema": "conditions-balanced-Hub-helper-author-source-controls/v1",
+  "unchanged_helper_functions_AST": [
+    "approved",
+    "brief",
+    "byte_identity",
+    "chunks",
+    "clean",
+    "destination",
+    "fence",
+    "identities",
+    "pin",
+    "read",
+    "require",
+    "write",
+    "write_json"
+  ]
+}

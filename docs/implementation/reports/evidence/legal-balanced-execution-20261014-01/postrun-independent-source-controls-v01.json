@@ -1,0 +1,174 @@
+{
+  "actual_census_or_resource_API_calls": 0,
+  "actual_public_contract": {
+    "bytes": 8893,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-protocol-contract-v01.json",
+    "sha256": "0a83321fd1dc46dae22137f89b41ed263fb0fa5d47b792a5c07484aa95d2ea0f"
+  },
+  "actual_reference_savedscore_checkpoint_or_private_body_reads": 0,
+  "cases": [
+    {
+      "expected_acceptance": true,
+      "name": "exact flat62 inventory",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "freezer exact reviewed F13 bytes",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "complete synthetic32 weighted trace accepted",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "130 active scalar tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "40 frozen tensor tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "nonzero inactive gradients refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "nonzero inactive Adam moments refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "frozen parent digest drift refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "protected branch chain drift refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "weighted sum denominator refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "class weight tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "actor ranking activation refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "31 actual returned forwards refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "complete synthetic runtime summary and actual trace validator accepted",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "summary total_actual_model_forwards tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "summary reused_parent_capture_rows tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "summary new_parent_control_forwards tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "summary candidate_training_capture_call_sizes tamper refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "loaded owner source drift refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "all632 initial and protected final rows accepted",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "partial631 parity coverage refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "unprotected modality refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "synthetic terminal public plan review wrapper joins accepted",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "terminal training review plan drift refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "terminal resource envelope change refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": false,
+      "name": "terminal foreign result command refused",
+      "passed": true
+    },
+    {
+      "expected_acceptance": true,
+      "name": "terminal inherited helper extractor and public custody AST exact",
+      "passed": true
+    }
+  ],
+  "claims_cleanup_or_Git_mutations": 0,
+  "control_count": 27,
+  "findings": [],
+  "fixture_scope": "Synthetic complete32 weighted trace/envelopes and pure public custody predicates; source AST extraction only. Inherited full ownclaim/lease/RSS kernels not re-executed. Does not prove numerical CE, actual results, runtime plan or future endpoint custody.",
+  "freezer": {
+    "bytes": 18728,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py",
+    "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+  },
+  "full_module_or_main_executions": 0,
+  "passed": true,
+  "production_or_numerical_imports": 0,
+  "runner": {
+    "bytes": 40252,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py",
+    "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+  },
+  "schema": "conditions-balanced-postrun-independent-source-controls/v1",
+  "source": {
+    "bytes": 18171,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/postrun_independent_source_controls_v01.py",
+    "sha256": "7f05489bb08a63c25e50b22c7de85c4c8f577285f34aa74ac9f76d116d4db5cf"
+  },
+  "terminal": {
+    "bytes": 13733,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/audit_conditions_balanced_terminal_resources_v01.py",
+    "sha256": "95716ad3d1f1f4c4afbdb8e314a31c8d9cc69be8b6966f207c41d40de75a30c3"
+  }
+}

@@ -1,0 +1,602 @@
+{
+  "Git_mutations": 0,
+  "algorithm_blob_inventory": {
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "mode": "100644",
+      "oid": "82978c03d34ac25327538fd9714b7074b946bfb6",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "mode": "100644",
+      "oid": "373c4207568b97be1932d778d71a32d07dc71e3d",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "mode": "100644",
+      "oid": "fa542082edd89b213843c9d3f8d3c2312ef1d04a",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "mode": "100644",
+      "oid": "f1c9efbae82ee2d639ec84cc5ba3578c00c9238a",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "mode": "100644",
+      "oid": "6a326c6188bfa05383e143c2339603758576ca69",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "mode": "100644",
+      "oid": "c74aed1afce161e349f512f36b6bcfd8db402d48",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "mode": "100644",
+      "oid": "bae499db41a6cf10e8dc5636bf587a32845e2155",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "mode": "100644",
+      "oid": "66fac7cce3155d0eaf515e63ff3ff46aba11ff5f",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "mode": "100644",
+      "oid": "c67a8c7857ab3123038e849ce7a6ae7018037718",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "mode": "100644",
+      "oid": "1bf4da481ff84ccb3554ae0dd1126dfc4cbffb6b",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "mode": "100644",
+      "oid": "b863e55c257d6dcb24c721ba1981be8b69e3a284",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "mode": "100644",
+      "oid": "af799a9fcf5699636e3e1dffce96dc1d3e2932ed",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "mode": "100644",
+      "oid": "7ce3ed18ec40071f0c8b24457f74fdfb248ad93e",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "mode": "100644",
+      "oid": "7b2e23b540f01ee952ff94057d7987257c33cdeb",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "mode": "100644",
+      "oid": "363d638395d12240d5b403d80b69eb735b911c2e",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "mode": "100644",
+      "oid": "c8e377f8a4e15fb02caf278bade4f06864983c4d",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "mode": "100644",
+      "oid": "8c0296e65af3bccc72ffcbb281ea6c65c6518dd3",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "mode": "100644",
+      "oid": "d4fda5e81f5393b3cd99266e03ea9a75612bb35f",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "mode": "100644",
+      "oid": "3a56d4c2c31e60779ae4a41d6586934609cfc5f3",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "mode": "100644",
+      "oid": "85eff000585407ffa7b689c574713df824c596a1",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "mode": "100644",
+      "oid": "6eb9b3a5f5a5f56c3f2466aa7ae06b3ef24189ee",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "mode": "100644",
+      "oid": "b00afcd281ba189b86e07de75854bb83f1a75e99",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "mode": "100644",
+      "oid": "0e96d544c72999d1fe9bc4c03e2585addb4a331c",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "mode": "100644",
+      "oid": "53d7123051e1a1b9737edeb8928dfe57a579286c",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "mode": "100644",
+      "oid": "446ea6eb734d8586a060f64fc56bf198e312aabe",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "mode": "100644",
+      "oid": "1d8df9d8d772720fd671b5431827c083013be798",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "mode": "100644",
+      "oid": "3537eca84b252ca61157675c7987166efff59c58",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "mode": "100644",
+      "oid": "0d4d7d8ed5670585d034f6bee17b453ea07e8d37",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py": {
+      "mode": "100644",
+      "oid": "3f7ab407530a66050eb35415af4a887b43bd7208",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "mode": "100644",
+      "oid": "4657325ab34db9137fd683dd78aa78cc715ee810",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "mode": "100644",
+      "oid": "5c548f8f28085d2a86a9fdf3b4d6bf21ed94e8fe",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "mode": "100644",
+      "oid": "f138ffb2285f7fc607fe3296f8abe5d6b7b9121a",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "mode": "100644",
+      "oid": "8fd095b4c4d7e69dd16f9207ee44569ab5cdb814",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "mode": "100644",
+      "oid": "b041195072f94cd75031ef729300b7c34d8e36f4",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "mode": "100644",
+      "oid": "bf9fa544c180e42e889f6f48bfb1af07bb2774c6",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "mode": "100644",
+      "oid": "1ebe9057048a31f2c514adec5b0b5722d05fb97e",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "mode": "100644",
+      "oid": "67934fe9f2cf4132933ed225facf53ad0bea1245",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "mode": "100644",
+      "oid": "9192b908d3afed67bf8fcec679b05613a1034e61",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "mode": "100644",
+      "oid": "a0f72635842cdcb22b333ada6ff782f1fcbfd419",
+      "type": "blob"
+    },
+    "ipfs_datasets_py/utils/cid_utils.py": {
+      "mode": "100644",
+      "oid": "36944fb73c85e541b0b9c47531ebfd7b79791534",
+      "type": "blob"
+    }
+  },
+  "all40_algorithm_blob_identities_unchanged": true,
+  "canonical_HEAD_or_index_refreshed": false,
+  "completed_training_reexecuted": false,
+  "findings": [],
+  "historical_training_resource_producers_unchanged": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-normative-wording-r2-20261006/lazy_scheduler_adoption.py": {
+      "bytes": 1345,
+      "sha256": "42f31d8da1eb5b44274ca0b8c8180cd78bc083dfd0e93438e61f38223929d84a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/__init__.py": {
+      "bytes": 56829,
+      "sha256": "f258f8eada774251feacd8e2ee2048efe56c89a8ee88efd50e4271ea41d43dc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/__init__.py": {
+      "bytes": 957,
+      "sha256": "a12bab3724da07be67b447719ace42fc1f480cb5635581f320a99a372f02f450"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/__init__.py": {
+      "bytes": 69336,
+      "sha256": "9d693fa576f00dc36899faad75ef3044c437e2bfec5c62306f7031236725bb0e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/proof_resource_safety.py": {
+      "bytes": 4534,
+      "sha256": "23569b40b44d9130c30c62be564d58908a509fb1f40c6377e89f2fc1e3c799c5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/resource_scheduler.py": {
+      "bytes": 82754,
+      "sha256": "a418e84f70ed8509ba0518feea69e7a8c27865139f83b6c81349eefdfd5893a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002/validation-source-r2/ipfs_datasets_py/optimizers/logic_theorem_optimizer/runtime_telemetry.py": {
+      "bytes": 53075,
+      "sha256": "542f705867b93fcb138a117e1f5c97a144ad6635dc92c37bc5034eee5065ef63"
+    }
+  },
+  "incoming_changes_since_previous_intake": [
+    {
+      "path": "docs/autoencoders/control_plane_and_sync.md",
+      "status": "M"
+    },
+    {
+      "path": "docs/autoencoders/fenced_span_ingest_runtime.md",
+      "status": "A"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py",
+      "status": "M"
+    },
+    {
+      "path": "ipfs_datasets_py/logic/autoformal/span_ingest_runtime.py",
+      "status": "A"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py",
+      "status": "M"
+    },
+    {
+      "path": "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py",
+      "status": "A"
+    },
+    {
+      "path": "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py",
+      "status": "M"
+    },
+    {
+      "path": "scripts/ops/legal_ir/run_fenced_span_ingest.py",
+      "status": "A"
+    },
+    {
+      "path": "tests/unit/logic/test_span_cache_fenced_ingest.py",
+      "status": "M"
+    },
+    {
+      "path": "tests/unit/logic/test_span_ingest_runtime.py",
+      "status": "A"
+    },
+    {
+      "path": "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py",
+      "status": "M"
+    },
+    {
+      "path": "tests/unit/optimizers/test_fenced_ingest_resource_reservation.py",
+      "status": "A"
+    }
+  ],
+  "incoming_entries_to_preserve": {
+    "docs/autoencoders/control_plane_and_sync.md": {
+      "after": {
+        "mode": "100644",
+        "oid": "8afef258eb55c3c72293a6398662ae47250576d3",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "d481a3547915e747df8cd93744c9bc99001d5a94",
+        "type": "blob"
+      }
+    },
+    "docs/autoencoders/fenced_span_ingest_runtime.md": {
+      "after": {
+        "mode": "100644",
+        "oid": "90fd452400a336c807275de41332126e45578643",
+        "type": "blob"
+      },
+      "before": null
+    },
+    "ipfs_datasets_py/logic/autoformal/span_cache_fenced_ingest.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "7430d1a5a760da43016396d10b66df2b16729790",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "f85c65d09dc3c95cc7415c79547717aa680ba821",
+        "type": "blob"
+      }
+    },
+    "ipfs_datasets_py/logic/autoformal/span_ingest_runtime.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "6c9410f4406872c617201c61268f85d69af10d5c",
+        "type": "blob"
+      },
+      "before": null
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "4bfa1bc80cc417d24a2fb2dd73bec57af528813e",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "ece123aa47b8123639c7cd190e7688e0c3d2b789",
+        "type": "blob"
+      }
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "6c3be6bc9d6fe6d4e9823b88ca0fa6b8a12c942e",
+        "type": "blob"
+      },
+      "before": null
+    },
+    "scripts/ops/legal_ir/ingest_ipfs_uscode_corpus.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "a2068538010eb06b2793c8a8c207382e08efd2e3",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "db53961e68547db68781e4b9564b798d708962bd",
+        "type": "blob"
+      }
+    },
+    "scripts/ops/legal_ir/run_fenced_span_ingest.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "20ed5883748e98f9a4c8c9e0a64e6f0c29719581",
+        "type": "blob"
+      },
+      "before": null
+    },
+    "tests/unit/logic/test_span_cache_fenced_ingest.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "1749ddcf6657bf4a65b725502249e97df709146d",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "2ce26170b52cfca3e945138b33e7ad6ea3ebb43b",
+        "type": "blob"
+      }
+    },
+    "tests/unit/logic/test_span_ingest_runtime.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "d997c5cc0a0ed6f3a7db9aea458748117343c592",
+        "type": "blob"
+      },
+      "before": null
+    },
+    "tests/unit/optimizers/logic_theorem_optimizer/test_autoencoder_daemon_resources.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "7c89e5fb54d58b6c52fc955011a99f7fbcfb2274",
+        "type": "blob"
+      },
+      "before": {
+        "mode": "100644",
+        "oid": "f654ae72f781a3a67c6ecf56ce79172aa39e11ac",
+        "type": "blob"
+      }
+    },
+    "tests/unit/optimizers/test_fenced_ingest_resource_reservation.py": {
+      "after": {
+        "mode": "100644",
+        "oid": "5d15402497228ccb35a23d6361f286d86c5e3932",
+        "type": "blob"
+      },
+      "before": null
+    }
+  },
+  "incoming_entry_count": 12,
+  "incoming_root_gitlinks_to_preserve_at_observed_owned_HEAD": {
+    "JevOps": {
+      "mode": "160000",
+      "oid": "9af1ebb6a4245ce2b4e673ac277e4988da4d5caa",
+      "type": "commit"
+    },
+    "Mcp-Plus-Plus": {
+      "mode": "160000",
+      "oid": "628bb6e7b01867f3bc252a3c276c0e6ef6acd5b0",
+      "type": "commit"
+    },
+    "external/ipfs_accelerate": {
+      "mode": "160000",
+      "oid": "c82e5774fe2ab97ccbb791416e9d77964c519d85",
+      "type": "commit"
+    },
+    "external/ipfs_datasets": {
+      "mode": "160000",
+      "oid": "4e3930f7dca099ce9727512e6fba400209224652",
+      "type": "commit"
+    },
+    "external/ipfs_kit": {
+      "mode": "160000",
+      "oid": "40c98c71b95be750509ffdb21e7e5494d91b4e79",
+      "type": "commit"
+    },
+    "external/meta-wearables-dat-android": {
+      "mode": "160000",
+      "oid": "4e56e1864a5e78194bababc3a68775c4196cbed0",
+      "type": "commit"
+    },
+    "external/meta-wearables-dat-ios": {
+      "mode": "160000",
+      "oid": "2b5695d16a710f3d2d7341f88570b86d01723d50",
+      "type": "commit"
+    },
+    "hallucinate_app": {
+      "mode": "160000",
+      "oid": "ffcf5ff3b3389c95ba53e9f1be45f89fa96c5ef6",
+      "type": "commit"
+    },
+    "swissknife": {
+      "mode": "160000",
+      "oid": "4772c7ff648dd5f438af059e21a1a5305d32dbe3",
+      "type": "commit"
+    }
+  },
+  "incoming_source_gitlinks_to_preserve": {
+    ".tools/ipfs_kit_py": {
+      "mode": "160000",
+      "oid": "a9b98beac1ef14278b4adf4f2289cd509530fb86",
+      "type": "commit"
+    },
+    "ipfs_accelerate_py": {
+      "mode": "160000",
+      "oid": "c82e5774fe2ab97ccbb791416e9d77964c519d85",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/logic/CEC/DCEC_Library": {
+      "mode": "160000",
+      "oid": "a4beb5b3280595be6b9221cac3c91dd019e6d371",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/logic/CEC/Eng-DCEC": {
+      "mode": "160000",
+      "oid": "df518c21ef81b8001e6db59f5fd70f10cc04ff6c",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/logic/CEC/ShadowProver": {
+      "mode": "160000",
+      "oid": "3060ede1ac1ec3f8ef9f9c9e41386aed1dbbe7f9",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/logic/CEC/Talos": {
+      "mode": "160000",
+      "oid": "e0b7650d3e3a403924773f8253e924c719748d36",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type": {
+      "mode": "160000",
+      "oid": "d58933631a5362b1e2fdc45254ef620fa231223a",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/multimedia/omni_converter_mk2": {
+      "mode": "160000",
+      "oid": "c1d9b0d517cea022516aab5b5d8fa5e3bc9a65aa",
+      "type": "commit"
+    },
+    "ipfs_datasets_py/processors/web_archiving/common_crawl_search_engine": {
+      "mode": "160000",
+      "oid": "0e635cba586e8f6f6ea8126e3b1668b3e675c029",
+      "type": "commit"
+    },
+    "ipfs_kit_py": {
+      "mode": "160000",
+      "oid": "a9b98beac1ef14278b4adf4f2289cd509530fb86",
+      "type": "commit"
+    }
+  },
+  "integration_requirements": [
+    "Use latest incoming source parent b114fc385a9eff043cae01cdd47c4d25d189d934 as first parent for the docs/evidence-only publication contribution.",
+    "Preserve all existing incoming tracked paths and all10 incoming source gitlinks exactly; do not overwrite upstream runtime/resource/docs/tests/scripts or reset to the earlier4e parent.",
+    "Preserve observed root incoming gitlinks when later adding root report/evidence; only a separately reviewed actual new datasets merge may change that one root gitlink.",
+    "Reobserve through isolated own refs with --refmap= before final integration if incoming main advances; this receipt is a bounded observation, not continuous custody.",
+    "Do not refresh canonical worktrees/indexes, execute upstream resource operations, or reinterpret source integration as scientific success."
+  ],
+  "latest_source_parent": "b114fc385a9eff043cae01cdd47c4d25d189d934",
+  "latest_source_parent_parents": [
+    "6c12cb4e6b640194b97e2cb1ad925b332aa9ee60",
+    "4e3930f7dca099ce9727512e6fba400209224652"
+  ],
+  "model_or_numerical_imports": 0,
+  "network_calls": 0,
+  "owned_source_HEAD": "b114fc385a9eff043cae01cdd47c4d25d189d934",
+  "passed": true,
+  "previous_intake": {
+    "bytes": 5087,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/concurrent-progress-intake-v01.json",
+    "sha256": "338e05cd12a6bff6af077646d51ab2912d46e3d3bb56b48a86efa0b518ee25e5"
+  },
+  "previous_source_parent": "4e3930f7dca099ce9727512e6fba400209224652",
+  "private_body_reads": 0,
+  "reviewed_incoming_blob_pins": {
+    "docs/autoencoders/control_plane_and_sync.md": {
+      "blob_oid": "8afef258eb55c3c72293a6398662ae47250576d3",
+      "bytes": 47711,
+      "sha256": "798855b22d35e4af5e724d572938fd86167d96ca945ab74c893d7cd0c2cb05e1"
+    },
+    "docs/autoencoders/fenced_span_ingest_runtime.md": {
+      "blob_oid": "90fd452400a336c807275de41332126e45578643",
+      "bytes": 7594,
+      "sha256": "fe20d383d1054202b9b88e71af15bb50522ba08bed59915e82ff0cdc69e310f5"
+    },
+    "ipfs_datasets_py/logic/autoformal/span_ingest_runtime.py": {
+      "blob_oid": "6c9410f4406872c617201c61268f85d69af10d5c",
+      "bytes": 35049,
+      "sha256": "ccbd0d29e9a9b38d5d05b5eaf360f0ba9afe8cbd365aae01dc90a0611482fec2"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_daemon_resources.py": {
+      "blob_oid": "4bfa1bc80cc417d24a2fb2dd73bec57af528813e",
+      "bytes": 39086,
+      "sha256": "98613d521c6a2841c53a75471ac24f2e783a10ba1cf0e6ea0b3697a0fd458481"
+    },
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/existing_resource_scheduler.py": {
+      "blob_oid": "6c3be6bc9d6fe6d4e9823b88ca0fa6b8a12c942e",
+      "bytes": 11337,
+      "sha256": "381fb2fb88edca9f79dbbb55d7272ffe5416aaa3d7ad1d9d2ef623d7fe80a127"
+    },
+    "scripts/ops/legal_ir/run_fenced_span_ingest.py": {
+      "blob_oid": "20ed5883748e98f9a4c8c9e0a64e6f0c29719581",
+      "bytes": 2033,
+      "sha256": "33cfd880ece8af8184b0490384dcb2018c2eedfb0367e1baabf8145d923e7870"
+    }
+  },
+  "root_owned_HEAD_observed": "6c7c63225513598d9b4ca4710d04e01994b36077",
+  "root_remote_freshness_claimed": false,
+  "schema": "conditions-balanced-concurrent-progress-publication-intake/v2",
+  "scope": "Read-only owned Git objects/source/docs plus ten specifically pinned producer source files; no private ledger/state, source references, models, numerical packages, network, tests, claims or Git mutations.",
+  "source_boundary_review": {
+    "docs_reviewed": [
+      "docs/autoencoders/control_plane_and_sync.md",
+      "docs/autoencoders/fenced_span_ingest_runtime.md"
+    ],
+    "documented_limits": [
+      "Closed existing ledger/scheduler/root/source launch bindings; no native policy/cap normalization or new authority from worker estimates.",
+      "Direct unowned fenced-v1 CLI refuses before cache or pool; current four process slots cannot fit one spawned compiler worker.",
+      "Cooperative polling and RSS samples are not kernel memory/process containment; default DuckDB constructor spill redirection not guaranteed.",
+      "Complete resumable census/evidence retained and immutable historical roots explicit; no truncation or automatic ledger reset.",
+      "No learned checkpoint training or Hub upload; compiler/decompiler/codec observations are diagnostic, source-scoped actual Lake build remains separate admission."
+    ],
+    "native_owner_distinction": "New tracked autoencoder_daemon_resources.py belongs to upstream fenced-ingestion runtime. It does not replace the qualified historical workspace/test-logs/native4096-four-width-20261004/resource-cap owner pinned for the completed training run.",
+    "new_scope": "Native resource-owned fenced span ingestion and exact existing scheduler binding; docs, native nonalgorithm resource owner, ingestion scripts and focused tests.",
+    "relationship_to_completed_training": "No change intersects the39 algorithm module owner paths plus one supplemental temporal-attention implementation. Completed F14 run used exact earlier frozen historical resource producers, independently rehashed unchanged here."
+  },
+  "source_branch": "codex/legal-balanced-execution-20261014-01",
+  "source_gitlinks_unchanged_since_previous_intake": true,
+  "source_parent_ancestry_preserved": true,
+  "training_plan_modified": false
+}

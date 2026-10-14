@@ -1,0 +1,33 @@
+{
+  "N11_producer": {
+    "bytes": 35837,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/run_conditions_presence_v01.py",
+    "sha256": "e13ac40c7b3a0b0a0591eaec954abe4f3bec7b15ed92292b122aa29a8b6cb861"
+  },
+  "analysis_output_created": false,
+  "analyzer": {
+    "bytes": 78455,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+    "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+  },
+  "cause": "N11 producer uses conditions-presence-joint-panel/v1; initial analyzer allowlist omitted this exact comparator schema.",
+  "checkpoint_JSON_parses": 0,
+  "correction_scope": "New V02 allowlist admits exactly the authenticated N11 producer schema; unchanged top_k8/max_search_nodes50000, source-ID and complete pure joint replay validation. Own source gate basename moves toV02.",
+  "error": "Saved bounded joint geometry differs",
+  "error_type": "ValueError",
+  "freeze": {
+    "bytes": 21853,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json",
+    "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+  },
+  "location": "validate_joint while reading authenticated frozen N11 comparator after complete F14 freeze",
+  "model_calls": 0,
+  "schema": "conditions-balanced-analyzer-compatibility-refusal/v1",
+  "source_qualification": {
+    "bytes": 41117,
+    "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyzer-source-independent-review-v01.json",
+    "sha256": "21fbb304453d59b63d1ad7fc264aed1836ec22a7772dae4016c41e829e1c9ce6"
+  },
+  "status": "refused_before_analysis_output",
+  "trained_outputs_modified": false
+}

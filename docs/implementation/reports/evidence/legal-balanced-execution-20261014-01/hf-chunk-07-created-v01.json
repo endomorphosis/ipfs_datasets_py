@@ -1,0 +1,24 @@
+{
+  "names": [
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py",
+    "releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/utils/cid_utils.py",
+    "releases/20261014-conditions-balanced-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_balanced_contracts.py"
+  ],
+  "parent_revision": "0cda533c8da701f6e7ae28871d27cf4081c62ae9",
+  "revision": "77e33d1c07b09a421b272e3ccb0af229933a7f82"
+}

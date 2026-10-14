@@ -1,0 +1,145 @@
+{
+  "Git_calls": 0,
+  "actual_main_calls": 0,
+  "actual_plan_freeze_result_or_reference_reads": 0,
+  "analyzer_all_scientific_helper_functions_AST_identical": true,
+  "analyzer_function_count": 41,
+  "analyzer_main_only_gate_basename_changed": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py": {
+      "bytes": 78455,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v01.py",
+      "sha256": "eefcb0c464f368f0c2e29f80c93252d8d81e4534e7252ea30761049a08d95940"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation_port_static_controls_v01.py": {
+      "bytes": 9090,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation_port_static_controls_v01.py",
+      "sha256": "f87ad3bb756e142abd300447adc452b00119a4c5640d26f5bbad095726a8c24e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78445,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/analyze_conditions_balanced_v02.py",
+      "sha256": "505ab5504578533bdf427b3a679c1af498e7d050cd4eeff0439b7144cf6a0126"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "4b2a739bd5ff2af9dccd831db06c0d108bbfdbd436bf342a4ad89cd4700da3dc"
+    }
+  },
+  "checkpoint_JSON_parses": 0,
+  "control_count": 19,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_0",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_1",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_2",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_3",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_4",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_5",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_6",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "stable_source_CE_pair_7",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "binary32_signed_zero_difference",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "modality_exact_tie_abstains",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "strict_all_ID_predicates_success",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "new_conditions_head_FP_ID_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "new_conditions_head_FN_ID_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "new_positive_ambiguity_ID_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "unrecovered_N11_FN_ID_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "raw_completeIR_loss_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "joint_completeIR_loss_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "N11_required_gain_missing_fails",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "N11_target_scope_drift_refused",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "network_calls": 0,
+  "numerical_library_or_model_imports": 0,
+  "passed": true,
+  "private_body_or_endpoint_reads": 0,
+  "recounter_all_function_AST_identical": true,
+  "recounter_function_count": 20,
+  "resource_API_calls": 0,
+  "schema": "conditions-balanced-evaluation-port-static-controls/v1",
+  "scope": "Static relocation and detached synthetic controls only; not actual runtime/result qualification.",
+  "source_contract_fixed_pin_unchanged": true
+}

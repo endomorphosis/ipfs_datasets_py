@@ -1,0 +1,2318 @@
+{
+  "SDK_readonly_metadata_calls": 2,
+  "algorithm_source_count": 40,
+  "all40_package_relative_sources_byte_exact": true,
+  "all_downloads_payload_and_original_sources_byte_exact": true,
+  "all_old_identities_exact": true,
+  "all_remote_new_identities_exact": true,
+  "all_seven_recorded_chunk_parents_join": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 3599,
+      "sha256": "a91ded7f061bd729e62309e60898ec62c0575553ffefe7d75daf26da437d51c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyze_conditions_balanced_v02.py": {
+      "bytes": 78492,
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/analyzer-source-independent-review-v02.json": {
+      "bytes": 46391,
+      "sha256": "f78fe121041242b3ad2a4479cd69345be577173ea329a192735279c55b3e0110"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/archive_conditions_balanced_hf_v01.py": {
+      "bytes": 24481,
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/audit_conditions_balanced_terminal_resources_v01.py": {
+      "bytes": 13733,
+      "sha256": "95716ad3d1f1f4c4afbdb8e314a31c8d9cc69be8b6966f207c41d40de75a30c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/balanced_execution_root_identity_v01.py": {
+      "bytes": 11831,
+      "sha256": "a0ecd10daaac94605c07146307a89a6a63f526826f018b59cce15f86a898efc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/build_conditions_balanced_release_spec_v02.py": {
+      "bytes": 14098,
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/capacity-clearance-inputs-v01.json": {
+      "bytes": 1595,
+      "sha256": "ae9767785500571698488cc34223c3f017a7166091244dbfee14fe6cee35da5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/capacity-clearance-source-independent-review-v01.json": {
+      "bytes": 20556,
+      "sha256": "9178985ef55ad0b04362e4483b5bcdd3ebfbff40cd287565a0e60de5b4241e50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/capacity-clearance-v01.json": {
+      "bytes": 26803,
+      "sha256": "a9b37c405f30c2c5cd83e717b0c1ba3b689d733c75a9c950a036d6eb3bff1366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8397,
+      "sha256": "3334b612ef383564fc7165e65173e48610ae03681e16576527a74b8fd9d4ab3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-plan-v01.json": {
+      "bytes": 67232,
+      "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-runtime-review-v01.json": {
+      "bytes": 87611,
+      "sha256": "b1551e2e14a6917a4afb8b9f812cc598f6c478491110bbb2d7cf49faef96f4f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-terminal-resource-audit-v01.json": {
+      "bytes": 61094,
+      "sha256": "f1d40cad4a91bbeab12844675278a6ca5521513eb05f7a81f6c02a0183c7e3e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-ce-training-review-v01.json": {
+      "bytes": 39309,
+      "sha256": "0843182f77c68844ff7c894803464f606996af3476e0436ed9a180d571ee84eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-independent-recount-v01.json": {
+      "bytes": 3095457,
+      "sha256": "637a02bbaa9b671363f653359ed637d3a1c6e502ff761c4ad48d1191aa9adc6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json": {
+      "bytes": 21853,
+      "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-analysis-v01.json": {
+      "bytes": 3635320,
+      "sha256": "b6e9fb3ff1d0085c2a7bcd37bd049310d592e22a0c4b9615b399affd25aa38fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-result-independent-review-v01.json": {
+      "bytes": 199842,
+      "sha256": "c0f1a533235449e9ef6a1a42a7007fdff2a27ddba2346dc10d1ee8dd2acde4fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-terminal-resource-inputs-v01.json": {
+      "bytes": 6623,
+      "sha256": "d05d5b8a53b4ccc91f32395c723363a1b82fab0ae52ac10c3d3288701c2bcaab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 49428,
+      "sha256": "3e54e70d9bbd450f6e3c71d84bbdd4324d7ed3db13996da9ec0ae237d2b4da2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions_balanced_resource_protocol_v01.py": {
+      "bytes": 22010,
+      "sha256": "09cfe98e31aecb9be4f24781c6f6d51b0b082402ab1bdd24861c5a7187bbd01a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py": {
+      "bytes": 53599,
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_balanced_contracts.py": {
+      "bytes": 11929,
+      "sha256": "17a00716a4c4e42cb8cc7b6b5e9bc9f063b2d44b5fe420fc604d5147bca9fe51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-before-file-identities-v01.json": {
+      "bytes": 2875288,
+      "sha256": "17b897479b0e0064bf90d4fe77485a1abc7a7692a6570d21fbd19057fc32f45c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-01-created-v01.json": {
+      "bytes": 2173,
+      "sha256": "abb4bf65a7fe3c7f94009681adb90f72022de9e4ab21e87d4b016d7ea66371c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-01-preupload-v01.json": {
+      "bytes": 2141,
+      "sha256": "0bcf43292b71fa063a86f4c2ccfeecfee49fd1c1b221df890b249350462eb89c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-01-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "b18f73c1135fa8367654145506d25b9755a08ba23af2237b49a72510a49be483"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-02-created-v01.json": {
+      "bytes": 1400,
+      "sha256": "0105fd9d4fd9a80c28dc6453b0dcaab3c7fed3b74fb7db241bbd8622c6acda0d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-02-preupload-v01.json": {
+      "bytes": 1368,
+      "sha256": "0f00e20d1915eced28c5b43c4c125685c216655a4a786c0af2fb67c1b0295724"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-02-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "504d1a5082dbeeba5d86d93f94d1fc0c387bb205b7926f8aa599ad2ecc905789"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-03-created-v01.json": {
+      "bytes": 1383,
+      "sha256": "046f72d1dfe85ba190900158198b693ccbe7e6033d379a45ff4cf7cf81093665"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-03-preupload-v01.json": {
+      "bytes": 1351,
+      "sha256": "b5709dd8146f62eea8e3d17f85ff9147377e7ce299cbfd8650171ffe6aa6eb3e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-03-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "70bf30b8cd2350c816e6f817cd728105610e0bbc1fe3197947c2fc0ef949f384"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-04-created-v01.json": {
+      "bytes": 2679,
+      "sha256": "067dbed2e9972d410d0d3f0193a44ddad257da1597b6ee8e934386d5abab01a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-04-preupload-v01.json": {
+      "bytes": 2647,
+      "sha256": "4fa72842ff131c272bc2bd8df3eebfc43ad804409a0d4fdfc08410f3167f3d03"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-04-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "991fa10b7b7798873ca503cac05efa94f33f514db1a15299bfa371898d593d82"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-05-created-v01.json": {
+      "bytes": 5114,
+      "sha256": "fc8d0ab640cd94c0a444a0e25c7ac1af1531354f539e79cd0acb03c739d17393"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-05-preupload-v01.json": {
+      "bytes": 5082,
+      "sha256": "7646f69455eb8935be560a403876873226cf73020eccab1036b26db93f19866f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-05-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "420e1ef3cab4bb17a04eb782452faf026ee86c64ecca43c85356c53272ca1189"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-06-created-v01.json": {
+      "bytes": 5584,
+      "sha256": "5230f34f4dc3fdc96877b5134af7197b01943b66054db31af7db12d4d9c13497"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-06-preupload-v01.json": {
+      "bytes": 5552,
+      "sha256": "4558d083999ae95eb06e0d342815a04fb41c260e637db70cdd400ac423fa223b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-06-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "b615cd0514c3fb72d484f5c854cd809f952720dfe49ad5d38dc575c8a8dbd3a2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-07-created-v01.json": {
+      "bytes": 2574,
+      "sha256": "cec8b70ef8d8daff95e42f0eabc1a2e46306b326275b5be8b7ba884cba0fb860"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-07-preupload-v01.json": {
+      "bytes": 2542,
+      "sha256": "eb283b577bbbbd567e7ca964462d3c4bc998b5c9dcb0b7dad748c2d03b892498"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-chunk-07-verified-v01.json": {
+      "bytes": 214,
+      "sha256": "9074ded081e10fdc9b72d09ccbe0e0348d1553c306673d2da6cdcf85ddb430df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-commit-created-v01.json": {
+      "bytes": 2033,
+      "sha256": "ad1c1775a5140513679758c5767eea006a6771cf8f1c0c4ce11baa9bd77387b6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 4876,
+      "sha256": "2ec3034854c0241ca72edc4d2aef658fcb35fcbced4ae9d87994b1e052ffbc19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-helper-source-independent-review-v01.json": {
+      "bytes": 112363,
+      "sha256": "e3247a665574efae90df968c579d71e4935d0a6c9cf3fb46d120b8527b342fdf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-preparation-receipt-v01.json": {
+      "bytes": 95913,
+      "sha256": "850219ab8a6dcc48235fc165c2f1c167aba8381379f0dd806c0fdb9578c94fe4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-publication-independent-review-v01.json": {
+      "bytes": 168461,
+      "sha256": "6180fbeff744d259ddec671fec0f24075638cb6546c10abb8609076d15886f43"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-publication-verification-v01.json": {
+      "bytes": 81163,
+      "sha256": "492730f4d68930b8031331a7a3861c82f0925bd99f6a4baa65db45317f3a6a82"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-release-spec-v01.json": {
+      "bytes": 81963,
+      "sha256": "8f481ffad0429e4a37d126f2e861b91903a7c3e9a6db199248b865701ceb0eaf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/README.md": {
+      "bytes": 3599,
+      "sha256": "a91ded7f061bd729e62309e60898ec62c0575553ffefe7d75daf26da437d51c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "80164299f95b6a3001ae5ced42b0b452ade5376fde70420ffeb843a54aa5e41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429955,
+      "sha256": "3e92229f7e2623b51a7d8ec3dae44c7c24c74eae4803a20e8719a05f500b1615"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "0b22ff76499dae7cbc0a50e3d8bf3e48e3eab4ca1d1db03427f4018973aedc8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431920,
+      "sha256": "d41bc34c7f404c274bddf2382809baae096b3d57fde241a10920b318b3b49272"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "ba03b06b986266f3cb7b84863594d59a62ae6e85be578900f44201af77a34efa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 679343,
+      "sha256": "be4c07600d23e0f882c44bb9b327241547fc7b451537c65b4a9f4706953ddd5b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "5a4de685497a1c9ad224ed4321a3bdc5323a4342c205ab5acdb9ab943b69df66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 805542,
+      "sha256": "8902cb42821f5febbf20bcd50a62540cbeec6ff0161ca7347ef6fd0bab7daf84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "a526a27e2a93de9a6ad903457918973a9074fa734b959e64d1be975d0dfd48a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 806178,
+      "sha256": "2c107be32b9e9fa5b4a0f8d2e11e8e9784a82bbf423a62f44449782ab362ecbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "8a9d44ff5d2d40e5bc8f82bd2e44c4383c4ac22bc707ba203d2a8c8d27c928dd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627159,
+      "sha256": "fe618428886c37aadbc648d3e2bace3e6af9b6c8930f45b1718a0f8dbdfeadf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "6da57833f3b6043bcb62ae567dc50d84a2bb7637acaa03f3a7bd1e103af5e509"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-raw.json": {
+      "bytes": 282617,
+      "sha256": "c8c884e16493555b7dce103cec1ee1c134e95775fe515f1c009a29c603c3b0a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "ddf7438b48559f03f293200a3aa28b8e9b3ac1e1b9a267f8605b6e1140a85c6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452628,
+      "sha256": "d27318ef0aa94f7cec4b02e626da0e16482221b0b689e9799e9530b991bb1ddb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "fdd34ddd72db5e5f2f587db323746dd5c91e78c8ed29c6fc361cfec82100ad99"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2287617,
+      "sha256": "22590eebd81cec981c07ab418db3dd7b7221c2e893017f848808c97b624318ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-checkpoint.json": {
+      "bytes": 9337887,
+      "sha256": "ff9f05efea37cda9678c31143e2d75339ae91397785c97ec70a1795dbe18eb4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-training.json": {
+      "bytes": 439937,
+      "sha256": "0475bf37c08f0dda6a246396ed16d4788b2cc328393646bd8dc5c51757628341"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "bc5e2c01fc12ef69dcf3f32dc4414fabb42295cbe81949ad059c7e22e8e57b40"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "f96c7d383e18181938eb0d87334083c67a659bc16ad71147e15f4610b4905388"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-disabled.json": {
+      "bytes": 20603,
+      "sha256": "f89481adaada95dc41f8896b835d225384396a319582ce95651cd6c5920d4984"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20601,
+      "sha256": "f59756705209fcf548f5b8e9f09b0d8d8355b712719bb3ab2802a8d21d00bbc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-zeros.json": {
+      "bytes": 20599,
+      "sha256": "ca9d1d8988b1b816b602b1312d8def0a89cae21162abde510831a0af69b40abd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "43faf1c3dd28dde92a0329a93a1300e0bf762b55e2c2bc1e52a544c7193f130d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "ddb2861c7a30099e07fa76d3401fa95f528c609a453ea7113bf3b2ca8cbb1cff"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-raw.json": {
+      "bytes": 3588666,
+      "sha256": "1f60a76e9c5c61120a30d63ddafbe86af9f991ce3a9b918e0fa51c31195bd5e7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/summary.json": {
+      "bytes": 62315,
+      "sha256": "2519fa0f65e73c2181ed6d417d6666e7996cba90d3dfa186ed1b67d8b9a3ec7e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1025009,
+      "sha256": "28fbf88eab037566110fe1cd57d785c41ece4165c84397951fd1a973c5c31d0b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1434813,
+      "sha256": "7639cd808fd79b502292661ff16d5cd74ad3a63cc68696b4d32a24e55b180290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1024797,
+      "sha256": "8bcffa177d02c401bfb8bb19b2ded864a375c1ffcd3ae15c3c067988725f08a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1434229,
+      "sha256": "cd732d1f21953f300f6fde527a70d2fb58206bce3604a291d3116bac85d9cf42"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526654,
+      "sha256": "2365a18e029f96a5f3140643ff673682553afd1c8f4bb4942852018180a163f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679332,
+      "sha256": "b3c7e30f59c83edf6330ba6c4e6c0c2d0807d71daac74df2619ffdf1ef6100dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 521374,
+      "sha256": "1bd61e6febe1f28c9e17d56c8718ed5fcef5c0d63370ad94e76088856b7828df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 805283,
+      "sha256": "fed7d498b75adfd4f09af059a601e24b8c5446e9fa0bab4a5504554ff83d324d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 464090,
+      "sha256": "bd256f3e43ddd264230d77311b46771a84e7d4d2d2fae7977133b841bf5ef02f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 806182,
+      "sha256": "d2fbe0fc093a24c4f01cb3e143e88b5cbf783ecfa2e2283fc6edcf4f93f8d4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "87a6a523ce8dac67cebdcae59dbdb6aca484b78a23990d524d5e205080273a41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 627149,
+      "sha256": "53aafbcbf904854f9035b09f898820f242a4438d4908671fc2777b071ee300f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "f2690e0089d83e6ecd7d8554feb3cc608e25cfb67ccefd6882de223ba856497f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-law-joint.json": {
+      "bytes": 107527,
+      "sha256": "c07db08dd20d62d976a9d040182f3ea614ba2ef360b5e333886e0c5940d475c6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-law-raw.json": {
+      "bytes": 282613,
+      "sha256": "c3997641d0f2c01b8bc6cd023c98e10e505e12f57e2b8f87ce097f6462699b6f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044651,
+      "sha256": "ae0243122e0d3db7edd5d7708ffecc9ae3f264512d012ee92291500bb62a661c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1452606,
+      "sha256": "10bc0d65eedd6eb563b43a75330046db79ccbdc20800e3a61c19cfb85ee2a736"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1456870,
+      "sha256": "890107015a522fd985c372844628025930e31e942a24af7bbbae5e9c1cb8c00f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2287597,
+      "sha256": "4c2b72940f8835cbc618ae407a1f2dca6a5edda08c9111fb13d34ed7c26c4365"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20597,
+      "sha256": "ea3a9a4472b6b67187c028669d560daf56c2ad5305334dba5940d2a004a88d69"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-disabled.json": {
+      "bytes": 20601,
+      "sha256": "235f9206d1b6e045f03ce4f66ef57c9eb684145ed20211a508722428c4f98b7d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "ac3c80bb54882d11e59fc50080b3e15090986e4ac93fd655de4908c6aa9572c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-zeros.json": {
+      "bytes": 20597,
+      "sha256": "247aada0954bae194ee7d0c167bad1585ad53c680dd40cf4b5bb64ad836fbd06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "24a737fecddb42460c6a5ef20bb320463fc762aa81a89948fe5b66873e471696"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-training168-joint.json": {
+      "bytes": 2485858,
+      "sha256": "4307c135817fca556ded32ebcf0dd51c35691bb12656873448a10759cda92b3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-training168-raw.json": {
+      "bytes": 3588639,
+      "sha256": "9eaad61005c5a2f9c698326514a80241b113b33306cf30bfd91fb93d0e3be9f4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c8095463e7cfeaa42d1cc1b2915b0c14e0067f8e57318900088d5913e121236"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child-identity.json": {
+      "bytes": 43,
+      "sha256": "78e6b72fdaa3cface110dc418a2d1f36af176405b9e4211fe6863799fc3016b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child.log": {
+      "bytes": 83,
+      "sha256": "422c9e4c841572d9474dd9a3e8841a82b1f8d51c1d1f66f359434c293b7e511c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/command.json": {
+      "bytes": 1097,
+      "sha256": "b6639b295256ebfd796399d12189ce63d176ca39c47c4f34dfd2a0d1b89fec8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 50897,
+      "sha256": "dbb491c1622e463ecf78a107b4b8cc3c1de7baf42a154ec060eedee102ba2872"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/group-rss-summary.json": {
+      "bytes": 1757,
+      "sha256": "584ac625d9ee4068d053e81f2122cbae6f5fcf97f48665b64718d85a9b47a4c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "9dbe7312d35d0cc35154fa80fff0f0ef8060ee62efb4570153b34f055d21bae1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "3743c644b6cadeafa36d7baff016c4a0e7a58d0f68b884ac3d033259516177fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/lease-observations.jsonl": {
+      "bytes": 106358,
+      "sha256": "00096e9f6567c123dfde5cf01c1dd9be9319fbd82cd72e836f5c9b0132e4e04a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/owned-group-final.json": {
+      "bytes": 189,
+      "sha256": "a152df444cecf5106266e4dac6dafe92b02fc19da515a6b9c29be4ad97f94e66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/pre-admission.json": {
+      "bytes": 7964,
+      "sha256": "df071980e36bb4af1e34f3103e57edc922181e9ce358a46cfa30ed9f20f667eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/resource-observations.json": {
+      "bytes": 2626,
+      "sha256": "2836fecc1aadf98e0f299fc76e6dba976f129492c66d3696f106829db3319ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4647,
+      "sha256": "7f565b11308e3a7c1a8d3d30624f57fee15c970402d5ff28afbaa3952c492df5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/analyzer-source-independent-review-v02.json": {
+      "bytes": 46391,
+      "sha256": "f78fe121041242b3ad2a4479cd69345be577173ea329a192735279c55b3e0110"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-inputs-v01.json": {
+      "bytes": 1595,
+      "sha256": "ae9767785500571698488cc34223c3f017a7166091244dbfee14fe6cee35da5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-source-independent-review-v01.json": {
+      "bytes": 20556,
+      "sha256": "9178985ef55ad0b04362e4483b5bcdd3ebfbff40cd287565a0e60de5b4241e50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-v01.json": {
+      "bytes": 26803,
+      "sha256": "a9b37c405f30c2c5cd83e717b0c1ba3b689d733c75a9c950a036d6eb3bff1366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8397,
+      "sha256": "3334b612ef383564fc7165e65173e48610ae03681e16576527a74b8fd9d4ab3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-plan-v01.json": {
+      "bytes": 67232,
+      "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-runtime-review-v01.json": {
+      "bytes": 87611,
+      "sha256": "b1551e2e14a6917a4afb8b9f812cc598f6c478491110bbb2d7cf49faef96f4f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-terminal-resource-audit-v01.json": {
+      "bytes": 61094,
+      "sha256": "f1d40cad4a91bbeab12844675278a6ca5521513eb05f7a81f6c02a0183c7e3e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-training-review-v01.json": {
+      "bytes": 39309,
+      "sha256": "0843182f77c68844ff7c894803464f606996af3476e0436ed9a180d571ee84eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-independent-recount-v01.json": {
+      "bytes": 3095457,
+      "sha256": "637a02bbaa9b671363f653359ed637d3a1c6e502ff761c4ad48d1191aa9adc6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-output-freeze-v01.json": {
+      "bytes": 21853,
+      "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-result-analysis-v01.json": {
+      "bytes": 3635320,
+      "sha256": "b6e9fb3ff1d0085c2a7bcd37bd049310d592e22a0c4b9615b399affd25aa38fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-result-independent-review-v01.json": {
+      "bytes": 199842,
+      "sha256": "c0f1a533235449e9ef6a1a42a7007fdff2a27ddba2346dc10d1ee8dd2acde4fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-terminal-resource-inputs-v01.json": {
+      "bytes": 6623,
+      "sha256": "d05d5b8a53b4ccc91f32395c723363a1b82fab0ae52ac10c3d3288701c2bcaab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 49428,
+      "sha256": "3e54e70d9bbd450f6e3c71d84bbdd4324d7ed3db13996da9ec0ae237d2b4da2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 4876,
+      "sha256": "2ec3034854c0241ca72edc4d2aef658fcb35fcbced4ae9d87994b1e052ffbc19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/original-trainer-source-independent-review-v01.json": {
+      "bytes": 29079,
+      "sha256": "876d8e1a87e29c1bdf00ac4659fdf395c4453572be1eb77faceb56773c12a25d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/phase-intake-v01.json": {
+      "bytes": 2788,
+      "sha256": "9e8225e4853a38dd228a816b64f644ed6d29c40f815fbafdcd9cbeff42d02b2b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 8630,
+      "sha256": "51ad97c08ff9207ddb2b80f49799a38cbd7284da92e9a76df47b4ab20f310ba9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/resource-baseline-inputs-v01.json": {
+      "bytes": 1357,
+      "sha256": "797ec8ac82e54d89e13fc2e9082116572e2b0e7e85440dfdc1d5c009af8f290f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/resource-baseline-v01.json": {
+      "bytes": 84897,
+      "sha256": "268c65ced2eed28d7863ab196ed43c36eab7f64a1bef1642db757402491ebfc7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 2316,
+      "sha256": "3fac4402183c5903113cb4543353cc0807e04915f7f5a64528d435eabc6ef1da"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/resource-observer-source-independent-review-v01.json": {
+      "bytes": 19295,
+      "sha256": "11824bbb48a2c3d1a3de133fa1f89eec167b4f040609e26219dd6302d9a4f136"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/resource-protocol-contract-v01.json": {
+      "bytes": 8893,
+      "sha256": "0a83321fd1dc46dae22137f89b41ed263fb0fa5d47b792a5c07484aa95d2ea0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/result-recount-inputs-v01.json": {
+      "bytes": 607,
+      "sha256": "10047967842c1e9dda3aea7cdc3bd6374ebd86479942c509b65c76aeef4dfbf3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/result-recount-source-independent-review-v01.json": {
+      "bytes": 41137,
+      "sha256": "d3dc57dd5e46c309fbdb7d6c84305a607407048eda34dd3ee3c63f092abe32cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-preflight-source-independent-review-v01.json": {
+      "bytes": 13072,
+      "sha256": "39d0def643cd6164fdbf9714b45b08746076a9969035d83ef71a53700612efdf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-preflight-v01.json": {
+      "bytes": 18661,
+      "sha256": "ede579e46a287fbfc0fac5aff3d4d5e29821964600d895e4951c6af4d2a5ff5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-execution-approval-v01.json": {
+      "bytes": 1660,
+      "sha256": "af04a8fe719389bb5db12bce29ca045ccef5cfcf803ab83e799a86701dd1d69f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-independent-review-v01.json": {
+      "bytes": 14607,
+      "sha256": "b7f70a968128c313b7d794365883b48c866dbd81f0c33a82f0181a4a01201b9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-source-independent-review-v01.json": {
+      "bytes": 13763,
+      "sha256": "a612c31454de66be97d175f41a8671c0e4c406b7e6ed73f5839f640e3667de81"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-v01.json": {
+      "bytes": 17057,
+      "sha256": "60b6587f4d462f2b099b50f2eaf569a7523c8f7f0002bc97196ca9583fdbedb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 68693,
+      "sha256": "9703035889cdf1c94b5417a095874c1372aa2151cc871b60de6929f5b657d410"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 50728,
+      "sha256": "4ba5b76d5420b576c711a95438ad11233870d16ba2c11604567253f08c7435a1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/sampler-source-independent-review-v01.json": {
+      "bytes": 1998,
+      "sha256": "99f78f472bb44a5048a542a8e09fd98889555dba30227a6c4b86ec7c0330ee2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/source-snapshot-recovery-v01.json": {
+      "bytes": 12796,
+      "sha256": "653f18eac27c7459095b5ff6adcf2a77a316f7af3422e66158af20262db3db8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/source-worktree-disappearance-v01.json": {
+      "bytes": 442,
+      "sha256": "d84e7afd0bb0007a4c74b109628a642dd0e3f1ccb7b7d0bd63ab3034ef5d1a6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/trainer-relocation-source-independent-review-v01.json": {
+      "bytes": 17836,
+      "sha256": "55cd76f6a0128dc47421aeb4a5c28d4261971d708d78ad1155922d588980e015"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/evidence/training-design-v01.json": {
+      "bytes": 8880,
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/analyze_conditions_balanced_v02.py": {
+      "bytes": 78492,
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/archive_conditions_balanced_hf_v01.py": {
+      "bytes": 24481,
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/audit_conditions_balanced_terminal_resources_v01.py": {
+      "bytes": 13733,
+      "sha256": "95716ad3d1f1f4c4afbdb8e314a31c8d9cc69be8b6966f207c41d40de75a30c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/balanced_execution_root_identity_v01.py": {
+      "bytes": 11831,
+      "sha256": "a0ecd10daaac94605c07146307a89a6a63f526826f018b59cce15f86a898efc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/build_conditions_balanced_release_spec_v02.py": {
+      "bytes": 14098,
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/conditions_balanced_resource_protocol_v01.py": {
+      "bytes": 22010,
+      "sha256": "09cfe98e31aecb9be4f24781c6f6d51b0b082402ab1bdd24861c5a7187bbd01a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/prepare_conditions_balanced_v02.py": {
+      "bytes": 21740,
+      "sha256": "86fe7ccd996573a4a891627dfa248edd7aa2d5390242ac8b2704e92e12b6079e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/reconcile_balanced_execution_root_identity_v01.py": {
+      "bytes": 7718,
+      "sha256": "c30826206b3e67cb994c24b1a08c9c8420069d0b03cb11df87ff124fa43e9957"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/review_balanced_execution_root_identity_preflight_v01.py": {
+      "bytes": 4321,
+      "sha256": "3ff9ae7cb0527db622147b87fdeee7eab76c32d73119bd88674f505222147366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_capacity_clearance_v01.py": {
+      "bytes": 8383,
+      "sha256": "e11c07245ab770590cba565a1502885a9a57eb5a064b51018472ca6f2d65af54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_resource_baseline_v01.py": {
+      "bytes": 8175,
+      "sha256": "89d024208c85b5bacc35636902c09d536222f2884b052566cb4b729df97408e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/recipes/sample_conditions_balanced_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "ba8990d2c7ccc5461d98269ac09a3f920d17b490e82021e71d474096daa6847f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py": {
+      "bytes": 53599,
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-upload-v01/releases/20261014-conditions-balanced-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_balanced_contracts.py": {
+      "bytes": 11929,
+      "sha256": "17a00716a4c4e42cb8cc7b6b5e9bc9f063b2d44b5fe420fc604d5147bca9fe51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/README.md": {
+      "bytes": 3599,
+      "sha256": "a91ded7f061bd729e62309e60898ec62c0575553ffefe7d75daf26da437d51c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "80164299f95b6a3001ae5ced42b0b452ade5376fde70420ffeb843a54aa5e41c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429955,
+      "sha256": "3e92229f7e2623b51a7d8ec3dae44c7c24c74eae4803a20e8719a05f500b1615"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "0b22ff76499dae7cbc0a50e3d8bf3e48e3eab4ca1d1db03427f4018973aedc8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431920,
+      "sha256": "d41bc34c7f404c274bddf2382809baae096b3d57fde241a10920b318b3b49272"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "ba03b06b986266f3cb7b84863594d59a62ae6e85be578900f44201af77a34efa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 679343,
+      "sha256": "be4c07600d23e0f882c44bb9b327241547fc7b451537c65b4a9f4706953ddd5b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "5a4de685497a1c9ad224ed4321a3bdc5323a4342c205ab5acdb9ab943b69df66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_dev-raw.json": {
+      "bytes": 805542,
+      "sha256": "8902cb42821f5febbf20bcd50a62540cbeec6ff0161ca7347ef6fd0bab7daf84"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "a526a27e2a93de9a6ad903457918973a9074fa734b959e64d1be975d0dfd48a0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_test-raw.json": {
+      "bytes": 806178,
+      "sha256": "2c107be32b9e9fa5b4a0f8d2e11e8e9784a82bbf423a62f44449782ab362ecbb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "8a9d44ff5d2d40e5bc8f82bd2e44c4383c4ac22bc707ba203d2a8c8d27c928dd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627159,
+      "sha256": "fe618428886c37aadbc648d3e2bace3e6af9b6c8930f45b1718a0f8dbdfeadf6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "6da57833f3b6043bcb62ae567dc50d84a2bb7637acaa03f3a7bd1e103af5e509"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-law-raw.json": {
+      "bytes": 282617,
+      "sha256": "c8c884e16493555b7dce103cec1ee1c134e95775fe515f1c009a29c603c3b0a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "ddf7438b48559f03f293200a3aa28b8e9b3ac1e1b9a267f8605b6e1140a85c6c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452628,
+      "sha256": "d27318ef0aa94f7cec4b02e626da0e16482221b0b689e9799e9530b991bb1ddb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "fdd34ddd72db5e5f2f587db323746dd5c91e78c8ed29c6fc361cfec82100ad99"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/baseline-old_tune-raw.json": {
+      "bytes": 2287617,
+      "sha256": "22590eebd81cec981c07ab418db3dd7b7221c2e893017f848808c97b624318ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-checkpoint.json": {
+      "bytes": 9337887,
+      "sha256": "ff9f05efea37cda9678c31143e2d75339ae91397785c97ec70a1795dbe18eb4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/cell-training.json": {
+      "bytes": 439937,
+      "sha256": "0475bf37c08f0dda6a246396ed16d4788b2cc328393646bd8dc5c51757628341"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "bc5e2c01fc12ef69dcf3f32dc4414fabb42295cbe81949ad059c7e22e8e57b40"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "f96c7d383e18181938eb0d87334083c67a659bc16ad71147e15f4610b4905388"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-disabled.json": {
+      "bytes": 20603,
+      "sha256": "f89481adaada95dc41f8896b835d225384396a319582ce95651cd6c5920d4984"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20601,
+      "sha256": "f59756705209fcf548f5b8e9f09b0d8d8355b712719bb3ab2802a8d21d00bbc9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity-zeros.json": {
+      "bytes": 20599,
+      "sha256": "ca9d1d8988b1b816b602b1312d8def0a89cae21162abde510831a0af69b40abd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "43faf1c3dd28dde92a0329a93a1300e0bf762b55e2c2bc1e52a544c7193f130d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "ddb2861c7a30099e07fa76d3401fa95f528c609a453ea7113bf3b2ca8cbb1cff"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/initial-training168-raw.json": {
+      "bytes": 3588666,
+      "sha256": "1f60a76e9c5c61120a30d63ddafbe86af9f991ce3a9b918e0fa51c31195bd5e7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/summary.json": {
+      "bytes": 62315,
+      "sha256": "2519fa0f65e73c2181ed6d417d6666e7996cba90d3dfa186ed1b67d8b9a3ec7e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-joint.json": {
+      "bytes": 1025009,
+      "sha256": "28fbf88eab037566110fe1cd57d785c41ece4165c84397951fd1a973c5c31d0b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_dev-raw.json": {
+      "bytes": 1434813,
+      "sha256": "7639cd808fd79b502292661ff16d5cd74ad3a63cc68696b4d32a24e55b180290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_eval-joint.json": {
+      "bytes": 1024797,
+      "sha256": "8bcffa177d02c401bfb8bb19b2ded864a375c1ffcd3ae15c3c067988725f08a6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-authored_eval-raw.json": {
+      "bytes": 1434229,
+      "sha256": "cd732d1f21953f300f6fde527a70d2fb58206bce3604a291d3116bac85d9cf42"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526654,
+      "sha256": "2365a18e029f96a5f3140643ff673682553afd1c8f4bb4942852018180a163f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679332,
+      "sha256": "b3c7e30f59c83edf6330ba6c4e6c0c2d0807d71daac74df2619ffdf1ef6100dc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_dev-joint.json": {
+      "bytes": 521374,
+      "sha256": "1bd61e6febe1f28c9e17d56c8718ed5fcef5c0d63370ad94e76088856b7828df"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_dev-raw.json": {
+      "bytes": 805283,
+      "sha256": "fed7d498b75adfd4f09af059a601e24b8c5446e9fa0bab4a5504554ff83d324d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_test-joint.json": {
+      "bytes": 464090,
+      "sha256": "bd256f3e43ddd264230d77311b46771a84e7d4d2d2fae7977133b841bf5ef02f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_test-raw.json": {
+      "bytes": 806182,
+      "sha256": "d2fbe0fc093a24c4f01cb3e143e88b5cbf783ecfa2e2283fc6edcf4f93f8d4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "87a6a523ce8dac67cebdcae59dbdb6aca484b78a23990d524d5e205080273a41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-fresh_tune-raw.json": {
+      "bytes": 627149,
+      "sha256": "53aafbcbf904854f9035b09f898820f242a4438d4908671fc2777b071ee300f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "f2690e0089d83e6ecd7d8554feb3cc608e25cfb67ccefd6882de223ba856497f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-law-joint.json": {
+      "bytes": 107527,
+      "sha256": "c07db08dd20d62d976a9d040182f3ea614ba2ef360b5e333886e0c5940d475c6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-law-raw.json": {
+      "bytes": 282613,
+      "sha256": "c3997641d0f2c01b8bc6cd023c98e10e505e12f57e2b8f87ce097f6462699b6f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044651,
+      "sha256": "ae0243122e0d3db7edd5d7708ffecc9ae3f264512d012ee92291500bb62a661c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1452606,
+      "sha256": "10bc0d65eedd6eb563b43a75330046db79ccbdc20800e3a61c19cfb85ee2a736"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_tune-joint.json": {
+      "bytes": 1456870,
+      "sha256": "890107015a522fd985c372844628025930e31e942a24af7bbbae5e9c1cb8c00f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-old_tune-raw.json": {
+      "bytes": 2287597,
+      "sha256": "4c2b72940f8835cbc618ae407a1f2dca6a5edda08c9111fb13d34ed7c26c4365"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20597,
+      "sha256": "ea3a9a4472b6b67187c028669d560daf56c2ad5305334dba5940d2a004a88d69"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-disabled.json": {
+      "bytes": 20601,
+      "sha256": "235f9206d1b6e045f03ce4f66ef57c9eb684145ed20211a508722428c4f98b7d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "ac3c80bb54882d11e59fc50080b3e15090986e4ac93fd655de4908c6aa9572c9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity-zeros.json": {
+      "bytes": 20597,
+      "sha256": "247aada0954bae194ee7d0c167bad1585ad53c680dd40cf4b5bb64ad836fbd06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "24a737fecddb42460c6a5ef20bb320463fc762aa81a89948fe5b66873e471696"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-training168-joint.json": {
+      "bytes": 2485858,
+      "sha256": "4307c135817fca556ded32ebcf0dd51c35691bb12656873448a10759cda92b3c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/results/trained-training168-raw.json": {
+      "bytes": 3588639,
+      "sha256": "9eaad61005c5a2f9c698326514a80241b113b33306cf30bfd91fb93d0e3be9f4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c8095463e7cfeaa42d1cc1b2915b0c14e0067f8e57318900088d5913e121236"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child-identity.json": {
+      "bytes": 43,
+      "sha256": "78e6b72fdaa3cface110dc418a2d1f36af176405b9e4211fe6863799fc3016b5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/child.log": {
+      "bytes": 83,
+      "sha256": "422c9e4c841572d9474dd9a3e8841a82b1f8d51c1d1f66f359434c293b7e511c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/command.json": {
+      "bytes": 1097,
+      "sha256": "b6639b295256ebfd796399d12189ce63d176ca39c47c4f34dfd2a0d1b89fec8b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/group-rss-observations.jsonl": {
+      "bytes": 50897,
+      "sha256": "dbb491c1622e463ecf78a107b4b8cc3c1de7baf42a154ec060eedee102ba2872"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/group-rss-summary.json": {
+      "bytes": 1757,
+      "sha256": "584ac625d9ee4068d053e81f2122cbae6f5fcf97f48665b64718d85a9b47a4c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "9dbe7312d35d0cc35154fa80fff0f0ef8060ee62efb4570153b34f055d21bae1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "3743c644b6cadeafa36d7baff016c4a0e7a58d0f68b884ac3d033259516177fa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/lease-observations.jsonl": {
+      "bytes": 106358,
+      "sha256": "00096e9f6567c123dfde5cf01c1dd9be9319fbd82cd72e836f5c9b0132e4e04a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/owned-group-final.json": {
+      "bytes": 189,
+      "sha256": "a152df444cecf5106266e4dac6dafe92b02fc19da515a6b9c29be4ad97f94e66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/pre-admission.json": {
+      "bytes": 7964,
+      "sha256": "df071980e36bb4af1e34f3103e57edc922181e9ce358a46cfa30ed9f20f667eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/resource-observations.json": {
+      "bytes": 2626,
+      "sha256": "2836fecc1aadf98e0f299fc76e6dba976f129492c66d3696f106829db3319ef3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/cells/conditions-balanced-ce/runtime/scheduler-adoption.json": {
+      "bytes": 4647,
+      "sha256": "7f565b11308e3a7c1a8d3d30624f57fee15c970402d5ff28afbaa3952c492df5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/analyzer-source-independent-review-v02.json": {
+      "bytes": 46391,
+      "sha256": "f78fe121041242b3ad2a4479cd69345be577173ea329a192735279c55b3e0110"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-inputs-v01.json": {
+      "bytes": 1595,
+      "sha256": "ae9767785500571698488cc34223c3f017a7166091244dbfee14fe6cee35da5e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-source-independent-review-v01.json": {
+      "bytes": 20556,
+      "sha256": "9178985ef55ad0b04362e4483b5bcdd3ebfbff40cd287565a0e60de5b4241e50"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/capacity-clearance-v01.json": {
+      "bytes": 26803,
+      "sha256": "a9b37c405f30c2c5cd83e717b0c1ba3b689d733c75a9c950a036d6eb3bff1366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-bootstrap-smoke-controls-v01.json": {
+      "bytes": 8397,
+      "sha256": "3334b612ef383564fc7165e65173e48610ae03681e16576527a74b8fd9d4ab3b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-plan-v01.json": {
+      "bytes": 67232,
+      "sha256": "bf02c6ee3c53a58291b48d3fca358165a51193e33defcad3c28849c3ea4ea7f9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-runtime-review-v01.json": {
+      "bytes": 87611,
+      "sha256": "b1551e2e14a6917a4afb8b9f812cc598f6c478491110bbb2d7cf49faef96f4f3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-terminal-resource-audit-v01.json": {
+      "bytes": 61094,
+      "sha256": "f1d40cad4a91bbeab12844675278a6ca5521513eb05f7a81f6c02a0183c7e3e5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-ce-training-review-v01.json": {
+      "bytes": 39309,
+      "sha256": "0843182f77c68844ff7c894803464f606996af3476e0436ed9a180d571ee84eb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-independent-recount-v01.json": {
+      "bytes": 3095457,
+      "sha256": "637a02bbaa9b671363f653359ed637d3a1c6e502ff761c4ad48d1191aa9adc6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-output-freeze-v01.json": {
+      "bytes": 21853,
+      "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-result-analysis-v01.json": {
+      "bytes": 3635320,
+      "sha256": "b6e9fb3ff1d0085c2a7bcd37bd049310d592e22a0c4b9615b399affd25aa38fb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-result-independent-review-v01.json": {
+      "bytes": 199842,
+      "sha256": "c0f1a533235449e9ef6a1a42a7007fdff2a27ddba2346dc10d1ee8dd2acde4fd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-terminal-resource-inputs-v01.json": {
+      "bytes": 6623,
+      "sha256": "d05d5b8a53b4ccc91f32395c723363a1b82fab0ae52ac10c3d3288701c2bcaab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/conditions-balanced-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 49428,
+      "sha256": "3e54e70d9bbd450f6e3c71d84bbdd4324d7ed3db13996da9ec0ae237d2b4da2d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/evaluation-contract-v01.json": {
+      "bytes": 15724,
+      "sha256": "cdd58af7b0b0abbb5e8523e23682a53f26ef28bf30e4b0f9090c4a88aeacf837"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/hf-helper-port-source-independent-review-v01.json": {
+      "bytes": 4876,
+      "sha256": "2ec3034854c0241ca72edc4d2aef658fcb35fcbced4ae9d87994b1e052ffbc19"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/original-trainer-source-independent-review-v01.json": {
+      "bytes": 29079,
+      "sha256": "876d8e1a87e29c1bdf00ac4659fdf395c4453572be1eb77faceb56773c12a25d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/phase-intake-v01.json": {
+      "bytes": 2788,
+      "sha256": "9e8225e4853a38dd228a816b64f644ed6d29c40f815fbafdcd9cbeff42d02b2b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/public-result-summary-v01.json": {
+      "bytes": 8630,
+      "sha256": "51ad97c08ff9207ddb2b80f49799a38cbd7284da92e9a76df47b4ab20f310ba9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/resource-baseline-inputs-v01.json": {
+      "bytes": 1357,
+      "sha256": "797ec8ac82e54d89e13fc2e9082116572e2b0e7e85440dfdc1d5c009af8f290f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/resource-baseline-v01.json": {
+      "bytes": 84897,
+      "sha256": "268c65ced2eed28d7863ab196ed43c36eab7f64a1bef1642db757402491ebfc7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 2316,
+      "sha256": "3fac4402183c5903113cb4543353cc0807e04915f7f5a64528d435eabc6ef1da"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/resource-observer-source-independent-review-v01.json": {
+      "bytes": 19295,
+      "sha256": "11824bbb48a2c3d1a3de133fa1f89eec167b4f040609e26219dd6302d9a4f136"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/resource-protocol-contract-v01.json": {
+      "bytes": 8893,
+      "sha256": "0a83321fd1dc46dae22137f89b41ed263fb0fa5d47b792a5c07484aa95d2ea0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/result-recount-inputs-v01.json": {
+      "bytes": 607,
+      "sha256": "10047967842c1e9dda3aea7cdc3bd6374ebd86479942c509b65c76aeef4dfbf3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/result-recount-source-independent-review-v01.json": {
+      "bytes": 41137,
+      "sha256": "d3dc57dd5e46c309fbdb7d6c84305a607407048eda34dd3ee3c63f092abe32cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-preflight-source-independent-review-v01.json": {
+      "bytes": 13072,
+      "sha256": "39d0def643cd6164fdbf9714b45b08746076a9969035d83ef71a53700612efdf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-preflight-v01.json": {
+      "bytes": 18661,
+      "sha256": "ede579e46a287fbfc0fac5aff3d4d5e29821964600d895e4951c6af4d2a5ff5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-execution-approval-v01.json": {
+      "bytes": 1660,
+      "sha256": "af04a8fe719389bb5db12bce29ca045ccef5cfcf803ab83e799a86701dd1d69f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-independent-review-v01.json": {
+      "bytes": 14607,
+      "sha256": "b7f70a968128c313b7d794365883b48c866dbd81f0c33a82f0181a4a01201b9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-source-independent-review-v01.json": {
+      "bytes": 13763,
+      "sha256": "a612c31454de66be97d175f41a8671c0e4c406b7e6ed73f5839f640e3667de81"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/root-identity-reconciliation-v01.json": {
+      "bytes": 17057,
+      "sha256": "60b6587f4d462f2b099b50f2eaf569a7523c8f7f0002bc97196ca9583fdbedb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 68693,
+      "sha256": "9703035889cdf1c94b5417a095874c1372aa2151cc871b60de6929f5b657d410"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 50728,
+      "sha256": "4ba5b76d5420b576c711a95438ad11233870d16ba2c11604567253f08c7435a1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/sampler-source-independent-review-v01.json": {
+      "bytes": 1998,
+      "sha256": "99f78f472bb44a5048a542a8e09fd98889555dba30227a6c4b86ec7c0330ee2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/source-snapshot-recovery-v01.json": {
+      "bytes": 12796,
+      "sha256": "653f18eac27c7459095b5ff6adcf2a77a316f7af3422e66158af20262db3db8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/source-worktree-disappearance-v01.json": {
+      "bytes": 442,
+      "sha256": "d84e7afd0bb0007a4c74b109628a642dd0e3f1ccb7b7d0bd63ab3034ef5d1a6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/trainer-relocation-source-independent-review-v01.json": {
+      "bytes": 17836,
+      "sha256": "55cd76f6a0128dc47421aeb4a5c28d4261971d708d78ad1155922d588980e015"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/evidence/training-design-v01.json": {
+      "bytes": 8880,
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/adopt_shared_scheduler_actor_ranking_v02.py": {
+      "bytes": 15101,
+      "sha256": "526aa9fa55d955eb92dba37053af2dfdf01f7dd8335cd309cb36770988bab0b7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/analyze_conditions_balanced_v02.py": {
+      "bytes": 78492,
+      "sha256": "1a4b4f6b579d0d086ef97d4867c9eea274ceb88142edb4bff849eb95f0fa2e57"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/archive_conditions_balanced_hf_v01.py": {
+      "bytes": 24481,
+      "sha256": "90e63b176bb7b4080a20e56031e57c5f561ac4b41141fb6307179e31fc9ed921"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/audit_conditions_balanced_terminal_resources_v01.py": {
+      "bytes": 13733,
+      "sha256": "95716ad3d1f1f4c4afbdb8e314a31c8d9cc69be8b6966f207c41d40de75a30c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/balanced_execution_root_identity_v01.py": {
+      "bytes": 11831,
+      "sha256": "a0ecd10daaac94605c07146307a89a6a63f526826f018b59cce15f86a898efc5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/build_conditions_balanced_release_spec_v02.py": {
+      "bytes": 14098,
+      "sha256": "bb9d5687dd634dd0170e7549bb26b1cdc71efdc565ae1d1af2ee44e5e81ca9fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/conditions_balanced_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7101,
+      "sha256": "ce8c0564bead3ad77df7c668590a80482c30b45c856b9be31ce1f2c7ad942142"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/conditions_balanced_resource_protocol_v01.py": {
+      "bytes": 22010,
+      "sha256": "09cfe98e31aecb9be4f24781c6f6d51b0b082402ab1bdd24861c5a7187bbd01a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/freeze_conditions_balanced_outputs_v01.py": {
+      "bytes": 18728,
+      "sha256": "8e150c915581208f0b3940a6ab72cc86309a1e5c1759e549d8b35bd975161bd8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/prepare_conditions_balanced_v02.py": {
+      "bytes": 21740,
+      "sha256": "86fe7ccd996573a4a891627dfa248edd7aa2d5390242ac8b2704e92e12b6079e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/reconcile_balanced_execution_root_identity_v01.py": {
+      "bytes": 7718,
+      "sha256": "c30826206b3e67cb994c24b1a08c9c8420069d0b03cb11df87ff124fa43e9957"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/review_balanced_execution_root_identity_preflight_v01.py": {
+      "bytes": 4321,
+      "sha256": "3ff9ae7cb0527db622147b87fdeee7eab76c32d73119bd88674f505222147366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_capacity_clearance_v01.py": {
+      "bytes": 8383,
+      "sha256": "e11c07245ab770590cba565a1502885a9a57eb5a064b51018472ca6f2d65af54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_resource_baseline_v01.py": {
+      "bytes": 8175,
+      "sha256": "89d024208c85b5bacc35636902c09d536222f2884b052566cb4b729df97408e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/recipes/sample_conditions_balanced_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "ba8990d2c7ccc5461d98269ac09a3f920d17b490e82021e71d474096daa6847f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_source_cache.py": {
+      "bytes": 29148,
+      "sha256": "af9c9944cfd9c2c926911bca94a7d407af25019a1ab833655a9511deea4f4594"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/arbitrary_native_span_runtime.py": {
+      "bytes": 28040,
+      "sha256": "dedf1598196e902269f6b82a9249b9d7bf41274df87da65c0b393fbd2547a50a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/contextual_legal_ir_runtime.py": {
+      "bytes": 37249,
+      "sha256": "57032fb7b824cfc9a39a442ccffa0bd5fb64873baa48a9ab43a94e80f901b430"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/dimension_source_inputs.py": {
+      "bytes": 28444,
+      "sha256": "c7f396d3323c40b5f4bab1aa42557e693b65cced58435e63c735f875c6d12206"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/gte_multilingual_profile.py": {
+      "bytes": 15959,
+      "sha256": "d6d6069c98c7f15bd4c6f8a43bd9ffb72032e04a452419a3ff5d9bd95bb06e8e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/legal_native_conditioning.py": {
+      "bytes": 24439,
+      "sha256": "48709fa4a521046ad753c87afe2732d17968e33d51ab2f43e4c4fefe2182059f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/retained_span_score_capture.py": {
+      "bytes": 17966,
+      "sha256": "e11329b8de6876642c500ee6cf2c4f261c6bb3b26556806a1b4caaea625b4909"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768.py": {
+      "bytes": 13375,
+      "sha256": "cd4b23b87fefe3f80f234a5c85d9e4823139d5040a5507813b88385ee601b4ea"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/formalization/autoencoder/source_embeddings_768_complete.py": {
+      "bytes": 9556,
+      "sha256": "6f781849dc87eba1b7f0929d292bb10f5724bb1ca5749989feb988cde243c609"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_contracts.py": {
+      "bytes": 109257,
+      "sha256": "d66ecfaa2c967cda40a1cf4b82936a34039e38ccdb3044468697a4f90af2844b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_decoder_preflight.py": {
+      "bytes": 9794,
+      "sha256": "a656d5e692623043f24d670a193a449d43af742de20ccd68c4b7e744d7e3b276"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_source_guards.py": {
+      "bytes": 6017,
+      "sha256": "a1b2fc2fe7fdf23b8caa46e43c5341287a35a94deaa70f291fb351e58505b32b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/canonical_span_decoder.py": {
+      "bytes": 21764,
+      "sha256": "c25044aeb63d66b73feac95de0ca6d49339774edb7611b1b956cf6307db438ec"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/joint_span_selection.py": {
+      "bytes": 16730,
+      "sha256": "791c283f625ae7d8841e7afa697b34cbfa5c74361d0c0129b66af31fb5e13679"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/matched_temporal_curriculum.py": {
+      "bytes": 39619,
+      "sha256": "a64fa4f79e949593744768c8ab4896f349d93d2885ebbc36a13d0854e6185a71"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/targeted_loss_curriculum.py": {
+      "bytes": 43299,
+      "sha256": "42aa966d65b599b5100617474109c96309c63c263d6182c10b357a7cda0e0dd3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/logic/legal_ir/temporal_role_contrast_corpus.py": {
+      "bytes": 15813,
+      "sha256": "acbae8463f6f1a347272fc83a71246a55110580a1e7221dc2f4b95e10c6bcddd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_corpus_manifest.py": {
+      "bytes": 27947,
+      "sha256": "b067f05b3cfc28cb213a83519530f7148b2a5fa7d5b25809e87e1f7c286f9a5d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_production.py": {
+      "bytes": 26219,
+      "sha256": "735ca0597186e094d736ef58435c82956c4ab805a68fc7a6adbfc0ee21ee889f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_embedding_runtime.py": {
+      "bytes": 19364,
+      "sha256": "ce80ed6294009e04580051e6eb06a817d74a8a56f04814ad0a698e3d27dd0d41"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_native_pool.py": {
+      "bytes": 7896,
+      "sha256": "04f29da03f937dfee7ecfcb621980240c014754abe55f71a2c1ef8338ba715bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/autoencoder_training_worker.py": {
+      "bytes": 100140,
+      "sha256": "bde3bd327df59f2e7557eac8aa2e0989ceb1128bc39918bf8cf46011e7bd9415"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_formula_codec.py": {
+      "bytes": 14622,
+      "sha256": "f90769a3d99131da5ba48bb84c6f830f521c92d98122bdaaa8dd88fc65042290"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_family_evaluator.py": {
+      "bytes": 42137,
+      "sha256": "3b6cd3a6fade78fed275a478f010329e5d030a250b914c4b46ab0f0d77b9d5ab"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_ir_grammar_decoder.py": {
+      "bytes": 146870,
+      "sha256": "0b1eae24b00157ae74a2700f23ca95c7f9957dc755078caaf179e64070fdeffd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_boundary.py": {
+      "bytes": 49894,
+      "sha256": "442bfb72ae1038f541530a8d2446872f0393a5eeab07ba9c5616d6ad80368d4a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py": {
+      "bytes": 60367,
+      "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_ranking.py": {
+      "bytes": 50602,
+      "sha256": "83553976f2f09e1cf31d0e3130742befc68355bf271fd4c5eca3a076c6140538"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_balanced.py": {
+      "bytes": 53599,
+      "sha256": "40254faadaded8a227a15d5b1526579d5212289837fd428991e32a5707e3824c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_conditions_presence.py": {
+      "bytes": 49847,
+      "sha256": "50d2ac6ac4acc790718eba1769e260bf5e746da69c9d29f8e36aecaee75eee25"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_continuation.py": {
+      "bytes": 14165,
+      "sha256": "3f13a711906103270a5e75f0f3c3411461ad2900537a640371fe10cc4042c79c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_formula.py": {
+      "bytes": 35294,
+      "sha256": "60e509fc5018584d19530dd6f9b8423f163cb7baec60f5736d849995bca61185"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_permission_retention.py": {
+      "bytes": 40092,
+      "sha256": "25f8d6e9ecfde1b9d28346a0f55e787abfd61b8673a0aaf1618b6c10cda82eb0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_adapter.py": {
+      "bytes": 48506,
+      "sha256": "48143e05dc9459f3f7a21b469ef24a6386f7a7645a8bb28ee3bb231b51332d28"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_temporal_attention.py": {
+      "bytes": 56776,
+      "sha256": "fb8670887177ac56379fa76dc9efe310b3a5d598f09c21a3d47e5bf960bc1731"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/modal_autoencoder_adaptive_optimizer.py": {
+      "bytes": 21228,
+      "sha256": "dcd3a885820e7985ebec458a80325fe00d4d50656cf5827a828dd9cb45eb2524"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/optimizers/logic_theorem_optimizer/snapshot_evaluator.py": {
+      "bytes": 38995,
+      "sha256": "1aa122f14dc52a4a5cb161bc2c40862334f7b216210bfcdb42fd5989b69761e6"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/ipfs_datasets_py/utils/cid_utils.py": {
+      "bytes": 4428,
+      "sha256": "190fa0c6958b212d3c7b55dec9c92056c9b73259da6d8e576c4f5b70928cc1bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/hf-verified-download-v01/releases/20261014-conditions-balanced-v1/source/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_conditions_balanced_contracts.py": {
+      "bytes": 11929,
+      "sha256": "17a00716a4c4e42cb8cc7b6b5e9bc9f063b2d44b5fe420fc604d5147bca9fe51"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/owned_lease_watchdog_actor_ranking_v02.py": {
+      "bytes": 24435,
+      "sha256": "6355884b6737c5b0e5cd1a128ad70a09fcf304f27bbf32492a15d8dbe070b032"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/phase-intake-v01.json": {
+      "bytes": 2788,
+      "sha256": "9e8225e4853a38dd228a816b64f644ed6d29c40f815fbafdcd9cbeff42d02b2b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/prepare_conditions_balanced_v02.py": {
+      "bytes": 21740,
+      "sha256": "86fe7ccd996573a4a891627dfa248edd7aa2d5390242ac8b2704e92e12b6079e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/public-result-summary-v01.json": {
+      "bytes": 8630,
+      "sha256": "51ad97c08ff9207ddb2b80f49799a38cbd7284da92e9a76df47b4ab20f310ba9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/reconcile_balanced_execution_root_identity_v01.py": {
+      "bytes": 7718,
+      "sha256": "c30826206b3e67cb994c24b1a08c9c8420069d0b03cb11df87ff124fa43e9957"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-baseline-inputs-v01.json": {
+      "bytes": 1357,
+      "sha256": "797ec8ac82e54d89e13fc2e9082116572e2b0e7e85440dfdc1d5c009af8f290f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-baseline-v01.json": {
+      "bytes": 84897,
+      "sha256": "268c65ced2eed28d7863ab196ed43c36eab7f64a1bef1642db757402491ebfc7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-bridge-source-independent-review-v01.json": {
+      "bytes": 2316,
+      "sha256": "3fac4402183c5903113cb4543353cc0807e04915f7f5a64528d435eabc6ef1da"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-observer-source-independent-review-v01.json": {
+      "bytes": 19295,
+      "sha256": "11824bbb48a2c3d1a3de133fa1f89eec167b4f040609e26219dd6302d9a4f136"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/resource-protocol-contract-v01.json": {
+      "bytes": 8893,
+      "sha256": "0a83321fd1dc46dae22137f89b41ed263fb0fa5d47b792a5c07484aa95d2ea0f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/result-recount-inputs-v01.json": {
+      "bytes": 607,
+      "sha256": "10047967842c1e9dda3aea7cdc3bd6374ebd86479942c509b65c76aeef4dfbf3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/result-recount-source-independent-review-v01.json": {
+      "bytes": 41137,
+      "sha256": "d3dc57dd5e46c309fbdb7d6c84305a607407048eda34dd3ee3c63f092abe32cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_balanced_execution_root_identity_preflight_v01.py": {
+      "bytes": 4321,
+      "sha256": "3ff9ae7cb0527db622147b87fdeee7eab76c32d73119bd88674f505222147366"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_capacity_clearance_v01.py": {
+      "bytes": 8383,
+      "sha256": "e11c07245ab770590cba565a1502885a9a57eb5a064b51018472ca6f2d65af54"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_hf_actual_v02.py": {
+      "bytes": 10147,
+      "sha256": "b7ae16eefd37bd066f9cc7682c155c71d5a305b18de1363887845af0f6501129"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_resource_baseline_v01.py": {
+      "bytes": 8175,
+      "sha256": "89d024208c85b5bacc35636902c09d536222f2884b052566cb4b729df97408e1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-preflight-source-independent-review-v01.json": {
+      "bytes": 13072,
+      "sha256": "39d0def643cd6164fdbf9714b45b08746076a9969035d83ef71a53700612efdf"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-preflight-v01.json": {
+      "bytes": 18661,
+      "sha256": "ede579e46a287fbfc0fac5aff3d4d5e29821964600d895e4951c6af4d2a5ff5c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-execution-approval-v01.json": {
+      "bytes": 1660,
+      "sha256": "af04a8fe719389bb5db12bce29ca045ccef5cfcf803ab83e799a86701dd1d69f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-independent-review-v01.json": {
+      "bytes": 14607,
+      "sha256": "b7f70a968128c313b7d794365883b48c866dbd81f0c33a82f0181a4a01201b9f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-source-independent-review-v01.json": {
+      "bytes": 13763,
+      "sha256": "a612c31454de66be97d175f41a8671c0e4c406b7e6ed73f5839f640e3667de81"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/root-identity-reconciliation-v01.json": {
+      "bytes": 17057,
+      "sha256": "60b6587f4d462f2b099b50f2eaf569a7523c8f7f0002bc97196ca9583fdbedb2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_conditions_balanced_v01.py": {
+      "bytes": 40252,
+      "sha256": "d1a33617bd758e110bacd1c02580d4811289c9319cc0a9e46a51633b9832e990"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 68693,
+      "sha256": "9703035889cdf1c94b5417a095874c1372aa2151cc871b60de6929f5b657d410"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 50728,
+      "sha256": "4ba5b76d5420b576c711a95438ad11233870d16ba2c11604567253f08c7435a1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/sample_conditions_balanced_private_resources_v01.py": {
+      "bytes": 6681,
+      "sha256": "ba8990d2c7ccc5461d98269ac09a3f920d17b490e82021e71d474096daa6847f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/sampler-source-independent-review-v01.json": {
+      "bytes": 1998,
+      "sha256": "99f78f472bb44a5048a542a8e09fd98889555dba30227a6c4b86ec7c0330ee2a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/source-snapshot-recovery-v01.json": {
+      "bytes": 12796,
+      "sha256": "653f18eac27c7459095b5ff6adcf2a77a316f7af3422e66158af20262db3db8f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/source-worktree-disappearance-v01.json": {
+      "bytes": 442,
+      "sha256": "d84e7afd0bb0007a4c74b109628a642dd0e3f1ccb7b7d0bd63ab3034ef5d1a6d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/trainer-relocation-source-independent-review-v01.json": {
+      "bytes": 17836,
+      "sha256": "55cd76f6a0128dc47421aeb4a5c28d4261971d708d78ad1155922d588980e015"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/training-design-v01.json": {
+      "bytes": 8880,
+      "sha256": "a64ba710a1f02dbad996eec355ef42e9368846b2b4ba9bdb735d1b5ae6f60f11"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-conditions-recall-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 29079,
+      "sha256": "876d8e1a87e29c1bdf00ac4659fdf395c4453572be1eb77faceb56773c12a25d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/child-exit.json": {
+      "bytes": 105,
+      "sha256": "5c8095463e7cfeaa42d1cc1b2915b0c14e0067f8e57318900088d5913e121236"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/child-identity.json": {
+      "bytes": 43,
+      "sha256": "78e6b72fdaa3cface110dc418a2d1f36af176405b9e4211fe6863799fc3016b5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/child.log": {
+      "bytes": 83,
+      "sha256": "422c9e4c841572d9474dd9a3e8841a82b1f8d51c1d1f66f359434c293b7e511c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/command.json": {
+      "bytes": 1097,
+      "sha256": "b6639b295256ebfd796399d12189ce63d176ca39c47c4f34dfd2a0d1b89fec8b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/group-rss-observations.jsonl": {
+      "bytes": 50897,
+      "sha256": "dbb491c1622e463ecf78a107b4b8cc3c1de7baf42a154ec060eedee102ba2872"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/group-rss-summary.json": {
+      "bytes": 1757,
+      "sha256": "584ac625d9ee4068d053e81f2122cbae6f5fcf97f48665b64718d85a9b47a4c3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/guardian-exit.json": {
+      "bytes": 521,
+      "sha256": "9dbe7312d35d0cc35154fa80fff0f0ef8060ee62efb4570153b34f055d21bae1"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/lease-binding.json": {
+      "bytes": 693,
+      "sha256": "3743c644b6cadeafa36d7baff016c4a0e7a58d0f68b884ac3d033259516177fa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/lease-observations.jsonl": {
+      "bytes": 106358,
+      "sha256": "00096e9f6567c123dfde5cf01c1dd9be9319fbd82cd72e836f5c9b0132e4e04a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/owned-group-final.json": {
+      "bytes": 189,
+      "sha256": "a152df444cecf5106266e4dac6dafe92b02fc19da515a6b9c29be4ad97f94e66"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/pre-admission.json": {
+      "bytes": 7964,
+      "sha256": "df071980e36bb4af1e34f3103e57edc922181e9ce358a46cfa30ed9f20f667eb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/resource-observations.json": {
+      "bytes": 2626,
+      "sha256": "2836fecc1aadf98e0f299fc76e6dba976f129492c66d3696f106829db3319ef3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "sha256": "80164299f95b6a3001ae5ced42b0b452ade5376fde70420ffeb843a54aa5e41c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429955,
+      "sha256": "3e92229f7e2623b51a7d8ec3dae44c7c24c74eae4803a20e8719a05f500b1615"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "sha256": "0b22ff76499dae7cbc0a50e3d8bf3e48e3eab4ca1d1db03427f4018973aedc8f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431920,
+      "sha256": "d41bc34c7f404c274bddf2382809baae096b3d57fde241a10920b318b3b49272"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "sha256": "ba03b06b986266f3cb7b84863594d59a62ae6e85be578900f44201af77a34efa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 679343,
+      "sha256": "be4c07600d23e0f882c44bb9b327241547fc7b451537c65b4a9f4706953ddd5b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "sha256": "5a4de685497a1c9ad224ed4321a3bdc5323a4342c205ab5acdb9ab943b69df66"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-raw.json": {
+      "bytes": 805542,
+      "sha256": "8902cb42821f5febbf20bcd50a62540cbeec6ff0161ca7347ef6fd0bab7daf84"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "sha256": "a526a27e2a93de9a6ad903457918973a9074fa734b959e64d1be975d0dfd48a0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-raw.json": {
+      "bytes": 806178,
+      "sha256": "2c107be32b9e9fa5b4a0f8d2e11e8e9784a82bbf423a62f44449782ab362ecbb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "sha256": "8a9d44ff5d2d40e5bc8f82bd2e44c4383c4ac22bc707ba203d2a8c8d27c928dd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627159,
+      "sha256": "fe618428886c37aadbc648d3e2bace3e6af9b6c8930f45b1718a0f8dbdfeadf6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "sha256": "6da57833f3b6043bcb62ae567dc50d84a2bb7637acaa03f3a7bd1e103af5e509"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-raw.json": {
+      "bytes": 282617,
+      "sha256": "c8c884e16493555b7dce103cec1ee1c134e95775fe515f1c009a29c603c3b0a9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "sha256": "ddf7438b48559f03f293200a3aa28b8e9b3ac1e1b9a267f8605b6e1140a85c6c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452628,
+      "sha256": "d27318ef0aa94f7cec4b02e626da0e16482221b0b689e9799e9530b991bb1ddb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "sha256": "fdd34ddd72db5e5f2f587db323746dd5c91e78c8ed29c6fc361cfec82100ad99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2287617,
+      "sha256": "22590eebd81cec981c07ab418db3dd7b7221c2e893017f848808c97b624318ba"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-checkpoint.json": {
+      "bytes": 9337887,
+      "sha256": "ff9f05efea37cda9678c31143e2d75339ae91397785c97ec70a1795dbe18eb4a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-training.json": {
+      "bytes": 439937,
+      "sha256": "0475bf37c08f0dda6a246396ed16d4788b2cc328393646bd8dc5c51757628341"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "sha256": "bc5e2c01fc12ef69dcf3f32dc4414fabb42295cbe81949ad059c7e22e8e57b40"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "f96c7d383e18181938eb0d87334083c67a659bc16ad71147e15f4610b4905388"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-disabled.json": {
+      "bytes": 20603,
+      "sha256": "f89481adaada95dc41f8896b835d225384396a319582ce95651cd6c5920d4984"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20601,
+      "sha256": "f59756705209fcf548f5b8e9f09b0d8d8355b712719bb3ab2802a8d21d00bbc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-zeros.json": {
+      "bytes": 20599,
+      "sha256": "ca9d1d8988b1b816b602b1312d8def0a89cae21162abde510831a0af69b40abd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity.json": {
+      "bytes": 2010,
+      "sha256": "43faf1c3dd28dde92a0329a93a1300e0bf762b55e2c2bc1e52a544c7193f130d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "sha256": "ddb2861c7a30099e07fa76d3401fa95f528c609a453ea7113bf3b2ca8cbb1cff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-raw.json": {
+      "bytes": 3588666,
+      "sha256": "1f60a76e9c5c61120a30d63ddafbe86af9f991ce3a9b918e0fa51c31195bd5e7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/summary.json": {
+      "bytes": 62315,
+      "sha256": "2519fa0f65e73c2181ed6d417d6666e7996cba90d3dfa186ed1b67d8b9a3ec7e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1025009,
+      "sha256": "28fbf88eab037566110fe1cd57d785c41ece4165c84397951fd1a973c5c31d0b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1434813,
+      "sha256": "7639cd808fd79b502292661ff16d5cd74ad3a63cc68696b4d32a24e55b180290"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1024797,
+      "sha256": "8bcffa177d02c401bfb8bb19b2ded864a375c1ffcd3ae15c3c067988725f08a6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1434229,
+      "sha256": "cd732d1f21953f300f6fde527a70d2fb58206bce3604a291d3116bac85d9cf42"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526654,
+      "sha256": "2365a18e029f96a5f3140643ff673682553afd1c8f4bb4942852018180a163f3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679332,
+      "sha256": "b3c7e30f59c83edf6330ba6c4e6c0c2d0807d71daac74df2619ffdf1ef6100dc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-joint.json": {
+      "bytes": 521374,
+      "sha256": "1bd61e6febe1f28c9e17d56c8718ed5fcef5c0d63370ad94e76088856b7828df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-raw.json": {
+      "bytes": 805283,
+      "sha256": "fed7d498b75adfd4f09af059a601e24b8c5446e9fa0bab4a5504554ff83d324d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-joint.json": {
+      "bytes": 464090,
+      "sha256": "bd256f3e43ddd264230d77311b46771a84e7d4d2d2fae7977133b841bf5ef02f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-raw.json": {
+      "bytes": 806182,
+      "sha256": "d2fbe0fc093a24c4f01cb3e143e88b5cbf783ecfa2e2283fc6edcf4f93f8d4ea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "sha256": "87a6a523ce8dac67cebdcae59dbdb6aca484b78a23990d524d5e205080273a41"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 627149,
+      "sha256": "53aafbcbf904854f9035b09f898820f242a4438d4908671fc2777b071ee300f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "sha256": "f2690e0089d83e6ecd7d8554feb3cc608e25cfb67ccefd6882de223ba856497f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-joint.json": {
+      "bytes": 107527,
+      "sha256": "c07db08dd20d62d976a9d040182f3ea614ba2ef360b5e333886e0c5940d475c6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-raw.json": {
+      "bytes": 282613,
+      "sha256": "c3997641d0f2c01b8bc6cd023c98e10e505e12f57e2b8f87ce097f6462699b6f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044651,
+      "sha256": "ae0243122e0d3db7edd5d7708ffecc9ae3f264512d012ee92291500bb62a661c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1452606,
+      "sha256": "10bc0d65eedd6eb563b43a75330046db79ccbdc20800e3a61c19cfb85ee2a736"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456870,
+      "sha256": "890107015a522fd985c372844628025930e31e942a24af7bbbae5e9c1cb8c00f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-raw.json": {
+      "bytes": 2287597,
+      "sha256": "4c2b72940f8835cbc618ae407a1f2dca6a5edda08c9111fb13d34ed7c26c4365"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20597,
+      "sha256": "ea3a9a4472b6b67187c028669d560daf56c2ad5305334dba5940d2a004a88d69"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-disabled.json": {
+      "bytes": 20601,
+      "sha256": "235f9206d1b6e045f03ce4f66ef57c9eb684145ed20211a508722428c4f98b7d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20599,
+      "sha256": "ac3c80bb54882d11e59fc50080b3e15090986e4ac93fd655de4908c6aa9572c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-zeros.json": {
+      "bytes": 20597,
+      "sha256": "247aada0954bae194ee7d0c167bad1585ad53c680dd40cf4b5bb64ad836fbd06"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity.json": {
+      "bytes": 2010,
+      "sha256": "24a737fecddb42460c6a5ef20bb320463fc762aa81a89948fe5b66873e471696"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-joint.json": {
+      "bytes": 2485858,
+      "sha256": "4307c135817fca556ded32ebcf0dd51c35691bb12656873448a10759cda92b3c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-raw.json": {
+      "bytes": 3588639,
+      "sha256": "9eaad61005c5a2f9c698326514a80241b113b33306cf30bfd91fb93d0e3be9f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/scheduler-adoption.json": {
+      "bytes": 4647,
+      "sha256": "7f565b11308e3a7c1a8d3d30624f57fee15c970402d5ff28afbaa3952c492df5"
+    }
+  },
+  "checkpoint_parsing": false,
+  "chunks": [
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 18,
+      "old_identities_exact": true,
+      "parent_revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+      "revision": "b5277ca8ade2ae96e19b5b4f4f0d72d84f79c8be"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 11,
+      "old_identities_exact": true,
+      "parent_revision": "b5277ca8ade2ae96e19b5b4f4f0d72d84f79c8be",
+      "revision": "8e2aee0401f292466e634aeb4deace1263acfa32"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 11,
+      "old_identities_exact": true,
+      "parent_revision": "8e2aee0401f292466e634aeb4deace1263acfa32",
+      "revision": "3fe09e1efa1f64dbc87dc5becf07097cbc0757d1"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 22,
+      "old_identities_exact": true,
+      "parent_revision": "3fe09e1efa1f64dbc87dc5becf07097cbc0757d1",
+      "revision": "bf412f6a58d54509b5c3b7b886d6ad56f7bbb9be"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 48,
+      "old_identities_exact": true,
+      "parent_revision": "bf412f6a58d54509b5c3b7b886d6ad56f7bbb9be",
+      "revision": "20cee581d55697e8e890d818cf37ab99d4966ff3"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 48,
+      "old_identities_exact": true,
+      "parent_revision": "20cee581d55697e8e890d818cf37ab99d4966ff3",
+      "revision": "0cda533c8da701f6e7ae28871d27cf4081c62ae9"
+    },
+    {
+      "new_byte_identities_exact": true,
+      "new_files": 18,
+      "old_identities_exact": true,
+      "parent_revision": "0cda533c8da701f6e7ae28871d27cf4081c62ae9",
+      "revision": "77e33d1c07b09a421b272e3ccb0af229933a7f82"
+    }
+  ],
+  "default_promotion": false,
+  "findings": [],
+  "immutable_remote_files": 5445,
+  "independent_immutable_SDK_model_info": true,
+  "model_card_negative_verified": true,
+  "model_execution": false,
+  "new_files": 176,
+  "observed_at_utc": "2026-10-14T08:17:37.378574+00:00",
+  "observed_main_matches_publication": true,
+  "observed_main_revision": "77e33d1c07b09a421b272e3ccb0af229933a7f82",
+  "old_files_preserved": 5269,
+  "parent_revision": "702caba2da183f9d98a0ffd12f1240243167aab2",
+  "passed": true,
+  "payload_bytes": 74081975,
+  "portable_reload_qualified": false,
+  "private_resource_reads": false,
+  "publication_or_upload_calls": 0,
+  "release_prefix": "releases/20261014-conditions-balanced-v1",
+  "repository": "Publicus/legal-ir-autoencoder",
+  "resource_API_calls": 0,
+  "revision": "77e33d1c07b09a421b272e3ccb0af229933a7f82",
+  "schema": "conditions-balanced-Hub-actual-independent-review/v1",
+  "scientific_success": false,
+  "semantic_accuracy": null,
+  "source_owner_count": 39,
+  "statutory8_unscored": true,
+  "technical_result_passed": true
+}

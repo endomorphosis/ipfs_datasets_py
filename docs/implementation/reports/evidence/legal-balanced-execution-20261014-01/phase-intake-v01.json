@@ -1,0 +1,95 @@
+{
+  "canonical_raw4": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "canonical_raw4_unchanged": true,
+  "cleanup": 0,
+  "new_claims": 0,
+  "new_model_calls": 0,
+  "new_temp_root_created_by_this_agent": false,
+  "observed_at_utc": "2026-10-14T07:25:44.795714+00:00",
+  "observed_temporary_root_initially_absent": true,
+  "path_metadata": [
+    {
+      "device": 66306,
+      "directory": true,
+      "exists": true,
+      "gid": 1000,
+      "inode": 66764317,
+      "mode": "0o775",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+      "regular": false,
+      "size": 16384,
+      "uid": 1000
+    },
+    {
+      "device": 66306,
+      "directory": true,
+      "exists": true,
+      "gid": 1000,
+      "inode": 58092485,
+      "mode": "0o775",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+      "regular": false,
+      "size": 4096,
+      "uid": 1000
+    },
+    {
+      "device": 66306,
+      "directory": true,
+      "exists": true,
+      "gid": 1000,
+      "inode": 51016937,
+      "mode": "0o775",
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+      "regular": false,
+      "size": 12288,
+      "uid": 1000
+    },
+    {
+      "device": 66306,
+      "directory": true,
+      "exists": true,
+      "gid": 1000,
+      "inode": 524344,
+      "mode": "0o700",
+      "path": "/tmp/pytest-of-barberb",
+      "regular": false,
+      "size": 4096,
+      "uid": 1000
+    },
+    {
+      "device": 66306,
+      "directory": false,
+      "exists": true,
+      "gid": 1000,
+      "inode": 524341,
+      "mode": "0o664",
+      "path": "/tmp/ipfs-datasets-resource-scheduler-1000.json",
+      "regular": true,
+      "size": 10744,
+      "uid": 1000
+    }
+  ],
+  "prior_root_merge": "d32bc5848a2a13f1a7902d5a76b1cc6f3467e63b",
+  "root_inode_migration_requires_new_qualification": true,
+  "schema": "legal-balanced-execution-environment-intake/v1",
+  "scope": "metadata-only environment/root rebind preparation; no endpoint contents or census",
+  "storage_cap_bytes": 145000000000,
+  "training_authorized": false
+}
