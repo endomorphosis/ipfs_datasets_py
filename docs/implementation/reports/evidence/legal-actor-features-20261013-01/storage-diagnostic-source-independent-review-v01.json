@@ -1,0 +1,106 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json": {
+      "bytes": 45858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json",
+      "sha256": "650d0691d88e6c97b540f97ec20e1a96d5aa41bd653cd48c2bd0432f4f0adb22"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_storage_diagnostic_controls_v01.py": {
+      "bytes": 8544,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_storage_diagnostic_controls_v01.py",
+      "sha256": "9f7d9bdda534247b277e1631b0f1df9499c1b17f14008fefaf30ac61470ecbd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py": {
+      "bytes": 18475,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py",
+      "sha256": "110873039eeeb5e61d02ff10ab959aa74a5af01f4e542871f0816588f753d81b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json": {
+      "bytes": 77873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json",
+      "sha256": "0d9930ff9831f0fb135439a066f0345e2fa3e9720a8827f74366253016b4f8f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py": {
+      "bytes": 37730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py",
+      "sha256": "61268317c492662e3a729e45de18e9ae8eb7b924b72e177b3fd5071dc6e99d62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py",
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-author-controls-v01.json": {
+      "bytes": 1726,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-author-controls-v01.json",
+      "sha256": "8ca76f7acef4e127c549795894c0b29cfb00f8f2a2591c534408bbfcd121efaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-independent-controls-v01.json": {
+      "bytes": 1961,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-independent-controls-v01.json",
+      "sha256": "c0aca824e33594867c478698b74fe1aa5332448bf341d83aec57c41d59612164"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage_diagnostic_independent_controls_v01.py": {
+      "bytes": 10416,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage_diagnostic_independent_controls_v01.py",
+      "sha256": "51e6d5436d38016f74662578bcdfb38cc7ac9bae833cb99fcde28f66854f4cdd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    }
+  },
+  "author_control_count": 14,
+  "author_controls": {
+    "bytes": 1726,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-author-controls-v01.json",
+    "sha256": "8ca76f7acef4e127c549795894c0b29cfb00f8f2a2591c534408bbfcd121efaa"
+  },
+  "execution": {
+    "actual_failure_metadata_reads": 0,
+    "actual_global_body_reads": 0,
+    "actual_named_root_census_calls": 0,
+    "actual_private_body_reads": 0,
+    "checkpoint_JSON_parses": 0,
+    "diagnostic_main_executed": false,
+    "model_or_encoder_calls": 0,
+    "production_resource_class_compiled": false,
+    "resource_API_calls": 0,
+    "synthetic_control_count": 12,
+    "synthetic_fixture_outside_charged_roots": true
+  },
+  "findings": [],
+  "independent_control_count": 12,
+  "independent_controls": {
+    "bytes": 1961,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-independent-controls-v01.json",
+    "sha256": "c0aca824e33594867c478698b74fe1aa5332448bf341d83aec57c41d59612164"
+  },
+  "interpretation_notes": [
+    "Copied_private_ledger_body_reads=1 denotes one authenticated copied ledger body parsed; raw hashing and closing custody fences can open that same file repeatedly. It is not a physical read syscall count.",
+    "Inventory metadata and free bytes are sampled; no atomic continuous snapshot or deduplicated charge is claimed."
+  ],
+  "observed_at_utc": "2026-10-14T00:02:24.403679+00:00",
+  "observer": {
+    "bytes": 18475,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py",
+    "sha256": "110873039eeeb5e61d02ff10ab959aa74a5af01f4e542871f0816588f753d81b"
+  },
+  "passed": true,
+  "reviewer": "/root/evaluation_n10",
+  "schema": "actor-features-storage-diagnostic-source-independent-review/v1",
+  "source_checks": [
+    "Readentire18475Bsource; exactsourcegate+rawfences required beforemain",
+    "Mainargumentfree/singlenewownedreceipt; no productionresourceclient/model/numericalmodule imports or resourceAPI/locks/capmutations",
+    "Onlyexactopening-v02copiedledger parsed afterSAMPLE rawpin/authenticatedreceiptpathandhash; neverlivegloballedger/schedulerbody",
+    "Exact536historical bodyhashmap/count434released102retained/fullclaims44581777216 andfailedownIDabsent required",
+    "Exactfive-fileprechildfailureinventory,modelstartedFalse/nullrecord/nulllease/childcreatedFalse/owner_account399 custody required",
+    "Read-onlyowner guardclosure detachedfromexactpinnedowner:fivefunctions+errorclass; resourceownerclassnevercompiled",
+    "Onecombinedfour-rootwalk useslstat-nonfollow/apparentperpathname/2Mbound andsameordinarymissingdescendant-churn/rootidentitychecks",
+    "Independentphysicalsyntheticfixture12checks compareoriginalowner_inventory totalsandhardlink/symlink/special/churn/rootreplacement semantics",
+    "Top20immediate-childdirectory aggregates/perroot conservation; no perfile paths or filecontents emitted",
+    "Physicalfree versus145GBapparentcap predicates separatelyreported; noadmissionguarantee and retry_authorizedFalse",
+    "Closingallrawpinsrechecked; exclusivepublicoutput frozen0444"
+  ]
+}

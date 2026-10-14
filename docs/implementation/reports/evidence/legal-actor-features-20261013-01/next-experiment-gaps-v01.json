@@ -1,0 +1,65 @@
+{
+  "decision": "archive_experimental_candidate_without_default_promotion",
+  "default_promotion": false,
+  "evidence": {
+    "bytes": 122326,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/result-independent-review-v01.json",
+    "sha256": "c0df4c577fe2563ec7a47f6d4d146c63d0f9f546db197c8a4e563ef2689fc306"
+  },
+  "limits": [
+    "No independent statutory gold or new family/Lean/latent results are supplied by the actor-feature run.",
+    "The authored reference panels are exposed engineering diagnostics, not a blind benchmark."
+  ],
+  "next_work": [
+    {
+      "acceptance": "A complete-IR gain rather than only rank/margin changes; report every affected and unaffected scope and reject silent regressions. No blind sweep or default promotion.",
+      "method": "Specify one opt-in adapter that can change the responsible heads; preserve source-only input custody, initially bit-equal parent behavior and exact frozen routing for unaffected outputs. Predeclare source batches, objective, update budget and all paired complete-IR gains/losses before a guarded run.",
+      "priority": 1,
+      "work": "Resolve fixed modality and optional-presence blockers"
+    },
+    {
+      "acceptance": "Independently reviewed reference decisions before statutory accuracy scoring or supervised labels; keep the current eight statutory examples unscored until then.",
+      "method": "Use justicedao/open-us-law-span-cache and uscode-autoformal-span-cache as source/provenance inputs, not automatically trusted semantic gold. Review exact quoted US Code context, citations, actor/action, modality, quantifiers, exceptions and temporal scope; record reviewer decisions and split by statute/context/document to prevent leakage.",
+      "priority": 2,
+      "work": "Independent statutory fidelity"
+    },
+    {
+      "acceptance": "Separate grammar/type/family/Lean-build acceptance from semantic fidelity; record actual subprocess/Lean results and no placeholders or unchecked axioms as proof of latent or legal correctness.",
+      "method": "For each actual 8D,384D,768D encoder/checkpoint, bind encoder lineage, embeddings and decoder weights. Compare genuine latents with zero/rotation/disabled controls. Enumerate registered logic families from the current logic module, produce a typed canonical AST, reject unsupported constructs, and verify family round trips and scope preservation. Compile the supported Lean emission with lake build legal in a pinned environment.",
+      "priority": 3,
+      "work": "Genuine latent and logic-family qualification"
+    }
+  ],
+  "observations": {
+    "actor_rank_sum_CE_hinge_context": [
+      206,
+      208,
+      205
+    ],
+    "actor_top8_training": [
+      168,
+      168
+    ],
+    "authored_eval_complete_IR": [
+      33,
+      72
+    ],
+    "complete_IR_gain_vs_both_controls": false,
+    "fresh_dev_complete_IR": [
+      0,
+      36
+    ],
+    "fresh_test_complete_IR": [
+      0,
+      36
+    ],
+    "frozen_wrong_modality_training_rows": 6,
+    "frozen_wrong_presence_training_rows": 2,
+    "training_complete_IR": [
+      153,
+      168
+    ]
+  },
+  "schema": "actor-features-next-experiment-gaps/v1",
+  "status": "design_only_no_followup_training_started"
+}

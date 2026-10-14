@@ -1,0 +1,67 @@
+{
+  "canonical_observed_unchanged": true,
+  "canonical_raw4": {
+    "root": {
+      "head_via_owned_common_refs": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "raw_HEAD": {
+        "bytes": 37,
+        "path": "/home/barberb/lift_coding/.git/HEAD",
+        "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+      },
+      "raw_commit": {
+        "bytes": 302,
+        "object_id": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+        "parents": [
+          "f9347a8a3eac7175991502a55864ea085396a439"
+        ],
+        "sha256": "2439cd54aa63e0a9e646e17d7a09c0c8d9fbb6e25f4eac7b867a30b5f718d3d5"
+      },
+      "raw_index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "symbolic_head": "refs/heads/chore/fmt-check-main"
+    },
+    "source": {
+      "head_via_owned_common_refs": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "raw_HEAD": {
+        "bytes": 21,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      "raw_commit": {
+        "bytes": 280,
+        "object_id": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "parents": [
+          "6bd6eaabd2d3dde46e664b7386efb134253eb928"
+        ],
+        "sha256": "5e814dd2d6dab444f6b80c8f6ba93fd28ab7069acf60131081dc0c42c9a42eb4"
+      },
+      "raw_index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "symbolic_head": "refs/heads/main"
+    }
+  },
+  "experiment": "Actor contextual feature adaptation, CE only, common N4 parent,32updates; separate modality/presence followup.",
+  "prior_final_review": {
+    "bytes": 30675,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/final-integration-independent-review-v01.json",
+    "sha256": "cc85e00cb197186cddb8a82ef73c594b9dda56ae577710be048728d674af292a"
+  },
+  "prior_selected_histories_and_recoveries": "Retain N9 selected32 plus five recovery histories; no foreign checkout/ref/worktree mutation authorized.",
+  "schema": "actor-features-phase-intake/v1",
+  "scope": {
+    "Lake_executed": false,
+    "default_promotion": false,
+    "independent_statutory_gold": false,
+    "latent_enabled": false,
+    "new_training_executed": false
+  },
+  "source_branch": "refs/heads/codex/legal-actor-features-20261013-01",
+  "source_initial_head": "632c35b37a83be0514628b9e35f7e8fcca79a056",
+  "source_worktree": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets"
+}

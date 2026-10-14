@@ -1,0 +1,48 @@
+{
+  "bridge_qualification": {
+    "bytes": 1961,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-bridge-source-independent-review-v02.json",
+    "sha256": "0a9f5e2da7b92ea585e4eca715cda268a2cf399c75e18654f735b766d9f9fe4b"
+  },
+  "check": {
+    "bytes": 6720,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/guardian-check-v02.json",
+    "sha256": "b94f165e413dab55575c370325597d894abeacc4e13dd20790ded2307e87a9a2"
+  },
+  "explicit_reconciliation": {
+    "bytes": 13906,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-reconciliation-v01.json",
+    "sha256": "ad085ca7094c6e646d7385d8a6a003003fccbd2615762953b79236e178e06490"
+  },
+  "guardian": {
+    "bytes": 38449,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py",
+    "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+  },
+  "prior_baseline": {
+    "bytes": 77873,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json",
+    "sha256": "0d9930ff9831f0fb135439a066f0345e2fa3e9720a8827f74366253016b4f8f2"
+  },
+  "recovery_preflight": {
+    "bytes": 20562,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-retained-claim-preflight-v01.json",
+    "sha256": "13ccb471de2de244a3e8cc5f8d2cd1c617579c52ec499121355d4a9906a10850"
+  },
+  "sample_receipt": {
+    "bytes": 1414,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v04/snapshot-receipt-v01.json",
+    "sha256": "79d5e53bfc8e11b6a906b60ff51b2d422ff38bef0fbbf4e8225adf0a337b8c8d"
+  },
+  "sampler": {
+    "bytes": 6661,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sample_actor_features_private_resources_v02.py",
+    "sha256": "1b2710c6c8e195f4bcc3f95c6e6369a4dc2f4cc9c18665ce6b54267f8dc81123"
+  },
+  "sampler_qualification": {
+    "bytes": 3036,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/sampler-source-independent-review-v02.json",
+    "sha256": "d1c8580d2d648f70551780e0126cecdfe421e1f07fd1dd6da04c4bf875006859"
+  },
+  "schema": "actor-features-resource-baseline-inputs/v2"
+}

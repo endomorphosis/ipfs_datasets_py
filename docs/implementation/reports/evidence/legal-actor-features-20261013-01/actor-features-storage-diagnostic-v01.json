@@ -1,0 +1,391 @@
+{
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json": {
+      "bytes": 45858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json",
+      "sha256": "650d0691d88e6c97b540f97ec20e1a96d5aa41bd653cd48c2bd0432f4f0adb22"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_storage_diagnostic_controls_v01.py": {
+      "bytes": 8544,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_storage_diagnostic_controls_v01.py",
+      "sha256": "9f7d9bdda534247b277e1631b0f1df9499c1b17f14008fefaf30ac61470ecbd9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py": {
+      "bytes": 18475,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py",
+      "sha256": "110873039eeeb5e61d02ff10ab959aa74a5af01f4e542871f0816588f753d81b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v02/ledger.json": {
+      "bytes": 6214615,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v02/ledger.json",
+      "sha256": "dbf8b00ea46b1d89422f5ee498e2c029e737bc02d1074c22de62c5488cc2af06"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json": {
+      "bytes": 1414,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json",
+      "sha256": "453462b6446895b159e156e89f47beedfd1703959360e8bdb011e651b4f22bf0"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json": {
+      "bytes": 77873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json",
+      "sha256": "0d9930ff9831f0fb135439a066f0345e2fa3e9720a8827f74366253016b4f8f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py": {
+      "bytes": 37730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py",
+      "sha256": "61268317c492662e3a729e45de18e9ae8eb7b924b72e177b3fd5071dc6e99d62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py",
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-author-controls-v01.json": {
+      "bytes": 1726,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-author-controls-v01.json",
+      "sha256": "8ca76f7acef4e127c549795894c0b29cfb00f8f2a2591c534408bbfcd121efaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-independent-controls-v01.json": {
+      "bytes": 1961,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-independent-controls-v01.json",
+      "sha256": "c0aca824e33594867c478698b74fe1aa5332448bf341d83aec57c41d59612164"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-source-independent-review-v01.json": {
+      "bytes": 6799,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-source-independent-review-v01.json",
+      "sha256": "0f714bd686151ce375b9245278efab0afe4b39dff0ff9f9efc6e0ef519c1d83f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage_diagnostic_independent_controls_v01.py": {
+      "bytes": 10416,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage_diagnostic_independent_controls_v01.py",
+      "sha256": "51e6d5436d38016f74662578bcdfb38cc7ac9bae833cb99fcde28f66854f4cdd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/child-exit.json": {
+      "bytes": 76,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/child-exit.json",
+      "sha256": "bbb5902ca8ad8fb95b029bf43a4c84e550850660cf478cd6669e175be794b803"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/failure-primary.json": {
+      "bytes": 1367,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/failure-primary.json",
+      "sha256": "2c030d397b9e67c1700dd8de6692e1195ca71647b54474ffe242fe4cafa50a3c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/guardian-exit.json": {
+      "bytes": 1764,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/guardian-exit.json",
+      "sha256": "cc2ad9205145b7c48a1f1e2adadc1c8acc187a7215c0164b0fedcb72ce985a0b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/pre-admission.json": {
+      "bytes": 7916,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/pre-admission.json",
+      "sha256": "f87cb56fbc7b5879e39cdbde216a6fa781fa8e448ede6f824e0f7f74e4910fb6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/resources-final-failure.json": {
+      "bytes": 718,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01/resources-final-failure.json",
+      "sha256": "95c107165303f6aa52010d0db4fdd41cc1dba10d3f30f62bc45e0984a0cb193c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py": {
+      "bytes": 36724,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native4096-four-width-20261004/resource-cap/autoencoder_daemon_resources.py",
+      "sha256": "b00d2752ba852fe73760bba4fbd51b0e845742c3527642606a2a77ed9f8f5e2c"
+    }
+  },
+  "baseline": {
+    "bytes": 77873,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json",
+    "sha256": "0d9930ff9831f0fb135439a066f0345e2fa3e9720a8827f74366253016b4f8f2"
+  },
+  "cap_changes": 0,
+  "census": {
+    "apparent_bytes": 100235384632,
+    "continuous_snapshot_claimed": false,
+    "counted_root_metadata": [
+      {
+        "device": 66306,
+        "inode": 66764317,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "device": 66306,
+        "inode": 58092485,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues"
+      },
+      {
+        "device": 66306,
+        "inode": 51016937,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence"
+      },
+      {
+        "device": 66306,
+        "inode": 524352,
+        "path": "/tmp/pytest-of-barberb"
+      }
+    ],
+    "direct_child_directory_count": 272,
+    "entry_count": 1419120,
+    "file_contents_read": 0,
+    "per_file_paths_published": false,
+    "per_root": [
+      {
+        "apparent_bytes": 90170618250,
+        "direct_nondirectory_apparent_bytes": 28996406,
+        "entry_count": 1349687,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs",
+        "special_file_count": 5,
+        "symlink_count": 651
+      },
+      {
+        "apparent_bytes": 237099227,
+        "direct_nondirectory_apparent_bytes": 192822384,
+        "entry_count": 122,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/todo-queues",
+        "special_file_count": 0,
+        "symlink_count": 0
+      },
+      {
+        "apparent_bytes": 4724077957,
+        "direct_nondirectory_apparent_bytes": 104585,
+        "entry_count": 5554,
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/docs/implementation/reports/evidence",
+        "special_file_count": 0,
+        "symlink_count": 0
+      },
+      {
+        "apparent_bytes": 5103589198,
+        "direct_nondirectory_apparent_bytes": 33,
+        "entry_count": 63757,
+        "path": "/tmp/pytest-of-barberb",
+        "special_file_count": 1,
+        "symlink_count": 192
+      }
+    ],
+    "regular_inode_observations": {
+      "first_observed_unique_inode_bytes": 68682991337,
+      "inode_size_variation_count": 0,
+      "regular_path_apparent_bytes": 100235261720,
+      "regular_path_count": 1215414,
+      "repeated_inode_path_apparent_bytes": 31552270383,
+      "repeated_inode_path_count": 579825,
+      "unique_sampled_inode_count": 635589
+    },
+    "special_file_count": 6,
+    "symlink_count": 843,
+    "top20_direct_child_directories": [
+      {
+        "apparent_bytes": 20812389653,
+        "entry_count": 212934,
+        "name": "federal-corpus-audits",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/federal-corpus-audits",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 6876884894,
+        "entry_count": 141845,
+        "name": "ui-event-validation-resume-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-event-validation-resume-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 6832874661,
+        "entry_count": 141708,
+        "name": "native-dcec-ui-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/native-dcec-ui-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 4167389909,
+        "entry_count": 85154,
+        "name": "source-conditioning-development-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/source-conditioning-development-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 4052925689,
+        "entry_count": 84797,
+        "name": "intent-ui-gap-repair-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/intent-ui-gap-repair-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 4022542368,
+        "entry_count": 84820,
+        "name": "intent-ui-coverage-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/intent-ui-coverage-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 3837499232,
+        "entry_count": 34761,
+        "name": "pytest-668",
+        "path": "/tmp/pytest-of-barberb/pytest-668",
+        "root": "/tmp/pytest-of-barberb"
+      },
+      {
+        "apparent_bytes": 2652720671,
+        "entry_count": 56523,
+        "name": "source384-fidelity-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/source384-fidelity-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 2251433883,
+        "entry_count": 958,
+        "name": "decoder-source-margin-20261004",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-source-margin-20261004",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1901978535,
+        "entry_count": 39820,
+        "name": "ui-modal-coverage-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/ui-modal-coverage-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1655194698,
+        "entry_count": 37461,
+        "name": "projection-freeze-development-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/projection-freeze-development-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1600531048,
+        "entry_count": 975,
+        "name": "decoder-action-consistency-20261003",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-action-consistency-20261003",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1448288873,
+        "entry_count": 28481,
+        "name": "family-coverage-context-20261002",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/family-coverage-context-20261002",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1429219641,
+        "entry_count": 766,
+        "name": "decoder-generated-field-training-r2-20261003",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-generated-field-training-r2-20261003",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1396305395,
+        "entry_count": 28915,
+        "name": "complete-features-fidelity-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/complete-features-fidelity-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1353201507,
+        "entry_count": 29061,
+        "name": "family-routing-convergence-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/family-routing-convergence-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1339191145,
+        "entry_count": 722,
+        "name": "decoder-action-binding-20261003",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/decoder-action-binding-20261003",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1294253090,
+        "entry_count": 28594,
+        "name": "training-readiness-parallel-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/training-readiness-parallel-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1275315452,
+        "entry_count": 28488,
+        "name": "provisional-context-main-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/provisional-context-main-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      },
+      {
+        "apparent_bytes": 1274490694,
+        "entry_count": 28527,
+        "name": "context-projection-handoff-20261001",
+        "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/context-projection-handoff-20261001",
+        "root": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs"
+      }
+    ]
+  },
+  "checkpoint_JSON_parses": 0,
+  "claim_releases": 0,
+  "claim_transfers": 0,
+  "cleanup_performed": false,
+  "copied_private_ledger_body_reads": 1,
+  "copied_scheduler_body_reads": 0,
+  "elapsed_census_seconds": 18.717217311961576,
+  "failure": {
+    "cached_owner_lease_is_null": true,
+    "cached_owner_record_is_null": true,
+    "child_created": false,
+    "failed_attempt_path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-01",
+    "failure_in_owner_account_before_ledger_write": true,
+    "guardian_generic_retention_flag_is_not_a_claim_existence_witness": true,
+    "model_started": false,
+    "optimizer_updates": 0
+  },
+  "findings": [],
+  "ledger_conservation": {
+    "all_previous536_record_bodies_unchanged": true,
+    "failed_own_reservation_id_absent": true,
+    "full_nonreleased_claim_bytes": 44581777216,
+    "full_record_bodies_published": false,
+    "new_records": 0,
+    "record_body_hash_map_sha256": "5602938898a81f1945a315ba2f8fac1784184e9326ba90ee46656daca06e5cb9",
+    "record_count": 536,
+    "record_status_counts": {
+      "released": 434,
+      "retained": 102
+    }
+  },
+  "limitations": [
+    "Metadata census and physical availability are sampled, with historical shared-root churn semantics.",
+    "Repeated inode observations may include concurrent inode reuse or file growth; no deduplicated cap or quota is substituted.",
+    "Top20 paths are immediate child directories of fixed public named roots; no per-file paths or contents are emitted."
+  ],
+  "model_or_encoder_calls": 0,
+  "observed_at_utc": "2026-10-14T00:03:28.814160+00:00",
+  "observer": {
+    "bytes": 18475,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/diagnose_actor_features_storage_v01.py",
+    "sha256": "110873039eeeb5e61d02ff10ab959aa74a5af01f4e542871f0816588f753d81b"
+  },
+  "passed": true,
+  "private_global_body_reads": 0,
+  "private_sample_receipt": {
+    "bytes": 1414,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/private-runtime-snapshots/opening-v02/snapshot-receipt-v01.json",
+    "sha256": "453462b6446895b159e156e89f47beedfd1703959360e8bdb011e651b4f22bf0"
+  },
+  "resource_API_calls": 0,
+  "resource_owner_constructed": false,
+  "retry_authorized": false,
+  "schema": "actor-features-storage-diagnostic/v1",
+  "shared_state_modified": false,
+  "source_qualification": {
+    "bytes": 6799,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/storage-diagnostic-source-independent-review-v01.json",
+    "sha256": "0f714bd686151ce375b9245278efab0afe4b39dff0ff9f9efc6e0ef519c1d83f"
+  },
+  "storage": {
+    "additional_requested_bytes": 200000000,
+    "admission_guaranteed": false,
+    "apparent_capacity_exceeded": true,
+    "apparent_capacity_headroom_bytes": -17161848,
+    "both_storage_predicates_pass": false,
+    "charged_bytes": 145017161848,
+    "limit_bytes": 145000000000,
+    "minimum_filesystem_free_bytes": 234852433920,
+    "observed_apparent_bytes": 100235384632,
+    "outstanding_full_reservations_bytes": 44581777216,
+    "physical_capacity_headroom_bytes": 190070656704,
+    "physical_fullclaims_capacity_insufficient": false
+  }
+}

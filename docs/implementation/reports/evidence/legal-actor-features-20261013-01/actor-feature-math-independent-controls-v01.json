@@ -1,0 +1,29 @@
+{
+  "actual_models": 0,
+  "checkpoint_reads": 0,
+  "control_count": 11,
+  "controls": [
+    "gate_0_analytic_matches_central_difference",
+    "gate_1_analytic_matches_central_difference",
+    "gate_2_analytic_matches_central_difference",
+    "query_0_analytic_matches_central_difference",
+    "query_1_analytic_matches_central_difference",
+    "query_2_analytic_matches_central_difference",
+    "initial_query_gradient_exact_zero_gate_gradient_nonzero",
+    "masked_padding_cannot_change_context_loss_or_gradient",
+    "context_interaction_changes_relative_token_logits",
+    "nonzero_gate_connects_query_gradient",
+    "zero_residual_preserves_signed_zero_and_original_value"
+  ],
+  "findings": [],
+  "optimizer_updates": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "schema": "actor-features-scalar-calculus-independent-controls/v1",
+  "scope": "Scalar analytic equations versus finite differences only; no PyTorch/autograd/kernel/accuracy claim.",
+  "source": {
+    "bytes": 5622,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_feature_math_independent_controls_v01.py",
+    "sha256": "b1fac1c451955222128db585221d1292fca8568e103f41a2e4f1b377f0a5f80c"
+  }
+}

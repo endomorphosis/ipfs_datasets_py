@@ -1,0 +1,23 @@
+{
+  "actual_models": 0,
+  "checkpoint_JSON_parses": 0,
+  "findings": [],
+  "model_source": {
+    "bytes": 60367,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_features.py",
+    "sha256": "498093553607bdeac57e42a6dfaf95275efc081ff46c0a7b428b39b99b3c54a3"
+  },
+  "numerical_library_imports": 0,
+  "optimizer_updates": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "production_module_imports": 0,
+  "schema": "actor-features-detached-contract-controls/v1",
+  "scope": "Standalone AST-selected definitions and stdlib scalar/symbolic controls; no numerical kernel or measured accuracy claim.",
+  "source": {
+    "bytes": 39343,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/datasets/tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_features_contracts.py",
+    "sha256": "2fce1a325218550bae160a58f9bba4fdd3c1b351d7bf2da320004905bb668ce0"
+  },
+  "tests": 19
+}
