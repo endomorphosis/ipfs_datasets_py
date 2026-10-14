@@ -1,0 +1,38 @@
+{
+  "actual_command": [
+    "python",
+    "-B",
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/review_conditions_presence_resource_baseline_v01.py"
+  ],
+  "actual_exit_code": 1,
+  "all_prior537_copied_record_bodies_and_producers_qualified_before_capacity_predicate": true,
+  "baseline_success_receipt_created": false,
+  "checkpoint_JSON_parses": 0,
+  "claims_reconciled": 0,
+  "exact_measured_capacity_numbers_not_retained_by_V01_failure_path": true,
+  "failed_predicate": "actual fullclaimcharged census/physical capacity must fit own200M before admission",
+  "files_deleted": 0,
+  "inputs": {
+    "bytes": 1322,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-baseline-inputs-v01.json",
+    "sha256": "1cdb97d00df8523c7f61afc063b0ef242b22aa04255190eff13bfaf343f4d513"
+  },
+  "new_model_calls": 0,
+  "new_reservation_created": false,
+  "next_action": "Narrow source-qualified V02 readonly diagnostic records actual capacity numbers before any storage intervention or numerical run.",
+  "observed_at_utc": "2026-10-14T03:03:56.758964+00:00",
+  "optimizer_updates": 0,
+  "resource_API_calls": 0,
+  "schema": "conditions-presence-readonly-capacity-refusal-observation/v1",
+  "source": {
+    "bytes": 5639,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/review_conditions_presence_resource_baseline_v01.py",
+    "sha256": "8e8893003c660ea94a951601f2f724449f5320bf9b269e9b8a83ec882eff8b58"
+  },
+  "source_qualification": {
+    "bytes": 13363,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/resource-observer-source-independent-review-v01.json",
+    "sha256": "7ee836640c2ecb963b2c8a258e56df63947cec99be04bd7e1944fc9a8ea8045d"
+  },
+  "storage_limit_changed": false
+}

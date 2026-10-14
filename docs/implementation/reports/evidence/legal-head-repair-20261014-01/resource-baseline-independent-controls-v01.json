@@ -1,0 +1,25 @@
+{
+  "actual_census_calls": 0,
+  "actual_main_calls": 0,
+  "actual_private_reads": 0,
+  "case_count": 7,
+  "cases": [
+    "537 synthetic current bodies conserved",
+    "Only new own released538 accepted",
+    "Foreign body mutation refused",
+    "Unapproved extra claim refused",
+    "Cap mutation refused",
+    "N7 release mutation refused",
+    "New own retained claim refused"
+  ],
+  "common_protocol": {
+    "bytes": 13955,
+    "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions_presence_resource_protocol_v01.py",
+    "sha256": "57e5657890d6646e7e4fc3a66d4f4901a14730e0aa386491f0528c5325643cdb"
+  },
+  "findings": [],
+  "model_calls": 0,
+  "passed": true,
+  "resource_API_calls": 0,
+  "schema": "conditions-presence-resource-independent-controls/v1"
+}

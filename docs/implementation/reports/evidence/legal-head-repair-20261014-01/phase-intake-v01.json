@@ -1,0 +1,67 @@
+{
+  "Lake_executed": false,
+  "canonical_raw4": {
+    "root": {
+      "head_via_owned_common_refs": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+      "raw_HEAD": {
+        "bytes": 37,
+        "path": "/home/barberb/lift_coding/.git/HEAD",
+        "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+      },
+      "raw_commit": {
+        "bytes": 302,
+        "object_id": "fe18069df4203da9bddfb77b1ed41748f4d5fb4d",
+        "parents": [
+          "f9347a8a3eac7175991502a55864ea085396a439"
+        ],
+        "sha256": "2439cd54aa63e0a9e646e17d7a09c0c8d9fbb6e25f4eac7b867a30b5f718d3d5"
+      },
+      "raw_index": {
+        "bytes": 692628,
+        "path": "/home/barberb/lift_coding/.git/index",
+        "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+      },
+      "symbolic_head": "refs/heads/chore/fmt-check-main"
+    },
+    "source": {
+      "head_via_owned_common_refs": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+      "raw_HEAD": {
+        "bytes": 21,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD",
+        "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+      },
+      "raw_commit": {
+        "bytes": 280,
+        "object_id": "d5238def256d1c352793ee7d977e6b17b6d8cbee",
+        "parents": [
+          "6bd6eaabd2d3dde46e664b7386efb134253eb928"
+        ],
+        "sha256": "5e814dd2d6dab444f6b80c8f6ba93fd28ab7069acf60131081dc0c42c9a42eb4"
+      },
+      "raw_index": {
+        "bytes": 3799757,
+        "path": "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index",
+        "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+      },
+      "symbolic_head": "refs/heads/main"
+    }
+  },
+  "default_promotion": false,
+  "latent_enabled": false,
+  "observed_at_utc": "2026-10-14T02:52:28.283306+00:00",
+  "prior_final_review": {
+    "bytes": 28326,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/final-integration-independent-review-v01.json",
+    "sha256": "c78ab9d0f3c4cd033418c0573d4b745920538faf5ef43ec691db95fbb82b621f"
+  },
+  "root_initial_head": "9fd25a0d77465782cbe53e50e81674c2d0c01efa",
+  "schema": "head-repair-phase-intake/v1",
+  "source_checkpoint": {
+    "bytes": 6464267,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-features-20261013-actor-features-ce-02/results/cell-checkpoint.json",
+    "sha256": "b4ea8a502789f6dddba6e159eb7ecebb753d8344a833b0afb9109cfd6830bcd3"
+  },
+  "source_initial_head": "d8f9e3dfc77901162e3d32343860aa4678374db0",
+  "source_model_state_sha256": "c05074b28fb827500f7be6e30d606faee39436047685a1a41b85fa88913100ab",
+  "training_executed": false
+}
