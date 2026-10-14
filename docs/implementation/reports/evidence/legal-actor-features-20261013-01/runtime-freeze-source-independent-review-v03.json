@@ -1,0 +1,331 @@
+{
+  "actual_concrete_training_review": {
+    "bytes": 23906,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-training-review-v02.json",
+    "sha256": "a94800afd1fcdb1509ab171d0931f61828f85a89db4974bd416fbdad0a675c9a"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-bootstrap-smoke-controls-v01.json": {
+      "bytes": 7838,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-bootstrap-smoke-controls-v01.json",
+      "sha256": "5199afbd4ad9b8a22cc9763ae629ae733e17ce66396f26b694b9c5a3ec870e38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-bootstrap-smoke-controls-v02.json": {
+      "bytes": 7838,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-bootstrap-smoke-controls-v02.json",
+      "sha256": "4d22116cd43abefef86e2779103b6562eb130030fc5b77053e32d7072afca1fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json": {
+      "bytes": 45858,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v01.json",
+      "sha256": "650d0691d88e6c97b540f97ec20e1a96d5aa41bd653cd48c2bd0432f4f0adb22"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json": {
+      "bytes": 46558,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json",
+      "sha256": "f433954ab6e9f26510096f308e879cac1b027bf33aa94a5df7bf765045e555fc"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-training-review-v02.json": {
+      "bytes": 23906,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-training-review-v02.json",
+      "sha256": "a94800afd1fcdb1509ab171d0931f61828f85a89db4974bd416fbdad0a675c9a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-freezer-independent-controls-v01.json": {
+      "bytes": 1542,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-freezer-independent-controls-v01.json",
+      "sha256": "f385188aed5b476ec77678090d91592d06dfb354df97814137e7d45f4c3cbfaa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-runner-independent-controls-v01.json": {
+      "bytes": 1294,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-runner-independent-controls-v01.json",
+      "sha256": "eb74befec4d8d8c8321e3b21904b313ac416b51afa3bfe56d43a0cb04e1caa66"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-independent-controls-v01.json": {
+      "bytes": 1664,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-independent-controls-v01.json",
+      "sha256": "2b780e178df4a54c6358266fb9af6672cddba46b2a5e4c02305a3a8d74a33407"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v01.json": {
+      "bytes": 3137,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v01.json",
+      "sha256": "0db827bd13c7f7aac441b3f235c708c047347388a51c06c11481081a2ed551fe"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v02.json": {
+      "bytes": 10284,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v02.json",
+      "sha256": "ca80fd8299ee19ee234625e628ac5ea6ba17c2cf3c7a5d9dbddc7fa6097b5c55"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v03.json": {
+      "bytes": 14099,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v03.json",
+      "sha256": "48b5c7fa3dad5b235edbac53df3464de61c19cf8aced4604f091302c20fe9f5f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v01.py": {
+      "bytes": 7068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v01.py",
+      "sha256": "c9e71e3b75126af0d6ea73562440a5f37e21a248f2c866f0a7bddfff6da8382a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v02.py": {
+      "bytes": 7068,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_bootstrap_smoke_controls_v02.py",
+      "sha256": "be673d96eacf5043173233a09e7b53030e7fa0b3561cedaef6ffa772ddaff8a9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_freezer_independent_controls_v01.py": {
+      "bytes": 7881,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_freezer_independent_controls_v01.py",
+      "sha256": "32ae966c6e996760f72e5cdc7426172b761bee52ee571824d5672bdd7c196af8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_runner_independent_controls_v01.py": {
+      "bytes": 7896,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor_features_runner_independent_controls_v01.py",
+      "sha256": "3fb6cfb4488ce281f5b0dd040fa20727bf25c19292c69ae0fc33212f409f56ba"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v01.py": {
+      "bytes": 45272,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v01.py",
+      "sha256": "980570fb3a9320eec893d889e985ab2cdcbe49e4533a52577a0e22cdf12c82ce"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v02.py": {
+      "bytes": 48250,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v02.py",
+      "sha256": "2eb9b5951821690653929b3b82f0a334e6ec29d3fca9859fd9b256d4b9c3c4a4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v03.py": {
+      "bytes": 48261,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/audit_actor_features_terminal_resources_v03.py",
+      "sha256": "3ac3a0b15434562fbb50e35f8883daad2bc674342d259269643bc9ee2cc0d22f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/evaluation-contract-v01.json": {
+      "bytes": 22072,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/evaluation-contract-v01.json",
+      "sha256": "19fa0d2f587301b98331b3ce41869b424ee1e1b87bda92d8b321d65034a66e47"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v01.py": {
+      "bytes": 18507,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v01.py",
+      "sha256": "ad6d428a5c5326839b7712e8f54d7444b77fdd9660726f36a154468eb80b3479"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v02.py": {
+      "bytes": 18664,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v02.py",
+      "sha256": "f960b8f41cbeef2b53b334584afa2f3d023d7ff55ea70fc9db55868fdeb45dee"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v03.py": {
+      "bytes": 18664,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v03.py",
+      "sha256": "1230a59f2a36424adfd79d635f62e6186281335fdb1e87c373ebc218fefd8588"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v01.py": {
+      "bytes": 12845,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v01.py",
+      "sha256": "1518b62611706103274068dd0cff72623f9735c38c2ab32e1193690a2aedd388"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v02.py": {
+      "bytes": 15738,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/prepare_actor_features_v02.py",
+      "sha256": "f5110cb2c98c6a8b68cf9c21a8055e6ca8f1aa9ae32e355609111882c3c1fd3d"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json": {
+      "bytes": 77873,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v01.json",
+      "sha256": "0d9930ff9831f0fb135439a066f0345e2fa3e9720a8827f74366253016b4f8f2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v02.json": {
+      "bytes": 85505,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-baseline-v02.json",
+      "sha256": "1f32831b3dc3850bc890be37aeeb6429be3389b9142bfdcc7e4a3cd88a2163c3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-observer-source-independent-review-v02.json": {
+      "bytes": 10258,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/resource-observer-source-independent-review-v02.json",
+      "sha256": "af92cffe666b63f7efa6ca9f73548a6c2f71778beea7f33c3284f50f416d918f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-baseline-independent-controls-v02.json": {
+      "bytes": 1154,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-baseline-independent-controls-v02.json",
+      "sha256": "528b96db0a75fce27f47e86d5d483b79079c793c90b49d737a1f3830822cb51b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-port-derivation-v02.json": {
+      "bytes": 22072,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-port-derivation-v02.json",
+      "sha256": "863e7d8bdda52c1b129960bd912c25c62626eaacb11d00160549132aa53df52c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-port-source-independent-review-v02.json": {
+      "bytes": 15060,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/retry-producer-port-source-independent-review-v02.json",
+      "sha256": "38d93065ad05b07149bbb103aadf8262fd10d152341fcfdfe2ffe3b75b48afb8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py": {
+      "bytes": 37730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v01.py",
+      "sha256": "61268317c492662e3a729e45de18e9ae8eb7b924b72e177b3fd5071dc6e99d62"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py": {
+      "bytes": 37730,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py",
+      "sha256": "23090332c18ce1b451a116381e072677aa1fef847518e0c08d1b67a60c52cb44"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py": {
+      "bytes": 38449,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_scope_guardian_v02.py",
+      "sha256": "b4811b7b24f584d5cb0f7c921451a234a3e0d84b2d7507e015426e258134c2db"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runner-preparer-source-independent-review-v01.json": {
+      "bytes": 15741,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runner-preparer-source-independent-review-v01.json",
+      "sha256": "d973cebe0ca421be81282313e830a5b431fc504bac4ee9531205d711b8b58618"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runner-preparer-source-independent-review-v02.json": {
+      "bytes": 22240,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runner-preparer-source-independent-review-v02.json",
+      "sha256": "e79d7314be3be343b57c7f896a488ee8ba64e3321d4c4c6a7b85ad9b08ac1271"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v01.json": {
+      "bytes": 11883,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v01.json",
+      "sha256": "242f0146861e7345a85df109edc5364545dd39647cf76ed865c8ffe5df43530a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v02.json": {
+      "bytes": 17795,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v02.json",
+      "sha256": "141c47106ffab470bcb807c794e6f4f1ae7301221180fa8167982c403c4fcb67"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/terminal-compatibility-independent-controls-v03.json": {
+      "bytes": 1403,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/terminal-compatibility-independent-controls-v03.json",
+      "sha256": "62f33992d2317d328408447e6fa52914d2f02431f0b3a2cd9a95a607a70e4598"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/terminal-compatibility-port-derivation-v03.json": {
+      "bytes": 6826,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/terminal-compatibility-port-derivation-v03.json",
+      "sha256": "d61a53a0fde2632939be574705e59cfbd1d21e6111e8173dd623358e1be9214b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/trainer-source-independent-review-v01.json": {
+      "bytes": 36118,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/trainer-source-independent-review-v01.json",
+      "sha256": "84bf3fe7373f026828a4cafde64f2346097417a23e41b26c91bdb973cb00dce4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json": {
+      "bytes": 14398,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v01.json",
+      "sha256": "e17fabcfd38b6c34469ae67f581da009be7701a63555bbb04a33b314f7cd5656"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v02.json": {
+      "bytes": 17749,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/training-design-v02.json",
+      "sha256": "cd68c23949fdeb5f5cedb759736f4d682e9530506a6d74960156023f40740f1e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/freeze_actor_ranking_outputs_v03.py": {
+      "bytes": 17662,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/freeze_actor_ranking_outputs_v03.py",
+      "sha256": "ec9870d6cd670792b8b14e161a18fde1dbed47041a7ae9f5bbca8f91dd3a465b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runtime-freeze-source-independent-review-v03.json": {
+      "bytes": 9077,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-ranking-20261013-01/runtime-freeze-source-independent-review-v03.json",
+      "sha256": "8ed3192ef1b5dff81441e712041ddf22f51f8d4305a31db8be77e849e49019fc"
+    }
+  },
+  "exact_literal_changes": [
+    {
+      "after": "runtime-freeze-source-independent-review-v03.json",
+      "before": "runtime-freeze-source-independent-review-v02.json",
+      "occurrences": 1
+    },
+    {
+      "after": "actor-features-terminal-resource-source-independent-review-v03.json",
+      "before": "actor-features-terminal-resource-source-independent-review-v02.json",
+      "occurrences": 2
+    },
+    {
+      "after": "audit_actor_features_terminal_resources_v03.py",
+      "before": "audit_actor_features_terminal_resources_v02.py",
+      "occurrences": 1
+    }
+  ],
+  "execution": {
+    "actual_result_reads": 0,
+    "checkpoint_JSON_parses": 0,
+    "full_module_imports": 0,
+    "main_calls": 0,
+    "model_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "optimizer_updates": 0,
+    "private_body_reads": 0,
+    "resource_API_calls": 0,
+    "synthetic_new_controls": 0,
+    "unchanged_control_reruns": 0
+  },
+  "findings": [],
+  "independently_qualified_shared_runner_feature_controls": 17,
+  "inherited_N10_freezer_controls": 18,
+  "inherited_controls_not_repeated": true,
+  "limitations": [
+    "Actual root terminal observer and this freezer must execute successfully before any scoring; this gate does not itself attest saved result contents."
+  ],
+  "observed_at_utc": "2026-10-14T01:00:08.545165+00:00",
+  "observer": {
+    "bytes": 18664,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/freeze_actor_features_outputs_v03.py",
+    "sha256": "1230a59f2a36424adfd79d635f62e6186281335fdb1e87c373ebc218fefd8588"
+  },
+  "passed": true,
+  "plan": {
+    "bytes": 46558,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-ce-plan-v02.json",
+    "sha256": "f433954ab6e9f26510096f308e879cac1b027bf33aa94a5df7bf765045e555fc"
+  },
+  "prior_source_qualification": {
+    "bytes": 17795,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/runtime-freeze-source-independent-review-v02.json",
+    "sha256": "141c47106ffab470bcb807c794e6f4f1ae7301221180fa8167982c403c4fcb67"
+  },
+  "retained_N9_detached_control_count": 62,
+  "retained_N9_foreign_occupancy_control_count": 20,
+  "reviewer": "/root/evaluation_n10",
+  "runner": {
+    "bytes": 37730,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/run_actor_features_v02.py",
+    "sha256": "23090332c18ce1b451a116381e072677aa1fef847518e0c08d1b67a60c52cb44"
+  },
+  "schema": "actor-features-runtime-freeze-source-independent-review/v1",
+  "scope": {
+    "actual_actor_attention_pool_calls": 1312,
+    "actual_actor_context_feature_calls": 1312,
+    "actual_model_forwards": 1552,
+    "actual_updates_required": 32,
+    "candidate_actor_feature_inference_calls": 1280,
+    "declared_source_owners": 37,
+    "default_promotion": false,
+    "expected_outputs": 62,
+    "final_source_rows": 632,
+    "inference_source_forwards": 1520,
+    "initial_source_rows": 632,
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "total_source_occurrences": 1904,
+    "training_source_occurrences": 384
+  },
+  "source_checks": [
+    "V03 bytes exactly reconstructed from qualified V02 with three declared path replacement types: own source gateV03, terminal source gateV03, terminal observerV03. No predicate/math/metric change.",
+    "All three pure validation ASTs unchanged; inherited18freezer+17sharedrunner+62inventory+20foreignoccupancy control qualifications remain applicable without reruns.",
+    "Exact raw actual planV02 and actual concrete prelaunch training reviewV02 bound; runner/trainer/guardian/sourceowners and baselineV02 unchanged.",
+    "New terminal source qualification48b5c7fa... is raw-bound; it fixes exact concrete review schema and exact guardian-check-v02 filename while retaining all536-current/own537 conservation, cap, copied endpoint, process and source predicates.",
+    "Actual terminal inputmanifestV02/outputauditV02 and successful runtime/output-freeze V01 logical paths unchanged. Full terminal plan/review/source/input closure remains mandatory before freezing.",
+    "62outputs/32updates384occurrences/40-34-6 tensors/908-258-650 scalars/632parity/1552modelcalls/1312featurecalls unchanged; frozen control calls remain zero.",
+    "No actual result/private/model/checkpoint body, observer main or live endpoint/API accessed during this source qualification."
+  ],
+  "source_only": true,
+  "terminal_source_qualification": {
+    "bytes": 14099,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-features-20261013-01/actor-features-terminal-resource-source-independent-review-v03.json",
+    "sha256": "48b5c7fa3dad5b235edbac53df3464de61c19cf8aced4604f091302c20fe9f5f"
+  },
+  "unchanged_expected_names_AST": true,
+  "unchanged_pure_function_AST_names": [
+    "expected_names",
+    "qualify_training_summary",
+    "qualify_gates"
+  ]
+}
