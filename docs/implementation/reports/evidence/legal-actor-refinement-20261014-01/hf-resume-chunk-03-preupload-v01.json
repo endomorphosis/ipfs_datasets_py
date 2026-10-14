@@ -1,0 +1,18 @@
+{
+  "additions_only": true,
+  "names": [
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity-zeros.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-parity.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-training168-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/initial-training168-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-fresh_dev-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-fresh_dev-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-fresh_test-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-fresh_test-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-training168-joint.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/parent-training168-raw.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/summary.json",
+    "releases/20261014-actor-refinement-v1/cells/actor-refinement-ce/results/trained-authored_dev-joint.json"
+  ],
+  "parent_revision": "8635d1d2ae8b617d5b15bd3da0c683b8f57125c1"
+}

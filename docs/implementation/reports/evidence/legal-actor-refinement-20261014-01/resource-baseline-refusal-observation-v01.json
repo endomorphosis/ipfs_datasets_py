@@ -1,0 +1,73 @@
+{
+  "actual_census_observed_bytes": null,
+  "actual_current_record_count": null,
+  "actual_tree_censuses": 0,
+  "admission_calls": 0,
+  "baseline_created": false,
+  "capacity_refusal_created": false,
+  "checkpoint_JSON_parses": 0,
+  "failure": {
+    "endpoint_not_discriminated_by_original_exception": true,
+    "error_type": "ValueError",
+    "message": "fresh guardian check must match actual copied endpoint bytes",
+    "observer_line": 53,
+    "protocol_function": "qualify_check",
+    "protocol_line": 140
+  },
+  "fresh_metadata_check": {
+    "bytes": 6729,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/guardian-check-v01.json",
+    "sha256": "896cb0d5748f3481182227b45a84dcfc1e3e8d6092e55047d30edd0fd987609e"
+  },
+  "guardian_report": {
+    "full_nonreleased_claim_bytes": 44381777216,
+    "lease_count": 1,
+    "waiter_count": 0
+  },
+  "input_manifest": {
+    "bytes": 1345,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-baseline-inputs-v01.json",
+    "sha256": "1d19b13825cb5a64fc91662a584055e6a187e9b16c5cb99842e9afe4bdfa18dc"
+  },
+  "known_control_flow": {
+    "actual_fullclaims_config_and_occupancy_checks_completed": true,
+    "current_typed_ledger_guards_completed": true,
+    "endpoint_byte_hash_match_failed": true,
+    "historical539_fullbodyhash_guards_completed": true
+  },
+  "limits": [
+    "The original exception does not identify whether ledger or scheduler bytes differed. No endpoint mismatch is inferred.",
+    "Current record count and storage census were not emitted before refusal and are not reconstructed by reading private bodies.",
+    "Observed scheduler occupancy is a sampled fact; no idle or continuous custody claim."
+  ],
+  "model_calls": 0,
+  "new_claims": 0,
+  "observed_at_utc": "2026-10-14T09:07:33.382005+00:00",
+  "observer": {
+    "bytes": 7192,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_resource_baseline_v01.py",
+    "sha256": "2119d148e4b069c2ab7f57b7b2a25310d753bee7e1a5f1c91c4c6978b36e48ba"
+  },
+  "observer_main_calls": 1,
+  "observer_returncode": 1,
+  "passed": false,
+  "private_bodies_published": false,
+  "private_sample_receipt": {
+    "bytes": 1422,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/private-runtime-snapshots/opening-v01/snapshot-receipt-v01.json",
+    "sha256": "d9ccd34be27e49153e18db4127910d2796aaa619615d210f26c31873d602add7"
+  },
+  "protocol": {
+    "bytes": 19906,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v01.py",
+    "sha256": "a34b72912a075cc71182cc901928168540adc1cc830f93625bcf62b239c58276"
+  },
+  "repeated_collection_or_observer_calls": 0,
+  "schema": "actor-refinement-resource-baseline-observation-refusal/v1",
+  "shared_state_modified": false,
+  "source_qualification": {
+    "bytes": 17737,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resource-observer-source-independent-review-v01.json",
+    "sha256": "81bb49e128f06e9a8821775c866033a3f28affce8c817521f738289dd0caec1a"
+  }
+}

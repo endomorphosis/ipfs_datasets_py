@@ -1,0 +1,42 @@
+{
+  "actual_archive_or_original_result_reads": 0,
+  "actual_command": [
+    "python",
+    "-B",
+    "test_restore_owned_results_archive_v01.py"
+  ],
+  "actual_original_paths_written": 0,
+  "actual_restore_main_calls": 0,
+  "claims_modified": 0,
+  "exit_code": 0,
+  "findings": [],
+  "fixture_only": true,
+  "model_calls": 0,
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "producer": {
+    "bytes": 22600,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/restore_owned_results_archive_v01.py",
+    "sha256": "51afc5cf53afc17a7919ab5a9efe122091f65fa6db26b3e008803feaf6d19a24"
+  },
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-owned-results-restore-independent-controls/v1",
+  "test_cases": [
+    "test_default_verify_is_readonly_opaque_and_supports_stdlib_PAX",
+    "test_selected_materialization_bytes_modes_empty_dirs_and_no_overwrite",
+    "test_raw_manifest_and_archive_identity_refuse_before_any_stage_write",
+    "test_tar_duplicates_links_directories_unknown_members_and_metadata_fail_closed",
+    "test_manifest_unknown_keys_duplicate_members_bad_paths_shapes_and_bounds_refused",
+    "test_explicit_selection_fresh_owned_stage_and_physical_inputs_required",
+    "test_duplicate_manifest_JSON_and_truncated_or_concatenated_archives_refused",
+    "test_archive_relocation_preserves_content_binding_and_manifest_unmodified"
+  ],
+  "test_source": {
+    "bytes": 10686,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_restore_owned_results_archive_v01.py",
+    "sha256": "6529e0f1ded38d554c2bbfcf2f669548b9fd763ec517e4ba2205b8f6a520aef2"
+  },
+  "tests_passed": 8
+}

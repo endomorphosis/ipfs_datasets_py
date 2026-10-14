@@ -1,0 +1,316 @@
+{
+  "Lake_executed": false,
+  "N7_fresh72_previously_exposed": true,
+  "all464_previously_exposed_engineering_diagnostics": true,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/phase-intake-v01.json": {
+      "bytes": 1419,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/phase-intake-v01.json",
+      "sha256": "e7af53efd6ae8b630eb0901c9cfac1cbe670830fea4431a14b3fb61b34e43f04"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json": {
+      "bytes": 52960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json": {
+      "bytes": 21832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json": {
+      "bytes": 112211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    }
+  },
+  "attempt_name": "actor-refinement-20261014-actor-refinement-ce-01",
+  "automatic_selection_or_promotion": false,
+  "broader_logic_families_qualified": false,
+  "cell": "actor-refinement-ce",
+  "checkpoint_selection_executed": false,
+  "completed_frozen_parent": {
+    "analysis": {
+      "bytes": 2776304,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-result-analysis-v01.json",
+      "sha256": "6e59923c6b848c509e79931fac15aa3ffbcb87b9de41730ecdfe35e205d5879a"
+    },
+    "freeze": {
+      "bytes": 21832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "independent_recount": {
+      "bytes": 2315880,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-independent-recount-v01.json",
+      "sha256": "c063345469b4b4746c902973ac6372d9b83066950fad03f530e0cfabfa4a9285"
+    },
+    "independent_review": {
+      "bytes": 112211,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/result-independent-review-v01.json",
+      "sha256": "313229defc2094ed502a2ca0e59632ae1f7f2ddc2fa3ccd352dea6cf09eb1060"
+    },
+    "new_control_forwards": 0,
+    "new_control_updates": 0,
+    "plan": {
+      "bytes": 52960,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-plan-v01.json",
+      "sha256": "83768d40f403a2e67a4fbfc61cf83f5c52cabd9b1a27a5ee3d51d891c6c6c25c"
+    },
+    "public_summary": {
+      "bytes": 18392,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/public-result-summary-v01.json",
+      "sha256": "e440efcd4be8660353eb24c4ac546b276ee0009af0063b7655e39dab4f080849"
+    },
+    "role": "Exact trained N11 donor and frozen sole comparator; zero new comparator forwards/updates.",
+    "runtime_review": {
+      "bytes": 78532,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-ce-runtime-review-v01.json",
+      "sha256": "4cbc44b4ccf2e2de529d2d6479eb097d183901a5539fde16e4057ded24b1aa5e"
+    }
+  },
+  "context_contract": {
+    "dimension": 384,
+    "producer_sha256": "aecff8f97f0c76f6df9b505803974817eda8162d57501eb872a9370472609101",
+    "representation_id": "targeted-loss-source-only-dormant384/v1",
+    "training_index_sha256": "72365c091abd613306fe56ce957d7fe1bbf3a8c5c9c92fee07bca6f659c1d073"
+  },
+  "default_promotion": false,
+  "diagnostic_source_count": 464,
+  "distinct_source_count": 632,
+  "dormant_source_only_controls": [
+    "zeros",
+    "alternate_placeholders",
+    "disabled",
+    "rotated_placeholders"
+  ],
+  "evaluation_reference_bodies_forbidden_to_training_child": true,
+  "expected_authored_score_sets": 27,
+  "expected_paired_panel_count": 9,
+  "expected_panel_count": 30,
+  "fixed_forward_accounting": {
+    "candidate_diagnostic_source_forwards": 928,
+    "candidate_training_capture_source_forwards": 336,
+    "dormant_control_source_forwards": 16,
+    "feature_paths_per_source_forward": 3,
+    "new_parent_control_forwards": 0,
+    "new_parent_control_updates": 0,
+    "reused_parent_capture_file_count": 6,
+    "reused_parent_capture_rows": 240,
+    "total_actual_model_forwards": 1312,
+    "total_model_source_occurrences": 1664,
+    "total_new_inference_source_forwards": 1280,
+    "training_batch_source_occurrences": 384,
+    "training_model_forward_calls": 32
+  },
+  "fresh_reference_packet": {
+    "bytes": 100802,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-packet-v01.json",
+    "sha256": "8bdacd3d1cb727f086b8fa063f7a735ae4f83833983b67afd90a16505dea41e2"
+  },
+  "fresh_reference_review": {
+    "bytes": 3473,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-reference-independent-review-v01.json",
+    "sha256": "2e30ac7887b2b1f384001d03000fedb73e4e2dd59e3dfe8ecb758c30b1b59da3"
+  },
+  "fresh_source_export": {
+    "bytes": 434236,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-attention-20261013-01/fresh-source-export-v01.json",
+    "sha256": "83078f6028dd63b47661c4e3bb5c9cb27546f926c306d074f13d509d2aeec846"
+  },
+  "genuine_latent_semantics_qualified": false,
+  "independent_statutory_gold": false,
+  "law8_unscored": true,
+  "legacy_prefix_sha256": "4f78bd92f4f5cac93f69eddc1e9d713d08f3eee70372ee7729cccc60792e6995",
+  "no_new_blind_generalization_claim": true,
+  "observed_at_utc": "2026-10-14T08:55:06.975663+00:00",
+  "old392_previously_exposed": true,
+  "paired_scored_scopes": [
+    "old_tune",
+    "fresh_tune",
+    "fresh_challenge",
+    "old_authored_eval",
+    "authored_dev",
+    "authored_eval",
+    "fresh_dev",
+    "fresh_test",
+    "training168"
+  ],
+  "populations": {
+    "authored_dev": 72,
+    "authored_eval": 72,
+    "fresh_challenge": 36,
+    "fresh_dev": 36,
+    "fresh_test": 36,
+    "fresh_tune": 36,
+    "law": 8,
+    "old_authored_eval": 72,
+    "old_tune": 96,
+    "training168": 168
+  },
+  "portable_numerical_reload_qualified": false,
+  "preregistered_before_new_model_execution": true,
+  "primary_metrics": {
+    "actor": "Before/after exact actor spans, token-score stable ranks, top1/top8/top16 and full-domain candidate/gold coverage. These are diagnostics, not additional acceptance thresholds.",
+    "complete_IR": "Exact equality of modality and all six actor/action/object/conditions/exceptions/temporal fields, separately for raw/greedy and joint. Abstentions are failures.",
+    "coupling": "Report nonactor decoded-role/modality/abstention changes caused by changed actor compatibility although all protected nonactor head vectors remain bit equal.",
+    "optional_presence": "Allfour roles on all9 authored scopes and3states: guarded head decisions versus raw selected versus joint selected; TP/TN/FP/FN and positive/negative ambiguity/abstention IDs. Frozen presence logits do not imply unchanged selected spans.",
+    "paired": "Every raw and joint fullIR gain/loss ID versus the exact frozen N11 parent in all9 scored scopes. Initial-to-trained also reported; no other model/comparator state is added."
+  },
+  "recipe": {
+    "actor_ranking_enabled": false,
+    "batch_size": 12,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "capture_rows_max": 128,
+    "clip_gradient_norm": 5.0,
+    "configured_dimension": 384,
+    "eps": 1e-08,
+    "foreach": false,
+    "inherited_optimizer_moments": false,
+    "latent_enabled": false,
+    "learning_rate": 0.001,
+    "new_embedding_encoder_calls": 0,
+    "new_updates": 32,
+    "optimizer": "fresh Adam",
+    "seed_and_order": 1729,
+    "source_order_unchanged": true,
+    "source_tokens_max": 128,
+    "training168_capture_chunk_sizes": [
+      128,
+      40
+    ],
+    "training_row_occurrences": 384,
+    "training_rows": 168,
+    "training_seconds": 32,
+    "weight_decay": 0.0
+  },
+  "references_parent_only": true,
+  "required_frozen_output_count": 62,
+  "schema": "actor-refinement-evaluation-contract/v1",
+  "scored_authored_source_count": 624,
+  "semantic_accuracy": null,
+  "source_export": {
+    "bytes": 4675279,
+    "path": "/home/barberb/lift_coding/artifacts/legal-temporal-adapter-20261013-01/training-source-export-v01.json",
+    "sha256": "ea377724beeffcfc7e8565b03ed207a90cdf3a1955f4ba7d0bfea460ba94c3a9"
+  },
+  "source_model_state_identity_basis": "Exact trained N11 state pin supplied by root; donor raw descriptor authenticated from qualified public N11 freeze without opening checkpoint body.",
+  "source_model_state_sha256": "b3b6fdb2eeb7653265930660d3a4eaae7b1a93db22b09e71a2276367c1b156a9",
+  "source_only_preregistration_scope": "Fixed exposed engineering comparison; no evaluation reference bodies, saved heads or checkpoint JSON parsed by this design task.",
+  "source_parent": {
+    "bytes": 9337558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+    "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+  },
+  "source_training_manifest_sha256": "afa0deeebf4052831883c046104a8808342b67a7c8dc2e58de2f9208a9287c34",
+  "states": [
+    "parent",
+    "initial",
+    "trained"
+  ],
+  "strict_scientific_success": {
+    "conjunctive": true,
+    "no_additional_heldout_accuracy_or_actor_margin_threshold": true,
+    "no_complete_IR_loss_IDs_vs_N11": {
+      "allowed_loss_count_each_scope_and_view": 0,
+      "scopes": [
+        "old_tune",
+        "fresh_tune",
+        "fresh_challenge",
+        "old_authored_eval",
+        "authored_dev",
+        "authored_eval",
+        "fresh_dev",
+        "fresh_test",
+        "training168"
+      ],
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "permission_retention": {
+      "allowed_abstentions": 0,
+      "allowed_losses": 0,
+      "gold_permission_count": 32,
+      "modality": "P",
+      "must_remain_decoded_or_selected": true,
+      "panel": "old_tune",
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "scientific_failure_is_archived_without_retry_or_promotion": true,
+    "technical_gate_required": true,
+    "training168": {
+      "joint_full_IR_strictly_greater_than": 154,
+      "minimum_accepted_raw_and_joint": 155,
+      "parent_joint_full_IR": 154,
+      "parent_raw_full_IR": 154,
+      "raw_full_IR_strictly_greater_than": 154,
+      "reference": "frozen trained N11"
+    }
+  },
+  "technical_gate": {
+    "exact_full_N11_42tensor_initialization": true,
+    "final_protected": {
+      "allfour_presence_pairs_including_learned_N11_conditions": true,
+      "binary32_signed_zero_preserved": true,
+      "excluded_score_vectors_only": [
+        "start_logits.actor",
+        "end_logits.actor"
+      ],
+      "modality_logits": true,
+      "nonactor_start_end_roles": [
+        "action",
+        "object",
+        "conditions",
+        "exceptions",
+        "temporal"
+      ],
+      "source_rows": 632
+    },
+    "initial_before_any_update": {
+      "all_modality_presence_and_six_role_boundary_logits_binary32_equal_to_N11": true,
+      "saved_greedy_and_joint_predictions_equal": true,
+      "source_rows": 632
+    },
+    "no_inherited_N10_zero_query_gate_or_conditions_reinitialization": true,
+    "training_state": {
+      "active_trainable_scalars": 258,
+      "actor_pointer_active_rows": [
+        0
+      ],
+      "actor_pointer_inactive_rows": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "all32_returned_branch_and_gradient_moment_freeze_traces_required": true,
+      "both_complete_N11_conditions_presence_tensors_frozen": true,
+      "exact_tensor_count": 42,
+      "frozen_gradients_none_and_no_frozen_optimizer_members": true,
+      "frozen_tensor_count": 36,
+      "inactive_gradients_and_Adam_moments_zero": true,
+      "inactive_stored_scalars": 650,
+      "query_and_gate_full64_active": true,
+      "stored_trainable_scalars": 908,
+      "trainable_parameter_order": [
+        "actor_start.weight",
+        "actor_start.bias",
+        "actor_end.weight",
+        "actor_end.bias",
+        "actor_attention.query",
+        "actor_context.gate"
+      ],
+      "trainable_tensor_count": 6
+    }
+  },
+  "threshold_or_hyperparameters_fitted": false
+}

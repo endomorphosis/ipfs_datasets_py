@@ -1,0 +1,12 @@
+{
+  "actual_main_calls": 0,
+  "control_count": 9,
+  "exact_observer_literal_port": true,
+  "exact_protocol_literal_port": true,
+  "findings": [],
+  "model_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "resource_calls": 0,
+  "schema": "actor-refinement-resource-retry-independent-controls/v1"
+}

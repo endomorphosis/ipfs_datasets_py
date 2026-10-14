@@ -1,0 +1,49 @@
+{
+  "actual_checkpoint_or_reference_or_private_body_reads": 0,
+  "actual_model_calls": 0,
+  "control_count": 19,
+  "controls": [
+    "exact62_geometry_with_six_saved_parent_files",
+    "valid_trained_N11_actor6_summary_1280plus32_1664",
+    "old1552_forward_count_rejected",
+    "new_parent_control_forward_rejected",
+    "15_loaded_source_closure_rejected",
+    "wrong_objective_rejected",
+    "reused_capture_custody_change_rejected",
+    "different_donor_state_rejected",
+    "all632_initial_and_final_conditions_nonactor_projection_required",
+    "conditions_not_protected_rejected",
+    "631_coverage_rejected",
+    "update_before_initial_parity_rejected",
+    "concrete_reviewer_refuses_import_torch",
+    "concrete_reviewer_refuses_import_ipfs_datasets_py",
+    "concrete_reviewer_refuses_socket.connect_",
+    "concrete_reviewer_refuses_fcntl.flock_",
+    "concrete_reviewer_refuses_open_/tmp/disk-reservations.json",
+    "concrete_reviewer_refuses_open_/tmp/unowned-review.json",
+    "concrete_reviewer_only_exclusive_owned_output_allowed"
+  ],
+  "findings": [],
+  "numerical_imports": 0,
+  "passed": true,
+  "production_main_calls": 0,
+  "schema": "actor-refinement-freezer-independent-detached-controls/v1",
+  "scope": "Freezer summary/gate validators detached with inert bootstrap/actor trace stub; runner full32 trace independently checked in separate19controls; reviewer audit receives synthetic events only",
+  "source_artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_freezer_independent_controls_v01.py": {
+      "bytes": 9057,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_freezer_independent_controls_v01.py",
+      "sha256": "925c948c408e49912cbebde415b48b3bb1c79fd9b34afd38f979af82a080bf38"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v01.py": {
+      "bytes": 19181,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/freeze_actor_refinement_outputs_v01.py",
+      "sha256": "51662331b34bb5db089603386f5aee8be3af3a2b6fa0f318784a70752a7aa87a"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_training_plan_v01.py": {
+      "bytes": 8033,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_training_plan_v01.py",
+      "sha256": "acd694e84d758e4ba191de5c01147b7db5f92e0461ac4b225d09eedab0ed05da"
+    }
+  }
+}

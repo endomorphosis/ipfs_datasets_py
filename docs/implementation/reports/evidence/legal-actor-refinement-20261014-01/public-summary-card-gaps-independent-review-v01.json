@@ -1,0 +1,161 @@
+{
+  "actor_error_qualifier": {
+    "corrected_count_wording_verified": true,
+    "identical_historical_mismatch_IDs_inferred": false,
+    "scope": "Count-only gap statement. Aggregate equality is not used to establish identity of the mismatched source IDs across historical runs.",
+    "training_actor_correct": 156,
+    "training_actor_mismatch_count": 12
+  },
+  "actual_release_mains": 0,
+  "all32_permissions_retained": true,
+  "analysis": {
+    "bytes": 2628958,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-analysis-v01.json",
+    "sha256": "0ff16b30a6cf9910ed3e60c915998261a3c886cbfe74a5ce9f6c6a1ab08ea079"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/MODEL_CARD_v01.md": {
+      "bytes": 2754,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/MODEL_CARD_v01.md",
+      "sha256": "e3b072e59f9774d9aeb85358ab2c3131bb81ed6f41da499c0a063c6f59c81df8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-independent-recount-v01.json": {
+      "bytes": 2383890,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-independent-recount-v01.json",
+      "sha256": "72031f7093614d57329cd4fe7b93c948772f80da98d9812c839c1ebe46902ea8"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json": {
+      "bytes": 21456,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json",
+      "sha256": "fcb0e01d212174c936c5a61c3efa7c8c229015097ff6eabde1fd3fdea61d72d9"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-analysis-v01.json": {
+      "bytes": 2628958,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-analysis-v01.json",
+      "sha256": "0ff16b30a6cf9910ed3e60c915998261a3c886cbfe74a5ce9f6c6a1ab08ea079"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json": {
+      "bytes": 98977,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+      "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-count-wording-review-v01.json": {
+      "bytes": 1610,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-count-wording-review-v01.json",
+      "sha256": "e3ae14a72eb5a3ef31273c5d08b59b770f47c7187aa476da01556254418a5528"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json": {
+      "bytes": 2337,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+      "sha256": "061df2c38c9d18889556ca7388a9b1b4b23fea47bfef358574945698e2705515"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-actual-independent-review-v01.json": {
+      "bytes": 121467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-actual-independent-review-v01.json",
+      "sha256": "69cfa09e4ea93fa7bd3feec16a4074bafe4b55ab8c9cf4268ec216f7eb7ea99e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json": {
+      "bytes": 9624,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json",
+      "sha256": "f1984b7d2b641f727d6e079872e888f081c8f14e51ff287e4cc5348fa15441ab"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/summary.json": {
+      "bytes": 62760,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/summary.json",
+      "sha256": "5d008f1ca9962d0e678626717dada5c817ea0f1c901848506ab38edb4ff4d7ae"
+    }
+  },
+  "card_all6_metric_rows_match": true,
+  "default_promotion": false,
+  "findings": [],
+  "freeze": {
+    "bytes": 21456,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json",
+    "sha256": "fcb0e01d212174c936c5a61c3efa7c8c229015097ff6eabde1fd3fdea61d72d9"
+  },
+  "gap_evidence": {
+    "gold_actor_top8_count": 168,
+    "joint_error_patterns": {
+      "actor": 5,
+      "actor,object,exceptions": 1,
+      "conditions": 2,
+      "modality,actor": 6
+    },
+    "new_model_calls": 0,
+    "new_training_approved": false,
+    "proposal_only": true
+  },
+  "gap_wording_correction": {
+    "bytes": 1610,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-count-wording-review-v01.json",
+    "sha256": "e3ae14a72eb5a3ef31273c5d08b59b770f47c7187aa476da01556254418a5528"
+  },
+  "gaps": {
+    "bytes": 2337,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+    "sha256": "061df2c38c9d18889556ca7388a9b1b4b23fea47bfef358574945698e2705515"
+  },
+  "independent_recount": {
+    "bytes": 2383890,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-independent-recount-v01.json",
+    "sha256": "72031f7093614d57329cd4fe7b93c948772f80da98d9812c839c1ebe46902ea8"
+  },
+  "model_calls": 0,
+  "model_card": {
+    "bytes": 2754,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/MODEL_CARD_v01.md",
+    "sha256": "e3b072e59f9774d9aeb85358ab2c3131bb81ed6f41da499c0a063c6f59c81df8"
+  },
+  "model_checkpoint_raw_pin_joined_from_freeze_without_parsing": true,
+  "network_calls": 0,
+  "new_numerical_calls": 0,
+  "newer_exposed_authored_joint": [
+    33,
+    34
+  ],
+  "older_exposed_authored_joint": [
+    51,
+    53
+  ],
+  "passed": true,
+  "private_body_reads": 0,
+  "qualifiers": {
+    "Lake_executed": false,
+    "all_diagnostics_repeatedly_exposed": true,
+    "blind_generalization_qualified": false,
+    "broader_logic_families_qualified": false,
+    "genuine_latent_semantics_qualified": false,
+    "independent_statutory_gold_qualified": false,
+    "latent_enabled": false,
+    "portable_numerical_reload_qualified": false,
+    "statutory8_unscored": true
+  },
+  "raw_checkpoint_JSON_parses": 0,
+  "raw_saved_head_parses": 0,
+  "reference_or_gold_body_reads": 0,
+  "reported_query_gate_change_evidence": "Qualified returned training traces report query/gate changes on32 updates; this review performs no live tensor/gradient recomputation.",
+  "required_minimum155_not_met": true,
+  "resource_API_calls": 0,
+  "result_review": {
+    "bytes": 98977,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+    "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+  },
+  "review_scope": "Evidence-only comparison of sealed public outputs/docs. Author is independent of root-authored summary/card/runtime-authored gaps; author previously wrote publication helper, not these outcome claims.",
+  "schema": "actor-refinement-public-summary-card-gaps-independent-review/v1",
+  "scientific_success": false,
+  "storage_public_receipt_joined": true,
+  "summary": {
+    "bytes": 9624,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/public-result-summary-v01.json",
+    "sha256": "f1984b7d2b641f727d6e079872e888f081c8f14e51ff287e4cc5348fa15441ab"
+  },
+  "summary_all18_metric_rows_match": true,
+  "technical_completion_passed": true,
+  "training_denominator": 168,
+  "training_raw_and_joint_parent_to_candidate": [
+    154,
+    154
+  ],
+  "zero_complete_IR_loss_IDs_all9_scopes_both_views": true
+}

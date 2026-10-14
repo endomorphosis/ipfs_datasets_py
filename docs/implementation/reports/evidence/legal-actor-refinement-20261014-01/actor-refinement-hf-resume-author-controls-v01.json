@@ -1,0 +1,202 @@
+{
+  "SDK_imports": 0,
+  "checkpoint_JSON_parses": 0,
+  "controls": [
+    {
+      "expected": "accepted",
+      "name": "exact5474partial_including_opaque_LFS_payload",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "unexpected_remote_path",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "missing_original_path",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "changed_other_original",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_partial_attributes",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "missing_created_payload",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_created_raw_Git_hash",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_created_LFS_sha256",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_created_LFS_size",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_partial_revision",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "boolean_metadata_query_count",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_second_parent",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "wrong_second_names",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "original_chunk1_failure_not_success",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "duplicate_original_chunk_name",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "different_original_group_geometry",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "missing_original_attributes",
+      "passed": true
+    },
+    {
+      "expected": "accepted",
+      "name": "strict_all5448plus26_restored_identity_equality",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "automatic_attributes_delta_reappears_after_correction",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "created_payload_identity_changes_in_correction",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "correction_adds_unapproved_path",
+      "passed": true
+    },
+    {
+      "expected": "accepted",
+      "name": "next_original_chunk_only",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "automatic_attributes_delta_reappears_during_resume",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "previously_created_chunk_cannot_repeat",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "duplicate_new_names",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "new_chunk_bytes_differ",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "old_path_removed_by_resume",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "extra_path_added_by_resume",
+      "passed": true
+    },
+    {
+      "expected": "accepted",
+      "name": "actual_public_attributes_2230plus129_exact",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "baseline_attributes_raw_byte_drift",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "partial_attributes_raw_byte_drift",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "attributes_line_removal_disallowed",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "unverified_baseline_attributes_disallowed",
+      "passed": true
+    },
+    {
+      "expected": "refused",
+      "name": "malformed_returned_revision",
+      "passed": true
+    },
+    {
+      "expected": "source_only",
+      "name": "main_static_recovery_limits_force_download_and_failed_discrepancy",
+      "passed": true
+    }
+  ],
+  "count": 35,
+  "findings": [],
+  "model_calls": 0,
+  "network_calls": 0,
+  "passed": true,
+  "private_body_reads": 0,
+  "public_raw_attributes_reads": 2,
+  "publisher_main_calls": 0,
+  "schema": "actor-refinement-Hub-resume-author-controls/v1",
+  "scope": "Pure synthetic5474identity and chunk fixtures plus exact public attributes byte fixtures and static main limits only.",
+  "source": {
+    "bytes": 24973,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/resume_actor_refinement_hf_v01.py",
+    "sha256": "98d851e0aa900e67a02ecf6b393d7ee772874494e5dbc046d005ddb2e5474a94"
+  },
+  "tests": {
+    "bytes": 9421,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_resume_detached_v01.py",
+    "sha256": "ec11a590ac839fce399914c9af92fca7ce31d6866c082763cc9bba860d53d391"
+  },
+  "uploads": 0
+}

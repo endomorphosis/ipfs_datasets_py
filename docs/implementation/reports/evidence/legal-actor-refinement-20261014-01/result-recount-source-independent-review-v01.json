@@ -1,0 +1,101 @@
+{
+  "actual_input_manifest_bound": false,
+  "actual_recount_executed": false,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-evaluation-author-controls-v01.json": {
+      "bytes": 9196,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-evaluation-author-controls-v01.json",
+      "sha256": "ea60b2ae3fc854a3f14d89343720ad9cc3b984ecd32366598e256a4baed7cad4"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py": {
+      "bytes": 56952,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+      "sha256": "a6b004330c0b0be63182e5931d9d77654ae0a3144526113fc9bd3075a121642e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py": {
+      "bytes": 52067,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_split_features.py",
+      "sha256": "886a0cde9924dceb5f5a4b655a995eb60a8f3fb954408d991fe4b4eb23ade0cd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py": {
+      "bytes": 49658,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/datasets/ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_targeted_loss.py",
+      "sha256": "f611490b2c15dee3437d0181686f16bb3aa56f3b20a00b9fa0d4ae2b2624637b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json": {
+      "bytes": 6260,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json",
+      "sha256": "61e6e6f74d1483213847e9951d18ea871003c8afc575b8173ae287ef49fe41d7"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py": {
+      "bytes": 41111,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+      "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py": {
+      "bytes": 27631,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_recount_detached_v01.py",
+      "sha256": "6eaac15eb42429532ad488e7ccdafd9e6867f78e90271817e74de0c155269dfd"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json": {
+      "bytes": 40673,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/trainer-source-independent-review-v01.json",
+      "sha256": "2b9ef89ebf9512ccdc61ccfa0e7e83a00b291764ad74fae22272b4be5e5b9ca1"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py": {
+      "bytes": 46595,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/review_conditions_balanced_result_recount_v01.py",
+      "sha256": "0c5b68645cc66e7758d1750c878f5be9fb117faad841fe27f73391c8ccbce8bf"
+    }
+  },
+  "findings": [],
+  "independent_control_counts": {
+    "analyzer": 20,
+    "recounter": 29
+  },
+  "independent_control_receipt": {
+    "bytes": 6260,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-independent-source-controls-v01.json",
+    "sha256": "61e6e6f74d1483213847e9951d18ea871003c8afc575b8173ae287ef49fe41d7"
+  },
+  "limitations": [
+    "Qualifies the sealed source and its required immutable helper/trainer/contract closure; actual root-created result inputs must follow complete qualified freeze.",
+    "No actual output, training checkpoint, reference or private resource body was opened by this reviewer."
+  ],
+  "observer": {
+    "bytes": 41111,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+    "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+  },
+  "passed": true,
+  "reused_immutable_helpers": 7,
+  "reviewer_actions": {
+    "Git_mutations": 0,
+    "actual_checkpoint_JSON_parses": 0,
+    "actual_saved_head_or_reference_reads": 0,
+    "model_or_encoder_calls": 0,
+    "network_calls": 0,
+    "numerical_imports": 0,
+    "private_resource_body_reads": 0,
+    "production_main_calls": 0,
+    "resource_API_calls": 0
+  },
+  "schema": "actor-refinement-result-recount-source-independent-review/v1",
+  "source_checks": [
+    "Both analyzer and recounter require complete62 frozen output inventory/full runtime identity before actual result/reference scoring; checkpoint JSON stays opaque",
+    "Only parent/initial/trained,30panels/27 authored score sets/nine paired scopes; sole exact trained N11 comparator,0new parent updates/forwards and6copied files/240rows",
+    "Preregistered raw AND joint training168 exactIR>=155, no completeIR lossID in either view for any9scopes, all32 permission identities/status retained; scientific failure remains a false outcome",
+    "Initial full632 binary32 heads and complete saved greedy/joint envelopes; final632 protects modality,all four presence pairs including learned N11 conditions,and five nonactor pointer roles; onlyactor start/end excluded",
+    "FullIR includes modality plus all six roles; law8 remains unscored and no legal/latent/formal/portability promotion claim",
+    "Retained binary32 ranking/domain helpers and source-qualified joint/greedy replay,rank changes diagnostic only",
+    "Actual32 trace schemas use trained query/gate state; no first-query zero-gradient/value/moment condition; all frozen36/inactive650/source hashes and feature branch chains checked",
+    "Every one of384 source IDs/SHA/actor gold coordinates/present nonactor negative domain, exact1729 schedule indices/IDs/hash/final progress authenticated",
+    "Runtime accounting1280 new inference+32 batchforwards=1312,1664new sourceoccurrences; copied parent captures counted as0new forwards",
+    "Pinned grouped maximum-minus-target CE regression passes huge equal positive/negative logits; F15 does not claim scalar CE or live numerical gradient replay"
+  ]
+}

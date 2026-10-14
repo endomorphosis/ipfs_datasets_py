@@ -1,0 +1,339 @@
+{
+  "Lake_executed": false,
+  "active_scalars": 258,
+  "all_trained_N11_conditions_rows_frozen": true,
+  "analysis": {
+    "bytes": 2628958,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-analysis-v01.json",
+    "sha256": "0ff16b30a6cf9910ed3e60c915998261a3c886cbfe74a5ce9f6c6a1ab08ea079"
+  },
+  "blind_generalization_qualified": false,
+  "broader_logic_families_qualified": false,
+  "checkpoint": {
+    "bytes": 12230969,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/actor-refinement-20261014-actor-refinement-ce-01/results/cell-checkpoint.json",
+    "sha256": "f421514dc02cb3542e7587767191aa99bd32551f145e0af4d01c47595d4d73c4"
+  },
+  "configured_dimension": 384,
+  "default_promotion": false,
+  "evaluation_contract": {
+    "bytes": 12913,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+    "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+  },
+  "exposed_authored_diagnostics_only": true,
+  "feature_learning": {
+    "context_nonzero_gradient_updates": 32,
+    "gate_changed_updates": 32,
+    "gate_nonzero_gradient_updates": 32,
+    "query_changed_updates": 32,
+    "query_nonzero_gradient_updates": 32,
+    "residual_nonzero_gradient_updates": 32
+  },
+  "final_model_state_sha256": "a1bb3158f19c7b619b7d15ee7ba4887046cc7d22eebecad7b04e8a8111ac3d42",
+  "final_protected_sources": 632,
+  "findings": [],
+  "freeze": {
+    "bytes": 21456,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-output-freeze-v01.json",
+    "sha256": "fcb0e01d212174c936c5a61c3efa7c8c229015097ff6eabde1fd3fdea61d72d9"
+  },
+  "frozen_nonactor_tensors": 36,
+  "genuine_8D_384D_768D_latent_semantics_qualified": false,
+  "inactive_actor_scalars": 650,
+  "independent_recount": {
+    "bytes": 2383890,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-independent-recount-v01.json",
+    "sha256": "72031f7093614d57329cd4fe7b93c948772f80da98d9812c839c1ebe46902ea8"
+  },
+  "inference_source_forwards": 1280,
+  "initial_full_parity_sources": 632,
+  "latent_enabled": false,
+  "metrics": [
+    {
+      "joint_actor_exact": 96,
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_actor_exact": 96,
+      "raw_exact_ir": 94,
+      "row_count": 96,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 27,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_actor_exact": 11,
+      "raw_exact_ir": 8,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 30,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_actor_exact": 28,
+      "raw_exact_ir": 25,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 61,
+      "joint_exact_ir": 51,
+      "panel": "old_authored_eval",
+      "raw_actor_exact": 56,
+      "raw_exact_ir": 48,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 56,
+      "joint_exact_ir": 46,
+      "panel": "authored_dev",
+      "raw_actor_exact": 51,
+      "raw_exact_ir": 45,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 63,
+      "joint_exact_ir": 33,
+      "panel": "authored_eval",
+      "raw_actor_exact": 52,
+      "raw_exact_ir": 27,
+      "row_count": 72,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 26,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "raw_actor_exact": 7,
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 9,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "raw_actor_exact": 3,
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 156,
+      "joint_exact_ir": 154,
+      "panel": "training168",
+      "raw_actor_exact": 156,
+      "raw_exact_ir": 154,
+      "row_count": 168,
+      "state": "parent"
+    },
+    {
+      "joint_actor_exact": 96,
+      "joint_exact_ir": 94,
+      "panel": "old_tune",
+      "raw_actor_exact": 96,
+      "raw_exact_ir": 94,
+      "row_count": 96,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 28,
+      "joint_exact_ir": 19,
+      "panel": "fresh_tune",
+      "raw_actor_exact": 11,
+      "raw_exact_ir": 8,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 30,
+      "joint_exact_ir": 25,
+      "panel": "fresh_challenge",
+      "raw_actor_exact": 28,
+      "raw_exact_ir": 25,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 63,
+      "joint_exact_ir": 53,
+      "panel": "old_authored_eval",
+      "raw_actor_exact": 58,
+      "raw_exact_ir": 50,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 59,
+      "joint_exact_ir": 46,
+      "panel": "authored_dev",
+      "raw_actor_exact": 55,
+      "raw_exact_ir": 45,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 64,
+      "joint_exact_ir": 34,
+      "panel": "authored_eval",
+      "raw_actor_exact": 52,
+      "raw_exact_ir": 27,
+      "row_count": 72,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 26,
+      "joint_exact_ir": 0,
+      "panel": "fresh_dev",
+      "raw_actor_exact": 7,
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 9,
+      "joint_exact_ir": 0,
+      "panel": "fresh_test",
+      "raw_actor_exact": 3,
+      "raw_exact_ir": 0,
+      "row_count": 36,
+      "state": "trained"
+    },
+    {
+      "joint_actor_exact": 156,
+      "joint_exact_ir": 154,
+      "panel": "training168",
+      "raw_actor_exact": 156,
+      "raw_exact_ir": 154,
+      "row_count": 168,
+      "state": "trained"
+    }
+  ],
+  "native_cap_bytes": 145000000000,
+  "passed": true,
+  "portable_numerical_reload_qualified": false,
+  "raw_result_bytes": 67956145,
+  "raw_result_file_count": 62,
+  "resource_review": {
+    "bytes": 41117,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-ce-terminal-resource-audit-v01.json",
+    "sha256": "bb30ea75741a9b0ca46969fc142ff067e299ff2c8820eedc699b33aa4bd3adac"
+  },
+  "result_review": {
+    "bytes": 98977,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor-refinement-result-independent-review-v01.json",
+    "sha256": "7732c8fd277193297eceb55abda416a224b34516936ea7d2826a1ffe736e700c"
+  },
+  "schema": "actor-refinement-public-result-summary/v1",
+  "scientific_success": false,
+  "semantic_accuracy": null,
+  "source_checkpoint": {
+    "bytes": 9337558,
+    "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+    "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+  },
+  "statutory8_unscored": true,
+  "storage_archive": {
+    "actual_independent_review": {
+      "bytes": 121467,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-actual-independent-review-v01.json",
+      "sha256": "69cfa09e4ea93fa7bd3feec16a4074bafe4b55ab8c9cf4268ec216f7eb7ea99e"
+    },
+    "archive_bytes": 149504694,
+    "files_preserved": 5445,
+    "immutable_revision": "0228887c8e33cb23e9679889a9496f87140021e6",
+    "measured_net_counted_savings_bytes": 783677871,
+    "new_files": 3,
+    "raw_bytes": 934325529,
+    "verified_member_count": 1162
+  },
+  "strict_acceptance": {
+    "all32_permission_retention": {
+      "count": 32,
+      "passed": true
+    },
+    "no_complete_IR_loss_IDs_vs_N11": {
+      "loss_ids_by_scope": {
+        "authored_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_challenge": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_dev": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_test": {
+          "joint": [],
+          "raw": []
+        },
+        "fresh_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "old_authored_eval": {
+          "joint": [],
+          "raw": []
+        },
+        "old_tune": {
+          "joint": [],
+          "raw": []
+        },
+        "training168": {
+          "joint": [],
+          "raw": []
+        }
+      },
+      "passed": true,
+      "scopes": [
+        "old_tune",
+        "fresh_tune",
+        "fresh_challenge",
+        "old_authored_eval",
+        "authored_dev",
+        "authored_eval",
+        "fresh_dev",
+        "fresh_test",
+        "training168"
+      ],
+      "views": [
+        "raw",
+        "joint"
+      ]
+    },
+    "schema": "actor-refinement-scientific-acceptance/v1",
+    "scientific_success": false,
+    "technical_gate_passed": true,
+    "training168": {
+      "joint_full_IR": 154,
+      "minimum_required": 155,
+      "passed": false,
+      "raw_full_IR": 154
+    }
+  },
+  "total_model_forwards": 1312,
+  "total_source_occurrences": 1664,
+  "trainable_actor_tensors": 6,
+  "training_recipe": {
+    "actor_ranking_enabled": false,
+    "batch_size": 12,
+    "learning_rate": 0.001,
+    "optimizer": "fresh Adam",
+    "seed": 1729,
+    "updates": 32
+  },
+  "training_rows": 168,
+  "training_source_occurrences": 384,
+  "training_updates": 32
+}

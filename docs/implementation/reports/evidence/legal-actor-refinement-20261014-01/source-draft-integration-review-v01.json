@@ -1,0 +1,41 @@
+{
+  "added_paths": [
+    "ipfs_datasets_py/optimizers/logic_theorem_optimizer/legal_span_actor_refinement.py",
+    "tests/unit/optimizers/logic_theorem_optimizer/test_legal_span_actor_refinement_contracts.py"
+  ],
+  "all_incoming_paths_unchanged": true,
+  "base": "5b7aa8800425a3a81b91792dac2810d92f48a717",
+  "base_path_count": 31624,
+  "base_tree_SHA256": "77ee521f64104ad7ce37148158de1c30860304f0bbe886af63fc93b89346e592",
+  "canonical_endpoints": {
+    "/home/barberb/lift_coding/.git/HEAD": {
+      "bytes": 37,
+      "sha256": "32a4e0619657da69ad525c8936b759693db31bc061488a69a547266919aac0c7"
+    },
+    "/home/barberb/lift_coding/.git/index": {
+      "bytes": 692628,
+      "sha256": "80b0426031778d38c8b762a273739e08edbf2ce2b18690efb4f541fa6de120a4"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/HEAD": {
+      "bytes": 21,
+      "sha256": "28d25bf82af4c0e2b72f50959b2beb859e3e60b9630a5e8c603dad4ddb2b6e80"
+    },
+    "/home/barberb/lift_coding/.git/modules/external/ipfs_datasets/index": {
+      "bytes": 3799757,
+      "sha256": "d2a68a76e7a7ed99ef8ba031261cb8e7b66d6fca6c351b0e1e9dd8dc13910175"
+    }
+  },
+  "default_promotion": false,
+  "draft": true,
+  "existing_path_changes": [],
+  "findings": [],
+  "head": "4e671ed68da7c7172df3ce2057c18c54eca38701",
+  "head_path_count": 31626,
+  "head_tree_SHA256": "9f2f64965d0b547eaa3786a55c6bdb0ef4df23ebccb63e547386eca0b77c8236",
+  "numerical_training_started": false,
+  "passed": true,
+  "preserved_gitlink_count": 10,
+  "preserved_symlink_count": 4,
+  "schema": "actor-refinement-source-draft-integration-review/v1",
+  "source_PR": "https://github.com/endomorphosis/ipfs_datasets_py/pull/1303"
+}

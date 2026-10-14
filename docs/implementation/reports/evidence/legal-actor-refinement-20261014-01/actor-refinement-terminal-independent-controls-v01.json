@@ -1,0 +1,105 @@
+{
+  "actual_baseline_or_private_body_reads": 0,
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v03.py": {
+      "bytes": 19906,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_resource_protocol_v03.py",
+      "sha256": "f7914d018d9d59c7dd611ccfe12cc30e6db4fe9319808651c6b24982cbbbbc55"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_terminal_independent_controls_v01.py": {
+      "bytes": 7125,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/actor_refinement_terminal_independent_controls_v01.py",
+      "sha256": "ef64a0c75ad915df2df79fcccf737dc5ea99fe27dda76cbb35cafd8a418a426e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/audit_actor_refinement_terminal_resources_v01.py": {
+      "bytes": 18496,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/audit_actor_refinement_terminal_resources_v01.py",
+      "sha256": "1face201ab85b598e50cf0da74e6c3ed562d9bc589f8ca8249cbdddf7e02705c"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v03.py": {
+      "bytes": 37759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v03.py",
+      "sha256": "3ce749fd283d7718a268afd31ff82b3df7b477f06ac98ad12fc3cf61e6384865"
+    }
+  },
+  "control_count": 14,
+  "controls": [
+    {
+      "expected_refusal": false,
+      "name": "dynamic closing permits active+released foreign records and fully charges active claim",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "preserved body mutation refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "missing prior refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "own nonrelease refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "own budget change refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "typed foreign fullclaim required",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "changed cap refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "own historicalID reuse refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": false,
+      "name": "exact V03 concrete plan/review/admission/command custody accepted",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "wrong output target refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "stale runner refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "admission plan mismatch refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "GPU envelope enable refused",
+      "passed": true
+    },
+    {
+      "expected_refusal": true,
+      "name": "model authority refused",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "model_calls": 0,
+  "numerical_imports": 0,
+  "passed": true,
+  "resource_API_calls": 0,
+  "schema": "actor-refinement-terminal-independent-detached-controls/v1",
+  "terminal_main_calls": 0
+}

@@ -1,0 +1,21 @@
+{
+  "authorization": "Root explicitly requested correction of the rationale and recording of the new raw pin before Git publication.",
+  "claim_scope": "The count remains 12 training actor mismatches; unchanged mismatch identities are not established.",
+  "corrected_pin": {
+    "bytes": 2337,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+    "sha256": "061df2c38c9d18889556ca7388a9b1b4b23fea47bfef358574945698e2705515"
+  },
+  "corrected_rationale": "Ordinary actor CE changed query/gate and improved several authored diagnostic outputs without reducing the count of 12 training actor mismatches. Gold actor spans remain in the top 8 domain; five training failures are actor-only. Six failures also need modality repair, one includes object/exceptions, and two are conditions-only.",
+  "findings": [],
+  "model_or_reference_reads": 0,
+  "passed": true,
+  "previous_pin": {
+    "bytes": 2326,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/next-experiment-gaps-v01.json",
+    "sha256": "7d8f0f1efaa4902aedb38f5816bf833d24a5cc4cbd2bdd3c7a546d36191b993b"
+  },
+  "previous_rationale": "Ordinary actor CE changed query/gate and improved several authored diagnostic outputs without changing the12 training actor mismatches. Gold actor spans remain in the top8 domain; five training failures are actor-only. Six failures also need modality repair, one includes object/exceptions, and two are conditions-only.",
+  "schema": "actor-refinement-gap-count-wording-review/v1",
+  "scientific_claim_changed": false
+}

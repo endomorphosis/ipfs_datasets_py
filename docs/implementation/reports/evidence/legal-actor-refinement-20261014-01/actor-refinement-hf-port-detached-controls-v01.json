@@ -1,0 +1,42 @@
+{
+  "SDK_imports": 0,
+  "actual_baseline_executions": 0,
+  "actual_helper_main_executions": 0,
+  "actual_prepare_executions": 0,
+  "actual_publish_executions": 0,
+  "control_source": {
+    "bytes": 10116,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/test_actor_refinement_hf_port_detached_v01.py",
+    "sha256": "a81f8bec89b1f13a30d29a0735c5c5155a5e3233a260954996da0a788b619c28"
+  },
+  "findings": [],
+  "helper": {
+    "bytes": 28390,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/archive_actor_refinement_hf_v01.py",
+    "sha256": "471dc3f744bfd374e798e0b9e0633a01b1045f039b689e3111c17fe3a4017e95"
+  },
+  "network_calls": 0,
+  "passed": true,
+  "schema": "actor-refinement-Hub-helper-port-detached-controls/v1",
+  "scope": "Pinned source-AST functions over synthetic current/prior maps, descriptor geometry, chunk sizes, Git/LFS identities and absent-required-source refusal; source-stage draft remains unsealed.",
+  "spec_or_result_or_reference_or_checkpoint_JSON_parses": 0,
+  "tests": [
+    "test_current_inventory_and5448_anchor_both_preserved",
+    "test_anchor_missing_changed_prefix_or_bad_baseline_refused",
+    "test_malformed_saved_remote_LFS_identity_refused",
+    "test_sdk_typed_hex_Git_and_LFS_identity",
+    "test_sdk_identity_malformed_cases",
+    "test_exact40_sources_include_supplement",
+    "test_source_closure_missing_unadmitted_duplicate_or_wrong_recipe_refused",
+    "test_required_missing_public_source_does_not_silently_skip",
+    "test_no_historical_path_filter",
+    "test_chunks48_files_and16M_boundary",
+    "test_large32MiB_file_is_explicit_singleton",
+    "test_chunk_both_budgets_or_single_large_file_hold",
+    "test_new_prefix_destination_rejects_traversal_and_noncanonical_names",
+    "test_Git_and_LFS_content_identity",
+    "test_baseline_gate_precedes_real_SDK_import",
+    "test_actualF15_tests_V03_recipes_and_trainer_gate_source_interfaces"
+  ],
+  "tests_run": 16
+}

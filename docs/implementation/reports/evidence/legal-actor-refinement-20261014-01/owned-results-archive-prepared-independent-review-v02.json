@@ -1,0 +1,777 @@
+{
+  "actual_archive_bytes": 149504694,
+  "actual_source_qualified_physical_restore_all_members": true,
+  "archive": {
+    "bytes": 149504694,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz",
+    "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+  },
+  "artifacts": {
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py": {
+      "bytes": 28064,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/analyze_actor_refinement_v01.py",
+      "sha256": "6c6309903cbe20ea73d045e6d29224096ff3a8602cc935c0af6343a6f4599d1b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json": {
+      "bytes": 12913,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/evaluation-contract-v01.json",
+      "sha256": "a8e64cee523d57149b6becaf18023bf87a9ecdb147d83e9c42453fce9230944e"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-released-results-storage-intake-v01.json": {
+      "bytes": 67366,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-released-results-storage-intake-v01.json",
+      "sha256": "520ab94ce21a4bfce3aea05b3678b3c8a7820ea3c3d456a3af3fdf8e8b789074"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v01.json": {
+      "bytes": 75686,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v01.json",
+      "sha256": "c6c2e49416c864352d2a65cd9d62bfd9d906897cd7861dd6ad93076d53b5a0d2"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json": {
+      "bytes": 801434,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+      "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json": {
+      "bytes": 84738,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json",
+      "sha256": "f8ffe1618f7b4bba6ce8f906bc62bf5571435434f4a9a5fd5465ca08d06752aa"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz": {
+      "bytes": 149504694,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-staging-v01/owned-released-results.tar.gz",
+      "sha256": "76f81402e57a5782abd7fb76b91b62e8af20886239187dd8603425eb4caee47f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v01.py": {
+      "bytes": 13018,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/prepare_actor_refinement_v01.py",
+      "sha256": "76cfdf05f3de904bfec6b910d206f9a2c5ae710f7cb9461a897e7f126b0c4495"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py": {
+      "bytes": 41111,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_actor_refinement_result_recount_v01.py",
+      "sha256": "e60814cdf89c0fa3d90dd732a4d6fd9e05dd9ea2a27834910fddf7dcbeaa0692"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_owned_results_archive_prepared_v01.py": {
+      "bytes": 11305,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_owned_results_archive_prepared_v01.py",
+      "sha256": "d2b95e0d901909e240bdac41da8f9b699293ec5449c48d4e9be78aca233130bb"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v01.py": {
+      "bytes": 37759,
+      "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/run_actor_refinement_v01.py",
+      "sha256": "9c1fe62765d07d2ae840d97461ea4b5952a42db71dae5b18c093ba54fe29923b"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json": {
+      "bytes": 21853,
+      "path": "/home/barberb/lift_coding/artifacts/legal-balanced-execution-20261014-01/conditions-balanced-output-freeze-v01.json",
+      "sha256": "b30372ad5d960d7263907ae3cca55854dca71d63d5fc2c497cbf740bc8a9530f"
+    },
+    "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json": {
+      "bytes": 21832,
+      "path": "/home/barberb/lift_coding/artifacts/legal-head-repair-20261014-01/conditions-presence-output-freeze-v01.json",
+      "sha256": "1ca5584653ca7c50906096c4ecf69f1dc78439f75180af7a18bcae4e9083d9f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-joint.json",
+      "sha256": "80164299f95b6a3001ae5ced42b0b452ade5376fde70420ffeb843a54aa5e41c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429955,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_dev-raw.json",
+      "sha256": "3e92229f7e2623b51a7d8ec3dae44c7c24c74eae4803a20e8719a05f500b1615"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-joint.json",
+      "sha256": "0b22ff76499dae7cbc0a50e3d8bf3e48e3eab4ca1d1db03427f4018973aedc8f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431920,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-authored_eval-raw.json",
+      "sha256": "d41bc34c7f404c274bddf2382809baae096b3d57fde241a10920b318b3b49272"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-joint.json",
+      "sha256": "ba03b06b986266f3cb7b84863594d59a62ae6e85be578900f44201af77a34efa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 679343,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_challenge-raw.json",
+      "sha256": "be4c07600d23e0f882c44bb9b327241547fc7b451537c65b4a9f4706953ddd5b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-joint.json",
+      "sha256": "5a4de685497a1c9ad224ed4321a3bdc5323a4342c205ab5acdb9ab943b69df66"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-raw.json": {
+      "bytes": 805542,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_dev-raw.json",
+      "sha256": "8902cb42821f5febbf20bcd50a62540cbeec6ff0161ca7347ef6fd0bab7daf84"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-joint.json",
+      "sha256": "a526a27e2a93de9a6ad903457918973a9074fa734b959e64d1be975d0dfd48a0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-raw.json": {
+      "bytes": 806178,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_test-raw.json",
+      "sha256": "2c107be32b9e9fa5b4a0f8d2e11e8e9784a82bbf423a62f44449782ab362ecbb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-joint.json",
+      "sha256": "8a9d44ff5d2d40e5bc8f82bd2e44c4383c4ac22bc707ba203d2a8c8d27c928dd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 627159,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-fresh_tune-raw.json",
+      "sha256": "fe618428886c37aadbc648d3e2bace3e6af9b6c8930f45b1718a0f8dbdfeadf6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-joint.json",
+      "sha256": "6da57833f3b6043bcb62ae567dc50d84a2bb7637acaa03f3a7bd1e103af5e509"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-raw.json": {
+      "bytes": 282617,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-law-raw.json",
+      "sha256": "c8c884e16493555b7dce103cec1ee1c134e95775fe515f1c009a29c603c3b0a9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-joint.json",
+      "sha256": "ddf7438b48559f03f293200a3aa28b8e9b3ac1e1b9a267f8605b6e1140a85c6c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1452628,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_authored_eval-raw.json",
+      "sha256": "d27318ef0aa94f7cec4b02e626da0e16482221b0b689e9799e9530b991bb1ddb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-joint.json",
+      "sha256": "fdd34ddd72db5e5f2f587db323746dd5c91e78c8ed29c6fc361cfec82100ad99"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2287617,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/baseline-old_tune-raw.json",
+      "sha256": "22590eebd81cec981c07ab418db3dd7b7221c2e893017f848808c97b624318ba"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-checkpoint.json": {
+      "bytes": 9337887,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-checkpoint.json",
+      "sha256": "ff9f05efea37cda9678c31143e2d75339ae91397785c97ec70a1795dbe18eb4a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-training.json": {
+      "bytes": 439937,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/cell-training.json",
+      "sha256": "0475bf37c08f0dda6a246396ed16d4788b2cc328393646bd8dc5c51757628341"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parent-head-parity.json",
+      "sha256": "bc5e2c01fc12ef69dcf3f32dc4414fabb42295cbe81949ad059c7e22e8e57b40"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20599,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-alternate_placeholders.json",
+      "sha256": "f96c7d383e18181938eb0d87334083c67a659bc16ad71147e15f4610b4905388"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-disabled.json": {
+      "bytes": 20603,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-disabled.json",
+      "sha256": "f89481adaada95dc41f8896b835d225384396a319582ce95651cd6c5920d4984"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20601,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-rotated_placeholders.json",
+      "sha256": "f59756705209fcf548f5b8e9f09b0d8d8355b712719bb3ab2802a8d21d00bbc9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-zeros.json": {
+      "bytes": 20599,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity-zeros.json",
+      "sha256": "ca9d1d8988b1b816b602b1312d8def0a89cae21162abde510831a0af69b40abd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity.json": {
+      "bytes": 2010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-parity.json",
+      "sha256": "43faf1c3dd28dde92a0329a93a1300e0bf762b55e2c2bc1e52a544c7193f130d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-joint.json",
+      "sha256": "ddb2861c7a30099e07fa76d3401fa95f528c609a453ea7113bf3b2ca8cbb1cff"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-raw.json": {
+      "bytes": 3588666,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/initial-training168-raw.json",
+      "sha256": "1f60a76e9c5c61120a30d63ddafbe86af9f991ce3a9b918e0fa51c31195bd5e7"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-joint.json",
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_dev-raw.json",
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-joint.json",
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-fresh_test-raw.json",
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-joint.json",
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/parent-training168-raw.json",
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/summary.json": {
+      "bytes": 62315,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/summary.json",
+      "sha256": "2519fa0f65e73c2181ed6d417d6666e7996cba90d3dfa186ed1b67d8b9a3ec7e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1025009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-joint.json",
+      "sha256": "28fbf88eab037566110fe1cd57d785c41ece4165c84397951fd1a973c5c31d0b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1434813,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_dev-raw.json",
+      "sha256": "7639cd808fd79b502292661ff16d5cd74ad3a63cc68696b4d32a24e55b180290"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1024797,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-joint.json",
+      "sha256": "8bcffa177d02c401bfb8bb19b2ded864a375c1ffcd3ae15c3c067988725f08a6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1434229,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-authored_eval-raw.json",
+      "sha256": "cd732d1f21953f300f6fde527a70d2fb58206bce3604a291d3116bac85d9cf42"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526654,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-joint.json",
+      "sha256": "2365a18e029f96a5f3140643ff673682553afd1c8f4bb4942852018180a163f3"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 679332,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_challenge-raw.json",
+      "sha256": "b3c7e30f59c83edf6330ba6c4e6c0c2d0807d71daac74df2619ffdf1ef6100dc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-joint.json": {
+      "bytes": 521374,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-joint.json",
+      "sha256": "1bd61e6febe1f28c9e17d56c8718ed5fcef5c0d63370ad94e76088856b7828df"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-raw.json": {
+      "bytes": 805283,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_dev-raw.json",
+      "sha256": "fed7d498b75adfd4f09af059a601e24b8c5446e9fa0bab4a5504554ff83d324d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-joint.json": {
+      "bytes": 464090,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-joint.json",
+      "sha256": "bd256f3e43ddd264230d77311b46771a84e7d4d2d2fae7977133b841bf5ef02f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-raw.json": {
+      "bytes": 806182,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_test-raw.json",
+      "sha256": "d2fbe0fc093a24c4f01cb3e143e88b5cbf783ecfa2e2283fc6edcf4f93f8d4ea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-joint.json",
+      "sha256": "87a6a523ce8dac67cebdcae59dbdb6aca484b78a23990d524d5e205080273a41"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 627149,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-fresh_tune-raw.json",
+      "sha256": "53aafbcbf904854f9035b09f898820f242a4438d4908671fc2777b071ee300f5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-frozen-head-retention.json",
+      "sha256": "f2690e0089d83e6ecd7d8554feb3cc608e25cfb67ccefd6882de223ba856497f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-joint.json": {
+      "bytes": 107527,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-joint.json",
+      "sha256": "c07db08dd20d62d976a9d040182f3ea614ba2ef360b5e333886e0c5940d475c6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-raw.json": {
+      "bytes": 282613,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-law-raw.json",
+      "sha256": "c3997641d0f2c01b8bc6cd023c98e10e505e12f57e2b8f87ce097f6462699b6f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044651,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-joint.json",
+      "sha256": "ae0243122e0d3db7edd5d7708ffecc9ae3f264512d012ee92291500bb62a661c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1452606,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_authored_eval-raw.json",
+      "sha256": "10bc0d65eedd6eb563b43a75330046db79ccbdc20800e3a61c19cfb85ee2a736"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456870,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-joint.json",
+      "sha256": "890107015a522fd985c372844628025930e31e942a24af7bbbae5e9c1cb8c00f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-raw.json": {
+      "bytes": 2287597,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-old_tune-raw.json",
+      "sha256": "4c2b72940f8835cbc618ae407a1f2dca6a5edda08c9111fb13d34ed7c26c4365"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20597,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-alternate_placeholders.json",
+      "sha256": "ea3a9a4472b6b67187c028669d560daf56c2ad5305334dba5940d2a004a88d69"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-disabled.json": {
+      "bytes": 20601,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-disabled.json",
+      "sha256": "235f9206d1b6e045f03ce4f66ef57c9eb684145ed20211a508722428c4f98b7d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20599,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-rotated_placeholders.json",
+      "sha256": "ac3c80bb54882d11e59fc50080b3e15090986e4ac93fd655de4908c6aa9572c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-zeros.json": {
+      "bytes": 20597,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity-zeros.json",
+      "sha256": "247aada0954bae194ee7d0c167bad1585ad53c680dd40cf4b5bb64ad836fbd06"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity.json": {
+      "bytes": 2010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-parity.json",
+      "sha256": "24a737fecddb42460c6a5ef20bb320463fc762aa81a89948fe5b66873e471696"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-joint.json": {
+      "bytes": 2485858,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-joint.json",
+      "sha256": "4307c135817fca556ded32ebcf0dd51c35691bb12656873448a10759cda92b3c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-raw.json": {
+      "bytes": 3588639,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-balanced-20261014-conditions-balanced-ce-01/results/trained-training168-raw.json",
+      "sha256": "9eaad61005c5a2f9c698326514a80241b113b33306cf30bfd91fb93d0e3be9f4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-joint.json": {
+      "bytes": 1015284,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-joint.json",
+      "sha256": "eb7b0e9078f976f3df08c719e383dc5fff3d3acbc4d80ea3dec98a119ac17aa6"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-raw.json": {
+      "bytes": 1429302,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_dev-raw.json",
+      "sha256": "b8fb400f4fd96a0b83d31c988c0be46c0e89c7a70c4c83da4b4e38fb2a4b877d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-joint.json": {
+      "bytes": 1025614,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-joint.json",
+      "sha256": "f0b526ab8ee08ff36d4f165ddeec8bbc67ed6a136cdfa60883540ef133dc1b41"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-raw.json": {
+      "bytes": 1431267,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-authored_eval-raw.json",
+      "sha256": "84bcaf9a3782e0dd25eded8db221bbe9f37d2549001b7f0e7bf3d5634fefc4fa"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-joint.json": {
+      "bytes": 526643,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-joint.json",
+      "sha256": "9ad796c9be1174c879ee7dbbafcac36f5b90b92b3acfeb9981cde6b9444cedf0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-raw.json": {
+      "bytes": 678690,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_challenge-raw.json",
+      "sha256": "ee7761773e874bc53263305b89ea5a0f9a60ba515861d1c54a58d1015669a032"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-joint.json": {
+      "bytes": 523009,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-joint.json",
+      "sha256": "13ee22f4a0a63a859462446fb5868ebe6db64aac2bf17c7a1eec4664d171587b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-raw.json": {
+      "bytes": 804889,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_dev-raw.json",
+      "sha256": "2753e176048d13539413c03b79cb80b6da4c6c9f819db180131c78ed5edf0eda"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-joint.json": {
+      "bytes": 464075,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-joint.json",
+      "sha256": "2c14eba5a09dbcb1af8dd08578891b66574c59c4e1029e3f85c36ad7a2dc4a90"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-raw.json": {
+      "bytes": 805525,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_test-raw.json",
+      "sha256": "c62b092b11232abea5d9fcdb78b299f300552de1561ae57f937fd79132bdcdd5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-joint.json": {
+      "bytes": 509148,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-joint.json",
+      "sha256": "f63f4bec2132e68488fa8478aa8db33a680970f5b4a05edb06c61649c1597585"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-raw.json": {
+      "bytes": 626506,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-fresh_tune-raw.json",
+      "sha256": "1700e482bec7fb04bbd11f708a9918b6d39f080c4afe1ab983c418105969c7ea"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-joint.json": {
+      "bytes": 107529,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-joint.json",
+      "sha256": "9e3743937ffd1ac576263b4939a0698b04652d48b435ee5db06014438cd7b763"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-raw.json": {
+      "bytes": 281964,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-law-raw.json",
+      "sha256": "57dd1d7cebb8d39ca0bcb95e99dda1ce84f526c9d84db03aa90a92c8db9c282b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-joint.json": {
+      "bytes": 1044665,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-joint.json",
+      "sha256": "57831087b8bf822d90a01fea67c99c0bb084fdd66433085270cc1ee10cffa40a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-raw.json": {
+      "bytes": 1451975,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_authored_eval-raw.json",
+      "sha256": "6563b1b6a7a6df062812fb383dfdacebd98e9341f13094c519bff14d1a9cebf5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-joint.json": {
+      "bytes": 1456878,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-joint.json",
+      "sha256": "ac6f49335d3452c9a35c8245b490a8dc13b06b44b2a783a0c5def41a0f2d74fe"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-raw.json": {
+      "bytes": 2286964,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/baseline-old_tune-raw.json",
+      "sha256": "ee83951ed1f370aab4d4ace76dea05e63f00fa56399c4fdfeb5fc3f4d3fb5d5f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json": {
+      "bytes": 9337558,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-checkpoint.json",
+      "sha256": "34080a8ad491e5a351aeea0adfc6f3e29e76d0ae93c1f8a8cee3ebf536a7b9fd"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-training.json": {
+      "bytes": 367209,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/cell-training.json",
+      "sha256": "26c70b4787b02c583d41b311ed91b0b10f2d7ef59239d5edd9e83e01014a9038"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/data-schedule-before-models.json": {
+      "bytes": 26725,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/data-schedule-before-models.json",
+      "sha256": "cd3e306d055b8e079252c99f2e20cac1a9f632cf5465b5e6ef19d8a13ec147c9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parent-head-parity.json": {
+      "bytes": 170292,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parent-head-parity.json",
+      "sha256": "ce1fc477a88d8c56a7c20c1240bb27eb76a0120bc1788da2b40fdf6f23b5071d"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-alternate_placeholders.json": {
+      "bytes": 20285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-alternate_placeholders.json",
+      "sha256": "da0c1705bb196ee857026c8bdd088d8809df80c370b5ebc4f6f2ae42265db8a4"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-disabled.json": {
+      "bytes": 20289,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-disabled.json",
+      "sha256": "0bdd1f7617b34f10574e47248bb09ca9bd3caa3d49a21a56a5018c49edf4bd78"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-rotated_placeholders.json": {
+      "bytes": 20287,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-rotated_placeholders.json",
+      "sha256": "de361ae677c9d491629a66185df31eb28da27fba004f4403b23a91d3628410c0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-zeros.json": {
+      "bytes": 20285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity-zeros.json",
+      "sha256": "381f338bfe734fc8112dd127a236b003b4f021f07a7593bfa9799f97e7a1c5ac"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity.json": {
+      "bytes": 2010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-parity.json",
+      "sha256": "24227e3ea9e9a9b07f5c81653d9888a0c24727b9c79f23c6a1c3446fdefff291"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-joint.json": {
+      "bytes": 2485870,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-joint.json",
+      "sha256": "4c191d96ae0c3554efd40354ee421f7e9471152d7071af8a40b7f77ce49184fb"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-raw.json": {
+      "bytes": 3588013,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/initial-training168-raw.json",
+      "sha256": "d60e2f1faad0ee83687d89fcca6c273c5ec462fea763a0eae6492ab50efaf71f"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-joint.json": {
+      "bytes": 523004,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-joint.json",
+      "sha256": "6b188d579415dc7a080174a6cdc3174fd4f5a0b07cfc4e05660bbbaf82cb5aa0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-raw.json": {
+      "bytes": 808276,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_dev-raw.json",
+      "sha256": "e0c5e1b50aa3ad569465a705e8826e6bf500abc68637dc1b2cad13110055ace5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-joint.json": {
+      "bytes": 464070,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-joint.json",
+      "sha256": "dffbc6bbdb4692ba663255e00b90b42401f37b462b1a4972c1afa1f19878228e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-raw.json": {
+      "bytes": 808912,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-fresh_test-raw.json",
+      "sha256": "e1318038ac4d13615f262b860a48d5feda630f355f59bcac4d4c16aaafeb4a67"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-joint.json": {
+      "bytes": 2485865,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-joint.json",
+      "sha256": "64f3a4437f92cc3a2f1630f32f39190b16d9f22a07cfda42f38f1aae69a4a71e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-raw.json": {
+      "bytes": 3591408,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/parent-training168-raw.json",
+      "sha256": "5f01addda580350cca3660e3de8bdcb1e84b83634c95124ea2718afb6ea42705"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/summary.json": {
+      "bytes": 62105,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/summary.json",
+      "sha256": "6ec7eb8bc440461c2adcde36521f8a5fe1b1a0843728cc04b3b933c9e065569b"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-joint.json": {
+      "bytes": 1024996,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-joint.json",
+      "sha256": "18d299abb12013d733133aa07a2d7763af265d29c772f85af435a2d9c0bbefd9"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-raw.json": {
+      "bytes": 1434161,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_dev-raw.json",
+      "sha256": "0c0ad06daeea537305067442b9fa121e588dbeef9b44283a96be66032b18e59c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-joint.json": {
+      "bytes": 1024788,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-joint.json",
+      "sha256": "bb2393f68feb47735bb8722f9fb5a96434edc80d3b06a5dcef426944b6ad5fb5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-raw.json": {
+      "bytes": 1433575,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-authored_eval-raw.json",
+      "sha256": "d28fffed948badf6c1b65aa2a74d517f4b5d09a7183b523f63ecfe58e16bd37c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-joint.json": {
+      "bytes": 526660,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-joint.json",
+      "sha256": "0d6cbc0405eca031a349b769176a796d6e5f84d8f9eb2d1e32bbeda464fb39e5"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-raw.json": {
+      "bytes": 678683,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_challenge-raw.json",
+      "sha256": "f66dce6f14f9d69baaeabf69bb8e2aa28106ad2881a744343b63a19ac892ceae"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-joint.json": {
+      "bytes": 520909,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-joint.json",
+      "sha256": "49e993f72a38f4987c85a4525038ae15e6878292f4b1391647322b599ccb7395"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-raw.json": {
+      "bytes": 807095,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_dev-raw.json",
+      "sha256": "24b795438140e40c44681dd7feee83a4698465f1d6d9ff8bdd2fde7177b0b5d8"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-joint.json": {
+      "bytes": 462509,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-joint.json",
+      "sha256": "f390e96c80799814eb3b9ebbd1ac7fe0a4559c7b873b7b606e795ad574574a80"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-raw.json": {
+      "bytes": 805493,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_test-raw.json",
+      "sha256": "8b14722d9cd8db43bbfeda107ed3d8a0b3e4099e5bca32e477a77317d58eb981"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-joint.json": {
+      "bytes": 509138,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-joint.json",
+      "sha256": "80ac9292e12421ef9a1d8c0370d4b94ea194c296a81dc2f654ab69142fb10231"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-raw.json": {
+      "bytes": 626492,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-fresh_tune-raw.json",
+      "sha256": "75a0246b3c414cd499f7bdcbb9c89e6497de08b4f88b38a145ef0c552fc6a64c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-frozen-head-retention.json": {
+      "bytes": 170400,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-frozen-head-retention.json",
+      "sha256": "6f1673c9fd51078e001691e99983d8249a8fe28bc199cda71f7547444635869c"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-joint.json": {
+      "bytes": 107530,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-joint.json",
+      "sha256": "805f502f343a2e85b50ee000c7b2f4359573e08f04958c5f29ad0284c31144a2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-raw.json": {
+      "bytes": 281964,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-law-raw.json",
+      "sha256": "6f42880078a1831fc9d70710e51c428d8d9b3e309da80381b3167456ca002eae"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-joint.json": {
+      "bytes": 1044652,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-joint.json",
+      "sha256": "743c3ec07c4c0a098a77bdbab717b41d5c55eac1417b54e16b9aedbd3980c4f0"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-raw.json": {
+      "bytes": 1451959,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_authored_eval-raw.json",
+      "sha256": "a8858e468228649fb688f10826770847b570517ab173bd4e8867f7b7871df02e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-joint.json": {
+      "bytes": 1456849,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-joint.json",
+      "sha256": "0461ddc7794a1ac2112fbad1512c50171575344233d74544c5d3f043a1493665"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-raw.json": {
+      "bytes": 2286936,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-old_tune-raw.json",
+      "sha256": "04d455a28f86d2ae6a39dbe97587bf17df6f0ae98f5f470e95dde25789d48311"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-alternate_placeholders.json": {
+      "bytes": 20281,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-alternate_placeholders.json",
+      "sha256": "043494f990cae2b3925a891ec3afbdab2fb7ba345b694fa7b21536338f931c61"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-disabled.json": {
+      "bytes": 20285,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-disabled.json",
+      "sha256": "d78d95321807a7f34ff4841e46c7412813388265159c0f769a43bd8282b2fcbc"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-rotated_placeholders.json": {
+      "bytes": 20283,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-rotated_placeholders.json",
+      "sha256": "a9b62a0f19f78b06122762a235cfef92ffdfd1d3024b6df79f0f22fc7d4a5da2"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-zeros.json": {
+      "bytes": 20281,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity-zeros.json",
+      "sha256": "1551a339ef86a914e5e2316d920291ee5dfc6aea054be534ca1b2fdcd4037a58"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity.json": {
+      "bytes": 2010,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-parity.json",
+      "sha256": "d7919329437242def74482fcbfa6d7107e1b784e997cd5c1771917e86124b82a"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-joint.json": {
+      "bytes": 2491319,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-joint.json",
+      "sha256": "426b8226648e6d7f513e7e343539e3f2859eda9f72061e0f09dcf95d80834e7e"
+    },
+    "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-raw.json": {
+      "bytes": 3590509,
+      "path": "/home/barberb/lift_coding/external/ipfs_datasets/workspace/test-logs/legal-trigger-readout-pilot-20261007-01/conditions-presence-20261014-conditions-presence-ce-01/results/trained-training168-raw.json",
+      "sha256": "208d4924d843669306a58db775e663046608fae8607beac29a76e2896b815dca"
+    }
+  },
+  "cap_changed": false,
+  "claims_modified": 0,
+  "conservative_net_apparent_savings_bytes": 782820835,
+  "counted_metadata_allowance_bytes": 2000000,
+  "current_original_identities_match_prepared_manifest": true,
+  "eviction_authorized": false,
+  "findings": [],
+  "full_root_censuses": 0,
+  "future_actual_training_plan_exists_and_audited": false,
+  "independent_all_member_SHA256_rehash": true,
+  "independent_physical_restoration_rerun": false,
+  "intake": {
+    "bytes": 67366,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-released-results-storage-intake-v01.json",
+    "sha256": "520ab94ce21a4bfce3aea05b3678b3c8a7820ea3c3d456a3af3fdf8e8b789074"
+  },
+  "interface_correction": "Root requested exact descriptor field prepared while the single actual audit was already running. This adds the prepared alias to the sealed actual manifest descriptor, preserves all scientific/byte/count/resource findings and binds the unchanged original actual-review receipt. No opaque rescan or new physical restoration run.",
+  "limits": [
+    "Historical HF coverage is partial for8 trigger/action checkpoints and all temporal03 members; exact newly prepared complete local archive proof is independent of those older receipts.",
+    "Raw bytes and mode recoverability is proven by qualified producer; original inode/ctime continuity cannot be preserved by restoration."
+  ],
+  "member_count": 1162,
+  "model_calls": 0,
+  "named_future_input_boundary": "F15 source preparer builds fresh N11 donor/capture closure; it does not inherit old artifacts wholesale. All N11/N14 outputs remain exact; source exports/reference artifact files lie outside selected resultdirs.",
+  "network_calls": 0,
+  "numerical_imports": 0,
+  "observer": {
+    "bytes": 11305,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/review_owned_results_archive_prepared_v01.py",
+    "sha256": "d2b95e0d901909e240bdac41da8f9b699293ec5449c48d4e9be78aca233130bb"
+  },
+  "original800M_target_met": false,
+  "original_moves": 0,
+  "original_unlinks": 0,
+  "passed": true,
+  "prepared": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "prepared_manifest": {
+    "bytes": 801434,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-v01.json",
+    "sha256": "5be5dfc877425e0fcc94ce00a2a5416b07d638133f3eeeaee791e326a18e39b3"
+  },
+  "previous_actual_review": {
+    "bytes": 75686,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-prepared-independent-review-v01.json",
+    "sha256": "c6c2e49416c864352d2a65cd9d62bfd9d906897cd7861dd6ad93076d53b5a0d2"
+  },
+  "private_body_reads": 0,
+  "protected_N11_N14_excluded": true,
+  "protected_N11_donor_unchanged": true,
+  "protected_frozen_outputs": {
+    "legal-balanced-execution-20261014-01": {
+      "exact_raw_outputs_rehashed": 62,
+      "member_bytes": 64172658
+    },
+    "legal-head-repair-20261014-01": {
+      "exact_raw_outputs_rehashed": 62,
+      "member_bytes": 64092147
+    }
+  },
+  "raw_bytes": 934325529,
+  "raw_checkpoint_JSON_parses": 0,
+  "raw_score_JSON_parses": 0,
+  "required_before_eviction": [
+    "Publish exact archive+prepared manifest to HF; independently verify immutable full-byte readback and bind actual receipt.",
+    "Source-qualify both explicit apply and standalone restore tools; actual concrete apply review/root authorization must join this actual manifest/HF readback.",
+    "Recheck current originals/complete hash set, archive durable final counted copy, all protected/live input paths and counted metadata/journal bound before approved member removal.",
+    "Run fresh qualified copied resource observation/native accounting after any authorized apply; this review is no capacity PASS or model authority."
+  ],
+  "resource_API_calls": 0,
+  "root_revised750M_minimum_met": true,
+  "schema": "actor-refinement-owned-results-archive-prepared-independent-review/v1",
+  "selected_attempt_count": 27,
+  "source_qualification": {
+    "bytes": 84738,
+    "path": "/home/barberb/lift_coding/artifacts/legal-actor-refinement-20261014-01/owned-results-archive-source-independent-review-v01.json",
+    "sha256": "f8ffe1618f7b4bba6ce8f906bc62bf5571435434f4a9a5fd5465ca08d06752aa"
+  }
+}
